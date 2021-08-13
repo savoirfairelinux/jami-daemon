@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b673c80c_5e56e1e6",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-08-13T13:54:17Z",
+      "side": 1,
+      "message": "if possible do the whole thing in a single lock (maybe add an unlocked private \"getCertificate_()\" )",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0aedef9_2ee109a7",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-08-13T13:54:17Z",
+      "side": 1,
+      "message": "not needed, finalCert is always cut",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "58442ac4_22d06dc4",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-08-13T13:54:17Z",
+      "side": 1,
+      "message": "this is this function !\nshould be just \"getCertificate\" (or the unlocked \"getCertificate_\").\nAlso no need for a loop since recursion will make the job.",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bbd09724_c4a1931b",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-08-13T13:54:17Z",
+      "side": 1,
+      "message": "should return incomplete chain if we can\u0027t find the issuer.",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d9585f5_22fb2421",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-08-13T13:54:17Z",
+      "side": 1,
+      "message": "not needed since finalCert is always crt which is already in the store. We just need to set its \"issuer\" field correctly.",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
