@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8b0a659_a66941d4",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-13T18:13:37Z",
+      "side": 1,
+      "message": "moved to a lambda",
+      "parentUuid": "4aa328e2_6667f0b4",
+      "range": {
+        "startLine": 149,
+        "startChar": 15,
+        "endLine": 149,
+        "endChar": 30
+      },
+      "revId": "01750a47866f5cdce8bb30aa3964c7ea4412d72f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ada3f0ff_f1dfaa7f",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-08-13T17:40:58Z",
       "side": 1,
       "message": "has been split",
+      "range": {
+        "startLine": 151,
+        "startChar": 26,
+        "endLine": 151,
+        "endChar": 37
+      },
+      "revId": "01750a47866f5cdce8bb30aa3964c7ea4412d72f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4633d7fe_7b6454ea",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-13T18:13:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ada3f0ff_f1dfaa7f",
       "range": {
         "startLine": 151,
         "startChar": 26,
