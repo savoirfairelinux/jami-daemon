@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "edb842ad_32768809",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-08-13T21:22:16Z",
+      "side": 1,
+      "message": "Reduction of between 30% to 50% of build time using autotools.\n\nCurrently, stage of jamid failed to link I don\u0027t know why.\n\nAlso, some weird warning by the archiver: ar: `u\u0027 modifier ignored since `D\u0027 is the default (see `U\u0027)\n\n",
+      "revId": "2845191846f67f3744f42b384de126ff58cffa9d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
