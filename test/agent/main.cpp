@@ -87,20 +87,34 @@ static SCM make_jami_port(int lvl)
     return scm_c_make_port(port_type, SCM_WRTNG | SCM_BUFLINE, (long)lvl);
 }
 
+static void
+fini()
+{
+    Agent::instance().fini();
+    DRing::fini();
+}
+
 void*
 main_inner(void* agent_config_raw) /* In Guile context */
 {
-    scm_set_current_output_port(make_jami_port(LOG_INFO));
-    scm_set_current_warning_port(make_jami_port(LOG_WARNING));
-    scm_set_current_error_port(make_jami_port(LOG_ERR));
+//    scm_set_current_output_port(make_jami_port(LOG_INFO));
+//    scm_set_current_warning_port(make_jami_port(LOG_WARNING));
+//    scm_set_current_error_port(make_jami_port(LOG_ERR));
 
     install_scheme_primitives();
 
     Agent::instance().init();
 
-    scm_internal_catch(SCM_BOOL_T, main_body, agent_config_raw, main_catch, nullptr);
+    atexit(fini);
 
-    Agent::instance().fini();
+    char *argv[] = {
+        (char*)"-l",
+        (char*)agent_config_raw,
+        (char*)"--",
+
+    };
+
+    scm_shell(3, argv);
 
     return nullptr;
 }
@@ -116,12 +130,10 @@ main(int argc, char* argv[])
     setenv("GUILE_LOAD_PATH", ".", 1);
 
     /* NOTE!  It's very important to initialize the daemon before entering Guile!!! */
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
 
     AGENT_ASSERT(DRing::start(""), "Failed to start daemon");
 
     /* Entering guile context */
     scm_with_guile(main_inner, argv[1]);
-
-    DRing::fini();
 }
