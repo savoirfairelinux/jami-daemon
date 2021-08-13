@@ -563,7 +563,7 @@ void
 Logger::fini()
 {
     // Force close on file and join thread
-    FileLog::instance().setFile(nullptr);
+    FileLog::instance().setFile({});
 }
 
 } // namespace jami
