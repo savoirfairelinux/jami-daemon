@@ -1,16 +1,12 @@
-include $(top_srcdir)/globals.mk
-
-if BUILD_PULSE
-
-noinst_LTLIBRARIES = libpulselayer.la
+noinst_LTLIBRARIES += libpulselayer.la
 
 libpulselayer_la_SOURCES = \
-		audiostream.cpp \
-		pulselayer.cpp
+		./media/audio/pulseaudio/audiostream.cpp \
+		./media/audio/pulseaudio/pulselayer.cpp
 
 
-noinst_HEADERS = \
-		audiostream.h \
-		pulselayer.h
+noinst_HEADERS += \
+		./media/audio/pulseaudio/audiostream.h \
+		./media/audio/pulseaudio/pulselayer.h
 
-endif
+libaudio_la_LIBADD += libpulselayer.la
