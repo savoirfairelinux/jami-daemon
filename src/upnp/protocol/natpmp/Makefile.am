@@ -1,9 +1,9 @@
-include $(top_srcdir)/globals.mk
-
-noinst_LTLIBRARIES = libnat_pmp.la
+noinst_LTLIBRARIES += libnat_pmp.la
 
 libnat_pmp_la_SOURCES = \
-        pmp_igd.h \
-        pmp_igd.cpp \
-        nat_pmp.h \
-        nat_pmp.cpp
+	./upnp/protocol/natpmp/pmp_igd.h \
+	./upnp/protocol/natpmp/pmp_igd.cpp \
+	./upnp/protocol/natpmp/nat_pmp.h \
+	./upnp/protocol/natpmp/nat_pmp.cpp
+
+libupnpprotocol_la_LIBADD += libnat_pmp.la
