@@ -2262,17 +2262,11 @@ JamiAccount::doRegister_()
                 // Check if sync request is from same account
                 std::promise<bool> accept;
                 std::future<bool> fut = accept.get_future();
-                accountManager_
-                    ->findCertificate(deviceId,
-                                      [this, &accept](
-                                          const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                                          if (not cert) {
-                                              accept.set_value(false);
-                                              return;
-                                          }
-                                          accept.set_value(cert->getIssuerUID()
-                                                           == accountManager_->getInfo()->accountId);
-                                      });
+                accountManager_->findCertificate(deviceId,
+                    [&accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                        accept.set_value(cert and
+                            cert->getIssuerUID() == accountManager_->getInfo()->accountId);
+                    });
                 fut.wait();
                 auto result = fut.get();
                 return result;
@@ -5445,18 +5439,18 @@ JamiAccount::transferFile(const std::string& conversationId,
                           size_t start,
                           size_t end)
 {
-    auto channelName = "data-transfer://" + conversationId + "/" + currentDeviceId() + "/" + fileId;
+    auto channelName = fmt::format("data-transfer://{}/{}/{}", conversationId, currentDeviceId(),  fileId);
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
     connectionManager_->connectDevice(
         DeviceId(deviceId),
         channelName,
-        [this, conversationId, path = std::move(path), fileId, interactionId, start, end](
+        [w = weak(), conversationId, path = std::move(path), fileId, interactionId, start, end](
             std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
             if (!socket)
                 return;
-            dht::ThreadPool::io().run([w = weak(),
+            dht::ThreadPool::io().run([w = std::move(w),
                                        path = std::move(path),
                                        socket = std::move(socket),
                                        conversationId = std::move(conversationId),
