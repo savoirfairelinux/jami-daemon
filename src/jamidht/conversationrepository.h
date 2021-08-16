@@ -188,6 +188,7 @@ public:
      * @param n                 Max commits number to get (default: 0)
      * @param logIfNotFound     Log if commit is found (false for detect commit before pulling)
      * @param fastLog           Used to count commits. This will just generate empty ConversationCommit
+     * @param authorUri         used to stop counting if detected with fast log
      * @return a list of commits
      */
     std::vector<ConversationCommit> logN(const std::string& last = "",
@@ -196,7 +197,8 @@ public:
     std::vector<ConversationCommit> log(const std::string& from = "",
                                         const std::string& to = "",
                                         bool logIfNotFound = true,
-                                        bool fastLog = false) const;
+                                        bool fastLog = false,
+                                        const std::string& authorUri = "") const;
     std::optional<ConversationCommit> getCommit(const std::string& commitId,
                                                 bool logIfNotFound = true) const;
 

@@ -1118,10 +1118,12 @@ Conversation::setMessageDisplayed(const std::string& uri, const std::string& int
 }
 
 uint32_t
-Conversation::countInteractions(const std::string& toId, const std::string& fromId) const
+Conversation::countInteractions(const std::string& toId,
+                                const std::string& fromId,
+                                const std::string& authorUri) const
 {
     // Log but without content to avoid costly convertions.
-    return pimpl_->repository_->log(fromId, toId, false, true).size();
+    return pimpl_->repository_->log(fromId, toId, false, true, authorUri).size();
 }
 
 } // namespace jami

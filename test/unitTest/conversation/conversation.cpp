@@ -4668,9 +4668,11 @@ ConversationTest::testCountInteractions()
     });
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !msgId3.empty(); }));
 
-    CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, "", "") == 4 /* 3 + initial */);
-    CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, msgId3, "") == 0);
-    CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, msgId2, "") == 1);
+    CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, "", "", "") == 4 /* 3 + initial */);
+    CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, "", "", aliceAccount->getUsername())
+                   == 0);
+    CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, msgId3, "", "") == 0);
+    CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, msgId2, "", "") == 1);
 }
 
 } // namespace test

@@ -1796,6 +1796,7 @@
            <arg type="s" name="conversationId" direction="in"/>
            <arg type="s" name="toId" direction="in"/>
            <arg type="s" name="fromId" direction="in"/>
+           <arg type="s" name="authorUri" direction="in"/>
            <arg type="u" name="count" direction="out"/>
        </method>
 
