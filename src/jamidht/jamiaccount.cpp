@@ -2242,7 +2242,37 @@ JamiAccount::doRegister_()
             auto isFile = name.substr(0, 7) == "file://";
             auto isVCard = name.substr(0, 8) == "vcard://";
             auto isDataTransfer = name.substr(0, 16) == "data-transfer://";
+
+            JAMI_WARN("[Account %s] New channel asked from %s with name %s",
+                        getAccountID().c_str(),
+                        deviceId.to_c_str(),
+                        name.c_str());
+
             if (name.find("git://") == 0) {
+                // Pre-check before acceptance. Sometimes, another device can start a conversation
+                // which is still not synced. So, here we decline channel's request in this case
+                // to avoid the other device to want to sync with us till we're not ready.
+                auto sep = name.find_last_of('/');
+                auto conversationId = name.substr(sep + 1);
+                auto remoteDevice = name.substr(6, sep - 6);
+
+                std::unique_lock<std::mutex> lk(conversationsMtx_);
+                auto conversation = conversations_.find(conversationId);
+                if (conversation == conversations_.end()) {
+                    JAMI_WARN("[Account %s] Git server requested, but for a non existing "
+                                "conversation (%s)",
+                                getAccountID().c_str(),
+                                conversationId.c_str());
+                    return false;
+                }
+                // Also check if peer is banned.
+                if (conversation->second->isBanned(remoteDevice)) {
+                    JAMI_WARN("[Account %s] %s is a banned device in conversation %s",
+                                getAccountID().c_str(),
+                                remoteDevice.c_str(),
+                                conversationId.c_str());
+                    return false;
+                }
                 return true;
             } else if (name == "sip") {
                 return true;
@@ -2375,31 +2405,14 @@ JamiAccount::doRegister_()
                         // Check if wanted remote it's our side (git://remoteDevice/conversationId)
                         return;
                     }
-                    JAMI_WARN("[Account %s] New channel asked from %s with name %s",
-                              getAccountID().c_str(),
-                              deviceId.to_c_str(),
-                              name.c_str());
 
-                    {
-                        // Check if pull from banned device
-                        std::unique_lock<std::mutex> lk(conversationsMtx_);
-                        auto conversation = conversations_.find(conversationId);
-                        if (conversation == conversations_.end()) {
-                            JAMI_WARN("[Account %s] Git server requested, but for a non existing "
-                                      "conversation (%s)",
-                                      getAccountID().c_str(),
-                                      conversationId.c_str());
-                            channel->shutdown();
-                            return;
-                        }
-                        if (conversation->second->isBanned(remoteDevice)) {
-                            JAMI_WARN("[Account %s] %s is a banned device in conversation %s",
-                                      getAccountID().c_str(),
-                                      remoteDevice.c_str(),
-                                      conversationId.c_str());
-                            channel->shutdown();
-                            return;
-                        }
+                    if (!isConversation(conversationId)) {
+                        JAMI_WARN("[Account %s] Git server requested, but for a non existing "
+                                    "conversation (%s)",
+                                    getAccountID().c_str(),
+                                    conversationId.c_str());
+                        channel->shutdown();
+                        return;
                     }
 
                     auto sock = gitSocket(deviceId, conversationId);
