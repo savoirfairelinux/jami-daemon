@@ -159,6 +159,7 @@ private:
     void testGetConversationsMembersWhileSyncing();
     void testRemoveContactRemoveSyncing();
     void testCountInteractions();
+    void testGetConversationMembersWithSelfOneOne();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -219,6 +220,7 @@ private:
     CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
     CPPUNIT_TEST(testRemoveContactRemoveSyncing);
     CPPUNIT_TEST(testCountInteractions);
+    CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -4671,6 +4673,31 @@ ConversationTest::testCountInteractions()
     CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, "", "") == 4 /* 3 + initial */);
     CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, msgId3, "") == 0);
     CPPUNIT_ASSERT(DRing::countInteractions(aliceId, convId, msgId2, "") == 1);
+}
+
+void
+ConversationTest::testGetConversationMembersWithSelfOneOne()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId)
+                convId = conversationId;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(aliceUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return !convId.empty(); }));
+
+    auto members = aliceAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(members.size() == 1);
+    CPPUNIT_ASSERT(members[0]["uri"] == aliceUri);
 }
 
 } // namespace test
