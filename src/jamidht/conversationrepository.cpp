@@ -1825,14 +1825,14 @@ ConversationRepository::Impl::initMembers()
     std::lock_guard<std::mutex> lk(membersMtx_);
     members_.clear();
     std::string repoPath = git_repository_workdir(repo.get());
-    std::vector<std::string> paths = {repoPath + "/" + "invited",
-                                      repoPath + "/" + "admins",
+    std::vector<std::string> paths = {repoPath + "/" + "admins",
                                       repoPath + "/" + "members",
+                                      repoPath + "/" + "invited",
                                       repoPath + "/" + "banned" + "/" + "members"};
     std::vector<MemberRole> roles = {
-        MemberRole::INVITED,
         MemberRole::ADMIN,
         MemberRole::MEMBER,
+        MemberRole::INVITED,
         MemberRole::BANNED,
     };
 
@@ -1841,8 +1841,11 @@ ConversationRepository::Impl::initMembers()
         for (const auto& f : fileutils::readDirectory(p)) {
             auto pos = f.find(".crt");
             auto uri = f.substr(0, pos);
-            uris.emplace_back(uri);
-            members_.emplace_back(ConversationMember {uri, roles[i]});
+            auto it = std::find(uris.begin(), uris.end(), uri);
+            if (it == uris.end()) {
+                members_.emplace_back(ConversationMember {uri, roles[i]});
+                uris.emplace_back(uri);
+            }
         }
         ++i;
     }
