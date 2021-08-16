@@ -327,7 +327,9 @@ Conversation::Impl::isAdmin() const
 
     auto adminsPath = repoPath() + DIR_SEPARATOR_STR + "admins";
     auto cert = shared->identity().second;
-    auto uri = cert->getIssuerUID();
+    if (!cert->issuer)
+        return false;
+    auto uri = cert->issuer->getId().toString();
     return fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
 }
 
@@ -346,7 +348,7 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
 {
     auto authorDevice = commit.author.email;
     auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
-    if (!cert) {
+    if (!cert || !cert->issuer) {
         JAMI_WARN("No author found for commit %s, reload certificates", commit.id.c_str());
         if (repository_)
             repository_->pinCertificates();
@@ -357,7 +359,7 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
                                                        + authorDevice + ".crt");
             auto deviceCert = fileutils::loadTextFile(certPath);
             cert = std::make_shared<crypto::Certificate>(deviceCert);
-            if (!cert) {
+            if (!cert || !cert->issuer) {
                 JAMI_ERR("No author found for commit %s", commit.id.c_str());
                 return std::nullopt;
             }
@@ -365,7 +367,7 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
             return std::nullopt;
         }
     }
-    auto authorId = cert->getIssuerUID();
+    auto authorId = cert->issuer->getId().toString();
     std::string parents;
     auto parentsSize = commit.parents.size();
     for (std::size_t i = 0; i < parentsSize; ++i) {

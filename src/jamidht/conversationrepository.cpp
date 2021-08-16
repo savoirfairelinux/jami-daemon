@@ -726,9 +726,9 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     }
 
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert)
+    if (!cert || !cert->issuer)
         return false;
-    auto userUri = cert->getIssuerUID();
+    auto userUri = cert->issuer->getId().toString();
     // Check that voter is admin
     auto adminFile = std::string("admins") + "/" + userUri + ".crt";
 
@@ -813,9 +813,9 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
     auto repo = repository();
-    if (not cert or not repo)
+    if (not cert or not cert->issuer or not repo)
         return false;
-    auto userUri = cert->getIssuerUID();
+    auto userUri = cert->issuer->getId().toString();
 
     std::string repoPath = git_repository_workdir(repo.get());
     if (mode() == ConversationMode::ONE_TO_ONE) {
@@ -898,9 +898,9 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
                                               const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert)
+    if (!cert || !cert->issuer)
         return false;
-    auto userUri = cert->getIssuerUID();
+    auto userUri = cert->issuer->getId().toString();
     // Check no other files changed
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     std::size_t wantedChanged = 3;
@@ -960,9 +960,9 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
                                                const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert)
+    if (!cert || !cert->issuer)
         return false;
-    auto userUri = cert->getIssuerUID();
+    auto userUri = cert->issuer->getId().toString();
     auto removeSelf = userUri == uriMember;
 
     // Retrieve tree for recent commit
@@ -1026,9 +1026,9 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
             return false;
         }
         cert = tls::CertificateStore::instance().getCertificate(deviceUri);
-        if (!cert)
+        if (!cert || !cert->issuer)
             return false;
-        if (uriMember != cert->getIssuerUID()
+        if (uriMember != cert->issuer->getId().toString()
             and uriMember != deviceUri /* If device is removed */) {
             JAMI_ERR("device removed but not for removed user (%s)", deviceFile.c_str());
             return false;
@@ -1077,9 +1077,9 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
                                                       const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert)
+    if (!cert || !cert->issuer)
         return false;
-    auto userUri = cert->getIssuerUID();
+    auto userUri = cert->issuer->getId().toString();
     auto valid = false;
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
@@ -1123,9 +1123,9 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (not cert)
+    if (not cert || !cert->issuer)
         return false;
-    auto userUri = cert->getIssuerUID();
+    auto userUri = cert->issuer->getId().toString();
     auto parentCrt = tls::CertificateStore::instance().getCertificate(userUri);
     auto repo = repository();
     if (not parentCrt or not repo)
@@ -1177,11 +1177,11 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     if (!account)
         return false;
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert) {
+    if (!cert || !cert->issuer) {
         JAMI_ERR("Cannot find certificate for %s", userDevice.c_str());
         return false;
     }
-    auto userUri = cert->getIssuerUID();
+    auto userUri = cert->issuer->getId().toString();
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
     // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
 
@@ -1717,9 +1717,9 @@ ConversationRepository::Impl::getInitialMembers() const
 
     auto authorDevice = commit.author.email;
     auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
-    if (!cert)
+    if (!cert || !cert->issuer)
         return {};
-    auto authorId = cert->getIssuerUID();
+    auto authorId = cert->issuer->getId().toString();
     if (mode() == ConversationMode::ONE_TO_ONE) {
         std::string err;
         Json::Value root;
@@ -2746,7 +2746,9 @@ ConversationRepository::voteKick(const std::string& uri, bool isDevice)
         return {};
     std::string repoPath = git_repository_workdir(repo.get());
     auto cert = account->identity().second;
-    auto adminUri = cert->getIssuerUID();
+    if (!cert || !cert->issuer)
+        return {};
+    auto adminUri = cert->issuer->getId().toString();
     if (adminUri == uri) {
         JAMI_WARN("Admin tried to ban theirself");
         return {};

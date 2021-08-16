@@ -625,9 +625,9 @@ void
 MultiplexedSocket::monitor() const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(deviceId().toString());
-    if (!cert)
+    if (!cert || !cert->issuer)
         return;
-    auto userUri = cert->getIssuerUID();
+    auto userUri = cert->issuer->getId().toString();
     JAMI_DBG("- Socket with device: %s - account: %s", deviceId().to_c_str(), userUri.c_str());
     auto now = clock::now();
     JAMI_DBG("- Duration: %lu",
