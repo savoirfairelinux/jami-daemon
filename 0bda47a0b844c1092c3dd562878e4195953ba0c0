@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b58b5c6a_c8962ff5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2248,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-08-16T22:11:54Z",
+      "side": 1,
+      "message": "could be a generic log for a new channel request (instead of just git) ?",
+      "revId": "0bda47a0b844c1092c3dd562878e4195953ba0c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
