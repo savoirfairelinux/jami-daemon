@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24bb6e59_a9de438f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 362,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-08-16T21:52:19Z",
+      "side": 1,
+      "message": "If the device certificate in the repo doesn\u0027t include the full chain, this will always be false.\nMaybe 🤔 the issuer could be found using the CertificateStore (or the members/admin directories if they are not pinned in the store) ?",
+      "revId": "8388ac7d40266372ec832e50df583f26337438b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
