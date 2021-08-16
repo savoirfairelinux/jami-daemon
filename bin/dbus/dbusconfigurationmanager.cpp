@@ -934,11 +934,12 @@ DBusConfigurationManager::loadConversationMessages(const std::string& accountId,
 
 uint32_t
 DBusConfigurationManager::countInteractions(const std::string& accountId,
-                                                 const std::string& conversationId,
-                                                 const std::string& toId,
-                                                 const std::string& fromId)
+                                            const std::string& conversationId,
+                                            const std::string& toId,
+                                            const std::string& fromId,
+                                            const std::string& authorUri)
 {
-    return DRing::countInteractions(accountId, conversationId, toId, fromId);
+    return DRing::countInteractions(accountId, conversationId, toId, fromId, authorUri);
 }
 
 bool

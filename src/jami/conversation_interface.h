@@ -72,7 +72,8 @@ DRING_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
 DRING_PUBLIC uint32_t countInteractions(const std::string& accountId,
                                         const std::string& conversationId,
                                         const std::string& toId,
-                                        const std::string& fromId);
+                                        const std::string& fromId,
+                                        const std::string& authorUri);
 
 struct DRING_PUBLIC ConversationSignal
 {

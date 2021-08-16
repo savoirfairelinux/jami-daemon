@@ -562,11 +562,13 @@ public:
      * Retrieve how many interactions there is from HEAD to interactionId
      * @param convId
      * @param interactionId     "" for getting the whole history
+     * @param authorUri         author to stop counting
      * @return number of interactions since interactionId
      */
     uint32_t countInteractions(const std::string& convId,
                                const std::string& toId,
-                               const std::string& fromId) const;
+                               const std::string& fromId,
+                               const std::string& authorUri = "") const;
 
     // Received a new commit notification
     void onNewGitCommit(const std::string& peer,

@@ -284,9 +284,10 @@ public:
                                       const std::string& fromMessage,
                                       const uint32_t& n);
     uint32_t countInteractions(const std::string& accountId,
-                                const std::string& conversationId,
-                                const std::string& toId,
-                                const std::string& fromId);
+                               const std::string& conversationId,
+                               const std::string& toId,
+                               const std::string& fromId,
+                               const std::string& authorUri);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__

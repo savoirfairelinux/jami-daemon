@@ -117,7 +117,8 @@ public:
                                         const std::string& to,
                                         unsigned n,
                                         bool logIfNotFound = false,
-                                        bool fastLog = false) const;
+                                        bool fastLog = false,
+                                        const std::string& authorUri = "") const;
     std::optional<std::string> linearizedParent(const std::string& commitId) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
@@ -1528,7 +1529,8 @@ ConversationRepository::Impl::log(const std::string& from,
                                   const std::string& to,
                                   unsigned n,
                                   bool logIfNotFound,
-                                  bool fastLog) const
+                                  bool fastLog,
+                                  const std::string& authorUri) const
 {
     std::vector<ConversationCommit> commits {};
 
@@ -1575,16 +1577,24 @@ ConversationRepository::Impl::log(const std::string& from,
             break;
         }
 
+        const git_signature* sig = git_commit_author(commit.get());
+        GitAuthor author;
+        author.name = sig->name;
+        author.email = sig->email;
+
         if (fastLog) {
+            if (authorUri != "") {
+                auto cert = tls::CertificateStore::instance().getCertificate(author.email);
+                if (cert && cert->issuer) {
+                    if (authorUri == cert->issuer->getId().toString())
+                        break;
+                }
+            }
             // Used to only count commit
             commits.emplace(commits.end(), ConversationCommit {});
             continue;
         }
 
-        const git_signature* sig = git_commit_author(commit.get());
-        GitAuthor author;
-        author.name = sig->name;
-        author.email = sig->email;
         std::vector<std::string> parents;
         auto parentsCount = git_commit_parentcount(commit.get());
         for (unsigned int p = 0; p < parentsCount; ++p) {
@@ -2427,9 +2437,10 @@ std::vector<ConversationCommit>
 ConversationRepository::log(const std::string& from,
                             const std::string& to,
                             bool logIfNotFound,
-                            bool fastLog) const
+                            bool fastLog,
+                            const std::string& authorUri) const
 {
-    return pimpl_->log(from, to, 0, logIfNotFound, fastLog);
+    return pimpl_->log(from, to, 0, logIfNotFound, fastLog, authorUri);
 }
 
 std::optional<ConversationCommit>

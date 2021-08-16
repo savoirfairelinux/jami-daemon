@@ -325,11 +325,14 @@ public:
 
     /**
      * Retrieve how many interactions there is from HEAD to interactionId
-     * @param toId     "" for getting the whole history
-     * @param fromId   "" => HEAD
+     * @param toId      "" for getting the whole history
+     * @param fromId    "" => HEAD
+     * @param authorURI author to stop counting
      * @return number of interactions since interactionId
      */
-    uint32_t countInteractions(const std::string& toId, const std::string& fromId = "") const;
+    uint32_t countInteractions(const std::string& toId,
+                               const std::string& fromId = "",
+                               const std::string& authorUri = "") const;
 
 private:
     std::shared_ptr<Conversation> shared()

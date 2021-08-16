@@ -4283,12 +4283,13 @@ JamiAccount::loadConversationMessages(const std::string& conversationId,
 uint32_t
 JamiAccount::countInteractions(const std::string& convId,
                                const std::string& toId,
-                               const std::string& fromId) const
+                               const std::string& fromId,
+                               const std::string& authorUri) const
 {
     std::lock_guard<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(convId);
     if (conversation != conversations_.end() && conversation->second) {
-        return conversation->second->countInteractions(toId, fromId);
+        return conversation->second->countInteractions(toId, fromId, authorUri);
     }
     return 0;
 }
