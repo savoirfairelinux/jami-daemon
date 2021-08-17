@@ -82,6 +82,8 @@ public:
     Impl(const char* name, const IceTransportOptions& options);
     ~Impl();
 
+    void initIceInstance();
+
     void onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status);
 
     void onReceiveData(unsigned comp_id, void* pkt, pj_size_t size);
@@ -131,7 +133,10 @@ public:
     const IpAddr getDefaultRemoteAddress(unsigned comp_id) const;
     bool handleEvents(unsigned max_msec);
 
+    std::string sessionName_ {};
     std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_ {};
+    bool isTcp_ {false};
+    bool upnpEnabled_ {false};
     IceTransportCompleteCb on_initdone_cb_ {};
     IceTransportCompleteCb on_negodone_cb_ {};
     IceRecvInfo on_recv_cb_ {};
@@ -172,11 +177,17 @@ public:
     std::vector<PeerChannel> peerChannels_ {};
     std::vector<IpAddr> iceDefaultRemoteAddr_;
 
+    // ICE controlling role. True for controller agents and false for
+    // controlled agents
     std::atomic_bool initiatorSession_ {true};
 
     // Local/Public addresses used by the account owning the ICE instance.
     IpAddr accountLocalAddr_ {};
     IpAddr accountPublicAddr_ {};
+
+    // STUN and TURN servers
+    std::vector<StunServerInfo> stunServers_;
+    std::vector<TurnServerInfo> turnServers_;
 
     /**
      * Returns the IP of each candidate for a given component in the ICE session
@@ -295,7 +306,13 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 //==============================================================================
 
 IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
-    : pool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
+    : sessionName_(name)
+    , pool_(nullptr,
+            [](pj_pool_t* pool) {
+                pj_pool_release(pool);
+            })
+    , isTcp_(options.tcpEnable)
+    , upnpEnabled_(options.upnpEnable)
     , on_initdone_cb_(options.onInitDone)
     , on_negodone_cb_(options.onNegoDone)
     , streamsCount_(options.streamsCount)
@@ -307,20 +324,72 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
     , initiatorSession_(options.master)
     , accountLocalAddr_(std::move(options.accountLocalAddr))
     , accountPublicAddr_(std::move(options.accountPublicAddr))
+    , stunServers_(std::move(options.stunServers))
+    , turnServers_(std::move(options.turnServers))
+    , thread_()
 {
     JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\" - comp count %u - as a %s",
              this,
              name,
              compCount_,
              initiatorSession_ ? "master" : "slave");
+}
 
-    if (options.upnpEnable)
+IceTransport::Impl::~Impl()
+{
+    JAMI_DBG("[ice:%p] destroying %p", this, icest_);
+
+    threadTerminateFlags_ = true;
+    iceCV_.notify_all();
+
+    if (thread_.joinable()) {
+        thread_.join();
+    }
+
+    pj_ice_strans* strans = nullptr;
+
+    std::swap(strans, icest_);
+
+    assert(strans);
+
+    // must be done before ioqueue/timer destruction
+    JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
+
+    pj_ice_strans_stop_ice(strans);
+    pj_ice_strans_destroy(strans);
+
+    // NOTE: This last handleEvents is necessary to close TURN socket.
+    // Because when destroying the TURN session pjproject creates a pj_timer
+    // to postpone the TURN destruction. This timer is only called if we poll
+    // the event queue.
+    auto tentative = 0;
+    while (tentative < HANDLE_EVENT_TENTATIVE && handleEvents(HANDLE_EVENT_DURATION)) {
+        tentative++;
+    }
+    if (tentative == HANDLE_EVENT_TENTATIVE)
+        JAMI_ERR(
+            "handle events didn't finish after %d tentatives. This is a bug. Please report it.",
+            HANDLE_EVENT_TENTATIVE);
+
+    if (config_.stun_cfg.ioqueue)
+        pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
+
+    if (config_.stun_cfg.timer_heap)
+        pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
+
+    JAMI_DBG("[ice:%p] done destroying", this);
+}
+
+void
+IceTransport::Impl::initIceInstance()
+{
+    if (upnpEnabled_)
         upnp_.reset(new upnp::Controller());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     cp_ = iceTransportFactory.getPoolCaching();
     config_ = iceTransportFactory.getIceCfg(); // config copy
-    if (options.tcpEnable) {
+    if (isTcp_) {
         config_.protocol = PJ_ICE_TP_TCP;
         config_.stun.conn_type = PJ_STUN_TP_TCP;
         config_.turn.conn_type = PJ_TURN_TP_TCP;
@@ -329,6 +398,11 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         config_.stun.conn_type = PJ_STUN_TP_UDP;
         config_.turn.conn_type = PJ_TURN_TP_UDP;
     }
+
+    pool_.reset(
+        pj_pool_create(iceTransportFactory.getPoolFactory(), "IceTransport.pool", 512, 512, NULL));
+    if (not pool_)
+        throw std::runtime_error("pj_pool_create() failed");
 
     // Note: For server reflexive candidates, UPNP mappings will
     // be used if available. Then, the public address learnt during
@@ -375,11 +449,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         JAMI_WARN("[ice:%p] No server reflexive candidates added", this);
     }
 
-    pool_.reset(
-        pj_pool_create(iceTransportFactory.getPoolFactory(), "IceTransport.pool", 512, 512, NULL));
-    if (not pool_)
-        throw std::runtime_error("pj_pool_create() failed");
-
     pj_ice_strans_cb icecb;
     pj_bzero(&icecb, sizeof(icecb));
 
@@ -423,11 +492,11 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
     };
 
     // Add STUN servers
-    for (auto& server : options.stunServers)
+    for (auto& server : stunServers_)
         add_stun_server(*pool_, config_, server);
 
     // Add TURN servers
-    for (auto& server : options.turnServers)
+    for (auto& server : turnServers_)
         add_turn_server(*pool_, config_, server);
 
     static constexpr auto IOQUEUE_MAX_HANDLES = std::min(PJ_IOQUEUE_MAX_HANDLES, 64);
@@ -459,51 +528,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 
     // Init to invalid addresses
     iceDefaultRemoteAddr_.reserve(compCount_);
-}
-
-IceTransport::Impl::~Impl()
-{
-    JAMI_DBG("[ice:%p] destroying %p", this, icest_);
-
-    threadTerminateFlags_ = true;
-    iceCV_.notify_all();
-
-    if (thread_.joinable()) {
-        thread_.join();
-    }
-
-    pj_ice_strans* strans = nullptr;
-
-    std::swap(strans, icest_);
-
-    assert(strans);
-
-    // must be done before ioqueue/timer destruction
-    JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
-
-    pj_ice_strans_stop_ice(strans);
-    pj_ice_strans_destroy(strans);
-
-    // NOTE: This last handleEvents is necessary to close TURN socket.
-    // Because when destroying the TURN session pjproject creates a pj_timer
-    // to postpone the TURN destruction. This timer is only called if we poll
-    // the event queue.
-    auto tentative = 0;
-    while (tentative < HANDLE_EVENT_TENTATIVE && handleEvents(HANDLE_EVENT_DURATION)) {
-        tentative++;
-    }
-    if (tentative == HANDLE_EVENT_TENTATIVE)
-        JAMI_ERR(
-            "handle events didn't finish after %d tentatives. This is a bug. Please report it.",
-            HANDLE_EVENT_TENTATIVE);
-
-    if (config_.stun_cfg.ioqueue)
-        pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
-
-    if (config_.stun_cfg.timer_heap)
-        pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
-
-    JAMI_DBG("[ice:%p] done destroying", this);
 }
 
 bool
@@ -590,7 +614,7 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 }
 
 void
-IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
+IceTransport::Impl::onComplete(pj_ice_strans*, pj_ice_strans_op op, pj_status_t status)
 {
     const char* opname = op == PJ_ICE_STRANS_OP_INIT
                              ? "initialization"
@@ -1044,6 +1068,12 @@ IceTransport::~IceTransport()
 {
     isStopped_ = true;
     cancelOperations();
+}
+
+void
+IceTransport::initIceInstance()
+{
+    pimpl_->initIceInstance();
 }
 
 bool
