@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c695003_d1593858",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3986,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-17T17:50:25Z",
+      "side": 1,
+      "message": "In fact I thought about this. And I think it\u0027s a bit more complex.\nremoveContact() is a bit different of discardTrustRequest().\n\nSo, we need to ask Adrien what we want when unbanning a contact. Because there is two possibilities:\n\n+ ban contact (keep the conv request) then re-add it \u003d\u003e accepts the previous trust request \u0026 clone conversation (imho it\u0027s the best, but this needs change in removeContact not there)\n+ ban contact also declines the request. So when re-add this will just authorize the peer to re-add a contact, and the contact will not appears.",
+      "range": {
+        "startLine": 3984,
+        "startChar": 27,
+        "endLine": 3986,
+        "endChar": 31
+      },
+      "revId": "f4ef9648552155bfc269f7b3d4b934df8977f50b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2782072c_35d81495",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3986,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-17T17:50:25Z",
+      "side": 1,
+      "message": "clang format :)",
+      "range": {
+        "startLine": 3986,
+        "startChar": 65,
+        "endLine": 3986,
+        "endChar": 68
+      },
+      "revId": "f4ef9648552155bfc269f7b3d4b934df8977f50b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d6d2024_a0fd6505",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3841,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-17T17:50:25Z",
+      "side": 1,
+      "message": "DRing::getConversationRequests(bobId)\n\n(I\u0027m changing the rest via https://review.jami.net/c/ring-daemon/+/18796)",
+      "range": {
+        "startLine": 3841,
+        "startChar": 20,
+        "endLine": 3841,
+        "endChar": 36
+      },
+      "revId": "f4ef9648552155bfc269f7b3d4b934df8977f50b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41cd47a2_13ac9591",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3849,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-17T17:50:25Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 3849,
+        "startChar": 24,
+        "endLine": 3849,
+        "endChar": 39
+      },
+      "revId": "f4ef9648552155bfc269f7b3d4b934df8977f50b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
