@@ -144,6 +144,7 @@ private:
     void testUnknownModeDetected();
     void testRemoveContact();
     void testBanContact();
+    void testBanContactWithoutAcceptingTrustRequest();
     void testOneToOneFetchWithNewMemberRefused();
     void testAddOfflineContactThenConnect();
     void testDeclineTrustRequestDoNotGenerateAnother();
@@ -204,6 +205,7 @@ private:
     CPPUNIT_TEST(testUnknownModeDetected);
     CPPUNIT_TEST(testRemoveContact);
     CPPUNIT_TEST(testBanContact);
+    CPPUNIT_TEST(testBanContactWithoutAcceptingTrustRequest);
     CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
     CPPUNIT_TEST(testAddOfflineContactThenConnect);
     CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
@@ -3798,6 +3800,53 @@ ConversationTest::testBanContact()
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
+}
+
+void
+ConversationTest::testBanContactWithoutAcceptingTrustRequest()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool requestReceived = false, memberMessageGenerated = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(bobAccount->getConversationRequests().size() == 1);
+
+    memberMessageGenerated = false;
+    bobAccount->removeContact(aliceUri, true);
+    CPPUNIT_ASSERT(
+        !cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
+    // Contact is banned without accept or decline the trust request,
+    // the number of conversation request will be zero.
+    CPPUNIT_ASSERT(bobAccount->getConversationRequests().size() == 0);
 }
 
 void

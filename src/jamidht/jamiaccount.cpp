@@ -3981,8 +3981,13 @@ JamiAccount::getConversationRequests()
         std::lock_guard<std::mutex> lk(accountManager_->conversationsRequestsMtx);
         requests.reserve(convReq.size());
         for (const auto& [id, request] : convReq) {
+            // Do not add requests that are declined or from banned contacts
+            auto contactDetail = accountManager_->getContactDetails(request.from);
+            if (contactDetail.find("banned") != contactDetail.end() 
+                    && contactDetail.at("banned") == TRUE_STR)
+                 continue;
             if (request.declined)
-                continue; // Do not add declined requests
+                continue;
             requests.emplace_back(request.toMap());
         }
     }
