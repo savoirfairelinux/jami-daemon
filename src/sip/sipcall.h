@@ -277,12 +277,6 @@ public:
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
 private:
-    IceTransport* getIceMediaTransport() const
-    {
-        std::lock_guard<std::mutex> lk(transportMtx_);
-        return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
-    }
-
     void generateMediaPorts();
 
     void openPortsUPnP();
@@ -436,9 +430,6 @@ private:
 
     ///< Transport used for media streams
     std::shared_ptr<IceTransport> mediaTransport_;
-
-    ///< Temporary transport for media. Replace mediaTransport_ when connected with success
-    std::unique_ptr<IceTransport> tmpMediaTransport_;
 
     std::string peerUri_ {};
 
