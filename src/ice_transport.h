@@ -135,6 +135,9 @@ public:
      */
     IceTransport(const char* name, const IceTransportOptions& options = {});
     ~IceTransport();
+
+    void initIceInstance();
+
     /**
      * Get current state
      */
