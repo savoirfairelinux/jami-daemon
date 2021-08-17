@@ -1,0 +1,9 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Code-Review+1: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Code-Review+1: Olivier Dion <olivier.dion@savoirfairelinux.com>
+Submitted-by: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Submitted-at: Tue, 17 Aug 2021 16:19:13 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/18932
+Project: ring-daemon
+Branch: refs/heads/master
