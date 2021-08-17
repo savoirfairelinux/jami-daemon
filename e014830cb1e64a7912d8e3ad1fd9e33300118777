@@ -88,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0db658e2_163ced50",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 678,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-17T19:55:36Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b37febb7_3579fb99",
+      "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ce492617_d3ac8abe",
