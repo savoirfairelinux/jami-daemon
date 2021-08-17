@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a143dd7b_ebba25eb",
+        "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
+        "patchSetId": 2
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-17T13:48:56Z",
+      "side": 1,
+      "message": "We could, but Ta and RTO are application specific, and is already configurable. In fact, all these settings should go in site_config.h instead in the patches. I just followed the current pattern.",
+      "parentUuid": "e227368e_e0cb906c",
+      "range": {
+        "startLine": 14,
+        "startChar": 11,
+        "endLine": 14,
+        "endChar": 34
+      },
+      "revId": "be1735344f6d19918c40376b41128d63974d280a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8ffaf310_5a610fa1",
         "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
         "patchSetId": 2
@@ -49,6 +73,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "816af8cc_59895d92",
+        "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
+        "patchSetId": 2
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-17T13:48:56Z",
+      "side": 1,
+      "message": "I tried, but since patch 0001-rfc6544.patch is the first, all the subsequent patches needs to be re-generated ... so",
+      "parentUuid": "8ffaf310_5a610fa1",
+      "range": {
+        "startLine": 41,
+        "startChar": 14,
+        "endLine": 44,
+        "endChar": 5
+      },
+      "revId": "be1735344f6d19918c40376b41128d63974d280a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e509ff86_e07976bf",
         "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
         "patchSetId": 2
@@ -60,6 +108,30 @@
       "writtenOn": "2021-08-09T15:44:25Z",
       "side": 1,
       "message": "why * 4?, why not another value",
+      "range": {
+        "startLine": 125,
+        "startChar": 90,
+        "endLine": 125,
+        "endChar": 101
+      },
+      "revId": "be1735344f6d19918c40376b41128d63974d280a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "40a7edb8_819aac5b",
+        "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
+        "patchSetId": 2
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-17T13:48:56Z",
+      "side": 1,
+      "message": "It\u0027s empirical. At least it must be greater than the one used for UDP.",
+      "parentUuid": "e509ff86_e07976bf",
       "range": {
         "startLine": 125,
         "startChar": 90,
