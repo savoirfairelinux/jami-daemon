@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "542a643d_17f2af0c",
+        "filename": "test/unitTest/ice/ice_media_cand_exchange.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 632,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-17T13:10:49Z",
+      "side": 1,
+      "message": "seems unnecessary if ringing is checked after",
+      "range": {
+        "startLine": 631,
+        "startChar": 32,
+        "endLine": 632,
+        "endChar": 47
+      },
+      "revId": "34d45147e663a4d709dd923559ac1e47d1950f03",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
