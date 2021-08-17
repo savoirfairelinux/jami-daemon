@@ -778,6 +778,8 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 bool
 JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
 {
+    JAMI_DBG("Start SIP call [%s]", call.getCallId().c_str());
+
     if (call.isIceEnabled())
         call.addLocalIceAttributes();
 
@@ -815,13 +817,6 @@ JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
 
     inv->mod_data[link_.getModId()] = &call;
     call.setInviteSession(inv);
-
-    /*
-        updateDialogViaSentBy(dialog);
-        if (hasServiceRoute())
-            pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(),
-       call->inv->pool));
-    */
 
     pjsip_tx_data* tdata;
 

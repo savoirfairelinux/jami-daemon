@@ -140,6 +140,7 @@ IceTest::testRawIceConnection()
 
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
                                                                               ice_config);
+    ice_master->initIceInstance();
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
         CPPUNIT_ASSERT(ok);
@@ -174,6 +175,8 @@ IceTest::testRawIceConnection()
 
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
                                                                              ice_config);
+    ice_slave->initIceInstance();
+
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
@@ -246,6 +249,7 @@ IceTest::testTurnMasterIceConnection()
     ice_config.compCountPerStream = 1;
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
                                                                               ice_config);
+    ice_master->initIceInstance();
     cv_create.notify_all();
     ice_config.turnServers = {};
     ice_config.onInitDone = [&](bool ok) {
@@ -289,6 +293,8 @@ IceTest::testTurnMasterIceConnection()
     ice_config.compCountPerStream = 1;
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
                                                                              ice_config);
+    ice_slave->initIceInstance();
+
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
@@ -356,6 +362,7 @@ IceTest::testTurnSlaveIceConnection()
     ice_config.compCountPerStream = 1;
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
                                                                               ice_config);
+    ice_master->initIceInstance();
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
         CPPUNIT_ASSERT(ok);
@@ -403,6 +410,7 @@ IceTest::testTurnSlaveIceConnection()
     ice_config.compCountPerStream = 1;
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
                                                                              ice_config);
+    ice_slave->initIceInstance();
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
@@ -467,6 +475,7 @@ IceTest::testReceiveTooManyCandidates()
 
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
                                                                               ice_config);
+    ice_master->initIceInstance();
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
         CPPUNIT_ASSERT(ok);
@@ -509,6 +518,7 @@ IceTest::testReceiveTooManyCandidates()
 
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
                                                                              ice_config);
+    ice_slave->initIceInstance();
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
@@ -575,6 +585,7 @@ IceTest::testCompleteOnFailure()
     ice_config.compCountPerStream = 1;
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
                                                                               ice_config);
+    ice_master->initIceInstance();
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
         CPPUNIT_ASSERT(ok);
@@ -622,6 +633,7 @@ IceTest::testCompleteOnFailure()
     ice_config.compCountPerStream = 1;
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
                                                                              ice_config);
+    ice_slave->initIceInstance();
     cv_create.notify_all();
     // Check that nego failed and callback called
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(120), [&] {
