@@ -80,6 +80,8 @@ public:
     Impl(const char* name, const IceTransportOptions& options);
     ~Impl();
 
+    void initIceInstance(const char* name, const IceTransportOptions& options);
+
     void onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status);
 
     void onReceiveData(unsigned comp_id, void* pkt, pj_size_t size);
@@ -171,6 +173,8 @@ public:
     std::vector<PeerChannel> peerChannels_ {};
     std::vector<IpAddr> iceDefaultRemoteAddr_;
 
+    // ICE controlling role. True for controller agents and false for
+    // controlled agents
     std::atomic_bool initiatorSession_ {true};
 
     // Local/Public addresses used by the account owning the ICE instance.
@@ -341,6 +345,55 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         config_.opt.aggressive = PJ_FALSE;
     }
 
+    pool_.reset(
+        pj_pool_create(iceTransportFactory.getPoolFactory(), "IceTransport.pool", 512, 512, NULL));
+    if (not pool_)
+        throw std::runtime_error("pj_pool_create() failed");
+}
+
+IceTransport::Impl::~Impl()
+{
+    JAMI_DBG("[ice:%p] destroying %p", this, icest_);
+
+    sip_utils::register_thread();
+    threadTerminateFlags_ = true;
+    iceCV_.notify_all();
+
+    if (thread_.joinable()) {
+        thread_.join();
+    }
+
+    pj_ice_strans* strans = nullptr;
+
+    std::swap(strans, icest_);
+
+    assert(strans);
+
+    // must be done before ioqueue/timer destruction
+    JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
+
+    pj_ice_strans_stop_ice(strans);
+    pj_ice_strans_destroy(strans);
+
+    // NOTE: This last handleEvents is necessary to close TURN socket.
+    // Because when destroying the TURN session pjproject creates a pj_timer
+    // to postpone the TURN destruction. This timer is only called if we poll
+    // the event queue.
+    while (handleEvents(500))
+        ;
+
+    if (config_.stun_cfg.ioqueue)
+        pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
+
+    if (config_.stun_cfg.timer_heap)
+        pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
+
+    JAMI_DBG("[ice:%p] done destroying", this);
+}
+
+void
+IceTransport::Impl::initIceInstance(const char* name, const IceTransportOptions& options)
+{
     addDefaultCandidates();
 
     // Note: For server reflexive candidates, UPNP mappings will
@@ -373,11 +426,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
     if (upnpSrflxCand.empty() and genericSrflxCand.empty()) {
         JAMI_WARN("[ice:%p] No server reflexive candidates added", this);
     }
-
-    pool_.reset(
-        pj_pool_create(iceTransportFactory.getPoolFactory(), "IceTransport.pool", 512, 512, NULL));
-    if (not pool_)
-        throw std::runtime_error("pj_pool_create() failed");
 
     pj_ice_strans_cb icecb;
     pj_bzero(&icecb, sizeof(icecb));
@@ -451,46 +499,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 
     // Init to invalid addresses
     iceDefaultRemoteAddr_.reserve(compCount_);
-}
-
-IceTransport::Impl::~Impl()
-{
-    JAMI_DBG("[ice:%p] destroying %p", this, icest_);
-
-    sip_utils::register_thread();
-    threadTerminateFlags_ = true;
-    iceCV_.notify_all();
-
-    if (thread_.joinable()) {
-        thread_.join();
-    }
-
-    pj_ice_strans* strans = nullptr;
-
-    std::swap(strans, icest_);
-
-    assert(strans);
-
-    // must be done before ioqueue/timer destruction
-    JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
-
-    pj_ice_strans_stop_ice(strans);
-    pj_ice_strans_destroy(strans);
-
-    // NOTE: This last handleEvents is necessary to close TURN socket.
-    // Because when destroying the TURN session pjproject creates a pj_timer
-    // to postpone the TURN destruction. This timer is only called if we poll
-    // the event queue.
-    while (handleEvents(500))
-        ;
-
-    if (config_.stun_cfg.ioqueue)
-        pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
-
-    if (config_.stun_cfg.timer_heap)
-        pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
-
-    JAMI_DBG("[ice:%p] done destroying", this);
 }
 
 bool
@@ -1051,6 +1059,13 @@ IceTransport::~IceTransport()
 {
     isStopped_ = true;
     cancelOperations();
+}
+
+void
+IceTransport::initIceInstance(const char* name, const IceTransportOptions& options)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->iceMutex_);
+    pimpl_->initIceInstance(name, options);
 }
 
 bool
