@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2a8c41b1_adc0a8a7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-17T12:52:59Z",
+      "side": 1,
+      "message": "We need to check on iOS/macOS also. The logic is different",
+      "revId": "b3f9ff6901687393dcff2d48d4c794a2214997a6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
