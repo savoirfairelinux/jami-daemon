@@ -16,6 +16,24 @@
       "message": "Good for me. Ideally a test can be added in unitTest to check this.",
       "revId": "bd14815a43f9881257d563a5788e3f1928cdb309",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b56b4d91_922d4d5f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-17T16:41:36Z",
+      "side": 1,
+      "message": "Yeah, I did find one thing when doing the test,\nseems like banned may not exist in map",
+      "parentUuid": "587ffed0_7476a1be",
+      "revId": "bd14815a43f9881257d563a5788e3f1928cdb309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
