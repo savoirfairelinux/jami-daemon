@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "587ffed0_7476a1be",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-17T14:09:35Z",
+      "side": 1,
+      "message": "Good for me. Ideally a test can be added in unitTest to check this.",
+      "revId": "bd14815a43f9881257d563a5788e3f1928cdb309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
