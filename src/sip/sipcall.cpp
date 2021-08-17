@@ -173,10 +173,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
 SIPCall::~SIPCall()
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
-    {
-        std::lock_guard<std::mutex> lk(transportMtx_);
-        resetTransport(std::move(tmpMediaTransport_));
-    }
+
     setTransport({});
     setInviteSession(); // prevents callback usage
 }
@@ -855,7 +852,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
         generateMediaPorts();
 
         // Setup and create ICE offer
-        if (account->isIceForMediaEnabled()) {
+        if (isIceEnabled()) {
             sdp_->clearIce();
 
             auto opts = account->getIceOptions();
@@ -867,8 +864,8 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
                 if (auto interfaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                                     publicAddr.getFamily())) {
                     opts.accountLocalAddr = interfaceAddr;
-                    initIceMediaTransport(true, std::move(opts));
-                    addLocalIceAttributes();
+                    if (initIceMediaTransport(true, std::move(opts)))
+                        addLocalIceAttributes();
                 } else {
                     JAMI_WARN("[call:%s] Cant init ICE transport, missing local address",
                               getCallId().c_str());
@@ -1456,7 +1453,6 @@ SIPCall::removeCall()
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
         resetTransport(std::move(mediaTransport_));
-        resetTransport(std::move(tmpMediaTransport_));
     }
 
     setInviteSession();
@@ -1628,15 +1624,13 @@ SIPCall::onPeerRinging()
 void
 SIPCall::addLocalIceAttributes()
 {
-    auto media_tr = getIceMediaTransport();
-
-    if (not media_tr) {
-        JAMI_WARN("[call:%s] no media ICE transport, SDP not changed", getCallId().c_str());
+    if (not mediaTransport_) {
+        JAMI_ERR("[call:%s] Invalid media ICE transport", getCallId().c_str());
         return;
     }
 
     // we need an initialized ICE to progress further
-    if (media_tr->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
+    if (mediaTransport_->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
         JAMI_ERR("[call:%s] Medias' ICE init failed", getCallId().c_str());
         return;
     }
@@ -1651,10 +1645,12 @@ SIPCall::addLocalIceAttributes()
         return;
     }
 
-    JAMI_DBG("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
+    JAMI_DBG("[call:%s] Add local attributes for ICE instance [%p]",
+             getCallId().c_str(),
+             mediaTransport_.get());
 
     if (isIceEnabled()) {
-        sdp_->addIceAttributes(media_tr->getLocalAttributes());
+        sdp_->addIceAttributes(mediaTransport_->getLocalAttributes());
     }
 
     if (account->isIceCompIdRfc5245Compliant()) {
@@ -1674,11 +1670,12 @@ SIPCall::addLocalIceAttributes()
                      streamIdx);
             // RTP
             sdp_->addIceCandidates(streamIdx,
-                                   media_tr->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP));
+                                   mediaTransport_->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP));
             // RTCP if it has its own port
             if (not rtcpMuxEnabled_) {
                 sdp_->addIceCandidates(streamIdx,
-                                       media_tr->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP + 1));
+                                       mediaTransport_->getLocalCandidates(streamIdx,
+                                                                           ICE_COMP_ID_RTP + 1));
             }
 
             streamIdx++;
@@ -1696,12 +1693,12 @@ SIPCall::addLocalIceAttributes()
                      stream.mediaAttribute_->toString().c_str(),
                      idx);
             // RTP
-            sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId));
+            sdp_->addIceCandidates(idx, mediaTransport_->getLocalCandidates(compId));
             compId++;
 
             // RTCP if it has its own port
             if (not rtcpMuxEnabled_) {
-                sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId));
+                sdp_->addIceCandidates(idx, mediaTransport_->getLocalCandidates(compId));
                 compId++;
             }
 
@@ -1713,10 +1710,8 @@ SIPCall::addLocalIceAttributes()
 std::vector<IceCandidate>
 SIPCall::getAllRemoteCandidates()
 {
-    auto media_tr = getIceMediaTransport();
-
-    if (not media_tr) {
-        JAMI_WARN("[call:%s] no media ICE transport", getCallId().c_str());
+    if (not mediaTransport_) {
+        JAMI_ERR("[call:%s] No media ICE transport", getCallId().c_str());
         return {};
     }
 
@@ -1724,8 +1719,8 @@ SIPCall::getAllRemoteCandidates()
     for (unsigned mediaIdx = 0; mediaIdx < static_cast<unsigned>(rtpStreams_.size()); mediaIdx++) {
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(mediaIdx)) {
-            if (media_tr->parseIceAttributeLine(mediaIdx, line, cand)) {
-                JAMI_DBG("[call:%s] add remote ICE candidate: %s",
+            if (mediaTransport_->parseIceAttributeLine(mediaIdx, line, cand)) {
+                JAMI_DBG("[call:%s] Add remote ICE candidate: %s",
                          getCallId().c_str(),
                          line.c_str());
                 rem_candidates.emplace_back(cand);
@@ -2332,22 +2327,20 @@ SIPCall::startIceMedia()
 {
     JAMI_DBG("[call:%s] Starting ICE", getCallId().c_str());
 
-    auto ice = getIceMediaTransport();
-
-    if (not ice or ice->isFailed()) {
+    if (not mediaTransport_ or mediaTransport_->isFailed()) {
         JAMI_ERR("[call:%s] Media ICE init failed", getCallId().c_str());
         onFailure(EIO);
         return;
     }
 
-    if (ice->isStarted()) {
+    if (mediaTransport_->isStarted()) {
         // NOTE: for incoming calls, the ice is already there and running
-        if (ice->isRunning())
+        if (mediaTransport_->isRunning())
             onIceNegoSucceed();
         return;
     }
 
-    if (!ice->isInitialized()) {
+    if (not mediaTransport_->isInitialized()) {
         // In this case, onInitDone will occurs after the startIceMedia
         waitForIceInit_ = true;
         return;
@@ -2362,7 +2355,7 @@ SIPCall::startIceMedia()
         onFailure(EIO);
         return;
     }
-    if (not ice->startIce(rem_ice_attrs, getAllRemoteCandidates())) {
+    if (not mediaTransport_->startIce(rem_ice_attrs, getAllRemoteCandidates())) {
         JAMI_ERR("[call:%s] Media ICE start failed", getCallId().c_str());
         onFailure(EIO);
     }
@@ -2387,13 +2380,7 @@ SIPCall::onIceNegoSucceed()
 
     // Nego succeed: move to the new media transport
     stopAllMedia();
-    {
-        std::unique_lock<std::mutex> lk(transportMtx_);
-        if (tmpMediaTransport_) {
-            resetTransport(std::move(mediaTransport_));
-            mediaTransport_ = std::move(tmpMediaTransport_);
-        }
-    }
+
     startAllMedia();
 }
 
@@ -2563,7 +2550,7 @@ SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
         openPortsUPnP();
     }
 
-    if (acc->isIceForMediaEnabled()) {
+    if (isIceEnabled()) {
         setupIceResponse();
     }
 
@@ -2823,9 +2810,8 @@ SIPCall::monitor() const
     if (auto codec = getVideoCodec())
         JAMI_DBG("\t- Video codec: %s", codec->systemCodecInfo.name.c_str());
 #endif
-    auto media_tr = getIceMediaTransport();
-    if (media_tr) {
-        JAMI_DBG("\t- Medias: %s", media_tr->link().c_str());
+    if (mediaTransport_) {
+        JAMI_DBG("\t- Medias: %s", mediaTransport_->link().c_str());
     }
 }
 
@@ -2954,30 +2940,30 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     // Destroy old ice on a separate io pool
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
-        resetTransport(std::move(tmpMediaTransport_));
-        tmpMediaTransport_ = std::move(transport);
+        resetTransport(std::move(mediaTransport_));
+        mediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str(), iceOptions);
     }
 
-    if (tmpMediaTransport_) {
+    if (mediaTransport_) {
         JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]",
                  getCallId().c_str(),
-                 tmpMediaTransport_.get());
+                 mediaTransport_.get());
+        mediaTransport_->initIceInstance();
     } else {
         JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
     }
 
-    return static_cast<bool>(tmpMediaTransport_);
+    return static_cast<bool>(mediaTransport_);
 }
 
 std::vector<std::string>
 SIPCall::getLocalIceCandidates(unsigned compId) const
 {
-    auto iceTransp = getIceMediaTransport();
-    if (not iceTransp) {
+    if (not mediaTransport_) {
         JAMI_WARN("[call:%s] no media ICE transport", getCallId().c_str());
         return {};
     }
-    return iceTransp->getLocalCandidates(compId);
+    return mediaTransport_->getLocalCandidates(compId);
 }
 
 void
@@ -3014,15 +3000,16 @@ SIPCall::merge(Call& call)
     localVideoPort_ = subcall.localVideoPort_;
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
+        resetTransport(std::move(mediaTransport_));
         mediaTransport_ = std::move(subcall.mediaTransport_);
-        tmpMediaTransport_ = std::move(subcall.tmpMediaTransport_);
     }
 
     peerUserAgent_ = subcall.peerUserAgent_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
 
     Call::merge(subcall);
-    startIceMedia();
+    if (isIceEnabled())
+        startIceMedia();
 }
 
 bool
