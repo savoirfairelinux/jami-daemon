@@ -574,6 +574,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             info->ice_ = Manager::instance()
                              .getIceTransportFactory()
                              .createUTransport(sthis->account.getAccountID().c_str(), ice_config);
+            info->ice_->initIceInstance();
 
             if (!info->ice_) {
                 JAMI_ERR("Cannot initialize ICE session.");
@@ -933,6 +934,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         info->ice_ = Manager::instance()
                          .getIceTransportFactory()
                          .createUTransport(shared->account.getAccountID().c_str(), ice_config);
+        info->ice_->initIceInstance();
+
         if (not info->ice_) {
             JAMI_ERR("Cannot initialize ICE session.");
             if (shared->connReadyCb_)
