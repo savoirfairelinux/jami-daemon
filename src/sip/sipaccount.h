@@ -69,6 +69,11 @@ class SIPAccount : public SIPAccountBase
 {
 public:
     constexpr static const char* const ACCOUNT_TYPE = "SIP";
+    constexpr static const char* const CONTACT_HEADER_WITH_PN
+        = "%s<%s:%s%s%s:%d%s;pn-provider=%s;pn-param=%s;pn-prid=%s>";
+    constexpr static const char* const CONTACT_HEADER_WITHOUT_PN = "%s<%s:%s%s%s:%d%s>";
+    constexpr static const char* const PN_FCM = "fcm";
+    constexpr static const char* const PN_APNS = "apns";
 
     std::shared_ptr<SIPAccount> shared()
     {
@@ -478,6 +483,14 @@ public:
 
     void setActiveCodecs(const std::vector<unsigned>& list) override;
     bool isSrtpEnabled() const override { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
+
+    void setPushNotificationToken(const std::string& pushDeviceToken = "");
+
+    /**
+     * To be called by clients with relevant data when a push notification is received.
+     */
+    void pushNotificationReceived(const std::string& from,
+                                  const std::map<std::string, std::string>& data);
 
 private:
     void doRegister1_();

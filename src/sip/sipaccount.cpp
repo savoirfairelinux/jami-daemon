@@ -870,6 +870,32 @@ SIPAccount::mapPortUPnP()
 }
 
 void
+SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
+{
+    JAMI_WARN("[SIP Account %s] setPushNotificationToken: %s",
+              getAccountID().c_str(),
+              pushDeviceToken.c_str());
+
+    if (deviceKey_.compare(pushDeviceToken) == 0)
+        return;
+
+    deviceKey_ = pushDeviceToken;
+
+    if (enabled_)
+        doUnregister([&](bool /* transport_free */) { doRegister(); });
+}
+
+void
+SIPAccount::pushNotificationReceived(const std::string& from,
+                                     const std::map<std::string, std::string>& data)
+{
+    JAMI_WARN("[SIP Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
+
+    if (enabled_)
+        doUnregister([&](bool /* transport_free */) { doRegister(); });
+}
+
+void
 SIPAccount::doRegister()
 {
     if (not isUsable()) {
@@ -1604,17 +1630,37 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         transport = ";transport=tls";
     }
 
-    std::string quotedDisplayName = "\"" + displayName_ + "\" " + (displayName_.empty() ? "" : " ");
-    contact_.slen = pj_ansi_snprintf(contact_.ptr,
-                                     PJSIP_MAX_URL_SIZE,
-                                     "%s<%s:%s%s%s:%d%s>",
-                                     quotedDisplayName.c_str(),
-                                     scheme,
-                                     username_.c_str(),
-                                     (username_.empty() ? "" : "@"),
-                                     address.c_str(),
-                                     port,
-                                     transport);
+    std::string quotedDisplayName = displayName_.empty() ? "" : "\"" + displayName_ + "\" ";
+    if (deviceKey_.empty()) {
+        contact_.slen = pj_ansi_snprintf(contact_.ptr,
+                                         PJSIP_MAX_URL_SIZE,
+                                         CONTACT_HEADER_WITHOUT_PN,
+                                         quotedDisplayName.c_str(),
+                                         scheme,
+                                         username_.c_str(),
+                                         (username_.empty() ? "" : "@"),
+                                         address.c_str(),
+                                         port,
+                                         transport);
+    } else {
+        contact_.slen = pj_ansi_snprintf(contact_.ptr,
+                                         PJSIP_MAX_URL_SIZE,
+                                         CONTACT_HEADER_WITH_PN,
+                                         quotedDisplayName.c_str(),
+                                         scheme,
+                                         username_.c_str(),
+                                         (username_.empty() ? "" : "@"),
+                                         address.c_str(),
+                                         port,
+                                         transport,
+#if defined(__ANDROID__) || defined(ANDROID)
+                                         PN_FCM,
+#elif defined(__Apple__)
+                                         PN_APNS,
+#endif
+                                         "",
+                                         deviceKey_.c_str());
+    }
     return contact_;
 }
 
@@ -2045,16 +2091,40 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
             transport_param = ";transport=tls";
         }
 
+        int len = 0;
         char* tmp = (char*) pj_pool_alloc(pool, PJSIP_MAX_URL_SIZE);
-        int len = pj_ansi_snprintf(tmp,
+
+        if (deviceKey_.empty()) {
+            len = pj_ansi_snprintf(tmp,
                                    PJSIP_MAX_URL_SIZE,
-                                   "<%s:%s%s%s:%d%s>",
+                                   CONTACT_HEADER_WITHOUT_PN,
+                                   "",
                                    scheme,
                                    username_.c_str(),
-                                   (not username_.empty() ? "@" : ""),
-                                   via_addrstr.data(),
+                                   (username_.empty() ? "" : "@"),
+                                   via_addrstr.c_str(),
                                    rport,
                                    transport_param);
+        } else {
+            len = pj_ansi_snprintf(tmp,
+                                   PJSIP_MAX_URL_SIZE,
+                                   CONTACT_HEADER_WITH_PN,
+                                   "",
+                                   scheme,
+                                   username_.c_str(),
+                                   (username_.empty() ? "" : "@"),
+                                   via_addrstr.c_str(),
+                                   rport,
+                                   transport_param,
+#if defined(__ANDROID__) || defined(ANDROID)
+                                   PN_FCM,
+#elif defined(__Apple__)
+                                   PN_APNS,
+#endif
+                                   "",
+                                   deviceKey_.c_str());
+        }
+
         if (len < 1) {
             JAMI_ERR("URI too long");
             return false;
