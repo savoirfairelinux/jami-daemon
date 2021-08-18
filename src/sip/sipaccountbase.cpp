@@ -299,6 +299,7 @@ void
 SIPAccountBase::unserialize(const YAML::Node& node)
 {
     using yaml_utils::parseValue;
+    using yaml_utils::parseValueOptional;
     using yaml_utils::parseVectorMap;
 
     Account::unserialize(node);
