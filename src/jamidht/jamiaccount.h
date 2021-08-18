@@ -411,7 +411,7 @@ public:
      */
     void enableProxyClient(bool enable);
 
-    void setPushNotificationToken(const std::string& pushDeviceToken = "");
+    void setPushNotificationToken(const std::string& pushDeviceToken = "") override;
 
     /**
      * To be called by clients with relevant data when a push notification is received.
@@ -880,7 +880,6 @@ private:
     bool proxyEnabled_ {false};
     std::string proxyServer_ {};
     std::string proxyServerCached_ {};
-    std::string deviceKey_ {};
 
     std::mutex dhParamsMtx_ {};
     std::shared_future<tls::DhParams> dhParams_;
