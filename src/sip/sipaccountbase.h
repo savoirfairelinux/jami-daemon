@@ -103,6 +103,8 @@ const char* const AUDIO_PORT_MIN_KEY = "audioPortMin";
 const char* const AUDIO_PORT_MAX_KEY = "audioPortMax";
 const char* const VIDEO_PORT_MIN_KEY = "videoPortMin";
 const char* const VIDEO_PORT_MAX_KEY = "videoPortMax";
+
+const char* const PUSH_TOKEN_KEY = "pushTokenKey";
 } // namespace Conf
 
 typedef std::vector<pj_ssl_cipher> CipherArray;

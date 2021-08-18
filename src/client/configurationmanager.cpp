@@ -1038,6 +1038,10 @@ setPushNotificationToken(const std::string& token)
 {
     for (const auto& account : jami::Manager::instance().getAllAccounts<JamiAccount>())
         account->setPushNotificationToken(token);
+#if defined(__ANDROID__) || defined(ANDROID) || defined(__Apple__)
+    for (const auto& account : jami::Manager::instance().getAllAccounts<SIPAccount>())
+        account->setPushNotificationToken(token);
+#endif
 }
 
 void

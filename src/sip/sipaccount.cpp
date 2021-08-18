@@ -558,6 +558,9 @@ SIPAccount::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
     out << YAML::EndMap;
 
+    // Push notification
+    out << YAML::Key << Conf::PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
+
     out << YAML::EndMap;
 }
 
@@ -672,6 +675,8 @@ SIPAccount::unserialize(const YAML::Node& node)
     parseValue(srtpMap, Conf::KEY_EXCHANGE_KEY, tmpKey);
     srtpKeyExchange_ = sip_utils::getKeyExchangeProtocol(tmpKey.c_str());
     parseValue(srtpMap, Conf::RTP_FALLBACK_KEY, srtpFallback_);
+
+    parseValueOptional(node, Conf::PUSH_TOKEN_KEY, deviceKey_);
 }
 
 void
@@ -867,6 +872,35 @@ SIPAccount::mapPortUPnP()
     }
 
     return false;
+}
+
+void
+SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
+{
+    JAMI_WARN("[SIP Account %s] setPushNotificationToken: %s",
+              getAccountID().c_str(),
+              pushDeviceToken.c_str());
+
+    if (deviceKey_.compare(pushDeviceToken) == 0)
+        return;
+
+    deviceKey_ = pushDeviceToken;
+
+    doUnregister([&](bool /* transport_free */) {
+        if (isUsable())
+            doRegister();
+        else
+            doUnregister();
+    });
+}
+
+void
+SIPAccount::pushNotificationReceived(const std::string& from,
+                                     const std::map<std::string, std::string>& data)
+{
+    JAMI_WARN("[SIP Account %s] pushNotificationReceived: %s",
+              getAccountID().c_str(),
+              from.c_str());
 }
 
 void
@@ -1605,16 +1639,36 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     }
 
     std::string quotedDisplayName = "\"" + displayName_ + "\" " + (displayName_.empty() ? "" : " ");
-    contact_.slen = pj_ansi_snprintf(contact_.ptr,
-                                     PJSIP_MAX_URL_SIZE,
-                                     "%s<%s:%s%s%s:%d%s>",
-                                     quotedDisplayName.c_str(),
-                                     scheme,
-                                     username_.c_str(),
-                                     (username_.empty() ? "" : "@"),
-                                     address.c_str(),
-                                     port,
-                                     transport);
+    if (deviceKey_.empty()) {
+        contact_.slen = pj_ansi_snprintf(contact_.ptr,
+                                         PJSIP_MAX_URL_SIZE,
+                                         CONTACT_HEADER_WITHOUT_PN,
+                                         quotedDisplayName.c_str(),
+                                         scheme,
+                                         username_.c_str(),
+                                         (username_.empty() ? "" : "@"),
+                                         address.c_str(),
+                                         port,
+                                         transport);
+    } else {
+        contact_.slen = pj_ansi_snprintf(contact_.ptr,
+                                         PJSIP_MAX_URL_SIZE,
+                                         CONTACT_HEADER_WITH_PN,
+                                         quotedDisplayName.c_str(),
+                                         scheme,
+                                         username_.c_str(),
+                                         (username_.empty() ? "" : "@"),
+                                         address.c_str(),
+                                         port,
+                                         transport,
+#if defined(__ANDROID__) || defined(ANDROID)
+                                         PN_FCM,
+#elif defined(__Apple__)
+                                         PN_APNS,
+#endif
+                                         "",
+                                         deviceKey_.c_str());
+    }
     return contact_;
 }
 
