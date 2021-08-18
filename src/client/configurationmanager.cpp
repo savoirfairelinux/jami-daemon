@@ -1036,16 +1036,35 @@ enableProxyClient(const std::string& accountID, bool enable)
 void
 setPushNotificationToken(const std::string& token)
 {
-    for (const auto& account : jami::Manager::instance().getAllAccounts<JamiAccount>())
-        account->setPushNotificationToken(token);
+    for (const auto& account : jami::Manager::instance().getAllAccounts()) {
+        if (JamiAccount* jAcc = dynamic_cast<JamiAccount*>(account.get())) {
+            jAcc->setPushNotificationToken(token);
+        }
+#if defined(__ANDROID__) || defined(ANDROID) || defined(__Apple__)
+        if (SIPAccount* sAcc = dynamic_cast<SIPAccount*>(account.get())) {
+            sAcc->setPushNotificationToken(token);
+        }
+#endif
+    }
 }
 
 void
 pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
 {
     try {
-        if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(data.at("to")))
+        auto it = data.find("to");
+        if (it != data.end()) {
+            auto account = jami::Manager::instance().getAccount<JamiAccount>(it->second);
+
             account->pushNotificationReceived(from, data);
+        }
+#if defined(__ANDROID__) || defined(ANDROID) || defined(__Apple__)
+        else {
+            for (const auto& sipAccount : jami::Manager::instance().getAllAccounts<SIPAccount>()) {
+                sipAccount->pushNotificationReceived(from, data);
+            }
+        }
+#endif
     } catch (const std::exception& e) {
         JAMI_ERR("Error processing push notification: %s", e.what());
     }
