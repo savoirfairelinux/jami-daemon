@@ -906,7 +906,6 @@ JamiAccount::serialize(YAML::Emitter& out) const
 
     out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
     out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
-    out << YAML::Key << Conf::PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
     out << YAML::Key << DRing::Account::ConfProperties::DHT_PROXY_LIST_URL << YAML::Value
         << proxyListUrl_;
 
@@ -961,7 +960,6 @@ JamiAccount::unserialize(const YAML::Node& node)
 
     parseValue(node, Conf::PROXY_ENABLED_KEY, proxyEnabled_);
     parseValue(node, Conf::PROXY_SERVER_KEY, proxyServer_);
-    parseValue(node, Conf::PROXY_PUSH_TOKEN_KEY, deviceKey_);
     try {
         parseValue(node, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
     } catch (const std::exception& e) {
@@ -1436,7 +1434,6 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseString(details, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
     parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
     parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
-    parseString(details, DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
     // Migrate from old versions
     if (proxyServer_.empty()
         || ((proxyServer_ == "dhtproxy.jami.net" || proxyServer_ == "dhtproxy.ring.cx")
@@ -1519,7 +1516,6 @@ JamiAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
     a.emplace(DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
-    a.emplace(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
 #if HAVE_RINGNS
@@ -2244,9 +2240,9 @@ JamiAccount::doRegister_()
             auto isDataTransfer = name.substr(0, 16) == "data-transfer://";
 
             JAMI_WARN("[Account %s] New channel asked from %s with name %s",
-                        getAccountID().c_str(),
-                        deviceId.to_c_str(),
-                        name.c_str());
+                      getAccountID().c_str(),
+                      deviceId.to_c_str(),
+                      name.c_str());
 
             if (name.find("git://") == 0) {
                 // Pre-check before acceptance. Sometimes, another device can start a conversation
@@ -2260,17 +2256,17 @@ JamiAccount::doRegister_()
                 auto conversation = conversations_.find(conversationId);
                 if (conversation == conversations_.end()) {
                     JAMI_WARN("[Account %s] Git server requested, but for a non existing "
-                                "conversation (%s)",
-                                getAccountID().c_str(),
-                                conversationId.c_str());
+                              "conversation (%s)",
+                              getAccountID().c_str(),
+                              conversationId.c_str());
                     return false;
                 }
                 // Also check if peer is banned.
                 if (conversation->second->isBanned(remoteDevice)) {
                     JAMI_WARN("[Account %s] %s is a banned device in conversation %s",
-                                getAccountID().c_str(),
-                                remoteDevice.c_str(),
-                                conversationId.c_str());
+                              getAccountID().c_str(),
+                              remoteDevice.c_str(),
+                              conversationId.c_str());
                     return false;
                 }
                 return true;
@@ -2408,9 +2404,9 @@ JamiAccount::doRegister_()
 
                     if (!isConversation(conversationId)) {
                         JAMI_WARN("[Account %s] Git server requested, but for a non existing "
-                                    "conversation (%s)",
-                                    getAccountID().c_str(),
-                                    conversationId.c_str());
+                                  "conversation (%s)",
+                                  getAccountID().c_str(),
+                                  conversationId.c_str());
                         channel->shutdown();
                         return;
                     }
