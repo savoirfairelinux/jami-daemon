@@ -103,6 +103,8 @@ const char* const AUDIO_PORT_MIN_KEY = "audioPortMin";
 const char* const AUDIO_PORT_MAX_KEY = "audioPortMax";
 const char* const VIDEO_PORT_MIN_KEY = "videoPortMin";
 const char* const VIDEO_PORT_MAX_KEY = "videoPortMax";
+
+constexpr const char* const PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
 } // namespace Conf
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
@@ -407,6 +409,11 @@ protected:
      * Port range for video RTP ports
      */
     std::pair<uint16_t, uint16_t> videoPortRange_ {49152, (MAX_PORT) -2};
+
+    /**
+     * Device push notification token.
+     */
+    std::string deviceKey_ {};
 
     static std::array<bool, HALF_MAX_PORT>& getPortsReservation() noexcept;
     static uint16_t acquirePort(uint16_t port);
