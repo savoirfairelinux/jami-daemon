@@ -272,6 +272,7 @@ SIPAccountBase::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
     out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
     out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
+    out << YAML::Key << Conf::PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
 
     out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
     out << YAML::Key << Conf::VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
@@ -299,6 +300,7 @@ void
 SIPAccountBase::unserialize(const YAML::Node& node)
 {
     using yaml_utils::parseValue;
+    using yaml_utils::parseValueOptional;
     using yaml_utils::parseVectorMap;
 
     Account::unserialize(node);
@@ -308,6 +310,7 @@ SIPAccountBase::unserialize(const YAML::Node& node)
     parseValue(node, Conf::INTERFACE_KEY, interface_);
     parseValue(node, Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal_);
     parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress_);
+    parseValueOptional(node, Conf::PROXY_PUSH_TOKEN_KEY, deviceKey_);
     IpAddr publishedIp {publishedIpAddress_};
     if (publishedIp and not publishedSameasLocal_)
         setPublishedAddress(publishedIp);

@@ -880,7 +880,6 @@ private:
     bool proxyEnabled_ {false};
     std::string proxyServer_ {};
     std::string proxyServerCached_ {};
-    std::string deviceKey_ {};
 
     std::mutex dhParamsMtx_ {};
     std::shared_future<tls::DhParams> dhParams_;
