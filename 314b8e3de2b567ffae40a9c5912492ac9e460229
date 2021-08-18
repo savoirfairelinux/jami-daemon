@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a38edd15_afb041cb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 16
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-18T20:37:56Z",
+      "side": 1,
+      "message": "I am observing weird connection pairs when aggressive nomination is disabled:\n\n[1] 70.80.144.223:20010 [srflx]  \u003c-\u003e 208.88.110.46:12904 [prflx] \n[2] 192.252.140.235:14689 [relay]  \u003c-\u003e 208.88.110.46:14248 [prflx] \n[1] 192.252.140.235:27454 [srflx]  \u003c-\u003e 192.252.140.236:13424 [prflx] \n[2] 192.252.140.235:27096 [relay]  \u003c-\u003e 208.88.110.46:20003 [prflx]\n\nthe nominated pairs types differs, which is not expected with regular nomination.\nFurthermore, the 192.252.140.235:27454 is known to be a relay, but identified as srflx\n ",
+      "revId": "314b8e3de2b567ffae40a9c5912492ac9e460229",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
