@@ -209,6 +209,11 @@ public:
 
     virtual bool cancelMessage(uint64_t /*id*/) { return false; }
 
+    virtual void setPushNotificationToken(const std::string& pushDeviceToken = "")
+    {
+        deviceKey_ = pushDeviceToken;
+    }
+
     /**
      * Tell if the account is enable or not.
      * @return true if enabled, false otherwise
@@ -608,6 +613,11 @@ protected:
      * handling of incoming empty offers.
      */
     bool emptyOffersEnabled_ {false};
+
+    /**
+     * Device push notification token.
+     */
+    std::string deviceKey_ {};
 
     /**
      * private account codec searching functions

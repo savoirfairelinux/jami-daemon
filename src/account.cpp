@@ -95,6 +95,7 @@ const std::string Account::DEFAULT_USER_AGENT = Account::setDefaultUserAgent();
 const char* const Account::DEFAULT_MODERATORS_KEY = "defaultModerators";
 const char* const Account::LOCAL_MODERATORS_ENABLED_KEY = "localModeratorsEnabled";
 const char* const Account::ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
+const char* const Account::PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
 
 #ifdef __ANDROID__
 constexpr const char* const DEFAULT_RINGTONE_PATH
@@ -251,6 +252,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << DEFAULT_MODERATORS_KEY << YAML::Value << string_join(defaultModerators_);
     out << YAML::Key << LOCAL_MODERATORS_ENABLED_KEY << YAML::Value << localModeratorsEnabled_;
     out << YAML::Key << ALL_MODERATORS_ENABLED_KEY << YAML::Value << allModeratorsEnabled_;
+    out << YAML::Key << PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
 }
 
 void
@@ -308,6 +310,7 @@ Account::unserialize(const YAML::Node& node)
     defaultModerators_ = string_split_set(defMod);
     parseValueOptional(node, LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled_);
     parseValueOptional(node, ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled_);
+    parseValueOptional(node, PROXY_PUSH_TOKEN_KEY, deviceKey_);
 }
 
 void
