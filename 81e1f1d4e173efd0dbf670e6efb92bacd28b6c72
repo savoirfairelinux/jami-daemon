@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8167e5bb_793f6787",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-08-18T22:33:59Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe loop variable\u0027s type is not a reference type; this creates a copy in each iteration; consider making this a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "81e1f1d4e173efd0dbf670e6efb92bacd28b6c72",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "80ed5963_2edd0f79",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-08-18T22:33:59Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "81e1f1d4e173efd0dbf670e6efb92bacd28b6c72",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7ec38a7_20055048",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 361,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-08-18T22:33:59Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "81e1f1d4e173efd0dbf670e6efb92bacd28b6c72",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
