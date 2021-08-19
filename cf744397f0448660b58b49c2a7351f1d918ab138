@@ -3,6 +3,98 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "06b0c67b_41f95839",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1045,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-19T12:37:03Z",
+      "side": 1,
+      "message": "get allaccounts can iterate over SIP+Jami account",
+      "range": {
+        "startLine": 1039,
+        "startChar": 24,
+        "endLine": 1045,
+        "endChar": 1
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa30b1de_a6c33fd9",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-19T12:37:03Z",
+      "side": 1,
+      "message": "can be in SIPAccountBase if common",
+      "range": {
+        "startLine": 562,
+        "startChar": 63,
+        "endLine": 562,
+        "endChar": 73
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "18fead68_7c9c43bc",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 890,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-19T12:37:03Z",
+      "side": 1,
+      "message": "not always false? I means doUnregister will set active_ to false, so here isUsable() should be always false.",
+      "range": {
+        "startLine": 890,
+        "startChar": 12,
+        "endLine": 890,
+        "endChar": 20
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2a7065d_d0d24400",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 767,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-19T12:37:03Z",
+      "side": 1,
+      "message": "duplicate with jamiaccount.h I think",
+      "range": {
+        "startLine": 767,
+        "startChar": 16,
+        "endLine": 767,
+        "endChar": 26
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "17fbedc8_fb0fe8e4",
         "filename": "src/sip/sipaccountbase.h",
         "patchSetId": 1
