@@ -272,6 +272,11 @@ ip_utils::haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>
 IpAddr
 ip_utils::getLocalAddr(pj_uint16_t family)
 {
+    if (AF_UNSPEC == family) {
+        JAMI_WARN("Unspecifcied interface family");
+        return {};
+    }
+ 
     IpAddr ip_addr {};
     pj_status_t status = pj_gethostip(family, ip_addr.pjPtr());
     if (status == PJ_SUCCESS) {
