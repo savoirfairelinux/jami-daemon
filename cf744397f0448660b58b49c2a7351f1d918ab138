@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b56a34c5_871f001b",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1045,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-19T18:14:51Z",
+      "side": 1,
+      "message": "Used dynamic_cast like the new push",
+      "parentUuid": "06b0c67b_41f95839",
+      "range": {
+        "startLine": 1039,
+        "startChar": 24,
+        "endLine": 1045,
+        "endChar": 1
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fa30b1de_a6c33fd9",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 1
@@ -37,6 +61,30 @@
       "writtenOn": "2021-08-19T12:37:03Z",
       "side": 1,
       "message": "can be in SIPAccountBase if common",
+      "range": {
+        "startLine": 562,
+        "startChar": 63,
+        "endLine": 562,
+        "endChar": 73
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5b6cef6_81ce86e3",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-19T18:14:51Z",
+      "side": 1,
+      "message": "Yeah, moved to SIPAccountBase",
+      "parentUuid": "fa30b1de_a6c33fd9",
       "range": {
         "startLine": 562,
         "startChar": 63,
@@ -72,6 +120,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "29511974_f778fc53",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 890,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-19T18:14:51Z",
+      "side": 1,
+      "message": "Removed",
+      "parentUuid": "18fead68_7c9c43bc",
+      "range": {
+        "startLine": 890,
+        "startChar": 12,
+        "endLine": 890,
+        "endChar": 20
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c2a7065d_d0d24400",
         "filename": "src/sip/sipaccount.h",
         "patchSetId": 1
@@ -95,6 +167,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "28189794_559cbac9",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 767,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-19T18:14:51Z",
+      "side": 1,
+      "message": "Yeah, moved to SIPAccountBase",
+      "parentUuid": "c2a7065d_d0d24400",
+      "range": {
+        "startLine": 767,
+        "startChar": 16,
+        "endLine": 767,
+        "endChar": 26
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "17fbedc8_fb0fe8e4",
         "filename": "src/sip/sipaccountbase.h",
         "patchSetId": 1
@@ -106,6 +202,30 @@
       "writtenOn": "2021-08-19T01:15:51Z",
       "side": 1,
       "message": "there is already Conf::PROXY_PUSH_TOKEN_KEY",
+      "range": {
+        "startLine": 107,
+        "startChar": 21,
+        "endLine": 107,
+        "endChar": 50
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fcc958bc_7def58ce",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-19T18:14:51Z",
+      "side": 1,
+      "message": "Moved to SipAccountBase",
+      "parentUuid": "17fbedc8_fb0fe8e4",
       "range": {
         "startLine": 107,
         "startChar": 21,
