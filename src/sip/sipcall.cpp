@@ -3032,6 +3032,7 @@ SIPCall::setupIceResponse()
 
     auto opt = account->getIceOptions();
 
+    opt.accountPublicAddr = account->getPublishedIpAddress();
     opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                       opt.accountPublicAddr.getFamily());
 
@@ -3040,8 +3041,6 @@ SIPCall::setupIceResponse()
         onFailure(EIO);
         return;
     }
-
-    opt.accountPublicAddr = account->getPublishedIpAddress();
 
     if (not initIceMediaTransport(false, opt)) {
         JAMI_ERR("[call:%s] ICE initialization failed", getCallId().c_str());
