@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17fbedc8_fb0fe8e4",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-19T01:15:51Z",
+      "side": 1,
+      "message": "there is already Conf::PROXY_PUSH_TOKEN_KEY",
+      "range": {
+        "startLine": 107,
+        "startChar": 21,
+        "endLine": 107,
+        "endChar": 50
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
