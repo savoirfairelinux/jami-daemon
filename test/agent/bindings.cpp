@@ -270,6 +270,14 @@ wait_event_binding()
     return SCM_UNDEFINED;
 }
 
+static SCM
+wait_for_call()
+{
+    Agent::instance().waitForCall();
+
+    return SCM_UNDEFINED;
+}
+
 /*
  * Register Guile bindings here.
  *
@@ -317,4 +325,5 @@ install_scheme_primitives()
     define_primitive("agent:enable", 0, 0, 0, (void*) enable_binding);
     define_primitive("agent:disable", 0, 0, 0, (void*) disable_binding);
     define_primitive("agent:wait-event", 0, 0, 0, (void*) wait_event_binding);
+    define_primitive("agent:wait-for-call", 0, 0, 0, (void*) wait_for_call);
 }
