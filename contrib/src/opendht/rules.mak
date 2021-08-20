@@ -1,9 +1,9 @@
 # OPENDHT
-OPENDHT_VERSION := efda4af94c6310b3966dc850f20467b6309d0a43
+OPENDHT_VERSION := 434e24f5ab44e44a7d3e6bb500ec5c59d8d2be60
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
-ifeq ($(call need_pkg,'opendht >= 2.2.0'),)
+ifeq ($(call need_pkg,'opendht >= 2.3.0'),)
 PKGS_FOUND += opendht
 endif
 
