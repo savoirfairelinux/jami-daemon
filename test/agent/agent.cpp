@@ -227,42 +227,13 @@ Agent::setDetails(const std::map<std::string, std::string>& details)
 }
 
 void
-Agent::activate(bool state)
+Agent::activate(bool enable)
 {
     LOG_AGENT_STATE();
 
-    std::mutex mtx;
-    std::condition_variable cv;
-    bool done = false;
+    DRing::sendRegister(accountID_, enable);
 
-    onVolatileDetailsChanged_.add([&](const std::string& accountID,
-                                      const std::map<std::string, std::string>& details) {
-
-        if (accountID_ != accountID) {
-            return true;
-        }
-
-        AGENT_INFO("Account is %s",
-                   details.at(DRing::Account::VolatileProperties::ACTIVE).c_str());
-
-        std::unique_lock lk(mtx);
-
-        done = true;
-        cv.notify_one();
-
-        return false;
-    });
-
-
-    DRing::setAccountActive(accountID_, state);
-
-    std::unique_lock lk(mtx);
-
-    cv.wait_for(lk, std::chrono::seconds(10), [&]{
-        return done;
-    });
-
-    if (state) {
+    if (enable) {
         waitForAnnouncement();
     }
 }
