@@ -112,6 +112,7 @@ public:
     std::string someContact() const;
     std::string someConversation() const;
     void setDetails(const std::map<std::string, std::string>& details);
+    std::map<std::string, std::string> getDetails() const;
     void stopRecording(const std::string& context);
     void startRecording(const std::string& context, const std::string& to);
     void searchForPeers(std::vector<std::string>& peers);
