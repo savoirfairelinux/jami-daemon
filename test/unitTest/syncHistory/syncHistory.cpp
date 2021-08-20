@@ -883,7 +883,7 @@ SyncHistoryTest::testConversationRequestRemoved()
     auto uri = aliceAccount->getUsername();
 
     // Start conversation for Alice
-    auto convId = bobAccount->startConversation();
+    auto convId = DRing::startConversation(bobId);
 
     // Check that alice receives the request
     std::mutex mtx;
@@ -903,7 +903,7 @@ SyncHistoryTest::testConversationRequestRemoved()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    bobAccount->addConversationMember(convId, uri);
+    DRing::addConversationMember(bobId, convId, uri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
@@ -946,7 +946,7 @@ SyncHistoryTest::testConversationRequestRemoved()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
     // Now decline trust request, this should trigger ConversationRequestDeclined both sides for Alice
-    aliceAccount->declineConversationRequest(convId);
+    DRing::declineConversationRequest(aliceId, convId);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
         return requestDeclined && requestDeclined2;
