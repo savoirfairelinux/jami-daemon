@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d00204f7_60ad9f26",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1045,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-20T14:23:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b56a34c5_871f001b",
+      "range": {
+        "startLine": 1039,
+        "startChar": 24,
+        "endLine": 1045,
+        "endChar": 1
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fa30b1de_a6c33fd9",
@@ -85,6 +109,30 @@
       "side": 1,
       "message": "Yeah, moved to SIPAccountBase",
       "parentUuid": "fa30b1de_a6c33fd9",
+      "range": {
+        "startLine": 562,
+        "startChar": 63,
+        "endLine": 562,
+        "endChar": 73
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "be97a09a_631cf8da",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-20T14:23:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c5b6cef6_81ce86e3",
       "range": {
         "startLine": 562,
         "startChar": 63,
@@ -142,6 +190,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "513ececd_11bdbc8a",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 890,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-20T14:23:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "29511974_f778fc53",
+      "range": {
+        "startLine": 890,
+        "startChar": 12,
+        "endLine": 890,
+        "endChar": 20
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c2a7065d_d0d24400",
@@ -189,6 +261,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "edd893ea_e233558d",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 767,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-20T14:23:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "28189794_559cbac9",
+      "range": {
+        "startLine": 767,
+        "startChar": 16,
+        "endLine": 767,
+        "endChar": 26
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "17fbedc8_fb0fe8e4",
@@ -226,6 +322,30 @@
       "side": 1,
       "message": "Moved to SipAccountBase",
       "parentUuid": "17fbedc8_fb0fe8e4",
+      "range": {
+        "startLine": 107,
+        "startChar": 21,
+        "endLine": 107,
+        "endChar": 50
+      },
+      "revId": "cf744397f0448660b58b49c2a7351f1d918ab138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6ef525ad_47235f8a",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-20T14:23:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fcc958bc_7def58ce",
       "range": {
         "startLine": 107,
         "startChar": 21,
