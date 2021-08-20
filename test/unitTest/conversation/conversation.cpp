@@ -259,6 +259,7 @@ ConversationTest::tearDown()
 void
 ConversationTest::testCreateConversation()
 {
+    JAMI_ERR() << "@@@ testCreateConversation";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceDeviceId = aliceAccount->currentDeviceId();
     auto uri = aliceAccount->getUsername();
@@ -309,6 +310,7 @@ ConversationTest::testCreateConversation()
 void
 ConversationTest::testGetConversation()
 {
+    JAMI_ERR() << "@@@ testGetConversation";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
     auto convId = DRing::startConversation(aliceId);
@@ -321,6 +323,7 @@ ConversationTest::testGetConversation()
 void
 ConversationTest::testGetConversationsAfterRm()
 {
+    JAMI_ERR() << "@@@ testGetConversationsAfterRm";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
 
@@ -352,6 +355,7 @@ ConversationTest::testGetConversationsAfterRm()
 void
 ConversationTest::testRemoveInvalidConversation()
 {
+    JAMI_ERR() << "@@@ testRemoveInvalidConversation";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
 
@@ -383,6 +387,7 @@ ConversationTest::testRemoveInvalidConversation()
 void
 ConversationTest::testRemoveConversationNoMember()
 {
+    JAMI_ERR() << "@@@ testRemoveConversationNoMember";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
 
@@ -421,6 +426,7 @@ ConversationTest::testRemoveConversationNoMember()
 void
 ConversationTest::testRemoveConversationWithMember()
 {
+    JAMI_ERR() << "@@@ testRemoveConversationWithMember";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -500,6 +506,7 @@ ConversationTest::testRemoveConversationWithMember()
 void
 ConversationTest::testAddMember()
 {
+    JAMI_ERR() << "@@@ testAddMember";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -560,6 +567,7 @@ ConversationTest::testAddMember()
 void
 ConversationTest::testMemberAddedNoBadFile()
 {
+    JAMI_ERR() << "@@@ testMemberAddedNoBadFile";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -610,6 +618,7 @@ ConversationTest::testMemberAddedNoBadFile()
 void
 ConversationTest::testAddOfflineMemberThenConnects()
 {
+    JAMI_ERR() << "@@@ testAddOfflineMemberThenConnects";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -653,6 +662,7 @@ ConversationTest::testAddOfflineMemberThenConnects()
 void
 ConversationTest::testGetMembers()
 {
+    JAMI_ERR() << "@@@ testGetMembers";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -727,6 +737,7 @@ ConversationTest::testGetMembers()
 void
 ConversationTest::testSendMessage()
 {
+    JAMI_ERR() << "@@@ testSendMessage";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -779,7 +790,7 @@ ConversationTest::testSendMessage()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
     // Wait that alice sees Bob
-    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 1; });
+    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 2; });
 
     DRing::sendMessage(aliceId, convId, "hi"s, "");
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; });
@@ -789,6 +800,7 @@ ConversationTest::testSendMessage()
 void
 ConversationTest::testSendMessageTriggerMessageReceived()
 {
+    JAMI_ERR() << "@@@ testSendMessageTriggerMessageReceived";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -822,6 +834,7 @@ ConversationTest::testSendMessageTriggerMessageReceived()
 void
 ConversationTest::testMergeTwoDifferentHeads()
 {
+    JAMI_ERR() << "@@@ testMergeTwoDifferentHeads";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -883,6 +896,7 @@ ConversationTest::testMergeTwoDifferentHeads()
 void
 ConversationTest::testGetRequests()
 {
+    JAMI_ERR() << "@@@ testGetRequests";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -915,6 +929,7 @@ ConversationTest::testGetRequests()
 void
 ConversationTest::testDeclineRequest()
 {
+    JAMI_ERR() << "@@@ testDeclineRequest";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -949,6 +964,7 @@ ConversationTest::testDeclineRequest()
 void
 ConversationTest::testSendMessageToMultipleParticipants()
 {
+    JAMI_ERR() << "@@@ testSendMessageToMultipleParticipants";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -1046,6 +1062,7 @@ ConversationTest::testSendMessageToMultipleParticipants()
 void
 ConversationTest::testPingPongMessages()
 {
+    JAMI_ERR() << "@@@ testPingPongMessages";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -1121,6 +1138,7 @@ ConversationTest::testPingPongMessages()
 void
 ConversationTest::testIsComposing()
 {
+    JAMI_ERR() << "@@@ testIsComposing";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1194,6 +1212,7 @@ ConversationTest::testIsComposing()
 void
 ConversationTest::testSetMessageDisplayed()
 {
+    JAMI_ERR() << "@@@ testSetMessageDisplayed";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1302,21 +1321,18 @@ ConversationTest::testSetMessageDisplayed()
 void
 ConversationTest::testSetMessageDisplayedPreference()
 {
+    JAMI_ERR() << "@@@ testSetMessageDisplayedPreference";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto convId = DRing::startConversation(aliceId);
-    auto details = aliceAccount->getAccountDetails();
-    CPPUNIT_ASSERT(details[ConfProperties::SENDREADRECEIPT] == "true");
-    details[ConfProperties::SENDREADRECEIPT] = "false";
-    DRing::setAccountDetails(aliceId, details);
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         msgDisplayed = false;
+         msgDisplayed = false, aliceRegistered = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
@@ -1354,7 +1370,24 @@ ConversationTest::testSetMessageDisplayedPreference()
                     cv.notify_one();
                 }
             }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    aliceRegistered = true;
+                    cv.notify_one();
+                }
+            }));
     DRing::registerSignalHandlers(confHandlers);
+
+    auto details = aliceAccount->getAccountDetails();
+    CPPUNIT_ASSERT(details[ConfProperties::SENDREADRECEIPT] == "true");
+    details[ConfProperties::SENDREADRECEIPT] = "false";
+    DRing::setAccountDetails(aliceId, details);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return aliceRegistered; }));
+
     DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return requestReceived && memberMessageGenerated;
@@ -1392,6 +1425,7 @@ ConversationTest::testSetMessageDisplayedPreference()
 void
 ConversationTest::testRemoveMember()
 {
+    JAMI_ERR() << "@@@ testRemoveMember";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1456,6 +1490,7 @@ ConversationTest::testRemoveMember()
 void
 ConversationTest::testMemberBanNoBadFile()
 {
+    JAMI_ERR() << "@@@ testMemberBanNoBadFile";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1665,6 +1700,7 @@ ConversationTest::testBanDevice()
 void
 ConversationTest::testMemberTryToRemoveAdmin()
 {
+    JAMI_ERR() << "@@@ testMemberTryToRemoveAdmin";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1719,6 +1755,7 @@ ConversationTest::testMemberTryToRemoveAdmin()
 void
 ConversationTest::testBannedMemberCannotSendMessage()
 {
+    JAMI_ERR() << "@@@ testBannedMemberCannotSendMessage";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1790,6 +1827,7 @@ ConversationTest::testBannedMemberCannotSendMessage()
 void
 ConversationTest::testAddBannedMember()
 {
+    JAMI_ERR() << "@@@ testAddBannedMember";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1861,6 +1899,7 @@ ConversationTest::addVote(std::shared_ptr<JamiAccount> account,
                           const std::string& votedUri,
                           const std::string& content)
 {
+    JAMI_ERR() << "@@@ addVote";
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     auto voteDirectory = repoPath + DIR_SEPARATOR_STR + "votes" + DIR_SEPARATOR_STR + "members";
@@ -1890,6 +1929,7 @@ ConversationTest::simulateRemoval(std::shared_ptr<JamiAccount> account,
                                   const std::string& convId,
                                   const std::string& votedUri)
 {
+    JAMI_ERR() << "@@@ simulateRemoval";
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     auto memberFile = repoPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + votedUri
@@ -1935,6 +1975,7 @@ ConversationTest::generateFakeInvite(std::shared_ptr<JamiAccount> account,
                                      const std::string& convId,
                                      const std::string& uri)
 {
+    JAMI_ERR() << "@@@ generateFakeInvite";
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     // remove from member & add into banned without voting for the ban
@@ -1979,6 +2020,7 @@ ConversationTest::generateFakeInvite(std::shared_ptr<JamiAccount> account,
 void
 ConversationTest::addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
 {
+    JAMI_ERR() << "@@@ addAll";
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
 
@@ -2003,6 +2045,7 @@ ConversationTest::commit(std::shared_ptr<JamiAccount> account,
                          const std::string& convId,
                          Json::Value& message)
 {
+    JAMI_ERR() << "@@@ commit";
     ConversationRepository cr(account->weak(), convId);
 
     Json::StreamWriterBuilder wbuilder;
@@ -2016,6 +2059,7 @@ ConversationTest::commitInRepo(const std::string& path,
                                std::shared_ptr<JamiAccount> account,
                                const std::string& msg)
 {
+    JAMI_ERR() << "@@@ commitInRepo";
     auto deviceId = std::string(account->currentDeviceId());
     auto name = account->getDisplayName();
     if (name.empty())
@@ -2113,6 +2157,7 @@ ConversationTest::commitInRepo(const std::string& path,
 std::string
 ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account)
 {
+    JAMI_ERR() << "@@@ createFakeConversation";
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + "tmp";
 
@@ -2279,6 +2324,7 @@ ConversationTest::addFile(std::shared_ptr<JamiAccount> account,
                           const std::string& relativePath,
                           const std::string& content)
 {
+    JAMI_ERR() << "@@@ addFile";
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     // Add file
@@ -2309,6 +2355,7 @@ ConversationTest::addFile(std::shared_ptr<JamiAccount> account,
 void
 ConversationTest::testMemberCannotBanOther()
 {
+    JAMI_ERR() << "@@@ testMemberCannotBanOther";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -2409,6 +2456,7 @@ ConversationTest::testMemberCannotBanOther()
 void
 ConversationTest::testCheckAdminFakeAVoteIsDetected()
 {
+    JAMI_ERR() << "@@@ testCheckAdminFakeAVoteIsDetected";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -2505,6 +2553,7 @@ ConversationTest::testCheckAdminFakeAVoteIsDetected()
 void
 ConversationTest::testVoteNonEmpty()
 {
+    JAMI_ERR() << "@@@ testVoteNonEmpty";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -2602,6 +2651,7 @@ ConversationTest::testVoteNonEmpty()
 void
 ConversationTest::testCommitUnauthorizedUser()
 {
+    JAMI_ERR() << "@@@ testCommitUnauthorizedUser";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
@@ -2666,7 +2716,7 @@ ConversationTest::testCommitUnauthorizedUser()
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
     // Wait that alice sees Bob
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 1; }));
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 2; }));
 
     // Add commit from invalid user
     Json::Value root;
@@ -2687,6 +2737,7 @@ ConversationTest::testCommitUnauthorizedUser()
 void
 ConversationTest::testAdminCannotKickTheirself()
 {
+    JAMI_ERR() << "@@@ testAdminCannotKickTheirself";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
     auto convId = DRing::startConversation(aliceId);
@@ -2737,6 +2788,7 @@ ConversationTest::testAdminCannotKickTheirself()
 void
 ConversationTest::testNoBadFileInInitialCommit()
 {
+    JAMI_ERR() << "@@@ testNoBadFileInInitialCommit";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -2804,6 +2856,7 @@ ConversationTest::testNoBadFileInInitialCommit()
 void
 ConversationTest::testPlainTextNoBadFile()
 {
+    JAMI_ERR() << "@@@ testPlainTextNoBadFile";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2882,6 +2935,7 @@ ConversationTest::testPlainTextNoBadFile()
 void
 ConversationTest::testVoteNoBadFile()
 {
+    JAMI_ERR() << "@@@ testVoteNoBadFile";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -2986,6 +3040,7 @@ ConversationTest::testVoteNoBadFile()
 void
 ConversationTest::testETooBigClone()
 {
+    JAMI_ERR() << "@@@ testETooBigClone";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3060,6 +3115,7 @@ ConversationTest::testETooBigClone()
 void
 ConversationTest::testETooBigFetch()
 {
+    JAMI_ERR() << "@@@ testETooBigFetch";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3118,7 +3174,7 @@ ConversationTest::testETooBigFetch()
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; });
 
     // Wait that alice sees Bob
-    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 1; });
+    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 2; });
 
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
@@ -3143,6 +3199,7 @@ ConversationTest::testETooBigFetch()
 void
 ConversationTest::testMemberJoinsNoBadFile()
 {
+    JAMI_ERR() << "@@@ testMemberJoinsNoBadFile";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -3227,6 +3284,7 @@ ConversationTest::testMemberJoinsNoBadFile()
 void
 ConversationTest::testMemberAddedNoCertificate()
 {
+    JAMI_ERR() << "@@@ testMemberAddedNoCertificate";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -3321,6 +3379,7 @@ ConversationTest::testMemberAddedNoCertificate()
 void
 ConversationTest::testMemberJoinsInviteRemoved()
 {
+    JAMI_ERR() << "@@@ testMemberJoinsInviteRemoved";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -3420,6 +3479,7 @@ ConversationTest::testMemberJoinsInviteRemoved()
 void
 ConversationTest::testAddContact()
 {
+    JAMI_ERR() << "@@@ testAddContact";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3485,6 +3545,7 @@ ConversationTest::testAddContact()
 void
 ConversationTest::testAddContactDeleteAndReAdd()
 {
+    JAMI_ERR() << "@@@ testAddContactDeleteAndReAdd";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3553,6 +3614,7 @@ ConversationTest::testAddContactDeleteAndReAdd()
 void
 ConversationTest::testFailAddMemberInOneToOne()
 {
+    JAMI_ERR() << "@@@ testFailAddMemberInOneToOne";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
@@ -3606,6 +3668,7 @@ ConversationTest::testFailAddMemberInOneToOne()
 void
 ConversationTest::testUnknownModeDetected()
 {
+    JAMI_ERR() << "@@@ testUnknownModeDetected";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3668,6 +3731,7 @@ ConversationTest::testUnknownModeDetected()
 void
 ConversationTest::testRemoveContact()
 {
+    JAMI_ERR() << "@@@ testRemoveContact";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3748,6 +3812,7 @@ ConversationTest::testRemoveContact()
 void
 ConversationTest::testBanContact()
 {
+    JAMI_ERR() << "@@@ testBanContact";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3810,6 +3875,7 @@ ConversationTest::testBanContact()
 void
 ConversationTest::testOneToOneFetchWithNewMemberRefused()
 {
+    JAMI_ERR() << "@@@ testOneToOneFetchWithNewMemberRefused";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
@@ -3883,6 +3949,7 @@ ConversationTest::testOneToOneFetchWithNewMemberRefused()
 void
 ConversationTest::testConversationMemberEvent()
 {
+    JAMI_ERR() << "@@@ testConversationMemberEvent";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3946,6 +4013,7 @@ void
 ConversationTest::testAddOfflineContactThenConnect()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    JAMI_ERR() << "@@@ testAddOfflineContactThenConnect";
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
@@ -4002,6 +4070,7 @@ ConversationTest::testAddOfflineContactThenConnect()
 void
 ConversationTest::testDeclineTrustRequestDoNotGenerateAnother()
 {
+    JAMI_ERR() << "@@@ testDeclineTrustRequestDoNotGenerateAnother";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4075,6 +4144,7 @@ ConversationTest::testDeclineTrustRequestDoNotGenerateAnother()
 void
 ConversationTest::testUpdateProfile()
 {
+    JAMI_ERR() << "@@@ testUpdateProfile";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4140,6 +4210,7 @@ ConversationTest::testUpdateProfile()
 void
 ConversationTest::testCheckProfileInConversationRequest()
 {
+    JAMI_ERR() << "@@@ testCheckProfileInConversationRequest";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4194,6 +4265,7 @@ ConversationTest::testCheckProfileInConversationRequest()
 void
 ConversationTest::testCheckProfileInTrustRequest()
 {
+    JAMI_ERR() << "@@@ testCheckProfileInTrustRequest";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4251,6 +4323,7 @@ END:VCARD";
 void
 ConversationTest::testMemberCannotUpdateProfile()
 {
+    JAMI_ERR() << "@@@ testMemberCannotUpdateProfile";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4321,6 +4394,7 @@ ConversationTest::testMemberCannotUpdateProfile()
 void
 ConversationTest::testUpdateProfileWithBadFile()
 {
+    JAMI_ERR() << "@@@ testUpdateProfileWithBadFile";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4401,6 +4475,7 @@ END:VCARD";
 void
 ConversationTest::testFetchProfileUnauthorized()
 {
+    JAMI_ERR() << "@@@ testFetchProfileUnauthorized";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4480,6 +4555,7 @@ END:VCARD";
 void
 ConversationTest::testDoNotLoadIncorrectConversation()
 {
+    JAMI_ERR() << "@@@ testDoNotLoadIncorrectConversation";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
     auto convId = DRing::startConversation(aliceId);
@@ -4506,6 +4582,7 @@ ConversationTest::testDoNotLoadIncorrectConversation()
 void
 ConversationTest::testSyncingWhileAccepting()
 {
+    JAMI_ERR() << "@@@ testSyncingWhileAccepting";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4556,6 +4633,7 @@ ConversationTest::testSyncingWhileAccepting()
 void
 ConversationTest::testGetConversationsMembersWhileSyncing()
 {
+    JAMI_ERR() << "@@@ testGetConversationsMembersWhileSyncing";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4607,6 +4685,7 @@ ConversationTest::testGetConversationsMembersWhileSyncing()
 void
 ConversationTest::testRemoveContactRemoveSyncing()
 {
+    JAMI_ERR() << "@@@ testRemoveContactRemoveSyncing";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -4653,6 +4732,7 @@ ConversationTest::testRemoveContactRemoveSyncing()
 void
 ConversationTest::testCountInteractions()
 {
+    JAMI_ERR() << "@@@ testCountInteractions";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto convId = DRing::startConversation(aliceId);
     std::mutex mtx;
@@ -4689,6 +4769,7 @@ ConversationTest::testCountInteractions()
 void
 ConversationTest::testGetConversationMembersWithSelfOneOne()
 {
+    JAMI_ERR() << "@@@ testGetConversationMembersWithSelfOneOne";
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
     std::mutex mtx;
