@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "abd5aeb7_97563b52",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1047,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-20T17:29:13Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "0a807cc2_55d6ab38",
+      "range": {
+        "startLine": 1040,
+        "startChar": 11,
+        "endLine": 1047,
+        "endChar": 6
+      },
+      "revId": "d1aa79d02af606861b1bf9029cb31645e059b079",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "958bfad7_d6ca9004",
@@ -54,6 +78,30 @@
       "writtenOn": "2021-08-20T15:42:45Z",
       "side": 1,
       "message": "it\u0027s a string so operator\u003d\u003d is ok",
+      "range": {
+        "startLine": 879,
+        "startChar": 9,
+        "endLine": 879,
+        "endChar": 48
+      },
+      "revId": "d1aa79d02af606861b1bf9029cb31645e059b079",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "91de9354_3c5361af",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 879,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-20T17:29:13Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "958bfad7_d6ca9004",
       "range": {
         "startLine": 879,
         "startChar": 9,
