@@ -1,6 +1,6 @@
 #!/bin/sh
 
-tmp=$(mktemp)
+tmp=$(mktemp --directory)
 
 export XDG_CONFIG_HOME=$tmp
 export XDG_CACHE_HOME=$tmp
@@ -8,7 +8,18 @@ export XDG_DATA_HOME=$tmp
 
 archive=$1
 
-./agent - <<EOF
+inputs=$(mktemp --suffix=.scm)
+outputs=$(mktemp)
+
+cat -> "$inputs" <<EOF
 (agent:ensure-account)
 (agent->archive "${archive}")
 EOF
+
+JAMI_LOG_FILE="$outputs" ./agent "$inputs"
+
+grep AGENT "$outputs"
+
+rm "$inputs"
+rm "$outputs"
+rm -rf "$tmp"
