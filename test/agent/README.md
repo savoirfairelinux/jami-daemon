@@ -31,7 +31,7 @@ stage, Guile must be already available.
 cd daemon
 ./configure --enable-agent  # you can other options if needed such as --enable-debug
 cd test/agent
-make agent
+make check
 ```
 
 # Running the agent
