@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "81c97e6b_91715e12",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-08-20T18:04:26Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nusing decl \u0027SIPAccountBase\u0027 is unused\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Amisc-unused-using-decls",
+      "revId": "8e07e2c3bcd97fd774a3c8004fb04fa56752e8f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
