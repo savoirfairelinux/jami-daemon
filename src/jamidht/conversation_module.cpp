@@ -39,6 +39,7 @@ struct PendingConversationFetch
     bool ready {false};
     bool cloning {false};
     std::string deviceId {};
+    std::set<std::string> connectingTo {};
 };
 
 class ConversationModule::Impl : public std::enable_shared_from_this<Impl>
@@ -129,15 +130,23 @@ public:
     std::mutex pendingConversationsFetchMtx_ {};
     std::map<std::string, PendingConversationFetch> pendingConversationsFetch_;
 
-    bool startFetch(const std::string& convId)
+    bool startFetch(const std::string& convId, const std::string& deviceId)
     {
         std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
         auto it = pendingConversationsFetch_.find(convId);
         if (it == pendingConversationsFetch_.end()) {
-            pendingConversationsFetch_[convId] = PendingConversationFetch {};
+            PendingConversationFetch pf;
+            pf.connectingTo.insert(deviceId);
+            pendingConversationsFetch_[convId] =  {};
             return true;
         }
-        return it->second.ready;
+        auto& pf = it->second;
+        if (pf.ready)
+            return false; // Already doing stuff
+        if (pf.connectingTo.find(deviceId) != pf.connectingTo.end())
+            return false; // Already connecting to this device
+        pf.connectingTo.insert(deviceId);
+        return true;
     }
 
     // The following informations are stored on the disk
@@ -205,10 +214,11 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         // cloning.
         // This avoid the case when we receives conversations from sync +
         // clone from infos. Both will be used
-        if (!startFetch(convId)) {
-            JAMI_WARN("[Account %s] Already fetching", accountId_.c_str(), convId.c_str());
+        if (!startFetch(convId, deviceId)) {
+            JAMI_WARN("[Account %s] Already fetching %s", accountId_.c_str(), convId.c_str());
             return;
         }
+        JAMI_ERR() << "@@@ NEEDS";
         onNeedGitSocket_(convId, deviceId, [=](const auto& channel) {
             auto acc = account_.lock();
             std::unique_lock<std::mutex> lk(pendingConversationsFetchMtx_);
@@ -270,10 +280,11 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
 
-        if (!startFetch(conversationId)) {
+        if (!startFetch(conversationId, deviceId)) {
             JAMI_WARN("[Account %s] Already fetching", accountId_.c_str(), conversationId.c_str());
             return;
         }
+        JAMI_ERR() << "@@@ NEEDS";
         onNeedGitSocket_(conversationId,
                          deviceId,
                          [this,
@@ -281,15 +292,14 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                           peer = std::move(peer),
                           deviceId = std::move(deviceId),
                           commitId = std::move(commitId)](const auto& channel) {
-                             {
-                                 std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                                 pendingConversationsFetch_.erase(conversationId);
-                             }
                              auto conversation = conversations_.find(conversationId);
                              auto acc = account_.lock();
                              if (!channel || !acc || conversation == conversations_.end()
-                                 || !conversation->second)
+                                 || !conversation->second) {
+                                 std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                                 pendingConversationsFetch_.erase(conversationId);
                                  return false;
+                             }
                              acc->addGitSocket(channel->deviceId(), conversationId, channel);
                              conversation->second->sync(
                                  peer,
@@ -310,16 +320,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                                    accountId_.c_str(),
                                                    deviceId.c_str(),
                                                    conversationId.c_str());
-                                         // TODO shutdown + remove git socket?
-
-                                         // runOnMainThread([this,
-                                         // conversationId=std::move(conversationId),
-                                         // peer=std::move(peer), deviceId=std::move(deviceId),
-                                         // commitId=std::move(commitId)]() { //// TODO weak
-                                         //    fetchNewCommits(peer, deviceId, conversationId,
-                                         //    commitId);
-                                         //});
                                      }
+                                     std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                                     pendingConversationsFetch_.erase(conversationId);
                                  },
                                  commitId);
                              return true;
@@ -333,7 +336,13 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             if (pendingConversationsFetch_.find(conversationId) != pendingConversationsFetch_.end())
                 return;
         }
-        if (conversation != conversations_.end()) {
+        bool clone = false;
+        {
+            std::lock_guard<std::mutex> lkCi(convInfosMtx_);
+            auto convIt = convInfos_.find(conversationId);
+            clone = convIt != convInfos_.end();
+        }
+        if (clone) {
             cloneConversation(deviceId, peer, conversationId);
             return;
         }
@@ -381,6 +390,7 @@ ConversationModule::Impl::handlePendingConversations()
                     return;
                 // Clone and store conversation
                 auto erasePending = [&] {
+                    JAMI_ERR() << "@@@ ERASE";
                     std::lock_guard<std::mutex> lk(sthis->pendingConversationsFetchMtx_);
                     sthis->pendingConversationsFetch_.erase(conversationId);
                 };
@@ -728,12 +738,6 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId)
                   conversationId.c_str());
         return;
     }
-    if (!pimpl_->startFetch(conversationId)) {
-        JAMI_WARN("[Account %s] Already fetching",
-                  pimpl_->accountId_.c_str(),
-                  conversationId.c_str());
-        return;
-    }
     auto memberHash = dht::InfoHash(request->from);
     if (!memberHash) {
         JAMI_WARN("Invalid member detected: %s", request->from.c_str());
@@ -743,9 +747,17 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId)
                        [w = pimpl_->weak(), request = *request, conversationId](
                            const std::shared_ptr<dht::crypto::PublicKey>& pk) {
                            auto sthis = w.lock();
-                           if (pk->getLongId().toString() == sthis->deviceId_)
+                           auto deviceId = pk->getLongId().toString();
+                           if (!sthis or deviceId == sthis->deviceId_)
                                return;
 
+                            if (!sthis->startFetch(conversationId, deviceId)) {
+                                JAMI_WARN("[Account %s] Already fetching",
+                                        sthis->accountId_.c_str(),
+                                        conversationId.c_str());
+                                return;
+                            }
+                           JAMI_ERR() << "@@@ NEEDS";
                            sthis->onNeedGitSocket_(
                                conversationId, pk->getLongId().toString(), [=](const auto& channel) {
                                    auto acc = sthis->account_.lock();
@@ -785,7 +797,7 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
         pimpl_->saveConvRequests();
     }
     emitSignal<DRing::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
-                                                                    conversationId);
+                                                                       conversationId);
     pimpl_->needsSyncingCb_();
 }
 
@@ -1039,14 +1051,13 @@ ConversationModule::onSyncData(const SyncMsg& msg,
         if (req.declined != 0) {
             // Request declined
             JAMI_INFO("[Account %s] Declined request detected for conversation %s (device %s)",
-                        pimpl_->accountId_.c_str(),
-                        convId.c_str(),
-                        deviceId.c_str());
+                      pimpl_->accountId_.c_str(),
+                      convId.c_str(),
+                      deviceId.c_str());
             emitSignal<DRing::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
-                                                                                convId);
+                                                                               convId);
             continue;
         }
-
 
         JAMI_INFO("[Account %s] New request detected for conversation %s (device %s)",
                   pimpl_->accountId_.c_str(),
@@ -1109,6 +1120,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                                           const std::string& contactUri,
                                           bool sendRequest)
 {
+    JAMI_ERR() << "@@@";
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
@@ -1117,6 +1129,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
         return;
     }
 
+    JAMI_ERR() << "@@@";
     if (it->second->isMember(contactUri, true)) {
         JAMI_DBG("%s is already a member of %s, resend invite",
                  contactUri.c_str(),
@@ -1129,14 +1142,17 @@ ConversationModule::addConversationMember(const std::string& conversationId,
         return;
     }
 
+    JAMI_ERR() << "@@@";
     it->second
         ->addMember(contactUri,
                     [this, conversationId, sendRequest, contactUri](bool ok,
                                                                     const std::string& commitId) {
+                        JAMI_ERR() << "@@@";
                         if (ok) {
                             std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
                             auto it = pimpl_->conversations_.find(conversationId);
                             if (it != pimpl_->conversations_.end() && it->second) {
+                                JAMI_ERR() << "@@@";
                                 pimpl_->sendMessageNotification(*it->second,
                                                                 commitId,
                                                                 true); // For the other members
