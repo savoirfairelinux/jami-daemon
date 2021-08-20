@@ -228,6 +228,12 @@ Agent::setDetails(const std::map<std::string, std::string>& details)
     DRing::setAccountDetails(accountID_, details);
 }
 
+std::map<std::string, std::string>
+Agent::getDetails() const
+{
+    return DRing::getAccountDetails(accountID_);
+}
+
 void
 Agent::activate(bool enable)
 {
@@ -494,6 +500,8 @@ Agent::registerStaticCallbacks()
 void
 Agent::waitForAnnouncement(std::chrono::seconds timeout)
 {
+    LOG_AGENT_STATE();
+
     std::condition_variable cv;
 
     std::mutex mtx;
