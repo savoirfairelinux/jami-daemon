@@ -327,6 +327,32 @@ Agent::waitForEvent()
     eventsCV_.wait(lk);
 }
 
+void
+Agent::waitForCall()
+{
+    LOG_AGENT_STATE();
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    std::unique_lock lk(mtx);
+
+    onCallStateChanged_.add([&](const std::string& /* call_id */,
+                                const std::string& state,
+                                signed             /* code */) {
+
+
+        if ("CURRENT" == state) {
+            std::unique_lock lk(mtx);
+            cv.notify_one();
+
+            return false;
+        }
+
+        return true;
+    });
+
+    cv.wait(lk);
+}
 
 Agent&
 Agent::instance()
