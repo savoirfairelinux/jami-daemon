@@ -133,6 +133,7 @@ public:
     void waitForAnnouncement(std::chrono::seconds timeout=std::chrono::seconds(30));
     void activate(bool state);
     void waitForEvent();
+    void waitForCall();
 
     void init();
     void fini();
