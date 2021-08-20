@@ -122,6 +122,7 @@ public:
     void ensureAccount();
     void waitForAnnouncement(std::chrono::seconds timeout=std::chrono::seconds(30));
     void activate(bool state);
+    void waitForCallState(const std::string& wanted="CURRENT");
 
     void init();
     void fini();
