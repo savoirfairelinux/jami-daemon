@@ -3678,7 +3678,7 @@ index 5fe825cf5..6dbd296f2 100644
  	stun_sock->sock_fd = PJ_INVALID_SOCKET;
      }
  
-+    for (int i = 0; i < stun_sock->incoming_nb ; ++i) {
++    for (int i = 0; i <= stun_sock->incoming_nb ; ++i) {
 +	if (stun_sock->incoming_socks[i].sock != NULL) {
 +	    stun_sock->incoming_socks[i].fd = PJ_INVALID_SOCKET;
 +	    pj_activesock_close(stun_sock->incoming_socks[i].sock);
@@ -3688,7 +3688,7 @@ index 5fe825cf5..6dbd296f2 100644
 +	}
 +    }
 +
-+    for (int i = 0; i < stun_sock->outgoing_nb ; ++i) {
++    for (int i = 0; i <= stun_sock->outgoing_nb ; ++i) {
 +	if (stun_sock->outgoing_socks[i].sock != NULL) {
 +	    stun_sock->outgoing_socks[i].fd = PJ_INVALID_SOCKET;
 +	    pj_activesock_close(stun_sock->outgoing_socks[i].sock);
