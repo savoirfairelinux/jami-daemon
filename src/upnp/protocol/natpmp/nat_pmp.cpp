@@ -552,9 +552,9 @@ NatPmp::getIgdPublicAddress()
     err = readResponse(natpmpHdl_, response);
 
     if (err < 0) {
-        JAMI_ERR("NAT-PMP: read response on IGD %s failed with error %s",
-                 igd_->toString().c_str(),
-                 getNatPmpErrorStr(err));
+        JAMI_WARN("NAT-PMP: Read response on IGD %s failed - %s",
+                  igd_->toString().c_str(),
+                  getNatPmpErrorStr(err));
         return;
     }
 
