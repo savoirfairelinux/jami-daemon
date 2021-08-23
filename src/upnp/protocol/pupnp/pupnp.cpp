@@ -36,6 +36,17 @@ constexpr static const char* ACTION_GET_GENERIC_PORT_MAPPING_ENTRY {"GetGenericP
 constexpr static const char* ACTION_GET_STATUS_INFO {"GetStatusInfo"};
 constexpr static const char* ACTION_GET_EXTERNAL_IP_ADDRESS {"GetExternalIPAddress"};
 
+// Error codes returned by router when trying to remove ports.
+constexpr static int ARRAY_IDX_INVALID = 713;
+constexpr static int CONFLICT_IN_MAPPING = 718;
+
+// Max number of IGD search attempts before failure.
+constexpr static unsigned int PUPNP_MAX_RESTART_SEARCH_RETRIES {3};
+// IGD search timeout (in seconds).
+constexpr static unsigned int SEARCH_TIMEOUT {60};
+// Base unit for the timeout between two successive IGD search.
+constexpr static auto PUPNP_SEARCH_RETRY_UNIT {std::chrono::seconds(10)};
+
 // Helper functions for xml parsing.
 static std::string
 getElementText(IXML_Node* node)
