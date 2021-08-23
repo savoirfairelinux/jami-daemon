@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "560bca8e_64cdd995",
+        "filename": "test/agent/README.md",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-23T13:28:55Z",
+      "side": 1,
+      "message": "imho (for later, as not related to this patch), make check shouldn\u0027t be used. make check is used for launching the tests, not only building.\nMaybe ./configure --enable-agent/make.",
+      "range": {
+        "startLine": 34,
+        "startChar": 1,
+        "endLine": 34,
+        "endChar": 10
+      },
+      "revId": "84f6c70d522c237ed1adf459cd2fe8f7dc03b73b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
