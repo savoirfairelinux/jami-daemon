@@ -1,7 +1,7 @@
 {
     "name": "portaudio",
     "version": "v190600_20161030",
-    "url": "http://www.portaudio.com/archives/pa_stable___VERSION__.tgz",
+    "url": "https://github.com/PortAudio/portaudio/archive/refs/tags/pa_stable___VERSION__.tgz",
     "use_cmake" : true,
     "defines": [
         "MSVS=1",
