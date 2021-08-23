@@ -51,13 +51,13 @@ namespace upnp {
 // Requested lifetime in seconds. The actual lifetime might be different.
 constexpr static unsigned int MAPPING_ALLOCATION_LIFETIME {60 * 60};
 // Max number of IGD search attempts before failure.
-constexpr static unsigned int MAX_RESTART_SEARCH_RETRIES {5};
+constexpr static unsigned int MAX_RESTART_SEARCH_RETRIES {3};
 // Time-out between two successive read response.
 constexpr static auto TIMEOUT_BEFORE_READ_RETRY {std::chrono::milliseconds(300)};
 // Max number of read attempts before failure.
-constexpr static unsigned int MAX_READ_RETRIES {5};
+constexpr static unsigned int MAX_READ_RETRIES {3};
 // Base unit for the timeout between two successive IGD search.
-constexpr static auto NATPMP_SEARCH_RETRY_UNIT {std::chrono::seconds(15)};
+constexpr static auto NATPMP_SEARCH_RETRY_UNIT {std::chrono::seconds(10)};
 
 class NatPmp : public UPnPProtocol
 {
