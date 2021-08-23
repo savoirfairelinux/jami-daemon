@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea8d1b89_d45edb66",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-23T13:18:07Z",
+      "side": 1,
+      "message": "The crash is in ip_utils::getLocalAddr because AF_UNSPEC is used.\n\nhttps://www.pjsip.org/pjlib/docs/html/group__pj__addr__resolve.htm#ga410b1bd02dcabf108b129e95368beef4\n\nWe should check in ip_utils that the family is correct (else returning an empty ip_addr) to avoid the crash (and also keep this changes)",
+      "revId": "398203b887b47145d9a11fa35c1c84508e609c5e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
