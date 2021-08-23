@@ -224,25 +224,35 @@ UPnPContext::connectivityChanged()
 
     JAMI_DBG("Connectivity change check: host address %s", hostAddr.toString().c_str());
 
-    auto addrChanged = false;
+    auto restartUpnp = false;
 
-    // Check if the host address changed.
-    for (auto const& [_, protocol] : protocolList_) {
-        if (protocol->isReady() and hostAddr != protocol->getHostAddress()) {
-            JAMI_WARN("Host address changed from %s to %s",
-                      protocol->getHostAddress().toString().c_str(),
-                      hostAddr.toString().c_str());
-            protocol->clearIgds();
-            addrChanged = true;
+    // On reception of "connectivity change" notification, the UPNP search
+    // will be restarted if either there is no valid IGD, or the IGD address
+    // changed.
+
+    if (not isReady()) {
+        restartUpnp = true;
+    } else {
+        // Check if the host address changed.
+        for (auto const& [_, protocol] : protocolList_) {
+            if (protocol->isReady() and hostAddr != protocol->getHostAddress()) {
+                JAMI_WARN("Host address changed from %s to %s",
+                          protocol->getHostAddress().toString().c_str(),
+                          hostAddr.toString().c_str());
+                protocol->clearIgds();
+                restartUpnp = true;
+                break;
+            }
         }
     }
 
-    // Address did not change, nothing to do.
-    if (not addrChanged) {
+    // We have at least one valid IGD and the host address did
+    // not change, so no need to restart.
+    if (not restartUpnp) {
         return;
     }
 
-    // No registered controller. New search will be performed when
+    // No registered controller. A new search will be performed when
     // a controller is registered.
     if (controllerList_.empty())
         return;
