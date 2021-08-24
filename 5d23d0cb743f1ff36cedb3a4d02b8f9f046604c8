@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "577eda2a_fd41c4da",
+        "filename": "src/jamidht/conversation_channel_handler.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-08-24T21:01:15Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027acc\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "5d23d0cb743f1ff36cedb3a4d02b8f9f046604c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
