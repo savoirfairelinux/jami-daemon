@@ -39,6 +39,30 @@
       },
       "revId": "0660d7b1e9a864db7c571aa25db1521fd00665d1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d3c9306_d2b57f4a",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 6
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-08-24T12:13:34Z",
+      "side": 1,
+      "message": "Done.  The note does not seem to show on gerrit, but it\u0027s there on Git",
+      "parentUuid": "1eb4d5e8_f4eff6eb",
+      "range": {
+        "startLine": 64,
+        "startChar": 53,
+        "endLine": 64,
+        "endChar": 62
+      },
+      "revId": "0660d7b1e9a864db7c571aa25db1521fd00665d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
