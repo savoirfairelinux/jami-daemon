@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "afde74a1_69f14b2d",
+        "filename": "src/ip_utils.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-24T15:41:58Z",
+      "side": 1,
+      "message": "the original crash wasn\u0027t in \"jami::ip_utils::getLocalAddr(unsigned short) (family\u003d0) at ip_utils.cpp:276\" ? Before pj_gethostip()",
+      "range": {
+        "startLine": 293,
+        "startChar": 1,
+        "endLine": 297,
+        "endChar": 5
+      },
+      "revId": "22b1f5b1567e1228f9c26c833345da083ed72963",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
