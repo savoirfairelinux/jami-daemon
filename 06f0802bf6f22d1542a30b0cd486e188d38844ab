@@ -22,6 +22,30 @@
       },
       "revId": "06f0802bf6f22d1542a30b0cd486e188d38844ab",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c322db3c_ec08717d",
+        "filename": "test/agent/bindings.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-08-24T11:47:32Z",
+      "side": 1,
+      "message": "Yeah I agree, I used it one time just to test.  We can cut this from the patch set.",
+      "parentUuid": "70badf0a_22d0de5d",
+      "range": {
+        "startLine": 312,
+        "startChar": 29,
+        "endLine": 312,
+        "endChar": 40
+      },
+      "revId": "06f0802bf6f22d1542a30b0cd486e188d38844ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
