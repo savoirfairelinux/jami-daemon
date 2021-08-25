@@ -22,6 +22,30 @@
       },
       "revId": "22b1f5b1567e1228f9c26c833345da083ed72963",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "432672dc_aceff4d9",
+        "filename": "src/ip_utils.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-08-25T14:25:22Z",
+      "side": 1,
+      "message": "Hmm yes\n\n#7  0x000055555aab5b7d in jami::ip_utils::getLocalAddr(unsigned short) (family\u003d0) at ip_utils.cpp:276\n#8  0x000055555aab5edf in jami::ip_utils::getInterfaceAddr(std::__cxx11::basic_string\u003cchar, std::char_traits\u003cchar\u003e, std::allocator\u003cchar\u003e \u003e const\u0026, unsigned short) (interface\u003d\"default\", family\u003d0) at ip_utils.cpp:295",
+      "parentUuid": "afde74a1_69f14b2d",
+      "range": {
+        "startLine": 293,
+        "startChar": 1,
+        "endLine": 297,
+        "endChar": 5
+      },
+      "revId": "22b1f5b1567e1228f9c26c833345da083ed72963",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
