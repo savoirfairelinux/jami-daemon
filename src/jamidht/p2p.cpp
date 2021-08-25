@@ -207,10 +207,10 @@ DhtPeerConnector::requestConnection(
             pimpl_->channeledOutgoing_[tid].emplace_back(outgoingFile);
         }
 
-        channel->onShutdown([this, tid, onChanneledCancelled, peer = outgoingFile->peer()]() {
+        channel->onShutdown([w = pimpl_->weak(), tid, onChanneledCancelled, peer = outgoingFile->peer()]() {
             JAMI_INFO("Channel down for outgoing transfer with id(%lu)", tid);
             onChanneledCancelled(peer);
-            dht::ThreadPool::io().run([w = pimpl_->weak(), tid, peer] {
+            dht::ThreadPool::io().run([w = std::move(w), tid, peer] {
                 if (auto shared = w.lock())
                     shared->removeOutgoing(tid, peer);
             });
@@ -303,9 +303,9 @@ DhtPeerConnector::onIncomingConnection(const DRing::DataTransferInfo& info,
         std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
         pimpl_->channeledIncoming_[id].emplace_back(std::move(incomingFile));
     }
-    channel->onShutdown([this, id, peer_id]() {
+    channel->onShutdown([w = pimpl_->weak(), id, peer_id]() {
         JAMI_INFO("Channel down for incoming transfer with id(%lu)", id);
-        dht::ThreadPool::io().run([w = pimpl_->weak(), id, peer_id] {
+        dht::ThreadPool::io().run([w=std::move(w), id, peer_id] {
             if (auto shared = w.lock())
                 shared->removeIncoming(id, peer_id);
         });
