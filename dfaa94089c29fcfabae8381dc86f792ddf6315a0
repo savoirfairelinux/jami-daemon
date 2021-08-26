@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf3c82e1_5715c11f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-26T14:59:04Z",
+      "side": 1,
+      "message": "peerId to homogeneize",
+      "range": {
+        "startLine": 103,
+        "startChar": 52,
+        "endLine": 103,
+        "endChar": 58
+      },
+      "revId": "dfaa94089c29fcfabae8381dc86f792ddf6315a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
