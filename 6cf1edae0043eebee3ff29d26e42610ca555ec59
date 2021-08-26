@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e32830da_c8a97f96",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-08-26T20:08:42Z",
+      "side": 1,
+      "message": "With VS, we can have multiple sinks starting with the same substr. If we cut the id that way, we wont know to which sink the log is related.\nAlso the signals (DecodingStarted, DecodingStopped) emited wont be correct.",
+      "range": {
+        "startLine": 271,
+        "startChar": 4,
+        "endLine": 275,
+        "endChar": 5
+      },
+      "revId": "6cf1edae0043eebee3ff29d26e42610ca555ec59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d32ad292_616a4063",
+        "filename": "src/media/video/sinkclient.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-08-26T20:08:42Z",
+      "side": 1,
+      "message": "why?",
+      "range": {
+        "startLine": 56,
+        "startChar": 28,
+        "endLine": 56,
+        "endChar": 43
+      },
+      "revId": "6cf1edae0043eebee3ff29d26e42610ca555ec59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

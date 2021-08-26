@@ -125,6 +125,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "54e2c532_a022c25e",
+        "filename": "src/manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3440,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-08-26T20:08:42Z",
+      "side": 1,
+      "message": "If peer hungup from conf we need to stop and remove the sink",
+      "parentUuid": "a850c817_99e4c421",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c8c96b4e_a000f325",
         "filename": "src/media/video/sinkclient.cpp",
         "patchSetId": 6
