@@ -1,0 +1,31 @@
+From 45430f86d00f60c439f936693bf033ff4c066329 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:49:20 -0400
+Subject: [PATCH] resort check list after adding prflx
+
+---
+ pjnath/src/pjnath/ice_session.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 77d014d62..f2c347163 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -4034,8 +4034,12 @@ static void handle_incoming_check(pj_ice_sess *ice,
+ 
+ 	    LOG5((ice->obj_name, "Performing triggered check for check %d",i));
+ 	    pj_log_push_indent();
+-	    perform_check(ice, &ice->clist, i, nominate);
+-	    pj_log_pop_indent();
++
++	    perform_check(ice, &ice->clist, i, nominate);
++	    /* Re-sort the list because of the newly added pair. */
++	    sort_checklist(ice, &ice->clist);
++
++	    pj_log_pop_indent();
+ 
+ 	} else if (c->state == PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS) {
+ 	    /* Should retransmit immediately
+-- 
+2.25.1
+
