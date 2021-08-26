@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d9e93c5f_6d9d69d0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-26T15:40:36Z",
+      "side": 1,
+      "message": "if a note to the PR can be added, hence we will remove it when bumping to 2.12",
+      "revId": "906a1fed1a6ee99c4beaf21d5b3b3a925c73b288",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "edb6272c_1b8eb34b",
+        "filename": "contrib/src/pjproject/0019-resort-check-list-after-adding-prflx.patch",
+        "patchSetId": 3
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-26T15:40:36Z",
+      "side": 1,
+      "message": "trailing",
+      "range": {
+        "startLine": 24,
+        "startChar": 2,
+        "endLine": 24,
+        "endChar": 6
+      },
+      "revId": "906a1fed1a6ee99c4beaf21d5b3b3a925c73b288",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
