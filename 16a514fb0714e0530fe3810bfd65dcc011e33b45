@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5d3376c1_77af8f71",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-26T19:19:11Z",
+      "side": 1,
+      "message": "no it\u0027s seems to be not intended",
+      "parentUuid": "43a66078_d151e10a",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5ca391c8_6bfc74cc",
         "filename": "src/conference.cpp",
         "patchSetId": 6
@@ -37,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "965cd393_7dd966e4",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-26T19:19:11Z",
+      "side": 1,
+      "message": "Not related to this patch, but yeah probably. Not sure how muted is updated with multiple host. confOrder should update",
+      "parentUuid": "5ca391c8_6bfc74cc",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1a0c64fa_52ffa817",
         "filename": "src/conference.cpp",
         "patchSetId": 6
@@ -48,6 +84,24 @@
       "writtenOn": "2021-08-26T19:07:47Z",
       "side": 1,
       "message": "same as above",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c8a346d_0b671051",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-26T19:19:11Z",
+      "side": 1,
+      "message": "same",
+      "parentUuid": "1a0c64fa_52ffa817",
       "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
