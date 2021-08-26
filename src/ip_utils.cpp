@@ -291,11 +291,6 @@ ip_utils::getLocalAddr(pj_uint16_t family)
 IpAddr
 ip_utils::getInterfaceAddr(const std::string& interface, pj_uint16_t family)
 {
-    if (AF_UNSPEC == family) {
-        JAMI_WARN("Unspecifcied interface family");
-        return {};
-    }
-
     if (interface == DEFAULT_INTERFACE)
         return getLocalAddr(family);
 
