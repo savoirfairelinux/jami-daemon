@@ -17,6 +17,7 @@ RUN add-apt-repository universe && \
         autoconf \
         automake \
         autopoint \
+        ccache \
         cmake \
         libdbus-1-dev \
         libdbus-c++-dev \
