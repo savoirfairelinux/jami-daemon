@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43a66078_d151e10a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-26T19:07:47Z",
+      "side": 1,
+      "message": "deviceId is never set. Is it intended ?",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ca391c8_6bfc74cc",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-26T19:07:47Z",
+      "side": 1,
+      "message": "is the comment still up to date ?",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a0c64fa_52ffa817",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-26T19:07:47Z",
+      "side": 1,
+      "message": "same as above",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a850c817_99e4c421",
+        "filename": "src/manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3440,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-26T19:07:47Z",
+      "side": 1,
+      "message": "why are we doing this here ?",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8c96b4e_a000f325",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 467,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-26T19:07:47Z",
+      "side": 1,
+      "message": "not related to this patch, but why it\u0027s an error to reset the frame size if the sink was started? We are doing a normal workflow (in line 422 for instance)",
+      "revId": "16a514fb0714e0530fe3810bfd65dcc011e33b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
