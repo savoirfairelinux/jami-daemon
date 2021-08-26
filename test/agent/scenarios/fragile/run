@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# Usage: run alice|bob
+
+export AGENT=$1
+
+tmp=$(mktemp --directory)
+
+XDG_CONFIG_HOME="$tmp" XDG_CACHE_HOME="$tmp" XDG_DATA_HOME="$tmp" JAMI_LOG_FILE="${AGENT}.out" ../../agent desc.scm
+
+rm -rf "$tmp"
