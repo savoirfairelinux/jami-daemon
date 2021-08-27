@@ -252,7 +252,9 @@ void
 MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
 {
     std::lock_guard<std::mutex> lkSockets(socketsMutex);
-    auto socket = makeSocket(name, channel);
+    auto& socket = sockets[channel];
+    if (!socket)
+        socket = makeSocket(name, channel);
     onChannelReady_(deviceId, socket);
     socket->ready();
 }

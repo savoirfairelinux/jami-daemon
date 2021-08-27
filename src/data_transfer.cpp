@@ -20,14 +20,15 @@
 
 #include "data_transfer.h"
 
-#include "manager.h"
-#include "jamidht/jamiaccount.h"
-#include "peer_connection.h"
-#include "fileutils.h"
-#include "string_utils.h"
-#include "map_utils.h"
+#include "base64.h"
 #include "client/ring_signal.h"
+#include "fileutils.h"
+#include "jamidht/jamiaccount.h"
 #include "jamidht/p2p.h"
+#include "manager.h"
+#include "map_utils.h"
+#include "peer_connection.h"
+#include "string_utils.h"
 
 #include <thread>
 #include <stdexcept>
@@ -354,13 +355,14 @@ private:
                     onRecvCb_(std::string_view(buf.data(), buf.size()));
             }
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
-            if (internalCompletionCb_)
-                internalCompletionCb_(info_.path);
 
             if (info_.bytesProgress != info_.totalSize)
                 emit(DRing::DataTransferEventCode::closed_by_peer);
-            else
+            else {
+                if (internalCompletionCb_)
+                    internalCompletionCb_(info_.path);
                 emit(DRing::DataTransferEventCode::finished);
+            }
         });
     }
 
@@ -709,7 +711,7 @@ FileInfo::emit(DRing::DataTransferEventCode code)
 {
     if (finishedCb_ && code >= DRing::DataTransferEventCode::finished)
         finishedCb_(uint32_t(code));
-    if (fileId_ != "profile.vcf") {
+    if (fileId_.find(".vcf") == std::string::npos) {
         // Else it's an internal transfer
         runOnMainThread([info = info_, iid = interactionId_, fid = fileId_, code]() {
             emitSignal<DRing::DataTransferSignal::DataTransferEvent>(info.accountId,
@@ -882,6 +884,8 @@ public:
             fileutils::check_dir(conversationDataPath_.c_str());
             waitingPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "waiting";
         }
+        profilesPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
+                        + DIR_SEPARATOR_STR + "profiles";
         loadWaiting();
     }
 
@@ -918,6 +922,7 @@ public:
     std::string accountId_ {};
     std::string to_ {};
     std::string waitingPath_ {};
+    std::string profilesPath_ {};
     std::string conversationDataPath_ {};
 
     // Pre swarm
@@ -928,7 +933,7 @@ public:
     std::map<std::string, WaitingRequest> waitingIds_ {};
     std::map<std::shared_ptr<ChannelSocket>, std::shared_ptr<OutgoingFile>> outgoings_ {};
     std::map<std::string, std::shared_ptr<IncomingFile>> incomings_ {};
-    std::map<std::string, std::shared_ptr<IncomingFile>> vcards_ {};
+    std::map<std::pair<std::string, std::string>, std::shared_ptr<IncomingFile>> vcards_ {};
 };
 
 TransferManager::TransferManager(const std::string& accountId, const std::string& to)
@@ -1265,30 +1270,47 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
 {
     if (!channel)
         return;
+
+    auto name = channel->name();
+    auto lastSep = name.find_last_of('/');
+    auto fileId = name.substr(lastSep + 1);
+
     auto deviceId = channel->deviceId().toString();
+    auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+    if (!cert || !cert->issuer || fileId.find(".vcf") == std::string::npos)
+        return;
+
+    auto uri = fileId == "profile.vcf" ? cert->issuer->getId().toString()
+                                       : fileId.substr(0, fileId.size() - 4 /*.vcf*/);
+
     std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    auto idx = std::pair<std::string, std::string> {deviceId, uri};
     // Check if not already an incoming file for this id and that we are waiting this file
-    auto itV = pimpl_->vcards_.find(deviceId);
+    auto itV = pimpl_->vcards_.find(idx);
     if (itV != pimpl_->vcards_.end()) {
         channel->shutdown();
         return;
     }
 
+    auto tid = generateUID();
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
     info.path = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_
-                + DIR_SEPARATOR_STR + "vcard" + DIR_SEPARATOR_STR + deviceId;
+                + DIR_SEPARATOR_STR + "vcard" + DIR_SEPARATOR_STR + deviceId + "_" + uri + "_"
+                + std::to_string(tid);
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "");
-    auto res = pimpl_->vcards_.emplace(deviceId, std::move(ifile));
+    auto res = pimpl_->vcards_.emplace(idx, std::move(ifile));
     if (res.second) {
         res.first->second->onFinished([w = weak(),
+                                       uri = std::move(uri),
                                        deviceId = std::move(deviceId),
                                        accountId = pimpl_->accountId_,
                                        path = info.path](uint32_t code) {
             // schedule destroy transfer as not needed
             dht::ThreadPool().computation().run([w,
+                                                 uri = std::move(uri),
                                                  deviceId = std::move(deviceId),
                                                  accountId = std::move(accountId),
                                                  path = std::move(path),
@@ -1296,15 +1318,12 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                 if (auto sthis_ = w.lock()) {
                     auto& pimpl = sthis_->pimpl_;
                     std::lock_guard<std::mutex> lk {pimpl->mapMutex_};
-                    auto itO = pimpl->vcards_.find(deviceId);
+                    auto itO = pimpl->vcards_.find({deviceId, uri});
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
                     if (code == uint32_t(DRing::DataTransferEventCode::finished)) {
-                        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
-                        if (!cert)
-                            return;
                         emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
-                                                                                cert->getIssuerUID(),
+                                                                                uri,
                                                                                 path);
                     }
                 }
@@ -1312,6 +1331,13 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
         });
         res.first->second->process();
     }
+}
+
+std::string
+TransferManager::profilePath(const std::string& contactId) const
+{
+    // TODO Android? iOS?
+    return pimpl_->profilesPath_ + DIR_SEPARATOR_STR + base64::encode(contactId) + ".vcf";
 }
 
 std::vector<WaitingRequest>

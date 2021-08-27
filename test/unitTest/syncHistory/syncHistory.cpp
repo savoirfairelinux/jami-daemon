@@ -69,6 +69,7 @@ private:
     void testSyncCreateAccountExportDeleteReimportWithConvReq();
     void testSyncOneToOne();
     void testConversationRequestRemoved();
+    void testProfileReceivedMultiDevice();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
     CPPUNIT_TEST(testCreateConversationThenSync);
@@ -82,6 +83,7 @@ private:
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
     CPPUNIT_TEST(testSyncOneToOne);
     CPPUNIT_TEST(testConversationRequestRemoved);
+    CPPUNIT_TEST(testProfileReceivedMultiDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -950,6 +952,118 @@ SyncHistoryTest::testConversationRequestRemoved()
 
     DRing::unregisterSignalHandlers();
     std::remove(aliceArchive.c_str());
+}
+
+void
+SyncHistoryTest::testProfileReceivedMultiDevice()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+
+    // Export alice
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    std::remove(aliceArchive.c_str());
+    aliceAccount->exportArchive(aliceArchive);
+
+    // Set VCards
+    std::string vcard = "BEGIN:VCARD\n\
+VERSION:2.1\n\
+FN:TITLE\n\
+DESCRIPTION:DESC\n\
+END:VCARD";
+    auto alicePath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                     + DIR_SEPARATOR_STR + "profile.vcf";
+    auto bobPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                   + DIR_SEPARATOR_STR + "profile.vcf";
+    // Save VCard
+    auto p = std::filesystem::path(alicePath);
+    fileutils::recursive_mkdir(p.parent_path());
+    std::ofstream aliceFile(alicePath);
+    if (aliceFile.is_open()) {
+        aliceFile << vcard;
+        aliceFile.close();
+    }
+    p = std::filesystem::path(bobPath);
+    fileutils::recursive_mkdir(p.parent_path());
+    std::ofstream bobFile(bobPath);
+    if (bobFile.is_open()) {
+        bobFile << vcard;
+        bobFile.close();
+    }
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, bobProfileReceived = false,
+         aliceProfileReceived = false;
+    std::string convId = "";
+    std::string bobDest = aliceAccount->dataTransfer()->profilePath(bobUri);
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ProfileReceived>(
+        [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
+            if (accountId == aliceId && peerId == bobUri) {
+                bobProfileReceived = true;
+                auto p = std::filesystem::path(bobDest);
+                fileutils::recursive_mkdir(p.parent_path());
+                std::rename(path.c_str(), bobDest.c_str());
+            } else if (accountId == bobId && peerId == aliceUri) {
+                aliceProfileReceived = true;
+            } else if (accountId == alice2Id && peerId == bobUri) {
+                bobProfileReceived = true;
+            } else if (accountId == alice2Id && peerId == aliceUri) {
+                aliceProfileReceived = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && bobProfileReceived && aliceProfileReceived;
+    }));
+    CPPUNIT_ASSERT(fileutils::isFile(bobDest));
+
+    // Now create alice2
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "ALICE2";
+    details[ConfProperties::ALIAS] = "ALICE2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+    bobProfileReceived = false, aliceProfileReceived = false;
+    alice2Id = Manager::instance().addAccount(details);
+    std::remove(aliceArchive.c_str());
+
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return aliceProfileReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bobProfileReceived; }));
+    DRing::unregisterSignalHandlers();
 }
 
 } // namespace test
