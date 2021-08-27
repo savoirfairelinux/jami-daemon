@@ -252,7 +252,12 @@ void
 MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
 {
     std::lock_guard<std::mutex> lkSockets(socketsMutex);
-    auto socket = makeSocket(name, channel);
+    auto& socket = sockets[channel];
+    if (!socket) {
+        socket = makeSocket(name, channel);
+        JAMI_ERR() << "Accepting a request without socket created. This is a bug! Channel's name: "
+                   << name;
+    }
     onChannelReady_(deviceId, socket);
     socket->ready();
 }
