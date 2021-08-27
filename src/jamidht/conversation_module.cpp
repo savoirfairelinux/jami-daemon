@@ -485,6 +485,21 @@ ConversationModule::Impl::handlePendingConversations()
                                                                         *commits.rbegin(),
                                                                         true);
                                 });
+                        // If we clone from another device, the avatar of the other member is not
+                        // sent. So ask for it.
+                        if (auto cert = tls::CertificateStore::instance().getCertificate(deviceId)) {
+                            if (cert->issuer
+                                && cert->issuer->getId().toString() == sthis->username_) {
+                                if (auto acc = sthis->account_.lock()) {
+                                    for (const auto& member : conversation->getMembers()) {
+                                        if (member.at("uri") != sthis->username_)
+                                            acc->askForProfile(conversationId,
+                                                               deviceId,
+                                                               member.at("uri"));
+                                    }
+                                }
+                            }
+                        }
                     }
                 } catch (const std::exception& e) {
                     emitSignal<DRing::ConversationSignal::OnConversationError>(sthis->accountId_,

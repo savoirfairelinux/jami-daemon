@@ -69,7 +69,6 @@ SyncChannelHandler::onReady(const DeviceId& deviceId,
     if (!cert || !acc || !acc->syncModule())
         return;
     acc->syncModule()->cacheSyncConnection(std::move(channel), cert->getIssuerUID(), deviceId);
-    acc->sendProfile(deviceId.toString());
 }
 
 } // namespace jami
