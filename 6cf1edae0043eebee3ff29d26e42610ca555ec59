@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "05f0a5f9_0e198a38",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-27T13:58:29Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "3182ed55_11c59a38",
+      "range": {
+        "startLine": 105,
+        "startChar": 32,
+        "endLine": 105,
+        "endChar": 34
+      },
+      "revId": "6cf1edae0043eebee3ff29d26e42610ca555ec59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e32830da_c8a97f96",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d19b6fb9_cf9ca1a0",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-27T13:58:29Z",
+      "side": 1,
+      "message": "reverted",
+      "parentUuid": "e32830da_c8a97f96",
+      "range": {
+        "startLine": 271,
+        "startChar": 4,
+        "endLine": 275,
+        "endChar": 5
+      },
+      "revId": "6cf1edae0043eebee3ff29d26e42610ca555ec59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d32ad292_616a4063",
@@ -60,6 +108,30 @@
       "writtenOn": "2021-08-26T20:08:42Z",
       "side": 1,
       "message": "why?",
+      "range": {
+        "startLine": 56,
+        "startChar": 28,
+        "endLine": 56,
+        "endChar": 43
+      },
+      "revId": "6cf1edae0043eebee3ff29d26e42610ca555ec59",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd45e06d_cf968593",
+        "filename": "src/media/video/sinkclient.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-27T13:58:29Z",
+      "side": 1,
+      "message": "the IDs are too long, and make the logs un-unusable. Any way, reverted. Will use the pointer instead to id the the instance in the logs.",
+      "parentUuid": "d32ad292_616a4063",
       "range": {
         "startLine": 56,
         "startChar": 28,
