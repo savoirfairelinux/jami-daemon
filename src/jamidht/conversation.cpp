@@ -889,6 +889,22 @@ Conversation::sync(const std::string& member,
         }
         // We need a new channel
         account->transferFile(id(), std::string(account->profilePath()), deviceId, "profile.vcf", "");
+
+        // Also sync members if self
+        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+        if (!cert || !cert->issuer || cert->issuer->getId().toString() != account->getUsername())
+            return;
+        JAMI_INFO() << "Sync contacts' profiles with " << deviceId;
+        auto members = pimpl_->repository_->members();
+        for (const auto& member : members) {
+            if (member.uri == account->getUsername())
+                continue;
+            account->transferFile(id(),
+                                  std::string(dataTransfer()->profilePath(member.uri)),
+                                  deviceId,
+                                  "profile/" + member.uri + ".vcf",
+                                  "");
+        }
     }
 }
 
@@ -932,6 +948,8 @@ Conversation::isRemoving()
 void
 Conversation::erase()
 {
+    if (pimpl_->conversationDataPath_ != "")
+        fileutils::removeAll(pimpl_->conversationDataPath_, true);
     if (!pimpl_->repository_)
         return;
     std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
