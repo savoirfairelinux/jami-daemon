@@ -43,7 +43,9 @@ libringacc_la_SOURCES = \
         archive_account_manager.h \
         archive_account_manager.cpp \
         server_account_manager.h \
-        server_account_manager.cpp
+        server_account_manager.cpp \
+        transfer_channel_handler.h \
+        transfer_channel_handler.cpp
 
 if RINGNS
 libringacc_la_SOURCES += \
