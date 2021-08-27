@@ -571,6 +571,10 @@ public:
 
     AccountManager* accountManager() { return accountManager_.get(); }
 
+    bool sha3SumVerify() const {
+        return !noSha3sumVerification_;
+    }
+
 private:
     NON_COPYABLE(JamiAccount);
 
