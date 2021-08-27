@@ -24,7 +24,8 @@ static constexpr const char SYNC_URI[] {"sync://"};
 
 namespace jami {
 
-SyncChannelHandler::SyncChannelHandler(std::weak_ptr<JamiAccount>&& acc, ConnectionManager& cm)
+SyncChannelHandler::SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc,
+                                       ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
@@ -69,7 +70,6 @@ SyncChannelHandler::onReady(const DeviceId& deviceId,
     if (!cert || !acc || !acc->syncModule())
         return;
     acc->syncModule()->cacheSyncConnection(std::move(channel), cert->getIssuerUID(), deviceId);
-    acc->sendProfile(deviceId.toString());
 }
 
 } // namespace jami

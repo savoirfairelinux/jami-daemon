@@ -35,6 +35,8 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/channel_handler.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/conversation_channel_handler.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/conversation_channel_handler.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/transfer_channel_handler.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/transfer_channel_handler.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/conversation_module.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/conversation_module.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/namedirectory.cpp"

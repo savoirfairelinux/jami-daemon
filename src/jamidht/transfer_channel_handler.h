@@ -27,35 +27,36 @@
 namespace jami {
 
 /**
- * Manages channels for syncing informations
+ * Manages Conversation's channels
  */
-class SyncChannelHandler : public ChannelHandlerInterface
+class TransferChannelHandler : public ChannelHandlerInterface
 {
 public:
-    SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc, ConnectionManager& cm);
-    ~SyncChannelHandler();
+    TransferChannelHandler(const std::shared_ptr<JamiAccount>& acc, ConnectionManager& cm);
+    ~TransferChannelHandler();
 
     /**
-     * Ask for a new sync channel
+     * Ask for a new channel
+     * This replaces the connectDevice() in jamiaccount
      * @param deviceId      The device to connect
-     * @param name          (Unused, generated from deviceId)
+     * @param channelName   The name of the channel
      * @param cb            The callback to call when connected (can be immediate if already connected)
      */
-    void connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb) override;
+    void connect(const DeviceId& deviceId, const std::string& channelName, ConnectCb&& cb) override;
 
     /**
-     * Determine if we accept or not the sync request
-     * @param deviceId      Device who asked
-     * @param name          Name asked
-     * @return if the channel is for a valid conversation and device not banned
+     * Determine if we accept or not the request
+     * @param deviceId      device who asked
+     * @param name          name asked
+     * @return if we accept or not
      */
     bool onRequest(const DeviceId& deviceId, const std::string& name) override;
 
     /**
-     * Launch sync process
-     * @param deviceId      Device who asked
-     * @param name          Name asked
-     * @param channel       Channel used to sync
+     * Handle socket ready
+     * @param deviceId      Related device
+     * @param name          Name of the handler
+     * @param channel       Channel to handle
      */
     void onReady(const DeviceId& deviceId,
                  const std::string& name,
@@ -64,6 +65,8 @@ public:
 private:
     std::weak_ptr<JamiAccount> account_;
     ConnectionManager& connectionManager_;
+
+    std::string idPath_;
 };
 
 } // namespace jami

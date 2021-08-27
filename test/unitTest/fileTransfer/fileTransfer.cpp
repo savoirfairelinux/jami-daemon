@@ -70,6 +70,7 @@ private:
     void testMultipleFileTransfer();
     void testConversationFileTransfer();
     void testFileTransferInConversation();
+    void testVcfFileTransferInConversation();
     void testBadSha3sumOut();
     void testBadSha3sumIn();
     void testAskToMultipleParticipants();
@@ -83,6 +84,7 @@ private:
     CPPUNIT_TEST(testMultipleFileTransfer);
     CPPUNIT_TEST(testConversationFileTransfer);
     CPPUNIT_TEST(testFileTransferInConversation);
+    CPPUNIT_TEST(testVcfFileTransferInConversation);
     CPPUNIT_TEST(testBadSha3sumOut);
     CPPUNIT_TEST(testBadSha3sumIn);
     CPPUNIT_TEST(testAskToMultipleParticipants);
@@ -162,7 +164,9 @@ FileTransferTest::testFileTransfer()
     DRing::registerSignalHandlers(confHandlers);
 
     // Create file to send
-    std::ofstream sendFile(sendPath);
+    auto sendVcfPath = sendPath + ".vcf";
+    auto recvVcfPath = recvPath + ".vcf";
+    std::ofstream sendFile(sendVcfPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
@@ -172,15 +176,15 @@ FileTransferTest::testFileTransfer()
     uint64_t id;
     info.accountId = aliceAccount->getAccountID();
     info.peer = bobUri;
-    info.path = sendPath;
-    info.displayName = "SEND";
+    info.path = sendVcfPath;
+    info.displayName = "SEND.vcf";
     info.bytesProgress = 0;
     CPPUNIT_ASSERT(DRing::sendFileLegacy(info, id) == DRing::DataTransferError::success);
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(transferWaiting);
 
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, finalId, recvPath)
+    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, finalId, recvVcfPath)
                    == DRing::DataTransferError::success);
 
     // Wait 2 times, both sides will got a finished status
@@ -188,14 +192,12 @@ FileTransferTest::testFileTransfer()
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(transferFinished);
 
-    CPPUNIT_ASSERT(compare(info.path, recvPath));
+    CPPUNIT_ASSERT(compare(info.path, recvVcfPath));
 
     // TODO FIX ME. The ICE take some time to stop and it doesn't seems to like
     // when stopping the daemon and removing the accounts to soon.
-    std::remove(sendPath.c_str());
-    std::remove(recvPath.c_str());
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::remove(sendVcfPath.c_str());
+    std::remove(recvVcfPath.c_str());
 }
 
 void
@@ -288,8 +290,6 @@ FileTransferTest::testDataTransferInfo()
     // when stopping the daemon and removing the accounts to soon.
     std::remove(sendPath.c_str());
     std::remove(recvPath.c_str());
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
 }
 
 void
@@ -391,8 +391,6 @@ FileTransferTest::testMultipleFileTransfer()
     std::remove(sendPath2.c_str());
     std::remove(recvPath.c_str());
     std::remove(recv2Path.c_str());
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
 }
 
 void
@@ -516,6 +514,103 @@ FileTransferTest::testConversationFileTransfer()
 
 void
 FileTransferTest::testFileTransferInConversation()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    auto convId = DRing::startConversation(aliceId);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    bool bobJoined = false;
+    std::string tidBob, iidBob;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> message) {
+            if (message["type"] == "application/data-transfer+json") {
+                if (accountId == bobId) {
+                    tidBob = message["fileId"];
+                    iidBob = message["id"];
+                }
+            }
+            if (accountId == aliceId && message["type"] == "member" && message["action"] == "join") {
+                bobJoined = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    bool transferAFinished = false, transferBFinished = false;
+    // Watch signals
+    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::string&,
+            const std::string&,
+            int code) {
+            if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
+                && conversationId == convId) {
+                if (accountId == aliceId)
+                    transferAFinished = true;
+                else if (accountId == bobId)
+                    transferBFinished = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && bobJoined;
+    }));
+
+    // Create file to send
+    std::ofstream sendFile(sendPath);
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << std::string(64000, 'A');
+    sendFile.close();
+
+    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
+
+    transferAFinished = false;
+    transferBFinished = false;
+    DRing::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return transferAFinished && transferBFinished;
+    }));
+
+    std::remove(sendPath.c_str());
+    std::remove(recvPath.c_str());
+    DRing::unregisterSignalHandlers();
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+}
+
+void
+FileTransferTest::testVcfFileTransferInConversation()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
