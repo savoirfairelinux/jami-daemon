@@ -32,7 +32,7 @@ namespace jami {
 class ConversationChannelHandler : public ChannelHandlerInterface
 {
 public:
-    ConversationChannelHandler(std::weak_ptr<JamiAccount>&& acc, ConnectionManager& cm);
+    ConversationChannelHandler(const std::shared_ptr<JamiAccount>& acc, ConnectionManager& cm);
     ~ConversationChannelHandler();
 
     /**

@@ -43,7 +43,9 @@ libringacc_la_SOURCES = \
 	./jamidht/sync_channel_handler.h \
 	./jamidht/sync_channel_handler.cpp \
 	./jamidht/sync_module.h \
-	./jamidht/sync_module.cpp
+	./jamidht/sync_module.cpp \
+	./jamidht/transfer_channel_handler.h \
+	./jamidht/transfer_channel_handler.cpp
 
 if RINGNS
 libringacc_la_SOURCES += \
