@@ -1091,7 +1091,7 @@ Conversation::downloadFile(const std::string& interactionId,
                                                         sha3sum,
                                                         path,
                                                         totalSize);
-                acc->askForFileChannel(shared->id(), deviceId, fileId, start, end);
+                acc->askForFileChannel(shared->id(), deviceId, interactionId, fileId, start, end);
             }
         });
     return true;
