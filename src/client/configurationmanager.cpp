@@ -1047,9 +1047,8 @@ pushNotificationReceived(const std::string& from, const std::map<std::string, st
     try {
         auto it = data.find("to");
         if (it != data.end()) {
-            auto account = jami::Manager::instance().getAccount<JamiAccount>(it->second);
-
-            account->pushNotificationReceived(from, data);
+            if (auto account = jami::Manager::instance().getAccount<JamiAccount>(it->second))
+                account->pushNotificationReceived(from, data);
         }
 #if defined(__ANDROID__) || defined(ANDROID) || defined(__Apple__)
         else {
