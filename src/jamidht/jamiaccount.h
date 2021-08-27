@@ -564,6 +564,10 @@ public:
                            size_t start = 0,
                            size_t end = 0);
 
+    void askForProfile(const std::string& conversationId,
+                       const std::string& deviceId,
+                       const std::string& memberUri);
+
     /**
      * Retrieve linked transfer manager
      * @param id    conversationId or empty for fallback
@@ -581,7 +585,7 @@ public:
     // Note: when swarm will be merged, this can be moved in transferManager
     bool needToSendProfile(const std::string& deviceId);
     /**
-     * Send Profile via cached SIP connection
+     * Send profile via cached SIP connection
      * @param deviceId      Device that will receive the profile
      */
     void sendProfile(const std::string& deviceId);
@@ -589,6 +593,8 @@ public:
     std::string profilePath() const;
 
     AccountManager* accountManager() { return accountManager_.get(); }
+
+    bool sha3SumVerify() const { return !noSha3sumVerification_; }
 
 private:
     NON_COPYABLE(JamiAccount);
