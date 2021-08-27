@@ -28,12 +28,13 @@ class Uri
 {
 public:
     enum class Scheme {
-        JAMI,        // Start with "jami:" and 45 ASCII chars OR 40 ASCII chars
-        SIP,         // Start with "sip:"
-        SWARM,       // Start with "swarm:" and 40 ASCII chars
-        GIT,         // Start with "git:"
-        SYNC,        // Start with "sync:"
-        UNRECOGNIZED // Anything that doesn't fit in other categories
+        JAMI,          // Start with "jami:" and 45 ASCII chars OR 40 ASCII chars
+        SIP,           // Start with "sip:"
+        SWARM,         // Start with "swarm:" and 40 ASCII chars
+        GIT,           // Start with "git:"
+        DATA_TRANSFER, // Start with "data-transfer://"
+        SYNC,          // Start with "sync:"
+        UNRECOGNIZED   // Anything that doesn't fit in other categories
     };
 
     Uri(const std::string_view& uri);

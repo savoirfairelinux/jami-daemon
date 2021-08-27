@@ -40,6 +40,7 @@
 #include "multiplexed_socket.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
+#include "transfer_channel_handler.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -2174,38 +2175,6 @@ JamiAccount::doRegister_()
                     std::lock_guard<std::mutex> lk(transfersMtx_);
                     incomingFileTransfers_.emplace(tid);
                     return true;
-                } else if (isDataTransfer) {
-                    // Check if sync request is from same account
-                    std::promise<bool> accept;
-                    std::future<bool> fut = accept.get_future();
-
-                    auto idstr = name.substr(16);
-                    auto sep = idstr.find('/');
-                    auto lastSep = idstr.find_last_of('/');
-                    auto conversationId = idstr.substr(0, sep);
-                    auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
-                    auto fileId = idstr.substr(lastSep + 1);
-                    if (fileHost == currentDeviceId())
-                        return false;
-
-                    sep = fileId.find_last_of('?');
-                    if (sep != std::string::npos) {
-                        fileId = fileId.substr(0, sep);
-                    }
-
-                    // Check if peer is member of the conversation
-                    if (fileId == "profile.vcf") {
-                        auto members = convModule()->getConversationMembers(conversationId);
-                        return std::find_if(members.begin(),
-                                            members.end(),
-                                            [&](auto m) { return m["uri"] == issuer; })
-                               != members.end();
-                    }
-
-                    return convModule()->onFileChannelRequest(conversationId,
-                                                              issuer,
-                                                              fileId,
-                                                              !noSha3sumVerification_);
                 }
                 return false;
             });
@@ -2230,7 +2199,7 @@ JamiAccount::doRegister_()
                         return;
                     incomingFileTransfers_.erase(it);
                     lk.unlock();
-                    std::function<void(const std::string&)> cb;
+                    InternalCompletionCb cb;
                     if (isVCard)
                         cb = [peerId, accountId = getAccountID()](const std::string& path) {
                             emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
@@ -2305,53 +2274,6 @@ JamiAccount::doRegister_()
                             shared->gitServers_.erase(serverId);
                         });
                     });
-                } else if (name.find(DATA_TRANSFER_URI) == 0) {
-                    auto idstr = name.substr(16);
-                    auto sep = idstr.find('/');
-                    auto lastSep = idstr.find_last_of('/');
-                    auto conversationId = idstr.substr(0, sep);
-                    auto fileId = idstr.substr(lastSep + 1);
-                    if (channel->isInitiator())
-                        return;
-
-                    sep = fileId.find_last_of('?');
-                    std::string arguments;
-                    if (sep != std::string::npos) {
-                        arguments = fileId.substr(sep + 1);
-                        fileId = fileId.substr(0, sep);
-                    }
-
-                    if (fileId == "profile.vcf") {
-                        std::string path = fileutils::sha3File(idPath_ + DIR_SEPARATOR_STR
-                                                               + "profile.vcf");
-                        dataTransfer()->transferFile(channel, fileId, "", path);
-                        return;
-                    }
-                    auto dt = dataTransfer(conversationId);
-                    sep = fileId.find('_');
-                    if (!dt or sep == std::string::npos) {
-                        channel->shutdown();
-                        return;
-                    }
-                    auto interactionId = fileId.substr(0, sep);
-                    std::string path = dt->path(fileId);
-                    auto start = 0u, end = 0u;
-                    for (const auto arg : jami::split_string(arguments, '&')) {
-                        auto keyVal = jami::split_string(arg, '=');
-                        if (keyVal.size() == 2) {
-                            if (keyVal[0] == "start") {
-                                std::from_chars(keyVal[1].data(),
-                                                keyVal[1].data() + keyVal[1].size(),
-                                                start);
-                            } else if (keyVal[0] == "end") {
-                                std::from_chars(keyVal[1].data(),
-                                                keyVal[1].data() + keyVal[1].size(),
-                                                end);
-                            }
-                        }
-                    }
-
-                    dt->transferFile(channel, fileId, interactionId, path, start, end);
                 } else {
                     // TODO move git://
                     auto uri = Uri(name);
@@ -2477,7 +2399,6 @@ JamiAccount::convModule()
                     // Here, we also accepts the trust request linked
                     // Because, if convId is for a multi swarm, to sync,
                     // we also need for contactUri to be a contact.
-                    JAMI_ERR() << "@@@ ACCEPT!";
                     acceptTrustRequest(contactUri, true);
                 } else {
                     updateConvForContact(contactUri, convId, "");
@@ -4144,12 +4065,16 @@ JamiAccount::sendProfile(const std::string& deviceId)
 
         sendFile(deviceId,
                  idPath_ + DIR_SEPARATOR_STR + "profile.vcf",
-                 [deviceId, accId = getAccountID()](const std::string&) {
+                 [deviceId, this](const std::string&) {
                      // Mark the VCard as sent
-                     auto path = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + accId
+                     auto path = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
                                  + DIR_SEPARATOR_STR + "vcard" + DIR_SEPARATOR_STR + deviceId;
+                     std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
+                     if (fileutils::isFile(path))
+                         return;
                      fileutils::ofstream(path);
                  });
+
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
     }
@@ -4413,7 +4338,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                     auto dt = shared->dataTransfer(conversationId);
                     if (!dt)
                         return;
-                    if (fileId == "profile.vcf")
+                    if (fileId.find(".vcf") != std::string::npos)
                         dt->onIncomingProfile(channel);
                     else
                         dt->onIncomingFileTransfer(fileId, channel);
@@ -4439,6 +4364,33 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
 }
 
 void
+JamiAccount::askForProfile(const std::string& conversationId,
+                           const std::string& deviceId,
+                           const std::string& memberUri)
+{
+    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    if (!connectionManager_)
+        return;
+
+    auto channelName = DATA_TRANSFER_URI + conversationId + "/profile/" + memberUri + ".vcf";
+    // We can avoid to negotiate new sessions, as the file notif
+    // probably come from an online device or last connected device.
+    connectionManager_->connectDevice(
+        DeviceId(deviceId),
+        channelName,
+        [this, conversationId](std::shared_ptr<ChannelSocket> channel, const DeviceId&) {
+            if (!channel)
+                return;
+            dht::ThreadPool::io().run([w = weak(), conversationId, channel] {
+                if (auto shared = w.lock())
+                    if (auto dt = shared->dataTransfer(conversationId))
+                        dt->onIncomingProfile(channel);
+            });
+        },
+        false);
+}
+
+void
 JamiAccount::initConnectionManager()
 {
     if (!connectionManager_) {
@@ -4447,6 +4399,8 @@ JamiAccount::initConnectionManager()
             = std::make_unique<ConversationChannelHandler>(weak(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::SYNC]
             = std::make_unique<SyncChannelHandler>(weak(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::DATA_TRANSFER]
+            = std::make_unique<TransferChannelHandler>(weak(), *connectionManager_.get());
     }
 }
 
