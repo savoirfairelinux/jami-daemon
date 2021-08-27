@@ -571,6 +571,8 @@ public:
 
     AccountManager* accountManager() { return accountManager_.get(); }
 
+    bool sha3SumVerify() const { return !noSha3sumVerification_; }
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -904,10 +906,10 @@ private:
                         pjsip_endpt_send_callback cb);
 
     /**
-     * Send Profile via cached SIP connection
+     * Send profiles via cached SIP connection
      * @param deviceId      Device that will receive the profile
      */
-    void sendProfile(const std::string& deviceId);
+    void sendProfiles(const std::string& deviceId);
 
     std::mutex gitServersMtx_ {};
     std::map<dht::Value::Id, std::unique_ptr<GitServer>> gitServers_ {};
