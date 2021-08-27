@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b2a59603_8c83b0fe",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 335,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-27T14:17:48Z",
+      "side": 1,
+      "message": "%*.s",
+      "range": {
+        "startLine": 335,
+        "startChar": 29,
+        "endLine": 335,
+        "endChar": 33
+      },
+      "revId": "478f5b962bd210e42197560878c06f4a97e73eda",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
