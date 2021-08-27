@@ -20,14 +20,15 @@
 
 #include "data_transfer.h"
 
-#include "manager.h"
-#include "jamidht/jamiaccount.h"
-#include "peer_connection.h"
-#include "fileutils.h"
-#include "string_utils.h"
-#include "map_utils.h"
+#include "base64.h"
 #include "client/ring_signal.h"
+#include "fileutils.h"
+#include "jamidht/jamiaccount.h"
 #include "jamidht/p2p.h"
+#include "manager.h"
+#include "map_utils.h"
+#include "peer_connection.h"
+#include "string_utils.h"
 
 #include <thread>
 #include <stdexcept>
@@ -709,7 +710,7 @@ FileInfo::emit(DRing::DataTransferEventCode code)
 {
     if (finishedCb_ && code >= DRing::DataTransferEventCode::finished)
         finishedCb_(uint32_t(code));
-    if (fileId_ != "profile.vcf") {
+    if (fileId_.find(".vcf") == std::string::npos) {
         // Else it's an internal transfer
         runOnMainThread([info = info_, iid = interactionId_, fid = fileId_, code]() {
             emitSignal<DRing::DataTransferSignal::DataTransferEvent>(info.accountId,
@@ -881,6 +882,8 @@ public:
                                     + to_;
             fileutils::check_dir(conversationDataPath_.c_str());
             waitingPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "waiting";
+            profilesPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
+                            + DIR_SEPARATOR_STR + "profiles";
         }
         loadWaiting();
     }
@@ -918,6 +921,7 @@ public:
     std::string accountId_ {};
     std::string to_ {};
     std::string waitingPath_ {};
+    std::string profilesPath_ {};
     std::string conversationDataPath_ {};
 
     // Pre swarm
@@ -1312,6 +1316,13 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
         });
         res.first->second->process();
     }
+}
+
+std::string_view
+TransferManager::profilePath(const std::string& contactId) const
+{
+    // TODO Android? iOS?
+    return pimpl_->profilesPath_ + DIR_SEPARATOR_STR + base64::encode(contactId) + ".vcf";
 }
 
 std::vector<WaitingRequest>
