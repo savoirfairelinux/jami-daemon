@@ -234,6 +234,12 @@ public:
     std::vector<WaitingRequest> waitingRequests() const;
     void onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel);
 
+    /**
+     * @param contactId     contact's id
+     * @return where profile.vcf is stored
+     */
+    std::string profilePath(const std::string& contactId) const;
+
 private:
     std::weak_ptr<TransferManager> weak()
     {
