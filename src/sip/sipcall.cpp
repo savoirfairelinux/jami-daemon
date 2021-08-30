@@ -2997,12 +2997,6 @@ SIPCall::merge(Call& call)
     pj_strcpy(&contactHeader_, &subcall.contactHeader_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
-    {
-        std::lock_guard<std::mutex> lk(transportMtx_);
-        resetTransport(std::move(mediaTransport_));
-        mediaTransport_ = std::move(subcall.mediaTransport_);
-    }
-
     peerUserAgent_ = subcall.peerUserAgent_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
 
@@ -3053,8 +3047,15 @@ SIPCall::setupIceResponse()
     auto opt = account->getIceOptions();
 
     opt.accountPublicAddr = account->getPublishedIpAddress();
-    opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
-                                                      opt.accountPublicAddr.getFamily());
+    if (opt.accountPublicAddr) {
+        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
+                                                          opt.accountPublicAddr.getFamily());
+    } else {
+        // Just set the local address for both, most likely the account is not
+        // registered.
+        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), AF_INET);
+        opt.accountPublicAddr = opt.accountLocalAddr;
+    }
 
     if (not opt.accountLocalAddr) {
         JAMI_ERR("[call:%s] No local address, ICE can't be initialized", getCallId().c_str());
@@ -3063,10 +3064,9 @@ SIPCall::setupIceResponse()
     }
 
     if (not initIceMediaTransport(false, opt)) {
+        // ICE media is enabled but failed to initialize. So this
+        // call is aborted.
         JAMI_ERR("[call:%s] ICE initialization failed", getCallId().c_str());
-        // Fatal condition
-        // TODO: what's SIP rfc says about that?
-        // (same question in startIceMedia)
         onFailure(EIO);
         return;
     }
