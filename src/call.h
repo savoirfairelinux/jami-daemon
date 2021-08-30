@@ -199,8 +199,6 @@ public:
 
     std::string getStateStr() const;
 
-    void setIPToIP(bool IPToIP) { isIPToIP_ = IPToIP; }
-
     virtual std::map<std::string, std::string> getDetails() const;
     static std::map<std::string, std::string> getNullDetails();
 
@@ -466,9 +464,6 @@ protected:
 
     /** Inactive/Active/Hold/Busy/Error */
     CallState callState_ {CallState::INACTIVE};
-
-    /** Direct IP-to-IP or classic call */
-    bool isIPToIP_ {false};
 
     /** Number of the peer */
     std::string peerNumber_ {};
