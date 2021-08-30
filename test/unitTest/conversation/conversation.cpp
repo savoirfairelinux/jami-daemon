@@ -407,7 +407,10 @@ ConversationTest::testRemoveConversationNoMember()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto dataPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(fileutils::isDirectory(dataPath));
 
     auto conversations = aliceAccount->getConversations();
     CPPUNIT_ASSERT(conversations.size() == 1);
@@ -416,6 +419,7 @@ ConversationTest::testRemoveConversationNoMember()
     conversations = aliceAccount->getConversations();
     CPPUNIT_ASSERT(conversations.size() == 0);
     CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(!fileutils::isDirectory(dataPath));
 }
 
 void
