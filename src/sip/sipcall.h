@@ -236,6 +236,17 @@ public:
     bool remoteHasValidIceAttributes();
     void addLocalIceAttributes();
 
+    std::shared_ptr<IceTransport> getIceMedia() const
+    {
+        std::lock_guard<std::mutex> lk(transportMtx_);
+        return mediaTransport_;
+    };
+    
+    /**
+     * Set ICE instance. Must be called only for sub-calls
+     */
+    void setIceMedia(std::shared_ptr<IceTransport> ice);
+
     /**
      * Setup ICE locally to answer to an ICE offer. The ICE session has
      * the controlled role (slave)
