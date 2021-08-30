@@ -2998,12 +2998,6 @@ SIPCall::merge(Call& call)
     pj_strcpy(&contactHeader_, &subcall.contactHeader_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
-    {
-        std::lock_guard<std::mutex> lk(transportMtx_);
-        resetTransport(std::move(mediaTransport_));
-        mediaTransport_ = std::move(subcall.mediaTransport_);
-    }
-
     peerUserAgent_ = subcall.peerUserAgent_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
 
@@ -3056,12 +3050,13 @@ SIPCall::setupIceResponse()
     // Try to use the discovered public address. If not available,
     // fallback on local address.
     opt.accountPublicAddr = account->getPublishedIpAddress();
-    if (opt.accountPublicAddr) {
+    if (opt.accountLocalAddr) {
         opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                           opt.accountPublicAddr.getFamily());
     } else {
-        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
-                                                          pj_AF_INET());
+        // Just set the local address for both, most likely the account is not
+        // registered.
+        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), AF_INET);
         opt.accountPublicAddr = opt.accountLocalAddr;
     }
 
