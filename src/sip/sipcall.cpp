@@ -2935,9 +2935,6 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
 
-    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(), iceOptions);
-
-    // Destroy old ice on a separate io pool
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
         resetTransport(std::move(mediaTransport_));
@@ -2998,12 +2995,6 @@ SIPCall::merge(Call& call)
     pj_strcpy(&contactHeader_, &subcall.contactHeader_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
-    {
-        std::lock_guard<std::mutex> lk(transportMtx_);
-        resetTransport(std::move(mediaTransport_));
-        mediaTransport_ = std::move(subcall.mediaTransport_);
-    }
-
     peerUserAgent_ = subcall.peerUserAgent_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
 
@@ -3060,8 +3051,9 @@ SIPCall::setupIceResponse()
         opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                           opt.accountPublicAddr.getFamily());
     } else {
-        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
-                                                          pj_AF_INET());
+        // Just set the local address for both, most likely the account is not
+        // registered.
+        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), AF_INET);
         opt.accountPublicAddr = opt.accountLocalAddr;
     }
 

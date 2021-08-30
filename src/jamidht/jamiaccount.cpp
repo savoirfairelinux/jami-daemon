@@ -424,7 +424,12 @@ JamiAccount::newOutgoingCall(std::string_view toUrl,
     if (not call)
         return {};
 
-    newOutgoingCallHelper(call, toUrl);
+    getIceOptions([w = weak(), call, to = std::string(toUrl)](auto&& opts) {
+        if (auto acc = w.lock()) {
+            call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
+            acc->newOutgoingCallHelper(call, to);
+        }
+    });
 
     return call;
 }
@@ -442,7 +447,12 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
     if (not call)
         return {};
 
-    newOutgoingCallHelper(call, toUrl);
+    getIceOptions([w = weak(), call, to = std::string(toUrl)](auto&& opts) {
+        if (auto acc = w.lock()) {
+            call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
+            acc->newOutgoingCallHelper(call, to);
+        }
+    });
 
     return call;
 }
@@ -491,7 +501,6 @@ std::shared_ptr<SIPCall>
 JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
 {
     auto mediaList = MediaAttribute::mediaAttributesToMediaMaps(mainCall->getMediaAttributeList());
-
     if (not mediaList.empty()) {
         return Manager::instance().callFactory.newSipCall(shared(),
                                                           Call::CallType::OUTGOING,
@@ -567,6 +576,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     auto dummyCall = createSubCall(call);
 
     call->addSubCall(*dummyCall);
+    dummyCall->setIceMedia(call->getIceMedia());
     auto sendRequest =
         [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
                                                                bool eraseDummy) {
@@ -585,7 +595,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 return;
 
             auto dev_call = createSubCall(call);
-            dev_call->setIPToIP(true);
+
             dev_call->setState(Call::ConnectionState::TRYING);
             call->addStateListener(
                 [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
@@ -596,6 +606,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                     }
                 });
             call->addSubCall(*dev_call);
+            dev_call->setIceMedia(call->getIceMedia());
             {
                 std::lock_guard<std::mutex> lk(pendingCallsMutex_);
                 pendingCalls_[deviceId].emplace_back(dev_call);
@@ -634,6 +645,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         dev_call->setTransport(transport);
         call->addSubCall(*dev_call);
+        dev_call->setIceMedia(call->getIceMedia());
+
         // Set the call in PROGRESSING State because the ICE session
         // is already ready. Note that this line should be after
         // addSubcall() to change the state of the main call
@@ -654,9 +667,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 }
             });
 
-        auto remoted_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
+        auto remote_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
         try {
-            onConnectedOutgoingCall(dev_call, toUri, remoted_address);
+            onConnectedOutgoingCall(dev_call, toUri, remote_address);
         } catch (const VoipLinkException&) {
             // In this case, the main scenario is that SIPStartCall failed because
             // the ICE is dead and the TLS session didn't send any packet on that dead
@@ -708,70 +721,56 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         return;
     JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
 
-    getIceOptions([=](auto&& opts) {
-        opts.onInitDone = [w = weak(), target = std::move(target), call](bool ok) {
-            if (!ok) {
-                JAMI_ERR("ICE medias are not initialized");
-                return;
-            }
-            auto shared = w.lock();
-            if (!shared or !call)
-                return;
+    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
 
-            const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
-                                                                 target.getFamily());
+    IpAddr addrSdp = getPublishedSameasLocal() ? localAddress
+                                               : getPublishedIpAddress(target.getFamily());
 
-            IpAddr addrSdp = shared->getPublishedSameasLocal()
-                                 ? localAddress
-                                 : shared->getPublishedIpAddress(target.getFamily());
+    // fallback on local address
+    if (not addrSdp)
+        addrSdp = localAddress;
 
-            // fallback on local address
-            if (not addrSdp)
-                addrSdp = localAddress;
+    // Initialize the session using ULAW as default codec in case of early media
+    // The session should be ready to receive media once the first INVITE is sent, before
+    // the session initialization is completed
+    if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
+        JAMI_WARN("Could not instantiate codec for early media");
 
-            // Initialize the session using ULAW as default codec in case of early media
-            // The session should be ready to receive media once the first INVITE is sent, before
-            // the session initialization is completed
-            if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
-                JAMI_WARN("Could not instantiate codec for early media");
+    // Building the local SDP offer
+    auto& sdp = call->getSDP();
 
-            // Building the local SDP offer
-            auto& sdp = call->getSDP();
+    sdp.setPublishedIP(addrSdp);
 
-            sdp.setPublishedIP(addrSdp);
+    auto mediaAttrList = call->getMediaAttributeList();
 
-            auto mediaAttrList = call->getMediaAttributeList();
+    if (mediaAttrList.empty()) {
+        JAMI_ERR("Call [%s] has no media. Abort!", call->getCallId().c_str());
+        return;
+    }
 
-            if (mediaAttrList.empty()) {
-                JAMI_ERR("Call [%s] has no media. Abort!", call->getCallId().c_str());
-                return;
-            }
+    if (not sdp.createOffer(mediaAttrList)) {
+        JAMI_ERR("Could not send outgoing INVITE request for new call");
+        return;
+    }
 
-            if (not sdp.createOffer(mediaAttrList)) {
-                JAMI_ERR("Could not send outgoing INVITE request for new call");
-                return;
-            }
+    call->setPeerNumber(to_id);
 
-            // Note: pj_ice_strans_create can call onComplete in the same thread
-            // This means that iceMutex_ in IceTransport can be locked when onInitDone is called
-            // So, we need to run the call creation in the main thread
-            // Also, we do not directly call SIPStartCall before receiving onInitDone, because
-            // there is an inside waitForInitialization that can block the thread.
-            // Note: avoid runMainThread as SIPStartCall use transportMutex
-            dht::ThreadPool::io().run(
-                [w = std::move(w), target = std::move(target), call = std::move(call)] {
-                    auto shared = w.lock();
-                    if (!shared)
-                        return;
+    // TODO_MC. Re-asses this statement.
 
-                    if (not shared->SIPStartCall(*call, target)) {
-                        JAMI_ERR("Could not send outgoing INVITE request for new call");
-                    }
-                });
-        };
-        call->setIPToIP(true);
-        call->setPeerNumber(to_id);
-        call->initIceMediaTransport(true, std::move(opts));
+    // Note: pj_ice_strans_create can call onComplete in the same thread
+    // This means that iceMutex_ in IceTransport can be locked when onInitDone is called
+    // So, we need to run the call creation in the main thread
+    // Also, we do not directly call SIPStartCall before receiving onInitDone, because
+    // there is an inside waitForInitialization that can block the thread.
+    // Note: avoid runMainThread as SIPStartCall use transportMutex
+    dht::ThreadPool::io().run([w = weak(), call = std::move(call), target] {
+        auto account = w.lock();
+        if (not account)
+            return;
+
+        if (not account->SIPStartCall(*call, target)) {
+            JAMI_ERR("Could not send outgoing INVITE request for new call");
+        }
     });
 }
 
@@ -780,7 +779,7 @@ JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
 {
     JAMI_DBG("Start SIP call [%s]", call.getCallId().c_str());
 
-    if (call.isIceEnabled())
+    if (call.getIceMedia())
         call.addLocalIceAttributes();
 
     std::string toUri(getToUri(call.getPeerNumber() + "@"
@@ -2154,71 +2153,71 @@ JamiAccount::doRegister_()
             auto result = fut.get();
             return result;
         });
-        connectionManager_->onChannelRequest([this](const DeviceId& deviceId,
-                                                    const std::string& name) {
-            JAMI_WARN("[Account %s] New channel asked from %s with name %s",
-                      getAccountID().c_str(),
-                      deviceId.to_c_str(),
-                      name.c_str());
+        connectionManager_->onChannelRequest(
+            [this](const DeviceId& deviceId, const std::string& name) {
+                JAMI_WARN("[Account %s] New channel asked from %s with name %s",
+                          getAccountID().c_str(),
+                          deviceId.to_c_str(),
+                          name.c_str());
 
-            auto uri = Uri(name);
-            auto itHandler = channelHandlers_.find(uri.scheme());
-            if (itHandler != channelHandlers_.end() && itHandler->second)
-                return itHandler->second->onRequest(deviceId, name);
-            // TODO replace
-            auto isFile = name.substr(0, 7) == FILE_URI;
-            auto isVCard = name.substr(0, 8) == VCARD_URI;
-            auto isDataTransfer = name.substr(0, 16) == DATA_TRANSFER_URI;
+                auto uri = Uri(name);
+                auto itHandler = channelHandlers_.find(uri.scheme());
+                if (itHandler != channelHandlers_.end() && itHandler->second)
+                    return itHandler->second->onRequest(deviceId, name);
+                // TODO replace
+                auto isFile = name.substr(0, 7) == FILE_URI;
+                auto isVCard = name.substr(0, 8) == VCARD_URI;
+                auto isDataTransfer = name.substr(0, 16) == DATA_TRANSFER_URI;
 
-            auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
-            if (!cert || !cert->issuer)
-                return false;
-            auto issuer = cert->issuer->getId().toString();
-
-            if (name == "sip") {
-                return true;
-            } else if (name.find(SYNC_URI) == 0) {
-                return issuer == accountManager_->getInfo()->accountId;
-            } else if (isFile or isVCard) {
-                auto tid = isFile ? name.substr(7) : name.substr(8);
-                std::lock_guard<std::mutex> lk(transfersMtx_);
-                incomingFileTransfers_.emplace(tid);
-                return true;
-            } else if (isDataTransfer) {
-                // Check if sync request is from same account
-                std::promise<bool> accept;
-                std::future<bool> fut = accept.get_future();
-
-                auto idstr = name.substr(16);
-                auto sep = idstr.find('/');
-                auto lastSep = idstr.find_last_of('/');
-                auto conversationId = idstr.substr(0, sep);
-                auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
-                auto fileId = idstr.substr(lastSep + 1);
-                if (fileHost == currentDeviceId())
+                auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
+                if (!cert || !cert->issuer)
                     return false;
+                auto issuer = cert->issuer->getId().toString();
 
-                sep = fileId.find_last_of('?');
-                if (sep != std::string::npos) {
-                    fileId = fileId.substr(0, sep);
+                if (name == "sip") {
+                    return true;
+                } else if (name.find(SYNC_URI) == 0) {
+                    return issuer == accountManager_->getInfo()->accountId;
+                } else if (isFile or isVCard) {
+                    auto tid = isFile ? name.substr(7) : name.substr(8);
+                    std::lock_guard<std::mutex> lk(transfersMtx_);
+                    incomingFileTransfers_.emplace(tid);
+                    return true;
+                } else if (isDataTransfer) {
+                    // Check if sync request is from same account
+                    std::promise<bool> accept;
+                    std::future<bool> fut = accept.get_future();
+
+                    auto idstr = name.substr(16);
+                    auto sep = idstr.find('/');
+                    auto lastSep = idstr.find_last_of('/');
+                    auto conversationId = idstr.substr(0, sep);
+                    auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
+                    auto fileId = idstr.substr(lastSep + 1);
+                    if (fileHost == currentDeviceId())
+                        return false;
+
+                    sep = fileId.find_last_of('?');
+                    if (sep != std::string::npos) {
+                        fileId = fileId.substr(0, sep);
+                    }
+
+                    // Check if peer is member of the conversation
+                    if (fileId == "profile.vcf") {
+                        auto members = convModule()->getConversationMembers(conversationId);
+                        return std::find_if(members.begin(),
+                                            members.end(),
+                                            [&](auto m) { return m["uri"] == issuer; })
+                               != members.end();
+                    }
+
+                    return convModule()->onFileChannelRequest(conversationId,
+                                                              issuer,
+                                                              fileId,
+                                                              !noSha3sumVerification_);
                 }
-
-                // Check if peer is member of the conversation
-                if (fileId == "profile.vcf") {
-                    auto members = convModule()->getConversationMembers(conversationId);
-                    return std::find_if(members.begin(),
-                                        members.end(),
-                                        [&](auto m) { return m["uri"] == issuer; })
-                           != members.end();
-                }
-
-                return convModule()->onFileChannelRequest(conversationId,
-                                                          issuer,
-                                                          fileId,
-                                                          !noSha3sumVerification_);
-            }
-            return false;
-        });
+                return false;
+            });
         connectionManager_->onConnectionReady([this](const DeviceId& deviceId,
                                                      const std::string& name,
                                                      std::shared_ptr<ChannelSocket> channel) {
