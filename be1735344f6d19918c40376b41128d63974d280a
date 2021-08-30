@@ -50,6 +50,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0e5d6a46_45f2ace5",
+        "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
+        "patchSetId": 2
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-30T19:32:31Z",
+      "side": 1,
+      "message": "But default values should reflect the RFCs. It\u0027s just to propose to change the default value because the RFC says so. After that, if they do this or not, we don\u0027T really care as we can use our own value.",
+      "parentUuid": "a143dd7b_ebba25eb",
+      "range": {
+        "startLine": 14,
+        "startChar": 11,
+        "endLine": 14,
+        "endChar": 34
+      },
+      "revId": "be1735344f6d19918c40376b41128d63974d280a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8ffaf310_5a610fa1",
         "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
         "patchSetId": 2
@@ -85,6 +109,30 @@
       "side": 1,
       "message": "I tried, but since patch 0001-rfc6544.patch is the first, all the subsequent patches needs to be re-generated ... so",
       "parentUuid": "8ffaf310_5a610fa1",
+      "range": {
+        "startLine": 41,
+        "startChar": 14,
+        "endLine": 44,
+        "endChar": 5
+      },
+      "revId": "be1735344f6d19918c40376b41128d63974d280a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "02e8b816_6ef7fb82",
+        "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
+        "patchSetId": 2
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-30T19:32:31Z",
+      "side": 1,
+      "message": "In fact with the changes after, it\u0027s ok for me to keep this here. Also you add some logs.\n\nI added it to package.json also",
+      "parentUuid": "816af8cc_59895d92",
       "range": {
         "startLine": 41,
         "startChar": 14,
@@ -132,6 +180,30 @@
       "side": 1,
       "message": "It\u0027s empirical. At least it must be greater than the one used for UDP.",
       "parentUuid": "e509ff86_e07976bf",
+      "range": {
+        "startLine": 125,
+        "startChar": 90,
+        "endLine": 125,
+        "endChar": 101
+      },
+      "revId": "be1735344f6d19918c40376b41128d63974d280a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b9a9145_bc9568be",
+        "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
+        "patchSetId": 2
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-30T19:32:31Z",
+      "side": 1,
+      "message": "In fact, I think I\u0027d prefer to have PJ_ICE_TCP_TA_VAL, to keep it separated.\n\n200ms seems big. I mean, it\u0027s noticeable. 100ms should eb a max for me.",
+      "parentUuid": "40a7edb8_819aac5b",
       "range": {
         "startLine": 125,
         "startChar": 90,
