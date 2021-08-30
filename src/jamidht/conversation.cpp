@@ -932,6 +932,8 @@ Conversation::isRemoving()
 void
 Conversation::erase()
 {
+    if (pimpl_->conversationDataPath_ != "")
+        fileutils::removeAll(pimpl_->conversationDataPath_, true);
     if (!pimpl_->repository_)
         return;
     std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
