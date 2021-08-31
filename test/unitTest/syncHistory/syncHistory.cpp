@@ -69,6 +69,7 @@ private:
     void testSyncCreateAccountExportDeleteReimportWithConvReq();
     void testSyncOneToOne();
     void testConversationRequestRemoved();
+    void testProfileReceivedMultiDevice();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
     CPPUNIT_TEST(testCreateConversationThenSync);
@@ -82,6 +83,7 @@ private:
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
     CPPUNIT_TEST(testSyncOneToOne);
     CPPUNIT_TEST(testConversationRequestRemoved);
+    CPPUNIT_TEST(testProfileReceivedMultiDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -950,6 +952,78 @@ SyncHistoryTest::testConversationRequestRemoved()
 
     DRing::unregisterSignalHandlers();
     std::remove(aliceArchive.c_str());
+}
+
+
+
+void
+SyncHistoryTest::testProfileReceivedMultiDevice()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+
+    std::string vcard = "BEGIN:VCARD\n\
+VERSION:2.1\n\
+FN:TITLE\n\
+DESCRIPTION:DESC\n\
+END:VCARD";
+    auto alicePath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "profile.vcf";
+    auto alicePath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "profile.vcf";
+    // Save VCard
+    auto p = std::filesystem::path(alicePath);
+    fileutils::recursive_mkdir(p.parent_path());
+    std::ofstream aliceFile(p);
+    if (aliceFile.is_open()) {
+        aliceFile << vcard;
+        aliceFile.close();
+    }
+    p = std::filesystem::path(bobPath);
+    fileutils::recursive_mkdir(p.parent_path());
+    std::ofstream bobFile(p);
+    if (bobFile.is_open()) {
+        bobFile << vcard;
+        bobFile.close();
+    }
+
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+                            emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
+                                                                                    peerId,
+                                                                                    path);
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+
 }
 
 } // namespace test
