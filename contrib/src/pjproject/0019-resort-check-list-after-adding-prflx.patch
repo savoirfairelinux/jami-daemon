@@ -1,31 +1,28 @@
-From 45430f86d00f60c439f936693bf033ff4c066329 Mon Sep 17 00:00:00 2001
+From 361a3999e4c75aed5f4f501eb9ede5a87e07351c Mon Sep 17 00:00:00 2001
 From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
-Date: Thu, 26 Aug 2021 10:49:20 -0400
-Subject: [PATCH] resort check list after adding prflx
+Date: Wed, 1 Sep 2021 15:13:07 -0400
+Subject: [PATCH 1/2] pjproject/0019-resort-check-list-after-adding-prflx.patch
 
 ---
- pjnath/src/pjnath/ice_session.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ pjnath/src/pjnath/ice_session.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 77d014d62..f2c347163 100644
+index 2e35d930e..5cb936fca 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -4034,8 +4034,12 @@ static void handle_incoming_check(pj_ice_sess *ice,
- 
- 	    LOG5((ice->obj_name, "Performing triggered check for check %d",i));
- 	    pj_log_push_indent();
--	    perform_check(ice, &ice->clist, i, nominate);
--	    pj_log_pop_indent();
+@@ -4119,7 +4119,11 @@ static void handle_incoming_check(pj_ice_sess *ice,
+ 	LOG4((ice->obj_name, "New triggered check added: %d", 
+ 	     ice->clist.count));
+ 	pj_log_push_indent();
 +
-+	    perform_check(ice, &ice->clist, i, nominate);
-+	    /* Re-sort the list because of the newly added pair. */
-+	    sort_checklist(ice, &ice->clist);
+ 	perform_check(ice, &ice->clist, ice->clist.count++, nominate);
++	/* Re-sort the list because of the newly added pair. */
++	sort_checklist(ice, &ice->clist);
 +
-+	    pj_log_pop_indent();
+ 	pj_log_pop_indent();
  
- 	} else if (c->state == PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS) {
- 	    /* Should retransmit immediately
+     } else {
 -- 
 2.25.1
 
