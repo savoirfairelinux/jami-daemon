@@ -128,7 +128,7 @@ public:
         else {
             JAMI_WARN("A channel is already present on that socket, accepting "
                       "the request will close the previous one %s",
-                      name.c_str());
+                     name.c_str());
         }
         return channelSocket;
     }
@@ -252,7 +252,11 @@ void
 MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
 {
     std::lock_guard<std::mutex> lkSockets(socketsMutex);
-    auto socket = makeSocket(name, channel);
+    auto& socket = sockets[channel];
+    if (!socket) {
+        socket = makeSocket(name, channel);
+        // TODO recheck
+    }
     onChannelReady_(deviceId, socket);
     socket->ready();
 }

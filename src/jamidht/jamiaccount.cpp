@@ -4038,29 +4038,38 @@ JamiAccount::sendProfiles(const std::string& deviceId)
 
         sendFile(deviceId,
                  idPath_ + DIR_SEPARATOR_STR + "profile.vcf",
-                 [deviceId, accId = getAccountID()](const std::string&) {
+                 [deviceId, this](const std::string&) {
                      // Mark the VCard as sent
-                     auto path = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + accId
+                     auto path = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
                                  + DIR_SEPARATOR_STR + "vcard" + DIR_SEPARATOR_STR + deviceId;
+                     std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
+                     if (fileutils::isFile(path))
+                         return;
                      fileutils::ofstream(path);
+
+                     // Also sync members if self
+                     auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+                     if (!cert || !cert->issuer || cert->issuer->getId().toString() != getUsername())
+                         return;
+                     JAMI_INFO() << "Sync contacts' profiles with " << deviceId;
+                     for (const auto& convId : convModule()->getConversations()) {
+                         for (const auto& m : convModule()->getConversationMembers(convId)) {
+                             if (m.at("uri") == getUsername())
+                                 continue;
+                             auto path = dataTransfer()->profilePath(m.at("uri"));
+                             if (!fileutils::isFile(path))
+                                 continue;
+                             JAMI_ERR() << currentDeviceId() << " @@@ ASK " << deviceId
+                                        << " prof: " << m.at("uri");
+                             transferFile(convId,
+                                          path,
+                                          deviceId,
+                                          "profile/" + m.at("uri") + ".vcf",
+                                          "");
+                         }
+                     }
                  });
 
-        // Also sync members if self
-        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
-        if (!cert || !cert->issuer || cert->issuer->getId().toString() != getUsername())
-            return;
-        JAMI_INFO() << "Sync contacts' profiles with " << deviceId;
-        for (const auto& convId : convModule()->getConversations()) {
-            for (const auto& m : convModule()->getConversationMembers(convId)) {
-                if (m.at("uri") == getUsername())
-                    continue;
-                transferFile(convId,
-                             dataTransfer()->profilePath(m.at("uri")),
-                             deviceId,
-                             "profile/" + m.at("uri") + ".vcf",
-                             "");
-            }
-        }
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
     }
@@ -4430,8 +4439,10 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                     auto dt = shared->dataTransfer(conversationId);
                     if (!dt)
                         return;
-                    if (fileId.find(".vcf") != std::string::npos)
+                    if (fileId.find(".vcf") != std::string::npos) {
+                        JAMI_ERR() << "@@@ INCO: " << fileId << " for " << shared->getAccountID();
                         dt->onIncomingProfile(channel);
+                    }
                     else
                         dt->onIncomingFileTransfer(fileId, channel);
                 });

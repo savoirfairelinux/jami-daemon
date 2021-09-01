@@ -91,6 +91,7 @@ TransferChannelHandler::onReady(const DeviceId&,
     auto acc = account_.lock();
     if (!acc)
         return;
+    JAMI_ERR() << "@@@ CHANNEL READY: " << name << " for " << acc->getAccountID();
 
     auto idstr = name.substr(16);
     auto sep = idstr.find('/');
@@ -117,6 +118,7 @@ TransferChannelHandler::onReady(const DeviceId&,
         return;
     } else if (name.find("profile") != std::string::npos
                && fileId.find(".vcf") != std::string::npos) {
+        JAMI_ERR() << "@@@ INCO: " << fileId << " for " << acc->getAccountID();
         acc->dataTransfer()->onIncomingProfile(channel);
         return;
     }
