@@ -806,8 +806,10 @@ IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
     , sha3Sum_(sha3Sum)
 {
     fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::out);
-    if (!stream_)
+    if (!stream_) {
+        JAMI_ERR() << "@@@@@@@@@@@@@ NOT OPENED " << info_.path;
         return;
+    }
 
     emit(DRing::DataTransferEventCode::ongoing);
 }
@@ -1292,11 +1294,13 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
         return;
     }
 
+    auto tid = generateUID();
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
     info.path = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_
-                + DIR_SEPARATOR_STR + "vcard" + DIR_SEPARATOR_STR + deviceId + "_" + uri;
+                + DIR_SEPARATOR_STR + "vcard" + DIR_SEPARATOR_STR + deviceId + "_"
+                + std::to_string(tid);
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "");
     auto res = pimpl_->vcards_.emplace(idx, std::move(ifile));
@@ -1320,6 +1324,8 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
                     if (code == uint32_t(DRing::DataTransferEventCode::finished)) {
+                        JAMI_ERR() << "@@@ is File: " << path << " " << fileutils::isFile(path)
+                                   << " size: " << fileutils::loadTextFile(path).size();
                         emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                 uri,
                                                                                 path);
