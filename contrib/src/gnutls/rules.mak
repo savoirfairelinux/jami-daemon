@@ -40,6 +40,10 @@ endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
+# Workaround this Autoconf 2.70 bug:
+# https://savannah.gnu.org/support/?110503#comment3.
+export GTKDOCIZE = false
+
 GNUTLS_CONF := \
 	--disable-gtk-doc \
 	--without-p11-kit \
