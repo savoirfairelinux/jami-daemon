@@ -126,9 +126,10 @@ public:
         if (not channelSocket)
             channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel);
         else {
+            JAMI_ERR() << "@@@" << channel;
             JAMI_WARN("A channel is already present on that socket, accepting "
                       "the request will close the previous one %s",
-                      name.c_str());
+                      channelSocket->name().c_str());
         }
         return channelSocket;
     }
@@ -504,6 +505,7 @@ MultiplexedSocket::addChannel(const std::string& name)
     thread_local dht::crypto::random_device rd;
     std::uniform_int_distribution<uint16_t> dist;
     auto offset = dist(rd);
+    JAMI_ERR() << "GENERATE " << offset;
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (int i = 1; i < UINT16_MAX; ++i) {
         auto c = (offset + i) % UINT16_MAX;
