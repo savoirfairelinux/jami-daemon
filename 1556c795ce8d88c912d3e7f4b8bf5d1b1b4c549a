@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6066ddc_02360dc4",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 1333,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-01T20:27:59Z",
+      "side": 1,
+      "message": "should not we unlock conversationsMtx_ before calling saveConvInfos() since we are done with conversations_?\nseems safe with the current implementation, but who knows with the future changes.",
+      "revId": "1556c795ce8d88c912d3e7f4b8bf5d1b1b4c549a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

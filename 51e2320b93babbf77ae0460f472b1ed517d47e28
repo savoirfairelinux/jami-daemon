@@ -318,6 +318,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c5999baa_b751ee3e",
+        "filename": "src/jamidht/conversation_channel_handler.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-01T20:27:59Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "a97f0b2d_3c9a3fcc",
+      "revId": "51e2320b93babbf77ae0460f472b1ed517d47e28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0bfa3b02_6c40543f",
@@ -1060,6 +1078,30 @@
       "side": 1,
       "message": "For this structure it\u0027s intended, as packed and passed into the network. So it should take the less size possible.",
       "parentUuid": "d520009d_b8ca76b2",
+      "range": {
+        "startLine": 35,
+        "startChar": 21,
+        "endLine": 35,
+        "endChar": 23
+      },
+      "revId": "51e2320b93babbf77ae0460f472b1ed517d47e28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "767f82a9_b78692dd",
+        "filename": "src/jamidht/conversation_module.h",
+        "patchSetId": 30
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-01T20:27:59Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9d1c3c10_cb91b850",
       "range": {
         "startLine": 35,
         "startChar": 21,
@@ -2151,6 +2193,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "76286325_46b4b027",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 2295,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-01T20:27:59Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "841674c1_550bf864",
+      "range": {
+        "startLine": 2295,
+        "startChar": 44,
+        "endLine": 2295,
+        "endChar": 47
+      },
+      "revId": "51e2320b93babbf77ae0460f472b1ed517d47e28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6ca9573d_0772a0b8",
@@ -2245,6 +2311,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e18ec991_0c17263e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 3689,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-01T20:27:59Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e645e1c9_f7f99cd4",
+      "range": {
+        "startLine": 3689,
+        "startChar": 1,
+        "endLine": 3689,
+        "endChar": 97
+      },
+      "revId": "51e2320b93babbf77ae0460f472b1ed517d47e28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "768c0f1c_dea400bb",
@@ -2276,6 +2366,24 @@
       "side": 1,
       "message": "This is sent two times: When you start writing (writing \u003d true), and when you stop (writing \u003d false). basically, when you start to write something and erase your text before sending, the other side will stop to see the writing notification",
       "parentUuid": "768c0f1c_dea400bb",
+      "revId": "51e2320b93babbf77ae0460f472b1ed517d47e28",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f7317a5_5e486714",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 30
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-01T20:27:59Z",
+      "side": 1,
+      "message": "Fair enough.\nBut I thought it worked differently. I thought the writing event is sent periodically (let say every second or so) as long as we are typing. The receiving side will set the remote typing state to active with a timer (same or little longer than used by the sender). So, the state will go back to inactive, unless we receive a new typing event.",
+      "parentUuid": "771db914_d50a6ae3",
       "revId": "51e2320b93babbf77ae0460f472b1ed517d47e28",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
