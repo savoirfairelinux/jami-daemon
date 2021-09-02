@@ -16,6 +16,24 @@
       "message": "should not we unlock conversationsMtx_ before calling saveConvInfos() since we are done with conversations_?\nseems safe with the current implementation, but who knows with the future changes.",
       "revId": "1556c795ce8d88c912d3e7f4b8bf5d1b1b4c549a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1d59594a_4924f73f",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 1333,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-02T13:06:28Z",
+      "side": 1,
+      "message": "should not really change anything, the important thing is that we always lock in the same order, at least this avoid errors in future changes.",
+      "parentUuid": "b6066ddc_02360dc4",
+      "revId": "1556c795ce8d88c912d3e7f4b8bf5d1b1b4c549a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
