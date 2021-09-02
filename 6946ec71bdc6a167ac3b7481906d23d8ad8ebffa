@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4123c452_ad9ec0dc",
+        "filename": "src/ice_transport.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-02T18:08:12Z",
+      "side": 1,
+      "message": "I see why (move the init outside the scope of the lock in sipcall) But generally the constructor is there for the init in cpp. This avoid to manually call init everytime we do an object.",
+      "range": {
+        "startLine": 136,
+        "startChar": 3,
+        "endLine": 136,
+        "endChar": 27
+      },
+      "revId": "6946ec71bdc6a167ac3b7481906d23d8ad8ebffa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9161eaae_42c7b851",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 2907,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-02T18:08:12Z",
+      "side": 1,
+      "message": "is this a problem to have the init part while transport is locked?\nIt wasn\u0027t and I\u0027m not a big fan on moving init stuff for a cpp object outside the constructor.",
+      "range": {
+        "startLine": 2907,
+        "startChar": 17,
+        "endLine": 2907,
+        "endChar": 28
+      },
+      "revId": "6946ec71bdc6a167ac3b7481906d23d8ad8ebffa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
