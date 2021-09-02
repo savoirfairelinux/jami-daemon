@@ -2949,15 +2949,13 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     iceOptions.streamsCount = static_cast<unsigned>(rtpStreams_.size());
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
     iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
-    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
 
-    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(), iceOptions);
-
-    // Destroy old ice on a separate io pool
     {
+        auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
         std::lock_guard<std::mutex> lk(transportMtx_);
         resetTransport(std::move(tmpMediaTransport_));
-        tmpMediaTransport_ = std::move(transport);
+        tmpMediaTransport_ = iceTransportFactory.createUTransport(getCallId().c_str(), iceOptions);
+        ;
     }
 
     if (tmpMediaTransport_) {
