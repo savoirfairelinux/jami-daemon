@@ -212,6 +212,30 @@
       },
       "revId": "be1735344f6d19918c40376b41128d63974d280a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "42980deb_74f1ade0",
+        "filename": "contrib/src/pjproject/0016-use-larger-Ta-interval",
+        "patchSetId": 2
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-02T13:06:43Z",
+      "side": 1,
+      "message": "to keep it simple for this patch, I will only increase the Ta to 50ms, and keep it the same for both UDP and TCP. We will adjust if needed.",
+      "parentUuid": "5b9a9145_bc9568be",
+      "range": {
+        "startLine": 125,
+        "startChar": 90,
+        "endLine": 125,
+        "endChar": 101
+      },
+      "revId": "be1735344f6d19918c40376b41128d63974d280a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
