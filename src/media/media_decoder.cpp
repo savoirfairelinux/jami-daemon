@@ -57,7 +57,12 @@ const constexpr unsigned MAX_ACCEL_FAILURES {5};
 MediaDemuxer::MediaDemuxer()
     : inputCtx_(avformat_alloc_context())
     , startTime_(AV_NOPTS_VALUE)
-{}
+{
+    if (inputCtx_) {
+        inputCtx_->flags |= AVFMT_FLAG_NONBLOCK;
+        inputCtx_->flags |= AVIO_FLAG_NONBLOCK;
+    }
+}
 
 MediaDemuxer::~MediaDemuxer()
 {
@@ -325,14 +330,16 @@ MediaDemuxer::decode()
     int ret = av_read_frame(inputCtx_, packet.get());
     if (ret == AVERROR(EAGAIN)) {
         /*no data available. Calculate time until next frame.
-         We do not use the emulated frame mechanism from the decoder because it will affect all platforms.
-         With the current implementation, the demuxer will be waiting just in case when av_read_frame
-         returns EAGAIN. For some platforms, av_read_frame is blocking and it will never happen.
+         We do not use the emulated frame mechanism from the decoder because it will affect all
+         platforms. With the current implementation, the demuxer will be waiting just in case when
+         av_read_frame returns EAGAIN. For some platforms, av_read_frame is blocking and it will
+         never happen.
          */
         if (inputParams_.framerate.numerator() == 0)
             return Status::Success;
-        rational<double> frameTime = 1e6/inputParams_.framerate;
-        int64_t timeToSleep = lastReadPacketTime_ - av_gettime_relative() + frameTime.real<int64_t>();
+        rational<double> frameTime = 1e6 / inputParams_.framerate;
+        int64_t timeToSleep = lastReadPacketTime_ - av_gettime_relative()
+                              + frameTime.real<int64_t>();
         if (timeToSleep <= 0) {
             return Status::Success;
         }
@@ -583,10 +590,10 @@ MediaDecoder::decode(AVPacket& packet)
     if (resolutionChangedCallback_) {
         if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
             JAMI_DBG("Resolution changed from %dx%d to %dx%d",
-                width_,
-                height_,
-                decoderCtx_->width,
-                decoderCtx_->height);
+                     width_,
+                     height_,
+                     decoderCtx_->width,
+                     decoderCtx_->height);
             width_ = decoderCtx_->width;
             height_ = decoderCtx_->height;
             resolutionChangedCallback_(width_, height_);
@@ -613,7 +620,8 @@ MediaDecoder::decode(AVPacket& packet)
         lastTimestamp_ = frame->pts;
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto startTime = avStream_->start_time == AV_NOPTS_VALUE ? 0 : avStream_->start_time;
-            rational<double> frame_time = rational<double>(getTimeBase()) * (packetTimestamp - startTime);
+            rational<double> frame_time = rational<double>(getTimeBase())
+                                          * (packetTimestamp - startTime);
             auto target_relative = static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto target_absolute = startTime_ + target_relative;
             if (target_relative < seekTime_) {
