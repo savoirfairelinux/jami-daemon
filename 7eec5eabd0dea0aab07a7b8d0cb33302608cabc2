@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8892795e_73039d32",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2922,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-09-02T14:58:24Z",
+      "side": 1,
+      "message": "Callbacks can still be fired before the assignment to tmpMediaTransport_.\n\nShould probably reset tmpMediaTransport_ to nullptr first, then setup new transport?",
+      "revId": "7eec5eabd0dea0aab07a7b8d0cb33302608cabc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
