@@ -265,7 +265,21 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                                                                   v.confirm,
                                                                   v.conversationId,
                                                                   std::move(v.payload))) {
-                                  sendTrustRequestConfirm(peer_account, v.conversationId);
+
+                                  JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
+                                  JAMI_ERR() << "@                                             @";
+                                  JAMI_ERR() << "@   AUTO ACCEPT CONVERSATION.                 @";
+                                  JAMI_ERR() << "@                                             @";
+                                  JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
+                                  auto conversationId = v.conversationId;
+                                  // Check if there was an old active conversation.
+                                  auto details = info_->contacts->getContactDetails(peer_account);
+                                  auto oldConvIt = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
+                                  if (oldConvIt != details.end() && oldConvIt->second != "") {
+                                      conversationId = oldConvIt->second;
+                                      JAMI_ERR("@@@ Accept with old convId: %s", conversationId);
+                                  }
+                                  sendTrustRequestConfirm(peer_account, conversationId);
                                   info_->contacts->saveTrustRequests();
                               }
                       });

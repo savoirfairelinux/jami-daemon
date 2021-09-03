@@ -1150,6 +1150,11 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                                              received);
                 return;
             }
+            JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
+            JAMI_ERR() << "@                                             @";
+            JAMI_ERR() << "@   Trust request for " + conversationId + "  @";
+            JAMI_ERR() << "@                                             @";
+            JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
             if (auto cm = convModule()) // Here account can be initializing
                 cm->onTrustRequest(uri, conversationId, payload, received);
         },
@@ -1171,13 +1176,26 @@ JamiAccount::loadAccount(const std::string& archive_password,
             });
         },
         [this](const std::string& uri, const std::string& convFromReq) {
-            // If we receives a confirmation of a trust request
-            // but without the conversation, this means that the peer is
-            // using an old version of Jami, without swarm support.
-            // In this case, delete current conversation linked with that
-            // contact because he will not get messages anyway.
-            if (convFromReq.empty())
+            if (convFromReq.empty()) {
+                // If we receives a confirmation of a trust request
+                // but without the conversation, this means that the peer is
+                // using an old version of Jami, without swarm support.
+                // In this case, delete current conversation linked with that
+                // contact because he will not get messages anyway.
                 convModule()->checkIfRemoveForCompat(uri);
+            } else {
+                // If we previously removed the contact, and re-add it, we may
+                // receive a convId different from the request. In that case,
+                // we need to remove the current conversation and clone the old
+                // one (given by convFromReq).
+                // TODO: In the future, we may want to re-commit the messages we
+                // may have send in the request we sent.
+                JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
+                JAMI_ERR() << "@                                             @";
+                JAMI_ERR() << "@   Delete and re-add old conversation        @";
+                JAMI_ERR() << "@                                             @";
+                JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
+            }
         }};
 
     try {

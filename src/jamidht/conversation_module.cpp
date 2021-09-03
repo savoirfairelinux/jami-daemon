@@ -1337,10 +1337,7 @@ ConversationModule::removeContact(const std::string& uri, bool ban)
     // Note, if we ban the device, we don't send the leave cause the other peer will just
     // never got the notifications, so just erase the datas
     for (const auto& id : toRm)
-        if (ban)
-            pimpl_->removeRepository(id, false, true);
-        else
-            removeConversation(id);
+        pimpl_->removeRepository(id, true, true);
 }
 
 bool
@@ -1366,22 +1363,27 @@ ConversationModule::removeConversation(const std::string& conversationId)
     }
     pimpl_->saveConvInfos();
     lockCi.unlock();
-    auto commitId = it->second->leave();
     emitSignal<DRing::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, conversationId);
-    if (hasMembers) {
-        JAMI_DBG() << "Wait that someone sync that user left conversation " << conversationId;
-        // Commit that we left
-        if (!commitId.empty()) {
-            // Do not sync as it's synched by convInfos
-            pimpl_->sendMessageNotification(*it->second, commitId, false);
-        } else {
-            JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
+    if (it->second->mode() != ConversationMode::ONE_TO_ONE) {
+        // For one to one, we do not notify the leave. The other can still generate request
+        // and this is managed by the banned part. If we re-accept, the old conversation will be
+        // retrieven
+        auto commitId = it->second->leave();
+        if (hasMembers) {
+            JAMI_DBG() << "Wait that someone sync that user left conversation " << conversationId;
+            // Commit that we left
+            if (!commitId.empty()) {
+                // Do not sync as it's synched by convInfos
+                pimpl_->sendMessageNotification(*it->second, commitId, false);
+            } else {
+                JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
+            }
+            // In this case, we wait that another peer sync the conversation
+            // to definitely remove it from the device. This is to inform the
+            // peer that we left the conversation and never want to receive
+            // any messages
+            return true;
         }
-        // In this case, we wait that another peer sync the conversation
-        // to definitely remove it from the device. This is to inform the
-        // peer that we left the conversation and never want to receive
-        // any messages
-        return true;
     }
     lk.unlock();
     // Else we are the last member, so we can remove
