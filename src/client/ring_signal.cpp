@@ -113,6 +113,8 @@ getSignalHandlers()
 
         /* Video */
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
+        exported_callback<DRing::VideoSignal::DefaultDeviceChanged>(),
+        exported_callback<DRing::VideoSignal::DeviceSettingsChanged>(),
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
         exported_callback<DRing::VideoSignal::DecodingStopped>(),
 #ifdef __ANDROID__
