@@ -293,47 +293,47 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
         onNeedSocket_(conversationId,
-                         deviceId,
-                         [this,
-                          conversationId = std::move(conversationId),
-                          peer = std::move(peer),
-                          deviceId = std::move(deviceId),
-                          commitId = std::move(commitId)](const auto& channel) {
-                             auto conversation = conversations_.find(conversationId);
-                             auto acc = account_.lock();
-                             if (!channel || !acc || conversation == conversations_.end()
-                                 || !conversation->second) {
-                                 std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                                 pendingConversationsFetch_.erase(conversationId);
-                                 return false;
-                             }
-                             acc->addGitSocket(channel->deviceId(), conversationId, channel);
-                             conversation->second->sync(
-                                 peer,
-                                 deviceId,
-                                 [this,
-                                  conversationId = std::move(conversationId),
-                                  peer = std::move(peer),
-                                  deviceId = std::move(deviceId),
-                                  commitId = std::move(commitId)](bool ok) {
-                                     if (!ok) {
-                                         JAMI_WARN("[Account %s] Could not fetch new commit from "
-                                                   "%s for %s, other "
-                                                   "peer may be disconnected",
-                                                   accountId_.c_str(),
-                                                   deviceId.c_str(),
-                                                   conversationId.c_str());
-                                         JAMI_INFO("[Account %s] Relaunch sync with %s for %s",
-                                                   accountId_.c_str(),
-                                                   deviceId.c_str(),
-                                                   conversationId.c_str());
-                                     }
-                                     std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                                     pendingConversationsFetch_.erase(conversationId);
-                                 },
-                                 commitId);
-                             return true;
-                         });
+                      deviceId,
+                      [this,
+                       conversationId = std::move(conversationId),
+                       peer = std::move(peer),
+                       deviceId = std::move(deviceId),
+                       commitId = std::move(commitId)](const auto& channel) {
+                          auto conversation = conversations_.find(conversationId);
+                          auto acc = account_.lock();
+                          if (!channel || !acc || conversation == conversations_.end()
+                              || !conversation->second) {
+                              std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                              pendingConversationsFetch_.erase(conversationId);
+                              return false;
+                          }
+                          acc->addGitSocket(channel->deviceId(), conversationId, channel);
+                          conversation->second->sync(
+                              peer,
+                              deviceId,
+                              [this,
+                               conversationId = std::move(conversationId),
+                               peer = std::move(peer),
+                               deviceId = std::move(deviceId),
+                               commitId = std::move(commitId)](bool ok) {
+                                  if (!ok) {
+                                      JAMI_WARN("[Account %s] Could not fetch new commit from "
+                                                "%s for %s, other "
+                                                "peer may be disconnected",
+                                                accountId_.c_str(),
+                                                deviceId.c_str(),
+                                                conversationId.c_str());
+                                      JAMI_INFO("[Account %s] Relaunch sync with %s for %s",
+                                                accountId_.c_str(),
+                                                deviceId.c_str(),
+                                                conversationId.c_str());
+                                  }
+                                  std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                                  pendingConversationsFetch_.erase(conversationId);
+                              },
+                              commitId);
+                          return true;
+                      });
     } else {
         if (getRequest(conversationId) != std::nullopt)
             return;
@@ -657,6 +657,13 @@ ConversationModule::onTrustRequest(const std::string& uri,
                                    const std::vector<uint8_t>& payload,
                                    time_t received)
 {
+    if (getOneToOneConversation(uri) != "") {
+        // If there is already an active one to one conversation here, it's an active
+        // contact and the contact will reclone this activeConv, so ignore the request
+        JAMI_WARN("Contact is sending a request for a non active conversation. Ignore. They will "
+                  "clone the old one");
+        return;
+    }
     {
         std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
         auto itConv = pimpl_->conversations_.find(conversationId);
@@ -746,61 +753,16 @@ ConversationModule::onNeedConversationRequest(const std::string& from,
 void
 ConversationModule::acceptConversationRequest(const std::string& conversationId)
 {
-    auto acc = pimpl_->account_.lock();
     // For all conversation members, try to open a git channel with this conversation ID
     auto request = pimpl_->getRequest(conversationId);
-    if (!acc || request == std::nullopt) {
+    if (request == std::nullopt) {
         JAMI_WARN("[Account %s] Request not found for conversation %s",
                   pimpl_->accountId_.c_str(),
                   conversationId.c_str());
         return;
     }
-    auto memberHash = dht::InfoHash(request->from);
-    if (!memberHash) {
-        JAMI_WARN("Invalid member detected: %s", request->from.c_str());
-        return;
-    }
-    acc->forEachDevice(memberHash,
-                       [w = pimpl_->weak(), request = *request, conversationId](
-                           const std::shared_ptr<dht::crypto::PublicKey>& pk) {
-                           auto sthis = w.lock();
-                           auto deviceId = pk->getLongId().toString();
-                           if (!sthis or deviceId == sthis->deviceId_)
-                               return;
-
-                           if (!sthis->startFetch(conversationId, deviceId)) {
-                               JAMI_WARN("[Account %s] Already fetching %s",
-                                         sthis->accountId_.c_str(),
-                                         conversationId.c_str());
-                               return;
-                           }
-                           sthis->onNeedSocket_(
-                               conversationId, pk->getLongId().toString(), [=](const auto& channel) {
-                                   auto acc = sthis->account_.lock();
-                                   std::unique_lock<std::mutex> lk(
-                                       sthis->pendingConversationsFetchMtx_);
-                                   auto& pending = sthis->pendingConversationsFetch_[conversationId];
-                                   if (channel && !pending.ready) {
-                                       pending.ready = true;
-                                       pending.deviceId = channel->deviceId().toString();
-                                       lk.unlock();
-                                       // Save the git socket
-                                       acc->addGitSocket(channel->deviceId(),
-                                                         conversationId,
-                                                         channel);
-                                       sthis->checkConversationsEvents();
-                                       return true;
-                                   }
-                                   return false;
-                               });
-                       });
     pimpl_->rmConversationRequest(conversationId);
-    ConvInfo info;
-    info.id = conversationId;
-    info.created = std::time(nullptr);
-    info.members.emplace_back(pimpl_->username_);
-    info.members.emplace_back(request->from);
-    addConvInfo(info);
+    cloneConversationFrom(conversationId, request->from);
 }
 
 void
@@ -849,6 +811,53 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
 
     emitSignal<DRing::ConversationSignal::ConversationReady>(pimpl_->accountId_, convId);
     return convId;
+}
+
+void
+ConversationModule::cloneConversationFrom(const std::string& conversationId, const std::string& uri)
+{
+    auto acc = pimpl_->account_.lock();
+    auto memberHash = dht::InfoHash(uri);
+    if (!acc || !memberHash) {
+        JAMI_WARN("Invalid member detected: %s", uri.c_str());
+        return;
+    }
+    acc->forEachDevice(
+        memberHash,
+        [w = pimpl_->weak(), conversationId](const std::shared_ptr<dht::crypto::PublicKey>& pk) {
+            auto sthis = w.lock();
+            auto deviceId = pk->getLongId().toString();
+            if (!sthis or deviceId == sthis->deviceId_)
+                return;
+
+            if (!sthis->startFetch(conversationId, deviceId)) {
+                JAMI_WARN("[Account %s] Already fetching %s",
+                          sthis->accountId_.c_str(),
+                          conversationId.c_str());
+                return;
+            }
+            sthis->onNeedSocket_(conversationId, pk->getLongId().toString(), [=](const auto& channel) {
+                auto acc = sthis->account_.lock();
+                std::unique_lock<std::mutex> lk(sthis->pendingConversationsFetchMtx_);
+                auto& pending = sthis->pendingConversationsFetch_[conversationId];
+                if (channel && !pending.ready) {
+                    pending.ready = true;
+                    pending.deviceId = channel->deviceId().toString();
+                    lk.unlock();
+                    // Save the git socket
+                    acc->addGitSocket(channel->deviceId(), conversationId, channel);
+                    sthis->checkConversationsEvents();
+                    return true;
+                }
+                return false;
+            });
+        });
+    ConvInfo info;
+    info.id = conversationId;
+    info.created = std::time(nullptr);
+    info.members.emplace_back(pimpl_->username_);
+    info.members.emplace_back(uri);
+    addConvInfo(info);
 }
 
 // Message send/load
@@ -1115,14 +1124,24 @@ ConversationModule::setFetched(const std::string& conversationId, const std::str
 
 void
 ConversationModule::onNewCommit(const std::string& peer,
-                                   const std::string& deviceId,
-                                   const std::string& conversationId,
-                                   const std::string& commitId)
+                                const std::string& deviceId,
+                                const std::string& conversationId,
+                                const std::string& commitId)
 {
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     auto itConv = pimpl_->convInfos_.find(conversationId);
-    if (itConv != pimpl_->convInfos_.end() && itConv->second.removed)
-        return; // ignore new commits for removed conversation
+    if (itConv != pimpl_->convInfos_.end() && itConv->second.removed) {
+        // If the conversation is removed and we receives a new commit,
+        // it means that the contact was removed but not banned. So we can generate
+        // a new trust request
+        JAMI_WARN("[Account %s] Could not find conversation %s, ask for an invite",
+                  pimpl_->accountId_.c_str(),
+                  conversationId.c_str());
+        pimpl_->sendMsgCb_(peer,
+                           std::move(std::map<std::string, std::string> {
+                               {"application/invite", conversationId}}));
+        return;
+    }
     JAMI_DBG("[Account %s] on new commit notification from %s, for %s, commit %s",
              pimpl_->accountId_.c_str(),
              peer.c_str(),
@@ -1318,8 +1337,12 @@ ConversationModule::removeContact(const std::string& uri, bool ban)
                         auto initMembers = itConv->second->getInitialMembers();
                         if ((isSelf && initMembers.size() == 1)
                             || std::find(initMembers.begin(), initMembers.end(), uri)
-                                   != initMembers.end())
+                                   != initMembers.end()) {
+                            // Mark as removed
+                            conv.removed = std::time(nullptr);
+                            updateConvInfos = true;
                             toRm.emplace_back(convId);
+                        }
                     }
                 } catch (const std::exception& e) {
                     JAMI_WARN("%s", e.what());
@@ -1337,10 +1360,7 @@ ConversationModule::removeContact(const std::string& uri, bool ban)
     // Note, if we ban the device, we don't send the leave cause the other peer will just
     // never got the notifications, so just erase the datas
     for (const auto& id : toRm)
-        if (ban)
-            pimpl_->removeRepository(id, false, true);
-        else
-            removeConversation(id);
+        pimpl_->removeRepository(id, true, true);
 }
 
 bool
@@ -1366,22 +1386,27 @@ ConversationModule::removeConversation(const std::string& conversationId)
     }
     pimpl_->saveConvInfos();
     lockCi.unlock();
-    auto commitId = it->second->leave();
     emitSignal<DRing::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, conversationId);
-    if (hasMembers) {
-        JAMI_DBG() << "Wait that someone sync that user left conversation " << conversationId;
-        // Commit that we left
-        if (!commitId.empty()) {
-            // Do not sync as it's synched by convInfos
-            pimpl_->sendMessageNotification(*it->second, commitId, false);
-        } else {
-            JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
+    if (it->second->mode() != ConversationMode::ONE_TO_ONE) {
+        // For one to one, we do not notify the leave. The other can still generate request
+        // and this is managed by the banned part. If we re-accept, the old conversation will be
+        // retrieven
+        auto commitId = it->second->leave();
+        if (hasMembers) {
+            JAMI_DBG() << "Wait that someone sync that user left conversation " << conversationId;
+            // Commit that we left
+            if (!commitId.empty()) {
+                // Do not sync as it's synched by convInfos
+                pimpl_->sendMessageNotification(*it->second, commitId, false);
+            } else {
+                JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
+            }
+            // In this case, we wait that another peer sync the conversation
+            // to definitely remove it from the device. This is to inform the
+            // peer that we left the conversation and never want to receive
+            // any messages
+            return true;
         }
-        // In this case, we wait that another peer sync the conversation
-        // to definitely remove it from the device. This is to inform the
-        // peer that we left the conversation and never want to receive
-        // any messages
-        return true;
     }
     lk.unlock();
     // Else we are the last member, so we can remove

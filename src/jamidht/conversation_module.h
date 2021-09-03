@@ -102,7 +102,7 @@ public:
     void onNeedConversationRequest(const std::string& from, const std::string& conversationId);
 
     /**
-     * Accepts a conversation's request
+     * Accept a conversation's request
      * @param convId
      */
     void acceptConversationRequest(const std::string& conversationId);
@@ -112,6 +112,14 @@ public:
      * @param convId
      */
     void declineConversationRequest(const std::string& conversationId);
+
+    /**
+     * Clone conversation from a member
+     * @note used to clone an old conversation after deleting/re-adding a contact
+     * @param conversationId
+     * @param uri
+     */
+    void cloneConversationFrom(const std::string& conversationId, const std::string& uri);
 
     /**
      * Starts a new conversation
@@ -216,7 +224,8 @@ public:
 
     /**
      * Notify that a peer fetched a commit
-     * @note: this definitely remove the repository when needed (when we left and someone fetched the information)
+     * @note: this definitely remove the repository when needed (when we left and someone fetched
+     * the information)
      * @param conversationId    Related conv
      * @param deviceId          Device who synced
      */
@@ -230,9 +239,9 @@ public:
      * @param commitId          Commit to retrieve
      */
     void onNewCommit(const std::string& peer,
-                        const std::string& deviceId,
-                        const std::string& conversationId,
-                        const std::string& commitId);
+                     const std::string& deviceId,
+                     const std::string& conversationId,
+                     const std::string& commitId);
 
     // Conversation's member
     /**
