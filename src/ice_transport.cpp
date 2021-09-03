@@ -77,10 +77,10 @@ using namespace upnp;
 class IceTransport::Impl
 {
 public:
-    Impl(const char* name, const IceTransportOptions& options);
+    Impl(const char* name);
     ~Impl();
 
-    void initIceInstance();
+    void initIceInstance(const IceTransportOptions& options);
 
     void onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status);
 
@@ -304,34 +304,12 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 
 //==============================================================================
 
-IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
+IceTransport::Impl::Impl(const char* name)
     : sessionName_(name)
-    , pool_(nullptr,
-            [](pj_pool_t* pool) {
-                pj_pool_release(pool);
-            })
-    , isTcp_(options.tcpEnable)
-    , upnpEnabled_(options.upnpEnable)
-    , on_initdone_cb_(options.onInitDone)
-    , on_negodone_cb_(options.onNegoDone)
-    , streamsCount_(options.streamsCount)
-    , compCountPerStream_(options.compCountPerStream)
-    , compCount_(streamsCount_ * compCountPerStream_)
-    , compIO_(compCount_)
-    , peerChannels_(compCount_)
-    , iceDefaultRemoteAddr_(compCount_)
-    , initiatorSession_(options.master)
-    , accountLocalAddr_(std::move(options.accountLocalAddr))
-    , accountPublicAddr_(std::move(options.accountPublicAddr))
-    , stunServers_(std::move(options.stunServers))
-    , turnServers_(std::move(options.turnServers))
+    , pool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
     , thread_()
 {
-    JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\" - comp count %u - as a %s",
-             this,
-             name,
-             compCount_,
-             initiatorSession_ ? "master" : "slave");
+    JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\"", this, name);
 }
 
 IceTransport::Impl::~Impl()
@@ -374,8 +352,29 @@ IceTransport::Impl::~Impl()
 }
 
 void
-IceTransport::Impl::initIceInstance()
+IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
 {
+    isTcp_ = options.tcpEnable;
+    upnpEnabled_ = options.upnpEnable;
+    on_initdone_cb_ = options.onInitDone;
+    on_negodone_cb_ = options.onNegoDone;
+    streamsCount_ = options.streamsCount;
+    compCountPerStream_ = options.compCountPerStream;
+    compCount_ = streamsCount_ * compCountPerStream_;
+    compIO_ = std::move(std::vector<ComponentIO>(compCount_));
+    peerChannels_ = std::move(std::vector<PeerChannel>(compCount_));
+    iceDefaultRemoteAddr_.reserve(compCount_);
+    initiatorSession_ = options.master;
+    accountLocalAddr_ = std::move(options.accountLocalAddr);
+    accountPublicAddr_ = std::move(options.accountPublicAddr);
+    stunServers_ = std::move(options.stunServers);
+    turnServers_ = std::move(options.turnServers);
+
+    JAMI_DBG("[ice:%p] Initializing the session - comp count %u - as a %s",
+             this,
+             compCount_,
+             initiatorSession_ ? "master" : "slave");
+
     if (upnpEnabled_)
         upnp_.reset(new upnp::Controller());
 
@@ -503,7 +502,6 @@ IceTransport::Impl::initIceInstance()
     // Init to invalid addresses
     iceDefaultRemoteAddr_.reserve(compCount_);
 }
-
 
 bool
 IceTransport::Impl::_isInitialized() const
@@ -1056,8 +1054,8 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 
 //==============================================================================
 
-IceTransport::IceTransport(const char* name, const IceTransportOptions& options)
-    : pimpl_ {std::make_unique<Impl>(name, options)}
+IceTransport::IceTransport(const char* name)
+    : pimpl_ {std::make_unique<Impl>(name)}
 {}
 
 IceTransport::~IceTransport()
@@ -1067,9 +1065,9 @@ IceTransport::~IceTransport()
 }
 
 void
-IceTransport::initIceInstance()
+IceTransport::initIceInstance(const IceTransportOptions& options)
 {
-    pimpl_->initIceInstance();
+    pimpl_->initIceInstance(options);
 }
 
 bool
@@ -1146,7 +1144,6 @@ IceTransport::isInitiator() const
 bool
 IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& rem_candidates)
 {
-
     if (not isInitialized()) {
         JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
         pimpl_->is_stopped_ = true;
@@ -1220,7 +1217,6 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
 bool
 IceTransport::startIce(const SDP& sdp)
 {
-
     if (pimpl_->streamsCount_ != 1) {
         JAMI_ERR("Expected exactly one stream per SDP (found %u streams)", pimpl_->streamsCount_);
         return false;
@@ -1785,7 +1781,6 @@ IceTransportFactory::IceTransportFactory()
           })
     , ice_cfg_()
 {
-
     pj_caching_pool_init(cp_.get(), NULL, 0);
 
     pj_ice_strans_cfg_default(&ice_cfg_);
@@ -1806,10 +1801,10 @@ IceTransportFactory::IceTransportFactory()
 IceTransportFactory::~IceTransportFactory() {}
 
 std::shared_ptr<IceTransport>
-IceTransportFactory::createTransport(const char* name, const IceTransportOptions& options)
+IceTransportFactory::createTransport(const char* name)
 {
     try {
-        return std::make_shared<IceTransport>(name, options);
+        return std::make_shared<IceTransport>(name);
     } catch (const std::exception& e) {
         JAMI_ERR("%s", e.what());
         return nullptr;
@@ -1817,10 +1812,10 @@ IceTransportFactory::createTransport(const char* name, const IceTransportOptions
 }
 
 std::unique_ptr<IceTransport>
-IceTransportFactory::createUTransport(const char* name, const IceTransportOptions& options)
+IceTransportFactory::createUTransport(const char* name)
 {
     try {
-        return std::make_unique<IceTransport>(name, options);
+        return std::make_unique<IceTransport>(name);
     } catch (const std::exception& e) {
         JAMI_ERR("%s", e.what());
         return nullptr;
