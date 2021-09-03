@@ -350,7 +350,8 @@ VideoFrame::getOrientation() const
 {
     int32_t* matrix {nullptr};
     if (auto p = packet()) {
-        matrix = reinterpret_cast<int32_t*>(av_packet_get_side_data(p, AV_PKT_DATA_DISPLAYMATRIX, nullptr));
+        matrix = reinterpret_cast<int32_t*>(
+            av_packet_get_side_data(p, AV_PKT_DATA_DISPLAYMATRIX, nullptr));
     } else if (auto p = pointer()) {
         if (AVFrameSideData* side_data = av_frame_get_side_data(p, AV_FRAME_DATA_DISPLAYMATRIX)) {
             matrix = reinterpret_cast<int32_t*>(side_data->data);
@@ -358,7 +359,7 @@ VideoFrame::getOrientation() const
     }
     if (matrix) {
         double angle = av_display_rotation_get(matrix);
-        return std::isnan(angle) ? 0 : -(int)angle;
+        return std::isnan(angle) ? 0 : -(int) angle;
     }
     return 0;
 }
@@ -406,8 +407,11 @@ void
 setDefaultDevice(const std::string& deviceId)
 {
     JAMI_DBG("Setting default device to %s", deviceId.c_str());
-    if (jami::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(deviceId))
+    if (jami::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(deviceId)) {
         jami::Manager::instance().saveConfig();
+
+        jami::emitSignal<DRing::VideoSignal::DefaultDeviceChanged>(deviceId);
+    }
 }
 
 void
@@ -443,6 +447,8 @@ applySettings(const std::string& deviceId, const std::map<std::string, std::stri
 {
     jami::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(deviceId, settings);
     jami::Manager::instance().saveConfig();
+
+    jami::emitSignal<DRing::VideoSignal::DeviceSettingsChanged>(deviceId);
 }
 
 void
