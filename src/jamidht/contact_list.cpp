@@ -94,6 +94,16 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
     return true;
 }
 
+void
+ContactList::updateConversation(const dht::InfoHash& h, const std::string& conversationId)
+{
+    auto c = contacts_.find(h);
+    if (c != contacts_.end()) {
+        c->second.conversationId = conversationId;
+        saveContacts();
+    }
+}
+
 bool
 ContactList::removeContact(const dht::InfoHash& h, bool ban)
 {
@@ -404,7 +414,8 @@ ContactList::loadKnownDevices()
                 if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
                     JAMI_WARN("[Contacts] can't add device %s", d.first.toString().c_str());
             } else {
-                JAMI_WARN("[Contacts] can't find certificate for device %s", d.first.toString().c_str());
+                JAMI_WARN("[Contacts] can't find certificate for device %s",
+                          d.first.toString().c_str());
             }
         }
     } catch (const std::exception& e) {
@@ -415,8 +426,11 @@ ContactList::loadKnownDevices()
             std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
             oh.get().convert(knownDevices);
             for (const auto& d : knownDevices) {
-                if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString())) {
-                    if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
+                if (auto crt = tls::CertificateStore::instance().getCertificate(
+                        d.first.toString())) {
+                    if (not foundAccountDevice(crt,
+                                               d.second.first,
+                                               clock::from_time_t(d.second.second)))
                         JAMI_WARN("[Contacts] can't add device %s", d.first.toString().c_str());
                 }
             }
@@ -430,8 +444,7 @@ ContactList::loadKnownDevices()
 void
 ContactList::saveKnownDevices() const
 {
-    std::ofstream file(path_ + DIR_SEPARATOR_STR "knownDevices",
-                       std::ios::trunc | std::ios::binary);
+    std::ofstream file(path_ + DIR_SEPARATOR_STR "knownDevices", std::ios::trunc | std::ios::binary);
 
     std::map<dht::PkId, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)
@@ -574,9 +587,9 @@ ContactList::getSyncData() const
     }
 
     for (const auto& dev : knownDevices_) {
-        sync_data.devices.emplace(dev.second.certificate->getLongId(), KnownDeviceSync {
-            dev.second.name, dev.second.certificate->getId()
-        });
+        sync_data.devices.emplace(dev.second.certificate->getLongId(),
+                                  KnownDeviceSync {dev.second.name,
+                                                   dev.second.certificate->getId()});
     }
     return sync_data;
 }
