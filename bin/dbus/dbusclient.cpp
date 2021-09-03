@@ -319,6 +319,10 @@ DBusClient::initLibrary(int flags)
     // Video event handlers
     const std::map<std::string, SharedCallback> videoEvHandlers = {
         exportable_callback<VideoSignal::DeviceEvent>(bind(&DBusVideoManager::deviceEvent, videoM)),
+        exportable_callback<VideoSignal::DefaultDeviceChanged>(
+            bind(&DBusVideoManager::defaultDeviceChanged, videoM, _1)),
+        exportable_callback<VideoSignal::DeviceSettingsChanged>(
+            bind(&DBusVideoManager::deviceSettingsChanged, videoM, _1)),
         exportable_callback<VideoSignal::DecodingStarted>(
             bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5)),
         exportable_callback<VideoSignal::DecodingStopped>(
