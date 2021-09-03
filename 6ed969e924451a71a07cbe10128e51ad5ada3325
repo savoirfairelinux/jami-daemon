@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "841f169d_1647a991",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 280,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-09-03T14:23:39Z",
+      "side": 1,
+      "message": "CRITICAL SonarQube violation:\n\n\ncannot pass non-trivial object of type \u0027std::__cxx11::basic_string\u003cchar\u003e\u0027 to variadic function; expected type from format string was \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-non-pod-varargs",
+      "revId": "6ed969e924451a71a07cbe10128e51ad5ada3325",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
