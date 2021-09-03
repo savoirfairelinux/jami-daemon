@@ -330,7 +330,7 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
     , lastFrameDebug_(std::chrono::system_clock::now())
 #endif
 {
-    JAMI_DBG("[Sink:%p] Sink [%.*s] created", this, getId().size(), getId().data());
+    JAMI_DBG("[Sink:%p] Sink [%s] created", this, getId().c_str());
 }
 
 void
