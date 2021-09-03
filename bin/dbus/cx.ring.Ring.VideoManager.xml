@@ -157,6 +157,20 @@
            <tp:docstring>Signal triggered by changes in the detected v4l2 devices, e.g. a camera being unplugged.</tp:docstring>
         </signal>
 
+        <signal name="defaultDeviceChanged" tp:name-for-bindings="defaultDeviceChanged">
+           <tp:docstring>Signal triggered by changes in the default device.</tp:docstring>
+            <arg type="s" name="id">
+              <tp:docstring>The ID of the call associated with the video, or "local" in the case of local video</tp:docstring>
+            </arg>
+        </signal>
+
+        <signal name="deviceSettingsChanged" tp:name-for-bindings="deviceSettingsChanged">
+           <tp:docstring>Signal triggered by changes in the device settings</tp:docstring>
+            <arg type="s" name="id">
+              <tp:docstring>The ID of the call associated with the video, or "local" in the case of local video</tp:docstring>
+            </arg>
+        </signal>
+
         <signal name="startedDecoding" tp:name-for-bindings="startedDecoding">
             <tp:docstring>Signal triggered when video is available in a shared memory buffer.</tp:docstring>
             <arg type="s" name="id">
