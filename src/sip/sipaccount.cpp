@@ -218,6 +218,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 
     auto toUri = getToUri(to);
     if (call->isIceEnabled()) {
+        call->createIceMediaTransport();
         call->initIceMediaTransport(true);
     }
     call->setPeerNumber(toUri);
@@ -310,6 +311,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Med
     // Do not init ICE yet if the the media list is empty. This may occur
     // if we are sending an invite with no SDP offer.
     if (call->isIceEnabled() and not mediaList.empty()) {
+        call->createIceMediaTransport();
         call->initIceMediaTransport(true);
     }
 
