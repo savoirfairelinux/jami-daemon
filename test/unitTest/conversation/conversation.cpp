@@ -140,6 +140,7 @@ private:
     void testMemberJoinsInviteRemoved();
     void testAddContact();
     void testAddContactDeleteAndReAdd();
+    void testInviteFromMessageAfterRemoved();
     void testFailAddMemberInOneToOne();
     void testUnknownModeDetected();
     void testRemoveContact();
@@ -201,6 +202,7 @@ private:
     CPPUNIT_TEST(testMemberJoinsInviteRemoved);
     CPPUNIT_TEST(testAddContact);
     CPPUNIT_TEST(testAddContactDeleteAndReAdd);
+    CPPUNIT_TEST(testInviteFromMessageAfterRemoved);
     CPPUNIT_TEST(testFailAddMemberInOneToOne);
     CPPUNIT_TEST(testUnknownModeDetected);
     CPPUNIT_TEST(testRemoveContact);
@@ -3555,16 +3557,76 @@ ConversationTest::testAddContactDeleteAndReAdd()
     std::this_thread::sleep_for(std::chrono::seconds(5)); // wait a bit that connections are closed
 
     // re-add
+    CPPUNIT_ASSERT(convId != "");
+    auto oldConvId = convId;
+    convId = "";
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    // Should retrieve previous conversation
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return oldConvId == convId; }));
+}
+
+void
+ConversationTest::testInviteFromMessageAfterRemoved()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
+    std::string convId = "";
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
     requestReceived = false;
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
-    conversationReady = false;
-    memberMessageGenerated = false;
-    // NOTE: automatically accepted as Alice is still a contact!
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && memberMessageGenerated;
     }));
+
+    // removeContact
+    bobAccount->removeContact(aliceUri, false);
+    std::this_thread::sleep_for(std::chrono::seconds(10)); // wait a bit that connections are closed
+
+    // bob sends a message, this should generate a new request for Alice
+    requestReceived = false;
+    DRing::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    conversationReady = false;
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
 }
 
 void
@@ -3693,7 +3755,8 @@ ConversationTest::testRemoveContact()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
+         conversationRemoved = false;
     std::string convId = "";
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
@@ -3712,6 +3775,12 @@ ConversationTest::testRemoveContact()
             } else if (accountId == bobId) {
                 conversationReady = true;
             }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId)
+                conversationRemoved = true;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
@@ -3736,19 +3805,9 @@ ConversationTest::testRemoveContact()
         return conversationReady && memberMessageGenerated;
     }));
 
-    memberMessageGenerated = false;
+    conversationRemoved = false;
     bobAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
-
-    // Check that getConversationMembers return "role":"left"
-    auto members = DRing::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(std::find_if(members.begin(),
-                                members.end(),
-                                [&](auto member) {
-                                    return member["uri"] == bobUri && member["role"] == "left";
-                                })
-                   != members.end());
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationRemoved; }));
 
     aliceAccount->removeContact(bobUri, false);
     cv.wait_for(lk, std::chrono::seconds(20));

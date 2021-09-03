@@ -1150,8 +1150,13 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                                              received);
                 return;
             }
-            if (auto cm = convModule()) // Here account can be initializing
-                cm->onTrustRequest(uri, conversationId, payload, received);
+            // Here account can be initializing
+            if (auto cm = convModule()) {
+                auto activeConv = cm->getOneToOneConversation(uri);
+                if (activeConv != conversationId) {
+                    cm->onTrustRequest(uri, conversationId, payload, received);
+                }
+            }
         },
         [this](const std::map<DeviceId, KnownDevice>& devices) {
             std::map<std::string, std::string> ids;
@@ -1171,13 +1176,31 @@ JamiAccount::loadAccount(const std::string& archive_password,
             });
         },
         [this](const std::string& uri, const std::string& convFromReq) {
-            // If we receives a confirmation of a trust request
-            // but without the conversation, this means that the peer is
-            // using an old version of Jami, without swarm support.
-            // In this case, delete current conversation linked with that
-            // contact because he will not get messages anyway.
-            if (convFromReq.empty())
+            if (convFromReq.empty()) {
+                // If we receives a confirmation of a trust request
+                // but without the conversation, this means that the peer is
+                // using an old version of Jami, without swarm support.
+                // In this case, delete current conversation linked with that
+                // contact because he will not get messages anyway.
                 convModule()->checkIfRemoveForCompat(uri);
+            } else {
+                // If we previously removed the contact, and re-add it, we may
+                // receive a convId different from the request. In that case,
+                // we need to remove the current conversation and clone the old
+                // one (given by convFromReq).
+                // TODO: In the future, we may want to re-commit the messages we
+                // may have send in the request we sent.
+                auto oldConv = convModule()->getOneToOneConversation(uri);
+                if (convFromReq != oldConv) {
+                    convModule()->removeConversation(oldConv);
+                    {
+                        std::lock_guard<std::mutex> lock(configurationMutex_);
+                        if (auto info = accountManager_->getInfo())
+                            info->contacts->updateConversation(dht::InfoHash(uri), convFromReq);
+                    }
+                    convModule()->cloneConversationFrom(convFromReq, uri);
+                }
+            }
         }};
 
     try {
@@ -4062,11 +4085,7 @@ JamiAccount::sendProfiles(const std::string& deviceId)
                              auto path = dataTransfer()->profilePath(uri);
                              if (!fileutils::isFile(path))
                                  continue;
-                             transferFile(convId,
-                                          path,
-                                          deviceId,
-                                          "profile/" + uri + ".vcf",
-                                          "");
+                             transferFile(convId, path, deviceId, "profile/" + uri + ".vcf", "");
                          }
                      }
                  });

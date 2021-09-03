@@ -71,6 +71,7 @@ public:
     bool addContact(const dht::InfoHash&,
                     bool confirmed = false,
                     const std::string& conversationId = "");
+    void updateConversation(const dht::InfoHash& h, const std::string& conversationId);
 
     bool setCertificateStatus(const std::string& cert_id,
                               const tls::TrustStore::PermissionStatus status);
