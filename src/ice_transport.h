@@ -130,10 +130,10 @@ public:
     /**
      * Constructor
      */
-    IceTransport(const char* name, const IceTransportOptions& options = {});
+    IceTransport(const char* name);
     ~IceTransport();
 
-    void initIceInstance();
+    void initIceInstance(const IceTransportOptions& options);
 
     /**
      * Get current state
@@ -269,11 +269,9 @@ public:
     IceTransportFactory();
     ~IceTransportFactory();
 
-    std::shared_ptr<IceTransport> createTransport(const char* name,
-                                                  const IceTransportOptions& options = {});
+    std::shared_ptr<IceTransport> createTransport(const char* name);
 
-    std::unique_ptr<IceTransport> createUTransport(const char* name,
-                                                   const IceTransportOptions& options = {});
+    std::unique_ptr<IceTransport> createUTransport(const char* name);
 
     /**
      * PJSIP specifics
