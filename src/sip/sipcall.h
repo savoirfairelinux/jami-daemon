@@ -278,6 +278,13 @@ public:
 
     void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
 
+    // Create a new ICE media session. If we already have an instance,
+    // it will be destroyed first.
+    void createIceMediaTransport();
+
+    // Initialize the ICE session.
+    // The initialization is performed asynchronously, i.e, the instance
+    // may not be ready to use when this method returns.
     bool initIceMediaTransport(bool master,
                                std::optional<IceTransportOptions> options = std::nullopt);
 

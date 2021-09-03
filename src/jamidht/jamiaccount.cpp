@@ -432,10 +432,14 @@ JamiAccount::newOutgoingCall(std::string_view toUrl,
     if (not call)
         return {};
 
-    getIceOptions([=](auto&& opts) {
-        call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
-        newOutgoingCallHelper(call, toUrl);
-    });
+    if (call->isIceEnabled()) {
+        call->createIceMediaTransport();
+        getIceOptions([=](auto&& opts) {
+            call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
+        });
+    }
+
+    newOutgoingCallHelper(call, toUrl);
 
     return call;
 }
@@ -453,10 +457,14 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
     if (not call)
         return {};
 
-    getIceOptions([=](auto&& opts) {
-        call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
-        newOutgoingCallHelper(call, toUrl);
-    });
+    if (call->isIceEnabled()) {
+        call->createIceMediaTransport();
+        getIceOptions([=](auto&& opts) {
+            call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
+        });
+    }
+
+    newOutgoingCallHelper(call, toUrl);
 
     return call;
 }
