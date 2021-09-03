@@ -248,27 +248,37 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(*v.owner,
-                      true,
-                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
-                                dht::InfoHash peer_account) mutable {
-                          JAMI_WARN(
-                              "Got trust request (confirm: %u) from: %s / %s. ConversationId: %s",
-                              v.confirm,
-                              peer_account.toString().c_str(),
-                              v.from.toString().c_str(),
-                              v.conversationId.c_str());
-                          if (info_)
-                              if (info_->contacts->onTrustRequest(peer_account,
-                                                                  v.owner,
-                                                                  time(nullptr),
-                                                                  v.confirm,
-                                                                  v.conversationId,
-                                                                  std::move(v.payload))) {
-                                  sendTrustRequestConfirm(peer_account, v.conversationId);
-                                  info_->contacts->saveTrustRequests();
-                              }
-                      });
+        onPeerMessage(
+            *v.owner,
+            true,
+            [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
+                      dht::InfoHash peer_account) mutable {
+                JAMI_WARN("Got trust request (confirm: %u) from: %s / %s. ConversationId: %s",
+                          v.confirm,
+                          peer_account.toString().c_str(),
+                          v.from.toString().c_str(),
+                          v.conversationId.c_str());
+                if (info_)
+                    if (info_->contacts->onTrustRequest(peer_account,
+                                                        v.owner,
+                                                        time(nullptr),
+                                                        v.confirm,
+                                                        v.conversationId,
+                                                        std::move(v.payload))) {
+                        auto conversationId = v.conversationId;
+                        // Check if there was an old active conversation.
+                        auto details = info_->contacts->getContactDetails(peer_account);
+                        auto oldConvIt = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
+                        if (oldConvIt != details.end() && oldConvIt->second != "") {
+                            if (conversationId == oldConvIt->second)
+                                return;
+                            conversationId = oldConvIt->second;
+                            JAMI_WARN("Accept with old convId: %s", conversationId.c_str());
+                        }
+                        sendTrustRequestConfirm(peer_account, conversationId);
+                        info_->contacts->saveTrustRequests();
+                    }
+            });
         return true;
     });
 }
