@@ -527,6 +527,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList)
         return !PJ_SUCCESS;
 
     if (isIceEnabled()) {
+        createIceMediaTransport();
         if (initIceMediaTransport(true))
             addLocalIceAttributes();
     }
@@ -866,6 +867,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
                 if (auto interfaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                                     publicAddr.getFamily())) {
                     opts.accountLocalAddr = interfaceAddr;
+                    createIceMediaTransport();
                     if (initIceMediaTransport(true, std::move(opts)))
                         addLocalIceAttributes();
                 } else {
@@ -2883,6 +2885,22 @@ SIPCall::InvSessionDeleter::operator()(pjsip_inv_session* inv) const noexcept
     pjsip_inv_dec_ref(inv);
 }
 
+void
+SIPCall::createIceMediaTransport()
+{
+    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+    std::lock_guard<std::mutex> lk(transportMtx_);
+    resetTransport(std::move(mediaTransport_));
+    mediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str());
+    if (mediaTransport_) {
+        JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]",
+                 getCallId().c_str(),
+                 mediaTransport_.get());
+    } else {
+        JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
+    }
+}
+
 bool
 SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> options)
 {
@@ -2892,7 +2910,12 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
         return false;
     }
 
-    JAMI_DBG("[call:%s] create media ICE transport", getCallId().c_str());
+    JAMI_DBG("[call:%s] Init media ICE transport", getCallId().c_str());
+    if (not mediaTransport_) {
+        JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
+        return false;
+    }
+
     auto iceOptions = options == std::nullopt ? acc->getIceOptions() : *options;
 
     auto optOnInitDone = std::move(iceOptions.onInitDone);
@@ -2936,23 +2959,10 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
     iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
 
-    {
-        auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-        std::lock_guard<std::mutex> lk(transportMtx_);
-        resetTransport(std::move(mediaTransport_));
-        mediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str(), iceOptions);
-    }
+    // Init ICE.
+    mediaTransport_->initIceInstance(iceOptions);
 
-    if (mediaTransport_) {
-        JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]",
-                 getCallId().c_str(),
-                 mediaTransport_.get());
-        mediaTransport_->initIceInstance();
-    } else {
-        JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
-    }
-
-    return static_cast<bool>(mediaTransport_);
+    return true;
 }
 
 std::vector<std::string>
@@ -3062,7 +3072,7 @@ SIPCall::setupIceResponse()
         onFailure(EIO);
         return;
     }
-
+    createIceMediaTransport();
     if (not initIceMediaTransport(false, opt)) {
         JAMI_ERR("[call:%s] ICE initialization failed", getCallId().c_str());
         // Fatal condition
