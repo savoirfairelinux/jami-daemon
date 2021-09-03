@@ -138,9 +138,8 @@ IceTest::testRawIceConnection()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
 
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              ice_config);
-    ice_master->initIceInstance();
+    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
         CPPUNIT_ASSERT(ok);
@@ -173,9 +172,8 @@ IceTest::testRawIceConnection()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
 
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             ice_config);
-    ice_slave->initIceInstance();
+    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_slave->initIceInstance(ice_config);
 
     cv_create.notify_all();
     CPPUNIT_ASSERT(
@@ -247,9 +245,8 @@ IceTest::testTurnMasterIceConnection()
     ice_config.master = true;
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              ice_config);
-    ice_master->initIceInstance();
+    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.turnServers = {};
     ice_config.onInitDone = [&](bool ok) {
@@ -291,9 +288,8 @@ IceTest::testTurnMasterIceConnection()
     ice_config.master = false;
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             ice_config);
-    ice_slave->initIceInstance();
+    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_slave->initIceInstance(ice_config);
 
     cv_create.notify_all();
     CPPUNIT_ASSERT(
@@ -360,9 +356,8 @@ IceTest::testTurnSlaveIceConnection()
     ice_config.master = true;
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              ice_config);
-    ice_master->initIceInstance();
+    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
         CPPUNIT_ASSERT(ok);
@@ -408,9 +403,8 @@ IceTest::testTurnSlaveIceConnection()
     ice_config.master = false;
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             ice_config);
-    ice_slave->initIceInstance();
+    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_slave->initIceInstance(ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
@@ -473,9 +467,8 @@ IceTest::testReceiveTooManyCandidates()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
 
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              ice_config);
-    ice_master->initIceInstance();
+    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
         CPPUNIT_ASSERT(ok);
@@ -516,9 +509,8 @@ IceTest::testReceiveTooManyCandidates()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
 
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             ice_config);
-    ice_slave->initIceInstance();
+    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_slave->initIceInstance(ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
@@ -583,9 +575,8 @@ IceTest::testCompleteOnFailure()
     ice_config.master = true;
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              ice_config);
-    ice_master->initIceInstance();
+    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
         CPPUNIT_ASSERT(ok);
@@ -631,9 +622,8 @@ IceTest::testCompleteOnFailure()
     ice_config.master = false;
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             ice_config);
-    ice_slave->initIceInstance();
+    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_slave->initIceInstance(ice_config);
     cv_create.notify_all();
     // Check that nego failed and callback called
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(120), [&] {
