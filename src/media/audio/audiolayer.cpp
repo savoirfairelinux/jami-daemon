@@ -164,7 +164,7 @@ AudioLayer::putUrgent(AudioBuffer& buffer)
 void
 AudioLayer::notifyIncomingCall()
 {
-    if (!Manager::instance().incomingCallsWaiting())
+    if (not playInomingCallBeep_)
         return;
 
     auto now = std::chrono::system_clock::now();
@@ -174,10 +174,6 @@ AudioLayer::notifyIncomingCall()
         return;
 
     lastNotificationTime_ = now;
-
-    // Enable notification only if more than one call
-    if (!Manager::instance().hasCurrentCall())
-        return;
 
     Tone tone("440/160", getSampleRate());
     size_t nbSample = tone.getSize();
