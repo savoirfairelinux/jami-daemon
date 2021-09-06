@@ -615,6 +615,8 @@ void
 Manager::ManagerPimpl::addWaitingCall(const std::string& id)
 {
     std::lock_guard<std::mutex> m(waitingCallsMutex_);
+    if (waitingCalls_.empty())
+        audiodriver_->startIncomingCallNotification();
     waitingCalls_.insert(id);
 }
 
@@ -623,6 +625,8 @@ Manager::ManagerPimpl::removeWaitingCall(const std::string& id)
 {
     std::lock_guard<std::mutex> m(waitingCallsMutex_);
     waitingCalls_.erase(id);
+    if (waitingCalls_.empty())
+        audiodriver_->stopIncomingCallNotification();
 }
 
 void
