@@ -53,7 +53,7 @@ typedef struct SpeexEchoState_ SpeexEchoState;
 #define COREAUDIO_API_STR  "coreaudio"
 #define PORTAUDIO_API_STR  "portaudio"
 
-#define PCM_DEFAULT     "default" // Default ALSA plugin
+#define PCM_DEFAULT     "default"     // Default ALSA plugin
 #define PCM_DSNOOP      "plug:dsnoop" // Alsa plugin for microphone sharing
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
 
@@ -118,6 +118,12 @@ public:
     void putUrgent(AudioBuffer& buffer);
 
     /**
+     * Start/Stop playing the incoming call notification sound (beep)
+     * while playing back audio (typically during an ongoing call).
+     */
+    void playIncomingCallNotification(bool play) { playInomingCallBeep_.exchange(play); }
+
+    /**
      * Flush main buffer
      */
     void flushMain();
@@ -179,7 +185,7 @@ public:
     AudioFormat getFormat() const { return audioFormat_; }
 
     /**
-     * Emit an audio notification on incoming calls
+     * Emit an audio notification (beep) on incoming calls
      */
     void notifyIncomingCall();
 
@@ -295,10 +301,15 @@ protected:
 private:
     void checkAEC();
 
+    // Set to "true" to play the incoming call notification (beep)
+    // when the playback is on (typically when there is already an
+    // active call).
+    std::atomic_bool playInomingCallBeep_ {false};
     /**
      * Time of the last incoming call notification
      */
-    std::chrono::system_clock::time_point lastNotificationTime_;
+    std::chrono::system_clock::time_point lastNotificationTime_ {
+        std::chrono::system_clock::time_point::min()};
 };
 
 } // namespace jami
