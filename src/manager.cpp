@@ -615,6 +615,9 @@ void
 Manager::ManagerPimpl::addWaitingCall(const std::string& id)
 {
     std::lock_guard<std::mutex> m(waitingCallsMutex_);
+    // Enable incoming call beep if needed.
+    if (audiodriver_ and waitingCalls_.empty() and not currentCall_.empty())
+        audiodriver_->playIncomingCallNotification(true);
     waitingCalls_.insert(id);
 }
 
@@ -623,6 +626,8 @@ Manager::ManagerPimpl::removeWaitingCall(const std::string& id)
 {
     std::lock_guard<std::mutex> m(waitingCallsMutex_);
     waitingCalls_.erase(id);
+    if (audiodriver_ and waitingCalls_.empty())
+        audiodriver_->playIncomingCallNotification(false);
 }
 
 void
