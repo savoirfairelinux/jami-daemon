@@ -65,6 +65,8 @@ static constexpr uint16_t IPV6_HEADER_SIZE = 40; ///< Size in bytes of IPV6 pack
 static constexpr uint16_t IPV4_HEADER_SIZE = 20; ///< Size in bytes of IPV4 packet header
 static constexpr int MAX_CANDIDATES {32};
 static constexpr int MAX_DESTRUCTION_TIMEOUT {3};
+static constexpr int HANDLE_EVENT_DURATION {500};
+static constexpr int HANDLE_EVENT_TENTATIVE {6};
 
 //==============================================================================
 
@@ -470,8 +472,12 @@ IceTransport::Impl::~Impl()
     // Because when destroying the TURN session pjproject creates a pj_timer
     // to postpone the TURN destruction. This timer is only called if we poll
     // the event queue.
-    while (handleEvents(500))
-        ;
+    auto tentative = 0;
+    while (tentative < HANDLE_EVENT_TENTATIVE && handleEvents(HANDLE_EVENT_DURATION)) {
+        tentative++;
+    }
+    if (tentative == HANDLE_EVENT_TENTATIVE)
+        JAMI_ERR("handle events didn't finish after %d tentatives. This is a bug. Please report it.", HANDLE_EVENT_TENTATIVE);
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
