@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6e544d8_abbddd8d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 760,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-07T19:03:29Z",
+      "side": 1,
+      "message": "not related to this patch, but isIPToIP_ seems unused.",
+      "range": {
+        "startLine": 760,
+        "startChar": 7,
+        "endLine": 760,
+        "endChar": 26
+      },
+      "revId": "1c3a084d4ad070d9eb6b24fcbdbf98eb1578d098",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb342848_a0fc30e4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 763,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-07T19:03:29Z",
+      "side": 1,
+      "message": "missing todo. issue or to modify in this patch?",
+      "range": {
+        "startLine": 763,
+        "startChar": 7,
+        "endLine": 763,
+        "endChar": 20
+      },
+      "revId": "1c3a084d4ad070d9eb6b24fcbdbf98eb1578d098",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb08199d_51f98b5d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 3051,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-07T19:03:29Z",
+      "side": 1,
+      "message": "mmh seems wrong",
+      "range": {
+        "startLine": 3050,
+        "startChar": 6,
+        "endLine": 3051,
+        "endChar": 30
+      },
+      "revId": "1c3a084d4ad070d9eb6b24fcbdbf98eb1578d098",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
