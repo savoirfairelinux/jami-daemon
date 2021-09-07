@@ -174,6 +174,12 @@ ut_syncHistory_SOURCES = syncHistory/syncHistory.cpp common.cpp
 check_PROGRAMS += ut_ice
 ut_ice_SOURCES = ice/ice.cpp common.cpp
 
+#
+# revoke
+#
+check_PROGRAMS += ut_revoke
+ut_revoke_SOURCES = revoke/revoke.cpp common.cpp
+
 check_PROGRAMS += ut_ice_sdp_parser
 ut_ice_sdp_parser_SOURCES = ice/ice_sdp_parser.cpp common.cpp
 

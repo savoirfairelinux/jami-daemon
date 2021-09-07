@@ -1086,23 +1086,9 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
         return false;
     return accountManager_
         ->revokeDevice(password, device, [this, device](AccountManager::RevokeDeviceResult result) {
-            switch (result) {
-            case AccountManager::RevokeDeviceResult::SUCCESS:
-                emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
-                                                                              device,
-                                                                              0);
-                break;
-            case AccountManager::RevokeDeviceResult::ERROR_CREDENTIALS:
-                emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
-                                                                              device,
-                                                                              1);
-                break;
-            case AccountManager::RevokeDeviceResult::ERROR_NETWORK:
-                emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
-                                                                              device,
-                                                                              2);
-                break;
-            }
+            emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
+                                                                          device,
+                                                                          static_cast<int>(result));
         });
     return true;
 }
