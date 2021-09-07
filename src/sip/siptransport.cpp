@@ -206,7 +206,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
 
     std::shared_ptr<SipTransport> sipTransport;
 
-    {
+    if (!isDestroying_) {
         std::lock_guard<std::mutex> lock(transportMapMutex_);
         auto key = transports_.find(tp);
         if (key == transports_.end())
@@ -269,6 +269,7 @@ void
 SipTransportBroker::shutdown()
 {
     std::unique_lock<std::mutex> lock(transportMapMutex_);
+    isDestroying_ = true;
     for (auto& t : transports_) {
         if (auto transport = t.second.lock()) {
             pjsip_transport_shutdown(transport->get());
