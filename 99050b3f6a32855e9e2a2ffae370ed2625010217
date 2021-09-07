@@ -87,6 +87,24 @@
       "parentUuid": "2ab1ca0b_50dd60ea",
       "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a23f3f5_29e2fad2",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-07T18:56:38Z",
+      "side": 1,
+      "message": "If the socket is not closed after 3 secs, it will probably not be closed or hang. 3 secs is a very long time for this operation and another bug is probably related.",
+      "parentUuid": "25b59529_a23c072d",
+      "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
