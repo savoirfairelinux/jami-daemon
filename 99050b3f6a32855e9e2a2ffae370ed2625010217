@@ -105,6 +105,24 @@
       "parentUuid": "25b59529_a23c072d",
       "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf246463_41036423",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-09-07T19:31:12Z",
+      "side": 1,
+      "message": "You\u0027re right, this should not take 3 seconds in normal cases.  Which means that if does happen, there\u0027s something wrong in PJSIP.\n\nCan we marks this as `JAMI_ERR(\"... This is a bug. Please report it.\", ...)` then?",
+      "parentUuid": "0a23f3f5_29e2fad2",
+      "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
