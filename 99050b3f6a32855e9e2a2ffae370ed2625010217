@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "489e7817_f4c89bab",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 477,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-09-07T18:42:14Z",
+      "side": 1,
+      "message": "Conditions should be transposed.  Otherwise you might end up with a false positive (handleEvents() returns false while tentative \u003d\u003d HANDLE_EVENT_TENTATIVE).",
+      "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "30b58d18_2251cf75",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
