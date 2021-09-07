@@ -69,6 +69,24 @@
       "parentUuid": "c256a3b2_fc36608c",
       "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "25b59529_a23c072d",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-09-07T18:48:33Z",
+      "side": 1,
+      "message": "Fine, I agree that infinite looping is bad on its own.  \n\nJust to be clear that the underlying UDP sockets might never closed, and thus it\u0027s a leak because you will end up with -1 \u003c- open() or -1 \u003c- socket(), in the long run, and there\u0027s many place in Jami and PJSIP where having a bad file descriptor ends up in kaput of the daemon.",
+      "parentUuid": "2ab1ca0b_50dd60ea",
+      "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
