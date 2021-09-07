@@ -688,7 +688,7 @@ ArchiveAccountManager::revokeDevice(const std::string& password,
 {
     auto fa = dht::ThreadPool::computation().getShared<AccountArchive>(
         [this, password] { return readArchive(password); });
-    findCertificate(dht::InfoHash(device),
+    findCertificate(DeviceId(device),
                     [fa = std::move(fa), password, device, cb, onAsync = onAsync_](
                         const std::shared_ptr<dht::crypto::Certificate>& crt) mutable {
                         if (not crt) {
