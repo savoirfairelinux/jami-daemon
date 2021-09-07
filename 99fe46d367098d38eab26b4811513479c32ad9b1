@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df973540_af8e4d35",
+        "filename": "src/media/audio/audiolayer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-09-07T16:01:05Z",
+      "side": 1,
+      "message": "could be a single method:\n\n    void playIncomingCallNotification(bool play) { playInomingCallBeep_.exchange(play); }",
+      "range": {
+        "startLine": 124,
+        "startChar": 0,
+        "endLine": 126,
+        "endChar": 0
+      },
+      "revId": "99fe46d367098d38eab26b4811513479c32ad9b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd40eedd_67f6c070",
+        "filename": "src/media/audio/audiolayer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-09-07T16:01:05Z",
+      "side": 1,
+      "message": "Could avoid unneeded syscall:\n\n    std::chrono::system_clock::min()\n\nTo avoid integer overflow, the check can then be done with:\n\n    if (now \u003e lastNotificationTime_ + std::chrono::seconds(5))",
+      "range": {
+        "startLine": 312,
+        "startChar": 65,
+        "endLine": 312,
+        "endChar": 97
+      },
+      "revId": "99fe46d367098d38eab26b4811513479c32ad9b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
