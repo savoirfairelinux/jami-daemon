@@ -34,6 +34,24 @@
       "parentUuid": "30b58d18_2251cf75",
       "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2ab1ca0b_50dd60ea",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-07T18:40:32Z",
+      "side": 1,
+      "message": "Not a leak as the memory pool will be released anyway, but the TURN will have a socket opened until it timeout. But anyway if it takes more than 3 secs to close, there is a problem and it will be bad to have a daemon still opened for a long time. But we should avoid to have potential infinite loop in destructors.\n\nI saw the destruction blocked twice (I ran the test 30 times) by running the test in https://review.jami.net/c/ring-daemon/+/19231/2. One in handleEvents, the second in siptransportbroker\n\nHowever I didn\u0027t save the backtraces..",
+      "parentUuid": "c256a3b2_fc36608c",
+      "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
