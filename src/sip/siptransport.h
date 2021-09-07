@@ -197,6 +197,7 @@ private:
     std::map<IpAddr, pjsip_transport*> udpTransports_;
 
     pjsip_endpoint* endpt_;
+    std::atomic_bool isDestroying_ {false};
 };
 
 } // namespace jami
