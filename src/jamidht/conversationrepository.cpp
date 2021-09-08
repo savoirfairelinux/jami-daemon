@@ -1563,7 +1563,7 @@ ConversationRepository::Impl::log(const std::string& from,
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
 
     for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
-        if (n != 0 && idx == n) {
+        if (n != 0 && idx - 1 == n) {
             break;
         }
         git_commit* commit_ptr = nullptr;
