@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3b24e7e0_0773f703",
+        "filename": "src/manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 620,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-08T18:05:40Z",
+      "side": 1,
+      "message": "Yes, I know. I tried to make a patch as less intrusive as possible.",
+      "parentUuid": "7c01755b_125d7fd3",
+      "range": {
+        "startLine": 618,
+        "startChar": 35,
+        "endLine": 620,
+        "endChar": 30
+      },
+      "revId": "bbdeac2f3b6a67e1df0268fa930f45a59443090a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9be549dc_b357ac20",
@@ -54,6 +78,30 @@
       "writtenOn": "2021-09-08T15:19:25Z",
       "side": 1,
       "message": "typo",
+      "range": {
+        "startLine": 167,
+        "startChar": 12,
+        "endLine": 167,
+        "endChar": 32
+      },
+      "revId": "bbdeac2f3b6a67e1df0268fa930f45a59443090a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd3159ef_7d469a02",
+        "filename": "src/media/audio/audiolayer.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-08T18:05:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9be549dc_b357ac20",
       "range": {
         "startLine": 167,
         "startChar": 12,
