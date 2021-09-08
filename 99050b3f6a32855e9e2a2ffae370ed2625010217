@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "89de7695_9a9c94d2",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 477,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-08T13:11:13Z",
+      "side": 1,
+      "message": "indeed. Should not be a problem because it still long :P but done",
+      "parentUuid": "489e7817_f4c89bab",
+      "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "30b58d18_2251cf75",
@@ -121,6 +139,24 @@
       "side": 1,
       "message": "You\u0027re right, this should not take 3 seconds in normal cases.  Which means that if does happen, there\u0027s something wrong in PJSIP.\n\nCan we marks this as `JAMI_ERR(\"... This is a bug. Please report it.\", ...)` then?",
       "parentUuid": "0a23f3f5_29e2fad2",
+      "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "168c8722_ae91d75d",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-08T13:11:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cf246463_41036423",
       "revId": "99050b3f6a32855e9e2a2ffae370ed2625010217",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
