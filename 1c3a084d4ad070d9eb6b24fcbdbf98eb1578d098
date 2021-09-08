@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6f73e5ae_fdbbfd93",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 760,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-08T23:21:54Z",
+      "side": 1,
+      "message": "it\u0027s unused. But not related to this patch",
+      "parentUuid": "0df97b47_dbfd7cbb",
+      "range": {
+        "startLine": 760,
+        "startChar": 7,
+        "endLine": 760,
+        "endChar": 26
+      },
+      "revId": "1c3a084d4ad070d9eb6b24fcbdbf98eb1578d098",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cb342848_a0fc30e4",
