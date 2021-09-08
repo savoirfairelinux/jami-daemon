@@ -119,7 +119,6 @@ public:
                                         bool logIfNotFound = false,
                                         bool fastLog = false,
                                         const std::string& authorUri = "") const;
-    std::optional<std::string> linearizedParent(const std::string& commitId) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
     // NOTE! GitDiff needs to be deteleted before repo
@@ -1533,20 +1532,21 @@ ConversationRepository::Impl::log(const std::string& from,
                                   const std::string& authorUri) const
 {
     std::vector<ConversationCommit> commits {};
+    git_oid oid, oidFrom, oidMerge;
 
-    git_oid oid;
+    // Note: Start from head to get all merge possibilities and correct linearized parent.
     auto repo = repository();
-    if (!repo)
+    if (!repo or git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
         return commits;
-    if (from.empty()) {
-        if (git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
-            JAMI_ERR("Cannot get reference for HEAD");
-            return commits;
-        }
-    } else {
-        if (git_oid_fromstr(&oid, from.c_str()) < 0) {
-            JAMI_ERR("Cannot get reference for commit %s", from.c_str());
-            return commits;
+    }
+
+    if (from != "" && git_oid_fromstr(&oidFrom, from.c_str()) == 0) {
+        auto isMergeBase = git_merge_base(&oidMerge, repo.get(), &oid, &oidFrom) == 0
+                           && git_oid_equal(&oidMerge, &oidFrom);
+        if (!isMergeBase) {
+            // We're logging a non merged branch, so, take this one instead of HEAD
+            oid = oidFrom;
         }
     }
 
@@ -1559,23 +1559,30 @@ ConversationRepository::Impl::log(const std::string& from,
             JAMI_DBG("Couldn't init revwalker for conversation %s", id_.c_str());
         return commits;
     }
+
     GitRevWalker walker {walker_ptr, git_revwalk_free};
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
 
+    auto startLogging = from == "";
     for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
-        if (n != 0 && idx == n) {
-            break;
-        }
         git_commit* commit_ptr = nullptr;
         std::string id = git_oid_tostr_s(&oid);
+        if (!commits.empty()) {
+            // Set linearized parent
+            commits.rbegin()->linearized_parent = id;
+        }
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
             JAMI_WARN("Failed to look up commit %s", id.c_str());
             break;
         }
         GitCommit commit {commit_ptr, git_commit_free};
-        if (id == to) {
+        if ((n != 0 && commits.size() == n) || (id == to))
             break;
-        }
+
+        if (!startLogging && from != "" && from == id)
+            startLogging = true;
+        if (!startLogging)
+            continue;
 
         const git_signature* sig = git_commit_author(commit.get());
         GitAuthor author;
@@ -1625,47 +1632,7 @@ ConversationRepository::Impl::log(const std::string& from,
         git_buf_dispose(&signed_data);
         cc->timestamp = git_commit_time(commit.get());
     }
-
     return commits;
-}
-
-std::optional<std::string>
-ConversationRepository::Impl::linearizedParent(const std::string& commitId) const
-{
-    git_oid oid;
-    auto repo = repository();
-    if (!repo or git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
-        JAMI_ERR("Cannot get reference for HEAD");
-        return std::nullopt;
-    }
-
-    git_revwalk* walker_ptr = nullptr;
-    if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
-        GitRevWalker walker {walker_ptr, git_revwalk_free};
-        // This fail can be ok in the case we check if a commit exists before pulling (so can fail
-        // there). only log if the fail is unwanted.
-        return std::nullopt;
-    }
-    GitRevWalker walker {walker_ptr, git_revwalk_free};
-    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-
-    auto ret = false;
-    for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
-        git_commit* commit_ptr = nullptr;
-        std::string id = git_oid_tostr_s(&oid);
-        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
-            JAMI_WARN("Failed to look up commit %s", id.c_str());
-            break;
-        }
-        GitCommit commit {commit_ptr, git_commit_free};
-
-        if (ret)
-            return id;
-        if (id == commitId)
-            ret = true;
-    }
-
-    return std::nullopt;
 }
 
 GitObject
@@ -2925,12 +2892,6 @@ bool
 ConversationRepository::validClone() const
 {
     return pimpl_->validCommits(logN("", 0));
-}
-
-std::optional<std::string>
-ConversationRepository::linearizedParent(const std::string& commitId) const
-{
-    return pimpl_->linearizedParent(commitId);
 }
 
 void

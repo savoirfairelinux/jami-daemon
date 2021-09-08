@@ -426,6 +426,7 @@ ConversationRepositoryTest::testFetch()
 
     // Clone repository
     auto id1 = repository->commitMessage("Commit 1");
+
     auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(),
                                                             aliceDeviceId.toString(),
                                                             repository->id());
