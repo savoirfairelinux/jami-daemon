@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f06b08a_bf0aeb29",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-08T18:12:33Z",
+      "side": 1,
+      "message": "IMHO, we also need to address the strong coupling between the UI and the media demuxer.",
+      "revId": "0cc6490cfbf4d83297d34c1b7c8873bace6bbf39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
