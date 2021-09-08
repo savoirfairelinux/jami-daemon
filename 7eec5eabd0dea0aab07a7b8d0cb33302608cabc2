@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "98e7423a_223f5ef1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2921,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-08T13:58:41Z",
+      "side": 1,
+      "message": "yes",
+      "parentUuid": "a5c16abf_1a26baf1",
+      "range": {
+        "startLine": 2921,
+        "startChar": 17,
+        "endLine": 2921,
+        "endChar": 18
+      },
+      "revId": "7eec5eabd0dea0aab07a7b8d0cb33302608cabc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8892795e_73039d32",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 2
@@ -55,6 +79,24 @@
       "side": 1,
       "message": "Also dangling `;` at line 2922.",
       "parentUuid": "8892795e_73039d32",
+      "revId": "7eec5eabd0dea0aab07a7b8d0cb33302608cabc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c39b6bd1_d5fd3727",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2922,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-08T13:58:41Z",
+      "side": 1,
+      "message": "As mentioned in previous comment, tmpMediaTransport_ will be removed completely",
+      "parentUuid": "ebd30d4c_cf60f899",
       "revId": "7eec5eabd0dea0aab07a7b8d0cb33302608cabc2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
