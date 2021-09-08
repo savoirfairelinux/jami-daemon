@@ -1064,14 +1064,11 @@ ConversationTest::testPingPongMessages()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
-            if (accountId == bobId) {
+            if (accountId == bobId)
                 messageBobReceived += 1;
-            }
-            if (accountId == aliceId) {
+            if (accountId == aliceId)
                 messageAliceReceived += 1;
-            }
-            if (messageAliceReceived == messageBobReceived)
-                cv.notify_one();
+            cv.notify_one();
         }));
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
