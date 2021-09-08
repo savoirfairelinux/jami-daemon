@@ -2409,11 +2409,12 @@ JamiAccount::convModule()
                                         [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
                                                              const DeviceId&) {
                                             if (socket) {
-                                                if (!cb(socket)) {
-                                                    socket->shutdown();
-                                                    shared->removeGitSocket(socket->deviceId(),
-                                                                            convId);
-                                                }
+                                                socket
+                                                    ->onShutdown([shared,
+                                                                  deviceId = socket->deviceId(),
+                                                                  convId] {
+                                                        shared->removeGitSocket(deviceId, convId);
+                                                    }) if (!cb(socket)) socket->shutdown();
                                                 return;
                                             }
                                             cb({});
