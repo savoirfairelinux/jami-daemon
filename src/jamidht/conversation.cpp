@@ -404,10 +404,9 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
         if (!extension.empty())
             message["fileId"] += "." + extension;
     }
-    auto linearizedParent = repository_->linearizedParent(commit.id);
     message["id"] = commit.id;
     message["parents"] = parents;
-    message["linearizedParent"] = linearizedParent ? *linearizedParent : "";
+    message["linearizedParent"] = commit.linearized_parent;
     message["author"] = authorId;
     message["type"] = type;
     message["timestamp"] = std::to_string(commit.timestamp);
