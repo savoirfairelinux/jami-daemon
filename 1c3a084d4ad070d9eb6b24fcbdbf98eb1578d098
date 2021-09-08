@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0df97b47_dbfd7cbb",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 760,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-08T21:04:53Z",
+      "side": 1,
+      "message": "Done\nShould we remove isIPToIP_ and all reference to it. Seems unused anywhere ?",
+      "parentUuid": "b6e544d8_abbddd8d",
+      "range": {
+        "startLine": 760,
+        "startChar": 7,
+        "endLine": 760,
+        "endChar": 26
+      },
+      "revId": "1c3a084d4ad070d9eb6b24fcbdbf98eb1578d098",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cb342848_a0fc30e4",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "12793c27_55f11e8d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 763,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-08T21:04:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cb342848_a0fc30e4",
+      "range": {
+        "startLine": 763,
+        "startChar": 7,
+        "endLine": 763,
+        "endChar": 20
+      },
+      "revId": "1c3a084d4ad070d9eb6b24fcbdbf98eb1578d098",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cb08199d_51f98b5d",
@@ -60,6 +108,30 @@
       "writtenOn": "2021-09-07T19:03:29Z",
       "side": 1,
       "message": "mmh seems wrong",
+      "range": {
+        "startLine": 3050,
+        "startChar": 6,
+        "endLine": 3051,
+        "endChar": 30
+      },
+      "revId": "1c3a084d4ad070d9eb6b24fcbdbf98eb1578d098",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f59fbb48_063dfffa",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 3051,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-08T21:04:53Z",
+      "side": 1,
+      "message": "yes, nice catch.",
+      "parentUuid": "cb08199d_51f98b5d",
       "range": {
         "startLine": 3050,
         "startChar": 6,
