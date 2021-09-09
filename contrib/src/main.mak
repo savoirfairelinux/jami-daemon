@@ -250,12 +250,14 @@ SVN ?= $(error subversion client (svn) not found!)
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download = $(error Trying to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
-download = flock "$@.lock" wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
+download = wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
 else ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
-download = flock "$@.lock" curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
+download = curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
-download = flock "$@.lock" sh -c \
-  'rm -f "$@.tmp" && fetch -p -o "$@.tmp" "$(1)" && touch "$@.tmp" && mv "$@.tmp" "$@"'
+download = rm -f $@.tmp && \
+	fetch -p -o $@.tmp "$(1)" && \
+	touch $@.tmp && \
+	mv $@.tmp $@
 else
 download = $(error Neither wget nor curl found!)
 endif
@@ -336,13 +338,14 @@ HOSTVARS := $(HOSTTOOLS) \
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download_git = $(error Trying to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else
-download_git = flock "$@.lock" sh -c "\
-  rm -Rf '$(@:.tar.xz=)' && \
-  $(GIT) clone $(2:%=--branch '%') '$(1)' '$(@:.tar.xz=)' && \
-  (cd '$(@:.tar.xz=)' && $(GIT) checkout $(3:%= '%')) && \
-  (test -z '$(4)' && rm -Rf $(@:%.tar.xz='%')/.git) || true && \
-  (cd '$(dir $@)' && tar cJ '$(notdir $(@:.tar.xz=))') > '$@' && \
-  rm -Rf '$(@:.tar.xz=)'"
+download_git = \
+	rm -Rf $(@:.tar.xz=) && \
+	$(GIT) clone $(2:%=--branch %) $(1) $(@:.tar.xz=) && \
+	(cd $(@:.tar.xz=) && $(GIT) checkout $(3:%= %)) && \
+	(test -z "$(4)" && rm -Rf $(@:%.tar.xz=%)/.git) || true && \
+	(cd $(dir $@) && \
+	tar cJ $(notdir $(@:.tar.xz=))) > $@ && \
+	rm -Rf $(@:.tar.xz=)
 endif
 
 checksum = \
