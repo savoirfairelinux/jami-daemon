@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a1ca36e8_61dcdd32",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2269,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-09T14:16:56Z",
+      "side": 1,
+      "message": "rewritten in https://review.jami.net/c/ring-daemon/+/18796",
+      "range": {
+        "startLine": 2265,
+        "startChar": 20,
+        "endLine": 2269,
+        "endChar": 23
+      },
+      "revId": "2c271871a0b6ea987844f293885d7bd077bf16f8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
