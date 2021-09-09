@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "74310ea3_b85a12d1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-09T18:22:15Z",
+      "side": 1,
+      "message": "Small nitpick, after this LGTM, didn\u0027t see any problem and looks good to me",
+      "revId": "6c011e90d5a2ea5bffdcd7ea79d434bb78670cdd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12793866_ae0ceeaa",
+        "filename": "src/jamidht/channeled_transport.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-09T18:22:15Z",
+      "side": 1,
+      "message": "can be removed",
+      "range": {
+        "startLine": 81,
+        "startChar": 11,
+        "endLine": 81,
+        "endChar": 23
+      },
+      "revId": "6c011e90d5a2ea5bffdcd7ea79d434bb78670cdd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
