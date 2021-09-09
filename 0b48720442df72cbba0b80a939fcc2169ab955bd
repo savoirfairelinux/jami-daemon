@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b07ed5b5_8c0481e7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 34
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-09-09T18:10:51Z",
+      "side": 1,
+      "message": "looks good!",
+      "revId": "0b48720442df72cbba0b80a939fcc2169ab955bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "724b7713_87521d86",
+        "filename": "src/jamidht/channel_handler.h",
+        "patchSetId": 34
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-09-09T18:10:51Z",
+      "side": 1,
+      "message": "my 2 cents: probably best to mention interface in the class name or description so it\u0027s obvious when reading elsewhere",
+      "range": {
+        "startLine": 29,
+        "startChar": 0,
+        "endLine": 33,
+        "endChar": 20
+      },
+      "revId": "0b48720442df72cbba0b80a939fcc2169ab955bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
