@@ -1904,10 +1904,6 @@ SIPAccount::supportPresence(int function, bool enabled)
     if (not presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)
         and not presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE))
         enablePresence(false);
-
-    Manager::instance().saveConfig();
-    // FIXME: bad signal used here, we need a global config changed signal.
-    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
 }
 
 MatchRank
