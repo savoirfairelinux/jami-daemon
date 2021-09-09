@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d6b33bfc_4bf87c23",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-09T13:19:16Z",
+      "side": 1,
+      "message": "Nice catch. However fixed with https://review.jami.net/c/ring-daemon/+/19234",
+      "revId": "691bcb1e5cecdedfb59b799d3ca8513314f1aeaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
