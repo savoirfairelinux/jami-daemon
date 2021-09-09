@@ -36,26 +36,6 @@ using ChannelReadyCb = std::function<void(void)>;
 using OnShutdownCb = std::function<void(void)>;
 
 static constexpr auto SEND_BEACON_TIMEOUT = std::chrono::milliseconds(3000);
-static constexpr uint16_t CONTROL_CHANNEL {0};
-static constexpr uint16_t PROTOCOL_CHANNEL {0xffff};
-
-enum class ChannelRequestState {
-    REQUEST,
-    ACCEPT,
-    DECLINE,
-};
-
-/**
- * That msgpack structure is used to request a new channel (id, name)
- * Transmitted over the TLS socket
- */
-struct ChannelRequest
-{
-    std::string name {};
-    uint16_t channel {0};
-    ChannelRequestState state {ChannelRequestState::REQUEST};
-    MSGPACK_DEFINE(name, channel, state)
-};
 
 /**
  * A socket divided in channels over a TLS session

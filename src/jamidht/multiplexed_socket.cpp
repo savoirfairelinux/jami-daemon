@@ -28,6 +28,8 @@
 
 static constexpr std::size_t IO_BUFFER_SIZE {8192}; ///< Size of char buffer used by IO operations
 static constexpr int MULTIPLEXED_SOCKET_VERSION {1};
+static constexpr uint16_t CONTROL_CHANNEL {0};
+static constexpr uint16_t PROTOCOL_CHANNEL {0xffff};
 
 struct ChanneledMessage
 {
@@ -52,6 +54,24 @@ namespace jami {
 
 using clock = std::chrono::steady_clock;
 using time_point = clock::time_point;
+
+enum class ChannelRequestState {
+    REQUEST,
+    ACCEPT,
+    DECLINE,
+};
+
+/**
+ * That msgpack structure is used to request a new channel (id, name)
+ * Transmitted over the TLS socket
+ */
+struct ChannelRequest
+{
+    std::string name {};
+    uint16_t channel {0};
+    ChannelRequestState state {ChannelRequestState::REQUEST};
+    MSGPACK_DEFINE(name, channel, state)
+};
 
 class MultiplexedSocket::Impl
 {
