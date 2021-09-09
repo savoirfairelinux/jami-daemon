@@ -39,6 +39,30 @@
       },
       "revId": "0b48720442df72cbba0b80a939fcc2169ab955bd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "52b6f83b_42afd5de",
+        "filename": "src/jamidht/channel_handler.h",
+        "patchSetId": 34
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-09T18:26:21Z",
+      "side": 1,
+      "message": "I agree",
+      "parentUuid": "724b7713_87521d86",
+      "range": {
+        "startLine": 29,
+        "startChar": 0,
+        "endLine": 33,
+        "endChar": 20
+      },
+      "revId": "0b48720442df72cbba0b80a939fcc2169ab955bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
