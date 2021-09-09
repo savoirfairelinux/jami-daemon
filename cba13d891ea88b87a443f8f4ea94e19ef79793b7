@@ -16,6 +16,24 @@
       "message": "I guess we can make it optional.  It\u0027s currently used as part of https://git.jami.net/savoirfairelinux/ring-project/-/blob/master/Jenkinsfile#L98.  If it\u0027s optional, there should be a check that verifies whether TARBALL is mounted on NFS and if so, error and abort, to prevent shooting ourselves in the foot.\n\nNote that reverting this will cause fetching in parallel to be unwieldy (causing hard to debug issues in the packaging-gnu-linux CI job) until the above is implemented.",
       "revId": "cba13d891ea88b87a443f8f4ea94e19ef79793b7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "642d217d_66f7b448",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-09-09T19:12:44Z",
+      "side": 1,
+      "message": "I\u0027d be more in favor of keeping the flock requirement and installing https://github.com/discoteq/flock on the MacOS environments, for simplicity and robustness.",
+      "parentUuid": "733f8f59_227c8f26",
+      "revId": "cba13d891ea88b87a443f8f4ea94e19ef79793b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
