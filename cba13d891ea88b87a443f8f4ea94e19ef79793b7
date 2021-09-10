@@ -34,6 +34,24 @@
       "parentUuid": "733f8f59_227c8f26",
       "revId": "cba13d891ea88b87a443f8f4ea94e19ef79793b7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81f8561b_8c7020cc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-10T13:59:57Z",
+      "side": 1,
+      "message": "$(FLOCK) with empty if not present or $(FLOCK)\u003dflock if there is ok.\n\nflock is only used for NFS and packaging and come from untrusted source. So it MUST NOT be mandatory",
+      "parentUuid": "642d217d_66f7b448",
+      "revId": "cba13d891ea88b87a443f8f4ea94e19ef79793b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
