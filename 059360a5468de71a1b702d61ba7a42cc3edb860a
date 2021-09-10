@@ -1,6 +1,29 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "13b66b43_d296e6cc",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 10
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-09-10T18:58:18Z",
+      "side": 1,
+      "message": "build: Use non-recursive Automake.",
+      "range": {
+        "startLine": 7,
+        "startChar": 7,
+        "endLine": 7,
+        "endChar": 32
+      },
+      "revId": "059360a5468de71a1b702d61ba7a42cc3edb860a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "db955a74_cfeca14a",
