@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb06b64a_29addfe5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-09-10T13:37:07Z",
+      "side": 1,
+      "message": "Yeah, I think it is better to keep these signals\n\nDespite the fact that changing settings is not async, there could be multiple places where the function could be invoked (video settings, and in-call)\n\nSo, if there are no such signals, on the client-side there will be many update functions\n\nBut, if we remove these signals, I think in current implementation, update functions will not be too many",
+      "parentUuid": "c2996e45_c4a1f3c8",
+      "revId": "e9ca73a070899149f8da8892ad7008fd3e1ecdcc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "41657652_e8710049",
@@ -43,6 +61,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d066b0a2_1df59f39",
+        "filename": "bin/dbus/cx.ring.Ring.VideoManager.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-09-10T13:37:07Z",
+      "side": 1,
+      "message": "How do we change  daemon version?",
+      "parentUuid": "41657652_e8710049",
+      "range": {
+        "startLine": 160,
+        "startChar": 23,
+        "endLine": 161,
+        "endChar": 30
+      },
+      "revId": "e9ca73a070899149f8da8892ad7008fd3e1ecdcc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8c59356f_b4980c46",
         "filename": "bin/dbus/cx.ring.Ring.VideoManager.xml",
         "patchSetId": 4
@@ -54,6 +96,30 @@
       "writtenOn": "2021-09-07T15:21:24Z",
       "side": 1,
       "message": "don\u0027t think we can receive a defaultDeviceChanged for non local?",
+      "range": {
+        "startLine": 163,
+        "startChar": 40,
+        "endLine": 163,
+        "endChar": 68
+      },
+      "revId": "e9ca73a070899149f8da8892ad7008fd3e1ecdcc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bca21028_371d2214",
+        "filename": "bin/dbus/cx.ring.Ring.VideoManager.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-09-10T13:37:07Z",
+      "side": 1,
+      "message": "Yeah, copy\u0026paste\n\nwill remove",
+      "parentUuid": "8c59356f_b4980c46",
       "range": {
         "startLine": 163,
         "startChar": 40,
