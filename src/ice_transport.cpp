@@ -309,7 +309,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
     , initiatorSession_(options.master)
     , accountLocalAddr_(std::move(options.accountLocalAddr))
     , accountPublicAddr_(std::move(options.accountPublicAddr))
-    , thread_()
 {
     JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\" - comp count %u - as a %s",
              this,
