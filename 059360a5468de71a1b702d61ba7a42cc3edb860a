@@ -153,6 +153,24 @@
       "parentUuid": "87c43508_7f20c8d3",
       "revId": "059360a5468de71a1b702d61ba7a42cc3edb860a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e266ac3_c0051c08",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-09-10T19:13:35Z",
+      "side": 1,
+      "message": "In user time yes.  But it\u0027s best to use wall clock for that.\n\nThis makes sens, since user time is the cumulative of all cores.  Same goes for system and %cpu.  This is why I was confused at first.  Worst user time AFTER.  But actually better wall clock!",
+      "parentUuid": "ef2e4ab8_3c448f29",
+      "revId": "059360a5468de71a1b702d61ba7a42cc3edb860a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
