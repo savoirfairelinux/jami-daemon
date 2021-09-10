@@ -1318,7 +1318,7 @@ ConversationModule::isBannedDevice(const std::string& convId, const std::string&
 }
 
 void
-ConversationModule::removeContact(const std::string& uri, bool ban)
+ConversationModule::removeContact(const std::string& uri, bool)
 {
     // Remove related conversation
     auto isSelf = uri == pimpl_->username_;
@@ -1368,27 +1368,31 @@ ConversationModule::removeContact(const std::string& uri, bool ban)
 bool
 ConversationModule::removeConversation(const std::string& conversationId)
 {
+    auto members = getConversationMembers(conversationId);
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    auto it = pimpl_->conversations_.find(conversationId);
-    if (it == pimpl_->conversations_.end()) {
-        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
-        return false;
-    }
-    auto members = it->second->getMembers();
-    auto hasMembers = !(members.size() == 1
-                        && pimpl_->username_.find(members[0]["uri"]) != std::string::npos);
     // Update convInfos
     std::unique_lock<std::mutex> lockCi(pimpl_->convInfosMtx_);
     auto itConv = pimpl_->convInfos_.find(conversationId);
-    if (itConv != pimpl_->convInfos_.end()) {
-        itConv->second.removed = std::time(nullptr);
-        // Sync now, because it can take some time to really removes the datas
-        if (hasMembers)
-            pimpl_->needsSyncingCb_();
+    if (itConv == pimpl_->convInfos_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return false;
     }
+    auto it = pimpl_->conversations_.find(conversationId);
+    auto isSyncing = it == pimpl_->conversations_.end();
+    auto hasMembers = !isSyncing
+                      && !(members.size() == 1
+                           && pimpl_->username_.find(members[0]["uri"]) != std::string::npos);
+    itConv->second.removed = std::time(nullptr);
+    if (isSyncing)
+        itConv->second.erased = std::time(nullptr);
+    // Sync now, because it can take some time to really removes the datas
+    if (hasMembers)
+        pimpl_->needsSyncingCb_();
     pimpl_->saveConvInfos();
     lockCi.unlock();
     emitSignal<DRing::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, conversationId);
+    if (isSyncing)
+        return true;
     if (it->second->mode() != ConversationMode::ONE_TO_ONE) {
         // For one to one, we do not notify the leave. The other can still generate request
         // and this is managed by the banned part. If we re-accept, the old conversation will be
