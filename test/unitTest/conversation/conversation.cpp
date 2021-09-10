@@ -159,6 +159,7 @@ private:
     void testSyncingWhileAccepting();
     void testGetConversationsMembersWhileSyncing();
     void testRemoveContactRemoveSyncing();
+    void testRemoveConversationRemoveSyncing();
     void testCountInteractions();
     void testGetConversationMembersWithSelfOneOne();
 
@@ -221,6 +222,7 @@ private:
     CPPUNIT_TEST(testSyncingWhileAccepting);
     CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
     CPPUNIT_TEST(testRemoveContactRemoveSyncing);
+    CPPUNIT_TEST(testRemoveConversationRemoveSyncing);
     CPPUNIT_TEST(testCountInteractions);
     CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
     CPPUNIT_TEST_SUITE_END();
@@ -3579,7 +3581,7 @@ ConversationTest::testInviteFromMessageAfterRemoved()
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& accountId,
-                const std::string& conversationId,
+                const std::string&,
                 std::map<std::string, std::string> /*metadatas*/) {
                 if (accountId == bobId)
                     requestReceived = true;
@@ -3775,7 +3777,7 @@ ConversationTest::testRemoveContact()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string& conversationId) {
+        [&](const std::string& accountId, const std::string&) {
             if (accountId == bobId)
                 conversationRemoved = true;
             cv.notify_one();
@@ -4719,6 +4721,60 @@ ConversationTest::testRemoveContactRemoveSyncing()
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
     bobAccount->removeContact(aliceUri, false);
+
+    CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 0);
+}
+
+void
+ConversationTest::testRemoveConversationRemoveSyncing()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, conversationRemoved = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& convId,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId && !convId.empty())
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
+        [&](const std::string& accountId, const std::string&) {
+            if (accountId == bobId) {
+                conversationRemoved = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+
+    CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
+    DRing::removeConversation(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationRemoved; }));
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 0);
 }
