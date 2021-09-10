@@ -70,6 +70,24 @@
       "parentUuid": "b3b0c22d_3395c693",
       "revId": "059360a5468de71a1b702d61ba7a42cc3edb860a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "87c43508_7f20c8d3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-10T18:47:43Z",
+      "side": 1,
+      "message": "np it\u0027s friday :)",
+      "parentUuid": "d9cd6825_c94e32c1",
+      "revId": "059360a5468de71a1b702d61ba7a42cc3edb860a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
