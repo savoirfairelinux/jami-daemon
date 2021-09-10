@@ -88,6 +88,24 @@
       "parentUuid": "d9cd6825_c94e32c1",
       "revId": "059360a5468de71a1b702d61ba7a42cc3edb860a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ef2e4ab8_3c448f29",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-09-10T18:57:29Z",
+      "side": 1,
+      "message": "You wrote:\n\n\u003e BEFORE: make -j  643.76s user 72.93s system 454% cpu 2:37.69 total\n\u003e AFTER: make -j  1223.89s user 454.49s system 1385% cpu 2:01.16 total\n\nI guess you meant the reverse.  And that would not be 20% faster but 200% faster.",
+      "parentUuid": "87c43508_7f20c8d3",
+      "revId": "059360a5468de71a1b702d61ba7a42cc3edb860a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
