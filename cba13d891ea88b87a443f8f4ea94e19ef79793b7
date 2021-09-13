@@ -52,6 +52,23 @@
       "parentUuid": "642d217d_66f7b448",
       "revId": "cba13d891ea88b87a443f8f4ea94e19ef79793b7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26c10041_10702f4b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2021-09-13T13:34:22Z",
+      "side": 1,
+      "message": "i\u0027d be fine with making flock optional and not a hard dependency.",
+      "revId": "cba13d891ea88b87a443f8f4ea94e19ef79793b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
