@@ -39,7 +39,11 @@ libringacc_la_SOURCES = \
 	./jamidht/archive_account_manager.h \
 	./jamidht/archive_account_manager.cpp \
 	./jamidht/server_account_manager.h \
-	./jamidht/server_account_manager.cpp
+	./jamidht/server_account_manager.cpp \
+	./jamidht/sync_channel_handler.h \
+	./jamidht/sync_channel_handler.cpp \
+	./jamidht/sync_module.h \
+	./jamidht/sync_module.cpp
 
 if RINGNS
 libringacc_la_SOURCES += \

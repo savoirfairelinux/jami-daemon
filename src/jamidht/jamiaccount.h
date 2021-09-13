@@ -45,6 +45,7 @@
 #include "gitserver.h"
 #include "channel_handler.h"
 #include "conversation_module.h"
+#include "sync_module.h"
 #include "conversationrepository.h"
 
 #include <opendht/dhtrunner.h>
@@ -89,6 +90,7 @@ class AccountManager;
 struct AccountInfo;
 class SipTransport;
 class ChanneledOutgoingTransfer;
+class SyncModule;
 
 using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
 using GitSocketList = std::map<DeviceId,                               /* device Id */
@@ -559,6 +561,7 @@ public:
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "");
 
     ConversationModule* convModule();
+    SyncModule* syncModule();
 
     /**
      * Send Profile via cached SIP connection
@@ -566,6 +569,11 @@ public:
      */
     // Note: when swarm will be merged, this can be moved in transferManager
     bool needToSendProfile(const std::string& deviceId);
+    /**
+     * Send Profile via cached SIP connection
+     * @param deviceId      Device that will receive the profile
+     */
+    void sendProfile(const std::string& deviceId);
 
     std::string profilePath() const;
 
@@ -841,10 +849,6 @@ private:
      */
     void callConnectionClosed(const DeviceId& deviceId, bool eraseDummy);
 
-    // Sync connections
-    std::mutex syncConnectionsMtx_;
-    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>> syncConnections_;
-
     /**
      * Ask a device to open a channeled SIP socket
      * @param peerId        The contact who owns the device
@@ -871,16 +875,6 @@ private:
                                const std::string& peerId,
                                const DeviceId& deviceId);
 
-    /**
-     * Store a new Sync connection
-     * @param socket    The new sync channel
-     * @param peerId    The contact who owns the device
-     * @param deviceId  Device linked to that transport
-     */
-    void cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
-                             const std::string& peerId,
-                             const DeviceId& deviceId);
-
     // File transfers
     std::mutex transfersMtx_ {};
     std::set<std::string> incomingFileTransfers_ {};
@@ -903,18 +897,8 @@ private:
                         const std::map<std::string, std::string>& data,
                         pjsip_endpt_send_callback cb);
 
-    /**
-     * Send Profile via cached SIP connection
-     * @param deviceId      Device that will receive the profile
-     */
-    void sendProfile(const std::string& deviceId);
-
     std::mutex gitServersMtx_ {};
     std::map<dht::Value::Id, std::unique_ptr<GitServer>> gitServers_ {};
-
-    void syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
-    void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
-    void syncWithConnected();
 
     std::atomic_bool deviceAnnounced_ {false};
 
@@ -928,6 +912,7 @@ private:
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>> channelHandlers_ {};
 
     std::unique_ptr<ConversationModule> convModule_;
+    std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
 };
