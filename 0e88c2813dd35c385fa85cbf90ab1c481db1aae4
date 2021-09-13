@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ef5f8279_e86cc05f",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 367,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-13T16:53:38Z",
+      "side": 1,
+      "message": "this change the destructor and re-add the infinite loop not in master",
+      "range": {
+        "startLine": 363,
+        "startChar": 30,
+        "endLine": 367,
+        "endChar": 9
+      },
+      "revId": "0e88c2813dd35c385fa85cbf90ab1c481db1aae4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
