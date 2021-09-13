@@ -39,6 +39,7 @@
 #include "jamidht/channeled_transport.h"
 #include "multiplexed_socket.h"
 #include "conversation_channel_handler.h"
+#include "sync_channel_handler.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -117,7 +118,6 @@ static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
 static constexpr const char FILE_URI[] {"file://"};
 static constexpr const char VCARD_URI[] {"vcard://"};
-static constexpr const char SYNC_URI[] {"sync://"};
 static constexpr const char DATA_TRANSFER_URI[] {"data-transfer://"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 
@@ -362,11 +362,8 @@ JamiAccount::shutdownConnections()
         // Just move destruction on another thread.
         dht::ThreadPool::io().run([conMgr = std::make_shared<decltype(connectionManager_)>(
                                        std::move(connectionManager_))] {});
+        channelHandlers_.clear();
         connectionManager_.reset();
-    }
-    {
-        std::unique_lock<std::mutex> lk(syncConnectionsMtx_);
-        syncConnections_.clear();
     }
     gitSocketList_.clear();
     dhtPeerConnector_.reset();
@@ -2104,20 +2101,14 @@ JamiAccount::doRegister_()
 
                     std::unique_lock<std::mutex> lk(connManagerMtx_);
                     initConnectionManager();
-                    auto channelName = "sync://" + deviceId;
-                    if (connectionManager_->isConnecting(crt->getLongId(), channelName)) {
-                        JAMI_INFO("[Account %s] Already connecting to %s",
-                                  getAccountID().c_str(),
-                                  deviceId.c_str());
-                        return;
-                    }
-                    connectionManager_->connectDevice(crt,
-                                                      channelName,
-                                                      [this](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId& deviceId) {
-                                                          if (socket)
-                                                              syncWith(deviceId, socket);
-                                                      });
+                    channelHandlers_[Uri::Scheme::SYNC]
+                        ->connect(crt->getLongId(),
+                                  "",
+                                  [this](std::shared_ptr<ChannelSocket> socket,
+                                         const DeviceId& deviceId) {
+                                      if (socket)
+                                          syncModule()->syncWith(deviceId, socket);
+                                  });
                     lk.unlock();
                     requestSIPConnection(
                         getUsername(),
@@ -2184,8 +2175,6 @@ JamiAccount::doRegister_()
 
             if (name == "sip") {
                 return true;
-            } else if (name.find(SYNC_URI) == 0) {
-                return cert->getIssuerUID() == accountManager_->getInfo()->accountId;
             } else if (isFile or isVCard) {
                 auto tid = isFile ? name.substr(7) : name.substr(8);
                 std::lock_guard<std::mutex> lk(transfersMtx_);
@@ -2238,8 +2227,6 @@ JamiAccount::doRegister_()
                 auto isVCard = name.substr(0, 8) == VCARD_URI;
                 if (name == "sip") {
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
-                } else if (name.find(SYNC_URI) == 0) {
-                    cacheSyncConnection(std::move(channel), peerId, deviceId);
                 } else if (isFile or isVCard) {
                     auto tid = isFile ? name.substr(7) : name.substr(8);
                     std::unique_lock<std::mutex> lk(transfersMtx_);
@@ -2289,7 +2276,8 @@ JamiAccount::doRegister_()
 
                     // Check if pull from banned device
                     if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
-                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the device is "
+                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the "
+                                  "device is "
                                   "unauthorized (%s) ",
                                   getAccountID().c_str(),
                                   conversationId.c_str(),
@@ -2382,6 +2370,12 @@ JamiAccount::doRegister_()
                     }
 
                     dt->transferFile(channel, fileId, interactionId, path, start, end);
+                } else {
+                    // TODO move git://
+                    auto uri = Uri(name);
+                    auto itHandler = channelHandlers_.find(uri.scheme());
+                    if (itHandler != channelHandlers_.end() && itHandler->second)
+                        itHandler->second->onReady(deviceId, name, std::move(channel));
                 }
             }
         });
@@ -2450,7 +2444,7 @@ JamiAccount::convModule()
             std::move([this] {
                 runOnMainThread([w = weak()] {
                     if (auto shared = w.lock())
-                        shared->syncWithConnected();
+                        shared->syncModule()->syncWithConnected();
                 });
             }),
             std::move([this](auto&& uri, auto&& msg) {
@@ -2483,7 +2477,7 @@ JamiAccount::convModule()
                         ->connectDevice(DeviceId(deviceId),
                                         "git://" + deviceId + "/" + convId,
                                         [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                             const DeviceId&) {
                                             if (socket) {
                                                 socket->onShutdown(
                                                     [shared, deviceId = socket->deviceId(), convId] {
@@ -2498,6 +2492,18 @@ JamiAccount::convModule()
             }));
     }
     return convModule_.get();
+}
+
+SyncModule*
+JamiAccount::syncModule()
+{
+    if (!accountManager() || currentDeviceId() == "") {
+        JAMI_ERR() << "Calling syncModule() with an uninitialized account.";
+        return nullptr;
+    }
+    if (!syncModule_)
+        syncModule_ = std::make_unique<SyncModule>(weak());
+    return syncModule_.get();
 }
 
 void
@@ -3721,9 +3727,9 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                   json["id"].asString().c_str());
 
         convModule()->onNewCommit(from,
-                                     json["deviceId"].asString(),
-                                     json["id"].asString(),
-                                     json["commit"].asString());
+                                  json["deviceId"].asString(),
+                                  json["id"].asString(),
+                                  json["commit"].asString());
         return true;
     } else if (m.first == MIME_TYPE_INVITE) {
         convModule()->onNeedConversationRequest(from, m.second);
@@ -4245,113 +4251,6 @@ JamiAccount::currentDeviceId() const
     return accountManager_->getInfo()->deviceId;
 }
 
-void
-JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
-                                 const std::string& peerId,
-                                 const DeviceId& device)
-{
-    std::unique_lock<std::mutex> lk(syncConnectionsMtx_);
-    syncConnections_[device].emplace_back(socket);
-
-    socket->onShutdown([w = weak(), peerId, device, socket]() {
-        auto shared = w.lock();
-        if (!shared)
-            return;
-        std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
-        auto& connections = shared->syncConnections_[device];
-        auto conn = connections.begin();
-        while (conn != connections.end()) {
-            if (*conn == socket)
-                conn = connections.erase(conn);
-            else
-                conn++;
-        }
-    });
-
-    socket->setOnRecv([this, device, peerId](const uint8_t* buf, size_t len) {
-        if (!buf)
-            return len;
-
-        SyncMsg msg;
-        try {
-            msgpack::unpacked result;
-            msgpack::object_handle oh = msgpack::unpack(reinterpret_cast<const char*>(buf), len);
-            oh.get().convert(msg);
-        } catch (const std::exception& e) {
-            JAMI_WARN("[convInfo] error on sync: %s", e.what());
-            return len;
-        }
-
-        if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get()))
-            manager->onSyncData(std::move(msg.ds), false);
-
-        convModule()->onSyncData(msg, peerId, device.toString());
-        return len;
-    });
-    sendProfile(device.toString());
-}
-
-void
-JamiAccount::syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
-{
-    if (!socket)
-        return;
-    {
-        std::lock_guard<std::mutex> lk(syncConnectionsMtx_);
-        socket->onShutdown([w = weak(), socket, deviceId]() {
-            // When sock is shutdown update syncConnections_ to be able to resync asap
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
-            auto& connections = shared->syncConnections_[deviceId];
-            auto conn = connections.begin();
-            while (conn != connections.end()) {
-                if (*conn == socket)
-                    conn = connections.erase(conn);
-                else
-                    conn++;
-            }
-            if (connections.empty()) {
-                shared->syncConnections_.erase(deviceId);
-            }
-        });
-        syncConnections_[deviceId].emplace_back(socket);
-    }
-    syncInfos(socket);
-}
-
-void
-JamiAccount::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
-{
-    Json::Value syncValue;
-    std::error_code ec;
-    msgpack::sbuffer buffer(8192);
-    SyncMsg msg;
-    {
-        std::lock_guard<std::mutex> lock(configurationMutex_);
-        if (auto info = accountManager_->getInfo())
-            if (info->contacts)
-                msg.ds = info->contacts->getSyncData();
-    }
-    msg.c = ConversationModule::convInfos(accountID_);
-    msg.cr = ConversationModule::convRequests(accountID_);
-    msgpack::pack(buffer, msg);
-    socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-    if (ec)
-        return;
-}
-
-void
-JamiAccount::syncWithConnected()
-{
-    std::lock_guard<std::mutex> lk(syncConnectionsMtx_);
-    for (auto& [_deviceId, sockets] : syncConnections_) {
-        if (not sockets.empty())
-            syncInfos(sockets[0]);
-    }
-}
-
 std::shared_ptr<TransferManager>
 JamiAccount::dataTransfer(const std::string& id)
 {
@@ -4532,6 +4431,8 @@ JamiAccount::initConnectionManager()
         channelHandlers_[Uri::Scheme::GIT]
             = std::make_unique<ConversationChannelHandler>(std::move(weak()),
                                                            *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::SYNC]
+            = std::make_unique<SyncChannelHandler>(std::move(weak()), *connectionManager_.get());
     }
 }
 

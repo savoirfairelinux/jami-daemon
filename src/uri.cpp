@@ -37,6 +37,8 @@ Uri::Uri(const std::string_view& uri)
             scheme_ = Uri::Scheme::JAMI;
         else if (scheme_str == "git")
             scheme_ = Uri::Scheme::GIT;
+        else if (scheme_str == "sync")
+            scheme_ = Uri::Scheme::SYNC;
         else
             scheme_ = Uri::Scheme::UNRECOGNIZED;
         authority_ = uri.substr(posSep + 1);
@@ -71,6 +73,10 @@ Uri::schemeToString() const
         return "sip";
     case Uri::Scheme::SWARM:
         return "swarm";
+    case Uri::Scheme::GIT:
+        return "git";
+    case Uri::Scheme::SYNC:
+        return "sync";
     case Uri::Scheme::JAMI:
     case Uri::Scheme::UNRECOGNIZED:
     default:
