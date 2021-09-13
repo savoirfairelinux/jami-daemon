@@ -71,13 +71,6 @@ AudioInput::~AudioInput()
 void
 AudioInput::process()
 {
-    if (switchPending_.exchange(false)) {
-        if (devOpts_.input.empty())
-            JAMI_DBG() << "Switching to default audio input";
-        else
-            JAMI_DBG() << "Switching audio input to '" << devOpts_.input << "'";
-    }
-
     readFromDevice();
 }
 
@@ -266,10 +259,7 @@ std::shared_future<DeviceParams>
 AudioInput::switchInput(const std::string& resource)
 {
     // Always switch inputs, even if it's the same resource, so audio will be in sync with video
-    if (switchPending_) {
-        JAMI_ERR() << "Audio switch already requested";
-        return {};
-    }
+    std::lock_guard<std::mutex> lk(resourceMutex_);
 
     JAMI_DBG() << "Switching audio source to match '" << resource << "'";
 
@@ -315,7 +305,6 @@ AudioInput::switchInput(const std::string& resource)
             foundDevOpts(devOpts_);
     }
 
-    switchPending_ = true;
     futureDevOpts_ = foundDevOpts_.get_future().share();
     wakeUp_ = std::chrono::high_resolution_clock::now() + MS_PER_PACKET;
     loop_.start();

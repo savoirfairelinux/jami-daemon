@@ -94,7 +94,7 @@ private:
     std::shared_ptr<RingBuffer> fileBuf_;
 
     std::string currentResource_;
-    std::atomic_bool switchPending_ {false};
+    std::mutex resourceMutex_ {};
     DeviceParams devOpts_;
     std::promise<DeviceParams> foundDevOpts_;
     std::shared_future<DeviceParams> futureDevOpts_;
