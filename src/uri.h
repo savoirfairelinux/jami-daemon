@@ -32,6 +32,7 @@ public:
         SIP,         // Start with "sip:"
         SWARM,       // Start with "swarm:" and 40 ASCII chars
         GIT,         // Start with "git:"
+        SYNC,        // Start with "sync:"
         UNRECOGNIZED // Anything that doesn't fit in other categories
     };
 
