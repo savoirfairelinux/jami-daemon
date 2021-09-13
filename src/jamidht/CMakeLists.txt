@@ -44,6 +44,10 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/jami_contact.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/server_account_manager.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/server_account_manager.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/sync_channel_handler.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/sync_channel_handler.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/sync_module.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/sync_module.cpp"
 )
 
 set (Source_Files__jamidht ${Source_Files__jamidht} PARENT_SCOPE)
