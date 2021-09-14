@@ -49,6 +49,6 @@ endif
 include ./jamidht/eth/libdevcore/Makefile.am
 include ./jamidht/eth/libdevcrypto/Makefile.am
 
-nobase_include_HEADERS += ./jamidht/jami_contact.h
+nobase_include_HEADERS= ./jamidht/jami_contact.h
 
 libring_la_LIBADD += libringacc.la
