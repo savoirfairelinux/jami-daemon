@@ -31,6 +31,7 @@ libringacc_la_SOURCES = \
 	./jamidht/accountarchive.h \
 	./jamidht/p2p.cpp \
 	./jamidht/p2p.h \
+	./jamidht/jami_contact.h \
 	./jamidht/contact_list.h \
 	./jamidht/contact_list.cpp \
 	./jamidht/account_manager.h \
@@ -48,7 +49,5 @@ endif
 
 include ./jamidht/eth/libdevcore/Makefile.am
 include ./jamidht/eth/libdevcrypto/Makefile.am
-
-nobase_include_HEADERS += ./jamidht/jami_contact.h
 
 libring_la_LIBADD += libringacc.la
