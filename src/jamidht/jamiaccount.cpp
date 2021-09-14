@@ -1177,12 +1177,13 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 // may have send in the request we sent.
                 auto oldConv = convModule()->getOneToOneConversation(uri);
                 if (convFromReq != oldConv) {
+                    convModule()->initReplay(oldConv, convFromReq);
                     convModule()->removeConversation(oldConv);
                     {
                         std::lock_guard<std::mutex> lock(configurationMutex_);
                         if (auto info = accountManager_->getInfo())
                             info->contacts->updateConversation(dht::InfoHash(uri), convFromReq);
-                    }
+                    } 
                     convModule()->cloneConversationFrom(convFromReq, uri);
                 }
             }

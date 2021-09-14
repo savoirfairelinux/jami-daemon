@@ -1441,6 +1441,22 @@ ConversationModule::checkIfRemoveForCompat(const std::string& peerUri)
     removeConversation(convId);
 }
 
+void
+ConversationModule::initReplay(const std::string& oldConvId, const std::string& newConvId)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto acc = pimpl_->account_.lock();
+    auto conversation = pimpl_->conversations_.find(oldConvId);
+    if (acc && conversation != pimpl_->conversations_.end() && conversation->second) {
+        conversation->second->loadMessages(
+            [id](auto&& messages) {
+            },
+            oldConvId,
+            0);
+    }
+}
+
+
 std::map<std::string, ConvInfo>
 ConversationModule::convInfos(const std::string& accountId)
 {
