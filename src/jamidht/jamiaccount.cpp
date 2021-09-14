@@ -1171,6 +1171,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 // TODO: In the future, we may want to re-commit the messages we
                 // may have send in the request we sent.
                 if (updateConvForContact(uri, oldConv, convFromReq)) {
+                    convModule()->initReplay(oldConv, convFromReq);
                     convModule()->removeConversation(oldConv);
                     convModule()->cloneConversationFrom(convFromReq, uri);
                 }
