@@ -88,6 +88,7 @@ using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages
     = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
+using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -144,9 +145,11 @@ public:
                      const std::string& type = "text/plain",
                      const std::string& parent = "",
                      OnDoneCb&& cb = {});
-    void sendMessage(Json::Value&& message,
-                     const std::string& parent = "",
-                     OnDoneCb&& cb = {});
+    void sendMessage(Json::Value&& message, const std::string& parent = "", OnDoneCb&& cb = {});
+    // Note: used for replay. Should not be used by clients
+    void sendMessages(std::vector<Json::Value>&& messages,
+                      const std::string& parent = "",
+                      OnMultiDoneCb&& cb = {});
     /**
      * Get a range of messages
      * @param cb        The callback when loaded
