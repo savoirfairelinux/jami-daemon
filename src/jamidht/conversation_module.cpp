@@ -151,6 +151,20 @@ public:
         return true;
     }
 
+    // Message send/load
+    void sendMessage(const std::string& conversationId,
+                     Json::Value&& value,
+                     const std::string& parent = "",
+                     bool announce = true,
+                     OnDoneCb&& cb = {});
+
+    void sendMessage(const std::string& conversationId,
+                     std::string message,
+                     const std::string& parent = "",
+                     const std::string& type = "text/plain",
+                     bool announce = true,
+                     OnDoneCb&& cb = {});
+
     // The following informations are stored on the disk
     mutable std::mutex convInfosMtx_; // Note, should be locked after conversationsMtx_ if needed
     std::map<std::string, ConvInfo> convInfos_;
@@ -190,6 +204,10 @@ public:
     std::shared_ptr<RepeatedTask> conversationsEventHandler {};
 
     std::weak_ptr<Impl> weak() { return std::static_pointer_cast<Impl>(shared_from_this()); }
+
+    // Replay conversations (after erasing/re-adding)
+    std::mutex replayMtx_;
+    std::map<std::string, std::vector<std::map<std::string, std::string>>> replay_;
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -430,12 +448,43 @@ ConversationModule::Impl::handlePendingConversations()
                             return;
                         }
                         auto commitId = conversation->join();
+                        std::vector<std::map<std::string, std::string>> messages;
+                        {
+                            std::lock_guard<std::mutex> lk(sthis->replayMtx_);
+                            auto replayIt = sthis->replay_.find(conversationId);
+                            if (replayIt != sthis->replay_.end()) {
+                                messages = std::move(replayIt->second);
+                                sthis->replay_.erase(replayIt);
+                            }
+                        }
                         if (!commitId.empty())
                             sthis->sendMessageNotification(conversationId, commitId, false);
                         // Inform user that the conversation is ready
                         emitSignal<DRing::ConversationSignal::ConversationReady>(sthis->accountId_,
                                                                                  conversationId);
                         sthis->needsSyncingCb_();
+                        std::vector<Json::Value> values;
+                        values.reserve(messages.size());
+                        for (const auto& message : messages) {
+                            // For now, only replay text messages.
+                            // File transfers will need more logic, and don't care about calls for now.
+                            if (message.at("type") == "text/plain"
+                                && message.at("author") == sthis->username_) {
+                                Json::Value json;
+                                json["body"] = message.at("body");
+                                json["type"] = "text/plain";
+                                values.emplace_back(json);
+                            }
+                        }
+                        if (!values.empty())
+                            conversation->sendMessages(
+                                std::move(values), "", [w, conversationId](const auto& commits) {
+                                    auto shared = w.lock();
+                                    if (!shared || !commits.empty())
+                                        shared->sendMessageNotification(conversationId,
+                                                                        *commits.rbegin(),
+                                                                        true);
+                                });
                     }
                 } catch (const std::exception& e) {
                     emitSignal<DRing::ConversationSignal::OnConversationError>(sthis->accountId_,
@@ -527,6 +576,47 @@ ConversationModule::Impl::sendMessageNotification(const Conversation& conversati
             continue;
         // Announce to all members that a new message is sent
         sendMsgCb_(uri, std::map<std::string, std::string> {{"application/im-gitmessage-id", text}});
+    }
+}
+
+void
+ConversationModule::Impl::sendMessage(const std::string& conversationId,
+                                      std::string message,
+                                      const std::string& parent,
+                                      const std::string& type,
+                                      bool announce,
+                                      OnDoneCb&& cb)
+{
+    Json::Value json;
+    json["body"] = std::move(message);
+    json["type"] = type;
+    sendMessage(conversationId, std::move(json), parent, announce, std::move(cb));
+}
+
+void
+ConversationModule::Impl::sendMessage(const std::string& conversationId,
+                                      Json::Value&& value,
+                                      const std::string& parent,
+                                      bool announce,
+                                      OnDoneCb&& cb)
+{
+    std::lock_guard<std::mutex> lk(conversationsMtx_);
+    auto conversation = conversations_.find(conversationId);
+    if (conversation != conversations_.end() && conversation->second) {
+        conversation->second->sendMessage(
+            std::move(value),
+            parent,
+            [this, conversationId, announce, cb = std::move(cb)](bool ok,
+                                                                 const std::string& commitId) {
+                if (cb)
+                    cb(ok, commitId);
+                if (!announce)
+                    return;
+                if (ok)
+                    sendMessageNotification(conversationId, commitId, true);
+                else
+                    JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
+            });
     }
 }
 
@@ -886,10 +976,7 @@ ConversationModule::sendMessage(const std::string& conversationId,
                                 bool announce,
                                 OnDoneCb&& cb)
 {
-    Json::Value json;
-    json["body"] = std::move(message);
-    json["type"] = type;
-    sendMessage(conversationId, std::move(json), parent, announce, std::move(cb));
+    pimpl_->sendMessage(conversationId, std::move(message), parent, type, announce, std::move(cb));
 }
 
 void
@@ -899,24 +986,7 @@ ConversationModule::sendMessage(const std::string& conversationId,
                                 bool announce,
                                 OnDoneCb&& cb)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    auto conversation = pimpl_->conversations_.find(conversationId);
-    if (conversation != pimpl_->conversations_.end() && conversation->second) {
-        conversation->second->sendMessage(
-            std::move(value),
-            parent,
-            [this, conversationId, announce, cb = std::move(cb)](bool ok,
-                                                                 const std::string& commitId) {
-                if (cb)
-                    cb(ok, commitId);
-                if (!announce)
-                    return;
-                if (ok)
-                    pimpl_->sendMessageNotification(conversationId, commitId, true);
-                else
-                    JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
-            });
-    }
+    pimpl_->sendMessage(conversationId, std::move(value), parent, announce, std::move(cb));
 }
 
 void
@@ -1462,6 +1532,30 @@ ConversationModule::checkIfRemoveForCompat(const std::string& peerUri)
         return;
     lk.unlock();
     removeConversation(convId);
+}
+
+void
+ConversationModule::initReplay(const std::string& oldConvId, const std::string& newConvId)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto acc = pimpl_->account_.lock();
+    auto conversation = pimpl_->conversations_.find(oldConvId);
+    if (acc && conversation != pimpl_->conversations_.end() && conversation->second) {
+        std::promise<bool> waitLoad;
+        std::future<bool> fut = waitLoad.get_future();
+        // we should wait for loadMessage, because it will be deleted after this.
+        conversation->second->loadMessages(
+            [&](auto&& messages) {
+                std::reverse(messages.begin(),
+                             messages.end()); // Log is inverted as we want to replay
+                std::lock_guard<std::mutex> lk(pimpl_->replayMtx_);
+                pimpl_->replay_[newConvId] = std::move(messages);
+                waitLoad.set_value(true);
+            },
+            "",
+            0);
+        fut.wait();
+    }
 }
 
 std::map<std::string, ConvInfo>
