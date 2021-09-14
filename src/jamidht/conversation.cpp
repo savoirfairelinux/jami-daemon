@@ -228,13 +228,14 @@ public:
                     }
                 }
 #ifdef ENABLE_PLUGIN
-                auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+                auto& pluginChatManager
+                    = Manager::instance().getJamiPluginManager().getChatServicesManager();
                 if (pluginChatManager.hasHandlers()) {
                     auto cm = std::make_shared<JamiMessage>(shared->getAccountID(),
-                                                        convId,
-                                                        c.at("author") != shared->getUsername(),
-                                                        c,
-                                                        false);
+                                                            convId,
+                                                            c.at("author") != shared->getUsername(),
+                                                            c,
+                                                            false);
                     cm->isSwarm = true;
                     pluginChatManager.publishMessage(std::move(cm));
                 }
@@ -655,19 +656,17 @@ Conversation::sendMessage(std::string&& message,
 }
 
 void
-Conversation::sendMessage(Json::Value&& value,
-                          const std::string& /*parent*/,
-                          OnDoneCb&& cb)
+Conversation::sendMessage(Json::Value&& value, const std::string& /*parent*/, OnDoneCb&& cb)
 {
     dht::ThreadPool::io().run([w = weak(), value = std::move(value), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
             auto shared = sthis->pimpl_->account_.lock();
             if (!shared)
                 return;
+            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
             Json::StreamWriterBuilder wbuilder;
             wbuilder["commentStyle"] = "None";
             wbuilder["indentation"] = "";
-            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
             auto commit = sthis->pimpl_->repository_->commitMessage(
                 Json::writeString(wbuilder, value));
             sthis->clearFetched();
@@ -675,6 +674,35 @@ Conversation::sendMessage(Json::Value&& value,
             if (cb)
                 cb(!commit.empty(), commit);
             sthis->pimpl_->announce(commit);
+        }
+    });
+}
+
+void
+Conversation::sendMessages(std::vector<Json::Value>&& messages,
+                           const std::string& /*parent*/,
+                           OnMultiDoneCb&& cb)
+{
+    dht::ThreadPool::io().run([w = weak(), messages = std::move(messages), cb = std::move(cb)] {
+        if (auto sthis = w.lock()) {
+            auto shared = sthis->pimpl_->account_.lock();
+            if (!shared)
+                return;
+            std::vector<std::string> commits;
+            for (const auto& message : messages) {
+                std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+                Json::StreamWriterBuilder wbuilder;
+                wbuilder["commentStyle"] = "None";
+                wbuilder["indentation"] = "";
+                auto commit = sthis->pimpl_->repository_->commitMessage(
+                    Json::writeString(wbuilder, message));
+                sthis->clearFetched();
+                lk.unlock();
+                commits.emplace_back(commit);
+                sthis->pimpl_->announce(commit);
+            }
+            if (cb)
+                cb(commits);
         }
     });
 }
