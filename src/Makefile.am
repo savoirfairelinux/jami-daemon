@@ -6,7 +6,6 @@ endif
 
 noinst_LTLIBRARIES=
 noinst_HEADERS=
-nobase_include_HEADERS=
 
 lib_LTLIBRARIES = libring.la
 libring_la_LIBADD=
@@ -140,7 +139,7 @@ libring_la_SOURCES += \
 		winsyslog.c
 endif
 
-nobase_include_HEADERS += \
+nobase_include_HEADERS = \
 	./jami/account_const.h \
 	./jami/call_const.h \
 	./jami/callmanager_interface.h \
