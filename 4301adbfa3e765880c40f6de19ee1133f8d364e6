@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89b6268a_37399682",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-09-14T18:57:50Z",
+      "side": 1,
+      "message": "lock with mutex",
+      "range": {
+        "startLine": 106,
+        "startChar": 4,
+        "endLine": 113,
+        "endChar": 5
+      },
+      "revId": "4301adbfa3e765880c40f6de19ee1133f8d364e6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
