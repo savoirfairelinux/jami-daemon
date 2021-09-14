@@ -1,8 +1,11 @@
+ pjnath/src/pjnath/ice_session.c | 58 +++++++++++++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 43 insertions(+), 15 deletions(-)
+
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index ef88807a1..5feb32b21 100644
+index 2e35d930e..34e711a93 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -3382,14 +3382,22 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4038,14 +4038,22 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	if (c->state == PJ_ICE_SESS_CHECK_STATE_FROZEN ||
  	    c->state == PJ_ICE_SESS_CHECK_STATE_WAITING)
  	{
@@ -13,6 +16,7 @@ index ef88807a1..5feb32b21 100644
 -	    pj_log_push_indent();
 -	    perform_check(ice, &ice->clist, i, nominate);
 -	    pj_log_pop_indent();
+-
 +	    /* If we are nominating in regular nomination, don't nominate this
 +	     * triggered check immediately, just wait for its scheduled check.
 +	     */
@@ -22,7 +26,7 @@ index ef88807a1..5feb32b21 100644
 +	    } else {
 +		/* See if we shall nominate this check */
 +		pj_bool_t nominate = (c->nominated || ice->is_nominating);
- 
++ 
 +		LOG5((ice->obj_name, "Performing triggered check for "
 +		      "check %d",i));
 +		pj_log_push_indent();
@@ -32,7 +36,7 @@ index ef88807a1..5feb32b21 100644
  	} else if (c->state == PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS) {
  	    /* Should retransmit immediately
  	     */
-@@ -3449,7 +3457,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4105,7 +4113,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
      else if (ice->clist.count < PJ_ICE_MAX_CHECKS) {
  
  	pj_ice_sess_check *c = &ice->clist.checks[ice->clist.count];
@@ -41,7 +45,7 @@ index ef88807a1..5feb32b21 100644
  
  	c->lcand = lcand;
  	c->rcand = rcand;
-@@ -3457,19 +3465,38 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4113,14 +4121,34 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	c->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
  	c->nominated = rcheck->use_candidate;
  	c->err_code = PJ_SUCCESS;
@@ -53,6 +57,8 @@ index ef88807a1..5feb32b21 100644
 -	LOG4((ice->obj_name, "New triggered check added: %d", 
 -	     ice->clist.count));
 -	pj_log_push_indent();
+-	perform_check(ice, &ice->clist, ice->clist.count++, nominate);
+-	pj_log_pop_indent();
 +	/* If we are nominating in regular nomination, don't nominate this
 +	 * newly found pair.
 +	 */
@@ -78,12 +84,5 @@ index ef88807a1..5feb32b21 100644
 +	    pj_log_pop_indent();
 +	}
  
--	perform_check(ice, &ice->clist, ice->clist.count++, nominate);
-     	/* Re-sort the list because of the newly added pair. */
-     	sort_checklist(ice, &ice->clist);
- 
--	pj_log_pop_indent();
--
      } else {
  	LOG4((ice->obj_name, "Error: unable to perform triggered check: "
- 	     "TOO MANY CHECKS IN CHECKLIST!"));

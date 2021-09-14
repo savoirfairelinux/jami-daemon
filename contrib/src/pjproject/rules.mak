@@ -64,7 +64,6 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0016-use-larger-Ta-interval.patch
 	$(APPLY) $(SRC)/pjproject/0017-auto-register-thread.patch
 	$(APPLY) $(SRC)/pjproject/0018-fix-ioqueue-lock-acquire.patch
-	$(APPLY) $(SRC)/pjproject/0019-resort-check-list-after-adding-prflx.patch # TODO remove with 2.12 (https://github.com/pjsip/pjproject/pull/2806)
 	$(APPLY) $(SRC)/pjproject/0020-avoid-immediate-nominating-triggered-check.patch # TODO remove with 2.12 (https://github.com/pjsip/pjproject/issues/2812)
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
