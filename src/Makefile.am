@@ -1,29 +1,59 @@
-include $(top_srcdir)/globals.mk
+include ../globals.mk
 
-if HAVE_OSX
-AM_OBJCXXFLAGS=-std=c++17
+ENABLE_PLUGIN_LIBS=
+
+if ENABLE_PLUGIN
+ENABLE_PLUGIN_LIBS+=./plugin/libplugin.la
 endif
 
-noinst_LTLIBRARIES=
-noinst_HEADERS=
-nobase_include_HEADERS=
+ENABLE_VIDEO_LIBS=
 
-lib_LTLIBRARIES = libring.la
-libring_la_LIBADD=
+if ENABLE_VIDEO
+ENABLE_VIDEO_LIBS+=./media/video/libvideo.la
+if HAVE_LINUX
+if HAVE_ANDROID
+ENABLE_VIDEO_LIBS+= \
+                ./media/video/androidvideo/libandroidvideo.la
+else
+ENABLE_VIDEO_LIBS+= \
+                ./media/video/v4l2/libv4l2.la
+endif
+endif
+if HAVE_OSX
+ENABLE_VIDEO_LIBS+= \
+                ./media/video/osxvideo/libosxvideo.la
+endif
+if HAVE_IOS
+ENABLE_VIDEO_LIBS+= \
+                ./media/video/iosvideo/libiosvideo.la
+endif
+if HAVE_WIN32
+ENABLE_VIDEO_LIBS+= \
+                ./media/video/winvideo/libwinvideo.la
+endif
+endif
 
-include ./client/Makefile.am
-include ./media/Makefile.am
-include ./config/Makefile.am
-include ./sip/Makefile.am
-include ./upnp/Makefile.am
-include ./security/Makefile.am
-include ./jamidht/Makefile.am
-include ./im/Makefile.am
-include ./plugin/Makefile.am
+SUBDIRS = client media config sip upnp security jamidht im $(ENABLE_VIDEO_SUBDIR)
+
+if ENABLE_PLUGIN
+SUBDIRS+=plugin
+endif
 
 # libring
 
-libring_la_LIBADD += \
+lib_LTLIBRARIES = libring.la
+
+libring_la_LIBADD = \
+	./sip/libsiplink.la \
+	./media/libmedia.la \
+	./client/libclient.la \
+	./config/libconfig.la \
+	./security/libsecurity.la \
+	./upnp/libupnpcontrol.la \
+	./jamidht/libringacc.la \
+	./im/libim.la \
+	$(ENABLE_PLUGIN_LIBS) \
+	$(ENABLE_VIDEO_LIBS) \
 	$(ALSA_LIBS) \
 	$(PULSEAUDIO_LIBS) \
 	$(PORTAUDIO_LIBS) \
@@ -52,9 +82,11 @@ libring_la_LIBADD += \
 
 if ENABLE_PLUGIN
 if HAVE_OSX
-libring_la_LIBADD += $(MINIZIP_LIBS)
+libring_la_LIBADD += \
+		$(MINIZIP_LIBS)
 else
-libring_la_LIBADD += $(ARCHIVE_LIBS)
+libring_la_LIBADD += \
+		$(ARCHIVE_LIBS)
 endif
 endif
 
@@ -130,8 +162,8 @@ libring_la_SOURCES = \
 		scheduled_executor.h \
 		scheduled_executor.cpp \
 		transport/peer_channel.h \
-		uri.h \
-		uri.cpp \
+        uri.h \
+        uri.cpp \
 		vcard.h
 
 if HAVE_WIN32
@@ -140,25 +172,25 @@ libring_la_SOURCES += \
 		winsyslog.c
 endif
 
-nobase_include_HEADERS += \
-	./jami/account_const.h \
-	./jami/call_const.h \
-	./jami/callmanager_interface.h \
-	./jami/configurationmanager_interface.h \
-	./jami/conversation_interface.h \
-	./jami/datatransfer_interface.h \
-	./jami/def.h \
-	./jami/jami.h \
-	./jami/media_const.h \
-	./jami/presence_const.h \
-	./jami/presencemanager_interface.h \
-	./jami/security_const.h
+nobase_include_HEADERS = \
+	jami/account_const.h \
+	jami/call_const.h \
+	jami/callmanager_interface.h \
+	jami/configurationmanager_interface.h \
+	jami/conversation_interface.h \
+	jami/datatransfer_interface.h \
+	jami/def.h \
+	jami/jami.h \
+	jami/media_const.h \
+	jami/presence_const.h \
+	jami/presencemanager_interface.h \
+	jami/security_const.h
 
 if ENABLE_PLUGIN
-nobase_include_HEADERS += \
-		./jami/plugin_manager_interface.h
+nobase_include_HEADERS+= \
+		jami/plugin_manager_interface.h
 endif
 if ENABLE_VIDEO
-nobase_include_HEADERS += \
-		./jami/videomanager_interface.h
+nobase_include_HEADERS+= \
+		jami/videomanager_interface.h
 endif

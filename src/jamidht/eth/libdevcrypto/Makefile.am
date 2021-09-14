@@ -1,6 +1,7 @@
-noinst_LTLIBRARIES += libdevcrypto.la
+include $(top_srcdir)/globals.mk
 
-libdevcrypto_la_SOURCES = ./jamidht/eth/libdevcrypto/Common.cpp
-noinst_HEADERS += ./jamidht/eth/libdevcrypto/Common.h
+AM_CPPFLAGS += -I$(top_srcdir)/src/jamidht/eth
+noinst_LTLIBRARIES = libdevcrypto.la
 
-libringacc_la_LIBADD += libdevcrypto.la
+libdevcrypto_la_SOURCES = Common.cpp
+noinst_HEADERS = Common.h

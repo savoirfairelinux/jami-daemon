@@ -1,16 +1,14 @@
-noinst_LTLIBRARIES += libdevcore.la
+include $(top_srcdir)/globals.mk
 
-libdevcore_la_SOURCES = \
-	./jamidht/eth/libdevcore/FixedHash.cpp \
-	./jamidht/eth/libdevcore/Common.cpp \
-	./jamidht/eth/libdevcore/SHA3.cpp \
-	./jamidht/eth/libdevcore/CommonData.cpp
+noinst_LTLIBRARIES = libdevcore.la
 
-noinst_HEADERS += \
-	./jamidht/eth/libdevcore/FixedHash.h \
-	./jamidht/eth/libdevcore/Common.h \
-	./jamidht/eth/libdevcore/SHA3.h \
-	./jamidht/eth/libdevcore/CommonData.h \
-	./jamidht/eth/libdevcore/Address.h
+libdevcore_la_SOURCES = FixedHash.cpp \
+	Common.cpp \
+	SHA3.cpp \
+	CommonData.cpp
 
-libringacc_la_LIBADD += libdevcore.la
+noinst_HEADERS = FixedHash.h \
+	Common.h \
+	SHA3.h \
+	CommonData.h \
+	Address.h

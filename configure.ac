@@ -636,6 +636,35 @@ BB_ENABLE_DOXYGEN
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
                  src/Makefile \
+                 src/sip/Makefile \
+                 src/im/Makefile \
+                 src/jamidht/Makefile \
+                 src/jamidht/eth/libdevcore/Makefile \
+                 src/jamidht/eth/libdevcrypto/Makefile \
+                 src/media/Makefile \
+                 src/media/audio/Makefile \
+                 src/media/audio/pulseaudio/Makefile \
+                 src/media/audio/alsa/Makefile \
+                 src/media/audio/opensl/Makefile \
+                 src/media/audio/jack/Makefile \
+                 src/media/audio/coreaudio/Makefile \
+                 src/media/audio/portaudio/Makefile \
+                 src/media/audio/sound/Makefile \
+                 src/media/audio/echo-cancel/Makefile \
+                 src/config/Makefile \
+                 src/client/Makefile \
+                 src/media/video/Makefile \
+                 src/media/video/v4l2/Makefile \
+                 src/media/video/androidvideo/Makefile \
+                 src/media/video/osxvideo/Makefile \
+                 src/media/video/iosvideo/Makefile \
+                 src/media/video/winvideo/Makefile \
+                 src/plugin/Makefile \
+                 src/security/Makefile \
+                 src/upnp/Makefile \
+                 src/upnp/protocol/Makefile \
+                 src/upnp/protocol/natpmp/Makefile \
+                 src/upnp/protocol/pupnp/Makefile \
                  ringtones/Makefile \
                  test/Makefile\
                  test/sip/Makefile

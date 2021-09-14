@@ -1,7 +1,11 @@
-noinst_LTLIBRARIES += libalsalayer.la
+include $(top_srcdir)/globals.mk
 
-libalsalayer_la_SOURCES = ./media/audio/alsa/alsalayer.cpp
+if BUILD_ALSA
 
-noinst_HEADERS += ./media/audio/alsa/alsalayer.h
+noinst_LTLIBRARIES = libalsalayer.la
 
-libaudio_la_LIBADD += libalsalayer.la
+libalsalayer_la_SOURCES = alsalayer.cpp
+
+noinst_HEADERS = alsalayer.h
+
+endif

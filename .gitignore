@@ -31,7 +31,6 @@ stamp-h1
 ltmain.sh
 INSTALL
 build
-.dirstamp
 
 # Binary translation files
 *.mo

@@ -1,50 +1,59 @@
-noinst_LTLIBRARIES += libmedia.la
+include $(top_srcdir)/globals.mk
 
-libmedia_la_LIBADD=
+noinst_LTLIBRARIES = libmedia.la
+
+SUBDIRS = audio
+
+if ENABLE_VIDEO
+SUBDIRS += video
+endif
 
 libmedia_la_SOURCES = \
-	./media/libav_utils.cpp \
-	./media/socket_pair.cpp \
-	./media/media_buffer.cpp \
-	./media/media_decoder.cpp \
-	./media/media_encoder.cpp \
-	./media/media_io_handle.cpp \
-	./media/media_codec.cpp \
-	./media/media_attribute.cpp \
-	./media/system_codec_container.cpp \
-	./media/srtp.c \
-	./media/recordable.cpp \
-	./media/media_filter.cpp \
-	./media/media_recorder.cpp \
-	./media/localrecorder.cpp \
-	./media/media_player.cpp \
-	./media/localrecordermanager.cpp \
-	./media/congestion_control.cpp
+	libav_utils.cpp \
+	socket_pair.cpp \
+	media_buffer.cpp \
+	media_decoder.cpp \
+	media_encoder.cpp \
+	media_io_handle.cpp \
+	media_codec.cpp \
+	media_attribute.cpp \
+	system_codec_container.cpp \
+	srtp.c \
+	recordable.cpp \
+	media_filter.cpp \
+	media_recorder.cpp \
+	localrecorder.cpp \
+	media_player.cpp \
+	localrecordermanager.cpp \
+	congestion_control.cpp
 
-noinst_HEADERS += \
-	./media/rtp_session.h \
-	./media/libav_utils.h \
-	./media/libav_deps.h \
-	./media/socket_pair.h \
-	./media/media_buffer.h \
-	./media/media_decoder.h \
-	./media/media_encoder.h \
-	./media/media_io_handle.h \
-	./media/media_device.h \
-	./media/media_codec.h \
-	./media/system_codec_container.h \
-	./media/srtp.h \
-	./media/recordable.h \
-	./media/decoder_finder.h \
-	./media/media_filter.h \
-	./media/media_stream.h \
-	./media/media_recorder.h \
-	./media/localrecorder.h \
-	./media/media_player.h \
-	./media/localrecordermanager.h \
-	./media/congestion_control.h
+noinst_HEADERS = \
+	rtp_session.h \
+	libav_utils.h \
+	libav_deps.h \
+	socket_pair.h \
+	media_buffer.h \
+	media_decoder.h \
+	media_encoder.h \
+	media_io_handle.h \
+	media_device.h \
+	media_codec.h \
+	system_codec_container.h \
+	srtp.h \
+	recordable.h \
+	decoder_finder.h \
+	media_filter.h \
+	media_stream.h \
+	media_recorder.h \
+	localrecorder.h \
+	media_player.h \
+	localrecordermanager.h \
+	congestion_control.h
 
-include ./media/audio/Makefile.am
-include ./media/video/Makefile.am
+libmedia_la_LIBADD = \
+	./audio/libaudio.la
 
-libring_la_LIBADD += libmedia.la
+if ENABLE_VIDEO
+libmedia_la_libADD = \
+	./video/libvideo.la
+endif

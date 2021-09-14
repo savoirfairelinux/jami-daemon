@@ -1,9 +1,5 @@
-noinst_LTLIBRARIES += libim.la
+include $(top_srcdir)/globals.mk
 
-libim_la_SOURCES = \
-	./im/instant_messaging.cpp \
-	./im/message_engine.cpp \
-	./im/instant_messaging.h \
-	./im/message_engine.h
+noinst_LTLIBRARIES = libim.la
 
-libring_la_LIBADD += libim.la
+libim_la_SOURCES = instant_messaging.cpp message_engine.cpp instant_messaging.h message_engine.h

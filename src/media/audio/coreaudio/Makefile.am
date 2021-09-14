@@ -1,25 +1,16 @@
-noinst_LTLIBRARIES += libcoreaudiolayer.la
-
-libcoreaudiolayer_la_SOURCES=
+include $(top_srcdir)/globals.mk
 
 if HAVE_OSX
-libcoreaudiolayer_la_SOURCES += \
-	./media/audio/coreaudio/osx/corelayer.mm \
-	./media/audio/coreaudio/osx/corelayer.h \
-	./media/audio/coreaudio/osx/audiodevice.cpp \
-	./media/audio/coreaudio/osx/audiodevice.h
+noinst_LTLIBRARIES = libcoreaudiolayer.la
+libcoreaudiolayer_la_SOURCES = osx/corelayer.mm osx/corelayer.h osx/audiodevice.cpp osx/audiodevice.h
 endif
 
 if HAVE_IOS
-libcoreaudiolayer_la_SOURCES += \
-	./media/audio/coreaudio/ios/corelayer.mm \
-	./media/audio/coreaudio/ios/corelayer.h
+noinst_LTLIBRARIES = libcoreaudiolayer.la
+libcoreaudiolayer_la_SOURCES = ios/corelayer.mm ios/corelayer.h
 endif
 
 libcoreaudiolayer_la_CXXFLAGS = \
 	-I$(top_srcdir)/src \
 	$(AM_CXXFLAGS)
-
-libcoreaudiolayer_la_OBJCXXFLAGS = -std=c++17
-
-libaudio_la_LIBADD += libcoreaudiolayer.la
+AM_OBJCXXFLAGS = -std=c++17

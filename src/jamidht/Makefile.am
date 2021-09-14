@@ -1,54 +1,54 @@
-noinst_LTLIBRARIES += libringacc.la
+include $(top_srcdir)/globals.mk
 
-libringacc_la_LIBADD=
+SUBDIRS = eth/libdevcore eth/libdevcrypto
 
 AM_CPPFLAGS += -I$(top_srcdir)/src/jamidht/eth
 
+noinst_LTLIBRARIES = libringacc.la
+
+libringacc_la_LIBADD = ./eth/libdevcore/libdevcore.la \
+    ./eth/libdevcrypto/libdevcrypto.la
+
 libringacc_la_SOURCES = \
-	./jamidht/abstract_sip_transport.h \
-	./jamidht/jamiaccount.cpp \
-	./jamidht/jamiaccount.h \
-	./jamidht/connectionmanager.h \
-	./jamidht/connectionmanager.cpp \
-	./jamidht/channeled_transport.h \
-	./jamidht/channeled_transport.cpp \
-	./jamidht/channeled_transfers.h \
-	./jamidht/channeled_transfers.cpp \
-	./jamidht/conversation.h \
-	./jamidht/conversation.cpp \
-	./jamidht/conversationrepository.h \
-	./jamidht/conversationrepository.cpp \
-	./jamidht/gitserver.h \
-	./jamidht/gitserver.cpp \
-	./jamidht/channel_handler.h \
-	./jamidht/conversation_channel_handler.h \
-	./jamidht/conversation_channel_handler.cpp \
-	./jamidht/conversation_module.h \
-	./jamidht/conversation_module.cpp \
-	./jamidht/multiplexed_socket.h \
-	./jamidht/multiplexed_socket.cpp \
-	./jamidht/accountarchive.cpp \
-	./jamidht/accountarchive.h \
-	./jamidht/p2p.cpp \
-	./jamidht/p2p.h \
-	./jamidht/contact_list.h \
-	./jamidht/contact_list.cpp \
-	./jamidht/account_manager.h \
-	./jamidht/account_manager.cpp \
-	./jamidht/archive_account_manager.h \
-	./jamidht/archive_account_manager.cpp \
-	./jamidht/server_account_manager.h \
-	./jamidht/server_account_manager.cpp
+        abstract_sip_transport.h \
+        jamiaccount.cpp \
+        jamiaccount.h \
+        connectionmanager.h \
+        connectionmanager.cpp \
+        channeled_transport.h \
+        channeled_transport.cpp \
+        channeled_transfers.h \
+        channeled_transfers.cpp \
+        conversation.h \
+        conversation.cpp \
+        conversationrepository.h \
+        conversationrepository.cpp \
+        gitserver.h \
+        gitserver.cpp \
+        channel_handler.h \
+        conversation_channel_handler.h \
+        conversation_channel_handler.cpp \
+        conversation_module.h \
+        conversation_module.cpp \
+        multiplexed_socket.h \
+        multiplexed_socket.cpp \
+        accountarchive.cpp \
+        accountarchive.h \
+        p2p.cpp \
+        p2p.h \
+        contact_list.h \
+        contact_list.cpp \
+        account_manager.h \
+        account_manager.cpp \
+        archive_account_manager.h \
+        archive_account_manager.cpp \
+        server_account_manager.h \
+        server_account_manager.cpp
 
 if RINGNS
 libringacc_la_SOURCES += \
-	./jamidht/namedirectory.cpp \
-	./jamidht/namedirectory.h
+        namedirectory.cpp \
+        namedirectory.h
 endif
 
-include ./jamidht/eth/libdevcore/Makefile.am
-include ./jamidht/eth/libdevcrypto/Makefile.am
-
-nobase_include_HEADERS += ./jamidht/jami_contact.h
-
-libring_la_LIBADD += libringacc.la
+nobase_include_HEADERS= jami_contact.h

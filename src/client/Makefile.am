@@ -1,27 +1,27 @@
-noinst_LTLIBRARIES += libclient.la
+include $(top_srcdir)/globals.mk
 
-noinst_HEADERS += \
-	./client/ring_signal.h
+noinst_LTLIBRARIES = libclient.la
 
-PRESENCE_SRC = ./client/presencemanager.cpp
+noinst_HEADERS = \
+	ring_signal.h
+
+PRESENCE_SRC = presencemanager.cpp
 
 if ENABLE_VIDEO
-VIDEO_SRC = ./client/videomanager.cpp
-noinst_HEADERS += ./client/videomanager.h
+VIDEO_SRC = videomanager.cpp
+noinst_HEADERS += videomanager.h
 endif
 
 if ENABLE_PLUGIN
-PLUGIN_SRC = ./client/plugin_manager_interface.cpp
+PLUGIN_SRC = plugin_manager_interface.cpp
 endif
 
 libclient_la_SOURCES = \
-	./client/ring_signal.cpp \
-	./client/callmanager.cpp \
-	./client/configurationmanager.cpp \
-	./client/datatransfer.cpp \
-	./client/conversation_interface.cpp \
+	ring_signal.cpp \
+	callmanager.cpp \
+	configurationmanager.cpp \
+	datatransfer.cpp \
+	conversation_interface.cpp \
 	$(PLUGIN_SRC) \
 	$(PRESENCE_SRC) \
 	$(VIDEO_SRC)
-
-libring_la_LIBADD += libclient.la

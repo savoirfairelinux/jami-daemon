@@ -1,11 +1,14 @@
-noinst_LTLIBRARIES += libportaudiolayer.la
+include $(top_srcdir)/globals.mk
+
+if BUILD_PORTAUDIO
+
+noinst_LTLIBRARIES = libportaudiolayer.la
 
 libportaudiolayer_la_SOURCES = \
-		./media/audio/portaudio/portaudiolayer.cpp
+		portaudiolayer.cpp
 
 
-noinst_HEADERS += \
-		./media/audio/portaudio/portaudiolayer.h
+noinst_HEADERS = \
+		portaudiolayer.h
 
-libaudio_la_LDFLAGS += @PORTAUDIO_LIBS@
-libaudio_la_LIBADD += libportaudiolayer.la
+endif
