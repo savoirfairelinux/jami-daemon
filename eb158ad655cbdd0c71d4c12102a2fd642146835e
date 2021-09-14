@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "835216e7_77988280",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 4
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-14T18:03:08Z",
+      "side": 0,
+      "message": "missing modification in package.json",
+      "revId": "eb158ad655cbdd0c71d4c12102a2fd642146835e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
