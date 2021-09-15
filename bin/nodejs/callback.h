@@ -576,7 +576,7 @@ void
 conversationRequestDeclined(const std::string& accountId, const std::string& conversationId)
 {
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, conversationId, message]() {
+    pendingSignals.emplace([accountId, conversationId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conversationRequestDeclinedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {
