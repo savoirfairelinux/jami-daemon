@@ -34,6 +34,24 @@
       "parentUuid": "d4fc63e7_6504d340",
       "revId": "5fd4d2e0509b44d1ec2de98f94c8ae8fa6023c44",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07ddea90_222a5710",
+        "filename": "src/Makefile.am",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-09-15T13:27:27Z",
+      "side": 0,
+      "message": "I saw yes.  But this implies that no included files use nobase_include_HEADERS.  Which might be true for now (to be check), but might change in the future.  We ought to check first.",
+      "parentUuid": "9d88fb35_ae37525a",
+      "revId": "5fd4d2e0509b44d1ec2de98f94c8ae8fa6023c44",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
