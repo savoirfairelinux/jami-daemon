@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c570ad92_03833836",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 22
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-15T20:54:08Z",
+      "side": 1,
+      "message": "Sure. We need to define the use cases, figure out why the feature was broken, and figure out how to implement it properly if possible.\nUntil then, we don\u0027t need to keep the temp variable around.",
+      "parentUuid": "b2fe56bf_3f5363de",
+      "revId": "30826c4312a5487bd5bab52020ce722183ab62b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3797482c_d474c192",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 22
