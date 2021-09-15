@@ -1168,20 +1168,15 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 // contact because he will not get messages anyway.
                 convModule()->checkIfRemoveForCompat(uri);
             } else {
+                auto oldConv = convModule()->getOneToOneConversation(uri);
                 // If we previously removed the contact, and re-add it, we may
                 // receive a convId different from the request. In that case,
                 // we need to remove the current conversation and clone the old
                 // one (given by convFromReq).
                 // TODO: In the future, we may want to re-commit the messages we
                 // may have send in the request we sent.
-                auto oldConv = convModule()->getOneToOneConversation(uri);
-                if (convFromReq != oldConv) {
+                if (updateConvForContact(uri, oldConv, convFromReq)) {
                     convModule()->removeConversation(oldConv);
-                    {
-                        std::lock_guard<std::mutex> lock(configurationMutex_);
-                        if (auto info = accountManager_->getInfo())
-                            info->contacts->updateConversation(dht::InfoHash(uri), convFromReq);
-                    }
                     convModule()->cloneConversationFrom(convFromReq, uri);
                 }
             }
@@ -2161,71 +2156,71 @@ JamiAccount::doRegister_()
             auto result = fut.get();
             return result;
         });
-        connectionManager_->onChannelRequest([this](const DeviceId& deviceId,
-                                                    const std::string& name) {
-            JAMI_WARN("[Account %s] New channel asked from %s with name %s",
-                      getAccountID().c_str(),
-                      deviceId.to_c_str(),
-                      name.c_str());
+        connectionManager_->onChannelRequest(
+            [this](const DeviceId& deviceId, const std::string& name) {
+                JAMI_WARN("[Account %s] New channel asked from %s with name %s",
+                          getAccountID().c_str(),
+                          deviceId.to_c_str(),
+                          name.c_str());
 
-            auto uri = Uri(name);
-            auto itHandler = channelHandlers_.find(uri.scheme());
-            if (itHandler != channelHandlers_.end() && itHandler->second)
-                return itHandler->second->onRequest(deviceId, name);
-            // TODO replace
-            auto isFile = name.substr(0, 7) == FILE_URI;
-            auto isVCard = name.substr(0, 8) == VCARD_URI;
-            auto isDataTransfer = name.substr(0, 16) == DATA_TRANSFER_URI;
+                auto uri = Uri(name);
+                auto itHandler = channelHandlers_.find(uri.scheme());
+                if (itHandler != channelHandlers_.end() && itHandler->second)
+                    return itHandler->second->onRequest(deviceId, name);
+                // TODO replace
+                auto isFile = name.substr(0, 7) == FILE_URI;
+                auto isVCard = name.substr(0, 8) == VCARD_URI;
+                auto isDataTransfer = name.substr(0, 16) == DATA_TRANSFER_URI;
 
-            auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
-            if (!cert || !cert->issuer)
-                return false;
-            auto issuer = cert->issuer->getId().toString();
-
-            if (name == "sip") {
-                return true;
-            } else if (name.find(SYNC_URI) == 0) {
-                return issuer == accountManager_->getInfo()->accountId;
-            } else if (isFile or isVCard) {
-                auto tid = isFile ? name.substr(7) : name.substr(8);
-                std::lock_guard<std::mutex> lk(transfersMtx_);
-                incomingFileTransfers_.emplace(tid);
-                return true;
-            } else if (isDataTransfer) {
-                // Check if sync request is from same account
-                std::promise<bool> accept;
-                std::future<bool> fut = accept.get_future();
-
-                auto idstr = name.substr(16);
-                auto sep = idstr.find('/');
-                auto lastSep = idstr.find_last_of('/');
-                auto conversationId = idstr.substr(0, sep);
-                auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
-                auto fileId = idstr.substr(lastSep + 1);
-                if (fileHost == currentDeviceId())
+                auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
+                if (!cert || !cert->issuer)
                     return false;
+                auto issuer = cert->issuer->getId().toString();
 
-                sep = fileId.find_last_of('?');
-                if (sep != std::string::npos) {
-                    fileId = fileId.substr(0, sep);
+                if (name == "sip") {
+                    return true;
+                } else if (name.find(SYNC_URI) == 0) {
+                    return issuer == accountManager_->getInfo()->accountId;
+                } else if (isFile or isVCard) {
+                    auto tid = isFile ? name.substr(7) : name.substr(8);
+                    std::lock_guard<std::mutex> lk(transfersMtx_);
+                    incomingFileTransfers_.emplace(tid);
+                    return true;
+                } else if (isDataTransfer) {
+                    // Check if sync request is from same account
+                    std::promise<bool> accept;
+                    std::future<bool> fut = accept.get_future();
+
+                    auto idstr = name.substr(16);
+                    auto sep = idstr.find('/');
+                    auto lastSep = idstr.find_last_of('/');
+                    auto conversationId = idstr.substr(0, sep);
+                    auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
+                    auto fileId = idstr.substr(lastSep + 1);
+                    if (fileHost == currentDeviceId())
+                        return false;
+
+                    sep = fileId.find_last_of('?');
+                    if (sep != std::string::npos) {
+                        fileId = fileId.substr(0, sep);
+                    }
+
+                    // Check if peer is member of the conversation
+                    if (fileId == "profile.vcf") {
+                        auto members = convModule()->getConversationMembers(conversationId);
+                        return std::find_if(members.begin(),
+                                            members.end(),
+                                            [&](auto m) { return m["uri"] == issuer; })
+                               != members.end();
+                    }
+
+                    return convModule()->onFileChannelRequest(conversationId,
+                                                              issuer,
+                                                              fileId,
+                                                              !noSha3sumVerification_);
                 }
-
-                // Check if peer is member of the conversation
-                if (fileId == "profile.vcf") {
-                    auto members = convModule()->getConversationMembers(conversationId);
-                    return std::find_if(members.begin(),
-                                        members.end(),
-                                        [&](auto m) { return m["uri"] == issuer; })
-                           != members.end();
-                }
-
-                return convModule()->onFileChannelRequest(conversationId,
-                                                          issuer,
-                                                          fileId,
-                                                          !noSha3sumVerification_);
-            }
-            return false;
-        });
+                return false;
+            });
         connectionManager_->onConnectionReady([this](const DeviceId& deviceId,
                                                      const std::string& name,
                                                      std::shared_ptr<ChannelSocket> channel) {
@@ -2281,7 +2276,8 @@ JamiAccount::doRegister_()
 
                     // Check if pull from banned device
                     if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
-                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the device is "
+                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the "
+                                  "device is "
                                   "unauthorized (%s) ",
                                   getAccountID().c_str(),
                                   conversationId.c_str(),
@@ -2471,7 +2467,7 @@ JamiAccount::convModule()
                         ->connectDevice(DeviceId(deviceId),
                                         "git://" + deviceId + "/" + convId,
                                         [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                             const DeviceId&) {
                                             if (socket) {
                                                 socket->onShutdown(
                                                     [shared, deviceId = socket->deviceId(), convId] {
@@ -2483,6 +2479,17 @@ JamiAccount::convModule()
                                                 cb({});
                                         });
                 });
+            },
+            [this](auto&& convId, auto&& contactUri, bool accept) {
+                if (accept) {
+                    // Here, we also accepts the trust request linked
+                    // Because, if convId is for a multi swarm, to sync,
+                    // we also need for contactUri to be a contact.
+                    JAMI_ERR() << "@@@ ACCEPT!";
+                    acceptTrustRequest(contactUri, true);
+                } else {
+                    updateConvForContact(contactUri, convId, "");
+                }
             });
     }
     return convModule_.get();
@@ -3099,6 +3106,27 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     }
 }
 
+bool
+JamiAccount::updateConvForContact(const std::string& uri,
+                                  const std::string& oldConv,
+                                  const std::string& newConv)
+{
+    if (newConv != oldConv) {
+        std::lock_guard<std::mutex> lock(configurationMutex_);
+        if (auto info = accountManager_->getInfo()) {
+            auto urih = dht::InfoHash(uri);
+            info->contacts->updateConversation(urih, newConv);
+            // Also decline trust request if there is one
+            auto req = info->contacts->getTrustRequest(urih);
+            if (req.find(DRing::Account::TrustRequest::CONVERSATIONID) != req.end()
+                && req.at(DRing::Account::TrustRequest::CONVERSATIONID) == oldConv)
+                accountManager_->discardTrustRequest(uri);
+        }
+        return true;
+    }
+    return false;
+}
+
 std::map<std::string, std::string>
 JamiAccount::getContactDetails(const std::string& uri) const
 {
@@ -3710,9 +3738,9 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                   json["id"].asString().c_str());
 
         convModule()->onNewCommit(from,
-                                     json["deviceId"].asString(),
-                                     json["id"].asString(),
-                                     json["commit"].asString());
+                                  json["deviceId"].asString(),
+                                  json["id"].asString(),
+                                  json["commit"].asString());
         return true;
     } else if (m.first == MIME_TYPE_INVITE) {
         convModule()->onNeedConversationRequest(from, m.second);
@@ -4519,8 +4547,7 @@ JamiAccount::initConnectionManager()
     if (!connectionManager_) {
         connectionManager_ = std::make_unique<ConnectionManager>(*this);
         channelHandlers_[Uri::Scheme::GIT]
-            = std::make_unique<ConversationChannelHandler>(weak(),
-                                                           *connectionManager_.get());
+            = std::make_unique<ConversationChannelHandler>(weak(), *connectionManager_.get());
     }
 }
 
