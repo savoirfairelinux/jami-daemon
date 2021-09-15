@@ -429,16 +429,14 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
         }
     }
 #ifdef ENABLE_PLUGIN
-    auto& pluginChatManager
-        = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
-    std::shared_ptr<JamiMessage> cm
-        = std::make_shared<JamiMessage>(getAccountId(),
-                                        getPeerNumber(),
-                                        true,
-                                        const_cast<std::map<std::string, std::string>&>(messages),
-                                        false);
-    pluginChatManager.publishMessage(cm);
-
+    auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+    if (pluginChatManager.hasHandlers()) {
+        pluginChatManager.publishMessage(std::make_shared<JamiMessage>(getAccountId(),
+                                            getPeerNumber(),
+                                            true,
+                                            messages,
+                                            false));
+    }
 #endif
     Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
 }

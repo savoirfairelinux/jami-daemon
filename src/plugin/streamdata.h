@@ -72,7 +72,7 @@ struct JamiMessage
     JamiMessage(const std::string& accId,
                 const std::string& pId,
                 bool isReceived,
-                std::map<std::string, std::string>& dataMap,
+                const std::map<std::string, std::string>& dataMap,
                 bool pPlugin)
         : accountId {accId}
         , peerId {pId}

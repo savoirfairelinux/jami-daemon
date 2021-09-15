@@ -340,9 +340,7 @@ SIPCall::createCallAVStreams()
         }
 
         // Receive
-        auto& videoReceive = videoRtp->getVideoReceive();
-
-        if (videoReceive) {
+        if (auto& videoReceive = videoRtp->getVideoReceive()) {
             auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
             StreamData receiveStreamData {getCallId(), true, StreamType::video, getPeerNumber()};
             createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);

@@ -113,8 +113,15 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
     pluginManager.registerService("sendTextMessage", sendTextMessage);
 }
 
+bool
+ChatServicesManager::hasHandlers() const
+{
+    return not chatHandlers_.empty();
+}
+
+
 std::vector<std::string>
-ChatServicesManager::getChatHandlers()
+ChatServicesManager::getChatHandlers() const
 {
     std::vector<std::string> res;
     res.reserve(chatHandlers_.size());
@@ -125,10 +132,11 @@ ChatServicesManager::getChatHandlers()
 }
 
 void
-ChatServicesManager::publishMessage(pluginMessagePtr& message)
+ChatServicesManager::publishMessage(pluginMessagePtr message)
 {
-    if (message->fromPlugin)
+    if (message->fromPlugin or chatHandlers_.empty())
         return;
+
     std::pair<std::string, std::string> mPair(message->accountId, message->peerId);
     auto& handlers = chatHandlerToggled_[mPair];
     auto& chatAllowDenySet = allowDenyList_[mPair];
@@ -148,16 +156,16 @@ ChatServicesManager::publishMessage(pluginMessagePtr& message)
         bool toggled = handlers.find((uintptr_t) chatHandler.get()) != handlers.end();
         if (toggle || toggled) {
             // Creates chat subjects if it doesn't exist yet.
-            chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
+            auto& subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>()).first->second;
             if (!toggled) {
                 // If activation is expected, and not yet performed, we perform activation
                 handlers.insert((uintptr_t) chatHandler.get());
-                chatHandler->notifyChatSubject(mPair, chatSubjects_[mPair]);
+                chatHandler->notifyChatSubject(mPair, subject);
                 chatAllowDenySet[chatHandlerName] = true;
                 PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList_);
             }
             // Finally we feed Chat subject with the message.
-            chatSubjects_[mPair]->publish(message);
+            subject->publish(message);
         }
     }
 }

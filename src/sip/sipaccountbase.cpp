@@ -474,24 +474,16 @@ SIPAccountBase::onTextMessage(const std::string& id,
     }
 
 #ifdef ENABLE_PLUGIN
-    auto& pluginChatManager
-        = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
-    std::shared_ptr<JamiMessage> cm = std::make_shared<JamiMessage>(
-        accountID_, from, true, const_cast<std::map<std::string, std::string>&>(payloads), false);
-    pluginChatManager.publishMessage(cm);
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, id, cm->data);
-
-    DRing::Message message;
-    message.from = from;
-    message.payloads = cm->data;
-#else
+    auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+    if (pluginChatManager.hasHandlers()) {
+        pluginChatManager.publishMessage(std::make_shared<JamiMessage>(accountID_, from, true, payloads, false));
+    }
+#endif
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, id, payloads);
 
     DRing::Message message;
     message.from = from;
     message.payloads = payloads;
-#endif
-
     message.received = std::time(nullptr);
     std::lock_guard<std::mutex> lck(mutexLastMessages_);
     lastMessages_.emplace_back(std::move(message));

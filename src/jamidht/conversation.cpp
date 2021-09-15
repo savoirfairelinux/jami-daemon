@@ -228,17 +228,16 @@ public:
                     }
                 }
 #ifdef ENABLE_PLUGIN
-                auto& pluginChatManager
-                    = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
-                std::shared_ptr<JamiMessage> cm
-                    = std::make_shared<JamiMessage>(shared->getAccountID(),
-                                                    convId,
-                                                    c.at("author") != shared->getUsername(),
-                                                    const_cast<std::map<std::string, std::string>&>(
-                                                        c),
-                                                    false);
-                cm->isSwarm = true;
-                pluginChatManager.publishMessage(cm);
+                auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+                if (pluginChatManager.hasHandlers()) {
+                    auto cm = std::make_shared<JamiMessage>(shared->getAccountID(),
+                                                        convId,
+                                                        c.at("author") != shared->getUsername(),
+                                                        c,
+                                                        false);
+                    cm->isSwarm = true;
+                    pluginChatManager.publishMessage(std::move(cm));
+                }
 #endif
                 // announce message
                 emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
@@ -417,27 +416,13 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commits) const
 {
-    auto shared = account_.lock();
     std::vector<std::map<std::string, std::string>> result = {};
+    result.reserve(commits.size());
     for (const auto& commit : commits) {
         auto message = convCommitToMap(commit);
         if (message == std::nullopt)
             continue;
         result.emplace_back(*message);
-#ifdef ENABLE_PLUGIN
-        auto& pluginChatManager
-            = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
-        std::shared_ptr<JamiMessage> cm
-            = std::make_shared<JamiMessage>(shared->getAccountID(),
-                                            repository_->id(),
-                                            message->at("author") != shared->getUsername(),
-                                            const_cast<std::map<std::string, std::string>&>(
-                                                *message),
-                                            false);
-        cm->isSwarm = true;
-        cm->fromHistory = true;
-        pluginChatManager.publishMessage(cm);
-#endif
     }
     return result;
 }

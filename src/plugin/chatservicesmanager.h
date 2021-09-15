@@ -49,18 +49,20 @@ public:
 
     NON_COPYABLE(ChatServicesManager);
 
+    bool hasHandlers() const;
+
     /**
      * @brief List all ChatHandlers available.
      * @return Vector of stored ChatHandlers pointers.
      */
-    std::vector<std::string> getChatHandlers();
+    std::vector<std::string> getChatHandlers() const;
 
     /**
      * @brief Publishes every message sent or received in a conversation that has (or should have)
      * an active ChatHandler.
      * @param message
      */
-    void publishMessage(pluginMessagePtr& message);
+    void publishMessage(pluginMessagePtr message);
 
     /**
      * @brief If an account is unregistered or a contact is erased, we clear all chat subjects
