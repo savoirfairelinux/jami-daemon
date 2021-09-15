@@ -52,6 +52,24 @@
       "parentUuid": "9d88fb35_ae37525a",
       "revId": "5fd4d2e0509b44d1ec2de98f94c8ae8fa6023c44",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "87ea84d0_504dfccd",
+        "filename": "src/Makefile.am",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-15T14:37:35Z",
+      "side": 0,
+      "message": "anyway removed from the patch, I don\u0027t really care about this, jami_contact.h is the only interesting change",
+      "parentUuid": "07ddea90_222a5710",
+      "revId": "5fd4d2e0509b44d1ec2de98f94c8ae8fa6023c44",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
