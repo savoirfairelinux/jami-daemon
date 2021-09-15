@@ -40,7 +40,7 @@ struct ThreadLoopException : public std::runtime_error
 class ThreadLoop
 {
 public:
-    enum ThreadState { READY, RUNNING, STOPPING };
+    enum class ThreadState { READY, RUNNING, STOPPING };
 
     ThreadLoop(const std::function<bool()>& setup,
                const std::function<void()>& process,
@@ -54,8 +54,8 @@ public:
     void waitForCompletion(); // thread will stop itself
 
     bool isRunning() const noexcept;
-    bool isStopping() const noexcept;
-    std::thread::id get_id() const noexcept;
+    bool isStopping() const noexcept { return state_ == ThreadState::STOPPING; }
+    std::thread::id get_id() const noexcept { return threadId_; }
 
 private:
     ThreadLoop(const ThreadLoop&) = delete;
@@ -73,7 +73,7 @@ private:
                   const std::function<void()> process,
                   const std::function<void()> cleanup);
 
-    std::atomic<ThreadState> state_ {READY};
+    std::atomic<ThreadState> state_ {ThreadState::READY};
     std::thread::id threadId_;
     std::thread thread_;
 };
