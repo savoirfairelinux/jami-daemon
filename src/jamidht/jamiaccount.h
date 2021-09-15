@@ -327,6 +327,17 @@ public:
     void removeContact(const std::string& uri, bool banned = true);
     std::vector<std::map<std::string, std::string>> getContacts() const;
 
+    /**
+     * Replace in contact's details related conversation
+     * @param uri           Of the contact
+     * @param oldConv       Current conversation
+     * @param newConv
+     * @return if replaced
+     */
+    bool updateConvForContact(const std::string& uri,
+                              const std::string& oldConv,
+                              const std::string& newConv);
+
     ///
     /// Obtain details about one account contact in serializable form.
     ///
