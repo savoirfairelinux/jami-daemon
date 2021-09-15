@@ -34,7 +34,7 @@ ThreadLoop::mainloop(std::thread::id& tid,
     tid = std::this_thread::get_id();
     try {
         if (setup()) {
-            while (state_ == RUNNING)
+            while (state_ == ThreadState::RUNNING)
                 process();
             cleanup();
         } else {
@@ -70,28 +70,27 @@ ThreadLoop::start()
 {
     const auto s = state_.load();
 
-    if (s == RUNNING) {
+    if (s == ThreadState::RUNNING) {
         JAMI_ERR("already started");
         return;
     }
 
     // stop pending but not processed by thread yet?
-    if (s == STOPPING and thread_.joinable()) {
+    if (s == ThreadState::STOPPING and thread_.joinable()) {
         JAMI_DBG("stop pending");
         thread_.join();
     }
 
-    state_ = RUNNING;
-    thread_
-        = std::thread(&ThreadLoop::mainloop, this, std::ref(threadId_), setup_, process_, cleanup_);
+    state_ = ThreadState::RUNNING;
+    thread_ = std::thread(&ThreadLoop::mainloop, this, std::ref(threadId_), setup_, process_, cleanup_);
     threadId_ = thread_.get_id();
 }
 
 void
 ThreadLoop::stop()
 {
-    if (state_ == RUNNING)
-        state_ = STOPPING;
+    if (state_ == ThreadState::RUNNING)
+        state_ = ThreadState::STOPPING;
 }
 
 void
@@ -120,22 +119,10 @@ bool
 ThreadLoop::isRunning() const noexcept
 {
 #ifdef _WIN32
-    return state_ == RUNNING;
+    return state_ == ThreadState::RUNNING;
 #else
-    return thread_.joinable() and state_ == RUNNING;
+    return thread_.joinable() and state_ == ThreadState::RUNNING;
 #endif
-}
-
-bool
-ThreadLoop::isStopping() const noexcept
-{
-    return state_ == STOPPING;
-}
-
-std::thread::id
-ThreadLoop::get_id() const noexcept
-{
-    return threadId_;
 }
 
 void
