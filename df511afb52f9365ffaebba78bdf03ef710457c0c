@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab04a486_1b1c816b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-09-15T15:47:49Z",
+      "side": 1,
+      "message": "Ideally we should find a way to not send all contact avatars every time the account avatar changes.",
+      "revId": "df511afb52f9365ffaebba78bdf03ef710457c0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
