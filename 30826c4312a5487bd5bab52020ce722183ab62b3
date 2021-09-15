@@ -51,6 +51,24 @@
       "message": "I know it\u0027s not part of this patch.  But is a mutex really necessary in the destructor?",
       "revId": "30826c4312a5487bd5bab52020ce722183ab62b3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e174b4e1_161e899d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-15T21:04:14Z",
+      "side": 1,
+      "message": "honestly, I dont know. May be needed to protect \u0027transport_\u0027 variable",
+      "parentUuid": "3797482c_d474c192",
+      "revId": "30826c4312a5487bd5bab52020ce722183ab62b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
