@@ -176,7 +176,8 @@ public:
     using SocketType = GenericSocket<uint8_t>;
     ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                   const std::string& name,
-                  const uint16_t& channel);
+                  const uint16_t& channel,
+                  bool isInitiator = false);
     ~ChannelSocket();
 
     DeviceId deviceId() const;
