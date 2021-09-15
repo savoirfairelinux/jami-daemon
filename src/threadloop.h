@@ -40,7 +40,7 @@ struct ThreadLoopException : public std::runtime_error
 class ThreadLoop
 {
 public:
-    enum ThreadState { READY, RUNNING, STOPPING };
+    enum class ThreadState { READY, RUNNING, STOPPING };
 
     ThreadLoop(const std::function<bool()>& setup,
                const std::function<void()>& process,
