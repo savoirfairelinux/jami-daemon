@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b2fe56bf_3f5363de",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 22
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-09-15T14:23:32Z",
+      "side": 1,
+      "message": "This temporary pointer was used at some point to allow negotiating a new ice media session while keeping current session running, allowing \"flicker-less\" re-invites.\n\nThis logic seems to have been broken for some time, however this temporary pointer might be used as a basis to repair it.\n\nInstead of removing it because it doesn\u0027t provide a useful feature anymore, could this valuable feature be repaired ?",
+      "revId": "30826c4312a5487bd5bab52020ce722183ab62b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3797482c_d474c192",
