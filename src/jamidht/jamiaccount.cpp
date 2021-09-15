@@ -1160,20 +1160,15 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 // contact because he will not get messages anyway.
                 convModule()->checkIfRemoveForCompat(uri);
             } else {
+                auto oldConv = convModule()->getOneToOneConversation(uri);
                 // If we previously removed the contact, and re-add it, we may
                 // receive a convId different from the request. In that case,
                 // we need to remove the current conversation and clone the old
                 // one (given by convFromReq).
                 // TODO: In the future, we may want to re-commit the messages we
                 // may have send in the request we sent.
-                auto oldConv = convModule()->getOneToOneConversation(uri);
-                if (convFromReq != oldConv) {
+                if (updateConvForContact(uri, oldConv, convFromReq)) {
                     convModule()->removeConversation(oldConv);
-                    {
-                        std::lock_guard<std::mutex> lock(configurationMutex_);
-                        if (auto info = accountManager_->getInfo())
-                            info->contacts->updateConversation(dht::InfoHash(uri), convFromReq);
-                    }
                     convModule()->cloneConversationFrom(convFromReq, uri);
                 }
             }
@@ -2472,6 +2467,16 @@ JamiAccount::convModule()
                                                 cb({});
                                         });
                 });
+            },
+            [this](auto&& convId, auto&& contactUri, bool accept) {
+                if (accept) {
+                    // Here, we also accepts the trust request linked
+                    // Because, if convId is for a multi swarm, to sync,
+                    // we also need for contactUri to be a contact.
+                    acceptTrustRequest(contactUri, true);
+                } else {
+                    updateConvForContact(contactUri, convId, "");
+                }
             });
     }
     return convModule_.get();
@@ -3098,6 +3103,27 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
         else
             ++it;
     }
+}
+
+bool
+JamiAccount::updateConvForContact(const std::string& uri,
+                                  const std::string& oldConv,
+                                  const std::string& newConv)
+{
+    if (newConv != oldConv) {
+        std::lock_guard<std::mutex> lock(configurationMutex_);
+        if (auto info = accountManager_->getInfo()) {
+            auto urih = dht::InfoHash(uri);
+            info->contacts->updateConversation(urih, newConv);
+            // Also decline trust request if there is one
+            auto req = info->contacts->getTrustRequest(urih);
+            if (req.find(DRing::Account::TrustRequest::CONVERSATIONID) != req.end()
+                && req.at(DRing::Account::TrustRequest::CONVERSATIONID) == oldConv)
+                accountManager_->discardTrustRequest(uri);
+        }
+        return true;
+    }
+    return false;
 }
 
 std::map<std::string, std::string>
