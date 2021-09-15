@@ -42,6 +42,7 @@ using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
 using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&)>;
 using SengMsgCb = std::function<void(const std::string&, std::map<std::string, std::string>&&)>;
 using NeedsSyncingCb = std::function<void()>;
+using RmConvFromContactCb = std::function<void(const std::string&, const std::string&)>;
 
 class ConversationModule
 {
@@ -49,7 +50,8 @@ public:
     ConversationModule(std::weak_ptr<JamiAccount>&& account,
                        NeedsSyncingCb&& needsSyncingCb,
                        SengMsgCb&& sendMsgCb,
-                       NeedSocketCb&& onNeedSocket);
+                       NeedSocketCb&& onNeedSocket,
+                       RmConvFromContactCb&& rmConvFromContactCb);
     ~ConversationModule() = default;
 
     /**

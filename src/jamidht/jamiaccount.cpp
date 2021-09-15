@@ -1169,20 +1169,15 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 // contact because he will not get messages anyway.
                 convModule()->checkIfRemoveForCompat(uri);
             } else {
+                auto oldConv = convModule()->getOneToOneConversation(uri);
                 // If we previously removed the contact, and re-add it, we may
                 // receive a convId different from the request. In that case,
                 // we need to remove the current conversation and clone the old
                 // one (given by convFromReq).
                 // TODO: In the future, we may want to re-commit the messages we
                 // may have send in the request we sent.
-                auto oldConv = convModule()->getOneToOneConversation(uri);
-                if (convFromReq != oldConv) {
+                if (updateConvForContact(uri, oldConv, convFromReq)) {
                     convModule()->removeConversation(oldConv);
-                    {
-                        std::lock_guard<std::mutex> lock(configurationMutex_);
-                        if (auto info = accountManager_->getInfo())
-                            info->contacts->updateConversation(dht::InfoHash(uri), convFromReq);
-                    }
                     convModule()->cloneConversationFrom(convFromReq, uri);
                 }
             }
@@ -2289,7 +2284,8 @@ JamiAccount::doRegister_()
 
                     // Check if pull from banned device
                     if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
-                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the device is "
+                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the "
+                                  "device is "
                                   "unauthorized (%s) ",
                                   getAccountID().c_str(),
                                   conversationId.c_str(),
@@ -2483,7 +2479,7 @@ JamiAccount::convModule()
                         ->connectDevice(DeviceId(deviceId),
                                         "git://" + deviceId + "/" + convId,
                                         [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                             const DeviceId&) {
                                             if (socket) {
                                                 socket->onShutdown(
                                                     [shared, deviceId = socket->deviceId(), convId] {
@@ -2495,6 +2491,9 @@ JamiAccount::convModule()
                                                 cb({});
                                         });
                 });
+            }),
+            std::move([this](auto&& convId, auto&& contactUri) {
+                updateConvForContact(contactUri, convId, "");
             }));
     }
     return convModule_.get();
@@ -3110,6 +3109,20 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     }
 }
 
+bool
+JamiAccount::updateConvForContact(const std::string& uri,
+                                  const std::string& oldConv,
+                                  const std::string& newConv)
+{
+    if (newConv != oldConv) {
+        std::lock_guard<std::mutex> lock(configurationMutex_);
+        if (auto info = accountManager_->getInfo())
+            info->contacts->updateConversation(dht::InfoHash(uri), newConv);
+        return true;
+    }
+    return false;
+}
+
 std::map<std::string, std::string>
 JamiAccount::getContactDetails(const std::string& uri) const
 {
@@ -3721,9 +3734,9 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                   json["id"].asString().c_str());
 
         convModule()->onNewCommit(from,
-                                     json["deviceId"].asString(),
-                                     json["id"].asString(),
-                                     json["commit"].asString());
+                                  json["deviceId"].asString(),
+                                  json["id"].asString(),
+                                  json["commit"].asString());
         return true;
     } else if (m.first == MIME_TYPE_INVITE) {
         convModule()->onNeedConversationRequest(from, m.second);
