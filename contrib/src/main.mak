@@ -33,7 +33,8 @@ SRC := $(TOPSRC)/src
 # 1. Environment variable
 # 2. Configured value at bootstrap time
 # 3. Default value
-TARBALLS := $(or $(TARBALLS),$(CONF_TARBALLS),$(TOPSRC)/tarballs)
+TARBALLS_DEFAULT := $(TOPSRC)/tarballs
+TARBALLS := $(or $(TARBALLS),$(CONF_TARBALLS),$(TARBALLS_DEFAULT))
 
 PATH :=$(abspath $(TOPSRC)/../extras/tools/build/bin):$(PATH)
 export PATH
@@ -247,14 +248,25 @@ endif
 endif
 SVN ?= $(error subversion client (svn) not found!)
 
+ifndef FLOCK
+ifeq ($(shell flock --version >/dev/null 2>&1 || echo FAIL),)
+FLOCK = flock
+endif
+endif
+ifneq ($(TARBALLS_DEFAULT),$(TARBALLS))
+FLOCK ?= $(error custom TARBALLS location requires flock)
+endif
+
+FLOCK_PREFIX := $(and $(FLOCK),$(FLOCK) "$@.lock")
+
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download = $(error Trying to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
-download = flock "$@.lock" wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
+download = $(FLOCK_PREFIX) wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
 else ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
-download = flock "$@.lock" curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
+download = $(FLOCK_PREFIX) curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
-download = flock "$@.lock" sh -c \
+download = $(FLOCK_PREFIX) sh -c \
   'rm -f "$@.tmp" && fetch -p -o "$@.tmp" "$(1)" && touch "$@.tmp" && mv "$@.tmp" "$@"'
 else
 download = $(error Neither wget nor curl found!)
