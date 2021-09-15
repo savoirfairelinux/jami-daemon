@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4fc63e7_6504d340",
+        "filename": "src/Makefile.am",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-09-15T00:43:44Z",
+      "side": 0,
+      "message": "No this is necessary because the includes files, e.g. ./media/Makefile.am, could do noinst_HEADERS +\u003d",
+      "revId": "5fd4d2e0509b44d1ec2de98f94c8ae8fa6023c44",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
