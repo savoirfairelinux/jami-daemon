@@ -120,11 +120,11 @@ public:
         clearSockets();
     }
 
-    std::shared_ptr<ChannelSocket> makeSocket(const std::string& name, uint16_t channel)
+    std::shared_ptr<ChannelSocket> makeSocket(const std::string& name, uint16_t channel, bool isInitiator = false)
     {
         auto& channelSocket = sockets[channel];
         if (not channelSocket)
-            channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel);
+            channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel, isInitiator);
         else {
             JAMI_WARN("A channel is already present on that socket, accepting "
                       "the request will close the previous one %s",
@@ -510,7 +510,7 @@ MultiplexedSocket::addChannel(const std::string& name)
         if (c == CONTROL_CHANNEL || c == PROTOCOL_CHANNEL
             || pimpl_->sockets.find(c) != pimpl_->sockets.end())
             continue;
-        return pimpl_->makeSocket(name, c);
+        return pimpl_->makeSocket(name, c, true);
     }
     return {};
 }
@@ -699,10 +699,11 @@ MultiplexedSocket::sendVersion()
 class ChannelSocket::Impl
 {
 public:
-    Impl(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel)
+    Impl(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel, bool isInitiator)
         : name(name)
         , channel(channel)
         , endpoint(std::move(endpoint))
+        , isInitiator_(isInitiator)
     {}
 
     ~Impl() {}
@@ -713,6 +714,7 @@ public:
     std::string name {};
     uint16_t channel {};
     std::weak_ptr<MultiplexedSocket> endpoint {};
+    bool isInitiator_ {false};
 
     std::vector<uint8_t> buf {};
     std::mutex mutex {};
@@ -722,8 +724,9 @@ public:
 
 ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                              const std::string& name,
-                             const uint16_t& channel)
-    : pimpl_ {std::make_unique<Impl>(endpoint, name, channel)}
+                             const uint16_t& channel,
+                             bool isInitiator)
+    : pimpl_ {std::make_unique<Impl>(endpoint, name, channel, isInitiator)}
 {}
 
 ChannelSocket::~ChannelSocket() {}
@@ -761,10 +764,11 @@ ChannelSocket::isReliable() const
 bool
 ChannelSocket::isInitiator() const
 {
-    if (auto ep = pimpl_->endpoint.lock()) {
-        return ep->isInitiator();
-    }
-    return false;
+    // Note. Is initiator here as not the same meaning of MultiplexedSocket.
+    // because a multiplexed socket can have sockets from accepted requests
+    // or made via connectDevice(). Here, isInitiator_ return if the socket
+    // is from connectDevice.
+    return pimpl_->isInitiator_;
 }
 
 int

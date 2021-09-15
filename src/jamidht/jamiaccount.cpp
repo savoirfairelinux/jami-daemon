@@ -2274,15 +2274,7 @@ JamiAccount::doRegister_()
                     auto conversationId = name.substr(sep + 1);
                     auto remoteDevice = name.substr(6, sep - 6);
 
-                    auto isServer = false;
-                    if (!DeviceId(remoteDevice)) {
-                        // This means that the remoteDevice is a short Id, so with a non up-to-date client
-                        isServer = remoteDevice
-                                   == accountManager_->getInfo()->devicePk->getId().toString();
-                    } else {
-                        isServer = remoteDevice == currentDeviceId();
-                    }
-                    if (!isServer || currentDeviceId() == deviceId.to_c_str()) {
+                    if (channel->isInitiator()) {
                         // Check if wanted remote it's our side (git://remoteDevice/conversationId)
                         return;
                     }
@@ -2336,13 +2328,9 @@ JamiAccount::doRegister_()
                     auto sep = idstr.find('/');
                     auto lastSep = idstr.find_last_of('/');
                     auto conversationId = idstr.substr(0, sep);
-                    auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
                     auto fileId = idstr.substr(lastSep + 1);
-                    if (fileHost == currentDeviceId()) // This means we are the host, so the file is
-                                                       // outgoing, ignore
-                    {
+                    if (channel->isInitiator())
                         return;
-                    }
 
                     sep = fileId.find_last_of('?');
                     std::string arguments;
