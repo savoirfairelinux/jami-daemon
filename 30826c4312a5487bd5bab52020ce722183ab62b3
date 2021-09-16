@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b7e6f593_1ce51fc9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 22
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-16T13:25:59Z",
+      "side": 1,
+      "message": "the goal of the whole logic is to start the negotiation but still use the same transport until the new one is ready to avoid a glitch while renegotiating.\nSo, yeah, there is a need for 2 ice",
+      "parentUuid": "c570ad92_03833836",
+      "revId": "30826c4312a5487bd5bab52020ce722183ab62b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3797482c_d474c192",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 22
