@@ -440,7 +440,27 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
         convCommits = repository_->logN(fromMessage, n);
     else
         convCommits = repository_->log(fromMessage, toMessage);
-    return convCommitToMap(convCommits);
+    auto result = convCommitToMap(convCommits);
+
+#ifdef ENABLE_PLUGIN
+    auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
+    if (pluginChatManager.hasHandlers()) {
+        auto account = account_.lock();
+        if (!account)
+            return result;
+        for (const auto& c: result) {
+            auto cm = std::make_shared<JamiMessage>(account->getAccountID(),
+                                                repository_->id(),
+                                                c.at("author") != account->getUsername(),
+                                                c,
+                                                false);
+            cm->isSwarm = true;
+            cm->fromHistory = true;
+            pluginChatManager.publishMessage(std::move(cm));
+        }
+    }
+#endif
+    return result;
 }
 
 Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
