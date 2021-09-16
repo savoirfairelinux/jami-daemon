@@ -39,6 +39,10 @@ TARBALLS := $(or $(TARBALLS),$(CONF_TARBALLS),$(TARBALLS_DEFAULT))
 PATH :=$(abspath $(TOPSRC)/../extras/tools/build/bin):$(PATH)
 export PATH
 
+# Workaround this Autoconf 2.70 bug:
+# https://savannah.gnu.org/support/?110503#comment3.
+export GTKDOCIZE := true
+
 PKGS_ALL := $(patsubst $(SRC)/%/rules.mak,%,$(wildcard $(SRC)/*/rules.mak))
 DATE := $(shell date +%Y%m%d)
 VPATH := $(TARBALLS)
