@@ -16,6 +16,29 @@
       "message": "Seems ok to me with some test.\nBut I never had big problems with echo-cancelling on my setups, so not sure how it improves things.",
       "revId": "b5b18adbd9b929072186bab2474d5bebfbbf4aca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e5fe308_b1e74aa0",
+        "filename": "src/media/audio/pulseaudio/audiostream.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-09-16T16:49:41Z",
+      "side": 1,
+      "message": "This seems incorrect. Elsewhere in pulselayer, we reference the sink/source assuming it has the auto-generated \".echo-cancel\" suffix, and strip it when comparing items in the enumerated device list.\nThese parameters will generate sink/source without the base device identifier prefixes.\ne.g. alsa_output.pci-0000_00_1f.3.analog-stereo.echo-cancel -\u003e echoCancel_sink",
+      "range": {
+        "startLine": 73,
+        "startChar": 8,
+        "endLine": 74,
+        "endChar": 38
+      },
+      "revId": "b5b18adbd9b929072186bab2474d5bebfbbf4aca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
