@@ -600,12 +600,21 @@ ConversationModule::loadConversations()
     }
     pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
 
-    // Set removed flag
+    // Prune any invalid conversations without members and
+    // set the removed flag if needed
+    size_t oldConvInfosSize = pimpl_->convInfos_.size();
     for (auto& [key, info] : pimpl_->convInfos_) {
+        if (info.members.empty()) {
+            pimpl_->convInfos_.erase(key);
+            continue;
+        }
         auto itConv = pimpl_->conversations_.find(info.id);
         if (itConv != pimpl_->conversations_.end() && info.removed)
             itConv->second->setRemovingFlag();
     }
+    // Save iff we've removed some invalid entries
+    if (oldConvInfosSize != pimpl_->convInfos_.size())
+        pimpl_->saveConvInfos();
 
     JAMI_INFO("[Account %s] Conversations loaded!", pimpl_->accountId_.c_str());
 }
