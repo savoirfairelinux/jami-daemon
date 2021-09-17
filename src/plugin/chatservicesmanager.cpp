@@ -143,7 +143,7 @@ ChatServicesManager::publishMessage(pluginMessagePtr message)
 
     // Search for activation flag.
     for (auto& chatHandler : chatHandlers_) {
-        std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
+        const std::string& chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
         std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
         // toggle is true if we should automatically activate the ChatHandler.
         bool toggle = PluginPreferencesUtils::getAlwaysPreference(chatHandler->id().substr(0, found),
@@ -204,7 +204,6 @@ ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const st
             if (chatHandlerName.second) // We only return active ChatHandler ids
                 ret.emplace_back(std::to_string(handlersNameMap_.at(chatHandlerName.first)));
     }
-
     return ret;
 }
 
@@ -213,9 +212,8 @@ ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
 {
     auto chatHandlerId = std::stoull(chatHandlerIdStr);
     for (auto& chatHandler : chatHandlers_) {
-        if ((uintptr_t) chatHandler.get() == chatHandlerId) {
+        if ((uintptr_t) chatHandler.get() == chatHandlerId)
             return chatHandler->getChatHandlerDetails();
-        }
     }
     return {};
 }
@@ -257,8 +255,7 @@ ChatServicesManager::toggleChatHandler(const uintptr_t chatHandlerId,
     if (chatHandlerIt != chatHandlers_.end()) {
         if (toggle) {
             (*chatHandlerIt)->notifyChatSubject(mPair, chatSubjects_[mPair]);
-            if (handlers.find(chatHandlerId) == handlers.end())
-                handlers.insert(chatHandlerId);
+            handlers.emplace(chatHandlerId);
             chatAllowDenySet[(*chatHandlerIt)->getChatHandlerDetails().at("name")] = true;
         } else {
             (*chatHandlerIt)->detach(chatSubjects_[mPair]);

@@ -222,11 +222,11 @@ PluginPreferencesUtils::setAllowDenyListPreferences(const ChatHandlerList& list)
 {
     std::string filePath = getAllowDenyListsPath();
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
-    std::ofstream fs(filePath, std::ios::binary);
-    if (!fs.good()) {
-        return;
-    }
     try {
+        std::ofstream fs(filePath, std::ios::binary);
+        if (!fs.good()) {
+            return;
+        }
         msgpack::pack(fs, list);
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
@@ -236,33 +236,17 @@ PluginPreferencesUtils::setAllowDenyListPreferences(const ChatHandlerList& list)
 void
 PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list)
 {
-    const std::string filePath = getAllowDenyListsPath();
+    std::string filePath = getAllowDenyListsPath();
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
-    std::ifstream file(filePath, std::ios::binary);
-
-    // If file is accessible
-    if (file.good()) {
-        // Get file size
-        std::string str;
-        file.seekg(0, std::ios::end);
-        size_t fileSize = static_cast<size_t>(file.tellg());
-        // If not empty
-        if (fileSize > 0) {
-            // Read whole file content and put it in the string str
-            str.reserve(static_cast<size_t>(file.tellg()));
-            file.seekg(0, std::ios::beg);
-            str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            file.close();
-            try {
-                // Unpack the string
-                msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
-                // Deserialized object is valid during the msgpack::object_handle instance is alive.
-                msgpack::object deserialized = oh.get();
-                deserialized.convert(list);
-            } catch (const std::exception& e) {
-                JAMI_ERR() << e.what();
-            }
-        }
+    try {
+        auto data = fileutils::loadFile(filePath);
+        // Unpack the string
+        msgpack::object_handle oh = msgpack::unpack((const char*)data.data(), data.size());
+        // Deserialized object is valid during the msgpack::object_handle instance is alive.
+        msgpack::object deserialized = oh.get();
+        deserialized.convert(list);
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
     }
 }
 
@@ -309,7 +293,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
 }
 
 bool
-PluginPreferencesUtils::getAlwaysPreference(const std::string& rootPath, std::string& handlerName)
+PluginPreferencesUtils::getAlwaysPreference(const std::string& rootPath, const std::string& handlerName)
 {
     auto preferences = getPreferences(rootPath);
     auto preferencesValues = getPreferencesValuesMap(rootPath);

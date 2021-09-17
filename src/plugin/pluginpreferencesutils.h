@@ -138,7 +138,7 @@ public:
      * @param handlerName
      * @return True if the handler should be automatically toggled
      */
-    static bool getAlwaysPreference(const std::string& rootPath, std::string& handlerName);
+    static bool getAlwaysPreference(const std::string& rootPath, const std::string& handlerName);
 
 private:
     PluginPreferencesUtils() {}
