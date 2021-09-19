@@ -35,7 +35,6 @@
 #include "manager.h"
 #include "logger.h"
 #include "libav_utils.h"
-#include "array_size.h"
 
 #include "media_codec.h"
 #include "system_codec_container.h"

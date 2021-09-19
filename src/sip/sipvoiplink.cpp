@@ -47,7 +47,6 @@
 
 #include "pres_sub_server.h"
 
-#include "array_size.h"
 #include "ip_utils.h"
 #include "sip_utils.h"
 #include "string_utils.h"

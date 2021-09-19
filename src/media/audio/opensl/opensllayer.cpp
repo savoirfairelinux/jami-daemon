@@ -28,7 +28,6 @@
 #include "libav_utils.h"
 #include "manager.h"
 #include "logger.h"
-#include "array_size.h"
 
 #include <SLES/OpenSLES_AndroidConfiguration.h>
 

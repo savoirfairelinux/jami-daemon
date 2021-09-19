@@ -31,7 +31,6 @@
 #include "compiler_intrinsics.h"
 #include "manager.h"
 #include "certstore.h"
-#include "array_size.h"
 #include "scheduled_executor.h"
 
 #include <gnutls/gnutls.h>

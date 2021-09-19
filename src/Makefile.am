@@ -107,7 +107,6 @@ libring_la_SOURCES = \
 		utf8_utils.h \
 		ring_types.h \
 		compiler_intrinsics.h \
-		array_size.h \
 		account_schema.h \
 		registration_states.h \
 		map_utils.h \

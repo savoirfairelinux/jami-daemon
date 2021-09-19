@@ -12,7 +12,6 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/account_schema.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/archiver.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/archiver.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/array_size.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/base64.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/base64.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.cpp"

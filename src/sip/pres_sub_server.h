@@ -28,7 +28,6 @@
 #include <pjsip/sip_module.h>
 
 #include "noncopyable.h"
-#include "array_size.h"
 
 namespace jami {
 

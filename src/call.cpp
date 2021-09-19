@@ -33,7 +33,6 @@
 #include "client/ring_signal.h"
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
-#include "array_size.h"
 #include "map_utils.h"
 #include "call_factory.h"
 #include "string_utils.h"

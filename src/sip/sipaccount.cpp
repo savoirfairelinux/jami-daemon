@@ -32,7 +32,6 @@
 #include "sipvoiplink.h"
 #include "sipcall.h"
 #include "sip_utils.h"
-#include "array_size.h"
 
 #include "call_factory.h"
 
@@ -1724,7 +1723,7 @@ const std::vector<std::string>&
 SIPAccount::getSupportedTlsProtocols()
 {
     static std::vector<std::string> availProtos {VALID_TLS_PROTOS,
-                                                 VALID_TLS_PROTOS + arraySize(VALID_TLS_PROTOS)};
+                                                 VALID_TLS_PROTOS + std::size(VALID_TLS_PROTOS)};
     return availProtos;
 }
 

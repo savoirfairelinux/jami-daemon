@@ -44,7 +44,6 @@ extern "C" {
 #include "logger.h"
 #include "../video_device.h"
 #include "string_utils.h"
-#include "array_size.h"
 
 #define ZEROVAR(x) std::memset(&(x), 0, sizeof(x))
 
@@ -234,7 +233,7 @@ static const unsigned pixelformats_supported[] = {
 static unsigned int
 pixelformat_score(unsigned pixelformat)
 {
-    unsigned int formats_count = arraySize(pixelformats_supported);
+    unsigned int formats_count = std::size(pixelformats_supported);
     for (unsigned int i = 0; i < formats_count; ++i) {
         if (pixelformats_supported[i] == pixelformat)
             return i;

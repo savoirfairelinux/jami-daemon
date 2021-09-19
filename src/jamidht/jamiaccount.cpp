@@ -72,7 +72,6 @@
 #endif
 #include "fileutils.h"
 #include "string_utils.h"
-#include "array_size.h"
 #include "archiver.h"
 #include "data_transfer.h"
 #include "conversation.h"

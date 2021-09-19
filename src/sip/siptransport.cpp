@@ -28,7 +28,6 @@
 #include "jamidht/channeled_transport.h"
 #include "jamidht/multiplexed_socket.h"
 
-#include "array_size.h"
 #include "compiler_intrinsics.h"
 #include "sipvoiplink.h"
 
@@ -60,7 +59,7 @@ constexpr const char* TRANSPORT_STATE_STR[] = {"CONNECTED",
                                                "SHUTDOWN",
                                                "DESTROY",
                                                "UNKNOWN STATE"};
-constexpr const size_t TRANSPORT_STATE_SZ = arraySize(TRANSPORT_STATE_STR);
+constexpr const size_t TRANSPORT_STATE_SZ = std::size(TRANSPORT_STATE_STR);
 static constexpr int ICE_COMP_ID_SIP_TRANSP {1};
 
 void

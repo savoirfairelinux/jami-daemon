@@ -30,7 +30,6 @@
 #include "audio/ringbuffer.h"
 #include "audio/audioloop.h"
 #include "manager.h"
-#include "array_size.h"
 
 #include <unistd.h>
 
