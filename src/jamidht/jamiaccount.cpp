@@ -1112,7 +1112,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
     JAMI_DBG("[Account %s] loading account", getAccountID().c_str());
     AccountManager::OnChangeCallback callbacks {
         [this](const std::string& uri, bool confirmed) {
-            dht::ThreadPool::computation().run([this, id = getAccountID(), uri, confirmed] {
+            dht::ThreadPool::computation().run([id = getAccountID(), uri, confirmed] {
                 emitSignal<DRing::ConfigurationSignal::ContactAdded>(id, uri, confirmed);
             });
         },
@@ -2434,19 +2434,19 @@ JamiAccount::convModule()
     if (!convModule_) {
         convModule_ = std::make_unique<ConversationModule>(
             weak(),
-            std::move([this] {
+            [this] {
                 runOnMainThread([w = weak()] {
                     if (auto shared = w.lock())
                         shared->syncWithConnected();
                 });
-            }),
-            std::move([this](auto&& uri, auto&& msg) {
+            },
+            [this](auto&& uri, auto&& msg) {
                 runOnMainThread([w = weak(), uri, msg] {
                     if (auto shared = w.lock())
                         shared->sendTextMessage(uri, msg);
                 });
-            }),
-            std::move([this](const auto& convId, const auto& deviceId, auto&& cb) {
+            },
+            [this](const auto& convId, const auto& deviceId, auto&& cb) {
                 runOnMainThread([w = weak(), convId, deviceId, cb = std::move(cb)] {
                     auto shared = w.lock();
                     if (!shared)
@@ -2482,7 +2482,7 @@ JamiAccount::convModule()
                                                 cb({});
                                         });
                 });
-            }));
+            });
     }
     return convModule_.get();
 }
@@ -4504,7 +4504,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
         // on new peer online
         for (const auto& m : convModule()->getConversationMembers(conversationId)) {
             accountManager_->forEachDevice(dht::InfoHash(m.at("uri")),
-                                           [this, tryDevice = std::move(tryDevice)](
+                                           [tryDevice = std::move(tryDevice)](
                                                const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                                                tryDevice(dev->getLongId());
                                            });
@@ -4518,7 +4518,7 @@ JamiAccount::initConnectionManager()
     if (!connectionManager_) {
         connectionManager_ = std::make_unique<ConnectionManager>(*this);
         channelHandlers_[Uri::Scheme::GIT]
-            = std::make_unique<ConversationChannelHandler>(std::move(weak()),
+            = std::make_unique<ConversationChannelHandler>(weak(),
                                                            *connectionManager_.get());
     }
 }
