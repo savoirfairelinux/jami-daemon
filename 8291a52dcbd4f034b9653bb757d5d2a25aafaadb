@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0c4bf58_2ec3c3d5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2495,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-09-20T14:37:44Z",
+      "side": 1,
+      "message": "move not needed (already a r-value), and could prevent copy-ellision",
+      "range": {
+        "startLine": 2495,
+        "startChar": 12,
+        "endLine": 2495,
+        "endChar": 22
+      },
+      "revId": "8291a52dcbd4f034b9653bb757d5d2a25aafaadb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
