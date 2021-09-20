@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9891f62e_0b013ef7",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1303,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-09-20T14:52:39Z",
+      "side": 1,
+      "message": "could we get the certificate or the peer id through the channel since it\u0027s authenticated ?",
+      "range": {
+        "startLine": 1303,
+        "startChar": 24,
+        "endLine": 1303,
+        "endChar": 95
+      },
+      "revId": "566d9a04a31a8bec5d50733e6e1f9b44532440ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
