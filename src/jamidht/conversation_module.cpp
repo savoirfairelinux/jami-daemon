@@ -603,14 +603,16 @@ ConversationModule::loadConversations()
     // Prune any invalid conversations without members and
     // set the removed flag if needed
     size_t oldConvInfosSize = pimpl_->convInfos_.size();
-    for (auto& [key, info] : pimpl_->convInfos_) {
+    for (auto itInfo = pimpl_->convInfos_.cbegin(); itInfo != pimpl_->convInfos_.cend();) {
+        const auto& info = itInfo->second;
         if (info.members.empty()) {
-            pimpl_->convInfos_.erase(key);
+            itInfo = pimpl_->convInfos_.erase(itInfo);
             continue;
         }
         auto itConv = pimpl_->conversations_.find(info.id);
         if (itConv != pimpl_->conversations_.end() && info.removed)
             itConv->second->setRemovingFlag();
+        ++itInfo;
     }
     // Save iff we've removed some invalid entries
     if (oldConvInfosSize != pimpl_->convInfos_.size())
