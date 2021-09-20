@@ -149,6 +149,8 @@ public:
 
     int waitForData(std::chrono::milliseconds, std::error_code&) const override;
 
+    std::shared_ptr<dht::crypto::Certificate> peerCertificate() const;
+
 private:
     class TlsSessionImpl;
     std::unique_ptr<TlsSessionImpl> pimpl_;

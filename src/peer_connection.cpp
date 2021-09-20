@@ -373,6 +373,14 @@ TlsSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
     return pimpl_->tls->write(buf, len, ec);
 }
 
+std::shared_ptr<dht::crypto::Certificate>
+TlsSocketEndpoint::peerCertificate() const
+{
+    if (!pimpl_->tls)
+        return {};
+    return pimpl_->tls->peerCertificate();
+}
+
 void
 TlsSocketEndpoint::waitForReady(const std::chrono::milliseconds& timeout)
 {

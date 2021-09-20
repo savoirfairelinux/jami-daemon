@@ -2229,7 +2229,7 @@ JamiAccount::doRegister_()
                                                      const std::string& name,
                                                      std::shared_ptr<ChannelSocket> channel) {
             if (channel) {
-                auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
+                auto cert = channel->peerCertificate();
                 if (!cert || !cert->issuer)
                     return;
                 auto peerId = cert->issuer->getId().toString();

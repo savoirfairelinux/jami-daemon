@@ -136,6 +136,8 @@ public:
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
+    std::shared_ptr<dht::crypto::Certificate> peerCertificate() const;
+
     void setOnRecv(RecvCb&&) override
     {
         throw std::logic_error("TlsSocketEndpoint::setOnRecv not implemented");

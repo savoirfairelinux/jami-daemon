@@ -129,6 +129,11 @@ public:
      */
     void sendBeacon(const std::chrono::milliseconds& timeout = SEND_BEACON_TIMEOUT);
 
+    /**
+     * Get peer's certificate
+     */
+    std::shared_ptr<dht::crypto::Certificate> peerCertificate() const;
+
 #ifdef DRING_TESTABLE
     /**
      * Check if we can send beacon on the socket
@@ -232,6 +237,11 @@ public:
      * @param timeout
      */
     void sendBeacon(const std::chrono::milliseconds& timeout = SEND_BEACON_TIMEOUT);
+
+    /**
+     * Get peer's certificate
+     */
+    std::shared_ptr<dht::crypto::Certificate> peerCertificate() const;
 
 #ifdef DRING_TESTABLE
     std::shared_ptr<MultiplexedSocket> underlyingSocket() const;

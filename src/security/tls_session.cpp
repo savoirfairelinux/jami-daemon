@@ -292,6 +292,8 @@ public:
     void initCredentials();
     bool commonSessionInit();
 
+    std::shared_ptr<dht::crypto::Certificate> peerCertificate(gnutls_session_t session) const;
+
     /*
      * Implicit certificate validations.
      */
@@ -328,6 +330,7 @@ public:
 
     std::mutex requestsMtx_;
     std::set<std::shared_ptr<dht::http::Request>> requests_;
+    std::shared_ptr<dht::crypto::Certificate> pCert_ {};
 };
 
 TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transport,
@@ -657,25 +660,12 @@ TlsSession::TlsSessionImpl::verifyCertificateWrapper(gnutls_session_t session)
      */
     if (gnutls_certificate_type_get(session) != GNUTLS_CRT_X509)
         return GNUTLS_E_CERTIFICATE_ERROR;
-    /*
-     * Get the peer's raw certificate (chain) as sent by the peer.
-     * The first certificate in the list is the peer's certificate, following the issuer's cert. etc.
-     */
-    unsigned int cert_list_size = 0;
-    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
-    if (cert_list == nullptr)
+
+    pCert_ = peerCertificate(session);
+    if (!pCert_)
         return GNUTLS_E_CERTIFICATE_ERROR;
 
-    /*
-     * Extract verification data by deserializing the certificate chain
-     */
-    std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
-    crt_data.reserve(cert_list_size);
-    for (unsigned i = 0; i < cert_list_size; i++)
-        crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
-    auto cert = dht::crypto::Certificate(crt_data);
-
-    std::string ocspUrl = getOcspUrl(cert.cert);
+    std::string ocspUrl = getOcspUrl(pCert_->cert);
     if (ocspUrl.empty()) {
         // Skipping OCSP verification: AIA not found
         return verified;
@@ -685,16 +675,16 @@ TlsSession::TlsSessionImpl::verifyCertificateWrapper(gnutls_session_t session)
     std::promise<int> v;
     std::future<int> f = v.get_future();
 
-    gnutls_x509_crt_t issuer_crt = cert.issuer ? cert.issuer->cert : nullptr;
-    verifyOcsp(ocspUrl, cert, issuer_crt, [&](const int status) {
+    gnutls_x509_crt_t issuer_crt = pCert_->issuer ? pCert_->issuer->cert : nullptr;
+    verifyOcsp(ocspUrl, *pCert_, issuer_crt, [&](const int status) {
         if (status == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE) {
             // OCSP URI is absent, don't fail the verification by overwritting the user-set one.
-            JAMI_WARN("Skipping OCSP verification %s: request failed", cert.getUID().c_str());
+            JAMI_WARN("Skipping OCSP verification %s: request failed", pCert_->getUID().c_str());
             v.set_value(verified);
         } else {
             if (status != GNUTLS_E_SUCCESS) {
                 JAMI_ERR("OCSP verification failed for %s: %s (%i)",
-                         cert.getUID().c_str(),
+                         pCert_->getUID().c_str(),
                          gnutls_strerror(status),
                          status);
             }
@@ -811,6 +801,27 @@ TlsSession::TlsSessionImpl::sendOcspRequest(const std::string& uri,
         requests_.emplace(request);
     }
     request->send();
+}
+
+std::shared_ptr<dht::crypto::Certificate>
+TlsSession::TlsSessionImpl::peerCertificate(gnutls_session_t session) const
+{
+    if (!session)
+        return {};
+    /*
+     * Get the peer's raw certificate (chain) as sent by the peer.
+     * The first certificate in the list is the peer's certificate, following the issuer's cert. etc.
+     */
+    unsigned int cert_list_size = 0;
+    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
+
+    if (cert_list == nullptr)
+        return {};
+    std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
+    crt_data.reserve(cert_list_size);
+    for (unsigned i = 0; i < cert_list_size; i++)
+        crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
+    return std::make_shared<dht::crypto::Certificate>(crt_data);
 }
 
 std::size_t
@@ -1696,6 +1707,12 @@ TlsSession::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) 
     if (!pimpl_->transport_->waitForData(timeout, ec))
         return 0;
     return 1;
+}
+
+std::shared_ptr<dht::crypto::Certificate>
+TlsSession::peerCertificate() const
+{
+    return pimpl_->pCert_;
 }
 
 } // namespace tls

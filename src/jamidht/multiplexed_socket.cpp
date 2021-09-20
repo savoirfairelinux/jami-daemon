@@ -632,7 +632,7 @@ MultiplexedSocket::underlyingICE() const
 void
 MultiplexedSocket::monitor() const
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(deviceId().toString());
+    auto cert = peerCertificate();
     if (!cert || !cert->issuer)
         return;
     auto userUri = cert->issuer->getId().toString();
@@ -654,6 +654,12 @@ void
 MultiplexedSocket::sendBeacon(const std::chrono::milliseconds& timeout)
 {
     pimpl_->sendBeacon(timeout);
+}
+
+std::shared_ptr<dht::crypto::Certificate>
+MultiplexedSocket::peerCertificate() const
+{
+    return pimpl_->endpoint->peerCertificate();
 }
 
 #ifdef DRING_TESTABLE
@@ -922,6 +928,14 @@ ChannelSocket::sendBeacon(const std::chrono::milliseconds& timeout)
     } else {
         shutdown();
     }
+}
+
+std::shared_ptr<dht::crypto::Certificate>
+ChannelSocket::peerCertificate() const
+{
+    if (auto ep = pimpl_->endpoint.lock())
+        return ep->peerCertificate();
+    return {};
 }
 
 } // namespace jami

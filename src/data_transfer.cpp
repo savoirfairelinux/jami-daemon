@@ -1266,6 +1266,9 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
     if (!channel)
         return;
     auto deviceId = channel->deviceId().toString();
+    auto cert = channel->peerCertificate();
+    if (!cert || !cert->issuer)
+        return;
     std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
     // Check if not already an incoming file for this id and that we are waiting this file
     auto itV = pimpl_->vcards_.find(deviceId);
@@ -1286,11 +1289,13 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
         res.first->second->onFinished([w = weak(),
                                        deviceId = std::move(deviceId),
                                        accountId = pimpl_->accountId_,
+                                       cert = std::move(cert),
                                        path = info.path](uint32_t code) {
             // schedule destroy transfer as not needed
             dht::ThreadPool().computation().run([w,
                                                  deviceId = std::move(deviceId),
                                                  accountId = std::move(accountId),
+                                                 cert = std::move(cert),
                                                  path = std::move(path),
                                                  code] {
                 if (auto sthis_ = w.lock()) {
@@ -1299,15 +1304,11 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                     auto itO = pimpl->vcards_.find(deviceId);
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
-                    if (code == uint32_t(DRing::DataTransferEventCode::finished)) {
-                        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
-                        if (!cert)
-                            return;
+                    if (code == uint32_t(DRing::DataTransferEventCode::finished))
                         emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                 cert->getIssuerUID(),
                                                                                 path);
-                    }
-                }
+                } 
             });
         });
         res.first->second->process();
