@@ -997,8 +997,13 @@ void
 Manager::unregisterAccounts()
 {
     for (const auto& account : getAllAccounts()) {
-        if (account->isEnabled())
+        if (account->isEnabled()) {
+            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account)) {
+                // Note: shutdown the connections as doUnregister will not do it (because the account is enabled)
+                acc->shutdownConnections();
+            }
             account->doUnregister();
+        }
     }
 }
 

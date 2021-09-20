@@ -2546,6 +2546,7 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     // Stop all current p2p connections if account is disabled
     // Else, we let the system managing if the co is down or not
+    // NOTE: this is used for changing account's config.
     if (not isEnabled())
         shutdownConnections();
 
