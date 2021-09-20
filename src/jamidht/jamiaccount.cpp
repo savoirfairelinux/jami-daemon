@@ -2178,13 +2178,14 @@ JamiAccount::doRegister_()
             auto isDataTransfer = name.substr(0, 16) == DATA_TRANSFER_URI;
 
             auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
-            if (!cert)
+            if (!cert || !cert->issuer)
                 return false;
+            auto issuer = cert->issuer->getId().toString();
 
             if (name == "sip") {
                 return true;
             } else if (name.find(SYNC_URI) == 0) {
-                return cert->getIssuerUID() == accountManager_->getInfo()->accountId;
+                return issuer == accountManager_->getInfo()->accountId;
             } else if (isFile or isVCard) {
                 auto tid = isFile ? name.substr(7) : name.substr(8);
                 std::lock_guard<std::mutex> lk(transfersMtx_);
@@ -2214,12 +2215,12 @@ JamiAccount::doRegister_()
                     auto members = convModule()->getConversationMembers(conversationId);
                     return std::find_if(members.begin(),
                                         members.end(),
-                                        [&](auto m) { return m["uri"] == cert->getIssuerUID(); })
+                                        [&](auto m) { return m["uri"] == issuer; })
                            != members.end();
                 }
 
                 return convModule()->onFileChannelRequest(conversationId,
-                                                          cert->getIssuerUID(),
+                                                          issuer,
                                                           fileId,
                                                           !noSha3sumVerification_);
             }

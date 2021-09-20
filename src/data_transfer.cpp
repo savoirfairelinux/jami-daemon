@@ -1306,7 +1306,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                         pimpl->vcards_.erase(itO);
                     if (code == uint32_t(DRing::DataTransferEventCode::finished))
                         emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
-                                                                                cert->getIssuerUID(),
+                                                                                cert->issuer->getId().toString(),
                                                                                 path);
                 } 
             });
