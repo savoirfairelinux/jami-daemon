@@ -115,11 +115,6 @@ public:
                bool anonymous = true);
     ~TlsSession();
 
-    /// Return the name of current cipher.
-    /// Can be called by onStateChange callback when state == ESTABLISHED
-    /// to obtain the used cypher suite id.
-    const char* currentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const;
-
     /// Request TLS thread to stop and quit.
     /// \note IO operations return error after this call.
     void shutdown() override;

@@ -1587,29 +1587,6 @@ TlsSession::maxPayload() const
     return pimpl_->transport_->maxPayload();
 }
 
-const char*
-TlsSession::currentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
-{
-    // get current session cipher suite info
-    gnutls_cipher_algorithm_t cipher, s_cipher = gnutls_cipher_get(pimpl_->session_);
-    gnutls_kx_algorithm_t kx, s_kx = gnutls_kx_get(pimpl_->session_);
-    gnutls_mac_algorithm_t mac, s_mac = gnutls_mac_get(pimpl_->session_);
-
-    // Loop on all known cipher suites until matching with session data, extract it's cs_id
-    for (std::size_t i = 0;; ++i) {
-        const char* const suite
-            = gnutls_cipher_suite_info(i, cs_id.data(), &kx, &cipher, &mac, nullptr);
-        if (!suite)
-            break;
-        if (cipher == s_cipher && kx == s_kx && mac == s_mac)
-            return suite;
-    }
-
-    auto name = gnutls_cipher_get_name(s_cipher);
-    JAMI_WARN("[TLS] No Cipher Suite Id found for cipher %s", name ? name : "<null>");
-    return {};
-}
-
 // Called by anyone to stop the connection and the FSM thread
 void
 TlsSession::shutdown()
