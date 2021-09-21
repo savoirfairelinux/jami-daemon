@@ -106,7 +106,8 @@ public:
     constexpr static const char* const ACCOUNT_TYPE = "RING";
     constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
     constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
-    constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80-95]";
+    constexpr static const char* const DHT_DEFAULT_PROXY
+        = "192.168.50.194:8000"; //"dhtproxy.jami.net:[80-95]";
     constexpr static const char* const DHT_DEFAULT_BOOTSTRAP_LIST_URL
         = "https://config.jami.net/boostrapList";
     constexpr static const char* const DHT_DEFAULT_PROXY_LIST_URL
