@@ -1576,7 +1576,7 @@ ConversationRepository::Impl::log(const std::string& from,
             break;
         }
         GitCommit commit {commit_ptr, git_commit_free};
-        if ((n != 0 && commits.size() == n) || (id == to))
+        if ((n != 0 && commits.size() - 1 == n) || (id == to))
             break;
 
         if (!startLogging && from != "" && from == id)
