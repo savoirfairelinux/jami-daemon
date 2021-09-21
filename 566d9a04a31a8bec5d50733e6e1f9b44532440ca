@@ -22,6 +22,30 @@
       },
       "revId": "566d9a04a31a8bec5d50733e6e1f9b44532440ca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5cf6964_16bd4911",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1303,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-21T15:24:04Z",
+      "side": 1,
+      "message": "Not really related to this patch, so I did another: https://review.jami.net/c/ring-daemon/+/19305 (currently testing)\n\nBut yeah indeed, we should avoid to re-use the certstore when we use a ChannelSocket",
+      "parentUuid": "9891f62e_0b013ef7",
+      "range": {
+        "startLine": 1303,
+        "startChar": 24,
+        "endLine": 1303,
+        "endChar": 95
+      },
+      "revId": "566d9a04a31a8bec5d50733e6e1f9b44532440ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
