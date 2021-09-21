@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de872b2a_14b43344",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 3037,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-21T18:25:30Z",
+      "side": 1,
+      "message": "TO determine. directly URI?",
+      "range": {
+        "startLine": 3037,
+        "startChar": 38,
+        "endLine": 3037,
+        "endChar": 47
+      },
+      "revId": "2851ec14c51c456d0c71b6e7071ca53cecdee3b0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
