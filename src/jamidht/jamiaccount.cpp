@@ -318,16 +318,16 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
     proxyServer_ = DHT_DEFAULT_PROXY;
     nonSwarmTransferManager_ = std::make_shared<TransferManager>(getAccountID(), "");
-
-    try {
-        std::istringstream is(fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
-                                                           std::chrono::hours(24 * 7)));
-        std::getline(is, proxyServerCached_);
-    } catch (const std::exception& e) {
-        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s",
-                 getAccountID().c_str(),
-                 e.what());
-    }
+//
+//    try {
+//        std::istringstream is(fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
+//                                                           std::chrono::hours(24 * 7)));
+//        std::getline(is, proxyServerCached_);
+//    } catch (const std::exception& e) {
+//        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s",
+//                 getAccountID().c_str(),
+//                 e.what());
+//    }
 
     setActiveCodecs({});
 }
@@ -1993,7 +1993,7 @@ JamiAccount::doRegister_()
         config.peer_discovery = dhtPeerDiscovery_;
         config.peer_publish = dhtPeerDiscovery_;
         if (proxyEnabled_)
-            config.proxy_server = proxyServerCached_;
+            config.proxy_server = proxyServer_;
 
         if (not config.proxy_server.empty()) {
             JAMI_INFO("[Account %s] using proxy server %s",
@@ -2850,7 +2850,7 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
                           });
         }
     } else {
-        cb(proxyServerCached_);
+        cb(proxyServer_);
     }
 }
 
@@ -2883,18 +2883,18 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
         auto randIt = proxys.begin();
         std::advance(randIt,
                      std::uniform_int_distribution<unsigned long>(0, proxys.size() - 1)(rand));
-        proxyServerCached_ = *randIt;
+       // proxyServerCached_ = *randIt;
         // Cache it!
-        fileutils::check_dir(cachePath_.c_str(), 0700);
-        std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
-        std::ofstream file = fileutils::ofstream(proxyCachePath);
-        JAMI_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
-        if (file.is_open())
-            file << proxyServerCached_;
-        else
-            JAMI_WARN("Cannot write into %s", proxyCachePath.c_str());
+//        fileutils::check_dir(cachePath_.c_str(), 0700);
+//        std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
+//        std::ofstream file = fileutils::ofstream(proxyCachePath);
+//        JAMI_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
+//        if (file.is_open())
+//            file << proxyServerCached_;
+//        else
+//            JAMI_WARN("Cannot write into %s", proxyCachePath.c_str());
     }
-    return proxyServerCached_;
+    return proxyServer_;
 }
 
 void
