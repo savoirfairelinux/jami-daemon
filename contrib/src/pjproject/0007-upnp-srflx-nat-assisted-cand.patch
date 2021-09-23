@@ -1,8 +1,8 @@
  pjnath/include/pjnath/config.h    |   2 +-
- pjnath/include/pjnath/stun_sock.h |  22 +++++
- pjnath/src/pjnath/ice_strans.c    | 156 +++++++++++++++++++++++++++---
+ pjnath/include/pjnath/stun_sock.h |  22 ++++
+ pjnath/src/pjnath/ice_strans.c    | 171 +++++++++++++++++++++++++++---
  pjnath/src/pjnath/stun_sock.c     |   1 +
- 4 files changed, 166 insertions(+), 15 deletions(-)
+ 4 files changed, 181 insertions(+), 15 deletions(-)
 
 diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
 index 3e7c6ae3a..89b421c51 100644
@@ -51,10 +51,10 @@ index 51f60cc03..ba74cc6a5 100644
       * Specify the port range for STUN socket binding, relative to the start
       * port number specified in \a bound_addr. Note that this setting is only
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index b935811aa..bf001b74f 100644
+index 0bd8c6138..d54eb4bf1 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
-@@ -551,6 +551,121 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+@@ -551,6 +551,136 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
      return PJ_TRUE;
  }
  
@@ -157,15 +157,30 @@ index b935811aa..bf001b74f 100644
 +    comp->cand_cnt++;
 +    max_cand_cnt--;
 +
-+    /* Add local address as a host candidate. */
-+    if (nat_cfg->max_host_cands) {
++    // Check if we already have a matching host candidate for 
++    // this srflx candidate
++
++    /* Find the base for this candidate */
++    unsigned j=0;
++    for (; j<comp->cand_cnt; j++) {
++        pj_ice_sess_cand *host = &comp->cand_list[j];
++
++        if (host->type != PJ_ICE_CAND_TYPE_HOST)
++            continue;
++
++        if (pj_sockaddr_cmp(&cand->base_addr, &host->addr) == 0) {
++            /* Found a matching host cadidate */
++            break;
++        }
++    }
++
++    /* Add local address as a host candidate if not already present. */
++    if (j == comp->cand_cnt && nat_cfg->max_host_cands) {
 +        pj_stun_sock_info stun_sock_info;
 +        pj_memset(&stun_sock_info, 0, sizeof(stun_sock_info));
 +        stun_sock_info.alias_cnt = 1;
 +        pj_sockaddr_cp(&stun_sock_info.aliases[0], laddr);
-+
 +        unsigned cand_cnt = 0;
-+
 +        status = add_local_candidate(cand, idx, 0, &cand_cnt, &max_cand_cnt,
 +                    stun_sock_info, ice_st, comp, cand->transport);
 +    }
@@ -176,7 +191,7 @@ index b935811aa..bf001b74f 100644
  static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
  				     pj_ice_strans_comp *comp,
  				     unsigned idx,
-@@ -876,20 +991,33 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
+@@ -875,20 +1005,33 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
  
      /* Create STUN transport if configured */
      for (i=0; i<ice_st->cfg.stun_tp_cnt; ++i) {
@@ -225,7 +240,7 @@ index b935811aa..bf001b74f 100644
  
      /* Create TURN relay if configured. */
 diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
-index 6dbd296f2..17959efd0 100644
+index 6d2602552..b7643ca79 100644
 --- a/pjnath/src/pjnath/stun_sock.c
 +++ b/pjnath/src/pjnath/stun_sock.c
 @@ -217,6 +217,7 @@ PJ_DEF(void) pj_stun_sock_cfg_default(pj_stun_sock_cfg *cfg)
@@ -237,4 +252,5 @@ index 6dbd296f2..17959efd0 100644
  
  
 -- 
-2.30.2
+2.25.1
+

@@ -118,7 +118,6 @@ public:
     static const char* getCandidateType(const pj_ice_sess_cand* cand);
     bool isTcpEnabled() const { return config_.protocol == PJ_ICE_TP_TCP; }
     bool addStunConfig(int af);
-    void addDefaultCandidates();
     void requestUpnpMappings();
     bool hasUpnp() const;
     // Take a list of address pairs (local/public) and add them as
@@ -296,10 +295,7 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 //==============================================================================
 
 IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
-    : pool_(nullptr,
-            [](pj_pool_t* pool) {
-                pj_pool_release(pool);
-            })
+    : pool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
     , on_initdone_cb_(options.onInitDone)
     , on_negodone_cb_(options.onNegoDone)
     , streamsCount_(options.streamsCount)
@@ -334,8 +330,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         config_.turn.conn_type = PJ_TURN_TP_UDP;
     }
 
-    addDefaultCandidates();
-
     // Note: For server reflexive candidates, UPNP mappings will
     // be used if available. Then, the public address learnt during
     // the account registration process will be added only if it
@@ -343,23 +337,37 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
     // Also note that UPNP candidates should be added first in order
     // to have a higher priority when performing the connectivity
     // checks.
+    // STUN configs layout:
+    // - index 0 : host IPv4
+    // - index 1 : host IPv6
+    // - index 2 : upnp/generic srflx IPv4.
+    // - index 3 : generic srflx (if upnp exists and different)
+
+    config_.stun_tp_cnt = 0;
+
+    JAMI_DBG("[ice:%p] Add host candidates", this);
+    addStunConfig(pj_AF_INET());
+    addStunConfig(pj_AF_INET6());
 
     std::vector<std::pair<IpAddr, IpAddr>> upnpSrflxCand;
     if (upnp_) {
         requestUpnpMappings();
         upnpSrflxCand = setupUpnpReflexiveCandidates();
         if (not upnpSrflxCand.empty()) {
-            JAMI_DBG("[ice:%p] Add UPNP srflx candidates:", this);
             addServerReflexiveCandidates(upnpSrflxCand);
+            JAMI_DBG("[ice:%p] Added UPNP srflx candidates:", this);
         }
     }
 
     auto genericSrflxCand = setupGenericReflexiveCandidates();
+
     if (not genericSrflxCand.empty()) {
+        // Generic srflx candidates will be added only if different
+        // from upnp candidates.
         if (upnpSrflxCand.empty()
             or (upnpSrflxCand[0].second.toString() != genericSrflxCand[0].second.toString())) {
-            JAMI_DBG("[ice:%p] Add generic srflx candidates:", this);
             addServerReflexiveCandidates(genericSrflxCand);
+            JAMI_DBG("[ice:%p] Added generic srflx candidates:", this);
         }
     }
 
@@ -425,8 +433,16 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
     static constexpr auto IOQUEUE_MAX_HANDLES = std::min(PJ_IOQUEUE_MAX_HANDLES, 64);
     TRY(pj_timer_heap_create(pool_.get(), 100, &config_.stun_cfg.timer_heap));
     TRY(pj_ioqueue_create(pool_.get(), IOQUEUE_MAX_HANDLES, &config_.stun_cfg.ioqueue));
-
-    pj_status_t status = pj_ice_strans_create(name, &config_, compCount_, this, &icecb, &icest_);
+    std::ostringstream sessionName {};
+    // We use the instance pointer as the PJNATH session name in order
+    // to easily identify the logs reported by PJNATH.
+    sessionName << this;
+    pj_status_t status = pj_ice_strans_create(sessionName.str().c_str(),
+                                              &config_,
+                                              compCount_,
+                                              this,
+                                              &icecb,
+                                              &icest_);
 
     if (status != PJ_SUCCESS || icest_ == nullptr) {
         throw std::runtime_error("pj_ice_strans_create() failed");
@@ -477,7 +493,9 @@ IceTransport::Impl::~Impl()
         tentative++;
     }
     if (tentative == HANDLE_EVENT_TENTATIVE)
-        JAMI_ERR("handle events didn't finish after %d tentatives. This is a bug. Please report it.", HANDLE_EVENT_TENTATIVE);
+        JAMI_ERR(
+            "handle events didn't finish after %d tentatives. This is a bug. Please report it.",
+            HANDLE_EVENT_TENTATIVE);
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
@@ -811,21 +829,6 @@ IceTransport::Impl::addStunConfig(int af)
 }
 
 void
-IceTransport::Impl::addDefaultCandidates()
-{
-    JAMI_DBG("[ice:%p] Setup default candidates", this);
-
-    // STUN configs layout:
-    // - index 0 : host IPv4
-    // - index 1 : host IPv6
-    // - index 2 : upnp/srflx IPv4.
-
-    config_.stun_tp_cnt = 0;
-    addStunConfig(pj_AF_INET());
-    addStunConfig(pj_AF_INET6());
-}
-
-void
 IceTransport::Impl::requestUpnpMappings()
 {
     // Must be called once !
@@ -938,12 +941,6 @@ IceTransport::Impl::setupGenericReflexiveCandidates()
 
     std::vector<std::pair<IpAddr, IpAddr>> addrList;
     auto isTcp = isTcpEnabled();
-
-    // First, set default server reflexive candidates using current
-    // account public address.
-    // Then, check for UPNP mappings and and them if available.
-    // For TCP transport, the connection type is set to passive for UPNP
-    // candidates and set to active otherwise.
 
     addrList.reserve(compCount_);
     for (unsigned id = 1; id <= compCount_; id++) {
@@ -1123,7 +1120,6 @@ IceTransport::isInitiator() const
 bool
 IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& rem_candidates)
 {
-
     if (not isInitialized()) {
         JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
         pimpl_->is_stopped_ = true;
@@ -1197,7 +1193,6 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
 bool
 IceTransport::startIce(const SDP& sdp)
 {
-
     if (pimpl_->streamsCount_ != 1) {
         JAMI_ERR("Expected exactly one stream per SDP (found %u streams)", pimpl_->streamsCount_);
         return false;
@@ -1762,7 +1757,6 @@ IceTransportFactory::IceTransportFactory()
           })
     , ice_cfg_()
 {
-
     pj_caching_pool_init(cp_.get(), NULL, 0);
 
     pj_ice_strans_cfg_default(&ice_cfg_);

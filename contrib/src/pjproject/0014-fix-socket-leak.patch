@@ -10,10 +10,10 @@ is owned by the active sock only if everything went well.
  1 file changed, 7 insertions(+)
 
 diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
-index dc6304d9f..a453f5b65 100644
+index 8e576e031..7a88494c6 100644
 --- a/pjnath/src/pjnath/turn_sock.c
 +++ b/pjnath/src/pjnath/turn_sock.c
-@@ -1195,6 +1195,7 @@ static void turn_on_state(pj_turn_session *sess,
+@@ -1286,6 +1286,7 @@ static void turn_on_state(pj_turn_session *sess,
  					 turn_sock->setting.port_range,
  					 max_bind_retry);
  	    if (status != PJ_SUCCESS) {
@@ -21,7 +21,7 @@ index dc6304d9f..a453f5b65 100644
  		pj_turn_sock_destroy(turn_sock);
  		return;
  	    }
-@@ -1205,6 +1206,7 @@ static void turn_on_state(pj_turn_session *sess,
+@@ -1296,6 +1297,7 @@ static void turn_on_state(pj_turn_session *sess,
  				    turn_sock->pool->obj_name, NULL);
  	    if (status != PJ_SUCCESS && !turn_sock->setting.qos_ignore_error) 
  	    {
@@ -29,7 +29,7 @@ index dc6304d9f..a453f5b65 100644
  		pj_turn_sock_destroy(turn_sock);
  		return;
  	    }
-@@ -1262,6 +1264,11 @@ static void turn_on_state(pj_turn_session *sess,
+@@ -1353,6 +1355,11 @@ static void turn_on_state(pj_turn_session *sess,
  					  turn_sock->cfg.ioqueue, &asock_cb,
  					  turn_sock,
  					  &turn_sock->active_sock);
@@ -42,4 +42,5 @@ index dc6304d9f..a453f5b65 100644
  #if PJ_HAS_SSL_SOCK
  	else {
 -- 
-2.32.0
+2.25.1
+
