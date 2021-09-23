@@ -3067,8 +3067,14 @@ SIPCall::setupIceResponse()
     auto opt = account->getIceOptions();
 
     opt.accountPublicAddr = account->getPublishedIpAddress();
-    opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
-                                                      opt.accountPublicAddr.getFamily());
+    if (opt.accountPublicAddr) {
+        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
+                                                          opt.accountPublicAddr.getFamily());
+    } else {
+        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
+                                                          pj_AF_INET());
+        opt.accountPublicAddr = opt.accountLocalAddr;
+    }
 
     if (not opt.accountLocalAddr) {
         JAMI_ERR("[call:%s] No local address, ICE can't be initialized", getCallId().c_str());

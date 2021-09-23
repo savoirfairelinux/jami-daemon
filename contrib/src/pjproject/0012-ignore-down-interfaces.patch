@@ -41,3 +41,6 @@ index d7bbf725e..2a392d16b 100644
  #if PJ_IP_HELPER_IGNORE_LOOPBACK_IF
  	if (ifreq.ifr_flags & IFF_LOOPBACK) {
  	    TRACE_((THIS_FILE, "  loopback interface"));
+-- 
+2.25.1
+

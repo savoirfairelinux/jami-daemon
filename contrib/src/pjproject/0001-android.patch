@@ -11,10 +11,10 @@ Subject: [PATCH] android
  4 files changed, 12 insertions(+), 7 deletions(-)
 
 diff --git a/aconfigure b/aconfigure
-index 51b01a2..2d606ba 100755
+index 7faf6e24c..de04d77a6 100755
 --- a/aconfigure
 +++ b/aconfigure
-@@ -5958,9 +5958,6 @@ case $target in
+@@ -5996,9 +5996,6 @@ case $target in
  	esac
  	# UUID
  	case $target in
@@ -25,10 +25,10 @@ index 51b01a2..2d606ba 100755
  		if test "$ac_has_uuid_lib" = "1" -a "$ac_has_uuid_h" = "1"; then
  			ac_os_objs="$ac_os_objs guid_uuid.o"
 diff --git a/aconfigure.ac b/aconfigure.ac
-index 954b815..f254a30 100644
+index 35d577081..a6a261cb4 100644
 --- a/aconfigure.ac
 +++ b/aconfigure.ac
-@@ -492,9 +492,6 @@ case $target in
+@@ -514,9 +514,6 @@ case $target in
  	esac
  	# UUID
  	case $target in
@@ -39,7 +39,7 @@ index 954b815..f254a30 100644
  		if test "$ac_has_uuid_lib" = "1" -a "$ac_has_uuid_h" = "1"; then
  			ac_os_objs="$ac_os_objs guid_uuid.o"
 diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
-index 7b8ea25..333dfc2 100644
+index 7b8ea2561..333dfc2f2 100644
 --- a/pjlib/include/pj/config_site.h
 +++ b/pjlib/include/pj/config_site.h
 @@ -24,3 +24,14 @@
@@ -59,7 +59,7 @@ index 7b8ea25..333dfc2 100644
 +#define PJMEDIA_VID_DEV_INFO_FMT_CNT            128
 \ No newline at end of file
 diff --git a/pjlib/src/pj/os_timestamp_posix.c b/pjlib/src/pj/os_timestamp_posix.c
-index 0aed8c4..1ec156b 100644
+index 0aed8c470..1ec156b0d 100644
 --- a/pjlib/src/pj/os_timestamp_posix.c
 +++ b/pjlib/src/pj/os_timestamp_posix.c
 @@ -203,7 +203,7 @@ PJ_DEF(pj_status_t) pj_get_timestamp_freq(pj_timestamp *freq)
@@ -71,3 +71,6 @@ index 0aed8c4..1ec156b 100644
  
  #include <errno.h>
  #include <time.h>
+-- 
+2.25.1
+

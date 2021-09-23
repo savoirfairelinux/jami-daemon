@@ -196,7 +196,7 @@ index 3a7df799a..374b70b59 100644
  
  on_return:
 diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
-index a6e192e9f..88f61b7e2 100644
+index 6de6ab1da..111b4f133 100644
 --- a/pjnath/src/pjnath/turn_sock.c
 +++ b/pjnath/src/pjnath/turn_sock.c
 @@ -100,6 +100,10 @@ struct pj_turn_sock
@@ -331,5 +331,5 @@ index a6e192e9f..88f61b7e2 100644
  				    	 const pj_uint8_t *pkt,
  				    	 unsigned pkt_len,
 -- 
-2.30.2
+2.25.1
 

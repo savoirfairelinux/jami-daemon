@@ -280,10 +280,10 @@ index 1c20729e8..1fed15f6f 100644
  
  
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 9df0bc08a..f6a34e62d 100644
+index cc7e7d564..0b1c5fd56 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -1533,6 +1533,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+@@ -1531,6 +1531,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
  					  PJ_FALSE, PJ_FALSE, 
  					  &the_check->rcand->addr, 
  					  addr_len, tdata);
@@ -297,7 +297,7 @@ index 9df0bc08a..f6a34e62d 100644
  	/* Restore FINGERPRINT usage */
  	pj_stun_session_use_fingerprint(comp->stun_sess, saved);
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 025724520..b935811aa 100644
+index 0fdd2c695..0bd8c6138 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -99,6 +99,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf1, const pj_uint8_t *buf2)
@@ -308,7 +308,7 @@ index 025724520..b935811aa 100644
  static void	   on_ice_complete(pj_ice_sess *ice, pj_status_t status);
  static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
  			      unsigned comp_id,
-@@ -1383,6 +1384,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+@@ -1382,6 +1383,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
      ice_cb.wait_tcp_connection      = &ice_wait_tcp_connection;
      ice_cb.reconnect_tcp_connection = &ice_reconnect_tcp_connection;
      ice_cb.close_tcp_connection     = &ice_close_tcp_connection;
@@ -316,7 +316,7 @@ index 025724520..b935811aa 100644
  #endif
  
      /* Create! */
-@@ -2190,6 +2192,15 @@ static void on_valid_pair(pj_ice_sess *ice)
+@@ -2189,6 +2191,15 @@ static void on_valid_pair(pj_ice_sess *ice)
      pj_grp_lock_dec_ref(ice_st->grp_lock);
  }
  
@@ -333,4 +333,5 @@ index 025724520..b935811aa 100644
   * Callback called by ICE session when ICE processing is complete, either
   * successfully or with failure.
 -- 
-2.30.2
+2.25.1
+

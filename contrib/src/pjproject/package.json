@@ -22,6 +22,7 @@
         "0016-use-larger-Ta-interval.patch",
         "0017-auto-register-thread.patch",
         "0018-fix-ioqueue-lock-acquire.patch",
+        "0019-resort-check-list-after-adding-prflx.patch",
         "0020-avoid-immediate-nominating-triggered-check.patch",
         "0001-win-config.patch",
         "0002-win-vs-gnutls.patch",

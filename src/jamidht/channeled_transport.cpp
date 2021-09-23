@@ -69,6 +69,15 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     if (pj_lock_create_recursive_mutex(pool_.get(), "chan", &base.lock) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP mutex.");
 
+    if (not local) {
+        JAMI_ERR("Invalid local address [%s]", local.toString(true).c_str());
+        throw std::runtime_error("Invalid local address");
+    }
+    if (not remote) {
+        JAMI_ERR("Invalid remote address [%s]", remote.toString(true).c_str());
+        throw std::runtime_error("Invalid remote address");
+    }
+
     pj_sockaddr_cp(&base.key.rem_addr, remote_.pjPtr());
     base.key.type = tp_type;
     auto reg_type = static_cast<pjsip_transport_type_e>(tp_type);
@@ -148,7 +157,8 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
         size_t remaining {len};
         while (remaining) {
             // Build rdata
-            size_t added = std::min(remaining, (size_t) PJSIP_MAX_PKT_LEN - (size_t) rdata_.pkt_info.len);
+            size_t added = std::min(remaining,
+                                    (size_t) PJSIP_MAX_PKT_LEN - (size_t) rdata_.pkt_info.len);
             std::copy_n(buf, added, rdata_.pkt_info.packet + rdata_.pkt_info.len);
             rdata_.pkt_info.len += added;
             buf += added;

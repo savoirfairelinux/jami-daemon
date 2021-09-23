@@ -2,7 +2,7 @@
  1 file changed, 176 insertions(+)
 
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index a3869d9ca..9df0bc08a 100644
+index f35cfba5c..cc7e7d564 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -30,6 +30,21 @@
@@ -202,3 +202,6 @@ index a3869d9ca..9df0bc08a 100644
      pj_ice_sess_cand *lcand;
      pj_status_t status = PJ_SUCCESS;
      char address[PJ_INET6_ADDRSTRLEN];
+-- 
+2.25.1
+

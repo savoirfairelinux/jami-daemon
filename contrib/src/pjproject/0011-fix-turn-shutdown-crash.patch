@@ -2,7 +2,7 @@
  1 file changed, 3 deletions(-)
 
 diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
-index 88f61b7e2..be17f860c 100644
+index 111b4f133..8e576e031 100644
 --- a/pjnath/src/pjnath/turn_sock.c
 +++ b/pjnath/src/pjnath/turn_sock.c
 @@ -1492,9 +1492,6 @@ static void turn_on_state(pj_turn_session *sess,
@@ -15,3 +15,6 @@ index 88f61b7e2..be17f860c 100644
  	pj_timer_heap_cancel_if_active(turn_sock->cfg.timer_heap,
  	                               &turn_sock->timer, 0);
  	pj_timer_heap_schedule_w_grp_lock(turn_sock->cfg.timer_heap,
+-- 
+2.25.1
+

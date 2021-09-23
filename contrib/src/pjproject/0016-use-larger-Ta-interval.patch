@@ -22,10 +22,10 @@ index 89b421c51..fe58be9c9 100644
  
  
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 77d014d62..2e35d930e 100644
+index 0b1c5fd56..503cbfd91 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -2704,9 +2704,8 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+@@ -2702,9 +2702,8 @@ static pj_status_t perform_check(pj_ice_sess *ice,
      return status;
  }
  
@@ -36,7 +36,7 @@ index 77d014d62..2e35d930e 100644
   */
  static pj_status_t start_periodic_check(pj_timer_heap_t *th, 
  					pj_timer_entry *te)
-@@ -2734,8 +2733,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2732,8 +2731,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
      /* Set checklist state to Running */
      clist_set_state(ice, clist, PJ_ICE_SESS_CHECKLIST_ST_RUNNING);
  
@@ -46,7 +46,7 @@ index 77d014d62..2e35d930e 100644
  
      /* Send STUN Binding request for check with highest priority on
       * Retry state.
-@@ -2743,9 +2741,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2741,9 +2739,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
  
      if (start_count == 0) {
  	for (i = 0; i < clist->count; ++i) {
@@ -59,7 +59,7 @@ index 77d014d62..2e35d930e 100644
  		status = perform_check(ice, clist, i, ice->is_nominating);
  		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
-@@ -2762,13 +2762,15 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2760,13 +2760,15 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
  	// TODO (sblin) remove - https://github.com/coturn/coturn/issues/408
  	pj_bool_t inc_counter = PJ_TRUE;
  	for (i = 0; i < clist->count; ++i) {
@@ -76,7 +76,7 @@ index 77d014d62..2e35d930e 100644
  		    status = perform_check(ice, clist, i, ice->is_nominating);
  		    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
-@@ -2788,9 +2790,12 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2786,9 +2788,12 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
  
      if (start_count == 0) {
  	for (i = 0; i < clist->count; ++i) {
@@ -90,7 +90,7 @@ index 77d014d62..2e35d930e 100644
  		status = perform_check(ice, clist, i, ice->is_nominating);
  		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
-@@ -2808,9 +2813,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2806,9 +2811,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
       */
      if (start_count == 0) {
  	for (i = 0; i < clist->count; ++i) {
@@ -103,7 +103,7 @@ index 77d014d62..2e35d930e 100644
  		status = perform_check(ice, clist, i, ice->is_nominating);
  		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
-@@ -2825,7 +2832,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2823,7 +2830,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
      if (start_count == 0) {
  	// If all sockets are pending, do nothing
  	for (i = 0; i < clist->count; ++i) {
@@ -112,7 +112,7 @@ index 77d014d62..2e35d930e 100644
  	    if (check->state == PJ_ICE_SESS_CHECK_STATE_PENDING) {
  		++start_count;
  		break;
-@@ -2833,8 +2840,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2831,8 +2838,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
  	}
      }
  
@@ -125,7 +125,7 @@ index 77d014d62..2e35d930e 100644
  	pj_time_val timeout = {0, PJ_ICE_TA_VAL};
  
  	pj_time_val_normalize(&timeout);
-@@ -2847,7 +2857,6 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2845,7 +2855,6 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
      return PJ_SUCCESS;
  }
  
