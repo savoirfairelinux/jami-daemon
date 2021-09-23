@@ -47,6 +47,8 @@ Agent::searchForPeers(std::vector<std::string>& peers)
     LOG_AGENT_STATE();
 
     for (auto it = peers.begin(); it != peers.end(); ++it) {
+        AGENT_INFO("Searching for peer %s", it->c_str());
+
         DRing::sendTrustRequest(accountID_, it->c_str());
         DRing::subscribeBuddy(accountID_, it->c_str(), true);
     }
@@ -71,7 +73,6 @@ Agent::ping(const std::string& conversation)
     onMessageReceived_.add([&](const std::string& /* accountID */,
                                const std::string& conversationID,
                                std::map<std::string, std::string> message) {
-
         if ("text/plain" != message.at("type")) {
             return true;
         }
@@ -101,8 +102,8 @@ Agent::ping(const std::string& conversation)
 
     std::unique_lock<std::mutex> lk(mtx);
 
-    bool ret = (std::cv_status::no_timeout == cv.wait_for(lk, std::chrono::seconds(30)) and
-                pongReceived.load());
+    bool ret = (std::cv_status::no_timeout == cv.wait_for(lk, std::chrono::seconds(30))
+                and pongReceived.load());
 
     AGENT_INFO("Pong %s", ret ? "received" : "missing");
 
@@ -117,7 +118,6 @@ Agent::someContact() const
     for (const auto& member : members) {
         if (member.at("uri") != peerID_) {
             return member.at("uri");
-
         }
     }
 
@@ -151,7 +151,6 @@ Agent::placeCall(const std::string& contact)
     std::string callID = "";
 
     onCallStateChanged_.add([&](const std::string& call_id, const std::string& state, signed code) {
-
         AGENT_INFO("[call:%s] In state %s : %d", callID.c_str(), state.c_str(), code);
 
         std::unique_lock lk(mtx);
@@ -180,10 +179,8 @@ Agent::placeCall(const std::string& contact)
 
     /* TODO - Parametize me */
     {
-        std::unique_lock lk (mtx);
-        cv.wait_for(lk, std::chrono::seconds(30), [&]{
-            return success or over;
-        });
+        std::unique_lock lk(mtx);
+        cv.wait_for(lk, std::chrono::seconds(30), [&] { return success or over; });
     }
 
     if (success) {
@@ -194,7 +191,7 @@ Agent::placeCall(const std::string& contact)
     }
 
     if (not over) {
-        std::unique_lock lk (mtx);
+        std::unique_lock lk(mtx);
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return over; });
     }
 
@@ -251,9 +248,9 @@ Agent::exportToArchive(const std::string& path)
 {
     LOG_AGENT_STATE();
 
-    AGENT_ASSERT(DRing::exportToFile(accountID_,
-                                     path),
-                 "Failed to export account to `%s`", path.c_str());
+    AGENT_ASSERT(DRing::exportToFile(accountID_, path),
+                 "Failed to export account to `%s`",
+                 path.c_str());
 }
 
 void
@@ -327,20 +324,17 @@ Agent::waitForCallState(const std::string& wanted)
     std::condition_variable cv;
     std::unique_lock lk(mtx);
 
-    onCallStateChanged_.add([&](const std::string& /* call_id */,
-                                const std::string& state,
-                                signed             /* code */) {
+    onCallStateChanged_.add(
+        [&](const std::string& /* call_id */, const std::string& state, signed /* code */) {
+            if (wanted == state) {
+                std::unique_lock lk(mtx);
+                cv.notify_one();
 
+                return false;
+            }
 
-        if (wanted == state) {
-            std::unique_lock lk(mtx);
-            cv.notify_one();
-
-            return false;
-        }
-
-        return true;
-    });
+            return true;
+        });
 
     cv.wait(lk);
 }
@@ -420,10 +414,10 @@ Agent::installSignalHandlers()
              _4)));
 
     handlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-                        bind(&Agent::Handler<const std::string&, const std::map<std::string, std::string>&>::execute,
-                             &onVolatileDetailsChanged_,
-                             _1,
-                             _2)));
+        bind(&Agent::Handler<const std::string&, const std::map<std::string, std::string>&>::execute,
+             &onVolatileDetailsChanged_,
+             _1,
+             _2)));
 
     DRing::registerSignalHandlers(handlers);
 }
@@ -523,30 +517,28 @@ Agent::waitForAnnouncement(std::chrono::seconds timeout)
 
     std::mutex mtx;
 
-    onVolatileDetailsChanged_.add([&](const std::string& accountID,
-                                      const std::map<std::string, std::string>& details) {
+    onVolatileDetailsChanged_.add(
+        [&](const std::string& accountID, const std::map<std::string, std::string>& details) {
+            if (accountID_ != accountID) {
+                return true;
+            }
 
-                    if (accountID_ != accountID) {
-                        return true;
-                    }
+            try {
+                if ("true" != details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
+                    return true;
+                }
+            } catch (const std::out_of_range&) {
+                return true;
+            }
 
-                    try {
-                        if ("true"
-                            != details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
-                            return true;
-                        }
-                    } catch (const std::out_of_range&) {
-                        return true;
-                    }
+            std::unique_lock lk(mtx);
 
-                    std::unique_lock lk (mtx);
+            cv.notify_one();
 
-                    cv.notify_one();
+            return false;
+        });
 
-                    return false;
-    });
-
-    std::unique_lock lk (mtx);
+    std::unique_lock lk(mtx);
 
     AGENT_ASSERT(std::cv_status::no_timeout == cv.wait_for(lk, timeout),
                  "Timeout while waiting for account announcement on DHT");
@@ -555,6 +547,7 @@ Agent::waitForAnnouncement(std::chrono::seconds timeout)
 void
 Agent::init()
 {
+    DRing::logging("console", "on");
     LOG_AGENT_STATE();
 
     installSignalHandlers();

@@ -73,7 +73,7 @@ DRING_PUBLIC void fini() noexcept;
  *
  * @param whom  Log handler to control
  */
-DRING_PUBLIC void logging(const char* whom, const char* action) noexcept;
+DRING_PUBLIC void logging(const std::string& whom, const std::string& action) noexcept;
 
 /* External Callback Dynamic Utilities
  *

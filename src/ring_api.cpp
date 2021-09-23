@@ -88,8 +88,6 @@ fini() noexcept
     jami::Logger::fini();
 }
 
-} // namespace DRing
-
 void
 logging(const std::string& whom, const std::string& action) noexcept
 {
@@ -105,3 +103,5 @@ logging(const std::string& whom, const std::string& action) noexcept
         JAMI_ERR("Bad log handler %s", whom.c_str());
     }
 }
+
+} // namespace DRing
