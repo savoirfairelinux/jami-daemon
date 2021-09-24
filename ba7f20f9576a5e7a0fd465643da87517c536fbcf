@@ -16,6 +16,29 @@
       "message": "Worked great during first tests, code looks ok",
       "revId": "ba7f20f9576a5e7a0fd465643da87517c536fbcf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7f02d662_ed4303a7",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 4170,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-24T13:44:01Z",
+      "side": 1,
+      "message": "oops!",
+      "range": {
+        "startLine": 4169,
+        "startChar": 24,
+        "endLine": 4170,
+        "endChar": 23
+      },
+      "revId": "ba7f20f9576a5e7a0fd465643da87517c536fbcf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
