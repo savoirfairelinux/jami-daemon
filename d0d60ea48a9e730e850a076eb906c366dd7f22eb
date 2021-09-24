@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ddfb4f96_ede745aa",
+        "filename": "src/account.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-24T14:14:31Z",
+      "side": 1,
+      "message": "after iOS we will be able to simplify some code!",
+      "range": {
+        "startLine": 130,
+        "startChar": 6,
+        "endLine": 130,
+        "endChar": 25
+      },
+      "revId": "d0d60ea48a9e730e850a076eb906c366dd7f22eb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
