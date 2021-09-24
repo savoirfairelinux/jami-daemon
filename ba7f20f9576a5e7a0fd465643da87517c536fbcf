@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "282fcd21_77c44df0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-09-24T12:57:24Z",
+      "side": 1,
+      "message": "Worked great during first tests, code looks ok",
+      "revId": "ba7f20f9576a5e7a0fd465643da87517c536fbcf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
