@@ -6,6 +6,9 @@ WEBRTCAP_URL := https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processin
 ifndef HAVE_DARWIN_OS
 PKGS += webrtc-audio-processing
 endif
+ifeq ($(call need_pkg,"webrtc-audio-processing >= 0.3"),)
+PKGS_FOUND += webrtc-audio-processing
+endif
 
 $(TARBALLS)/webrtc-audio-processing-$(WEBRTCAP_VER).tar.gz:
 	$(call download,$(WEBRTCAP_URL))
