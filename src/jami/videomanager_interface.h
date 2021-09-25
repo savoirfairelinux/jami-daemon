@@ -26,6 +26,7 @@
 extern "C" {
 struct AVFrame;
 struct AVPacket;
+void av_frame_free(AVFrame **frame);
 }
 
 #include "def.h"
@@ -51,24 +52,6 @@ namespace DRing {
 
 [[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC void registerVideoHandlers(
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
-
-/* FrameBuffer is a generic video frame container */
-struct DRING_PUBLIC FrameBuffer
-{
-    uint8_t* ptr {nullptr};  // data as a plain raw pointer
-    std::size_t ptrSize {0}; // size in byte of ptr array
-    int format {0};          // as listed by AVPixelFormat (avutils/pixfmt.h)
-    int width {0};           // frame width
-    int height {0};          // frame height
-    std::vector<uint8_t> storage;
-};
-
-struct DRING_PUBLIC SinkTarget
-{
-    using FrameBufferPtr = std::unique_ptr<FrameBuffer>;
-    std::function<FrameBufferPtr(std::size_t bytes)> pull;
-    std::function<void(FrameBufferPtr)> push;
-};
 
 class DRING_PUBLIC MediaFrame
 {
@@ -169,6 +152,27 @@ private:
     uint8_t* ptr_ {nullptr};
     bool allocated_ {false};
     void setGeometry(int format, int width, int height) noexcept;
+};
+
+
+/* FrameBuffer is a generic video frame container */
+struct DRING_PUBLIC FrameBuffer
+{
+    uint8_t* ptr {nullptr};  // data as a plain raw pointer
+    std::size_t ptrSize {0}; // size in byte of ptr array
+    int format {0};          // as listed by AVPixelFormat (avutils/pixfmt.h)
+    int width {0};           // frame width
+    int height {0};          // frame height
+    std::vector<uint8_t> storage;
+    // If set, new frame will be written to this buffer instead
+    std::unique_ptr<AVFrame, void (*)(AVFrame*)> avframe {nullptr, [](AVFrame* frame) { av_frame_free(&frame); }};
+};
+
+struct DRING_PUBLIC SinkTarget
+{
+    using FrameBufferPtr = std::unique_ptr<FrameBuffer>;
+    std::function<FrameBufferPtr(std::size_t bytes)> pull;
+    std::function<void(FrameBufferPtr)> push;
 };
 
 struct DRING_PUBLIC AVSinkTarget
