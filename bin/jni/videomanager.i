@@ -290,7 +290,6 @@ JNIEXPORT jlong JNICALL Java_net_jami_daemon_JamiServiceJNI_acquireNativeWindow(
 
 JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_releaseNativeWindow(JNIEnv *jenv, jclass jcls, jlong window_)
 {
-    std::lock_guard<std::mutex> guard(windows_mutex);
     ANativeWindow *window = (ANativeWindow*)((intptr_t) window_);
     ANativeWindow_release(window);
 }
@@ -298,37 +297,17 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_releaseNativeWindow(J
 JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_setNativeWindowGeometry(JNIEnv *jenv, jclass jcls, jlong window_, int width, int height)
 {
     ANativeWindow *window = (ANativeWindow*)((intptr_t) window_);
-    ANativeWindow_setBuffersGeometry(window, width, height, WINDOW_FORMAT_RGBA_8888);
+    ANativeWindow_setBuffersGeometry(window, width, height, WINDOW_FORMAT_RGBX_8888);
 }
 
 void AndroidDisplayCb(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer> frame)
 {
-    std::unique_lock<std::mutex> guard(windows_mutex, std::defer_lock);
-    if (!guard.try_lock())
-        return;
+    ANativeWindow_unlockAndPost(window);
+    std::unique_lock<std::mutex> guard(windows_mutex);
     try {
-        auto& i = windows.at(window);
-        ANativeWindow_Buffer buffer;
-        if (ANativeWindow_lock(window, &buffer, NULL) == 0) {
-            if (buffer.bits && frame && frame->ptr) {
-                if (buffer.stride == frame->width)
-                    memcpy(buffer.bits, frame->ptr, frame->width * frame->height * 4);
-                else {
-                    size_t line_size_in = frame->width * 4;
-                    size_t line_size_out = buffer.stride * 4;
-                    for (size_t i=0, n=frame->height; i<n; i++)
-                        memcpy((uint8_t*)buffer.bits + line_size_out * i, frame->ptr + line_size_in * i, line_size_in);
-                }
-            }
-            else
-                __android_log_print(ANDROID_LOG_WARN, TAG, "Can't copy surface");
-            ANativeWindow_unlockAndPost(window);
-        } else {
-            __android_log_print(ANDROID_LOG_WARN, TAG, "Can't lock surface");
-        }
-        i = std::move(frame);
+        windows.at(window) = std::move(frame);
     } catch (...) {
-        __android_log_print(ANDROID_LOG_WARN, TAG, "Can't copy frame: no window");
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Can't move frame: no window");
     }
 }
 
@@ -340,17 +319,20 @@ std::unique_ptr<DRing::FrameBuffer> sinkTargetPullCallback(ANativeWindow *window
             std::lock_guard<std::mutex> guard(windows_mutex);
             ret = std::move(windows.at(window));
         }
-        if (not ret) {
-            __android_log_print(ANDROID_LOG_WARN, TAG, "Creating new video buffer of %zu kib", bytes/1024);
-            ret.reset(new DRing::FrameBuffer());
+        if (ret) {
+            ANativeWindow_Buffer buffer;
+            if (ANativeWindow_lock(window, &buffer, nullptr) == 0) {
+                ret->avframe->format = AV_PIX_FMT_RGBA;
+                ret->avframe->width = buffer.width;
+                ret->avframe->height = buffer.height;
+                ret->avframe->data[0] = (uint8_t *) buffer.bits;
+                ret->avframe->linesize[0] = buffer.stride * 4;
+            }
+            return ret;
         }
-        ret->storage.resize(bytes);
-        ret->ptr = ret->storage.data();
-        ret->ptrSize = bytes;
-        return ret;
     } catch (...) {
-        return {};
     }
+    return {};
 }
 
 JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCallback(JNIEnv *jenv, jclass jcls, jstring sinkId, jlong window)
@@ -371,7 +353,9 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCallback
 
     {
         std::lock_guard<std::mutex> guard(windows_mutex);
-        windows.emplace(nativeWindow, nullptr);
+        auto buf = std::make_unique<DRing::FrameBuffer>();
+        buf->avframe.reset(av_frame_alloc());
+        windows.emplace(nativeWindow, std::move(buf));
     }
     DRing::registerSinkTarget(sink, DRing::SinkTarget {.pull=p_display_cb, .push=f_display_cb});
 }
