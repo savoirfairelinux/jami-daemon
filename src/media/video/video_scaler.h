@@ -26,6 +26,10 @@
 
 struct SwsContext;
 
+extern "C" {
+struct AVFrame;
+}
+
 namespace jami {
 namespace video {
 
@@ -35,6 +39,7 @@ public:
     VideoScaler();
     ~VideoScaler();
     void reset();
+    void scale(const VideoFrame& input, AVFrame* output);
     void scale(const VideoFrame& input, VideoFrame& output);
     void scale_with_aspect(const VideoFrame& input, VideoFrame& output);
     void scale_and_pad(const VideoFrame& input,
