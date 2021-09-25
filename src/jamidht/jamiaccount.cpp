@@ -334,8 +334,6 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount() noexcept
 {
-    hangupCalls();
-    shutdownConnections();
     if (peerDiscovery_) {
         peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
@@ -2280,7 +2278,8 @@ JamiAccount::doRegister_()
 
                     // Check if pull from banned device
                     if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
-                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the device is "
+                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the "
+                                  "device is "
                                   "unauthorized (%s) ",
                                   getAccountID().c_str(),
                                   conversationId.c_str(),
@@ -2470,7 +2469,7 @@ JamiAccount::convModule()
                         ->connectDevice(DeviceId(deviceId),
                                         "git://" + deviceId + "/" + convId,
                                         [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                             const DeviceId&) {
                                             if (socket) {
                                                 socket->onShutdown(
                                                     [shared, deviceId = socket->deviceId(), convId] {
@@ -3709,9 +3708,9 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                   json["id"].asString().c_str());
 
         convModule()->onNewCommit(from,
-                                     json["deviceId"].asString(),
-                                     json["id"].asString(),
-                                     json["commit"].asString());
+                                  json["deviceId"].asString(),
+                                  json["id"].asString(),
+                                  json["commit"].asString());
         return true;
     } else if (m.first == MIME_TYPE_INVITE) {
         convModule()->onNeedConversationRequest(from, m.second);
@@ -4518,8 +4517,7 @@ JamiAccount::initConnectionManager()
     if (!connectionManager_) {
         connectionManager_ = std::make_unique<ConnectionManager>(*this);
         channelHandlers_[Uri::Scheme::GIT]
-            = std::make_unique<ConversationChannelHandler>(weak(),
-                                                           *connectionManager_.get());
+            = std::make_unique<ConversationChannelHandler>(weak(), *connectionManager_.get());
     }
 }
 
