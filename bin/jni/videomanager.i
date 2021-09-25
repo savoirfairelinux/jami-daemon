@@ -303,7 +303,9 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_setNativeWindowGeomet
 
 void AndroidDisplayCb(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer> frame)
 {
-    std::lock_guard<std::mutex> guard(windows_mutex);
+    std::unique_lock<std::mutex> guard(windows_mutex, std::defer_lock);
+    if (!guard.try_lock())
+        return;
     try {
         auto& i = windows.at(window);
         ANativeWindow_Buffer buffer;

@@ -76,7 +76,10 @@ public:
     void setFrameSize(int width, int height);
     void setFramePosition(int x, int y);
 
-    void registerTarget(const DRing::SinkTarget& target) noexcept { target_ = target; }
+    void registerTarget(const DRing::SinkTarget& target) noexcept {
+        std::lock_guard<std::mutex> lock(mtx_);
+        target_ = target;
+    }
     void registerAVTarget(const DRing::AVSinkTarget& target) noexcept { avTarget_ = target; }
 
 private:
@@ -93,6 +96,7 @@ private:
     DRing::AVSinkTarget avTarget_;
     std::unique_ptr<VideoScaler> scaler_;
     std::unique_ptr<MediaFilter> filter_;
+    std::mutex mtx_;
 
     void setRotation(int rotation);
 

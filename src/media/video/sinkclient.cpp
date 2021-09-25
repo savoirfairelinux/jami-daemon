@@ -435,6 +435,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #if HAVE_SHM
         shm_->renderFrame(*frame);
 #endif
+        std::lock_guard<std::mutex> lock(mtx_);
         if (target_.pull) {
             VideoFrame dst;
             width = frame->width();
