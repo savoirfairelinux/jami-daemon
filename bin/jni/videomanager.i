@@ -369,8 +369,10 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCallback
     auto f_display_cb = std::bind(&AndroidDisplayCb, nativeWindow, std::placeholders::_1);
     auto p_display_cb = std::bind(&sinkTargetPullCallback, nativeWindow, std::placeholders::_1);
 
-    std::lock_guard<std::mutex> guard(windows_mutex);
-    windows.emplace(nativeWindow, nullptr);
+    {
+        std::lock_guard<std::mutex> guard(windows_mutex);
+        windows.emplace(nativeWindow, nullptr);
+    }
     DRing::registerSinkTarget(sink, DRing::SinkTarget {.pull=p_display_cb, .push=f_display_cb});
 }
 
@@ -385,10 +387,11 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_unregisterVideoCallba
         return;
     const std::string sink(arg1_pstr);
     jenv->ReleaseStringUTFChars(sinkId, arg1_pstr);
+    ANativeWindow* nativeWindow = (ANativeWindow*)((intptr_t) window);
+
+    DRing::registerSinkTarget(sink, DRing::SinkTarget {});
 
     std::lock_guard<std::mutex> guard(windows_mutex);
-    DRing::registerSinkTarget(sink, DRing::SinkTarget {});
-    ANativeWindow* nativeWindow = (ANativeWindow*)((intptr_t) window);
     windows.erase(nativeWindow);
 }
 
