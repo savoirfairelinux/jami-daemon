@@ -999,7 +999,8 @@ Manager::unregisterAccounts()
     for (const auto& account : getAllAccounts()) {
         if (account->isEnabled()) {
             if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account)) {
-                // Note: shutdown the connections as doUnregister will not do it (because the account is enabled)
+                // Note: shutdown the connections as doUnregister will not do it (because the
+                // account is enabled)
                 acc->shutdownConnections();
             }
             account->doUnregister();
@@ -3026,8 +3027,10 @@ Manager::removeAccount(const std::string& accountID, bool flush)
     if (const auto& remAccount = getAccount(accountID)) {
         // Force stopping connection before doUnregister as it will
         // wait for dht threads to finish
-        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(remAccount))
+        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(remAccount)) {
+            acc->hangupCalls();
             acc->shutdownConnections();
+        }
         remAccount->doUnregister();
         if (flush)
             remAccount->flush();
@@ -3279,16 +3282,12 @@ Manager::sendTextMessage(const std::string& accountID,
 #ifdef ENABLE_PLUGIN // modifies send message
             auto& pluginChatManager = getJamiPluginManager().getChatServicesManager();
             if (pluginChatManager.hasHandlers()) {
-                auto cm = std::make_shared<JamiMessage>(accountID,
-                                                    to,
-                                                    false,
-                                                    payloads,
-                                                    fromPlugin);
+                auto cm = std::make_shared<JamiMessage>(accountID, to, false, payloads, fromPlugin);
                 pluginChatManager.publishMessage(cm);
                 return acc->sendTextMessage(cm->peerId, cm->data);
             } else
 #endif // ENABLE_PLUGIN
-            return acc->sendTextMessage(to, payloads);
+                return acc->sendTextMessage(to, payloads);
         } catch (const std::exception& e) {
             JAMI_ERR("Exception during text message sending: %s", e.what());
         }
