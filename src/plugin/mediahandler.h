@@ -22,10 +22,14 @@
 
 #include "streamdata.h"
 #include "observer.h"
-#include <libavutil/frame.h>
+
 #include <string>
 #include <memory>
 #include <map>
+
+extern "C" {
+struct AVFrame;
+}
 
 namespace jami {
 
