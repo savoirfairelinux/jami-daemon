@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1d9e6d94_0195ec65",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-09-27T21:40:16Z",
+      "side": 1,
+      "message": "I don\u0027t that the changes in sdp.cpp are part of this fix?",
+      "revId": "0184751d5e15eb305330e8d54d171ba03de9c386",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
