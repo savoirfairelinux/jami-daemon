@@ -4384,7 +4384,7 @@ JamiAccount::sendFile(const std::string& conversationId,
 
             shared->convModule()
                 ->sendMessage(conversationId,
-                              value,
+                              std::move(value),
                               parent,
                               true,
                               [accId = shared->getAccountID(),
