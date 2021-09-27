@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1f89f330_95224274",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 752,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-27T19:21:56Z",
+      "side": 1,
+      "message": "Done\nAlso removed all other occurrences",
+      "parentUuid": "e18c3348_ebe52e5d",
+      "range": {
+        "startLine": 752,
+        "startChar": 9,
+        "endLine": 752,
+        "endChar": 19
+      },
+      "revId": "976ca708cc0383974a10c464c8e5c9407de47897",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9389db57_95ddf76a",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-09-27T17:42:06Z",
       "side": 1,
       "message": "missing todo",
+      "range": {
+        "startLine": 755,
+        "startChar": 13,
+        "endLine": 755,
+        "endChar": 40
+      },
+      "revId": "976ca708cc0383974a10c464c8e5c9407de47897",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "681e4162_7c7079f4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 755,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-27T19:21:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9389db57_95ddf76a",
       "range": {
         "startLine": 755,
         "startChar": 13,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cce72fb8_d20498ec",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 3053,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-27T19:21:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f3973a41_82116d2e",
+      "range": {
+        "startLine": 3053,
+        "startChar": 12,
+        "endLine": 3053,
+        "endChar": 28
+      },
+      "revId": "976ca708cc0383974a10c464c8e5c9407de47897",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "80b90067_5382f6b2",
@@ -83,6 +155,30 @@
       "writtenOn": "2021-09-27T17:42:06Z",
       "side": 1,
       "message": "is this assert really wanted?",
+      "range": {
+        "startLine": 248,
+        "startChar": 10,
+        "endLine": 248,
+        "endChar": 22
+      },
+      "revId": "976ca708cc0383974a10c464c8e5c9407de47897",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "19179b38_a2dd0d59",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-27T19:21:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "80b90067_5382f6b2",
       "range": {
         "startLine": 248,
         "startChar": 10,
