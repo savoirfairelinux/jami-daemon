@@ -51,8 +51,8 @@ bool
 PluginManager::load(const std::string& path)
 {
     auto it = dynPluginMap_.find(path);
-    if (it != dynPluginMap_.end() && !it->second.second) {
-        dynPluginMap_.erase(it);
+    if (it != dynPluginMap_.end()) {
+        unload(path);
     }
 
     std::string error;
