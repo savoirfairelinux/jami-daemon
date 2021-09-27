@@ -27,7 +27,7 @@ index f35cfba5c..cc7e7d564 100644
  /* String names for candidate types */
  static const char *cand_type_names[] =
  {
-@@ -731,6 +746,144 @@ static pj_uint32_t CALC_CAND_PRIO(pj_ice_sess *ice,
+@@ -734,6 +749,144 @@ static pj_uint32_t CALC_CAND_PRIO(pj_ice_sess *ice,
  #endif
  }
  
@@ -172,7 +172,7 @@ index f35cfba5c..cc7e7d564 100644
  
  /*
   * Add ICE candidate
-@@ -748,6 +901,29 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+@@ -751,6 +904,29 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
  					 unsigned *p_cand_id,
  					 pj_ice_cand_transport transport)
  {

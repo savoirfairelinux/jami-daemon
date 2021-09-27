@@ -283,7 +283,7 @@ diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
 index cc7e7d564..0b1c5fd56 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -1531,6 +1531,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+@@ -1534,6 +1534,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
  					  PJ_FALSE, PJ_FALSE, 
  					  &the_check->rcand->addr, 
  					  addr_len, tdata);
