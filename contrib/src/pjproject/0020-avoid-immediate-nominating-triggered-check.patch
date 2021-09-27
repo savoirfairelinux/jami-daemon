@@ -5,7 +5,7 @@ diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
 index f060aaa9c..f04b7314e 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -4054,14 +4054,22 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4057,14 +4057,22 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	if (c->state == PJ_ICE_SESS_CHECK_STATE_FROZEN ||
  	    c->state == PJ_ICE_SESS_CHECK_STATE_WAITING)
  	{
@@ -35,7 +35,7 @@ index f060aaa9c..f04b7314e 100644
  	} else if (c->state == PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS) {
  	    /* Should retransmit immediately
  	     */
-@@ -4121,7 +4129,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4124,7 +4132,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
      else if (ice->clist.count < PJ_ICE_MAX_CHECKS) {
  
  	pj_ice_sess_check *c = &ice->clist.checks[ice->clist.count];
@@ -44,7 +44,7 @@ index f060aaa9c..f04b7314e 100644
  
  	c->lcand = lcand;
  	c->rcand = rcand;
-@@ -4129,19 +4137,38 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4132,19 +4140,38 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	c->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
  	c->nominated = rcheck->use_candidate;
  	c->err_code = PJ_SUCCESS;
