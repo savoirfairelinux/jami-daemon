@@ -357,9 +357,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         JAMI_WARN("[Account %s] Could not find conversation %s, ask for an invite",
                   accountId_.c_str(),
                   conversationId.c_str());
-        sendMsgCb_(peer,
-                   std::move(std::map<std::string, std::string> {
-                       {"application/invite", conversationId}}));
+        sendMsgCb_(peer, std::map<std::string, std::string> {
+                       {"application/invite", conversationId}
+                    });
     }
 }
 
@@ -523,9 +523,9 @@ ConversationModule::Impl::sendMessageNotification(const Conversation& conversati
         if (!sync && username_.find(uri) != std::string::npos)
             continue;
         // Announce to all members that a new message is sent
-        sendMsgCb_(uri,
-                   std::move(std::map<std::string, std::string> {
-                       {"application/im-gitmessage-id", text}}));
+        sendMsgCb_(uri, std::map<std::string, std::string> {
+                       {"application/im-gitmessage-id", text}
+                    });
     }
 }
 
@@ -590,8 +590,7 @@ ConversationModule::loadConversations()
     pimpl_->conversations_.clear();
     for (const auto& repository : conversationsRepositories) {
         try {
-            auto conv = std::make_shared<Conversation>(pimpl_->account_, repository);
-            pimpl_->conversations_.emplace(repository, std::move(conv));
+            pimpl_->conversations_.emplace(repository, std::make_shared<Conversation>(pimpl_->account_, repository));
         } catch (const std::logic_error& e) {
             JAMI_WARN("[Account %s] Conversations not loaded : %s",
                       pimpl_->accountId_.c_str(),
@@ -874,30 +873,30 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId, con
 // Message send/load
 void
 ConversationModule::sendMessage(const std::string& conversationId,
-                                const std::string& message,
+                                std::string message,
                                 const std::string& parent,
                                 const std::string& type,
                                 bool announce,
-                                const OnDoneCb& cb)
+                                OnDoneCb&& cb)
 {
     Json::Value json;
-    json["body"] = message;
+    json["body"] = std::move(message);
     json["type"] = type;
-    sendMessage(conversationId, json, parent, announce, cb);
+    sendMessage(conversationId, std::move(json), parent, announce, std::move(cb));
 }
 
 void
 ConversationModule::sendMessage(const std::string& conversationId,
-                                const Json::Value& value,
+                                Json::Value&& value,
                                 const std::string& parent,
                                 bool announce,
-                                const OnDoneCb& cb)
+                                OnDoneCb&& cb)
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto conversation = pimpl_->conversations_.find(conversationId);
     if (conversation != pimpl_->conversations_.end() && conversation->second) {
         conversation->second->sendMessage(
-            value,
+            std::move(value),
             parent,
             [this, conversationId, announce, cb = std::move(cb)](bool ok,
                                                                  const std::string& commitId) {
@@ -924,7 +923,7 @@ ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t durat
         value["to"] = finalUri;
         value["type"] = "application/call-history+json";
         value["duration"] = std::to_string(duration_ms);
-        sendMessage(convId, value);
+        sendMessage(convId, std::move(value));
     }
 }
 
@@ -995,7 +994,6 @@ ConversationModule::downloadFile(const std::string& conversationId,
                                  size_t start,
                                  size_t end)
 {
-    std::string sha3sum = {};
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto conversation = pimpl_->conversations_.find(conversationId);
     if (conversation == pimpl_->conversations_.end() || !conversation->second)
@@ -1148,9 +1146,9 @@ ConversationModule::onNewCommit(const std::string& peer,
         JAMI_WARN("[Account %s] Could not find conversation %s, ask for an invite",
                   pimpl_->accountId_.c_str(),
                   conversationId.c_str());
-        pimpl_->sendMsgCb_(peer,
-                           std::move(std::map<std::string, std::string> {
-                               {"application/invite", conversationId}}));
+        pimpl_->sendMsgCb_(peer, std::map<std::string, std::string> {
+                               {"application/invite", conversationId}
+                            });
         return;
     }
     JAMI_DBG("[Account %s] on new commit notification from %s, for %s, commit %s",
