@@ -643,21 +643,21 @@ Conversation::isBanned(const std::string& uri, bool isDevice) const
 }
 
 void
-Conversation::sendMessage(const std::string& message,
+Conversation::sendMessage(std::string&& message,
                           const std::string& type,
                           const std::string& parent,
-                          const OnDoneCb& cb)
+                          OnDoneCb&& cb)
 {
     Json::Value json;
-    json["body"] = message;
+    json["body"] = std::move(message);
     json["type"] = type;
-    sendMessage(json, parent, cb);
+    sendMessage(std::move(json), parent, std::move(cb));
 }
 
 void
-Conversation::sendMessage(const Json::Value& value,
+Conversation::sendMessage(Json::Value&& value,
                           const std::string& /*parent*/,
-                          const OnDoneCb& cb)
+                          OnDoneCb&& cb)
 {
     dht::ThreadPool::io().run([w = weak(), value = std::move(value), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {

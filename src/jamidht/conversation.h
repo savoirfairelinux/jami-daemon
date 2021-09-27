@@ -140,13 +140,13 @@ public:
     bool isBanned(const std::string& uri, bool isDevice = false) const;
 
     // Message send
-    void sendMessage(const std::string& message,
+    void sendMessage(std::string&& message,
                      const std::string& type = "text/plain",
                      const std::string& parent = "",
-                     const OnDoneCb& cb = {});
-    void sendMessage(const Json::Value& message,
+                     OnDoneCb&& cb = {});
+    void sendMessage(Json::Value&& message,
                      const std::string& parent = "",
-                     const OnDoneCb& cb = {});
+                     OnDoneCb&& cb = {});
     /**
      * Get a range of messages
      * @param cb        The callback when loaded
