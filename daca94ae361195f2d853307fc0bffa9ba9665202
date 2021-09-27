@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b421a3b8_80194651",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 574,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-27T15:55:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bcb07779_db88173b",
+      "range": {
+        "startLine": 574,
+        "startChar": 20,
+        "endLine": 574,
+        "endChar": 38
+      },
+      "revId": "daca94ae361195f2d853307fc0bffa9ba9665202",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bf71535a_e43e3904",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-09-24T19:56:57Z",
       "side": 1,
       "message": "declineConversationRequest\n\nNote: avoid loop drom discardTrustRequest",
+      "range": {
+        "startLine": 1390,
+        "startChar": 20,
+        "endLine": 1390,
+        "endChar": 38
+      },
+      "revId": "daca94ae361195f2d853307fc0bffa9ba9665202",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e8ed4dd_846ab0c6",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1390,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-27T15:55:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bf71535a_e43e3904",
       "range": {
         "startLine": 1390,
         "startChar": 20,
