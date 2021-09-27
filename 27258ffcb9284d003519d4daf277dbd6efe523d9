@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "685223a6_bde1de5d",
+        "filename": "src/jami/videomanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-27T18:51:19Z",
+      "side": 1,
+      "message": "trailing",
+      "range": {
+        "startLine": 167,
+        "startChar": 120,
+        "endLine": 167,
+        "endChar": 129
+      },
+      "revId": "27258ffcb9284d003519d4daf277dbd6efe523d9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
