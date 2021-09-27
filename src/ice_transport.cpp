@@ -130,6 +130,8 @@ public:
     void setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr);
     const IpAddr getDefaultRemoteAddress(unsigned comp_id) const;
     bool handleEvents(unsigned max_msec);
+    int flushTimerHeapAndIoQueue();
+    int checkEventQueue(int maxEventToPoll);
 
     std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_ {};
     IceTransportCompleteCb on_initdone_cb_ {};
@@ -204,8 +206,6 @@ public:
 
     std::atomic_bool destroying_ {false};
     onShutdownCb scb {};
-
-    std::shared_ptr<pj_caching_pool> cp_;
 };
 
 //==============================================================================
@@ -318,7 +318,7 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         upnp_.reset(new upnp::Controller());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    cp_ = iceTransportFactory.getPoolCaching();
+
     config_ = iceTransportFactory.getIceCfg(); // config copy
     if (options.tcpEnable) {
         config_.protocol = PJ_ICE_TP_TCP;
@@ -453,7 +453,7 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         while (not threadTerminateFlags_) {
             // NOTE: handleEvents can return false in this case
             // but here we don't care if there is event or not.
-            handleEvents(500); // limit polling to 500ms
+            handleEvents(HANDLE_EVENT_DURATION); // limit polling to 500ms
         }
     });
 
@@ -484,18 +484,23 @@ IceTransport::Impl::~Impl()
     pj_ice_strans_stop_ice(strans);
     pj_ice_strans_destroy(strans);
 
-    // NOTE: This last handleEvents is necessary to close TURN socket.
+    // NOTE: This last timer heap and IO queue polling is necessary to close
+    // TURN socket.
     // Because when destroying the TURN session pjproject creates a pj_timer
     // to postpone the TURN destruction. This timer is only called if we poll
     // the event queue.
-    auto tentative = 0;
-    while (tentative < HANDLE_EVENT_TENTATIVE && handleEvents(HANDLE_EVENT_DURATION)) {
-        tentative++;
+
+    int ret = flushTimerHeapAndIoQueue();
+
+    if (ret < 0) {
+        JAMI_ERR("[ice:%p] IO queue polling failed", this);
+    } else if (ret > 0) {
+        JAMI_ERR("[ice:%p] Unexpected left timer in timer heap. Please report the bug", this);
     }
-    if (tentative == HANDLE_EVENT_TENTATIVE)
-        JAMI_ERR(
-            "handle events didn't finish after %d tentatives. This is a bug. Please report it.",
-            HANDLE_EVENT_TENTATIVE);
+
+    if (checkEventQueue(1) > 0) {
+        JAMI_WARN("[ice:%p] Unexpected left events in IO queue", this);
+    }
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
@@ -550,28 +555,28 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
     // By tests, never seen more than two events per 500ms
     static constexpr auto MAX_NET_EVENTS = 2;
 
-    pj_time_val max_timeout = {0, 0};
+    pj_time_val max_timeout = {0, static_cast<long>(max_msec)};
     pj_time_val timeout = {0, 0};
     unsigned net_event_count = 0;
 
-    max_timeout.msec = max_msec;
-
-    timeout.sec = timeout.msec = 0;
     pj_timer_heap_poll(config_.stun_cfg.timer_heap, &timeout);
-    auto ret = timeout.msec != PJ_MAXINT32;
+    auto hasActiveTimer = timeout.sec != PJ_MAXINT32 || timeout.msec != PJ_MAXINT32;
 
     // timeout limitation
-    if (timeout.msec >= 1000)
-        timeout.msec = 999;
-    if (PJ_TIME_VAL_GT(timeout, max_timeout))
-        timeout = max_timeout;
+    if (hasActiveTimer)
+        pj_time_val_normalize(&timeout);
+
+    if (PJ_TIME_VAL_GT(timeout, max_timeout)) {
+        timeout.sec = max_timeout.sec;
+        timeout.msec = max_timeout.msec;
+    }
 
     do {
         auto n_events = pj_ioqueue_poll(config_.stun_cfg.ioqueue, &timeout);
 
         // timeout
         if (not n_events)
-            return ret;
+            return hasActiveTimer;
 
         // error
         if (n_events < 0) {
@@ -580,13 +585,73 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
             last_errmsg_ = sip_utils::sip_strerror(err);
             JAMI_DBG("[ice:%p] ioqueue error %d: %s", this, err, last_errmsg_.c_str());
             std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
-            return ret;
+            return hasActiveTimer;
         }
 
         net_event_count += n_events;
         timeout.sec = timeout.msec = 0;
     } while (net_event_count < MAX_NET_EVENTS);
-    return ret;
+    return hasActiveTimer;
+}
+
+int
+IceTransport::Impl::flushTimerHeapAndIoQueue()
+{
+    pj_time_val timerTimeout = {0, 100};
+    pj_time_val defaultWaitTime = {0, 500};
+    bool hasActiveTimer = false;
+    std::chrono::milliseconds totalWaitTime {0};
+    std::chrono::milliseconds maxWaitTimeForTimerFlush {3000};
+    auto const start = std::chrono::steady_clock::now();
+    // We try to process pending events as fast as possible to
+    // speed-up the release.
+    int maxEventToProcess = 10;
+
+    do {
+        if (checkEventQueue(maxEventToProcess) < 0)
+            return -1;
+
+        pj_timer_heap_poll(config_.stun_cfg.timer_heap, &timerTimeout);
+        hasActiveTimer = !(timerTimeout.sec == PJ_MAXINT32 && timerTimeout.msec == PJ_MAXINT32);
+
+        if (hasActiveTimer) {
+            pj_time_val_normalize(&timerTimeout);
+            auto waitTime = std::chrono::milliseconds(
+                std::min(PJ_TIME_VAL_MSEC(timerTimeout), PJ_TIME_VAL_MSEC(defaultWaitTime)));
+            std::this_thread::sleep_for(waitTime);
+            totalWaitTime += waitTime;
+        }
+    } while (hasActiveTimer && totalWaitTime < maxWaitTimeForTimerFlush);
+
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start);
+    JAMI_DBG("[ice:%p] Timer heap flushed after %ld ms", this, duration.count());
+
+    return static_cast<int>(pj_timer_heap_count(config_.stun_cfg.timer_heap));
+}
+
+int
+IceTransport::Impl::checkEventQueue(int maxEventToPoll)
+{
+    pj_time_val timeout = {0, 0};
+    int eventCount = 0;
+    int events = 0;
+
+    do {
+        events = pj_ioqueue_poll(config_.stun_cfg.ioqueue, &timeout);
+
+        if (events < 0) {
+            const auto err = pj_get_os_error();
+            last_errmsg_ = sip_utils::sip_strerror(err);
+            JAMI_ERR("[ice:%p] ioqueue error %d: %s", this, err, last_errmsg_.c_str());
+            return events;
+        }
+
+        eventCount += events;
+
+    } while (events > 0 && eventCount < maxEventToPoll);
+
+    return eventCount;
 }
 
 void
