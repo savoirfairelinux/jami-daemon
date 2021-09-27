@@ -132,17 +132,17 @@ public:
 
     // Message send/load
     void sendMessage(const std::string& conversationId,
-                     const Json::Value& value,
+                     Json::Value&& value,
                      const std::string& parent = "",
                      bool announce = true,
-                     const OnDoneCb& cb = {});
+                     OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
-                     const std::string& message,
+                     std::string message,
                      const std::string& parent = "",
                      const std::string& type = "text/plain",
                      bool announce = true,
-                     const OnDoneCb& cb = {});
+                     OnDoneCb&& cb = {});
 
     /**
      * Add to the related conversation the call history message
