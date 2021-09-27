@@ -56,10 +56,7 @@ static constexpr int POOL_INITIAL_SIZE = 16384;
 static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;
 
 Sdp::Sdp(const std::string& id)
-    : memPool_(nullptr,
-               [](pj_pool_t* pool) {
-                   pj_pool_release(pool);
-               })
+    : memPool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
     , publishedIpAddr_()
     , publishedIpAddrType_()
     , telephoneEventPayload_(101) // same as asterisk
@@ -133,12 +130,14 @@ randomFill(std::vector<uint8_t>& dest)
 void
 Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
 {
+    JAMI_DBG("Set active local session to [%p]. Was [%p]", sdp, activeLocalSession_);
     activeLocalSession_ = sdp;
 }
 
 void
 Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session* sdp)
 {
+    JAMI_DBG("Set active remote session to [%p]. Was [%p]", sdp, activeRemoteSession_);
     activeRemoteSession_ = sdp;
 }
 

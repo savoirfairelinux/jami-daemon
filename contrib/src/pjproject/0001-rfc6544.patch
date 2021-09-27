@@ -29,7 +29,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjnath-test/concur_test.c    |    5 +-
  pjnath/src/pjnath-test/sess_auth.c      |   14 +-
  pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
- pjnath/src/pjnath/ice_session.c         |  629 +++++++++++--
+ pjnath/src/pjnath/ice_session.c         |  632 +++++++++++--
  pjnath/src/pjnath/ice_strans.c          |  749 +++++++++++++---
  pjnath/src/pjnath/nat_detect.c          |    7 +-
  pjnath/src/pjnath/stun_session.c        |   19 +-
@@ -42,7 +42,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjturn-srv/server.c          |    2 +-
  pjsip-apps/src/samples/icedemo.c        |  116 ++-
  pjsip/src/pjsua-lib/pjsua_core.c        |    2 +-
- 22 files changed, 2603 insertions(+), 464 deletions(-)
+ 22 files changed, 2606 insertions(+), 464 deletions(-)
 
 diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
 index 8a656c225..3e7c6ae3a 100644
@@ -762,7 +762,7 @@ index 18a1bbd13..577659c87 100644
      if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  	app_perror("    error: server sending data", status);
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 3fecc3def..f35cfba5c 100644
+index 3fecc3def..8917f647c 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -18,6 +18,7 @@
@@ -844,7 +844,17 @@ index 3fecc3def..f35cfba5c 100644
  
      pj_ansi_snprintf(ice->obj_name, sizeof(ice->obj_name),
  		     name, ice);
-@@ -733,7 +745,8 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+@@ -508,6 +520,9 @@ static void destroy_ice(pj_ice_sess *ice,
+     pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,
+                                    &ice->timer, PJ_FALSE);
+ 
++    pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,
++                                   &ice->timer_connect, TIMER_NONE);
++
+     for (i=0; i<ice->comp_cnt; ++i) {
+ 	if (ice->comp[i].stun_sess) {
+ 	    pj_stun_session_destroy(ice->comp[i].stun_sess);
+@@ -733,7 +748,8 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
  					 const pj_sockaddr_t *base_addr,
  					 const pj_sockaddr_t *rel_addr,
  					 int addr_len,
@@ -854,7 +864,7 @@ index 3fecc3def..f35cfba5c 100644
  {
      pj_ice_sess_cand *lcand;
      pj_status_t status = PJ_SUCCESS;
-@@ -779,6 +792,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+@@ -779,6 +795,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
      lcand->comp_id = (pj_uint8_t)comp_id;
      lcand->transport_id = (pj_uint8_t)transport_id;
      lcand->type = type;
@@ -862,7 +872,7 @@ index 3fecc3def..f35cfba5c 100644
      pj_strdup(ice->pool, &lcand->foundation, foundation);
      lcand->local_pref = local_pref;
      lcand->prio = CALC_CAND_PRIO(ice, type, local_pref, lcand->comp_id);
-@@ -1020,6 +1034,9 @@ static void check_set_state(pj_ice_sess *ice, pj_ice_sess_check *check,
+@@ -1020,6 +1037,9 @@ static void check_set_state(pj_ice_sess *ice, pj_ice_sess_check *check,
  			    pj_ice_sess_check_state st, 
  			    pj_status_t err_code)
  {
@@ -872,7 +882,7 @@ index 3fecc3def..f35cfba5c 100644
      LOG5((ice->obj_name, "Check %s: state changed from %s to %s",
  	 dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), &ice->clist, check),
  	 check_state_name[check->state],
-@@ -1171,6 +1188,15 @@ static pj_status_t prune_checklist(pj_ice_sess *ice,
+@@ -1171,6 +1191,15 @@ static pj_status_t prune_checklist(pj_ice_sess *ice,
  		return PJNATH_EICENOHOSTCAND;
  	    }
  	}
@@ -888,7 +898,7 @@ index 3fecc3def..f35cfba5c 100644
      }
  
      /* Next remove a pair if its local and remote candidates are identical
-@@ -1240,10 +1266,14 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+@@ -1240,10 +1269,14 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
      }
  
      switch (type) {
@@ -905,7 +915,7 @@ index 3fecc3def..f35cfba5c 100644
  	on_ice_complete(ice, PJNATH_EICENOMTIMEOUT);
  	break;
      case TIMER_COMPLETION_CALLBACK:
-@@ -1273,6 +1303,9 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+@@ -1273,6 +1306,9 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
      case TIMER_KEEP_ALIVE:
  	ice_keep_alive(ice, PJ_TRUE);
  	break;
@@ -915,7 +925,7 @@ index 3fecc3def..f35cfba5c 100644
      case TIMER_NONE:
  	/* Nothing to do, just to get rid of gcc warning */
  	break;
-@@ -1481,15 +1514,27 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+@@ -1481,15 +1517,27 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
       * See if all checks in the checklist have completed. If we do,
       * then mark ICE processing as failed.
       */
@@ -950,7 +960,7 @@ index 3fecc3def..f35cfba5c 100644
  
      if (no_pending_check) {
  	/* All checks have completed, but we don't have nominated pair.
-@@ -1506,8 +1551,8 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+@@ -1506,8 +1554,8 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
  
  	    if (i < ice->comp_cnt) {
  		/* This component ID doesn't have valid pair.
@@ -961,7 +971,7 @@ index 3fecc3def..f35cfba5c 100644
  		on_ice_complete(ice, PJNATH_EICEFAILED);
  		return PJ_TRUE;
  	    } else {
-@@ -1541,11 +1586,48 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+@@ -1541,11 +1589,48 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
  	    /* Unreached */
  
  	} else if (ice->is_nominating) {
@@ -1015,7 +1025,7 @@ index 3fecc3def..f35cfba5c 100644
  	    return PJ_TRUE;
  
  	} else {
-@@ -1737,6 +1819,44 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
+@@ -1737,6 +1822,44 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
      return check_ice_complete(ice);
  }
  
@@ -1060,7 +1070,7 @@ index 3fecc3def..f35cfba5c 100644
  
  /* Get foundation index of a check pair. This function can also be used for
   * adding a new foundation (combination of local & remote cands foundations)
-@@ -1905,6 +2025,29 @@ static pj_status_t add_rcand_and_update_checklist(
+@@ -1905,6 +2028,29 @@ static pj_status_t add_rcand_and_update_checklist(
  		continue;
  	    }
  
@@ -1090,7 +1100,7 @@ index 3fecc3def..f35cfba5c 100644
  #if 0
  	    /* Trickle ICE:
  	     * Make sure that pair has not been added to checklist
-@@ -1925,7 +2068,6 @@ static pj_status_t add_rcand_and_update_checklist(
+@@ -1925,7 +2071,6 @@ static pj_status_t add_rcand_and_update_checklist(
  	    }
  #endif
  
@@ -1098,7 +1108,7 @@ index 3fecc3def..f35cfba5c 100644
  	    /* Add the pair */
  	    chk = &clist->checks[clist->count];
  	    chk->lcand = lcand;
-@@ -2121,6 +2263,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+@@ -2121,6 +2266,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
      td = PJ_POOL_ZALLOC_T(ice->pool, timer_data);
      td->ice = ice;
      td->clist = clist;
@@ -1106,7 +1116,7 @@ index 3fecc3def..f35cfba5c 100644
      clist->timer.user_data = (void*)td;
      clist->timer.cb = &periodic_timer;
  
-@@ -2209,6 +2352,36 @@ PJ_DEF(pj_status_t) pj_ice_sess_update_check_list(
+@@ -2209,6 +2355,36 @@ PJ_DEF(pj_status_t) pj_ice_sess_update_check_list(
      return status;
  }
  
@@ -1143,7 +1153,7 @@ index 3fecc3def..f35cfba5c 100644
  /* Perform check on the specified candidate pair. */
  static pj_status_t perform_check(pj_ice_sess *ice, 
  				 pj_ice_sess_checklist *clist,
-@@ -2219,19 +2392,17 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+@@ -2219,19 +2395,17 @@ static pj_status_t perform_check(pj_ice_sess *ice,
      pj_ice_msg_data *msg_data;
      pj_ice_sess_check *check;
      const pj_ice_sess_cand *lcand;
@@ -1164,7 +1174,7 @@ index 3fecc3def..f35cfba5c 100644
  
      /* Create request */
      status = pj_stun_session_create_req(comp->stun_sess, 
-@@ -2282,32 +2453,71 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+@@ -2282,32 +2456,71 @@ static pj_status_t perform_check(pj_ice_sess *ice,
  				    &ice->tie_breaker);
  
      } else {
@@ -1253,7 +1263,7 @@ index 3fecc3def..f35cfba5c 100644
  }
  
  
-@@ -2344,55 +2554,108 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -2344,55 +2557,108 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
      pj_log_push_indent();
  
      /* Send STUN Binding request for check with highest priority on
@@ -1383,7 +1393,7 @@ index 3fecc3def..f35cfba5c 100644
      }
  
      pj_grp_lock_release(ice->grp_lock);
-@@ -2636,6 +2899,222 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+@@ -2636,6 +2902,222 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
      return status;
  }
  
@@ -1606,7 +1616,7 @@ index 3fecc3def..f35cfba5c 100644
  
  /* This callback is called when outgoing STUN request completed */
  static void on_stun_request_complete(pj_stun_session *stun_sess,
-@@ -2941,7 +3420,9 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+@@ -2941,7 +3423,9 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
  				      &check->lcand->base_addr, 
  				      &check->lcand->base_addr,
  				      pj_sockaddr_get_len(&xaddr->sockaddr),
@@ -1617,7 +1627,7 @@ index 3fecc3def..f35cfba5c 100644
  	if (status != PJ_SUCCESS) {
  	    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, 
  			    status);
-@@ -3003,11 +3484,7 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+@@ -3003,11 +3487,7 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
      /* Perform 7.1.2.2.2.  Updating Pair States.
       * This may terminate ICE processing.
       */
@@ -1630,7 +1640,7 @@ index 3fecc3def..f35cfba5c 100644
  
      pj_grp_lock_release(ice->grp_lock);
  }
-@@ -3202,9 +3679,13 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -3202,9 +3682,13 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      msg_data->has_req_data = PJ_FALSE;
  
      /* Send the response */
@@ -1646,7 +1656,7 @@ index 3fecc3def..f35cfba5c 100644
  
      /* 
       * Handling early check.
-@@ -3323,12 +3804,12 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -3323,12 +3807,12 @@ static void handle_incoming_check(pj_ice_sess *ice,
      /* Just get candidate with the highest priority and same transport ID
       * for the specified  component ID in the checklist.
       */
