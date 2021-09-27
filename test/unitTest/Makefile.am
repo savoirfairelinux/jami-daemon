@@ -149,7 +149,7 @@ ut_conversationRepository_SOURCES = conversationRepository/conversationRepositor
 # conversation
 #
 check_PROGRAMS += ut_conversation
-ut_conversation_SOURCES = conversation/conversation.cpp common.cpp
+ut_conversation_SOURCES = conversation/conversationcommon.cpp conversation/conversation.cpp common.cpp
 #
 # media_negotiation
 #
@@ -161,6 +161,18 @@ ut_media_negotiation_SOURCES = media_negotiation/media_negotiation.cpp common.cp
 #
 check_PROGRAMS += ut_compability
 ut_compability_SOURCES = conversation/compability.cpp
+
+#
+# conversationRequest
+#
+check_PROGRAMS += ut_conversationRequest
+ut_conversationRequest_SOURCES = conversation/conversationRequest.cpp common.cpp
+
+#
+# conversationMembersEvent
+#
+check_PROGRAMS += ut_conversationMembersEvent
+ut_conversationMembersEvent_SOURCES = conversation/conversationMembersEvent.cpp conversation/conversationcommon.cpp common.cpp
 
 #
 # syncHistory
