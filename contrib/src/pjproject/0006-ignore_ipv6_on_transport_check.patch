@@ -24,4 +24,5 @@ index d5bd8fdda..e168f14bc 100644
  	    TRACE_((THIS_FILE, "Transport type in tpsel not matched"));
  	    return PJSIP_ETPNOTSUITABLE;
 -- 
-2.30.2
+2.25.1
+
