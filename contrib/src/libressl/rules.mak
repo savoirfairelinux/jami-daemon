@@ -18,7 +18,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
-SSL_VERSION := 3.2.1
+SSL_VERSION := 3.4.0
 LIBRESSL_VERSION := v$(SSL_VERSION)
 OPENBSD_VERSION := libressl-v$(SSL_VERSION)
 LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL_VERSION).tar.gz
