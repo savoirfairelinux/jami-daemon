@@ -1485,7 +1485,7 @@ ConversationModule::removeConversation(const std::string& conversationId)
     auto it = pimpl_->conversations_.find(conversationId);
     auto isSyncing = it == pimpl_->conversations_.end();
     auto hasMembers = !isSyncing
-                      && !(members.size() == 1 && pimpl_->username_ != members[0]["uri"]);
+                      && !(members.size() == 1 && pimpl_->username_ == members[0]["uri"]);
     itConv->second.removed = std::time(nullptr);
     if (isSyncing)
         itConv->second.erased = std::time(nullptr);
