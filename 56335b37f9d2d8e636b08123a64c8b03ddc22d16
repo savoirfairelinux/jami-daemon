@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "28bb23b0_29e1fe60",
+        "filename": "contrib/src/pjproject/0002-rfc2466.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-28T13:59:34Z",
+      "side": 1,
+      "message": "no need to change, same for 3, 6, 16, 19, 20",
+      "range": {
+        "startLine": 5,
+        "startChar": 18,
+        "endLine": 5,
+        "endChar": 26
+      },
+      "revId": "56335b37f9d2d8e636b08123a64c8b03ddc22d16",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "307ad199_00ca5c18",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 502,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-28T13:59:34Z",
+      "side": 1,
+      "message": "At least it certainly speed up the finish of the daemon, But yeah, I see those messages all the time now. eg (after open wait 30 secs and stop the daemon)\n\n\n[1632837432.755|27425|upnp_context.cpp  :425  ] Controller 0x7fa0cc005080 was already removed\n[1632837432.755|27425|upnp_context.cpp  :149  ] Stopping UPNP context\n[1632837432.756|27423|ringbuffer.cpp    :60   ] Destroy RingBuffer urgentRingBuffer_id\n[1632837432.756|27423|manager.cpp       :905  ] Stopping schedulers and worker threads\n[1632837432.760|27555|ice_transport.cpp :1096 ] [ice:0x7fa064226470] rx: channel is closed\n[1632837432.760|27602|ice_transport.cpp :481  ] [ice:0x7fa064226470] Destroying ice_strans 0x7fa064231918\n[1632837432.764|27557|ice_transport.cpp :1096 ] [ice:0x7fa0643053b0] rx: channel is closed\n[1632837432.764|27558|ice_transport.cpp :481  ] [ice:0x7fa0643053b0] Destroying ice_strans 0x7fa064310018\n[1632837432.795|27573|ice_transport.cpp :481  ] [ice:0x7fa06cabbc40] Destroying ice_strans 0x7fa06cac7858\n[1632837432.799|27590|ice_transport.cpp :481  ] [ice:0x7fa06c47d330] Destroying ice_strans 0x7fa06c489018\n[1632837432.908|27545|ice_transport.cpp :1096 ] [ice:0x7fa06c3c4920] rx: channel is closed\n[1632837432.908|27570|ice_transport.cpp :481  ] [ice:0x7fa06c3c4920] Destroying ice_strans 0x7fa06c3cd278\n[1632837433.023|27560|ice_transport.cpp :481  ] [ice:0x7fa06c8707b0] Destroying ice_strans 0x7fa06c87eba8\n[1632837433.230|27554|ice_transport.cpp :481  ] [ice:0x7fa06c54ad90] Destroying ice_strans 0x7fa06c558ea8\n[1632837433.242|27595|ice_transport.cpp :626  ] [ice:0x7fa06c7b9fc0] Timer heap flushed after 500 ms\n[1632837433.242|27595|ice_transport.cpp :497  ] [ice:0x7fa06c7b9fc0] Unexpected left timer in timer heap. Please report the bug\n[1632837433.242|27595|ice_transport.cpp :501  ] [ice:0x7fa06c7b9fc0] Unexpected left events in IO queue\n[1632837433.242|27595|ice_transport.cpp :510  ] [ice:0x7fa06c7b9fc0] done destroying\n[1632837433.243|27599|ice_transport.cpp :626  ] [ice:0x7fa06cb2c5c0] Timer heap flushed after 500 ms\n[1632837433.243|27599|ice_transport.cpp :497  ] [ice:0x7fa06cb2c5c0] Unexpected left timer in timer heap. Please report the bug\n[1632837433.243|27599|ice_transport.cpp :501  ] [ice:0x7fa06cb2c5c0] Unexpected left events in IO queue\n[1632837433.244|27599|ice_transport.cpp :510  ] [ice:0x7fa06cb2c5c0] done destroying\n[1632837433.252|27571|ice_transport.cpp :626  ] [ice:0x7fa06cbcebe0] Timer heap flushed after 500 ms\n[1632837433.252|27571|ice_transport.cpp :497  ] [ice:0x7fa06cbcebe0] Unexpected left timer in timer heap. Please report the bug\n[1632837433.252|27571|ice_transport.cpp :501  ] [ice:0x7fa06cbcebe0] Unexpected left events in IO queue\n[1632837433.252|27571|ice_transport.cpp :510  ] [ice:0x7fa06cbcebe0] done destroying\n[1632837433.260|27602|ice_transport.cpp :626  ] [ice:0x7fa064226470] Timer heap flushed after 500 ms\n[1632837433.260|27602|ice_transport.cpp :497  ] [ice:0x7fa064226470] Unexpected left timer in timer heap. Please report the bug\n[1632837433.261|27602|ice_transport.cpp :501  ] [ice:0x7fa064226470] Unexpected left events in IO queue\n[1632837433.261|27602|ice_transport.cpp :510  ] [ice:0x7fa064226470] done destroying\n[1632837433.264|27558|ice_transport.cpp :626  ] [ice:0x7fa0643053b0] Timer heap flushed after 500 ms\n[1632837433.265|27558|ice_transport.cpp :497  ] [ice:0x7fa0643053b0] Unexpected left timer in timer heap. Please report the bug\n[1632837433.265|27558|ice_transport.cpp :501  ] [ice:0x7fa0643053b0] Unexpected left events in IO queue\n[1632837433.265|27558|ice_transport.cpp :510  ] [ice:0x7fa0643053b0] done destroying\n[1632837433.295|27573|ice_transport.cpp :626  ] [ice:0x7fa06cabbc40] Timer heap flushed after 500 ms\n[1632837433.295|27573|ice_transport.cpp :497  ] [ice:0x7fa06cabbc40] Unexpected left timer in timer heap. Please report the bug\n[1632837433.296|27573|ice_transport.cpp :501  ] [ice:0x7fa06cabbc40] Unexpected left events in IO queue\n[1632837433.296|27573|ice_transport.cpp :510  ] [ice:0x7fa06cabbc40] done destroying\n[1632837433.300|27590|ice_transport.cpp :626  ] [ice:0x7fa06c47d330] Timer heap flushed after 500 ms\n[1632837433.300|27590|ice_transport.cpp :497  ] [ice:0x7fa06c47d330] Unexpected left timer in timer heap. Please report the bug\n[1632837433.300|27590|ice_transport.cpp :501  ] [ice:0x7fa06c47d330] Unexpected left events in IO queue\n[1632837433.300|27590|ice_transport.cpp :510  ] [ice:0x7fa06c47d330] done destroying\n[1632837433.409|27570|ice_transport.cpp :626  ] [ice:0x7fa06c3c4920] Timer heap flushed after 500 ms\n[1632837433.409|27570|ice_transport.cpp :497  ] [ice:0x7fa06c3c4920] Unexpected left timer in timer heap. Please report the bug\n[1632837433.409|27570|ice_transport.cpp :501  ] [ice:0x7fa06c3c4920] Unexpected left events in IO queue\n[1632837433.409|27570|ice_transport.cpp :510  ] [ice:0x7fa06c3c4920] done destroying\n[1632837433.524|27560|ice_transport.cpp :626  ] [ice:0x7fa06c8707b0] Timer heap flushed after 500 ms\n[1632837433.524|27560|ice_transport.cpp :497  ] [ice:0x7fa06c8707b0] Unexpected left timer in timer heap. Please report the bug\n[1632837433.524|27560|ice_transport.cpp :501  ] [ice:0x7fa06c8707b0] Unexpected left events in IO queue\n[1632837433.525|27560|ice_transport.cpp :510  ] [ice:0x7fa06c8707b0] done destroying\n[1632837433.731|27554|ice_transport.cpp :626  ] [ice:0x7fa06c54ad90] Timer heap flushed after 500 ms\n[1632837433.731|27554|ice_transport.cpp :497  ] [ice:0x7fa06c54ad90] Unexpected left timer in timer heap. Please report the bug\n[1632837433.731|27554|ice_transport.cpp :501  ] [ice:0x7fa06c54ad90] Unexpected left events in IO queue\n[1632837433.731|27554|ice_transport.cpp :510  ] [ice:0x7fa06c54ad90] done destroying\n[1632837433.732|27554|ice_transport.cpp :465  ] [ice:0x7fa06c6bc8b0] destroying 0x7fa06c6c09e8\n[1632837434.173|27554|ice_transport.cpp :481  ] [ice:0x7fa06c6bc8b0] Destroying ice_strans 0x7fa06c6c09e8\n[1632837434.674|27554|ice_transport.cpp :626  ] [ice:0x7fa06c6bc8b0] Timer heap flushed after 500 ms\n[1632837434.674|27554|ice_transport.cpp :497  ] [ice:0x7fa06c6bc8b0] Unexpected left timer in timer heap. Please report the bug\n[1632837434.674|27554|ice_transport.cpp :501  ] [ice:0x7fa06c6bc8b0] Unexpected left events in IO queue\n[1632837434.674|27554|ice_transport.cpp :510  ] [ice:0x7fa06c6bc8b0] done destroying\n[1632837434.675|27554|ice_transport.cpp :465  ] [ice:0x7fa06c5c0940] destroying 0x7fa06c5cd268\n[1632837434.733|27554|ice_transport.cpp :481  ] [ice:0x7fa06c5c0940] Destroying ice_strans 0x7fa06c5cd268\n[1632837435.234|27554|ice_transport.cpp :626  ] [ice:0x7fa06c5c0940] Timer heap flushed after 500 ms\n[1632837435.234|27554|ice_transport.cpp :497  ] [ice:0x7fa06c5c0940] Unexpected left timer in timer heap. Please report the bug\n[1632837435.234|27554|ice_transport.cpp :501  ] [ice:0x7fa06c5c0940] Unexpected left events in IO queue\n[1632837435.234|27554|ice_transport.cpp :510  ] [ice:0x7fa06c5c0940] done destroying\n[1632837435.236|27423|sipvoiplink.cpp   :761  ] Shutdown SIPVoIPLink@0x56079b32cef0...\n[1632837435.236|27423|siptransport.cpp  :193  ] destroying SipTransportBroker@0x56079b32fbd0\n[1632837435.525|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7fa00c01ce70: destroying\n[1632837435.525|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7fa00c01ce70 {tr\u003d0x7fa00c01cec0}\n[1632837435.525|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7fa00c01ce70 {tr\u003d0x7fa00c01cec0} bye\n[1632837435.525|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7fa02c0099b0: destroying\n[1632837435.525|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7fa02c0099b0 {tr\u003d0x7fa02c009a00}\n[1632837435.526|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7fa02c0099b0 {tr\u003d0x7fa02c009a00} bye\n[1632837435.526|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7fa02c0231a0: destroying\n[1632837435.526|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7fa02c0231a0 {tr\u003d0x7fa02c0231f0}\n[1632837435.526|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7fa02c0231a0 {tr\u003d0x7fa02c0231f0} bye\n[1632837435.527|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7f9fa8036dc0: destroying\n[1632837435.527|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7f9fa8036dc0 {tr\u003d0x7f9fa8036e10}\n[1632837435.527|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7f9fa8036dc0 {tr\u003d0x7f9fa8036e10} bye\n[1632837435.527|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7fa0000077f0: destroying\n[1632837435.527|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7fa0000077f0 {tr\u003d0x7fa000007840}\n[1632837435.527|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7fa0000077f0 {tr\u003d0x7fa000007840} bye\n[1632837435.528|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7f9fc4016d10: destroying\n[1632837435.528|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7f9fc4016d10 {tr\u003d0x7f9fc4016d60}\n[1632837435.528|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7f9fc4016d10 {tr\u003d0x7f9fc4016d60} bye\n[1632837435.528|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7fa00800a6d0: destroying\n[1632837435.528|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7fa00800a6d0 {tr\u003d0x7fa00800a720}\n[1632837435.528|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7fa00800a6d0 {tr\u003d0x7fa00800a720} bye\n[1632837435.529|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7f9fa0006ba0: destroying\n[1632837435.529|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7f9fa0006ba0 {tr\u003d0x7f9fa0006bf0}\n[1632837435.529|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7f9fa0006ba0 {tr\u003d0x7f9fa0006bf0} bye\n[1632837435.529|27423|channeled_transport.cpp:128  ] ChanneledSIPTransport@0x7f9fc804d800: destroying\n[1632837435.529|27423|channeled_transport.cpp:194  ] ~ChanneledSIPTransport@0x7f9fc804d800 {tr\u003d0x7f9fc804d850}\n[1632837435.529|27423|channeled_transport.cpp:211  ] ~ChanneledSIPTransport@0x7f9fc804d800 {tr\u003d0x7f9fc804d850} bye\n[1632837435.530|27423|sipvoiplink.cpp   :779  ] SIPVoIPLink@0x56079b32cef0 is shutdown\n[1632837435.567|27423|upnp_context.cpp  :102  ] UPnPContext instance [0x7fa0cc0036e0] destroyed\n[1632837436.029|27423|ringbuffer.cpp    :60   ] Destroy RingBuffer audiolayer_id",
+      "range": {
+        "startLine": 492,
+        "startChar": 0,
+        "endLine": 502,
+        "endChar": 5
+      },
+      "revId": "56335b37f9d2d8e636b08123a64c8b03ddc22d16",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "109a6f11_67cbbebe",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-28T13:59:34Z",
+      "side": 1,
+      "message": "nice catch. I wonder if pj_timer_heap_count() is better and avoid this error",
+      "range": {
+        "startLine": 562,
+        "startChar": 15,
+        "endLine": 562,
+        "endChar": 72
+      },
+      "revId": "56335b37f9d2d8e636b08123a64c8b03ddc22d16",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
