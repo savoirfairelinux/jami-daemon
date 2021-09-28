@@ -75,8 +75,6 @@ private:
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)*> rxPool_;
     pjsip_rx_data rdata_ {};
 
-    ScheduledExecutor scheduler_ {};
-
     pj_status_t send(pjsip_tx_data*, const pj_sockaddr_t*, int, void*, pjsip_transport_callback);
 
     // Handle disconnected event
