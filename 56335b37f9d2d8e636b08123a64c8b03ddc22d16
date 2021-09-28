@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "022b2d4d_d66ed9b1",
+        "filename": "contrib/src/pjproject/0002-rfc2466.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-28T16:06:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "28bb23b0_29e1fe60",
+      "range": {
+        "startLine": 5,
+        "startChar": 18,
+        "endLine": 5,
+        "endChar": 26
+      },
+      "revId": "56335b37f9d2d8e636b08123a64c8b03ddc22d16",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "307ad199_00ca5c18",
@@ -84,6 +108,30 @@
       "writtenOn": "2021-09-28T13:59:34Z",
       "side": 1,
       "message": "nice catch. I wonder if pj_timer_heap_count() is better and avoid this error",
+      "range": {
+        "startLine": 562,
+        "startChar": 15,
+        "endLine": 562,
+        "endChar": 72
+      },
+      "revId": "56335b37f9d2d8e636b08123a64c8b03ddc22d16",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f65a2e6_9825f0a2",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-28T16:06:12Z",
+      "side": 1,
+      "message": "may be, but we already have the information. Calling pj_timer_heap_count() is redundant.",
+      "parentUuid": "109a6f11_67cbbebe",
       "range": {
         "startLine": 562,
         "startChar": 15,
