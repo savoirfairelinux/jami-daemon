@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e98f1e8b_bdd1590a",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 570,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-28T14:56:48Z",
+      "side": 1,
+      "message": "timeout \u003d max_timeout; was ok",
+      "range": {
+        "startLine": 568,
+        "startChar": 12,
+        "endLine": 570,
+        "endChar": 11
+      },
+      "revId": "8b7393115cd0fae737b8fdc8e793385916433468",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
