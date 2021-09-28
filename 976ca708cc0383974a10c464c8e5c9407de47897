@@ -97,6 +97,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e3f84890_84541de9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 755,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-28T15:07:11Z",
+      "side": 1,
+      "message": "Still there. do we want to do this there or later?  A GitLAb ticket is better to avoid to forget.",
+      "parentUuid": "681e4162_7c7079f4",
+      "range": {
+        "startLine": 755,
+        "startChar": 13,
+        "endLine": 755,
+        "endChar": 40
+      },
+      "revId": "976ca708cc0383974a10c464c8e5c9407de47897",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f3973a41_82116d2e",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 21
@@ -179,6 +203,30 @@
       "side": 1,
       "message": "Done",
       "parentUuid": "80b90067_5382f6b2",
+      "range": {
+        "startLine": 248,
+        "startChar": 10,
+        "endLine": 248,
+        "endChar": 22
+      },
+      "revId": "976ca708cc0383974a10c464c8e5c9407de47897",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6d8a18c9_dfbb707d",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-28T15:07:11Z",
+      "side": 1,
+      "message": "Still the same question. isSubCall should be unrelated to if we have or not a ice transport here. For now it will pass, but is it really bad to fail by calling setIceMedia() when isSubCall is false",
+      "parentUuid": "19179b38_a2dd0d59",
       "range": {
         "startLine": 248,
         "startChar": 10,
