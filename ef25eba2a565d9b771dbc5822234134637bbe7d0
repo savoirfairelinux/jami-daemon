@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0f75582_43d361a1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 23
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-28T19:44:36Z",
+      "side": 1,
+      "message": "btw isp2p re-added, wanted?",
+      "revId": "ef25eba2a565d9b771dbc5822234134637bbe7d0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9785703f_76f8c626",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-28T19:44:36Z",
+      "side": 1,
+      "message": "trailing",
+      "range": {
+        "startLine": 244,
+        "startChar": 0,
+        "endLine": 244,
+        "endChar": 4
+      },
+      "revId": "ef25eba2a565d9b771dbc5822234134637bbe7d0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
