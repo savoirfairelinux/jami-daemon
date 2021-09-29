@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "10cf8913_197f9563",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 320,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-29T13:29:31Z",
+      "side": 1,
+      "message": "still this one :crossed_fingers:! Next one to be remvoed",
+      "range": {
+        "startLine": 317,
+        "startChar": 10,
+        "endLine": 320,
+        "endChar": 14
+      },
+      "revId": "b694f74b285bd96becc531c4f84d0d9bec55cd63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6411be9_9fd92249",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1473,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-09-29T13:29:31Z",
+      "side": 1,
+      "message": "clang-format would solve this :}",
+      "range": {
+        "startLine": 1473,
+        "startChar": 44,
+        "endLine": 1473,
+        "endChar": 47
+      },
+      "revId": "b694f74b285bd96becc531c4f84d0d9bec55cd63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
