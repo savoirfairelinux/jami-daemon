@@ -1734,19 +1734,6 @@ IceTransport::waitForInitialization(std::chrono::milliseconds timeout)
     return not(pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
 }
 
-int
-IceTransport::waitForNegotiation(std::chrono::milliseconds timeout)
-{
-    std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
-    if (!pimpl_->iceCV_.wait_for(lk, timeout, [this] {
-            return pimpl_->threadTerminateFlags_ or pimpl_->_isRunning() or pimpl_->_isFailed();
-        })) {
-        JAMI_WARN("[ice:%p] waitForIceNegotiation: timeout", pimpl_.get());
-        return -1;
-    }
-    return not(pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
-}
-
 ssize_t
 IceTransport::waitForData(unsigned compId, std::chrono::milliseconds timeout, std::error_code& ec)
 {
