@@ -87,7 +87,6 @@ MediaAttribute::getMediaType(const DRing::MediaMap& map)
 {
     const auto& iter = map.find(DRing::Media::MediaAttributeKey::MEDIA_TYPE);
     if (iter == map.end()) {
-        JAMI_WARN("[MEDIA_TYPE] key not found in media map");
         return {false, MediaType::MEDIA_NONE};
     }
 
@@ -117,7 +116,6 @@ MediaAttribute::getMediaSourceType(const DRing::MediaMap& map)
 {
     const auto& iter = map.find(DRing::Media::MediaAttributeKey::SOURCE_TYPE);
     if (iter == map.end()) {
-        JAMI_WARN("[MEDIA_TYPE] key not found in media map");
         return {false, MediaSourceType::NONE};
     }
 
@@ -129,7 +127,6 @@ MediaAttribute::getBoolValue(const DRing::MediaMap& map, const std::string& key)
 {
     const auto& iter = map.find(key);
     if (iter == map.end()) {
-        JAMI_WARN("[%s] key not found for media", key.c_str());
         return {false, false};
     }
 
@@ -148,7 +145,6 @@ MediaAttribute::getStringValue(const DRing::MediaMap& map, const std::string& ke
 {
     const auto& iter = map.find(key);
     if (iter == map.end()) {
-        JAMI_WARN("[%s] key not found in media map", key.c_str());
         return {false, {}};
     }
 
