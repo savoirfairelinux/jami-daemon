@@ -63,6 +63,7 @@ public:
     void testRemoveContact();
     void testRemoveConversationUpdateContactDetails();
     void testBanContact();
+    void testBanContactRemoveTrustRequest();
     void testAddOfflineContactThenConnect();
     void testDeclineTrustRequestDoNotGenerateAnother();
     void testRemoveContactRemoveSyncing();
@@ -86,6 +87,7 @@ private:
     CPPUNIT_TEST(testRemoveContact);
     CPPUNIT_TEST(testRemoveConversationUpdateContactDetails);
     CPPUNIT_TEST(testBanContact);
+    CPPUNIT_TEST(testBanContactRemoveTrustRequest);
     CPPUNIT_TEST(testAddOfflineContactThenConnect);
     CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
     CPPUNIT_TEST(testRemoveContactRemoveSyncing);
@@ -691,6 +693,56 @@ ConversationRequestTest::testBanContact()
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
+}
+
+void
+ConversationRequestTest::testBanContactRemoveTrustRequest()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, requestDeclined = true;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestDeclined>(
+            [&](const std::string& accountId, const std::string& conversationId) {
+                if (accountId == bobId)
+                    requestDeclined = true;
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    // Check created files
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    bobAccount->removeContact(aliceUri, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return requestDeclined; }));
+    auto requests = DRing::getConversationRequests(bobId);
+    CPPUNIT_ASSERT(requests.size() == 0);
 }
 
 void
