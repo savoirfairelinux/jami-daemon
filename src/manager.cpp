@@ -52,7 +52,6 @@ using random_device = dht::crypto::random_device;
 
 #include "sip/sip_utils.h"
 #include "sip/sipvoiplink.h"
-#include "sip/sipaccount.h"
 
 #include "im/instant_messaging.h"
 
@@ -1664,7 +1663,8 @@ Manager::createConfFromParticipantList(const std::vector<std::string>& participa
     bool videoEnabled {false};
     for (const auto& numberaccount : participantList) {
         std::string tostr(numberaccount.substr(0, numberaccount.find(',')));
-        std::string accountId(numberaccount.substr(numberaccount.find(',') + 1, numberaccount.size()));
+        std::string accountId(
+            numberaccount.substr(numberaccount.find(',') + 1, numberaccount.size()));
         auto account = getAccount(accountId);
         if (account) {
             videoEnabled |= account->isVideoEnabled();
@@ -2105,20 +2105,6 @@ Manager::incomingCall(Call& call, const std::string& accountId)
 
     // Process the call.
     pimpl_->processIncomingCall(call, accountId);
-}
-
-void
-Manager::mediaChangeRequested(const std::string& callId,
-                              const std::string& accountId,
-                              const std::vector<DRing::MediaMap>& mediaList)
-{
-    JAMI_INFO("Media change request for call %s on account %s with %lu media",
-              callId.c_str(),
-              accountId.c_str(),
-              mediaList.size());
-
-    // Report the media change request.
-    emitSignal<DRing::CallSignal::MediaChangeRequested>(accountId, callId, mediaList);
 }
 
 void
@@ -2882,7 +2868,6 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
         }
     }
 }
-
 
 AudioFormat
 Manager::hardwareAudioFormatChanged(AudioFormat format)
