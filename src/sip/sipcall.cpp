@@ -88,6 +88,8 @@ static constexpr auto MULTISTREAM_REQUIRED_VERSION_STR = "10.0.2"sv;
 static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION
     = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
 
+constexpr auto DUMMY_VIDEO_STR = "dummy video session";
+
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
                  Call::CallType type,
@@ -927,6 +929,16 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList)
     }
 
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+
+    // TODO. is the right place?
+    // Disable video if disabled in the account.
+    if (not account->isVideoEnabled()) {
+        for (auto& mediaAttr : mediaAttrList) {
+            if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
+                mediaAttr.enabled_ = false;
+            }
+        }
+    }
 
     if (mediaAttrList.empty()) {
         JAMI_DBG("[call:%s] Media list size is empty. Ignoring the media change request",
@@ -2196,7 +2208,7 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 void
 SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 {
-    JAMI_DBG("[call:%s] New local medias", getCallId().c_str());
+    JAMI_DBG("[call:%s] New local media", getCallId().c_str());
 
     unsigned idx = 0;
     for (auto const& newMediaAttr : mediaAttrList) {
@@ -2224,6 +2236,18 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
             updateMediaStream(newAttr, streamIdx);
         }
     }
+}
+
+size_t
+SIPCall::getActiveMediaStreamCount(const std::vector<MediaAttribute>& mediaAttrList)
+{
+    size_t count = 0;
+    for (auto const& stream : mediaAttrList) {
+        if (stream.enabled_)
+            count++;
+    }
+
+    return count;
 }
 
 bool
@@ -2413,6 +2437,21 @@ SIPCall::onIceNegoSucceed()
     startAllMedia();
 }
 
+bool
+SIPCall::checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList)
+{
+    JAMI_DBG("[call:%s] Received a media change request", getCallId().c_str());
+
+    auto remoteMediaAtrrList = MediaAttribute::buildMediaAttributesList(remoteMediaList,
+                                                                        isSrtpEnabled());
+
+    bool mediaChanged = remoteMediaAtrrList.size() != rtpStreams_.size()
+                        or getActiveMediaStreamCount(remoteMediaAtrrList)
+                               != getActiveMediaStreamCount(getMediaAttributeList());
+
+    return mediaChanged;
+}
+
 pj_status_t
 SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
@@ -2449,21 +2488,14 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
     pjsip_tx_data* tdata = nullptr;
     if (pjsip_inv_initial_answer(inviteSession_.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata)
         != PJ_SUCCESS) {
-        JAMI_ERR("Could not create answer TRYING");
+        JAMI_ERR("[call:%s] Could not create answer TRYING", getCallId().c_str());
         return res;
     }
 
     // Report the change request.
     auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
-    // TODO_MC. Validate this assessment.
-    // Report re-invites only if the number of media changed, otherwise answer
-    // using the current local attributes.
-    if (acc->isMultiStreamEnabled() and remoteMediaList.size() != rtpStreams_.size()) {
-        Manager::instance().mediaChangeRequested(getCallId(), getAccountId(), remoteMediaList);
-    } else {
-        auto localMediaList = MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList());
-        answerMediaChangeRequest(localMediaList);
-    }
+
+    Manager::instance().mediaChangeRequested(getCallId(), remoteMediaList);
 
     return res;
 }
@@ -2688,10 +2720,12 @@ SIPCall::getDetails() const
 void
 SIPCall::enterConference(const std::string& confId)
 {
+    JAMI_DBG("[call:%s] Entering conference [%s]", getCallId().c_str(), confId.c_str());
+
 #ifdef ENABLE_VIDEO
     auto conf = Manager::instance().getConferenceFromID(confId);
     if (conf == nullptr) {
-        JAMI_ERR("Unknown conference [%s]", confId.c_str());
+        JAMI_ERR("[call:%s] Unknown conference [%s]", getCallId().c_str(), confId.c_str());
         return;
     }
 
@@ -2714,6 +2748,14 @@ SIPCall::enterConference(const std::string& confId)
 void
 SIPCall::exitConference()
 {
+    auto confId = getConfId();
+    if (confId.empty()) {
+        JAMI_DBG("[call:%s] Leaving conference [%s]", getCallId().c_str(), confId.c_str());
+    } else {
+        JAMI_ERR("[call:%s] The call is not bound to any conference", getCallId().c_str());
+        return;
+    }
+
     auto const& audioRtp = getAudioRtp();
     if (audioRtp && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
         auto& rbPool = Manager::instance().getRingBufferPool();
@@ -2742,20 +2784,55 @@ SIPCall::getReceiveVideoFrameActiveWriter()
     return {};
 }
 
-std::shared_ptr<video::VideoRtpSession>
+bool
 SIPCall::addDummyVideoRtpSession()
 {
 #ifdef ENABLE_VIDEO
-    MediaAttribute mediaAttr(MediaType::MEDIA_VIDEO, true, true, false, "", "dummy video session");
+    JAMI_DBG("[call:%s] Add dummy video stream", getCallId().c_str());
+
+    MediaAttribute mediaAttr(MediaType::MEDIA_VIDEO,
+                             true,
+                             true,
+                             false,
+                             "dummy source",
+                             DUMMY_VIDEO_STR);
+
     addMediaStream(mediaAttr);
     auto& stream = rtpStreams_.back();
     createRtpSession(stream);
-    if (stream.rtpSession_) {
-        return std::dynamic_pointer_cast<video::VideoRtpSession>(stream.rtpSession_);
-    }
+    return stream.rtpSession_ != nullptr;
 #endif
 
-    return {};
+    return false;
+}
+
+int
+SIPCall::removeDummyVideoRtpSessions()
+{
+    // It's not expected to have more than one dummy video stream, but
+    // check just in case.
+
+    int dummyVideoCount = 0;
+    decltype(rtpStreams_)::iterator iter;
+
+    do {
+        iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), [](const RtpStream& stream) {
+            return stream.mediaAttribute_->label_.compare(DUMMY_VIDEO_STR) == 0;
+        });
+        if (iter != rtpStreams_.end()) {
+            JAMI_DBG("[call:%s] Removing stream: %s ",
+                     getCallId().c_str(),
+                     iter->mediaAttribute_->toString(true).c_str());
+            rtpStreams_.erase(iter);
+            dummyVideoCount++;
+        }
+    } while (iter != rtpStreams_.end());
+
+    if (dummyVideoCount > 0) {
+        JAMI_DBG("[call:%s] Removed %d dummy video stream(s)", getCallId().c_str(), dummyVideoCount);
+    }
+
+    return dummyVideoCount;
 }
 
 void
