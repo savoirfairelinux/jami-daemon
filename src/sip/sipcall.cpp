@@ -79,6 +79,7 @@ getVideoSettings()
 #endif
 
 static constexpr std::chrono::seconds DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
+static constexpr std::chrono::milliseconds EXPECTED_ICE_INIT_MAX_TIME {5000};
 static constexpr std::chrono::seconds DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
 static constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
 static constexpr int ICE_COMP_ID_RTP {1};
@@ -1447,7 +1448,7 @@ SIPCall::removeCall()
         getCallId());
 #endif
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
-    JAMI_WARN("[call:%s] removeCall()", getCallId().c_str());
+    JAMI_DBG("[call:%s] removeCall()", getCallId().c_str());
     if (sdp_) {
         sdp_->setActiveLocalSdpSession(nullptr);
         sdp_->setActiveRemoteSdpSession(nullptr);
@@ -1637,20 +1638,41 @@ SIPCall::addLocalIceAttributes()
         return;
     }
 
+    auto start = std::chrono::steady_clock::now();
+
     if (not mediaTransport->isInitialized()) {
         JAMI_DBG("[call:%s] Waiting for ICE initialization", getCallId().c_str());
         // we need an initialized ICE to progress further
         if (mediaTransport->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
-            JAMI_ERR("[call:%s] ICE initialization failed", getCallId().c_str());
+            JAMI_ERR("[call:%s] ICE initialization timed out", getCallId().c_str());
             return;
+        }
+        // ICE initialization may take longer than usual in some cases,
+        // for instance when TURN servers do not respond in time (DNS
+        // resolution or other issues).
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start);
+        if (duration > EXPECTED_ICE_INIT_MAX_TIME) {
+            JAMI_WARN("[call:%s] ICE initialization time was unexpectedly high (%ld ms)",
+                      getCallId().c_str(),
+                      duration.count());
         }
     }
 
-    // Check transport again, the call might be canceled while waiting
-    // for initialization.
-    if (not mediaTransport->isRunning()) {
-        JAMI_WARN("[call:%s] ICE was stopped while waiting for initialization", getCallId().c_str());
+    // Check the state of ICE instance, the initialization may have failed.
+    if (not mediaTransport->isInitialized()) {
+        JAMI_ERR("[call:%s] ICE session is not initialized", getCallId().c_str());
+        return;
     }
+
+    // Check the state, the call might have been canceled while waiting.
+    // for initialization.
+    if (getState() == Call::CallState::OVER) {
+        JAMI_WARN("[call:%s] The call was terminated while waiting for ICE initialization",
+                  getCallId().c_str());
+        return;
+    }
+
     auto account = getSIPAccount();
     if (not account) {
         JAMI_ERR("No account detected");
@@ -1689,7 +1711,7 @@ SIPCall::addLocalIceAttributes()
             if (not rtcpMuxEnabled_) {
                 sdp_->addIceCandidates(streamIdx,
                                        mediaTransport->getLocalCandidates(streamIdx,
-                                                                       ICE_COMP_ID_RTP + 1));
+                                                                          ICE_COMP_ID_RTP + 1));
             }
 
             streamIdx++;
