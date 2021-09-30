@@ -55,7 +55,7 @@ namespace jami {
 namespace video {
 class SinkClient;
 class VideoGenerator;
-}
+} // namespace video
 class ChannelSocket;
 class RingBufferPool;
 struct VideoManager;
@@ -213,15 +213,6 @@ public:
      * @param accountId an account id
      */
     void incomingCall(Call& call, const std::string& accountId);
-
-    /**
-     * Handle a media change request from the peer
-     * @param callId
-     * @param accountId
-     */
-    void mediaChangeRequested(const std::string& callId,
-                              const std::string& accountId,
-                              const std::vector<DRing::MediaMap>& mediaList);
 
     /**
      * Functions which occur with a user's action
