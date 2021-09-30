@@ -389,7 +389,7 @@ private:
     // Find the stream index with the matching label
     size_t findRtpStreamIndex(const std::string& label) const;
 
-    std::vector<IceCandidate> getAllRemoteCandidates();
+    std::vector<IceCandidate> getAllRemoteCandidates(IceTransport& transport) const;
 
     inline std::shared_ptr<const SIPCall> shared() const
     {
