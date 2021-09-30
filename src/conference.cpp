@@ -330,7 +330,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
         auto iter = std::find_if(mediaList.begin(), mediaList.end(), check);
 
         if (iter == mediaList.end()) {
-            // Nothing to do if the call does not have a media that uses with
+            // Nothing to do if the call does not have a media with
             // a valid source type.
             JAMI_DBG("[Call: %s] Does not have an active [%s] media source",
                      callId.c_str(),
@@ -339,9 +339,9 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
         }
 
         if (getMediaSourceState(iter->type_) == MediaSourceState::NONE) {
-            // If the source state for the specified media type is not set
-            // yet, the state will initialized using the state of the first
-            // participant with a valid media source.
+            // If the source state of the specified media type is not set
+            // yet, the state will be initialized using the state of the
+            // first participant with a valid media source.
             setMediaSourceState(iter->type_, iter->muted_);
         } else {
             // To mute the local source, all the sources of the participating
@@ -419,6 +419,14 @@ Conference::add(const std::string& participant_id)
         }
 #ifdef ENABLE_VIDEO
         if (auto call = getCall(participant_id)) {
+            // In conference, all participants need to have video session
+            // in order to diplay the participant in the layout. So, if a
+            // participant joins with an audio an audio only call, a dummy
+            // video stream is added to the call.
+            auto mediaList = call->getMediaAttributeList();
+            if (not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
+                call->addDummyVideoRtpSession();
+            }
             call->enterConference(getConfID());
             // Continue the recording for the conference if one participant was recording
             if (call->isRecording()) {

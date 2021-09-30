@@ -359,6 +359,10 @@ struct Manager::ManagerPimpl
     void processIncomingCall(Call& incomCall, const std::string& accountId);
     static void stripSipPrefix(Call& incomCall);
 
+    // Process incoming media change request.
+    void processMediaChangeRequest(const std::string& callId,
+                                   const std::vector<DRing::MediaMap>& remoteMediaList);
+
     Manager& base_; // pimpl back-pointer
 
     std::shared_ptr<asio::io_context> ioContext_;
@@ -2083,16 +2087,13 @@ Manager::incomingCall(Call& call, const std::string& accountId)
 
 void
 Manager::mediaChangeRequested(const std::string& callId,
-                              const std::string& accountId,
-                              const std::vector<DRing::MediaMap>& mediaList)
+                              const std::vector<DRing::MediaMap>& remoteMediaList)
 {
-    JAMI_INFO("Media change request for call %s on account %s with %lu media",
+    JAMI_INFO("Media change request for call %s with %lu media",
               callId.c_str(),
-              accountId.c_str(),
-              mediaList.size());
+              remoteMediaList.size());
 
-    // Report the media change request.
-    emitSignal<DRing::CallSignal::MediaChangeRequested>(accountId, callId, mediaList);
+    pimpl_->processMediaChangeRequest(callId, remoteMediaList);
 }
 
 void
@@ -2847,6 +2848,64 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
                 });
             }
         }
+    }
+}
+
+void
+Manager::ManagerPimpl::processMediaChangeRequest(const std::string& callId,
+                                                 const std::vector<DRing::MediaMap>& remoteMediaList)
+{
+    JAMI_INFO("Media change request for call %s with %lu media",
+              callId.c_str(),
+              remoteMediaList.size());
+
+    auto call = Manager::instance().getCallFromCallID(callId);
+    if (not call) {
+        JAMI_INFO("Call [%s] does not exist!", callId.c_str());
+        return;
+    }
+    auto w = call->getAccount();
+    auto account = w.lock();
+
+    if (not account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
+
+    // If it's a RDV point, accept any media change request. TODO: Really ?
+    if (account->isRendezVous()) {
+        if (call->getConfId().empty()) {
+            JAMI_ERR("Call [%s] must be attached to a conference", callId.c_str());
+            assert(false); // TODO. Remove me
+            return;
+        }
+        // If the new media list has video, remote any existing dummy
+        // video sessions.
+        if (MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
+                                                                                  false),
+                                         MediaType::MEDIA_VIDEO)) {
+            call->removeDummyVideoRtpSessions();
+        }
+        call->answerMediaChangeRequest(remoteMediaList);
+        call->enterConference(call->getConfId());
+
+        return;
+    }
+
+    // If multi-stream is supported and the offered media is
+    // different from the current media, the request is reported
+    // the client to be processed. Otherwise, we answer with the
+    // current local media.
+
+    if (account->isMultiStreamEnabled() and call->checkMediaChangeRequest(remoteMediaList)) {
+        // Report the media change request.
+        emitSignal<DRing::CallSignal::MediaChangeRequested>(call->getAccountId(),
+                                                            callId,
+                                                            remoteMediaList);
+    } else {
+        auto localMediaList = MediaAttribute::mediaAttributesToMediaMaps(
+            call->getMediaAttributeList());
+        call->answerMediaChangeRequest(localMediaList);
     }
 }
 

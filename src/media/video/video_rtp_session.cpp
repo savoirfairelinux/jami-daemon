@@ -71,11 +71,13 @@ VideoRtpSession::VideoRtpSession(const string& callID, const DeviceParams& local
 {
     setupVideoBitrateInfo(); // reset bitrate
     cc = std::make_unique<CongestionControl>();
+    JAMI_DBG("[this] Video RTP session created", this);
 }
 
 VideoRtpSession::~VideoRtpSession()
 {
     stop();
+    JAMI_DBG("[%p] Video RTP session destroyed", this);
 }
 
 /// Setup internal VideoBitrateInfo structure from media descriptors.
@@ -97,7 +99,7 @@ void
 VideoRtpSession::startSender()
 {
     JAMI_DBG("Start video RTP sender: input [%s] - muted [%s]",
-             input_.c_str(),
+             conference_ ? "Video Mixer" : input_.c_str(),
              muteState_ ? "YES" : "NO");
 
     if (send_.enabled and not send_.onHold) {
@@ -321,8 +323,10 @@ VideoRtpSession::setupVideoPipeline()
     if (conference_)
         setupConferenceVideoPipeline(*conference_);
     else if (sender_) {
-        if (videoLocal_)
+        if (videoLocal_) {
+            JAMI_DBG("[call:%s] Setup video pipeline on local capture device", callID_.c_str());
             videoLocal_->attach(sender_.get());
+        }
     } else {
         videoLocal_.reset();
     }
