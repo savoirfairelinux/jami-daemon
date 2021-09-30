@@ -129,6 +129,7 @@ private:
 public:
     void answer() override;
     void answer(const std::vector<DRing::MediaMap>& mediaList) override;
+    bool checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) override;
     void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList) override;
     void hangup(int reason) override;
     void refuse() override;
@@ -269,10 +270,12 @@ public:
      * Returns a pointer to the VideoRtp object
      */
     std::shared_ptr<video::VideoRtpSession> getVideoRtp() const;
-    std::shared_ptr<video::VideoRtpSession> addDummyVideoRtpSession();
+    bool addDummyVideoRtpSession() override;
+    int removeDummyVideoRtpSessions() override;
 #endif
     // Get the list of current RTP sessions
     std::vector<std::shared_ptr<RtpSession>> getRtpSessionList() const;
+    static size_t getActiveMediaStreamCount(const std::vector<MediaAttribute>& mediaAttrList);
 
     void setPeerRegisteredName(const std::string& name) { peerRegisteredName_ = name; }
 

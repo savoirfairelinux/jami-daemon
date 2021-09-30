@@ -219,6 +219,16 @@ public:
     virtual void answer(const std::vector<DRing::MediaMap>& mediaList) = 0;
 
     /**
+     * Process an incoming media change request.
+     * This method check the new media against current media to determine
+     * if the change request should be reported to the client or handled
+     * by the manager.
+     * @param the new media list from the remote
+     * @return true if the change needs to be reported
+     */
+    virtual bool checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) = 0;
+
+    /**
      * Answer to a media update request. The media attributes set by the
      * caller of this method will determine the response sent to the
      * peer and the configuration of the local media.
@@ -322,6 +332,10 @@ public: // media management
     virtual bool toggleRecording();
 
     virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
+
+    virtual bool addDummyVideoRtpSession() = 0;
+
+    virtual int removeDummyVideoRtpSessions() = 0;
 
     virtual void switchInput(const std::string& = {}) {};
 
