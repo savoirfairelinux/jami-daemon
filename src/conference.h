@@ -244,6 +244,15 @@ public:
     void takeOverMediaSourceControl(const std::string& callId);
 
     /**
+     *  Process incoming media change request.
+     *
+     * @param callId the call ID
+     * @param remoteMediaList new media list from the remote
+     */
+    void handleMediaChangeRequest(const std::shared_ptr<Call>& call,
+                                  const std::vector<DRing::MediaMap>& remoteMediaList);
+
+    /**
      * Add a new participant to the conference
      */
     void addParticipant(const std::string& participant_id);
