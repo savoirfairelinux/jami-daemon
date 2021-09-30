@@ -1805,20 +1805,18 @@ JamiAccount::loadBootstrap() const
 void
 JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
 {
-    JAMI_DBG("[Account %s] Track buddy [%s] presence", getAccountID().c_str(), buddy_id.c_str());
-
     std::string buddyUri;
-
     try {
         buddyUri = parseJamiUri(buddy_id);
     } catch (...) {
-        JAMI_ERR("[Account %s] Failed to track a buddy due to an invalid URI %s",
+        JAMI_ERR("[Account %s] Failed to track presence: invalid URI %s",
                  getAccountID().c_str(),
                  buddy_id.c_str());
         return;
     }
-    auto h = dht::InfoHash(buddyUri);
+    JAMI_DBG("[Account %s] %s presence for %s", getAccountID().c_str(), track ? "Track" : "Untrack", buddy_id.c_str());
 
+    auto h = dht::InfoHash(buddyUri);
     std::lock_guard<std::mutex> lock(buddyInfoMtx);
     if (track) {
         auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
