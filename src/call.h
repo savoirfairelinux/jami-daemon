@@ -219,9 +219,22 @@ public:
     virtual void answer(const std::vector<DRing::MediaMap>& mediaList) = 0;
 
     /**
-     * Answer to a media update request. The media attributes set by the
-     * caller of this method will determine the response sent to the
-     * peer and the configuration of the local media.
+     * Process an incoming media change request.
+     * This method checks the new media against the current media to
+     * determine if the change request must be reported to the client
+     * for confirmation or can be handled by the daemon.
+     * @param the new media list from the remote
+     * @return true if the change needs to be reported
+     */
+    virtual bool mediaChangeRequestNeedsConfirmation(
+        const std::vector<DRing::MediaMap>& remoteMediaList)
+        = 0;
+
+    /**
+     * Answer to a media update request.
+     * The media attributes set by the caller of this method will
+     * determine the response to send to the peer and the configuration
+     * of the local media.
      * @param mediaList The list of media attributes. An empty media
      * list means the media update request was not accepted, meaning the
      * call continue with the current media. It's up to the implementation
@@ -318,10 +331,22 @@ public:
                                                                            - duration_start_);
     }
 
-public: // media management
+    // media management
     virtual bool toggleRecording();
 
     virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
+
+    /**
+     * Add a dummy video stream with the attached sink.
+     * Typically needed in conference to display infos for participants
+     * that have joined the conference without video (audio only).
+     */
+    virtual bool addDummyVideoRtpSession() = 0;
+
+    /**
+     * Remove all dummy video streams.
+     */
+    virtual int removeDummyVideoRtpSessions() = 0;
 
     virtual void switchInput(const std::string& = {}) {};
 
