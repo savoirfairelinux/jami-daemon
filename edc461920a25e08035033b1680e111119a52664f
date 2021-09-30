@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "80c8894c_146f4a40",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1651,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-09-30T15:22:23Z",
+      "side": 1,
+      "message": "Related to the previous commit, but this check is not good.\nI will fix it in a separate patch.",
+      "revId": "edc461920a25e08035033b1680e111119a52664f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
