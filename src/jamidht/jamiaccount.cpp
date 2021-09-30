@@ -1153,6 +1153,10 @@ JamiAccount::loadAccount(const std::string& archive_password,
             });
         },
         [this](const std::string& uri, const std::string& convFromReq) {
+            // Remove cached payload if there is one
+            auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests" + DIR_SEPARATOR_STR
+                               + uri;
+            fileutils::remove(requestPath);
             if (convFromReq.empty()) {
                 // If we receives a confirmation of a trust request
                 // but without the conversation, this means that the peer is
@@ -1911,8 +1915,23 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
         // In this case, the TrustRequest was sent but never confirmed (cause the contact was
         // offline maybe) To avoid the contact to never receive the conv request, retry there
         std::lock_guard<std::mutex> lock(configurationMutex_);
-        if (accountManager_)
-            accountManager_->sendTrustRequest(id, convId, convModule()->conversationVCard(convId));
+        if (accountManager_) {
+            // Retrieve cached payload for trust request.
+            auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests" + DIR_SEPARATOR_STR
+                               + contactId.toString();
+            std::vector<uint8_t> payload;
+            try {
+                payload = fileutils::loadFile(requestPath);
+            } catch (...) {
+            }
+
+            if (payload.size() > 64000) {
+                JAMI_WARN() << "Trust request is too big, reset payload";
+                payload.clear();
+            }
+
+            accountManager_->sendTrustRequest(id, convId, payload);
+        }
     }
 }
 
@@ -3128,6 +3147,20 @@ JamiAccount::discardTrustRequest(const std::string& from)
 void
 JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
+    // Here we cache payload sent by the client
+    auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests";
+    fileutils::recursive_mkdir(requestPath, 0700);
+    auto cachedFile = requestPath + DIR_SEPARATOR_STR + to;
+    std::ofstream req = fileutils::ofstream(cachedFile, std::ios::trunc | std::ios::binary);
+    if (!req.is_open()) {
+        JAMI_ERR("Could not write data to %s", cachedFile.c_str());
+        return;
+    }
+    req.write(reinterpret_cast<const char*>(&payload[0]), payload.size());
+    if (payload.size() > 64000) {
+        JAMI_WARN() << "Trust request is too big";
+    }
+
     auto conversation = convModule()->getOneToOneConversation(to);
     if (conversation.empty())
         conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, to);

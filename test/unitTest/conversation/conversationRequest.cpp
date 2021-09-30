@@ -67,6 +67,7 @@ public:
     void testDeclineTrustRequestDoNotGenerateAnother();
     void testRemoveContactRemoveSyncing();
     void testRemoveConversationRemoveSyncing();
+    void testCacheRequestFromClient();
 
     std::string aliceId;
     std::string bobId;
@@ -89,6 +90,7 @@ private:
     CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
     CPPUNIT_TEST(testRemoveContactRemoveSyncing);
     CPPUNIT_TEST(testRemoveConversationRemoveSyncing);
+    CPPUNIT_TEST(testCacheRequestFromClient);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -135,7 +137,7 @@ ConversationRequestTest::testAcceptTrustRemoveConvReq()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
+    bool conversationReady = false, requestReceived = false;
     std::string convId = "";
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
@@ -153,15 +155,6 @@ ConversationRequestTest::testAcceptTrustRemoveConvReq()
                 conversationReady = true;
             }
             cv.notify_one();
-        }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
         }));
     DRing::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(bobUri);
@@ -929,6 +922,54 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 0);
 }
+
+void
+ConversationRequestTest::testCacheRequestFromClient()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false;
+    std::string convId = "";
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    std::vector<uint8_t> payload = {0x64, 0x64, 0x64};
+    aliceAccount->sendTrustRequest(bobUri,
+                                   payload); // Random payload, just care with the file
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    auto cachedPath = fileutils::get_cache_dir() + DIR_SEPARATOR_CH + aliceAccount->getAccountID()
+                      + DIR_SEPARATOR_CH + "requests" + DIR_SEPARATOR_CH + bobUri;
+    CPPUNIT_ASSERT(fileutils::isFile(cachedPath));
+    CPPUNIT_ASSERT(fileutils::loadFile(cachedPath) == payload);
+
+    CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 1);
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+    CPPUNIT_ASSERT(!fileutils::isFile(cachedPath));
+}
+
 } // namespace test
 } // namespace jami
 
