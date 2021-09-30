@@ -249,7 +249,6 @@ public:
     std::condition_variable rxCv_ {};
     std::list<std::vector<ValueType>> rxQueue_ {};
 
-    std::mutex reorderBufMutex_;
     bool flushProcessing_ {false};     ///< protect against recursive call to flushRxQueue
     std::vector<ValueType> rawPktBuf_; ///< gnutls incoming packet buffer
     uint64_t baseSeq_ {0};   ///< sequence number of first application data packet received
@@ -257,6 +256,7 @@ public:
     uint64_t gapOffset_ {0}; ///< offset of first byte not received yet
     clock::time_point lastReadTime_;
     std::map<uint64_t, std::vector<ValueType>> reorderBuffer_ {};
+    std::list<clock::time_point> nextFlush_ {};
 
     std::size_t send(const ValueType*, std::size_t, std::error_code&);
     ssize_t sendRaw(const void*, size_t);
@@ -266,7 +266,7 @@ public:
 
     bool initFromRecordState(int offset = 0);
     void handleDataPacket(std::vector<ValueType>&&, uint64_t);
-    void flushRxQueue();
+    void flushRxQueue(std::unique_lock<std::mutex>&);
 
     // Statistics
     std::atomic<std::size_t> stRxRawPacketCnt_ {0};
@@ -318,8 +318,6 @@ public:
     bool setup();
     void process();
     void cleanup();
-
-    ScheduledExecutor scheduler_;
 
     // Path mtu discovery
     std::array<int, 3> MTUS_;
@@ -1366,16 +1364,15 @@ TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint6
         JAMI_WARN("[TLS] OOO pkt: 0x%lx", pkt_seq);
     }
 
-    {
-        std::lock_guard<std::mutex> lk {reorderBufMutex_};
-        if (reorderBuffer_.empty())
-            lastReadTime_ = clock::now();
-        reorderBuffer_.emplace(pkt_seq, std::move(buf));
-    }
-
+    std::unique_lock<std::mutex> lk {rxMutex_};
+    auto now = clock::now();
+    if (reorderBuffer_.empty())
+        lastReadTime_ = now;
+    reorderBuffer_.emplace(pkt_seq, std::move(buf));
+    nextFlush_.emplace_back(now + RX_OOO_TIMEOUT);
+    rxCv_.notify_one();
     // Try to flush right now as a new packet is available
-    flushRxQueue();
-    scheduler_.scheduleIn([this] { flushRxQueue(); }, RX_OOO_TIMEOUT);
+    flushRxQueue(lk);
 }
 
 ///
@@ -1384,7 +1381,7 @@ TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint6
 /// \note This method must be called continuously, faster than RX_OOO_TIMEOUT
 ///
 void
-TlsSession::TlsSessionImpl::flushRxQueue()
+TlsSession::TlsSessionImpl::flushRxQueue(std::unique_lock<std::mutex>& lk)
 {
     // RAII bool swap
     class GuardedBoolSwap
@@ -1401,7 +1398,6 @@ TlsSession::TlsSessionImpl::flushRxQueue()
         bool& var_;
     };
 
-    std::unique_lock<std::mutex> lk {reorderBufMutex_};
     if (reorderBuffer_.empty())
         return;
 
@@ -1471,11 +1467,28 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
     // block until rx packet or state change
     {
         std::unique_lock<std::mutex> lk {rxMutex_};
-        rxCv_.wait(lk,
-                   [this] { return !rxQueue_.empty() or state_ != TlsSessionState::ESTABLISHED; });
+        if (nextFlush_.empty())
+            rxCv_.wait(lk, [this] {
+                return state_ != TlsSessionState::ESTABLISHED or not rxQueue_.empty()
+                       or not nextFlush_.empty();
+            });
+        else
+            rxCv_.wait_until(lk, nextFlush_.front(), [this] {
+                return state_ != TlsSessionState::ESTABLISHED or !rxQueue_.empty();
+            });
         state = state_.load();
         if (state != TlsSessionState::ESTABLISHED)
             return state;
+
+        if (not nextFlush_.empty()) {
+            auto now = clock::now();
+            if (nextFlush_.front() <= now) {
+                while (nextFlush_.front() <= now)
+                    nextFlush_.pop_front();
+                flushRxQueue(lk);
+                return state;
+            }
+        }
     }
 
     std::array<uint8_t, 8> seq;
