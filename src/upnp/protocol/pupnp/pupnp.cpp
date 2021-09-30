@@ -975,7 +975,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         // Even if the discovery search is successful, it's normal to receive
         // time-out events. This because we send search requests using various
         // device types, which some of them may not return a response.
-        JAMI_DBG("PUPnP: Received discovery search time-out");
+        // JAMI_DBG("PUPnP: Received discovery search time-out");
         break;
     }
     case UPNP_EVENT_RECEIVED: {
