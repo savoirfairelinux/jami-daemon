@@ -55,8 +55,8 @@ namespace jami {
 Conference::Conference(bool enableVideo)
     : id_(Manager::instance().callFactory.getNewCallID())
 #ifdef ENABLE_VIDEO
-    , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
     , videoEnabled_(enableVideo)
+    , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
 {
     JAMI_INFO("Create new conference %s", id_.c_str());
@@ -128,7 +128,6 @@ Conference::Conference(bool enableVideo)
             }
             lk.unlock();
             if (!hostAdded) {
-                auto audioLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
                 ParticipantInfo pi;
                 pi.videoMuted = true;
                 pi.audioLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
@@ -310,6 +309,12 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
         return;
     }
 
+    auto account = call->getAccount().lock();
+    if (not account) {
+        JAMI_ERR("No account detected for call %s", callId.c_str());
+        return;
+    }
+
     auto mediaList = call->getMediaAttributeList();
 
     std::vector<MediaType> mediaTypeList {MediaType::MEDIA_AUDIO, MediaType::MEDIA_VIDEO};
@@ -323,7 +328,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
         auto iter = std::find_if(mediaList.begin(), mediaList.end(), check);
 
         if (iter == mediaList.end()) {
-            // Nothing to do if the call does not have a media that uses with
+            // Nothing to do if the call does not have a media with
             // a valid source type.
             JAMI_DBG("[Call: %s] Does not have an active [%s] media source",
                      callId.c_str(),
@@ -335,7 +340,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
             // If the source state for the specified media type is not set
             // yet, the state will initialized using the state of the first
             // participant with a valid media source.
-            if (call->getAccount().lock()->isRendezVous()) {
+            if (account->isRendezVous()) {
                 iter->muted_ = true;
             }
             setMediaSourceState(iter->type_, iter->muted_);
@@ -368,6 +373,39 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
                       muted ? "muted" : "un-muted");
             emitSignal<DRing::CallSignal::VideoMuted>(id_, muted);
         }
+    }
+}
+
+void
+Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
+                                     const std::vector<DRing::MediaMap>& remoteMediaList)
+{
+    JAMI_DBG("Conf [%s] Answer to media change request", getConfID().c_str());
+
+    // If the new media list has video, remove existing dummy
+    // video sessions if any.
+    if (MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
+                                                                              false),
+                                     MediaType::MEDIA_VIDEO)) {
+        call->removeDummyVideoRtpSessions();
+    }
+
+    // Check if we need to update the mixer.
+    // We need to check before the media is changed.
+    auto updateMixer = call->checkMediaChangeRequest(remoteMediaList);
+
+    // NOTE:
+    // Since this is a conference, accept any media change request.
+    // This also means that if original call was an audio-only call,
+    // the local camera will be enabled, unless the video is disabled
+    // in the account settings.
+
+    call->answerMediaChangeRequest(remoteMediaList);
+    call->enterConference(call->getConfId());
+
+    if (updateMixer and getState() == Conference::State::ACTIVE_ATTACHED) {
+        detachLocalParticipant();
+        attachLocalParticipant();
     }
 }
 
@@ -415,6 +453,14 @@ Conference::addParticipant(const std::string& participant_id)
         }
 #ifdef ENABLE_VIDEO
         if (auto call = getCall(participant_id)) {
+            // In conference, all participants need to have video session
+            // (with a sink) in order to display the participant info in
+            // the layout. So, if a participant joins with an audio only
+            // call, a dummy video stream is added to the call.
+            auto mediaList = call->getMediaAttributeList();
+            if (not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
+                call->addDummyVideoRtpSession();
+            }
             call->enterConference(getConfID());
             // Continue the recording for the conference if one participant was recording
             if (call->isRecording()) {
@@ -750,6 +796,8 @@ void
 Conference::switchInput(const std::string& input)
 {
 #ifdef ENABLE_VIDEO
+    JAMI_DBG("[Conf:%s] Setting video input to %s", id_.c_str(), input.c_str());
+
     mediaInput_ = input;
 
     // Done if the video is disabled
@@ -877,8 +925,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
             hangupParticipant(root["hangupParticipant"].asString());
         }
         if (root.isMember("handRaised")) {
-            setHandRaised(root["handRaised"].asString(),
-                                 root["handState"].asString() == "true");
+            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
         }
     }
 }

@@ -219,9 +219,33 @@ public:
     virtual void answer(const std::vector<DRing::MediaMap>& mediaList) = 0;
 
     /**
-     * Answer to a media update request. The media attributes set by the
-     * caller of this method will determine the response sent to the
-     * peer and the configuration of the local media.
+     * Check the media of an incoming media change request.
+     * This method checks the new media against the current media. It
+     * determines if the differences are significant enough to require 
+     * more processing.
+     * For instance, this can be used to check if the a change request
+     * must be reported to the client for confirmation or can be handled
+     * by the daemon.
+     * The conditions that cause this method to return true are implementation
+     * specific.
+     * 
+     * @param the new media list from the remote
+     * @return true if the new media differs from the current media
+     **/
+    virtual bool checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) = 0;
+
+    /**
+     * Process incoming media change request.
+     *
+     * @param the new media list from the remote
+     */
+    virtual void handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) = 0;
+
+    /**
+     * Answer to a media update request.
+     * The media attributes set by the caller of this method will
+     * determine the response to send to the peer and the configuration
+     * of the local media.
      * @param mediaList The list of media attributes. An empty media
      * list means the media update request was not accepted, meaning the
      * call continue with the current media. It's up to the implementation
@@ -318,10 +342,22 @@ public:
                                                                            - duration_start_);
     }
 
-public: // media management
+    // media management
     virtual bool toggleRecording();
 
     virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
+
+    /**
+     * Add a dummy video stream with the attached sink.
+     * Typically needed in conference to display infos for participants
+     * that have joined the conference without video (audio only).
+     */
+    virtual bool addDummyVideoRtpSession() = 0;
+
+    /**
+     * Remove all dummy video streams.
+     */
+    virtual int removeDummyVideoRtpSessions() = 0;
 
     virtual void switchInput(const std::string& = {}) {};
 

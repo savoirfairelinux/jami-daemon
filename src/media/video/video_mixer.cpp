@@ -117,6 +117,8 @@ VideoMixer::~VideoMixer()
 void
 VideoMixer::switchInput(const std::string& input)
 {
+    JAMI_DBG("Set new input %s", input.c_str());
+
     if (auto local = videoLocal_) {
         // Detach videoInput from mixer
         local->detach(this);
@@ -131,7 +133,7 @@ VideoMixer::switchInput(const std::string& input)
     }
 
     if (input.empty()) {
-        JAMI_DBG("[mixer:%s] Input is empty, don't add it in the mixer", id_.c_str());
+        JAMI_DBG("[mixer:%s] Input is empty, don't add it to the mixer", id_.c_str());
         return;
     }
 

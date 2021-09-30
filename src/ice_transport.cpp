@@ -732,7 +732,7 @@ IceTransport::Impl::link() const
             auto laddr = getLocalAddress(absIdx);
             auto raddr = getRemoteAddress(absIdx);
 
-            if (laddr and raddr) {
+            if (laddr and laddr.getPort() != 0 and raddr and raddr.getPort() != 0) {
                 out << " [" << i << "] " << laddr.toString(true, true) << " ["
                     << getCandidateType(getSelectedCandidate(absIdx, false)) << "] "
                     << " <-> " << raddr.toString(true, true) << " ["
@@ -811,7 +811,7 @@ IceTransport::Impl::getSelectedCandidate(unsigned comp_id, bool remote) const
 
     const auto* sess = pj_ice_strans_get_valid_pair(icest_, comp_id);
     if (sess == nullptr) {
-        JAMI_ERR("[ice:%p] Component %i has no valid pair", this, comp_id);
+        JAMI_WARN("[ice:%p] Component %i has no valid pair (disabled)", this, comp_id);
         return nullptr;
     }
 
@@ -829,7 +829,6 @@ IceTransport::Impl::getLocalAddress(unsigned comp_id) const
     if (auto cand = getSelectedCandidate(comp_id, false))
         return cand->addr;
 
-    JAMI_ERR("[ice:%p] No local address for component %i", this, comp_id);
     return {};
 }
 
@@ -841,7 +840,6 @@ IceTransport::Impl::getRemoteAddress(unsigned comp_id) const
     if (auto cand = getSelectedCandidate(comp_id, true))
         return cand->addr;
 
-    JAMI_ERR("[ice:%p] No remote address for component %i", this, comp_id);
     return {};
 }
 
