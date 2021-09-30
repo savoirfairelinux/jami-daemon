@@ -1406,6 +1406,24 @@ ConversationModule::isBannedDevice(const std::string& convId, const std::string&
 void
 ConversationModule::removeContact(const std::string& uri, bool)
 {
+    // Remove linked conversation's requests
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+        auto update = false;
+        auto it = pimpl_->conversationsRequests_.begin();
+        while (it != pimpl_->conversationsRequests_.end()) {
+            if (it->second.from == uri) {
+                emitSignal<DRing::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
+                                                                                   it->first);
+                update = true;
+                it = pimpl_->conversationsRequests_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        if (update)
+            pimpl_->saveConvRequests();
+    }
     // Remove related conversation
     auto isSelf = uri == pimpl_->username_;
     std::vector<std::string> toRm;
