@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c82267c0_00f00888",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 691,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-01T19:41:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9d1cd5ba_76b3a97b",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4d5e8e18_b91040cd",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-10-01T19:14:13Z",
       "side": 1,
       "message": "builder can be reused",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a72227e_bf83e974",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 694,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-01T19:41:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4d5e8e18_b91040cd",
       "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -70,6 +106,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2cba1847_7a679ad1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 699,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-01T19:41:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bbf426a8_bc24da06",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "54e83b49_07003715",
@@ -83,6 +137,24 @@
       "writtenOn": "2021-10-01T19:14:13Z",
       "side": 1,
       "message": "move commit",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "60746006_ba3d9aec",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-01T19:41:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "54e83b49_07003715",
       "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -140,6 +212,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "77e9e91d_c2133c0d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 702,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-01T19:41:50Z",
+      "side": 1,
+      "message": "yeah, I changed that, the overload already exists for a vector of commits.",
+      "parentUuid": "684ea493_25c5220d",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b975e5ac_47e80635",
@@ -153,6 +243,24 @@
       "writtenOn": "2021-10-01T19:14:13Z",
       "side": 1,
       "message": "move json",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9e2b36a4_b694daaf",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 476,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-01T19:41:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b975e5ac_47e80635",
       "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
