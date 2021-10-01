@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "716d75a7_31d5ef20",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1655,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-01T18:14:44Z",
+      "side": 1,
+      "message": "Lot of casting for nothing.\n\n```cpp\nauto duration \u003d std::chrono::steady_clock::now() - start;\nif (duration \u003e EXPECTED_ICE_INIT_MAX_TIME) {\n```\n\ndo the same, count() should never be called (except for printing), EXPECTED_ICE_INIT_MAX_TIME is already a duration.",
+      "range": {
+        "startLine": 1653,
+        "startChar": 37,
+        "endLine": 1655,
+        "endChar": 36
+      },
+      "revId": "f7b641458e819985b0108b915648da3578206cfb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
