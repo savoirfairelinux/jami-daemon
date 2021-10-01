@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d616919a_ef206cb0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T16:46:21Z",
+      "side": 1,
+      "message": "To be discussed, but IMO we should be blocking on the network instead of waiting using our own custom computation.",
+      "revId": "e861cfffd2c26ed303723357294c13a288b38074",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
