@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d34d110a_c61745f0",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 488,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:10:16Z",
+      "side": 1,
+      "message": "// Download members profile on first sync",
+      "parentUuid": "8a37e319_b68c0cab",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "755b4c00_8afc9064",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 17
