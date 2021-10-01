@@ -124,6 +124,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "684ea493_25c5220d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 702,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:31:34Z",
+      "side": 1,
+      "message": "Could we do it after the loop (using the commits vector) allowing do the replay in a single block, keeping the mutex locked, to avoid race conditions ?",
+      "parentUuid": "452c16b1_1df1aee2",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b975e5ac_47e80635",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 8
