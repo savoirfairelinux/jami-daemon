@@ -1825,8 +1825,7 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
         auto buddy = trackedBuddies_.find(h);
         if (buddy != trackedBuddies_.end()) {
             if (auto dht = dht_)
-                if (dht->isRunning())
-                    dht->cancelListen(h, std::move(buddy->second.listenToken));
+                dht->cancelListen(h, std::move(buddy->second.listenToken));
             trackedBuddies_.erase(buddy);
         }
     }
@@ -1836,9 +1835,8 @@ void
 JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
 {
     auto dht = dht_;
-    if (not dht or not dht->isRunning()) {
+    if (not dht)
         return;
-    }
     buddy.listenToken = dht->listen<
         DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired) {
         bool wasConnected, isConnected;
