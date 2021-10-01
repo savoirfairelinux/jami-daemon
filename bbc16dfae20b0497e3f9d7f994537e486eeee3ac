@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d1cd5ba_76b3a97b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 691,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:14:13Z",
+      "side": 1,
+      "message": "commits.reserve(messages.size());",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d5e8e18_b91040cd",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 694,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:14:13Z",
+      "side": 1,
+      "message": "builder can be reused",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2c3c7ad_48676817",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 699,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:14:13Z",
+      "side": 1,
+      "message": "not sure why clearFetched on every commit ?",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "54e83b49_07003715",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:14:13Z",
+      "side": 1,
+      "message": "move commit",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "687db8bf_b228b903",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 702,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:14:13Z",
+      "side": 1,
+      "message": "should we just annonce the last commit ?",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b975e5ac_47e80635",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 476,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:14:13Z",
+      "side": 1,
+      "message": "move json",
+      "revId": "bbc16dfae20b0497e3f9d7f994537e486eeee3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
