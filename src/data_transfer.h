@@ -232,6 +232,7 @@ public:
      * @return waiting list
      */
     std::vector<WaitingRequest> waitingRequests() const;
+    bool isWaiting(const std::string& fileId) const;
     void onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel);
 
 private:

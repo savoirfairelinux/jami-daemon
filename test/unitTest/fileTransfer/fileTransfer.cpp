@@ -201,10 +201,6 @@ FileTransferTest::testFileTransfer()
 void
 FileTransferTest::testDataTransferInfo()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -521,10 +517,6 @@ FileTransferTest::testConversationFileTransfer()
 void
 FileTransferTest::testFileTransferInConversation()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -622,10 +614,6 @@ FileTransferTest::testFileTransferInConversation()
 void
 FileTransferTest::testBadSha3sumOut()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -738,10 +726,6 @@ FileTransferTest::testBadSha3sumOut()
 void
 FileTransferTest::testBadSha3sumIn()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -854,10 +838,6 @@ FileTransferTest::testBadSha3sumIn()
 void
 FileTransferTest::testAskToMultipleParticipants()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
@@ -986,10 +966,6 @@ FileTransferTest::testAskToMultipleParticipants()
 void
 FileTransferTest::testCancelInTransfer()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -1034,7 +1010,7 @@ FileTransferTest::testCancelInTransfer()
                 cv.notify_one();
             }
         }));
-    bool transferBOngoing = false, transferBFinished = false;
+    bool transferBOngoing = false, transferBCancelled = false;
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
@@ -1046,10 +1022,10 @@ FileTransferTest::testCancelInTransfer()
                 && conversationId == convId) {
                 if (accountId == bobId)
                     transferBOngoing = true;
-            } else if (code >= static_cast<int>(DRing::DataTransferEventCode::finished)
+            } else if (code > static_cast<int>(DRing::DataTransferEventCode::finished)
                        && conversationId == convId) {
                 if (accountId == bobId)
-                    transferBFinished = true;
+                    transferBCancelled = true;
             }
             cv.notify_one();
         }));
@@ -1066,7 +1042,7 @@ FileTransferTest::testCancelInTransfer()
     // Create file to send
     std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
-    sendFile << std::string(64000, 'A');
+    sendFile << std::string(640000, 'A');
     sendFile.close();
 
     DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
@@ -1076,10 +1052,11 @@ FileTransferTest::testCancelInTransfer()
     transferBOngoing = false;
     CPPUNIT_ASSERT(DRing::downloadFile(bobId, convId, iidBob, tidBob, recvPath));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBOngoing; }));
-    transferBFinished = false;
+    transferBCancelled = false;
     DRing::cancelDataTransfer(bobId, convId, tidBob);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBCancelled; }));
     CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
+    CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(tidBob));
 
     std::remove(sendPath.c_str());
     DRing::unregisterSignalHandlers();
@@ -1088,10 +1065,6 @@ FileTransferTest::testCancelInTransfer()
 void
 FileTransferTest::testTransferInfo()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();

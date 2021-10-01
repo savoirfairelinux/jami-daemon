@@ -1058,6 +1058,13 @@ TransferManager::cancel(const std::string& fileId)
     std::shared_ptr<ChannelSocket> channel;
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     if (!pimpl_->to_.empty()) {
+        // Remove from waiting, this avoid auto-download
+        auto itW = pimpl_->waitingIds_.find(fileId);
+        if (itW != pimpl_->waitingIds_.end()) {
+            pimpl_->waitingIds_.erase(itW);
+            JAMI_DBG() << "Cancel " << fileId;
+            pimpl_->saveWaiting();
+        }
         // Note: For now, there is no cancel for outgoings.
         // The client can just remove the file.
         auto itC = pimpl_->incomings_.find(fileId);
@@ -1306,9 +1313,10 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                         pimpl->vcards_.erase(itO);
                     if (code == uint32_t(DRing::DataTransferEventCode::finished))
                         emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
-                                                                                cert->issuer->getId().toString(),
+                                                                                cert->issuer->getId()
+                                                                                    .toString(),
                                                                                 path);
-                } 
+                }
             });
         });
         res.first->second->process();
@@ -1326,6 +1334,13 @@ TransferManager::waitingRequests() const
             res.emplace_back(req);
     }
     return res;
+}
+
+bool
+TransferManager::isWaiting(const std::string& fileId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    return pimpl_->waitingIds_.find(fileId) != pimpl_->waitingIds_.end();
 }
 
 } // namespace jami
