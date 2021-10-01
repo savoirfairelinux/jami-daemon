@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46a1b5c2_851b1d36",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:09:29Z",
+      "side": 1,
+      "message": "does that means users can\u0027t send vcf files from client ? could be a boolean in the constructor ?",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a37e319_b68c0cab",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 488,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:09:29Z",
+      "side": 1,
+      "message": "could it be:\n\n    // Download profile from members on first sync\n\n?",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "755b4c00_8afc9064",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:09:29Z",
+      "side": 1,
+      "message": "this seems generally inefficient. Could be something like\n\n    getMemberUris(includeMyself \u003d false)\n\n(doesn\u0027t have to be in this patchset)",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b9912f7_a381700c",
+        "filename": "src/jamidht/transfer_channel_handler.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:09:29Z",
+      "side": 1,
+      "message": "jami:: not needed (already in the Jami namespace)",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79175eaf_a55af7e6",
+        "filename": "src/jamidht/transfer_channel_handler.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-01T19:09:29Z",
+      "side": 1,
+      "message": "shared_ptr or const reference, stored as weak_ptr (signals the account mush be non-null at this point)",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
