@@ -16,6 +16,24 @@
       "message": "To be discussed, but IMO we should be blocking on the network instead of waiting using our own custom computation.",
       "revId": "e861cfffd2c26ed303723357294c13a288b38074",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "596cb71f_0d0b57db",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-01T18:18:56Z",
+      "side": 1,
+      "message": "It\u0027s indeed a discussion to have, if we want this blocking, we can clean MediaDemuxer and remove the EAGAIN logic as unused. But yeah, at least, we must ensure that av_read_frame will be stopped if a camera is unplugged at this point (which is not the case today with the current blocking mode)",
+      "parentUuid": "d616919a_ef206cb0",
+      "revId": "e861cfffd2c26ed303723357294c13a288b38074",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
