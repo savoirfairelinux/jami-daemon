@@ -43,7 +43,7 @@ Mapping::Mapping(PortType type, uint16_t portExternal, uint16_t portInternal, bo
 
 Mapping::Mapping(const Mapping& other)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(other.mutex_);
 
     internalAddr_ = other.internalAddr_;
     internalPort_ = other.internalPort_;
@@ -95,17 +95,6 @@ Mapping::setAvailable(bool val)
 void
 Mapping::setState(const MappingState& state)
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (state_ == state)
-            return;
-    }
-
-    JAMI_DBG("Changed mapping %s state from %s to %s",
-             toString().c_str(),
-             getStateStr(),
-             getStateStr(state));
-
     std::lock_guard<std::mutex> lock(mutex_);
     state_ = state;
 }
@@ -136,22 +125,17 @@ Mapping::toString(bool extraInfo) const
 bool
 Mapping::isValid() const
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (state_ == MappingState::FAILED)
-            return false;
-        if (internalPort_ == 0)
-            return false;
-        if (externalPort_ == 0)
-            return false;
-        if (not igd_ or not igd_->isValid())
-            return false;
-    }
-
-    if (not hasValidHostAddress())
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (state_ == MappingState::FAILED)
         return false;
-
-    return true;
+    if (internalPort_ == 0)
+        return false;
+    if (externalPort_ == 0)
+        return false;
+    if (not igd_ or not igd_->isValid())
+        return false;
+    IpAddr intAddr(internalAddr_);
+    return intAddr and not intAddr.isLoopback();
 }
 
 bool
