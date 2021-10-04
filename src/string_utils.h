@@ -32,57 +32,6 @@
 #include <WTypes.h>
 #endif
 
-// Add string operators crucially missing from standard
-// see https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/1RcShRhrmRc
-namespace std {
-inline string
-operator+(const string& s, const string_view& sv)
-{
-    string ret;
-    ret.reserve(s.size() + sv.size());
-    ret.append(s);
-    ret.append(sv);
-    return ret;
-}
-inline string
-operator+(const string_view& sv, const string& s)
-{
-    string ret;
-    ret.reserve(s.size() + sv.size());
-    ret.append(sv);
-    ret.append(s);
-    return ret;
-}
-using svmatch = match_results<string_view::const_iterator>;
-using svsub_match = sub_match<string_view::const_iterator>;
-constexpr string_view svsub_match_view(const svsub_match& submatch) noexcept {
-    return string_view(&*submatch.first, submatch.second - submatch.first);
-}
-inline bool
-regex_match(string_view sv,
-            svmatch& m,
-            const regex& e,
-            regex_constants::match_flag_type flags = regex_constants::match_default)
-{
-    return regex_match(sv.begin(), sv.end(), m, e, flags);
-}
-inline bool
-regex_match(string_view sv,
-            const regex& e,
-            regex_constants::match_flag_type flags = regex_constants::match_default)
-{
-    return regex_match(sv.begin(), sv.end(), e, flags);
-}
-inline bool
-regex_search(string_view sv,
-             svmatch& m,
-             const regex& e,
-             regex_constants::match_flag_type flags = regex_constants::match_default)
-{
-    return regex_search(sv.begin(), sv.end(), m, e, flags);
-}
-} // namespace std
-
 namespace jami {
 
 constexpr static const char TRUE_STR[] = "true";
@@ -114,6 +63,15 @@ static inline double
 stod(const std::string& str)
 {
     return std::stod(str);
+}
+
+template<typename... Args>
+std::string concat(Args &&... args){
+    static_assert((std::is_constructible_v<std::string_view, Args&&> && ...));
+    std::string s;
+    s.reserve((std::string_view{ args }.size() + ...));
+    (s.append(std::forward<Args>(args)), ...);
+    return s;
 }
 
 std::string_view trim(std::string_view s);
@@ -188,3 +146,46 @@ std::string string_join(const std::set<std::string>& set, std::string_view separ
 std::set<std::string> string_split_set(std::string& str, std::string_view separator = "/");
 
 } // namespace jami
+
+// Add string operators crucially missing from standard
+// see https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/1RcShRhrmRc
+namespace std {
+inline string
+operator+(const string& s, const string_view& sv)
+{
+    return jami::concat(s, sv);
+}
+inline string
+operator+(const string_view& sv, const string& s)
+{
+    return jami::concat(sv, s);
+}
+using svmatch = match_results<string_view::const_iterator>;
+using svsub_match = sub_match<string_view::const_iterator>;
+constexpr string_view svsub_match_view(const svsub_match& submatch) noexcept {
+    return string_view(&*submatch.first, submatch.second - submatch.first);
+}
+inline bool
+regex_match(string_view sv,
+            svmatch& m,
+            const regex& e,
+            regex_constants::match_flag_type flags = regex_constants::match_default)
+{
+    return regex_match(sv.begin(), sv.end(), m, e, flags);
+}
+inline bool
+regex_match(string_view sv,
+            const regex& e,
+            regex_constants::match_flag_type flags = regex_constants::match_default)
+{
+    return regex_match(sv.begin(), sv.end(), e, flags);
+}
+inline bool
+regex_search(string_view sv,
+             svmatch& m,
+             const regex& e,
+             regex_constants::match_flag_type flags = regex_constants::match_default)
+{
+    return regex_search(sv.begin(), sv.end(), m, e, flags);
+}
+} // namespace std
