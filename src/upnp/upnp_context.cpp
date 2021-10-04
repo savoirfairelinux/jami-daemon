@@ -627,11 +627,6 @@ UPnPContext::updateMappingList(bool async)
     mappingListUpdateTimer_ = getScheduler()->scheduleIn([this] { updateMappingList(false); },
                                                          MAP_UPDATE_INTERVAL);
 
-    JAMI_DBG("Current preferred protocol [%s] IGD [%s %s] ",
-             prefIgd->getProtocolName(),
-             prefIgd->getUID().c_str(),
-             prefIgd->toString().c_str());
-
     // Process pending requests if any.
     processPendingRequests(prefIgd);
 
@@ -792,10 +787,6 @@ UPnPContext::pruneUnTrackedMappings(const std::shared_ptr<IGD>& igd,
             auto it = mappingList.find(map.getMapKey());
             if (it == mappingList.end()) {
                 // Not present, request mapping remove.
-                JAMI_DBG("Sending a remove request for un-tracked mapping %s on IGD %s",
-                         map.toString().c_str(),
-                         igd->toString().c_str());
-                // Add to the list.
                 toRemoveList.emplace_back(std::move(map));
                 // Make only few remove requests at once.
                 if (toRemoveList.size() >= MAX_REQUEST_REMOVE_COUNT)

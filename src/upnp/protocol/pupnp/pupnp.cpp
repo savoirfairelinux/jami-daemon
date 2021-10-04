@@ -678,7 +678,6 @@ PUPnP::processAddMapAction(const Mapping& map)
 
     runOnUpnpContextQueue([w = weak(), map] {
         if (auto upnpThis = w.lock()) {
-            JAMI_DBG("PUPnP: Opened mapping %s", map.toString().c_str());
             if (upnpThis->observer_)
                 upnpThis->observer_->onMappingAdded(map.getIgd(), std::move(map));
         }
@@ -975,7 +974,6 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         // Even if the discovery search is successful, it's normal to receive
         // time-out events. This because we send search requests using various
         // device types, which some of them may not return a response.
-        JAMI_DBG("PUPnP: Received discovery search time-out");
         break;
     }
     case UPNP_EVENT_RECEIVED: {
@@ -1508,8 +1506,6 @@ PUPnP::actionAddPortMapping(const Mapping& mapping)
                                   &response_container_ptr);
     response.reset(response_container_ptr);
 
-    JAMI_DBG("PUPnP: Sent request to open port %s", mapping.toString().c_str());
-
     bool success = true;
 
     if (upnp_err != UPNP_E_SUCCESS) {
@@ -1622,8 +1618,6 @@ PUPnP::actionDeletePortMapping(const Mapping& mapping)
                   errorDescription.c_str());
         success = false;
     }
-
-    JAMI_DBG("PUPnP: Sent request to close port %s", mapping.toString().c_str());
 
     return success;
 }
