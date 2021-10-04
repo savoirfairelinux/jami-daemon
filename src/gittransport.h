@@ -63,7 +63,7 @@ constexpr auto HOST_TAG = "host="sv;
  * @param url       The repository's URL
  * @return 0 on success, - 1 on error
  */
-int generateRequest(git_buf* request, const std::string& cmd, const std::string_view& url);
+int generateRequest(git_buf* request, const std::string& cmd, std::string_view url);
 
 /**
  * Send a git command on the linked socket
