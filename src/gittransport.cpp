@@ -26,7 +26,7 @@ using namespace std::string_view_literals;
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
 int
-generateRequest(git_buf* request, const std::string& cmd, const std::string_view& url)
+generateRequest(git_buf* request, const std::string& cmd, std::string_view url)
 {
     if (cmd.empty()) {
         giterr_set_str(GITERR_NET, "empty command");
@@ -42,7 +42,7 @@ generateRequest(git_buf* request, const std::string& cmd, const std::string_view
     auto deviceId = url.substr(0, delim);
     auto conversationId = url.substr(delim, url.size());
 
-    auto nullSeparator = "\0"sv;
+    constexpr auto nullSeparator = "\0"sv;
     auto total = 4                                   /* 4 bytes for the len len */
                  + cmd.size()                        /* followed by the command */
                  + 1                                 /* space */
@@ -170,7 +170,7 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
         return -1;
     }
     auto accountId = path.substr(delimAccount + 1, delimConv - 1 - delimAccount);
-    std::string_view gitUrl = url + std::string("git://").size();
+    std::string_view gitUrl = url + ("git://"sv).size();
     auto delim = gitUrl.find('/');
     if (delim == std::string::npos) {
         JAMI_ERR("Incorrect url %s", std::string(gitUrl).c_str());

@@ -391,7 +391,7 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
                     type = cm[id].asString();
                     continue;
                 }
-                message.insert({id, cm[id].asString()});
+                message.emplace(id, cm[id].asString());
             }
         } else {
             JAMI_WARN("%s", err.c_str());
