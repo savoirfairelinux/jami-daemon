@@ -395,11 +395,8 @@ namespace DRing {
 void setDefaultDevice(const std::string& name);
 std::string getDefaultDevice();
 
-void startCamera();
-void stopCamera();
 void startAudioDevice();
 void stopAudioDevice();
-bool switchInput(const std::string& resource);
 std::map<std::string, std::string> getSettings(const std::string& name);
 void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
 
@@ -413,6 +410,9 @@ bool getDecodingAccelerated();
 void setDecodingAccelerated(bool state);
 bool getEncodingAccelerated();
 void setEncodingAccelerated(bool state);
+
+std::string openVideoInput(const std::string& path);
+bool closeVideoInput(const std::string& id);
 }
 
 class VideoCallback {

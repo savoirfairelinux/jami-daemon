@@ -192,18 +192,19 @@ DRING_PUBLIC void setDefaultDevice(const std::string& deviceId);
 DRING_PUBLIC void setDeviceOrientation(const std::string& deviceId, int angle);
 DRING_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& deviceId);
 DRING_PUBLIC std::string getDefaultDevice();
-DRING_PUBLIC void startCamera();
-DRING_PUBLIC void stopCamera();
 DRING_PUBLIC void startAudioDevice();
 DRING_PUBLIC void stopAudioDevice();
+
+DRING_PUBLIC std::string openVideoInput(const std::string& path);
+DRING_PUBLIC bool closeVideoInput(const std::string& id);
+
 DRING_PUBLIC std::string createMediaPlayer(const std::string& path);
+DRING_PUBLIC std::string closeMediaPlayer(const std::string& id);
 DRING_PUBLIC bool pausePlayer(const std::string& id, bool pause);
-DRING_PUBLIC bool closePlayer(const std::string& id);
 DRING_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
 DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
-DRING_PUBLIC bool switchInput(const std::string& resource);
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
 DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
@@ -216,8 +217,8 @@ DRING_PUBLIC void addVideoDevice(
     const std::string& node,
     const std::vector<std::map<std::string, std::string>>& devInfo = {});
 DRING_PUBLIC void removeVideoDevice(const std::string& node);
-DRING_PUBLIC VideoFrame* getNewFrame();
-DRING_PUBLIC void publishFrame();
+DRING_PUBLIC VideoFrame* getNewFrame(const std::string& id);
+DRING_PUBLIC void publishFrame(const std::string& id);
 #endif
 
 DRING_PUBLIC bool getDecodingAccelerated();

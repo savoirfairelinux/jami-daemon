@@ -42,30 +42,26 @@ struct VideoManager
 public:
     void setDeviceOrientation(const std::string& deviceId, int angle);
 
-    /**
-     * VideoManager acts as a cache of the active VideoInput.
-     * When this input is needed, you must use getVideoCamera
-     * to create the instance if not done yet and obtain a shared pointer
-     * for your own usage.
-     * VideoManager instance doesn't increment the reference count of
-     * this video input instance: this instance is destroyed when the last
-     * external user has released its shared pointer.
-     */
-    std::weak_ptr<video::VideoInput> videoInput;
-    std::shared_ptr<video::VideoFrameActiveWriter> videoPreview;
+    // Client-managed video inputs and players
+    std::map<std::string, std::shared_ptr<video::VideoInput>> clientVideoInputs;
+    std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
+    // Client-managed audio preview
+    std::shared_ptr<AudioInput> audioPreview;
+
+    // device monitor
     video::VideoDeviceMonitor videoDeviceMonitor;
-    std::atomic_bool started;
+
     /**
-     * VideoManager also acts as a cache of the active AudioInput(s).
-     * When one of these is needed, you must use getAudioInput, which will
-     * create an instance if need be and return a shared_ptr.
+     * Cache of the active Audio/Video input(s).
      */
     std::map<std::string, std::weak_ptr<AudioInput>> audioInputs;
     std::map<std::string, std::weak_ptr<video::VideoInput>> videoInputs;
-    std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
     std::mutex audioMutex;
-    std::shared_ptr<AudioInput> audioPreview;
     bool hasRunningPlayers();
+    std::shared_ptr<video::VideoInput> getVideoInput(const std::string& id) const {
+        auto input = videoInputs.find(id);
+        return input == videoInputs.end() ? nullptr : input->second.lock();
+    }
 };
 
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();

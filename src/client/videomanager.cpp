@@ -364,17 +364,17 @@ VideoFrame::getOrientation() const
 }
 
 VideoFrame*
-getNewFrame()
+getNewFrame(const std::string& id)
 {
-    if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
+    if (auto input = jami::Manager::instance().getVideoManager().getVideoInput(id))
         return &input->getNewFrame();
     return nullptr;
 }
 
 void
-publishFrame()
+publishFrame(const std::string& id)
 {
-    if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
+    if (auto input = jami::Manager::instance().getVideoManager().getVideoInput(id))
         return input->publishFrame();
 }
 
@@ -446,32 +446,41 @@ applySettings(const std::string& deviceId, const std::map<std::string, std::stri
 }
 
 void
-startCamera()
-{
-    jami::Manager::instance().getVideoManager().videoPreview = jami::getVideoCamera();
-    jami::Manager::instance().getVideoManager().started = switchInput(
-        jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
-}
-
-void
-stopCamera()
-{
-    jami::Manager::instance().getVideoManager().started = false;
-    jami::Manager::instance().getVideoManager().videoPreview.reset();
-}
-
-void
 startAudioDevice()
 {
-    jami::Manager::instance().getVideoManager().audioPreview = jami::getAudioInput(
-        jami::RingBufferPool::DEFAULT_ID);
-    jami::Manager::instance().getVideoManager().audioPreview->switchInput("");
+    auto newPreview = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID);
+    jami::Manager::instance().getVideoManager().audioPreview = newPreview;
+    newPreview->switchInput("");
 }
 
 void
 stopAudioDevice()
 {
     jami::Manager::instance().getVideoManager().audioPreview.reset();
+}
+
+std::string openVideoInput(const std::string& path)
+{
+    auto& vm = jami::Manager::instance().getVideoManager();
+
+    auto id = path.empty() ? vm.videoDeviceMonitor.getMRLForDefaultDevice() : path;
+    auto& input = vm.clientVideoInputs[id];
+    if (not input) {
+        input = vm.getVideoInput(id);
+    }
+    return id;
+}
+
+bool closeVideoInput(const std::string& id)
+{
+    auto& vm = jami::Manager::instance().getVideoManager();
+
+    auto inputIt = vm.clientVideoInputs.find(id);
+    if (inputIt != vm.clientVideoInputs.end()) {
+        vm.clientVideoInputs.erase(inputIt);
+        return true;
+    }
+    return false;
 }
 
 std::string
@@ -514,20 +523,6 @@ stopLocalRecorder(const std::string& filepath)
 
     rec->stopRecording();
     jami::LocalRecorderManager::instance().removeRecorderByPath(filepath);
-}
-
-bool
-switchInput(const std::string& resource)
-{
-    bool ret = true;
-    if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
-        ret = input->switchInput(resource).valid();
-    else
-        JAMI_WARN("Video input not initialized");
-
-    if (auto input = jami::Manager::instance().getVideoManager().audioPreview)
-        ret &= input->switchInput(resource).valid();
-    return ret;
 }
 
 void
@@ -679,8 +674,6 @@ getVideoCamera()
     auto& vmgr = Manager::instance().getVideoManager();
     if (auto input = vmgr.videoInput.lock())
         return input;
-
-    vmgr.started = false;
     auto input = std::make_shared<video::VideoInput>();
     vmgr.videoInput = input;
     return input;

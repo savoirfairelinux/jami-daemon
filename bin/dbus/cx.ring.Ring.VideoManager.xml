@@ -67,13 +67,6 @@
             </arg>
         </method>
 
-        <method name="startCamera" tp:name-for-bindings="startCamera">
-            <tp:docstring> Starts the video camera, which renders the active v4l2 device's video to shared memory. Useful for testing/debugging camera settings</tp:docstring>
-        </method>
-
-        <method name="stopCamera" tp:name-for-bindings="stopCamera">
-        </method>
-
         <method name="startAudioDevice" tp:name-for-bindings="startAudioDevice">
             <tp:docstring> Starts the audio layer stream, so the audio device can be read.</tp:docstring>
         </method>
@@ -81,20 +74,20 @@
         <method name="stopAudioDevice" tp:name-for-bindings="stopAudioDevice">
         </method>
 
-        <method name="switchInput" tp:name-for-bindings="switchInput">
-            <arg type="s" name="resource" direction="in">
-                <tp:docstring>
-                    A media resource locator (MRL).
-                    Currently, the following are supported:
-                    <ul>
-                        <li>camera://DEVICE</li>
-                        <li>display://DISPLAY_NAME[ WIDTHxHEIGHT]</li>
-                        <li>file://IMAGE_PATH</li>
-                    </ul>
-                </tp:docstring>
+        <method name="openVideoInput" tp:name-for-bindings="openVideoInput">
+            <tp:docstring>Sets the default device id</tp:docstring>
+            <arg type="s" name="deviceUri" direction="in">
             </arg>
-            <arg type="b" name="switched" direction="out">
-                <tp:docstring>Returns true if the input stream was successfully changed, false otherwise</tp:docstring>
+            <arg type="s" name="inputId" direction="out">
+            </arg>
+        </method>
+
+        <method name="closeVideoInput" tp:name-for-bindings="closeVideoInput">
+            <tp:docstring>Sets the default device id</tp:docstring>
+            <arg type="s" name="inputId" direction="in">
+            </arg>
+            <arg type="b" name="closed" direction="out">
+            <tp:docstring>Returns true if the input was closed</tp:docstring>
             </arg>
         </method>
 
