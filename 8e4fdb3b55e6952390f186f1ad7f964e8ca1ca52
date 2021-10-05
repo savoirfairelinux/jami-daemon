@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "607e9893_12fc25bd",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1415,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-05T15:46:22Z",
+      "side": 1,
+      "message": "only for one-to-one ?",
+      "revId": "8e4fdb3b55e6952390f186f1ad7f964e8ca1ca52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
