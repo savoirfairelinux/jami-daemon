@@ -449,7 +449,8 @@ void
 startCamera()
 {
     jami::Manager::instance().getVideoManager().videoPreview = jami::getVideoCamera();
-    jami::Manager::instance().getVideoManager().started = switchToCamera();
+    jami::Manager::instance().getVideoManager().started = switchInput(
+        jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
 void
@@ -527,13 +528,6 @@ switchInput(const std::string& resource)
     if (auto input = jami::Manager::instance().getVideoManager().audioPreview)
         ret &= input->switchInput(resource).valid();
     return ret;
-}
-
-bool
-switchToCamera()
-{
-    return switchInput(
-        jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
 void
