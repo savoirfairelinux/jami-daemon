@@ -302,7 +302,8 @@ Account::unserialize(const YAML::Node& node)
     }
 
     parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
-    updateUpnpController();
+    if (isEnabled())
+        updateUpnpController();
 
     std::string defMod;
     parseValueOptional(node, DEFAULT_MODERATORS_KEY, defMod);
@@ -335,7 +336,8 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
         parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_);
 
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
-    updateUpnpController();
+    if (isEnabled())
+        updateUpnpController();
 
     std::string defMod;
     parseString(details, Conf::CONFIG_DEFAULT_MODERATORS, defMod);
