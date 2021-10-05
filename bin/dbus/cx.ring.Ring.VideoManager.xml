@@ -98,13 +98,6 @@
             </arg>
         </method>
 
-        <method name="hasCameraStarted" tp:name-for-bindings="hasCameraStarted">
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
-            <arg type="b" name="started" direction="out">
-            <tp:docstring>Returns true if the camera has already started, false otherwise</tp:docstring>
-            </arg>
-        </method>
-
         <method name="getDecodingAccelerated" tp:name-for-bindings="getDecodingAccelerated">
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
             <arg type="b" name="state" direction="out">

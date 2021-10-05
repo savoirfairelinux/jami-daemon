@@ -536,12 +536,6 @@ switchToCamera()
         jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
-bool
-hasCameraStarted()
-{
-    return jami::Manager::instance().getVideoManager().started;
-}
-
 void
 registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 {
