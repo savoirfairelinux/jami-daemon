@@ -169,13 +169,17 @@ Account::updateUpnpController()
 {
     std::lock_guard<std::mutex> lk {upnp_mtx};
 
-    if (upnpEnabled_ and not upnpCtrl_) {
+    if (not upnpEnabled_) {
+        upnpCtrl_.reset();
+        return;
+    }
+
+    // UPNP enabled. Create new controller if needed.
+    if (isUsable() and not upnpCtrl_) {
         upnpCtrl_.reset(new upnp::Controller());
         if (not upnpCtrl_) {
             throw std::runtime_error("Failed to create a UPNP Controller instance!");
         }
-    } else if (not upnpEnabled_) {
-        upnpCtrl_.reset();
     }
 }
 
