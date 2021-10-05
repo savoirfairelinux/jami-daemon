@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19775133_5d2ae3a3",
+        "filename": "src/account.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-05T15:41:23Z",
+      "side": 1,
+      "message": "Add logic here and use isUsable()\n\n    bool useUpnp \u003d isUsable() and upnpEnabled_;\n    if (useUpnp and not upnpCtrl_) {\n        ...\n    } else if (not useUpnp) {\n        ...\n    }",
+      "revId": "68a2baf93dea964bf63945c0aedbdccc859f6090",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "845fdcc8_da948df6",
+        "filename": "src/account.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-05T15:41:23Z",
+      "side": 1,
+      "message": "maybe the account was just disabled. in that case we need to destroy the controller. The logic should be in updateUpnpController (also to avoid duplication).",
+      "revId": "68a2baf93dea964bf63945c0aedbdccc859f6090",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
