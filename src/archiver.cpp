@@ -296,8 +296,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
         const auto& fileMatchPair = f(filename);
         if (fileMatchPair.first) {
             auto filePath = dir + DIR_SEPARATOR_STR + fileMatchPair.second;
-            std::string directory(filePath);
-            directory = directory.substr(0, directory.find_last_of(DIR_SEPARATOR_CH));
+            std::string directory = filePath.substr(0, filePath.find_last_of(DIR_SEPARATOR_CH));
             fileutils::check_dir(directory.c_str());
             mz_zip_reader_entry_open(zip_handle);
             void* buffStream = NULL;
