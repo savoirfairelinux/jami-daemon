@@ -48,7 +48,6 @@ std::string getDefaultDevice();
 
 void startCamera();
 void stopCamera();
-bool hasCameraStarted();
 void startAudioDevice();
 void stopAudioDevice();
 bool switchInput(const std::string& resource);

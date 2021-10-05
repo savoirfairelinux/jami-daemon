@@ -92,12 +92,6 @@ DBusVideoManager::switchInput(const std::string& resource) -> decltype(DRing::sw
 }
 
 auto
-DBusVideoManager::hasCameraStarted() -> decltype(DRing::hasCameraStarted())
-{
-    return DRing::hasCameraStarted();
-}
-
-auto
 DBusVideoManager::getDecodingAccelerated() -> decltype(DRing::getDecodingAccelerated())
 {
     return DRing::getDecodingAccelerated();
