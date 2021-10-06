@@ -282,6 +282,8 @@ public:
 
     bool isAutoAnswerEnabled() const { return autoAnswerEnabled_; }
 
+    bool receiveCallWhenBusy() const { return receiveCallWhenBusy_; }
+
     bool isReadReceiptEnabled() const { return sendReadReceipt_; }
 
     void attachCall(const std::string& id);
@@ -448,6 +450,7 @@ protected:
     static const char* const HOSTNAME_KEY;
     static const char* const ACCOUNT_ENABLE_KEY;
     static const char* const ACCOUNT_AUTOANSWER_KEY;
+    static const char* const RECEIVE_CALL_WHEN_BUSY_KEY;
     static const char* const ACCOUNT_READRECEIPT_KEY;
     static const char* const ACCOUNT_ISRENDEZVOUS_KEY;
     static const char* const ACCOUNT_ACTIVE_CALL_LIMIT_KEY;
@@ -511,6 +514,9 @@ protected:
 
     /* If true, automatically answer calls to this account */
     bool autoAnswerEnabled_;
+
+    /* If False, automatically refuses calls when another is active */
+    bool receiveCallWhenBusy_;
 
     // If true, send Displayed status (and emit to the client)
     bool sendReadReceipt_;
