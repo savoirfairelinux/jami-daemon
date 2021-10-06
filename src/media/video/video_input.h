@@ -65,7 +65,14 @@ public:
     int getWidth() const;
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
-    const DeviceParams& getParams() const;
+
+    const DeviceParams& getConfig() const {
+        return decOpts_;
+    }
+    std::shared_future<DeviceParams> getParams() const {
+        return futureDecOpts_;
+    }
+    
     MediaStream getInfo() const;
 
     void setSink(const std::string& sinkId);
