@@ -579,12 +579,6 @@ VideoInput::switchInput(const std::string& resource)
     return futureDecOpts_;
 }
 
-const DeviceParams&
-VideoInput::getParams() const
-{
-    return decOpts_;
-}
-
 MediaStream
 VideoInput::getInfo() const
 {

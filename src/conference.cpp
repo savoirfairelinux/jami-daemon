@@ -789,7 +789,7 @@ std::shared_ptr<video::VideoMixer>
 Conference::getVideoMixer()
 {
     if (!videoMixer_)
-        videoMixer_.reset(new video::VideoMixer(id_));
+        videoMixer_.reset(new video::VideoMixer(id_, mediaInput_));
     return videoMixer_;
 }
 #endif
