@@ -262,12 +262,6 @@ getParticipantList(const std::string& confID)
     return jami::Manager::instance().getParticipantList(confID);
 }
 
-std::vector<std::string>
-getDisplayNames(const std::string& confID)
-{
-    return jami::Manager::instance().getDisplayNames(confID);
-}
-
 std::string
 getConferenceId(const std::string& callID)
 {

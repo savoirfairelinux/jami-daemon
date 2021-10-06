@@ -3196,15 +3196,6 @@ Manager::getConferenceList() const
 }
 
 std::vector<std::string>
-Manager::getDisplayNames(const std::string& confID) const
-{
-    if (auto conf = getConferenceFromID(confID))
-        return conf->getDisplayNames();
-    JAMI_WARN("Did not find conference %s", confID.c_str());
-    return {};
-}
-
-std::vector<std::string>
 Manager::getParticipantList(const std::string& confID) const
 {
     if (auto conf = getConferenceFromID(confID)) {

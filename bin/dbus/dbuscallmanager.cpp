@@ -253,13 +253,6 @@ DBusCallManager::getParticipantList(const std::string& confID)
 }
 
 auto
-DBusCallManager::getDisplayNames(const std::string& confID)
-    -> decltype(DRing::getDisplayNames(confID))
-{
-    return DRing::getDisplayNames(confID);
-}
-
-auto
 DBusCallManager::getConferenceId(const std::string& callID)
     -> decltype(DRing::getConferenceId(callID))
 {

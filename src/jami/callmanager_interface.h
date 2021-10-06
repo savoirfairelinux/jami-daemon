@@ -87,7 +87,6 @@ DRING_PUBLIC bool holdConference(const std::string& confID);
 DRING_PUBLIC bool unholdConference(const std::string& confID);
 DRING_PUBLIC std::vector<std::string> getConferenceList();
 DRING_PUBLIC std::vector<std::string> getParticipantList(const std::string& confID);
-DRING_PUBLIC std::vector<std::string> getDisplayNames(const std::string& confID);
 DRING_PUBLIC std::string getConferenceId(const std::string& callID);
 DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(

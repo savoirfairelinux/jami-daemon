@@ -97,7 +97,6 @@ public:
     bool unholdConference(const std::string& confID);
     std::vector<std::string> getConferenceList();
     std::vector<std::string> getParticipantList(const std::string& confID);
-    std::vector<std::string> getDisplayNames(const std::string& confID);
     std::string getConferenceId(const std::string& callID);
     std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
     bool startRecordedFilePlayback(const std::string& filepath);
