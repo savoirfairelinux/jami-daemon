@@ -78,14 +78,15 @@ private:
 static constexpr const auto MIXER_FRAMERATE = 30;
 static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / MIXER_FRAMERATE);
 
-VideoMixer::VideoMixer(const std::string& id)
+VideoMixer::VideoMixer(const std::string& id, const std::string& localInput)
     : VideoGenerator::VideoGenerator()
     , id_(id)
     , sink_(Manager::instance().createSinkClient(id, true))
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
 {
     // Local video camera is the main participant
-    videoLocal_ = getVideoCamera();
+    if (not localInput.empty())
+        videoLocal_ = getVideoInput(localInput);
     if (videoLocal_)
         videoLocal_->attach(this);
     loop_.start();
@@ -122,8 +123,6 @@ VideoMixer::switchInput(const std::string& input)
             localInput->stopInput();
         }
 #endif
-    } else {
-        videoLocal_ = getVideoCamera();
     }
 
     if (input.empty()) {
@@ -132,7 +131,7 @@ VideoMixer::switchInput(const std::string& input)
     }
 
     // Re-attach videoInput to mixer
-    if (videoLocal_) {
+    if (videoLocal_ = getVideoInput(input)) {
         if (auto localInput = std::dynamic_pointer_cast<VideoInput>(videoLocal_)) {
             localInput->switchInput(input);
         }
@@ -153,7 +152,6 @@ VideoMixer::switchSecondaryInput(const std::string& input)
         }
 #endif
     }
-    videoLocalSecondary_ = getVideoInput(input);
 
     if (input.empty()) {
         JAMI_DBG("Input is empty, don't add it in the mixer");
@@ -161,7 +159,7 @@ VideoMixer::switchSecondaryInput(const std::string& input)
     }
 
     // Re-attach videoInput to mixer
-    if (videoLocalSecondary_) {
+    if (videoLocalSecondary_ = getVideoInput(input)) {
         if (auto videoInput = std::dynamic_pointer_cast<VideoInput>(videoLocalSecondary_))
             videoInput->switchInput(input);
         videoLocalSecondary_->attach(this);
