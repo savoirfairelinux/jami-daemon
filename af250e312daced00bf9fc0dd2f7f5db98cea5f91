@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "00058b12_217eb4ab",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-10-06T18:07:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nusing the result of an assignment as a condition without parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-parentheses",
+      "revId": "af250e312daced00bf9fc0dd2f7f5db98cea5f91",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a3887d2_d4db6747",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-10-06T18:07:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nusing the result of an assignment as a condition without parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-parentheses",
+      "revId": "af250e312daced00bf9fc0dd2f7f5db98cea5f91",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
