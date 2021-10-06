@@ -83,7 +83,7 @@ LocalRecorder::startRecording()
 
 #ifdef ENABLE_VIDEO
     // video recording
-    if (!isAudioOnly_) {
+    /*if (!isAudioOnly_) {
         videoInput_ = std::static_pointer_cast<video::VideoInput>(jami::getVideoCamera());
         if (videoInput_) {
             videoInput_->attach(recorder_->addStream(videoInput_->getInfo()));
@@ -91,7 +91,7 @@ LocalRecorder::startRecording()
             JAMI_ERR() << "Unable to record video (no video input)";
             return false;
         }
-    }
+    }*/
 #endif
 
     return Recordable::startRecording(path_);
