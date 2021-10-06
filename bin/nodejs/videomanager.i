@@ -46,13 +46,8 @@ namespace DRing {
 void setDefaultDevice(const std::string& name);
 std::string getDefaultDevice();
 
-void startCamera();
-void stopCamera();
-bool hasCameraStarted();
 void startAudioDevice();
 void stopAudioDevice();
-bool switchInput(const std::string& resource);
-bool switchToCamera();
 std::map<std::string, std::string> getSettings(const std::string& name);
 void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
 
