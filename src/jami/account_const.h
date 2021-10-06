@@ -111,6 +111,7 @@ constexpr static const char ENABLED[] = "Account.enable";
 constexpr static const char MAILBOX[] = "Account.mailbox";
 constexpr static const char DTMF_TYPE[] = "Account.dtmfType";
 constexpr static const char AUTOANSWER[] = "Account.autoAnswer";
+constexpr static const char RECEIVECALLWHENBUSY[] = "Account.receiveCallWhenBusy";
 constexpr static const char SENDREADRECEIPT[] = "Account.sendReadReceipt";
 constexpr static const char ISRENDEZVOUS[] = "Account.rendezVous";
 constexpr static const char ACTIVE_CALL_LIMIT[] = "Account.activeCallLimit";

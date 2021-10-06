@@ -82,6 +82,7 @@ const char* const Account::PASSWORD_KEY = "password";
 const char* const Account::HOSTNAME_KEY = "hostname";
 const char* const Account::ACCOUNT_ENABLE_KEY = "enable";
 const char* const Account::ACCOUNT_AUTOANSWER_KEY = "autoAnswer";
+const char* const Account::RECEIVE_CALL_WHEN_BUSY_KEY = "receiveCallWhenBusy";
 const char* const Account::ACCOUNT_READRECEIPT_KEY = "sendReadReceipt";
 const char* const Account::ACCOUNT_ISRENDEZVOUS_KEY = "rendezVous";
 const char* const Account::ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
@@ -112,6 +113,7 @@ Account::Account(const std::string& accountID)
     , alias_()
     , enabled_(true)
     , autoAnswerEnabled_(false)
+    , receiveCallWhenBusy_(true)
     , sendReadReceipt_(true)
     , isRendezVous_(false)
     , registrationState_(RegistrationState::UNREGISTERED)
@@ -242,6 +244,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << activeCodecs;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
+    out << YAML::Key << RECEIVE_CALL_WHEN_BUSY_KEY << YAML::Value << receiveCallWhenBusy_;
     out << YAML::Key << ACCOUNT_READRECEIPT_KEY << YAML::Value << sendReadReceipt_;
     out << YAML::Key << ACCOUNT_ISRENDEZVOUS_KEY << YAML::Value << isRendezVous_;
     out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit_;
@@ -267,6 +270,7 @@ Account::unserialize(const YAML::Node& node)
     parseValue(node, ALIAS_KEY, alias_);
     parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
     parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
+    parseValueOptional(node, RECEIVE_CALL_WHEN_BUSY_KEY, receiveCallWhenBusy_);
     parseValueOptional(node, ACCOUNT_READRECEIPT_KEY, sendReadReceipt_);
     parseValueOptional(node, ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous_);
     parseValue(node, ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit_);
@@ -326,6 +330,7 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
     parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
     parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
+    parseBool(details, Conf::CONFIG_ACCOUNT_RECEIVECALLWHENBUSY, receiveCallWhenBusy_);
     parseBool(details, Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt_);
     parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_);
     parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
@@ -361,6 +366,7 @@ Account::getAccountDetails() const
             {Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_},
             {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ACCOUNT_RECEIVECALLWHENBUSY, receiveCallWhenBusy_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_ ? TRUE_STR : FALSE_STR},
             {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit_)},

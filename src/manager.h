@@ -526,6 +526,12 @@ public:
     std::vector<std::string> getCallList() const;
 
     /**
+     * Get list of calls for a accountId (internal subcalls are filter-out)
+     * @return std::vector<std::string> A list of call IDs (without subcalls)
+     */
+    std::vector<std::string> getCallList(const std::string accountId) const;
+
+    /**
      * Get conferences informations (participant list + rendered positions in the frame)
      * @param confId
      * @return {{"uri":"xxx", "x":"0", "y":"0", "w":"0", "h":"0"}...}

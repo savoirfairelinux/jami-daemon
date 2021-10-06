@@ -2050,6 +2050,12 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         return;
     }
 
+    auto list = getCallList(accountId);
+    if (!list.empty() && !account->receiveCallWhenBusy()) {
+        refuseCall(call.getCallId());
+        return;
+    }
+
     if (account->isMultiStreamEnabled()) {
         // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
@@ -3163,6 +3169,18 @@ Manager::getCallList() const
     std::vector<std::string> results;
     for (const auto& call : callFactory.getAllCalls()) {
         if (!call->isSubcall())
+            results.push_back(call->getCallId());
+    }
+    return results;
+}
+
+std::vector<std::string>
+Manager::getCallList(const std::string accountId) const
+{
+    std::vector<std::string> results;
+    for (const auto& call : callFactory.getAllCalls()) {
+        if (!call->isSubcall() && call->getAccountId() == accountId
+            && call->getState() == Call::CallState::ACTIVE)
             results.push_back(call->getCallId());
     }
     return results;

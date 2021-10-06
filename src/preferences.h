@@ -89,6 +89,7 @@ public:
     void setSearchBarDisplay(bool search) { searchBarDisplay_ = search; }
 
     bool getMd5Hash() const { return md5Hash_; }
+
     void setMd5Hash(bool md5) { md5Hash_ = md5; }
 
 private:
