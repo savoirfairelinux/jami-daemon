@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "57d0027e_abbd0a74",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T13:35:54Z",
+      "side": 1,
+      "message": "still present in cx.ring.Ring.CallManager.xml (fails the compilation)",
+      "revId": "0de3668fc34acec27ccabd67eb42c764d45c96a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
