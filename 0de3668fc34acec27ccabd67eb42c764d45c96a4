@@ -16,6 +16,24 @@
       "message": "still present in cx.ring.Ring.CallManager.xml (fails the compilation)",
       "revId": "0de3668fc34acec27ccabd67eb42c764d45c96a4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "114c7a7c_1eb3988f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T14:28:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "57d0027e_abbd0a74",
+      "revId": "0de3668fc34acec27ccabd67eb42c764d45c96a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
