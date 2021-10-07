@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "70a9c5a8_388c974f",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T19:06:15Z",
+      "side": 1,
+      "message": "This API is only for client-side capture (eg. Android-style), not for \"normal\" videoInput.\nThis should never happen if there is no major client-side bug. In that case every frame would be lost and no video would be captured.\nThis was the case in the Android client during development and there wasn\u0027t any log, only this message allowed to confirm the issue.",
+      "parentUuid": "b5eca0e9_cec7881d",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b4d094bb_0028c53d",
         "filename": "src/client/videomanager.cpp",
         "patchSetId": 6
@@ -31,6 +49,24 @@
       "writtenOn": "2021-10-07T15:04:27Z",
       "side": 1,
       "message": "I suppose this used for camera preview, so potentially called up to 30 times per second.\nIf getVideoInput fails for any reason, we will have tons of traces.",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad558c99_9bfef3ad",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 381,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T19:06:15Z",
+      "side": 1,
+      "message": "This is used for client-side video capture, not for video preview. No other log shows any issue in that case (see above).",
+      "parentUuid": "b4d094bb_0028c53d",
       "revId": "24a859ff4076a98342ce80a776a0160029febe33",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -54,6 +90,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0dfa8b07_8e8cfc0c",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T19:06:15Z",
+      "side": 1,
+      "message": "Input is a reference to the map value, created here.",
+      "parentUuid": "863a0628_25e846fb",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f388a9e1_9fcec5d8",
         "filename": "src/media/localrecorder.cpp",
         "patchSetId": 6
@@ -65,6 +119,24 @@
       "writtenOn": "2021-10-07T15:04:27Z",
       "side": 1,
       "message": "why ?",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a54320ec_f8feeb66",
+        "filename": "src/media/localrecorder.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T19:06:15Z",
+      "side": 1,
+      "message": "WIP",
+      "parentUuid": "f388a9e1_9fcec5d8",
       "revId": "24a859ff4076a98342ce80a776a0160029febe33",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -88,6 +160,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8d930dc6_93262952",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T19:06:15Z",
+      "side": 1,
+      "message": "Could be removed. This patch merely updates the current behavior to the new API.",
+      "parentUuid": "31b62b17_db656898",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fa59d499_fc9b4a77",
         "filename": "src/media/video/video_rtp_session.cpp",
         "patchSetId": 6
@@ -99,6 +189,24 @@
       "writtenOn": "2021-10-07T15:04:27Z",
       "side": 1,
       "message": "May be not in this patch, but ultimately a single RTP session should only have one input, and it should not care if it\u0027s a camera or a mixer. It does not need to know if we hare in conference or not.",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "266332d0_4dd14c46",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T19:06:15Z",
+      "side": 1,
+      "message": "Indeed",
+      "parentUuid": "fa59d499_fc9b4a77",
       "revId": "24a859ff4076a98342ce80a776a0160029febe33",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -122,6 +230,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a465ea19_d6adf514",
+        "filename": "tools/jamictrl/jamictrl.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T19:06:15Z",
+      "side": 1,
+      "message": "Existing script is merely updated to use the new API. In that case the return value is always true since we use the id provided just above.",
+      "parentUuid": "b875efee_f56b0881",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "10af7d02_16e0e114",
         "filename": "tools/jamictrl/toggle_video_preview.py",
         "patchSetId": 6
@@ -133,6 +259,24 @@
       "writtenOn": "2021-10-07T15:04:27Z",
       "side": 1,
       "message": "check return values ?",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5151f618_1cb8fa22",
+        "filename": "tools/jamictrl/toggle_video_preview.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T19:06:15Z",
+      "side": 1,
+      "message": "Existing script is merely updated to use the new API. Checking the return value is not mandatory, in that case the return value would always be true since we use the id provided just above.",
+      "parentUuid": "10af7d02_16e0e114",
       "revId": "24a859ff4076a98342ce80a776a0160029febe33",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
