@@ -16,6 +16,24 @@
       "message": "Do we still need STUN ? If yes, in which case?",
       "revId": "02e53134c21f15eb0c2184c17306326a8a0a8fba",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7995e96c_8f3316c1",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 995,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T21:31:55Z",
+      "side": 1,
+      "message": "Stun for SIP accounts provide the public IP for TURN authorization etc, as per the spec.\n\nIn JamiAccount it\u0027s provided by the DHT instead.",
+      "parentUuid": "796579b5_b4e29ec3",
+      "revId": "02e53134c21f15eb0c2184c17306326a8a0a8fba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
