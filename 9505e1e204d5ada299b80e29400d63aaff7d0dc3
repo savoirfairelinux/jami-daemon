@@ -16,6 +16,24 @@
       "message": "still one occurrence in daemon/bin/nodejs/videomanager.i",
       "revId": "9505e1e204d5ada299b80e29400d63aaff7d0dc3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "487dc447_827d41e7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-07T14:28:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "11cf2cce_ad3db61f",
+      "revId": "9505e1e204d5ada299b80e29400d63aaff7d0dc3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
