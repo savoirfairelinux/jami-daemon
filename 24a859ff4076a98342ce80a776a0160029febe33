@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b5eca0e9_cec7881d",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T15:04:27Z",
+      "side": 1,
+      "message": "Potentially called up to 30 times per second.\nIf getVideoInput fails for any reason, we will have tons of traces.",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4d094bb_0028c53d",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 381,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T15:04:27Z",
+      "side": 1,
+      "message": "I suppose this used for camera preview, so potentially called up to 30 times per second.\nIf getVideoInput fails for any reason, we will have tons of traces.",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "863a0628_25e846fb",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T15:04:27Z",
+      "side": 1,
+      "message": "what do we need input for ?",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f388a9e1_9fcec5d8",
+        "filename": "src/media/localrecorder.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T15:04:27Z",
+      "side": 1,
+      "message": "why ?",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31b62b17_db656898",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T15:04:27Z",
+      "side": 1,
+      "message": "do we still need this ?",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa59d499_fc9b4a77",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T15:04:27Z",
+      "side": 1,
+      "message": "May be not in this patch, but ultimately a single RTP session should only have one input, and it should not care if it\u0027s a camera or a mixer. It does not need to know if we hare in conference or not.",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b875efee_f56b0881",
+        "filename": "tools/jamictrl/jamictrl.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T15:04:27Z",
+      "side": 1,
+      "message": "should not we check the return values ?\n\nWhat does toggle_video do anyway ?",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "10af7d02_16e0e114",
+        "filename": "tools/jamictrl/toggle_video_preview.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-07T15:04:27Z",
+      "side": 1,
+      "message": "check return values ?",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
