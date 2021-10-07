@@ -55,12 +55,12 @@ public:
     /**
      * Stop recording
      */
-    void stopRecording();
+    virtual void stopRecording();
 
     /**
      * Start recording
      */
-    bool startRecording(const std::string& path);
+    virtual bool startRecording(const std::string& path);
 
     /**
      * Return the file path for this recording

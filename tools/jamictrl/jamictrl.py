@@ -233,9 +233,9 @@ if __name__ == "__main__":
         import time
         while True:
             time.sleep(2)
-            ctrl.videomanager.startCamera()
+            id = ctrl.videomanager.openVideoInput("")
             time.sleep(2)
-            ctrl.videomanager.stopCamera()
+            ctrl.videomanager.closeVideoInput(id)
 
     if len(sys.argv) == 1 or ctrl.autoAnswer:
         signal.signal(signal.SIGINT, ctrl.interruptHandler)
