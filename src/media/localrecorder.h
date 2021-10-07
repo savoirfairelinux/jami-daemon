@@ -40,27 +40,28 @@ namespace jami {
 class LocalRecorder : public Recordable
 {
 public:
-    LocalRecorder(const bool& audioOnly);
+    LocalRecorder(const std::string& inputUri);
     ~LocalRecorder();
 
     /**
      * Set recording path
      */
-    void setPath(const std::string& path);
+    void setPath(const std::string& path) override;
 
     /**
      * Start local recording. Return true if recording was successfully
      * started, false otherwise.
      */
-    bool startRecording();
+    bool startRecording() override;
 
     /**
      * Stops recording.
      */
-    void stopRecording();
+    void stopRecording() override;
 
 private:
     std::string path_;
+    std::string inputUri_;
 
     // media inputs
     std::shared_ptr<jami::video::VideoInput> videoInput_;
