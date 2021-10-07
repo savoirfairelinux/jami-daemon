@@ -300,9 +300,8 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_setNativeWindowGeomet
     ANativeWindow_setBuffersGeometry(window, width, height, WINDOW_FORMAT_RGBX_8888);
 }
 
-void AndroidDisplayCb(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer> frame)
+void releaseBuffer(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer> frame)
 {
-    ANativeWindow_unlockAndPost(window);
     std::unique_lock<std::mutex> guard(windows_mutex);
     try {
         windows.at(window) = std::move(frame);
@@ -311,24 +310,33 @@ void AndroidDisplayCb(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer>
     }
 }
 
+void AndroidDisplayCb(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer> frame)
+{
+    ANativeWindow_unlockAndPost(window);
+    releaseBuffer(window, std::move(frame));
+}
+
 std::unique_ptr<DRing::FrameBuffer> sinkTargetPullCallback(ANativeWindow *window, std::size_t bytes)
 {
     try {
-        std::unique_ptr<DRing::FrameBuffer> ret;
+        std::unique_ptr<DRing::FrameBuffer> frame;
         {
             std::lock_guard<std::mutex> guard(windows_mutex);
-            ret = std::move(windows.at(window));
+            frame = std::move(windows.at(window));
         }
-        if (ret) {
+        if (frame) {
             ANativeWindow_Buffer buffer;
             if (ANativeWindow_lock(window, &buffer, nullptr) == 0) {
-                ret->avframe->format = AV_PIX_FMT_RGBA;
-                ret->avframe->width = buffer.width;
-                ret->avframe->height = buffer.height;
-                ret->avframe->data[0] = (uint8_t *) buffer.bits;
-                ret->avframe->linesize[0] = buffer.stride * 4;
+                frame->avframe->format = AV_PIX_FMT_RGBA;
+                frame->avframe->width = buffer.width;
+                frame->avframe->height = buffer.height;
+                frame->avframe->data[0] = (uint8_t *) buffer.bits;
+                frame->avframe->linesize[0] = buffer.stride * 4;
+                return frame;
+            } else {
+                __android_log_print(ANDROID_LOG_WARN, TAG, "Can't lock window");
+                releaseBuffer(window, std::move(frame));
             }
-            return ret;
         }
     } catch (...) {
     }
