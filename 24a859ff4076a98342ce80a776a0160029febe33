@@ -141,6 +141,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f57be8ee_898a6364",
+        "filename": "src/media/localrecorder.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-08T21:02:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a54320ec_f8feeb66",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "31b62b17_db656898",
@@ -172,6 +190,24 @@
       "side": 1,
       "message": "Could be removed. This patch merely updates the current behavior to the new API.",
       "parentUuid": "31b62b17_db656898",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8462c205_851f7d29",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-08T21:02:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8d930dc6_93262952",
       "revId": "24a859ff4076a98342ce80a776a0160029febe33",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
