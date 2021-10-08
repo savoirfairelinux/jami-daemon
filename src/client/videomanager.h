@@ -16,8 +16,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef VIDEOMANAGER_H_
-#define VIDEOMANAGER_H_
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -42,37 +41,31 @@ struct VideoManager
 public:
     void setDeviceOrientation(const std::string& deviceId, int angle);
 
-    /**
-     * VideoManager acts as a cache of the active VideoInput.
-     * When this input is needed, you must use getVideoCamera
-     * to create the instance if not done yet and obtain a shared pointer
-     * for your own usage.
-     * VideoManager instance doesn't increment the reference count of
-     * this video input instance: this instance is destroyed when the last
-     * external user has released its shared pointer.
-     */
-    std::weak_ptr<video::VideoInput> videoInput;
-    std::shared_ptr<video::VideoFrameActiveWriter> videoPreview;
-    video::VideoDeviceMonitor videoDeviceMonitor;
-    std::atomic_bool started;
-    /**
-     * VideoManager also acts as a cache of the active AudioInput(s).
-     * When one of these is needed, you must use getAudioInput, which will
-     * create an instance if need be and return a shared_ptr.
-     */
-    std::map<std::string, std::weak_ptr<AudioInput>> audioInputs;
-    std::map<std::string, std::weak_ptr<video::VideoInput>> videoInputs;
+    // Client-managed video inputs and players
+    std::map<std::string, std::shared_ptr<video::VideoInput>> clientVideoInputs;
     std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
-    std::mutex audioMutex;
+    // Client-managed audio preview
     std::shared_ptr<AudioInput> audioPreview;
+
+    // device monitor
+    video::VideoDeviceMonitor videoDeviceMonitor;
+
+    /**
+     * Cache of the active Audio/Video input(s).
+     */
+    std::map<std::string, std::weak_ptr<AudioInput>, std::less<>> audioInputs;
+    std::map<std::string, std::weak_ptr<video::VideoInput>, std::less<>> videoInputs;
+    std::mutex audioMutex;
     bool hasRunningPlayers();
+    std::shared_ptr<video::VideoInput> getVideoInput(std::string_view id) const {
+        auto input = videoInputs.find(id);
+        return input == videoInputs.end() ? nullptr : input->second.lock();
+    }
 };
 
-std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
-std::shared_ptr<video::VideoInput> getVideoInput(
-    const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
+std::shared_ptr<video::VideoInput> getVideoInput(const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
 std::string createMediaPlayer(const std::string& path);
 std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
 bool pausePlayer(const std::string& id, bool pause);
@@ -82,5 +75,3 @@ bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
 } // namespace jami
-
-#endif // VIDEOMANAGER_H_

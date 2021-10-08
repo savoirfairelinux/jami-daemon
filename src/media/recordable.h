@@ -55,7 +55,7 @@ public:
     /**
      * Stop recording
      */
-    void stopRecording();
+    virtual void stopRecording();
 
     /**
      * Start recording
