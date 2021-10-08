@@ -292,7 +292,7 @@ bool
 SinkClient::stop() noexcept
 {
     setFrameSize(0, 0);
-    setFramePosition(0, 0);
+    setCrop(0, 0, 0, 0);
     shm_.reset();
     return true;
 }
@@ -315,7 +315,7 @@ bool
 SinkClient::stop() noexcept
 {
     setFrameSize(0, 0);
-    setFramePosition(0, 0);
+    setCrop(0, 0, 0, 0);
     return true;
 }
 
@@ -337,10 +337,6 @@ void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
-    int width = width_;
-    int height = height_;
-    int x = x_;
-    int y = y_;
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
@@ -357,16 +353,14 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     if (avTarget_.push) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
-        if (y + height <= outFrame->pointer()->height) {
-            outFrame->pointer()->crop_top = y;
-            outFrame->pointer()->crop_bottom = outFrame->pointer()->height - y - height;
-        }
-        if (x + width <= outFrame->pointer()->width) {
-            outFrame->pointer()->crop_left = x;
-            outFrame->pointer()->crop_right = outFrame->pointer()->width - x - width;
-        }
-        if (height && width)
+        if (crop_.w || crop_.h) {
+            JAMI_DBG("[Sink:%p] crop from %dx%d to %dx%d at %dx%d", this, outFrame->width(), outFrame->height(), crop_.w, crop_.h, crop_.x, crop_.y);
+            outFrame->pointer()->crop_top = crop_.y;
+            outFrame->pointer()->crop_bottom = (size_t) outFrame->height() - crop_.y - crop_.h;
+            outFrame->pointer()->crop_left = crop_.x;
+            outFrame->pointer()->crop_right = (size_t) outFrame->width() - crop_.x - crop_.w;
             av_frame_apply_cropping(outFrame->pointer(), AV_FRAME_CROP_UNALIGNED);
+        }
 
         avTarget_.push(std::move(outFrame));
     }
@@ -405,28 +399,23 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                                          frame->height(),
                                          frame->format(),
                                          false);
-            if (std::abs(rotation_ - angle) == 90) {
-                width = height_;
-                height = width_;
-            }
             rotation_ = angle;
         }
         if (filter_) {
+            JAMI_DBG("[Sink:%p] rotate to %d", this, angle);
             filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
             frame = std::static_pointer_cast<VideoFrame>(
                 std::shared_ptr<MediaFrame>(filter_->readOutput()));
         }
 
-        if (height < frame->height()) {
-            frame->pointer()->crop_top = y;
-            frame->pointer()->crop_bottom = (size_t) frame->height() - y - height;
-        }
-        if (width < frame->width()) {
-            frame->pointer()->crop_left = x;
-            frame->pointer()->crop_right = (size_t) frame->width() - x - width;
-        }
-        if (height < frame->height() || width < frame->width())
+        if (crop_.w || crop_.h) {
+            JAMI_DBG("[Sink:%p] crop from %dx%d to %dx%d at %dx%d", this, frame->width(), frame->height(), crop_.w, crop_.h, crop_.x, crop_.y);
+            frame->pointer()->crop_top = crop_.y;
+            frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
+            frame->pointer()->crop_left = crop_.x;
+            frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
             av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+        }
 
         if (frame->height() != height_ || frame->width() != width_) {
             setFrameSize(0, 0);
@@ -437,8 +426,8 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
         std::lock_guard<std::mutex> lock(mtx_);
         if (target_.pull) {
-            width = frame->width();
-            height = frame->height();
+            int width = frame->width();
+            int height = frame->height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
             const int format = AV_PIX_FMT_RGBA;
 #else
@@ -448,6 +437,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             if (bytes > 0) {
                 if (auto buffer_ptr = target_.pull(bytes)) {
                     if (buffer_ptr->avframe) {
+                        JAMI_DBG("[Sink:%p] display to %dx%d", this, buffer_ptr->avframe->width, buffer_ptr->avframe->height);
                         scaler_->scale(*frame, buffer_ptr->avframe.get());
                     } else {
                         buffer_ptr->format = format;
@@ -489,11 +479,13 @@ SinkClient::setFrameSize(int width, int height)
 }
 
 void
-SinkClient::setFramePosition(int x, int y)
+SinkClient::setCrop(int x, int y, int w, int h)
 {
-    JAMI_DBG("[Sink:%p] Change frame position from [%d, %d] to [%d, %d]", this, x_, y_, x, y);
-    x_ = x;
-    y_ = y;
+    JAMI_DBG("[Sink:%p] Change crop to [x:%d, y:%d, w:%d, h:%d]", this, crop_.x, crop_.y, crop_.w, crop_.h);
+    crop_.x = x;
+    crop_.y = y;
+    crop_.w = w;
+    crop_.h = h;
 }
 
 } // namespace video
