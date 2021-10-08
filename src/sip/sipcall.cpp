@@ -1410,7 +1410,7 @@ SIPCall::setVideoOrientation(int rotation)
                            + "/>"
                              "</to_encoder></vc_primitive></media_control>";
 
-    JAMI_DBG("Sending device orientation via SIP INFO");
+    JAMI_DBG("Sending device orientation via SIP INFO %d", rotation);
 
     sendSIPInfo(sip_body, "media_control+xml");
 }

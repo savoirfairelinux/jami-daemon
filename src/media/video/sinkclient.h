@@ -74,7 +74,7 @@ public:
     bool stop() noexcept;
 
     void setFrameSize(int width, int height);
-    void setFramePosition(int x, int y);
+    void setCrop(int x, int y, int w, int h);
 
     void registerTarget(const DRing::SinkTarget& target) noexcept {
         std::lock_guard<std::mutex> lock(mtx_);
@@ -88,8 +88,10 @@ private:
     const bool mixer_ {false};
     int width_ {0};
     int height_ {0};
-    int x_ {0};
-    int y_ {0};
+
+    struct Rect { int x {0}, y {0}, w {0}, h {0}; };
+    Rect crop_ {};
+
     bool started_ {false}; // used to arbitrate client's stop signal.
     int rotation_ {0};
     DRing::SinkTarget target_;
