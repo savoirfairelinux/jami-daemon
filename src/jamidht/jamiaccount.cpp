@@ -610,7 +610,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             dev_call->setIceMedia(call->getIceMedia());
             {
                 std::lock_guard<std::mutex> lk(pendingCallsMutex_);
-                pendingCalls_[deviceId].emplace_back(dev_call);
+                pendingCalls_[deviceId].emplace_back(std::move(dev_call));
             }
 
             JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
@@ -707,7 +707,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             if (not ok) {
                 if (auto call = wCall.lock()) {
                     JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
-                    call->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+                    if (call->getConnectionState() == Call::ConnectionState::TRYING)
+                        call->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
                 }
             }
         });
