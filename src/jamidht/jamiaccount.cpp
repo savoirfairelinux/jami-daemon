@@ -604,7 +604,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                         and state != Call::ConnectionState::TRYING) {
                         if (auto shared = w.lock())
                             shared->callConnectionClosed(deviceId, true);
+                        return false;
                     }
+                    return true;
                 });
             call->addSubCall(*dev_call);
             dev_call->setIceMedia(call->getIceMedia());
@@ -665,7 +667,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                     and state != Call::ConnectionState::TRYING) {
                     if (auto shared = w.lock())
                         shared->callConnectionClosed(deviceId, true);
+                    return false;
                 }
+                return true;
             });
 
         auto remote_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
