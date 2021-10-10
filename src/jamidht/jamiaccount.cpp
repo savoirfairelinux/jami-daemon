@@ -569,59 +569,35 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     dht::InfoHash peer_account(toUri);
 
+    auto sendRequest = [this, wCall, toUri](const DeviceId& deviceId) {
+        auto call = wCall.lock();
+        if (not call)
+            return;
+        auto state = call->getConnectionState();
+        if (state != Call::ConnectionState::PROGRESSING and state != Call::ConnectionState::TRYING
+            and state != Call::ConnectionState::RINGING) {
+            return;
+        }
+
+        auto deviceCall = createSubCall(call);
+        deviceCall->setIPToIP(true);
+        deviceCall->setState(Call::ConnectionState::TRYING);
+        call->addSubCall(*deviceCall);
+        deviceCall->setIceMedia(call->getIceMedia());
+        {
+            std::lock_guard<std::mutex> lk(pendingCallsMutex_);
+            pendingCalls_[deviceId].emplace_back(std::move(deviceCall));
+        }
+
+        JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
+                  call->getCallId().c_str());
+        requestSIPConnection(toUri, deviceId);
+    };
+
     // Call connected devices
     std::set<DeviceId> devices;
+
     std::unique_lock<std::mutex> lkSipConn(sipConnsMtx_);
-    // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
-    // cached connection is failing with ICE (close event still not detected).
-    auto dummyCall = createSubCall(call);
-
-    call->addSubCall(*dummyCall);
-    dummyCall->setIceMedia(call->getIceMedia());
-    auto sendRequest =
-        [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
-                                                               bool eraseDummy) {
-            if (eraseDummy) {
-                // Mark the temp call as failed to stop the main call if necessary
-                if (dummyCall)
-                    dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
-                return;
-            }
-            auto call = wCall.lock();
-            if (not call)
-                return;
-            auto state = call->getConnectionState();
-            if (state != Call::ConnectionState::PROGRESSING
-                and state != Call::ConnectionState::TRYING)
-                return;
-
-            auto dev_call = createSubCall(call);
-            dev_call->setIPToIP(true);
-            dev_call->setState(Call::ConnectionState::TRYING);
-            call->addStateListener(
-                [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
-                    if (state != Call::ConnectionState::PROGRESSING
-                        and state != Call::ConnectionState::TRYING) {
-                        if (auto shared = w.lock())
-                            shared->callConnectionClosed(deviceId, true);
-                        return false;
-                    }
-                    return true;
-                });
-            call->addSubCall(*dev_call);
-            dev_call->setIceMedia(call->getIceMedia());
-            {
-                std::lock_guard<std::mutex> lk(pendingCallsMutex_);
-                pendingCalls_[deviceId].emplace_back(std::move(dev_call));
-            }
-
-            JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
-                      call->getCallId().c_str());
-            // Else, ask for a channel (for future calls/text messages)
-            requestSIPConnection(toUri, deviceId);
-        };
-
-    std::vector<std::shared_ptr<ChannelSocket>> channels;
     for (auto& [key, value] : sipConns_) {
         if (key.first != toUri)
             continue;
@@ -639,42 +615,41 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         if (!transport or !ice)
             continue;
 
-        channels.emplace_back(sipConn.channel);
+        // Send beacon so the channel gets destroyed quickly if the connection is broken
+        dht::ThreadPool::io().run([channel = sipConn.channel] { channel->sendBeacon(); });
 
         JAMI_WARN("[call %s] A channeled socket is detected with this peer.",
                   call->getCallId().c_str());
 
-        auto dev_call = createSubCall(call);
-
-        dev_call->setTransport(transport);
-        call->addSubCall(*dev_call);
-        dev_call->setIceMedia(call->getIceMedia());
+        auto deviceCall = createSubCall(call);
+        deviceCall->addStateListener([sendRequest,
+                                      deviceId = key.second](Call::CallState callState,
+                                                             Call::ConnectionState state,
+                                                             int error) {
+            if (state >= Call::ConnectionState::RINGING)
+                return false;
+            if (callState == Call::CallState::MERROR
+                and state == Call::ConnectionState::DISCONNECTED and error == ECONNRESET) {
+                JAMI_WARN("Device %s: Call using existing connection failed, sending new request",
+                          deviceId.to_c_str());
+                sendRequest(deviceId);
+                return false;
+            }
+            return true;
+        });
+        deviceCall->setTransport(transport);
+        call->addSubCall(*deviceCall);
+        deviceCall->setIceMedia(call->getIceMedia());
 
         // Set the call in PROGRESSING State because the ICE session
         // is already ready. Note that this line should be after
         // addSubcall() to change the state of the main call
         // and avoid to get an active call in a TRYING state.
-        dev_call->setState(Call::ConnectionState::PROGRESSING);
-
-        {
-            std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
-            onConnectionClosed_[key.second] = sendRequest;
-        }
-
-        call->addStateListener(
-            [w = weak(), deviceId = key.second](Call::CallState, Call::ConnectionState state, int) {
-                if (state != Call::ConnectionState::PROGRESSING
-                    and state != Call::ConnectionState::TRYING) {
-                    if (auto shared = w.lock())
-                        shared->callConnectionClosed(deviceId, true);
-                    return false;
-                }
-                return true;
-            });
+        deviceCall->setState(Call::ConnectionState::PROGRESSING);
 
         auto remote_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
         try {
-            onConnectedOutgoingCall(dev_call, toUri, remote_address);
+            onConnectedOutgoingCall(deviceCall, toUri, remote_address);
         } catch (const VoipLinkException&) {
             // In this case, the main scenario is that SIPStartCall failed because
             // the ICE is dead and the TLS session didn't send any packet on that dead
@@ -685,27 +660,18 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
         devices.emplace(key.second);
     }
-
     lkSipConn.unlock();
-    // Note: Send beacon can destroy the socket (if storing last occurence of shared_ptr)
-    // causing sipConn to be destroyed. So, do it while sipConns_ not locked.
-    for (const auto& channel : channels)
-        channel->sendBeacon();
 
     // Find listening devices for this account
     accountManager_->forEachDevice(
         peer_account,
-        [this, devices = std::move(devices), sendRequest](
-            const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+        [devices = std::move(devices),
+         sendRequest](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
             // Test if already sent via a SIP transport
             auto deviceId = dev->getLongId();
             if (devices.find(deviceId) != devices.end())
                 return;
-            {
-                std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
-                onConnectionClosed_[deviceId] = sendRequest;
-            }
-            sendRequest(deviceId, false);
+            sendRequest(deviceId);
         },
         [wCall](bool ok) {
             if (not ok) {
@@ -3975,33 +3941,6 @@ JamiAccount::cacheTurnServers()
 }
 
 void
-JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
-{
-    std::function<void(const DeviceId&, bool)> cb;
-    {
-        std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
-        auto it = onConnectionClosed_.find(deviceId);
-        if (it != onConnectionClosed_.end()) {
-            if (eraseDummy) {
-                cb = std::move(it->second);
-                onConnectionClosed_.erase(it);
-            } else {
-                // In this case a new subcall is created and the callback
-                // will be re-called once with eraseDummy = true
-                cb = it->second;
-            }
-        }
-    }
-    dht::ThreadPool::io().run(
-        [w = weak(), cb = std::move(cb), id = deviceId, erase = std::move(eraseDummy)] {
-            if (auto acc = w.lock()) {
-                if (cb)
-                    cb(id, erase);
-            }
-        });
-}
-
-void
 JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& deviceId)
 {
     JAMI_DBG("[Account %s] Request SIP connection to peer %s on device %s",
@@ -4041,16 +3980,11 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
                                                        const DeviceId&) {
                                           if (socket)
                                               return;
-                                          auto shared = w.lock();
-                                          if (!shared)
-                                              return;
-                                          // If this is triggered, this means that the
-                                          // connectDevice didn't get any response from the DHT.
-                                          // Stop searching pending call.
-                                          shared->callConnectionClosed(id.second, true);
-                                          shared->forEachPendingCall(id.second, [](const auto& pc) {
-                                              pc->onFailure();
-                                          });
+                                          if (auto shared = w.lock())
+                                              shared->forEachPendingCall(id.second,
+                                                                         [](const auto& pc) {
+                                                                             pc->onFailure();
+                                                                         });
                                       });
 }
 
@@ -4223,10 +4157,6 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         if (!shared)
             return;
         shared->shutdownSIPConnection(socket, key.first, key.second);
-        // The connection can be closed during the SIP initialization, so
-        // if this happens, the request should be re-sent to ask for a new
-        // SIP channel to make the call pass through
-        shared->callConnectionClosed(key.second, false);
     };
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
     if (!sip_tr) {
