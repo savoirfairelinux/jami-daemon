@@ -134,6 +134,8 @@ Call::Call(const std::shared_ptr<Account>& account,
         // kill pending subcalls at disconnect
         if (call_state == CallState::OVER)
             hangupCalls(safePopSubcalls(), 0);
+
+        return true;
     });
 
     time(&timestamp_start_);
@@ -265,8 +267,12 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 
-    for (auto& l : stateChangedListeners_)
-        l(callState_, connectionState_, code);
+    for (auto it = stateChangedListeners_.begin(); it != stateChangedListeners_.end(); ) {
+        if ((*it)(callState_, connectionState_, code))
+            ++it;
+        else
+            it = stateChangedListeners_.erase(it);
+    }
 
     if (old_client_state != new_client_state) {
         if (not parent_) {
@@ -483,6 +489,7 @@ Call::addSubCall(Call& subcall)
                     }
                 }
             });
+            return true;
         });
 }
 
