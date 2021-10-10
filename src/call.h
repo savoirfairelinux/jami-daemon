@@ -109,7 +109,7 @@ public:
 
     using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
     using OnReadyCb = std::function<void(bool)>;
-    using StateListenerCb = std::function<void(CallState, ConnectionState, int)>;
+    using StateListenerCb = std::function<bool(CallState, ConnectionState, int)>;
 
     /**
      * This determines if the call originated from the local user (OUTGOING)
