@@ -850,16 +850,6 @@ private:
     std::mutex pendingCallsMutex_;
     std::map<DeviceId, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
 
-    std::mutex onConnectionClosedMtx_ {};
-    std::map<DeviceId, std::function<void(const DeviceId&, bool)>> onConnectionClosed_ {};
-    /**
-     * onConnectionClosed contains callbacks that need to be called if a sub call is failing
-     * @param deviceId      The device we are calling
-     * @param eraseDummy    Erase the dummy call (a temporary subcall that must be stop when we will
-     * not create new subcalls)
-     */
-    void callConnectionClosed(const DeviceId& deviceId, bool eraseDummy);
-
     /**
      * Ask a device to open a channeled SIP socket
      * @param peerId        The contact who owns the device
