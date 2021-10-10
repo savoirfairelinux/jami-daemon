@@ -2857,7 +2857,8 @@ SIPCall::monitor() const
         JAMI_DBG("\t- Video codec: %s", codec->systemCodecInfo.name.c_str());
 #endif
     if (auto transport = getIceMedia()) {
-        JAMI_DBG("\t- Medias: %s", transport->link().c_str());
+        if (transport->isRunning())
+            JAMI_DBG("\t- Medias: %s", transport->link().c_str());
     }
 }
 
