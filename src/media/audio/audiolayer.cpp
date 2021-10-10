@@ -156,7 +156,6 @@ AudioLayer::checkAEC()
 void
 AudioLayer::putUrgent(AudioBuffer& buffer)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     urgentRingBuffer_.put(buffer.toAVFrame());
 }
 
