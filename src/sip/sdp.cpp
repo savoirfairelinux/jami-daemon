@@ -130,14 +130,16 @@ randomFill(std::vector<uint8_t>& dest)
 void
 Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
 {
-    JAMI_DBG("Set active local session to [%p]. Was [%p]", sdp, activeLocalSession_);
+    if (activeLocalSession_ != sdp)
+        JAMI_DBG("Set active local session to [%p]. Was [%p]", sdp, activeLocalSession_);
     activeLocalSession_ = sdp;
 }
 
 void
 Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session* sdp)
 {
-    JAMI_DBG("Set active remote session to [%p]. Was [%p]", sdp, activeRemoteSession_);
+    if (activeLocalSession_ != sdp)
+        JAMI_DBG("Set active remote session to [%p]. Was [%p]", sdp, activeRemoteSession_);
     activeRemoteSession_ = sdp;
 }
 
