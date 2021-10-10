@@ -167,7 +167,8 @@ OpenSLLayer::initAudioEngine()
     SLASSERT((*engineObject_)->Realize(engineObject_, SL_BOOLEAN_FALSE));
     SLASSERT((*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_));
 
-    uint32_t bufSize = hardwareBuffSize_ * hardwareFormat_.getBytesPerFrame();
+    size_t bufSize = hardwareBuffSize_ * hardwareFormat_.getBytesPerFrame();
+    JAMI_WARN("OpenSL init: using buffer size of %u to support  %s with %zu samples per channel", bufSize, hardwareFormat_.toString().c_str(), hardwareBuffSize_);
     bufs_ = allocateSampleBufs(BUF_COUNT * 3, bufSize);
     for (int i = 0; i < BUF_COUNT; i++)
         freePlayBufQueue_.push(&bufs_[i]);
