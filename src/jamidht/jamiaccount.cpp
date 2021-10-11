@@ -2166,25 +2166,19 @@ JamiAccount::doRegister_()
             return result;
         });
         connectionManager_->onChannelRequest(
-            [this](const DeviceId& deviceId, const std::string& name) {
-                JAMI_WARN("[Account %s] New channel asked from %s with name %s",
+            [this](const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name) {
+                JAMI_WARN("[Account %s] New channel asked with name %s",
                           getAccountID().c_str(),
-                          deviceId.to_c_str(),
                           name.c_str());
 
                 auto uri = Uri(name);
                 auto itHandler = channelHandlers_.find(uri.scheme());
                 if (itHandler != channelHandlers_.end() && itHandler->second)
-                    return itHandler->second->onRequest(deviceId, name);
+                    return itHandler->second->onRequest(cert, name);
                 // TODO replace
                 auto isFile = name.substr(0, 7) == FILE_URI;
                 auto isVCard = name.substr(0, 8) == VCARD_URI;
                 auto isDataTransfer = name.substr(0, 16) == DATA_TRANSFER_URI;
-
-                auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
-                if (!cert || !cert->issuer)
-                    return false;
-                auto issuer = cert->issuer->getId().toString();
 
                 if (name == "sip") {
                     return true;
@@ -2268,7 +2262,7 @@ JamiAccount::doRegister_()
                     auto accountId = this->accountID_;
                     JAMI_WARN("[Account %s] Git server requested for conversation %s, device %s, "
                               "channel %u",
-                              getAccountID().c_str(),
+                              accountId.c_str(),
                               conversationId.c_str(),
                               deviceId.to_c_str(),
                               channel->channel());
@@ -2297,7 +2291,7 @@ JamiAccount::doRegister_()
                     auto uri = Uri(name);
                     auto itHandler = channelHandlers_.find(uri.scheme());
                     if (itHandler != channelHandlers_.end() && itHandler->second)
-                        itHandler->second->onReady(deviceId, name, std::move(channel));
+                        itHandler->second->onReady(cert, name, std::move(channel));
                 }
             }
         });

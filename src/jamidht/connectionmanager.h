@@ -56,7 +56,7 @@ using onICERequestCallback = std::function<bool(const DeviceId&)>;
 /**
  * Used to accept or decline an incoming channel request
  */
-using ChannelRequestCallback = std::function<bool(const DeviceId&, const std::string& /* name */)>;
+using ChannelRequestCallback = std::function<bool(const std::shared_ptr<dht::crypto::Certificate>&, const std::string& /* name */)>;
 /**
  * Used by connectDevice, when the socket is ready
  */

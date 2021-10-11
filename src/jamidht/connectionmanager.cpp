@@ -957,10 +957,10 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
                     sthis->connReadyCb_(deviceId, socket->name(), socket);
         });
     info->socket_->setOnRequest(
-        [w = weak()](const DeviceId& deviceId, const uint16_t&, const std::string& name) {
+        [w = weak()](const std::shared_ptr<dht::crypto::Certificate>& peer, const uint16_t&, const std::string& name) {
             if (auto sthis = w.lock())
                 if (sthis->channelReqCb_)
-                    return sthis->channelReqCb_(deviceId, name);
+                    return sthis->channelReqCb_(peer, name);
             return false;
         });
     info->socket_->onShutdown([w = weak(), deviceId, vid]() {

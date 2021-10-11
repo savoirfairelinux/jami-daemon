@@ -356,7 +356,7 @@ MultiplexedSocket::Impl::onVersion(int version)
 void
 MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
 {
-    auto accept = onRequest_(deviceId, channel, name);
+    auto accept = onRequest_(endpoint->peerCertificate(), channel, name);
     std::shared_ptr<ChannelSocket> channelSocket;
     if (accept) {
         std::lock_guard<std::mutex> lkSockets(socketsMutex);
