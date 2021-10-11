@@ -38,6 +38,7 @@ constexpr auto WANT_CMD = "want"sv;
 constexpr auto HAVE_CMD = "have"sv;
 constexpr auto SERVER_CAPABILITIES
     = " HEAD\0side-band side-band-64k shallow no-progress include-tag"sv;
+constexpr auto VERSION_PKT = "000eversion 1\0"sv;
 
 namespace jami {
 
@@ -80,7 +81,7 @@ public:
     void ACKCommon();
     bool ACKFirst();
     void sendPackData();
-    std::map<std::string, std::string> getParameters(const std::string& pkt_line);
+    std::map<std::string, std::string> getParameters(std::string_view pkt_line);
 
     std::string repositoryId_ {};
     std::string repository_ {};
@@ -97,9 +98,7 @@ public:
 bool
 GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
 {
-    std::string pkt = cachedPkt_;
-    if (buf)
-        pkt += std::string({buf, buf + len});
+    std::string fullPkt = buf ? cachedPkt_ + std::string_view((const char*)buf, len) : std::move(cachedPkt_);
     cachedPkt_.clear();
 
     // Parse pkt len
@@ -107,17 +106,18 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
     // The first four bytes define the length of the packet and 0000 is a FLUSH pkt
 
     unsigned int pkt_len;
-    std::from_chars(pkt.data(), pkt.data() + 4, pkt_len, 16);
-    if (pkt_len != pkt.size()) {
+    std::from_chars(fullPkt.data(), fullPkt.data() + 4, pkt_len, 16);
+    std::string_view pkt {};
+    if (pkt_len != fullPkt.size()) {
         // Store next packet part
         if (pkt_len == 0) {
             // FLUSH_PKT
             pkt_len = 4;
         }
-        cachedPkt_ = pkt.substr(pkt_len, pkt.size() - pkt_len);
+        cachedPkt_ = fullPkt.substr(pkt_len, fullPkt.size() - pkt_len);
     }
     // NOTE: do not remove the size to detect the 0009done packet
-    pkt = pkt.substr(0, pkt_len);
+    pkt = fullPkt.substr(0, pkt_len);
 
     if (pkt.find(UPLOAD_PACK_CMD) == 4) {
         // Cf: https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
@@ -164,7 +164,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
             }
             GitRepository rep {repo, git_repository_free};
             git_oid commit_id;
-            if (git_oid_fromstr(&commit_id, commit.c_str()) == 0) {
+            if (git_oid_fromstr(&commit_id, std::string(commit).c_str()) == 0) {
                 // Reference found
                 common_ = commit;
             }
@@ -191,7 +191,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
             NAK();
         }
     } else {
-        JAMI_WARN("Unwanted packet received: %s", pkt.c_str());
+        JAMI_WARN("Unwanted packet received: %.*s", (int)pkt.size(), pkt.data());
     }
     return !cachedPkt_.empty();
 }
@@ -212,13 +212,11 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // Answer with the version number
     // **** When the client initially connects the server will immediately respond
     // **** with a version number (if "version=1" is sent as an Extra Parameter),
-    std::string currentHead;
     std::error_code ec;
-    std::stringstream packet;
+    
     if (sendVersion) {
-        packet << "000eversion 1\0";
-        socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
-                       packet.str().size(),
+        socket_->write(reinterpret_cast<const unsigned char*>(VERSION_PKT.data()),
+                       VERSION_PKT.size(),
                        ec);
         if (ec) {
             JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
@@ -231,14 +229,13 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
         JAMI_ERR("Cannot get reference for HEAD");
         return;
     }
-    currentHead = git_oid_tostr_s(&commit_id);
 
     // Send references
-    std::string capStr = currentHead + SERVER_CAPABILITIES;
+    std::string capStr = concat(git_oid_tostr_s(&commit_id), SERVER_CAPABILITIES);
 
-    packet.str("");
+    std::stringstream packet;
     packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
-    packet << capStr << "\n";
+    packet << capStr << '\n';
 
     // Now, add other references
     git_strarray refs;
@@ -249,7 +246,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                 JAMI_WARN("Cannot get reference for %s", ref.c_str());
                 continue;
             }
-            currentHead = git_oid_tostr_s(&commit_id);
+            std::string_view currentHead = git_oid_tostr_s(&commit_id);
 
             packet << std::setw(4) << std::setfill('0') << std::hex
                    << ((6 /* size + space + \n */ + currentHead.size() + ref.size()) & 0x0FFFF);
@@ -432,7 +429,7 @@ GitServer::Impl::sendPackData()
 }
 
 std::map<std::string, std::string>
-GitServer::Impl::getParameters(const std::string& pkt_line)
+GitServer::Impl::getParameters(std::string_view pkt_line)
 {
     std::map<std::string, std::string> parameters;
     std::string key, value;
@@ -443,7 +440,7 @@ GitServer::Impl::getParameters(const std::string& pkt_line)
         if (letter == '\0') {
             // parameters such as host or version are after the first \0
             if (nullChar != 0 && !key.empty()) {
-                parameters[key] = value;
+                parameters[std::move(key)] = std::move(value);
             }
             nullChar += 1;
             isKey = true;

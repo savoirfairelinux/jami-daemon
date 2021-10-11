@@ -19,27 +19,29 @@
  */
 #include "uri.h"
 
+using namespace std::string_view_literals;
+
 namespace jami {
 
-Uri::Uri(const std::string_view& uri)
+Uri::Uri(std::string_view uri)
 {
     // TODO better handling of Uri, for now it's only used for
     // setMessageDisplayed to differentiate swarm:xxx
     scheme_ = Uri::Scheme::JAMI;
     auto posSep = uri.find(':');
-    if (posSep != std::string::npos) {
+    if (posSep != std::string_view::npos) {
         auto scheme_str = uri.substr(0, posSep);
-        if (scheme_str == "sip")
+        if (scheme_str == "sip"sv)
             scheme_ = Uri::Scheme::SIP;
-        else if (scheme_str == "swarm")
+        else if (scheme_str == "swarm"sv)
             scheme_ = Uri::Scheme::SWARM;
-        else if (scheme_str == "jami")
+        else if (scheme_str == "jami"sv)
             scheme_ = Uri::Scheme::JAMI;
-        else if (scheme_str == "data-transfer")
+        else if (scheme_str == "data-transfer"sv)
             scheme_ = Uri::Scheme::DATA_TRANSFER;
-        else if (scheme_str == "git")
+        else if (scheme_str == "git"sv)
             scheme_ = Uri::Scheme::GIT;
-        else if (scheme_str == "sync")
+        else if (scheme_str == "sync"sv)
             scheme_ = Uri::Scheme::SYNC;
         else
             scheme_ = Uri::Scheme::UNRECOGNIZED;

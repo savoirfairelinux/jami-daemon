@@ -30,10 +30,12 @@
 
 namespace jami {
 
+using ConvInfoMap = std::map<std::string, ConvInfo, std::less<>>;
+
 struct SyncMsg
 {
     jami::DeviceSync ds;
-    std::map<std::string, jami::ConvInfo> c;
+    ConvInfoMap c;
     std::map<std::string, jami::ConversationRequest> cr;
     MSGPACK_DEFINE(ds, c, cr)
 };
@@ -184,9 +186,9 @@ public:
      * @param verifyShaSum  For debug only
      * @return if we accept the channel request
      */
-    bool onFileChannelRequest(const std::string& conversationId,
+    bool onFileChannelRequest(std::string_view conversationId,
                               const std::string& member,
-                              const std::string& fileId,
+                              std::string_view fileId,
                               bool verifyShaSum = true) const;
 
     /**
@@ -196,7 +198,7 @@ public:
      * @param fileId            Related fileId
      * @param path              where to download the file
      */
-    bool downloadFile(const std::string& conversationId,
+    bool downloadFile(std::string_view conversationId,
                       const std::string& interactionId,
                       const std::string& fileId,
                       const std::string& path,
@@ -269,8 +271,7 @@ public:
      * @param conversationId
      * @return a map of members with their role and details
      */
-    std::vector<std::map<std::string, std::string>> getConversationMembers(
-        const std::string& conversationId) const;
+    std::vector<std::map<std::string, std::string>> getConversationMembers(std::string_view conversationId) const;
     /**
      * Retrieve the number of interactions from interactionId to HEAD
      * @param convId
@@ -331,9 +332,9 @@ public:
 
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId,
-                              const std::map<std::string, ConvInfo>& conversations);
+                              const ConvInfoMap& conversations);
     static void saveConvInfosToPath(const std::string& path,
-                                    const std::map<std::string, ConvInfo>& conversations);
+                                    const ConvInfoMap& conversations);
     static void saveConvRequests(
         const std::string& accountId,
         const std::map<std::string, ConversationRequest>& conversationsRequests);
@@ -341,8 +342,8 @@ public:
         const std::string& path,
         const std::map<std::string, ConversationRequest>& conversationsRequests);
 
-    static std::map<std::string, ConvInfo> convInfos(const std::string& accountId);
-    static std::map<std::string, ConvInfo> convInfosFromPath(const std::string& path);
+    static ConvInfoMap convInfos(const std::string& accountId);
+    static ConvInfoMap convInfosFromPath(const std::string& path);
     static std::map<std::string, ConversationRequest> convRequests(const std::string& accountId);
     static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::string& path);
     void addConvInfo(const ConvInfo& info);
