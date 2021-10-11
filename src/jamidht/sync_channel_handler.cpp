@@ -51,25 +51,23 @@ SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, Connec
 }
 
 bool
-SyncChannelHandler::onRequest(const DeviceId& deviceId, const std::string& /* name */)
+SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& /* name */)
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
     auto acc = account_.lock();
-    if (!cert || !acc)
+    if (!cert || !cert->issuer || !acc)
         return false;
-    return cert->getIssuerUID() == acc->getUsername();
+    return cert->issuer->getId().toString() == acc->getUsername();
 }
 
 void
-SyncChannelHandler::onReady(const DeviceId& deviceId,
+SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cert,
                             const std::string&,
                             std::shared_ptr<ChannelSocket> channel)
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
     auto acc = account_.lock();
-    if (!cert || !acc || !acc->syncModule())
+    if (!cert || !cert->issuer || !acc || !acc->syncModule())
         return;
-    acc->syncModule()->cacheSyncConnection(std::move(channel), cert->getIssuerUID(), deviceId);
+    acc->syncModule()->cacheSyncConnection(std::move(channel), cert->issuer->getId().toString(), cert->getLongId());
 }
 
 } // namespace jami

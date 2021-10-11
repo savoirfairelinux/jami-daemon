@@ -206,13 +206,15 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
     std::shared_ptr<ChannelSocket> sendSocket = nullptr;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string& name) {
             successfullyReceive = name == "git://*";
             return true;
         });
 
     aliceAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string&) { return true; });
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
@@ -387,14 +389,15 @@ ConversationRepositoryTest::testFetch()
     std::shared_ptr<ChannelSocket> channelSocket = nullptr;
     std::shared_ptr<ChannelSocket> sendSocket = nullptr;
 
-    bobAccount->connectionManager().onChannelRequest([&](const DeviceId&, const std::string& name) {
-        successfullyReceive = name == "git://*";
-        ccv.notify_one();
-        return true;
-    });
+    bobAccount->connectionManager().onChannelRequest(
+        [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string& name) {
+            successfullyReceive = name == "git://*";
+            ccv.notify_one();
+            return true;
+        });
 
     aliceAccount->connectionManager().onChannelRequest(
-        [&](const DeviceId&, const std::string&) { return true; });
+        [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
@@ -789,13 +792,13 @@ DIR_SEPARATOR_STR + bobAccount->getAccountID()
     std::shared_ptr<ChannelSocket> sendSocket = nullptr;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
-            successfullyReceive = name == "git://*";
-            return true;
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&
+name) { successfullyReceive = name == "git://*"; return true;
         });
 
     aliceAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) { return true; });
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&
+name) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {

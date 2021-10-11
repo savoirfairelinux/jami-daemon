@@ -131,7 +131,8 @@ ConnectionManagerTest::testConnectDevice()
     bool successfullyReceive = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive, &cvReceive](const DeviceId&, const std::string& name) {
+        [&successfullyReceive, &cvReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                                           const std::string& name) {
             successfullyReceive = name == "git://*";
             cvReceive.notify_one();
             return true;
@@ -169,7 +170,8 @@ ConnectionManagerTest::testAcceptConnection()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string& name) {
             successfullyReceive = name == "git://*";
             return true;
         });
@@ -214,7 +216,7 @@ ConnectionManagerTest::testMultipleChannels()
     int receiverConnected = 0;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const DeviceId&, const std::string&) { return true; });
+        [](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
@@ -268,7 +270,7 @@ ConnectionManagerTest::testMultipleChannelsSameName()
     int receiverConnected = 0;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const DeviceId&, const std::string&) { return true; });
+        [](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
@@ -325,7 +327,8 @@ ConnectionManagerTest::testSendReceiveData()
     bool dataOk = false, dataOk2 = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string&) {
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string&) {
             successfullyReceive = true;
             return true;
         });
@@ -399,7 +402,8 @@ ConnectionManagerTest::testDeclineConnection()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string&) {
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string&) {
             successfullyReceive = true;
             return false;
         });
@@ -444,7 +448,7 @@ ConnectionManagerTest::testAcceptsICERequest()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const DeviceId&, const std::string&) { return true; });
+        [](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onICERequest([&](const DeviceId&) {
         successfullyReceive = true;
         return true;
@@ -489,7 +493,7 @@ ConnectionManagerTest::testDeclineICERequest()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const DeviceId&, const std::string&) { return true; });
+        [](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onICERequest([&](const DeviceId&) {
         successfullyReceive = true;
         return false;
@@ -537,7 +541,7 @@ ConnectionManagerTest::testChannelRcvShutdown()
     std::shared_ptr<ChannelSocket> bobSock;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const DeviceId&, const std::string&) { return true; });
+        [](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId& did, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
@@ -587,7 +591,8 @@ ConnectionManagerTest::testChannelSenderShutdown()
     bool shutdownReceived = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string& name) {
             successfullyReceive = name == "git://*";
             return true;
         });
@@ -641,7 +646,8 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string& name) {
             successfullyReceive = name == "git://*";
             return true;
         });
@@ -698,7 +704,8 @@ ConnectionManagerTest::testShutdownCallbacks()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive, &chan2cv](const DeviceId&, const std::string& name) {
+        [&successfullyReceive, &chan2cv](const std::shared_ptr<dht::crypto::Certificate>&,
+                                         const std::string& name) {
             if (name == "1") {
                 successfullyReceive = true;
             } else {
@@ -760,7 +767,8 @@ ConnectionManagerTest::testFloodSocket()
     bool receiverConnected = false;
     std::shared_ptr<ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string& name) {
             successfullyReceive = name == "1";
             return true;
         });
@@ -866,7 +874,8 @@ ConnectionManagerTest::testDestroyWhileSending()
     bool receiverConnected = false;
     std::shared_ptr<ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string& name) {
             successfullyReceive = name == "1";
             return true;
         });
@@ -957,12 +966,13 @@ ConnectionManagerTest::testIsConnecting()
     std::condition_variable cv;
     bool successfullyConnected = false, successfullyReceive = false;
 
-    bobAccount->connectionManager().onChannelRequest([&](const DeviceId&, const std::string&) {
-        successfullyReceive = true;
-        cv.notify_one();
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        return true;
-    });
+    bobAccount->connectionManager().onChannelRequest(
+        [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) {
+            successfullyReceive = true;
+            cv.notify_one();
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            return true;
+        });
 
     CPPUNIT_ASSERT(!aliceAccount->connectionManager().isConnecting(bobDeviceId, "sip"));
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
@@ -1000,7 +1010,7 @@ ConnectionManagerTest::testCanSendBeacon()
 
     std::shared_ptr<MultiplexedSocket> aliceSocket, bobSocket;
     bobAccount->connectionManager().onChannelRequest(
-        [&](const DeviceId&, const std::string&) { return true; });
+        [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
             if (socket && socket->name() == "sip")
@@ -1042,7 +1052,7 @@ ConnectionManagerTest::testCannotSendBeacon()
 
     std::shared_ptr<MultiplexedSocket> aliceSocket, bobSocket;
     bobAccount->connectionManager().onChannelRequest(
-        [&](const DeviceId&, const std::string&) { return true; });
+        [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
             if (socket && socket->name() == "sip")
@@ -1092,7 +1102,7 @@ ConnectionManagerTest::testConnectivityChangeTriggerBeacon()
 
     std::shared_ptr<MultiplexedSocket> aliceSocket, bobSocket;
     bobAccount->connectionManager().onChannelRequest(
-        [&](const DeviceId&, const std::string&) { return true; });
+        [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
             if (socket && socket->name() == "sip")
@@ -1141,7 +1151,7 @@ ConnectionManagerTest::testOnNoBeaconTriggersShutdown()
 
     std::shared_ptr<MultiplexedSocket> aliceSocket, bobSocket;
     bobAccount->connectionManager().onChannelRequest(
-        [&](const DeviceId&, const std::string&) { return true; });
+        [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
             if (socket && socket->name() == "sip")
