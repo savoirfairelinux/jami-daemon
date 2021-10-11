@@ -50,7 +50,7 @@ public:
      * @param name          name asked
      * @return if we accept or not
      */
-    bool onRequest(const DeviceId& deviceId, const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
 
     /**
      * Handle socket ready
@@ -58,7 +58,7 @@ public:
      * @param name          Name of the handler
      * @param channel       Channel to handle
      */
-    void onReady(const DeviceId& deviceId,
+    void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                  const std::string& name,
                  std::shared_ptr<ChannelSocket> channel) override;
 

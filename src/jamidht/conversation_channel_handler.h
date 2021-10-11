@@ -49,12 +49,12 @@ public:
      * @param name          name asked
      * @return if the channel is for a valid conversation and device not banned
      */
-    bool onRequest(const DeviceId& deviceId, const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
 
     /**
      * TODO, this needs to extract gitservers from JamiAccount
      */
-    void onReady(const DeviceId& deviceId,
+    void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                  const std::string& name,
                  std::shared_ptr<ChannelSocket> channel) override;
 

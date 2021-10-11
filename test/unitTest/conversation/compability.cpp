@@ -343,11 +343,12 @@ CompabilityTest::testSendFileCompatibility()
             }
             cv.notify_one();
         }));
-    bobAccount->connectionManager().onChannelRequest([&](const DeviceId&, const std::string& name) {
-        successfullyReceive = name.find("file://") == 0;
-        cv.notify_one();
-        return true;
-    });
+    bobAccount->connectionManager().onChannelRequest(
+        [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string& name) {
+            successfullyReceive = name.find("file://") == 0;
+            cv.notify_one();
+            return true;
+        });
     DRing::registerSignalHandlers(confHandlers);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return !convId.empty(); }));
