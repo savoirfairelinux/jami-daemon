@@ -1267,7 +1267,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
 }
 
 std::string
-TransferManager::path(const std::string& fileId) const
+TransferManager::path(std::string_view fileId) const
 {
     return pimpl_->conversationDataPath_ + DIR_SEPARATOR_STR + fileId;
 }

@@ -37,7 +37,6 @@ using random_device = dht::crypto::random_device;
 #include <optional>
 
 using namespace std::string_view_literals;
-constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
 constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
 
 namespace jami {
@@ -1305,9 +1304,7 @@ ConversationRepository::Impl::commit(const std::string& msg)
     }
 
     // git commit -S
-    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
-    auto signed_buf = account->identity().first->sign(to_sign_vec);
-    std::string signed_str = base64::encode(signed_buf);
+    std::string signed_str = base64::encode(account->identity().first->sign((const uint8_t *)to_sign.ptr, to_sign.size));
     if (git_commit_create_with_signature(&commit_id,
                                          repo.get(),
                                          to_sign.ptr,
@@ -1919,10 +1916,9 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     auto conversationsPath = fileutils::get_data_dir() + "/" + shared->getAccountID() + "/"
                              + "conversations";
     fileutils::check_dir(conversationsPath.c_str());
-    auto path = conversationsPath + "/" + conversationId;
+    auto path = fmt::format("{}/{}", conversationsPath, conversationId);
     git_repository* rep = nullptr;
-    std::stringstream url;
-    url << "git://" << deviceId << '/' << conversationId;
+    auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 
     git_clone_options clone_options;
     git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
@@ -1947,7 +1943,7 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     }
 
     JAMI_INFO("Start clone in %s", path.c_str());
-    if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) < 0) {
+    if (git_clone(&rep, url.c_str(), path.c_str(), nullptr) < 0) {
         const git_error* err = giterr_last();
         if (err)
             JAMI_ERR("Error when retrieving remote conversation: %s %s", err->message, path.c_str());
@@ -2366,25 +2362,21 @@ ConversationRepository::commitMessage(const std::string& msg)
     auto account = pimpl_->account_.lock();
     if (!account)
         return {};
-    auto deviceId = std::string(account->currentDeviceId());
 
     // First, we need to add device file to the repository if not present
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
-    std::string repoPath = git_repository_workdir(repo.get());
     // NOTE: libgit2 uses / for files
-    std::string path = std::string("devices") + "/" + deviceId + ".crt";
-    std::string devicePath = repoPath + path;
+    std::string path = fmt::format("devices/{}.crt", account->currentDeviceId());
+    std::string devicePath = git_repository_workdir(repo.get()) + path;
     if (!fileutils::isFile(devicePath)) {
         auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERR("Could not write data to %s", devicePath.c_str());
             return {};
         }
-        auto cert = account->identity().second;
-        auto deviceCert = cert->toString(false);
-        file << deviceCert;
+        file << account->identity().second->toString(false);
         file.close();
 
         if (!pimpl_->add(path))
@@ -2536,12 +2528,11 @@ ConversationRepository::diffStats(const std::string& newId, const std::string& o
 }
 
 std::vector<std::string>
-ConversationRepository::changedFiles(const std::string_view& diffStats)
+ConversationRepository::changedFiles(std::string_view diffStats)
 {
-    std::string line;
+    static const std::regex re(" +\\| +[0-9]+.*");
     std::vector<std::string> changedFiles;
-    for (auto line : split_string(diffStats, '\n')) {
-        std::regex re(" +\\| +[0-9]+.*");
+    for (std::string_view line; jami::getline(diffStats, line);) {
         std::svmatch match;
         if (!std::regex_search(line, match, re) && match.size() == 0)
             continue;
@@ -2557,7 +2548,7 @@ ConversationRepository::join()
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
-    std::string repoPath = git_repository_workdir(repo.get());
+    std::string_view repoPath = git_repository_workdir(repo.get());
     auto account = pimpl_->account_.lock();
     if (!account)
         return {};
@@ -2662,7 +2653,7 @@ ConversationRepository::leave()
         ss << std::hex;
         for (const auto& b : v)
             ss << (unsigned) b;
-        std::string crlPath = crlsPath + "/" + deviceId + "/" + ss.str() + ".crl";
+        std::string crlPath = fmt::format("{}/{}/{}.crl", crlsPath, deviceId, ss.str());
 
         if (fileutils::isFile(crlPath)) {
             fileutils::removeAll(crlPath, true);

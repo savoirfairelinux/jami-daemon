@@ -128,7 +128,7 @@ public:
 
     // Conversations
     mutable std::mutex conversationsMtx_ {};
-    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
+    std::map<std::string, std::shared_ptr<Conversation>, std::less<>> conversations_;
     std::mutex pendingConversationsFetchMtx_ {};
     std::map<std::string, PendingConversationFetch> pendingConversationsFetch_;
 
@@ -167,7 +167,7 @@ public:
 
     // The following informations are stored on the disk
     mutable std::mutex convInfosMtx_; // Note, should be locked after conversationsMtx_ if needed
-    std::map<std::string, ConvInfo> convInfos_;
+    ConvInfoMap convInfos_;
     // The following methods modify what is stored on the disk
     /**
      * @note convInfosMtx_ should be locked
@@ -656,7 +656,7 @@ ConversationModule::saveConvRequestsToPath(
 
 void
 ConversationModule::saveConvInfos(const std::string& accountId,
-                                  const std::map<std::string, ConvInfo>& conversations)
+                                  const ConvInfoMap& conversations)
 {
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
     saveConvInfosToPath(path, conversations);
@@ -664,7 +664,7 @@ ConversationModule::saveConvInfos(const std::string& accountId,
 
 void
 ConversationModule::saveConvInfosToPath(const std::string& path,
-                                        const std::map<std::string, ConvInfo>& conversations)
+                                        const ConvInfoMap& conversations)
 {
     std::ofstream file(path + DIR_SEPARATOR_STR + "convInfo", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversations);
@@ -1065,9 +1065,9 @@ ConversationModule::dataTransfer(const std::string& id) const
 }
 
 bool
-ConversationModule::onFileChannelRequest(const std::string& conversationId,
+ConversationModule::onFileChannelRequest(std::string_view conversationId,
                                          const std::string& member,
-                                         const std::string& fileId,
+                                         std::string_view fileId,
                                          bool verifyShaSum) const
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
@@ -1078,7 +1078,7 @@ ConversationModule::onFileChannelRequest(const std::string& conversationId,
 }
 
 bool
-ConversationModule::downloadFile(const std::string& conversationId,
+ConversationModule::downloadFile(std::string_view conversationId,
                                  const std::string& interactionId,
                                  const std::string& fileId,
                                  const std::string& path,
@@ -1330,14 +1330,15 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
 }
 
 std::vector<std::map<std::string, std::string>>
-ConversationModule::getConversationMembers(const std::string& conversationId) const
+ConversationModule::getConversationMembers(std::string_view conversationId) const
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    auto conversation = pimpl_->conversations_.find(conversationId);
-    if (conversation != pimpl_->conversations_.end() && conversation->second)
-        return conversation->second->getMembers(true, true);
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        auto conversation = pimpl_->conversations_.find(conversationId);
+        if (conversation != pimpl_->conversations_.end() && conversation->second)
+            return conversation->second->getMembers(true, true);
+    }
 
-    lk.unlock();
     std::lock_guard<std::mutex> lkCI(pimpl_->convInfosMtx_);
     auto convIt = pimpl_->convInfos_.find(conversationId);
     if (convIt != pimpl_->convInfos_.end()) {
@@ -1584,17 +1585,17 @@ ConversationModule::initReplay(const std::string& oldConvId, const std::string& 
     }
 }
 
-std::map<std::string, ConvInfo>
+ConvInfoMap
 ConversationModule::convInfos(const std::string& accountId)
 {
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
     return convInfosFromPath(path);
 }
 
-std::map<std::string, ConvInfo>
+ConvInfoMap
 ConversationModule::convInfosFromPath(const std::string& path)
 {
-    std::map<std::string, ConvInfo> convInfos;
+    ConvInfoMap convInfos;
     try {
         // read file
         auto file = fileutils::loadFile("convInfo", path);

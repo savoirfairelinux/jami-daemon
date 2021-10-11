@@ -51,7 +51,9 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     if (!acc || !cert || !cert->issuer)
         return false;
     auto uri = cert->issuer->getId().toString();
-    auto idstr = name.substr(16);
+
+    std::string_view name_view(name);
+    auto idstr = name_view.substr(16);
     auto sep = idstr.find('/');
     auto lastSep = idstr.find_last_of('/');
     auto conversationId = idstr.substr(0, sep);
