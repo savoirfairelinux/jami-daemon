@@ -29,9 +29,9 @@ class TlsSocketEndpoint;
 
 using DeviceId = dht::PkId;
 using OnConnectionRequestCb = std::function<
-    bool(const DeviceId& /* device id */, const uint16_t& /* id */, const std::string& /* name */)>;
+    bool(const std::shared_ptr<dht::crypto::Certificate>& /* peer */, const uint16_t& /* id */, const std::string& /* name */)>;
 using OnConnectionReadyCb
-    = std::function<void(const DeviceId& /* device id */, const std::shared_ptr<ChannelSocket>&)>;
+    = std::function<void(const DeviceId& /* deviceId */, const std::shared_ptr<ChannelSocket>&)>;
 using ChannelReadyCb = std::function<void(void)>;
 using OnShutdownCb = std::function<void(void)>;
 

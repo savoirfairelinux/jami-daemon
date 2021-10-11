@@ -46,7 +46,7 @@ ConversationChannelHandler::connect(const DeviceId& deviceId,
 }
 
 bool
-ConversationChannelHandler::onRequest(const DeviceId&, const std::string& name)
+ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>&, const std::string& name)
 {
     // Pre-check before acceptance. Sometimes, another device can start a conversation
     // which is still not synced. So, here we decline channel's request in this case
@@ -63,7 +63,7 @@ ConversationChannelHandler::onRequest(const DeviceId&, const std::string& name)
 }
 
 void
-ConversationChannelHandler::onReady(const DeviceId&,
+ConversationChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
                                     const std::string&,
                                     std::shared_ptr<ChannelSocket>)
 {}
