@@ -45,10 +45,9 @@ TransferChannelHandler::connect(const DeviceId& deviceId,
 {}
 
 bool
-TransferChannelHandler::onRequest(const DeviceId& deviceId, const std::string& name)
+TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
 {
     auto acc = account_.lock();
-    auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
     if (!acc || !cert || !cert->issuer)
         return false;
     auto uri = cert->issuer->getId().toString();
@@ -83,7 +82,7 @@ TransferChannelHandler::onRequest(const DeviceId& deviceId, const std::string& n
 }
 
 void
-TransferChannelHandler::onReady(const DeviceId&,
+TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
                                 const std::string& name,
                                 std::shared_ptr<ChannelSocket> channel)
 {

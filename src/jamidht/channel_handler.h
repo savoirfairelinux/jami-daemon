@@ -46,19 +46,19 @@ public:
 
     /**
      * Determine if we accept or not the request. Called when ConnectionManager receives a request
-     * @param deviceId      Device who asked
+     * @param peer          Peer who asked
      * @param name          The name of the channel
      * @return if we accept or not
      */
-    virtual bool onRequest(const DeviceId& deviceId, const std::string& name) = 0;
+    virtual bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) = 0;
 
     /**
      * Called when ConnectionManager has a new channel ready
-     * @param deviceId      Related device
+     * @param peer          Connected peer
      * @param name          The name of the channel
      * @param channel       Channel to handle
      */
-    virtual void onReady(const DeviceId& deviceId,
+    virtual void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                          const std::string& name,
                          std::shared_ptr<ChannelSocket> channel)
         = 0;
