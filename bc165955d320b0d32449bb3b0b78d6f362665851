@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "85f45efd_362a5f11",
+        "filename": "src/media/audio/opensl/audio_player.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-12T15:35:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "59144741_bf9b4f4d",
+      "revId": "bc165955d320b0d32449bb3b0b78d6f362665851",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ca6d8d74_ab74aec2",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-10-12T15:04:11Z",
       "side": 1,
       "message": "Maybe JAMI_DBG is enough",
+      "revId": "bc165955d320b0d32449bb3b0b78d6f362665851",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d83706b_38ff6715",
+        "filename": "src/media/audio/opensl/opensllayer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-12T15:35:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ca6d8d74_ab74aec2",
       "revId": "bc165955d320b0d32449bb3b0b78d6f362665851",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
