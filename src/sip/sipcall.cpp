@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -562,10 +562,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList)
 int
 SIPCall::SIPSessionReinvite()
 {
-    // This version is kept for backward compatibility.
-    auto const& acc = getSIPAccount();
-    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled() and not isAudioOnly(),
-                                                 getState() == CallState::HOLD);
+    auto mediaList = getMediaAttributeList();
     return SIPSessionReinvite(mediaList);
 }
 
