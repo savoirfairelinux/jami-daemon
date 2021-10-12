@@ -1,29 +1,19 @@
-;;; This is an example of a passive agent
+;;; This is an example of a passive agent.
 ;;;
-;;; It will accept all trust request and answer every call
+;;; The passive agent ensure that an account is created and then wait for
+;;; incomming call of any peer.
 
-(define details-matrix
-  '((("Account.upnpEnabled" . "true")
-     ("TURN.enable" . "true"))
-
-    (("Account.upnpEnabled" . "false")
-     ("TURN.enable" . "true"))
-
-    (("Account.upnpEnabled" . "false")
-     ("TURN.enable" . "false"))))
-
-(define (scenario/passive)
-  "Agent does nothing"
-  (agent:wait))
-
-(define (scenario/passive:change-details)
-  "Agent changes its account details once in a while"
-  (for-each (lambda (details)
-              (agent:disable)
-              (agent:set-details details)
-              (agent:enable)
-              (agent:wait 15))
-            details-matrix))
+(use-modules ((agent) #:prefix agent:)
+	     ((jami signal) #:prefix jami:)
+	     ((jami call) #:prefix call:))
 
 (agent:ensure-account)
-(scenario/passive)
+
+(jami:on-signal 'incomming-call
+		(lambda (account-id call-id peer-display-name media-list)
+		  (when (string= account-id agent:account-id)
+		    (format #t
+			    "Incoming [call:~a] from peer ~a~%"
+			    call-id peer-display-name)
+		    (call:accept call-id media-list))
+		  #t))
