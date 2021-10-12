@@ -20,8 +20,11 @@
 
 #pragma once
 
+/* Guile */
 #include <libguile.h>
 
-#define scm_to_cxx_string(VAR) (scm_to_cxx_string)(VAR, #VAR)
+/* Agent */
+#include "utils.h"
 
+extern void define_primitive(const char* name, int req, int opt, int rst, void* func);
 extern void install_scheme_primitives();
