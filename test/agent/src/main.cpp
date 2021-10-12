@@ -18,26 +18,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-/* agent */
-#include "agent/agent.h"
-#include "agent/bindings.h"
+/* Agent */
+#include "bindings/bindings.h"
+#include "utils.h"
 
 /* Jami */
 #include "jami.h"
 
 /* Third parties */
-#include <gnutls/gnutls.h>
 #include <libguile.h>
-
-/* std */
-#include <fstream>
-
-static void
-fini()
-{
-    Agent::instance().fini();
-    DRing::fini();
-}
 
 struct args {
     int argc;
@@ -45,29 +34,23 @@ struct args {
 };
 
 void*
-main_inner(void* args_raw) /* In Guile context */
+main_in_guile(void* args_raw)
 {
-    struct args* args = (struct args*)args_raw;
+    struct args* args = static_cast<struct args*>(args_raw);
 
     install_scheme_primitives();
 
-    Agent::instance().init();
-
-    atexit(fini);
+    atexit(DRing::fini);
 
     scm_shell(args->argc, args->argv);
 
+    /* unreachable */
     return nullptr;
 }
 
 int
 main(int argc, char* argv[])
 {
-    if (argc < 2) {
-        printf("Usage: agent CONFIG\n");
-        exit(EXIT_FAILURE);
-    }
-
     setenv("GUILE_LOAD_PATH", ".", 1);
 
     /* NOTE!  It's very important to initialize the daemon before entering Guile!!! */
@@ -75,11 +58,8 @@ main(int argc, char* argv[])
 
     AGENT_ASSERT(DRing::start(""), "Failed to start daemon");
 
-    struct args args;
+    struct args args = { argc, argv };
 
-    args.argc = argc;
-    args.argv = argv;
-
-    /* Entering guile context */
-    scm_with_guile(main_inner, (void*)&args);
+    /* Entering guile context - This never returns */
+    scm_with_guile(main_in_guile, (void*)&args);
 }
