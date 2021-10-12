@@ -72,6 +72,7 @@ public:
 
     inline void setFormat(const AudioFormat& format)
     {
+        std::lock_guard<std::mutex> l(writeLock_);
         format_ = format;
         resizer_.setFormat(format, format.sample_rate / 50);
     }
@@ -201,6 +202,7 @@ private:
 
     mutable std::mutex lock_;
     mutable std::condition_variable not_empty_;
+    std::mutex writeLock_;
 
     ReadOffsetMap readoffsets_;
 

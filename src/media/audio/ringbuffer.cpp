@@ -163,6 +163,7 @@ RingBuffer::hasNoReadOffsets() const
 void
 RingBuffer::put(std::shared_ptr<AudioFrame>&& data)
 {
+    std::lock_guard<std::mutex> l(writeLock_);
     resizer_.enqueue(resampler_.resample(std::move(data), format_));
 }
 
