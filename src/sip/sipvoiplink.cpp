@@ -560,7 +560,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    sip_utils::addContactHeader(account->getContactHeader(transport->get()), tdata);
+    sip_utils::addContactHeader(call->getContactHeader(), tdata);
     if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not send msg RINGING");
         return PJ_FALSE;

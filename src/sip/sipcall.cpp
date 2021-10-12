@@ -420,9 +420,15 @@ SIPCall::generateMediaPorts()
 }
 
 void
-SIPCall::setContactHeader(pj_str_t contact)
+SIPCall::setContactHeader(const std::string& contact)
 {
-    pj_strcpy(&contactHeader_, &contact);
+    contactHeader_ = contact;
+}
+
+const std::string&
+SIPCall::getContactHeader() const
+{
+    return contactHeader_;
 }
 
 void
@@ -437,6 +443,12 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
     if (not t) {
         return;
     }
+    auto account = getSIPAccount();
+    if (not account) {
+        JAMI_ERR("[call:%s] No account detected", getCallId().c_str());
+    }
+
+    setContactHeader(account->getContactHeader(transport_.get()));
 
     if (isSrtpEnabled() and not transport_->isSecure()) {
         JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an un-encrypted signaling channel",
@@ -704,9 +716,7 @@ SIPCall::terminateSipSession(int status)
             if (tdata) {
                 auto account = getSIPAccount();
                 if (account) {
-                    sip_utils::addContactHeader(account->getContactHeader(
-                                                    transport_ ? transport_->get() : nullptr),
-                                                tdata);
+                    sip_utils::addContactHeader(contactHeader_, tdata);
                     // Add user-agent header
                     sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
                 } else {
@@ -753,7 +763,8 @@ SIPCall::answer()
         Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
     }
 
-    setContactHeader(account->getContactHeader(transport_ ? transport_->get() : nullptr));
+    assert(transport_);
+    assert(not contactHeader_.empty());
 
     pjsip_tx_data* tdata;
     if (!inviteSession_->last_answer)
@@ -769,11 +780,10 @@ SIPCall::answer()
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
     // contactStr must stay in scope as long as tdata
-    if (contactHeader_.slen) {
-        JAMI_DBG("[call:%s] Answering with contact header: %.*s",
+    if (not contactHeader_.empty()) {
+        JAMI_DBG("[call:%s] Answering with contact header: %s",
                  getCallId().c_str(),
-                 (int) contactHeader_.slen,
-                 contactHeader_.ptr);
+                 contactHeader_.c_str());
         sip_utils::addContactHeader(contactHeader_, tdata);
     }
 
@@ -882,7 +892,8 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
         }
     }
 
-    setContactHeader(account->getContactHeader(transport_ ? transport_->get() : nullptr));
+    assert(transport_);
+    assert(not contactHeader_.empty());
 
     if (!inviteSession_->last_answer)
         throw std::runtime_error("Should only be called for initial answer");
@@ -899,11 +910,10 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
         != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
-    if (contactHeader_.slen) {
-        JAMI_DBG("[call:%s] Answering with contact header: %.*s",
+    if (not contactHeader_.empty()) {
+        JAMI_DBG("[call:%s] Answering with contact header: %s",
                  getCallId().c_str(),
-                 (int) contactHeader_.slen,
-                 contactHeader_.ptr);
+                 contactHeader_.c_str());
         sip_utils::addContactHeader(contactHeader_, tdata);
     }
 
@@ -993,7 +1003,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList)
         return;
     }
 
-    if (contactHeader_.slen) {
+    if (not contactHeader_.empty()) {
         sip_utils::addContactHeader(contactHeader_, tdata);
     }
 
@@ -2504,7 +2514,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
                                  NULL,
                                  &tdata)
         != PJ_SUCCESS) {
-        JAMI_ERR("Could not create initial answer OK");
+        JAMI_ERR("[call:%s] Could not create initial answer OK", getCallId().c_str());
         return !PJ_SUCCESS;
     }
 
@@ -2517,11 +2527,15 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
         return !PJ_SUCCESS;
     }
 
-    // ContactStr must stay in scope as long as tdata
-    sip_utils::addContactHeader(getSIPAccount()->getContactHeader(getTransport()->get()), tdata);
+    if (contactHeader_.empty()) {
+        JAMI_ERR("[call:%s] Contact header is empty!", getCallId().c_str());
+        return !PJ_SUCCESS;
+    }
+
+    sip_utils::addContactHeader(contactHeader_, tdata);
 
     if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Could not send msg OK");
+        JAMI_ERR("[call:%s] Could not send msg OK", getCallId().c_str());
         return !PJ_SUCCESS;
     }
 
@@ -3032,8 +3046,7 @@ SIPCall::merge(Call& call)
     sdp_ = std::move(subcall.sdp_);
     peerHolding_ = subcall.peerHolding_;
     upnp_ = std::move(subcall.upnp_);
-    std::copy_n(subcall.contactBuffer_, PJSIP_MAX_URL_SIZE, contactBuffer_);
-    pj_strcpy(&contactHeader_, &subcall.contactHeader_);
+    contactHeader_ = std::move(subcall.contactHeader_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
     peerUserAgent_ = subcall.peerUserAgent_;

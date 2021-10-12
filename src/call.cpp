@@ -430,11 +430,8 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
 #ifdef ENABLE_PLUGIN
     auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
     if (pluginChatManager.hasHandlers()) {
-        pluginChatManager.publishMessage(std::make_shared<JamiMessage>(getAccountId(),
-                                            getPeerNumber(),
-                                            true,
-                                            messages,
-                                            false));
+        pluginChatManager.publishMessage(
+            std::make_shared<JamiMessage>(getAccountId(), getPeerNumber(), true, messages, false));
     }
 #endif
     Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
@@ -474,8 +471,9 @@ Call::addSubCall(Call& subcall)
         subcall.sendTextMessage(msg.first, msg.second);
 
     subcall.addStateListener(
-        [sub = subcall.weak(),
-         parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
+        [sub = subcall.weak(), parent = weak()](Call::CallState new_state,
+                                                Call::ConnectionState new_cstate,
+                                                int /* code */) {
             runOnMainThread([sub, parent, new_state, new_cstate]() {
                 if (auto p = parent.lock()) {
                     if (auto s = sub.lock()) {

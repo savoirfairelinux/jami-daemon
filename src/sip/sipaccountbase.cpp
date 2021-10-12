@@ -458,7 +458,7 @@ SIPAccountBase::getIceOptions() const noexcept
 void
 SIPAccountBase::onTextMessage(const std::string& id,
                               const std::string& from,
-                              const std::string& deviceId,
+                              const std::string& /* deviceId */,
                               const std::map<std::string, std::string>& payloads)
 {
     JAMI_DBG("Text message received from %s, %zu part(s)", from.c_str(), payloads.size());
@@ -476,7 +476,8 @@ SIPAccountBase::onTextMessage(const std::string& id,
 #ifdef ENABLE_PLUGIN
     auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
     if (pluginChatManager.hasHandlers()) {
-        pluginChatManager.publishMessage(std::make_shared<JamiMessage>(accountID_, from, true, payloads, false));
+        pluginChatManager.publishMessage(
+            std::make_shared<JamiMessage>(accountID_, from, true, payloads, false));
     }
 #endif
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, id, payloads);
