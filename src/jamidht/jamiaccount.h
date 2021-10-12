@@ -251,9 +251,9 @@ public:
 
     /**
      * Get the contact header for
-     * @return pj_str_t The contact header based on account information
+     * @return The contact header based on account information
      */
-    pj_str_t getContactHeader(pjsip_transport* = nullptr) override;
+    std::string getContactHeader(SipTransport* transport = nullptr) override;
 
     /* Returns true if the username and/or hostname match this account */
     MatchRank matches(std::string_view username, std::string_view hostname) const override;
@@ -804,8 +804,6 @@ private:
      */
     pjsip_host_port via_addr_ {};
 
-    char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
-    pj_str_t contact_ {contactBuffer_, 0};
     pjsip_transport* via_tp_ {nullptr};
 
     std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
