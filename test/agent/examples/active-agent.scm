@@ -1,98 +1,59 @@
 ;;; This is an example of an active agent.
-
-;;; Here we define a simple variable named `peer` that references a string.
 ;;;
-;;; You should change this to the Jami ID of an other agent or one of your
-;;; account.
-(define my-peer "358d385fc78edde27981caac4ec40fb963c8a066")
+;;; The active agent ensure that an account is created and then call its peer
+;;; every minute.
 
-;;; Here we define a variable named `details-matrix` that references a list of
-;;; association lists.
-;;;
-;;; An association list is a list that has pairs of (key . value).
-(define details-matrix
-  '((("Account.upnpEnabled" . "true")
-     ("TURN.enable" . "true"))
+(use-modules
+ (ice-9 threads)
+ ((agent) #:prefix agent:)
+ ((jami account) #:prefix account:)
+ ((jami signal) #:prefix jami:)
+ ((jami call) #:prefix call:))
 
-    (("Account.upnpEnabled" . "false")
-     ("TURN.enable" . "true"))
+(define (make-a-call from to)
+  (let ((mtx (make-mutex))
+        (cnd (make-condition-variable))
+        (this-call-id "")
+        (success #f)
+        (over #f))
 
-    (("Account.upnpEnabled" . "false")
-     ("TURN.enable" . "false"))))
+    (jami:on-signal 'call-state-changed
+                    (lambda (call-id state code)
+                      (with-mutex mtx
+                        (let ((ret (cond
+                                    ((not (string= call-id this-call-id)) #t)
+                                    ((string= state "CURRENT") (begin
+                                                                 (set! success #t)
+                                                                 #t))
+                                    ((string= state "OVER") (begin
+                                                              (set! over #t)
+                                                              #f))
+                                    (else #t))))
+                          (signal-condition-variable cnd)
+                          ret))))
 
-(define (scenario/call:details someone)
-  "
-  pre-conditions: SOMEONE is a string that references a valid contact in the agent account.
+    (set! this-call-id (call:place-call from to))
 
-  Here we define a variable named `scenario/call` that references a procedure
-  that takes a single argument called `someone`.
+    (with-mutex mtx
+      (while (not (or success over))
+        (wait-condition-variable cnd mtx (+ (current-time) 30))))
 
-  This procedure iterates over the details matrix defined above and changes the
-  details of the account, using `agent:set-details` for every association list in
-  the matrix.  If it fails to place a call, then the `bad-call` exception is
-  thrown.  Finally, the agent sleeps for 10 seconds using `agent:wait`.
-  "
-  (for-each (lambda (details)
-              (agent:set-details details)
-              (or (agent:place-call someone)
-                  (throw 'bad-call)))
-            (agent:wait 10)
-            details-matrix))
+    (when success
+      (call:hang-up this-call-id))
 
-(define (scenario/call:periodic someone)
-  "
-  pre-conditions: SOMEONE is a string that references a valid contact in the agent account.
+    (unless over
+      (with-mutex mtx
+        (while (not over)
+          (wait-condition-variable cnd mtx (+ (current-time) 30)))))
 
-  Place a call to SOMEONE periodically until it fails.
+    success))
 
-  NOTE!  This is an example of a recursive procedure.  In Scheme, tail
-  recursions are free."
-  (when (agent:place-call someone)
-    (scenario/call:periodic someone)))
-
-(define (scenario/call:nth someone cnt)
-  "
-  pre-conditions: SOMEONE is a string that references a valid contact in the agent account.
-                   LEFT is a positive number.
-
-  Place a call to SOMEONE CNT time.
-  "
-  (let ((fail 0))
-    (do ((i 0 (1+ i)))
-        ((> i cnt))
-      (unless (agent:place-call someone)
-        (set! fail (1+ fail))))
-    fail)
-)
-
-(define (scenario/ping conversation)
-  "
-  pre-conditions: CONVERSATION is a string that references a valid conversation in the agent account.
-
-  Here we define a variable named `scenario/ping` that references a procedure
-  that takes a single argument called `conversation`.
-
-  This procedure work just like `scenario/call`, but will send a random
-  message to CONVERSATION and expect to receive a pong of it, instead of
-  placing a call.
-  "
-  (for-each (lambda (details)
-              (agent:set-details details)
-              (or (agent:ping conversation) (throw 'bad-ping))
-              (agent:wait 5))
-            details-matrix))
-
-;;; Set default account's details.
-;(agent:set-details '(("Account.upnpEnabled" . "true") ("TURN.enable" . "true")))
-
-;;; Search for our peer.
-;(agent:search-for-peers my-peer)
-
-;;; Let's call our peer 50 times.
-;(scenario/call:nth my-peer 50)
-
-;;; Wait for 100000 seconds.
 (agent:ensure-account)
-(agent:search-for-peers my-peer)
 
-(format #t "Failed ~a calls out of 1000" (scenario/call:nth my-peer 100))
+(while #t
+  (begin
+    (make-a-call agent:account-id "bcebc2f134fc15eb06c64366c1882de2e0f1e54f")
+    (account:send-register agent:account-id #f)
+    (sleep 30)
+    (account:send-register agent:account-id #t)
+    (sleep 30)))
