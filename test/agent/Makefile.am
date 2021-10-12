@@ -9,6 +9,7 @@ agent_SOURCES =                   \
 	src/main.cpp              \
 	src/utils.h               \
 	src/bindings/bindings.cpp \
-	src/bindings/bindings.h
+	src/bindings/bindings.h   \
+	src/bindings/account.h
 
 agent_LDADD = $(top_builddir)/src/libring.la

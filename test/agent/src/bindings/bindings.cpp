@@ -22,11 +22,13 @@
 #include "bindings/bindings.h"
 
 /* Include module's bindings here */
+#include "bindings/account.h"
 
 void
 install_scheme_primitives()
 {
     /* Define modules here */
+    scm_c_define_module("jami account", install_account_primitives, NULL);
 }
 
 /*
