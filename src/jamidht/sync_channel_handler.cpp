@@ -50,7 +50,7 @@ SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, Connec
 }
 
 bool
-SyncChannelHandler::onRequest(const DeviceId& deviceId, const std::string& name)
+SyncChannelHandler::onRequest(const DeviceId& deviceId, const std::string& /* name */)
 {
     auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
     auto acc = account_.lock();

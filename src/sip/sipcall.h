@@ -219,7 +219,8 @@ public:
     void onMediaNegotiationComplete();
     // End fo SiPVoipLink events
 
-    void setContactHeader(pj_str_t contact);
+    void setContactHeader(const std::string& contact);
+    const std::string& getContactHeader() const;
 
     void setTransport(const std::shared_ptr<SipTransport>& t);
 
@@ -432,8 +433,7 @@ private:
 
     std::string peerRegisteredName_ {};
 
-    char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
-    pj_str_t contactHeader_ {contactBuffer_, 0};
+    std::string contactHeader_ {};
 
     std::shared_ptr<jami::upnp::Controller> upnp_;
 
