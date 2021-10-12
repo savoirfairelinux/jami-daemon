@@ -86,11 +86,12 @@ AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
             playQueue_->pop();
     }
     if (devShadowQueue_.size() == 0) {
-        // JAMI_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(),
-        // playQueue_->size(), devShadowQueue_.size());
         for (int i = 0; i < DEVICE_SHADOW_BUFFER_QUEUE_LEN; i++) {
-            (*bq)->Enqueue(bq, silentBuf_.buf_, silentBuf_.size_);
-            devShadowQueue_.push(&silentBuf_);
+            if ((*bq)->Enqueue(bq, silentBuf_.buf_, silentBuf_.size_) == SL_RESULT_SUCCESS) {
+                devShadowQueue_.push(&silentBuf_);
+            } else {
+                JAMI_ERR("Enqueue silentBuf_ failed");
+            }
         }
     }
 }
@@ -208,9 +209,12 @@ AudioPlayer::start()
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_STOPPED);
     SLASSERT(result);
 
-    SLASSERT(
-        (*playBufferQueueItf_)->Enqueue(playBufferQueueItf_, silentBuf_.buf_, silentBuf_.size_));
     devShadowQueue_.push(&silentBuf_);
+    result = (*playBufferQueueItf_)->Enqueue(playBufferQueueItf_, silentBuf_.buf_, silentBuf_.size_);
+    if (result != SL_RESULT_SUCCESS) {
+        JAMI_ERR("Enqueue silentBuf_ failed, result = %d", result);
+        devShadowQueue_.pop();
+    }
 
     lk.unlock();
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_PLAYING);
