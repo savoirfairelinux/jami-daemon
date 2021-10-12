@@ -174,12 +174,17 @@ getHostFromUri(std::string_view uri)
 }
 
 void
-addContactHeader(pj_str_t contact_str, pjsip_tx_data* tdata)
+addContactHeader(const std::string& contactHdr, pjsip_tx_data* tdata)
 {
+    if (contactHdr.empty()) {
+        JAMI_WARN("Contact header won't be added (empty string)");
+        return;
+    }
+    auto pjContact = sip_utils::CONST_PJ_STR(contactHdr);
     pjsip_contact_hdr* contact = pjsip_contact_hdr_create(tdata->pool);
     contact->uri = pjsip_parse_uri(tdata->pool,
-                                   contact_str.ptr,
-                                   contact_str.slen,
+                                   pjContact.ptr,
+                                   pjContact.slen,
                                    PJSIP_PARSE_URI_AS_NAMEADDR);
     // remove old contact header (if present)
     pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
@@ -189,7 +194,7 @@ addContactHeader(pj_str_t contact_str, pjsip_tx_data* tdata)
 void
 addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
 {
-    if (tdata == nullptr)
+    if (tdata == nullptr or userAgent.empty())
         return;
 
     auto pjUserAgent = CONST_PJ_STR(userAgent);
@@ -224,8 +229,8 @@ getPeerUserAgent(const pjsip_rx_data* rdata)
 
     constexpr auto USER_AGENT_STR = CONST_PJ_STR("User-Agent");
     if (auto uaHdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
-                                                                   &USER_AGENT_STR,
-                                                                   nullptr)) {
+                                                                            &USER_AGENT_STR,
+                                                                            nullptr)) {
         return as_view(uaHdr->hvalue);
     }
     return {};

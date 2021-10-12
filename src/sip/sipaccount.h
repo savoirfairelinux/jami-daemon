@@ -69,9 +69,6 @@ class SIPAccount : public SIPAccountBase
 {
 public:
     constexpr static const char* const ACCOUNT_TYPE = "SIP";
-    constexpr static const char* const CONTACT_HEADER_WITH_PN
-        = "%s<%s:%s%s%s:%d%s;pn-provider=%s;pn-param=%s;pn-prid=%s>";
-    constexpr static const char* const CONTACT_HEADER_WITHOUT_PN = "%s<%s:%s%s%s:%d%s>";
     constexpr static const char* const PN_FCM = "fcm";
     constexpr static const char* const PN_APNS = "apns";
 
@@ -348,9 +345,9 @@ public:
 
     /**
      * Get the contact header for
-     * @return pj_str_t The contact header based on account information
+     * @return The contact header based on account information
      */
-    pj_str_t getContactHeader(pjsip_transport* = nullptr) override;
+    std::string getContactHeader(SipTransport* transport = nullptr) override;
 
     std::string getServiceRoute() const { return serviceRoute_; }
 
@@ -613,12 +610,11 @@ private:
     /**
      * Print contact header in certain format
      */
-    int printContactHeader(char* data,
-                           const std::string& displayName,
-                           const char* scheme,
-                           const std::string& address,
-                           pj_uint16_t port,
-                           const char* transport);
+    std::string printContactHeader(const std::string& displayName,
+                                   const char* scheme,
+                                   const std::string& address,
+                                   pj_uint16_t port,
+                                   const char* transport);
 
     /**
      * Resolved IP of hostname_ (for registration)
@@ -750,8 +746,7 @@ private:
      */
     std::string upnpIpAddr_;
 
-    char contactBuffer_[PJSIP_MAX_URL_SIZE];
-    pj_str_t contact_;
+    std::string contact_;
     int contactRewriteMethod_;
     bool allowIPAutoRewrite_;
     /* Undocumented feature in pjsip, this can == 2 */

@@ -794,19 +794,14 @@ JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
     std::string targetStr = getToUri(target.toString(true));
     pj_str_t pjTarget = sip_utils::CONST_PJ_STR(targetStr);
 
-    pj_str_t pjContact;
-    {
-        auto transport = call.getTransport();
-        pjContact = getContactHeader(transport ? transport->get() : nullptr);
-    }
+    auto contact = getContactHeader(call.getTransport());
+    auto pjContact = sip_utils::CONST_PJ_STR(contact);
 
-    JAMI_DBG("contact header: %.*s / %s -> %s / %.*s",
-             (int) pjContact.slen,
-             pjContact.ptr,
+    JAMI_DBG("contact header: %s / %s -> %s / %s",
+             contact.c_str(),
              from.c_str(),
              toUri.c_str(),
-             (int) pjTarget.slen,
-             pjTarget.ptr);
+             targetStr.c_str());
 
     auto local_sdp = call.getSDP().getLocalSdpSession();
     pjsip_dialog* dialog {nullptr};
@@ -3058,32 +3053,26 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri,
     return true;
 }
 
-pj_str_t
-JamiAccount::getContactHeader(pjsip_transport* t)
+std::string
+JamiAccount::getContactHeader(SipTransport* sipTransport)
 {
     std::string quotedDisplayName = "\"" + displayName_ + "\" " + (displayName_.empty() ? "" : " ");
-    if (t) {
-        auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(t);
-        auto address = td->self->getLocalAddress().toString(true);
-        bool reliable = t->flag & PJSIP_TRANSPORT_RELIABLE;
+    std::ostringstream contact;
 
-        contact_.slen = pj_ansi_snprintf(contact_.ptr,
-                                         PJSIP_MAX_URL_SIZE,
-                                         "%s<sips:%s%s%s;transport=%s>",
-                                         quotedDisplayName.c_str(),
-                                         id_.second->getId().toString().c_str(),
-                                         (address.empty() ? "" : "@"),
-                                         address.c_str(),
-                                         reliable ? "tls" : "dtls");
+    if (auto transport = sipTransport->get()) {
+        auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(transport);
+        auto address = td->self->getLocalAddress().toString(true);
+        bool reliable = transport->flag & PJSIP_TRANSPORT_RELIABLE;
+
+        contact << quotedDisplayName << "<sips:" << id_.second->getId().toString()
+                << (address.empty() ? "" : "@") << address
+                << (reliable ? ";transport=tls>" : ";transport=dtls");
     } else {
         JAMI_ERR("getContactHeader: no SIP transport provided");
-        contact_.slen = pj_ansi_snprintf(contact_.ptr,
-                                         PJSIP_MAX_URL_SIZE,
-                                         "%s<sips:%s@ring.dht>",
-                                         quotedDisplayName.c_str(),
-                                         id_.second->getId().toString().c_str());
+        contact << quotedDisplayName << "<sips:" << id_.second->getId().toString() << "@ring.dht>";
     }
-    return contact_;
+
+    return contact.str();
 }
 
 /* contacts */
