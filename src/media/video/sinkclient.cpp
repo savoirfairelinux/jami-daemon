@@ -360,7 +360,10 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             outFrame->pointer()->crop_right = (size_t) outFrame->width() - crop_.x - crop_.w;
             av_frame_apply_cropping(outFrame->pointer(), AV_FRAME_CROP_UNALIGNED);
         }
-
+        if (outFrame->height() != height_ || outFrame->width() != width_) {
+            setFrameSize(0, 0);
+            setFrameSize(outFrame->width(), outFrame->height());
+        }
         avTarget_.push(std::move(outFrame));
     }
 
