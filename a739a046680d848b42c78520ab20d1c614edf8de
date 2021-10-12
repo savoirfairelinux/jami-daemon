@@ -16,6 +16,24 @@
       "message": "reserve size\n\n    ret.reserve(SCM_SIMPLE_VECTOR_LENGTH(value));",
       "revId": "a739a046680d848b42c78520ab20d1c614edf8de",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "69b680f7_823a4158",
+        "filename": "test/agent/src/utils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-10-12T18:10:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d6257893_6531ef8d",
+      "revId": "a739a046680d848b42c78520ab20d1c614edf8de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
