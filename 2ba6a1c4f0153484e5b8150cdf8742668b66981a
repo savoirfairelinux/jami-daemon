@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "50247245_8f46b4ae",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-10-13T22:56:48Z",
+      "side": 1,
+      "message": "In commit description: varialbe -\u003e variable",
+      "revId": "2ba6a1c4f0153484e5b8150cdf8742668b66981a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
