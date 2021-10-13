@@ -34,6 +34,24 @@
       "parentUuid": "796579b5_b4e29ec3",
       "revId": "02e53134c21f15eb0c2184c17306326a8a0a8fba",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22f97aa2_2cce8966",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 995,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-13T16:24:19Z",
+      "side": 1,
+      "message": "btw I think we should remove STUN from advanced Jami account\u0027 settings one day, there is no reason (as the DHT will give the IP) (not related to this)",
+      "parentUuid": "7995e96c_8f3316c1",
+      "revId": "02e53134c21f15eb0c2184c17306326a8a0a8fba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
