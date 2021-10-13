@@ -160,6 +160,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b6af1614_a070d18f",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "my question is why input is assigned if not used ?",
+      "parentUuid": "c708a545_6575fa6b",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f388a9e1_9fcec5d8",
@@ -301,6 +319,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e10343c_b0d3403f",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "266332d0_4dd14c46",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b875efee_f56b0881",
@@ -336,6 +372,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "452b62f4_44cc87db",
+        "filename": "tools/jamictrl/jamictrl.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 238,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "a465ea19_d6adf514",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "10af7d02_16e0e114",
@@ -367,6 +421,24 @@
       "side": 1,
       "message": "Existing script is merely updated to use the new API. Checking the return value is not mandatory, in that case the return value would always be true since we use the id provided just above.",
       "parentUuid": "10af7d02_16e0e114",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dfcdfb4d_d41a938d",
+        "filename": "tools/jamictrl/toggle_video_preview.py",
+        "patchSetId": 6
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "5151f618_1cb8fa22",
       "revId": "24a859ff4076a98342ce80a776a0160029febe33",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

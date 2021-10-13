@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4015fe6a_cd1fb7e5",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "just a side note: VideoInput/VideoGenerator stores the writable frame as shared pointer, and getNewFrame() return a reference (return *writableFrame_.get()), then we unref here to get the raw pointer. \nI guess there is a better way to do it. May be use shared_ptr everywhere",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d88f7c8_1cdf8d20",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "not need, already have a return.",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe788f45_4cabf737",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 456,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "no check before using newPreview ? If it should not fail, we should assert/throw exception in that case.",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dcd4b741_9054f5bc",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 465,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "needs new line after the return type as per SFL coding style.",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c36a54aa_d457a976",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 477,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-13T13:52:19Z",
+      "side": 1,
+      "message": "new line",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
