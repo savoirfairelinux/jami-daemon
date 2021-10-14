@@ -1,7 +1,7 @@
-From e657b352dba5b23c82fa29028e7ff4eb19a7dd50 Mon Sep 17 00:00:00 2001
-From: jrun <darwinskernel@gmail.com>
-Date: Thu, 27 Feb 2020 13:44:47 -0500
-Subject: [PATCH 9/9] add config site
+From 4905d9a403074f6dd6b835e26c6e4148702ac6e7 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mchibani@hotmail.com>
+Date: Thu, 23 Sep 2021 10:48:44 -0400
+Subject: [PATCH 09/20] add-config-site
 
 ---
  pjlib/include/pj/config_site.h | 26 ++++++++++++++++++++++++++

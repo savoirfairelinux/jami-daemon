@@ -1,11 +1,17 @@
+From 3693ab706b91a11d32b3d3d436442901aade714c Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Wed, 1 Sep 2021 15:13:07 -0400
+Subject: [PATCH 18/20] resort-check-list-after-adding-prflx
+
+---
  pjnath/src/pjnath/ice_session.c | 4 ++++
  1 file changed, 4 insertions(+)
 
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 503cbfd91..f060aaa9c 100644
+index 7e6f2cf76..48a0b5016 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -4138,7 +4138,11 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4179,7 +4179,11 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	LOG4((ice->obj_name, "New triggered check added: %d", 
  	     ice->clist.count));
  	pj_log_push_indent();

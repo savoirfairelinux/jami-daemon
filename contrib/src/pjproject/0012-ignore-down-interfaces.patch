@@ -1,3 +1,9 @@
+From 8cfec34649387db111fa215e0fd264edec26f2c2 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 12/20] ignore-down-interfaces
+
+---
  pjlib/src/pj/ip_helper_generic.c | 15 +++++++++++++++
  1 file changed, 15 insertions(+)
 
