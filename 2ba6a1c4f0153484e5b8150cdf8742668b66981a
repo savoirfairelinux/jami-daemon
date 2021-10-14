@@ -51,6 +51,24 @@
       "message": "clear()",
       "revId": "2ba6a1c4f0153484e5b8150cdf8742668b66981a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b15ea317_e01a5df4",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 879,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-14T16:14:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9d9f8b14_235f56af",
+      "revId": "2ba6a1c4f0153484e5b8150cdf8742668b66981a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
