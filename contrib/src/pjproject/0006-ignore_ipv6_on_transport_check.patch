@@ -1,7 +1,7 @@
-From d8cbda261c7cebec8251742b1e383b69614951c5 Mon Sep 17 00:00:00 2001
-From: jrun <darwinskernel@gmail.com>
-Date: Thu, 20 Feb 2020 13:37:23 -0500
-Subject: [PATCH] ignore_ipv6_on_transport_check
+From 5d0ffdaa6b7aa61b7a22afb3078b58517560aed8 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 06/20] ignore_ipv6_on_transport_check
 
 ---
  pjsip/src/pjsip/sip_transport.c | 5 ++++-
@@ -24,4 +24,5 @@ index d5bd8fdda..e168f14bc 100644
  	    TRACE_((THIS_FILE, "Transport type in tpsel not matched"));
  	    return PJSIP_ETPNOTSUITABLE;
 -- 
-2.30.2
+2.25.1
+

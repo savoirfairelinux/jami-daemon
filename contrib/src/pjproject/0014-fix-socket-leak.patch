@@ -1,10 +1,8 @@
-From c1093eeb18a4090fd7eac6e8e70a6da1777f0907 Mon Sep 17 00:00:00 2001
-From: Olivier Dion <olivier.dion@savoirfairelinux.com>
-Date: Mon, 26 Jul 2021 09:52:50 -0400
-Subject: [PATCH]  pjnath/turn_sock: Fix leak of socket
+From 113adc72405483a90061b9759944433f67172993 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 14/20] fix-socket-leak
 
-Opened socket is not closed on binding and quality of service error.  The socket
-is owned by the active sock only if everything went well.
 ---
  pjnath/src/pjnath/turn_sock.c | 7 +++++++
  1 file changed, 7 insertions(+)

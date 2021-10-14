@@ -1,7 +1,7 @@
-From 2feee8db77ed47e7b574367295d4f03f9aea67f8 Mon Sep 17 00:00:00 2001
-From: sauwming <ming@teluu.com>
-Date: Fri, 6 Aug 2021 09:45:54 +0800
-Subject: [PATCH] Fix socktype and duplicate checking in pj_getaddrinfo()
+From 8399d7f3503d50f6e69966b4736693908eca7542 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 15/20] fix-socktype-and-duplicate-checking
 
 ---
  pjlib/src/pj/addr_resolv_sock.c | 11 ++++++++---

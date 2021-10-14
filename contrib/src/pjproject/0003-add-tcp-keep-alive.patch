@@ -1,7 +1,7 @@
-From 0d46f77fe2cd2e3197f3b7b745d822b6c1cb9790 Mon Sep 17 00:00:00 2001
-From: jrun <darwinskernel@gmail.com>
-Date: Thu, 27 Feb 2020 12:57:17 -0500
-Subject: [PATCH 3/9] add tcp keep alive
+From 9b3905a11fc8e7d92e8e9ba6f8c882febfe09a2e Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:38 -0400
+Subject: [PATCH 03/20] add-tcp-keep-alive
 
 ---
  pjlib/include/pj/sock.h             | 29 +++++++++++++++++++
@@ -246,10 +246,10 @@ index ab83af956..966a9fc43 100644
  PJ_EXPORT_SYMBOL(PJ_SOL_UDP)
  PJ_EXPORT_SYMBOL(PJ_SOL_IPV6)
 diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
-index 5362c72e9..97069ed9e 100644
+index 7ec2a1574..0ad30d3f1 100644
 --- a/pjnath/include/pjnath/ice_session.h
 +++ b/pjnath/include/pjnath/ice_session.h
-@@ -648,6 +648,11 @@ typedef struct pj_ice_sess_cb
+@@ -655,6 +655,11 @@ typedef struct pj_ice_sess_cb
                                          pj_ice_sess_checklist *clist,
                                          unsigned check_id);
  
@@ -280,7 +280,7 @@ index 1c20729e8..1fed15f6f 100644
  
  
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index cc7e7d564..0b1c5fd56 100644
+index 7f60341cb..7e6f2cf76 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -1534,6 +1534,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
@@ -297,7 +297,7 @@ index cc7e7d564..0b1c5fd56 100644
  	/* Restore FINGERPRINT usage */
  	pj_stun_session_use_fingerprint(comp->stun_sess, saved);
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 0fdd2c695..0bd8c6138 100644
+index e96c819cc..3692baf75 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -99,6 +99,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf1, const pj_uint8_t *buf2)

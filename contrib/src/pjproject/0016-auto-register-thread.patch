@@ -1,7 +1,7 @@
-From 2e9dcff92232e7fe6bd779a5947d32d8c94cd807 Mon Sep 17 00:00:00 2001
-From: Olivier Dion <olivier.dion@polymtl.ca>
-Date: Wed, 28 Jul 2021 17:27:29 -0400
-Subject: [PATCH] pj/os_core: Register thread if not registered
+From 17d67a2ec1e024873ca807d1c81696fd0fba2c1f Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 16/20] auto-register-thread
 
 ---
  pjlib/src/pj/os_core_unix.c  | 35 ++++++++++++++++++++++++++++++++---

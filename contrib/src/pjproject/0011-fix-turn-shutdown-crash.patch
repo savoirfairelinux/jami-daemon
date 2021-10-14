@@ -1,3 +1,9 @@
+From ab81d0415e5fb6a0d16da2ae52e98a3a6eae687f Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 11/20] fix-turn-shutdown-crash
+
+---
  pjnath/src/pjnath/turn_sock.c | 3 ---
  1 file changed, 3 deletions(-)
 

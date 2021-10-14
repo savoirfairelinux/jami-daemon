@@ -1,8 +1,14 @@
+From 398943a4e6984e4ce23ee63853ff7030ae35e917 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:38 -0400
+Subject: [PATCH 02/20] rfc2466
+
+---
  pjnath/src/pjnath/ice_session.c | 176 ++++++++++++++++++++++++++++++++
  1 file changed, 176 insertions(+)
 
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index f35cfba5c..cc7e7d564 100644
+index ebe538ecf..7f60341cb 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -30,6 +30,21 @@
