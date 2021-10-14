@@ -1256,19 +1256,25 @@ SIPCall::onhold(OnReadyCb&& cb)
 bool
 SIPCall::hold()
 {
-    if (not setState(CallState::HOLD))
+    if (not setState(CallState::HOLD)) {
+        JAMI_WARN("[call:%s] Failed to set state to HOLD", getCallId().c_str());
         return false;
+    }
 
     stopAllMedia();
 
     if (getConnectionState() == ConnectionState::CONNECTED) {
+        for (auto& stream : rtpStreams_) {
+            stream.mediaAttribute_->onHold_ = true;
+        }
         if (SIPSessionReinvite() != PJ_SUCCESS) {
             JAMI_WARN("[call:%s] Reinvite failed", getCallId().c_str());
-            return true;
+            return false;
         }
     }
 
     isWaitingForIceAndMedia_ = true;
+    JAMI_DBG("[call:%s] Set state to HOLD", getCallId().c_str());
     return true;
 }
 
@@ -1322,6 +1328,9 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
     sdp_cb();
 
     if (getConnectionState() == ConnectionState::CONNECTED) {
+        for (auto& stream : rtpStreams_) {
+            stream.mediaAttribute_->onHold_ = false;
+        }
         if (SIPSessionReinvite() != PJ_SUCCESS) {
             JAMI_WARN("[call:%s] resuming hold", getCallId().c_str());
             if (isWaitingForIceAndMedia_) {
