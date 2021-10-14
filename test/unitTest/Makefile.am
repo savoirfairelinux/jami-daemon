@@ -155,6 +155,8 @@ ut_conversation_SOURCES = conversation/conversationcommon.cpp conversation/conve
 #
 check_PROGRAMS += ut_media_negotiation
 ut_media_negotiation_SOURCES = media_negotiation/media_negotiation.cpp common.cpp
+check_PROGRAMS += ut_hold_resume
+ut_hold_resume_SOURCES = media_negotiation/hold_resume.cpp common.cpp
 
 #
 # compability
@@ -207,5 +209,6 @@ check_PROGRAMS += ut_sip_empty_offer
 ut_sip_empty_offer_SOURCES = sip_account/sip_empty_offer.cpp
 check_PROGRAMS += ut_sip_srtp
 ut_sip_srtp_SOURCES = sip_account/sip_srtp.cpp
+
 
 TESTS = $(check_PROGRAMS)
