@@ -1,11 +1,17 @@
+From 4c05a164103238527f7ae52db1f89b7b16dc7220 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mchibani@hotmail.com>
+Date: Wed, 8 Sep 2021 15:42:03 -0400
+Subject: [PATCH 19/20] avoid-immediate-nominating-triggered-check
+
+---
  pjnath/src/pjnath/ice_session.c | 57 ++++++++++++++++++++++++---------
  1 file changed, 42 insertions(+), 15 deletions(-)
 
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index f060aaa9c..f04b7314e 100644
+index 48a0b5016..80681e5ae 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -4057,14 +4057,22 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4098,14 +4098,22 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	if (c->state == PJ_ICE_SESS_CHECK_STATE_FROZEN ||
  	    c->state == PJ_ICE_SESS_CHECK_STATE_WAITING)
  	{
@@ -35,7 +41,7 @@ index f060aaa9c..f04b7314e 100644
  	} else if (c->state == PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS) {
  	    /* Should retransmit immediately
  	     */
-@@ -4124,7 +4132,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4165,7 +4173,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
      else if (ice->clist.count < PJ_ICE_MAX_CHECKS) {
  
  	pj_ice_sess_check *c = &ice->clist.checks[ice->clist.count];
@@ -44,7 +50,7 @@ index f060aaa9c..f04b7314e 100644
  
  	c->lcand = lcand;
  	c->rcand = rcand;
-@@ -4132,19 +4140,38 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -4173,19 +4181,38 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	c->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
  	c->nominated = rcheck->use_candidate;
  	c->err_code = PJ_SUCCESS;

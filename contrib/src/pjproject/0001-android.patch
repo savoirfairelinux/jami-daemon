@@ -1,7 +1,7 @@
-From 34ca3353abf3e6bdaab4abb7d5b996421500f3e0 Mon Sep 17 00:00:00 2001
-From: jrun <darwinskernel@gmail.com>
-Date: Fri, 28 Feb 2020 12:33:24 -0500
-Subject: [PATCH] android
+From 1b06187b429d89871af0a2a27be7936568571228 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mchibani@hotmail.com>
+Date: Thu, 23 Sep 2021 13:57:22 -0400
+Subject: [PATCH 20/20] android
 
 ---
  aconfigure                        |  3 ---

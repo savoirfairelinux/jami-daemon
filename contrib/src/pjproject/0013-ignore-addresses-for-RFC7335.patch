@@ -1,3 +1,12 @@
+From 0f901bec66f65b8268e8b2eaa89f0c7aa1bdf0ea Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 13/20] ignore-addresses-for-RFC7335
+
+---
+ pjlib/src/pj/ip_helper_generic.c | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
 diff --git a/pjlib/src/pj/ip_helper_generic.c b/pjlib/src/pj/ip_helper_generic.c
 index 2a392d16b..c1e49c3d3 100644
 --- a/pjlib/src/pj/ip_helper_generic.c

@@ -1,3 +1,9 @@
+From ca9e764b9dad95351ceb50efabe757b2909be00e Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 07/20] upnp-srflx-nat-assisted-cand
+
+---
  pjnath/include/pjnath/config.h    |   2 +-
  pjnath/include/pjnath/stun_sock.h |  22 ++++
  pjnath/src/pjnath/ice_strans.c    | 171 +++++++++++++++++++++++++++---
@@ -5,7 +11,7 @@
  4 files changed, 181 insertions(+), 15 deletions(-)
 
 diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
-index 3e7c6ae3a..89b421c51 100644
+index 3f170491b..914d652d5 100644
 --- a/pjnath/include/pjnath/config.h
 +++ b/pjnath/include/pjnath/config.h
 @@ -279,7 +279,7 @@
@@ -51,7 +57,7 @@ index 51f60cc03..ba74cc6a5 100644
       * Specify the port range for STUN socket binding, relative to the start
       * port number specified in \a bound_addr. Note that this setting is only
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 0bd8c6138..d54eb4bf1 100644
+index 3692baf75..67bc28785 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -551,6 +551,136 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,

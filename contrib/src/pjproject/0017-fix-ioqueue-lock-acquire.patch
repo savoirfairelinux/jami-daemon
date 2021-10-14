@@ -1,13 +1,8 @@
-From 2bf169548d9d55ca022a3203bb64c3c90ed01891 Mon Sep 17 00:00:00 2001
-From: Olivier Dion <olivier.dion@savoirfairelinux.com>
-Date: Thu, 19 Aug 2021 10:15:13 -0400
-Subject: [PATCH] pj/ioqueue_epoll: Acquire ioqueue's lock before destroying
+From 75d2d80e5c8f815ab0c298eabd843df6539fa5e5 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mchibani@hotmail.com>
+Date: Thu, 16 Sep 2021 09:33:50 -0400
+Subject: [PATCH 17/20] fix-ioqueue-lock-acquire
 
-`ioqueue_destroy(ioqueue)` will call `pj_lock_release(ioqueue->lock)`, which will
-result in failure of the assertion `mutex->owner == pj_thread_this()` when
-`PJ_DEBUG` is defined.
-
-Thus, acquire the lock before destroying the ioqueue.
 ---
  pjlib/src/pj/ioqueue_epoll.c | 1 +
  1 file changed, 1 insertion(+)
