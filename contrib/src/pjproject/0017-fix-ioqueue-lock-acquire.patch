@@ -1,0 +1,24 @@
+From 75d2d80e5c8f815ab0c298eabd843df6539fa5e5 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mchibani@hotmail.com>
+Date: Thu, 16 Sep 2021 09:33:50 -0400
+Subject: [PATCH 17/20] fix-ioqueue-lock-acquire
+
+---
+ pjlib/src/pj/ioqueue_epoll.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/pjlib/src/pj/ioqueue_epoll.c b/pjlib/src/pj/ioqueue_epoll.c
+index dbf479d25..560160ab7 100644
+--- a/pjlib/src/pj/ioqueue_epoll.c
++++ b/pjlib/src/pj/ioqueue_epoll.c
+@@ -231,6 +231,7 @@ PJ_DEF(pj_status_t) pj_ioqueue_create( pj_pool_t *pool,
+ 
+     ioqueue->epfd = os_epoll_create(max_fd);
+     if (ioqueue->epfd < 0) {
++	pj_lock_acquire(ioqueue->lock);
+ 	ioqueue_destroy(ioqueue);
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_os_error());
+     }
+-- 
+2.25.1
+
