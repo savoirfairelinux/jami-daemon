@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "687a3eea_9561f9cd",
+        "filename": "src/account.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-14T14:47:21Z",
+      "side": 1,
+      "message": "is there still platforms for non multistream? the code may be simplified",
+      "range": {
+        "startLine": 129,
+        "startChar": 22,
+        "endLine": 130,
+        "endChar": 21
+      },
+      "revId": "54f7a3025832bd84837ca99b58872d2da776080d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
