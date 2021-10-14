@@ -34,6 +34,7 @@
 #include "account_const.h"
 #include "sip/sipcall.h"
 #include "sip/sdp.h"
+
 using namespace DRing::Account;
 using namespace DRing::Call;
 
@@ -86,13 +87,14 @@ private:
     void audio_only_test();
     void audio_video_test();
     void peer_answer_with_all_media_disabled();
+    void hold_resume_test();
 
     CPPUNIT_TEST_SUITE(SipBasicCallTest);
     CPPUNIT_TEST(audio_only_test);
     CPPUNIT_TEST(audio_video_test);
     // Test when the peer answers with all the media disabled (RTP port = 0)
     CPPUNIT_TEST(peer_answer_with_all_media_disabled);
-
+    CPPUNIT_TEST(hold_resume_test);
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
@@ -216,11 +218,6 @@ SipBasicCallTest::onIncomingCallWithMedia(const std::string& accountId,
               callId.c_str(),
               mediaList.size());
 
-    // NOTE.
-    // We shouldn't access shared_ptr<Call> as this event is supposed to mimic
-    // the client, and the client have no access to this type. But here, we only
-    // needed to check if the call exists. This is the most straightforward and
-    // reliable way to do it until we add a new API (like hasCall(id)).
     if (not Manager::instance().getCallFromCallID(callId)) {
         JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
         callData.callId_ = {};
@@ -419,8 +416,6 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
                                    bool expectedToSucceed,
                                    bool validateMedia)
 {
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
-
     configureTest(aliceData_, bobData_);
 
     JAMI_INFO("=== Start a call and validate ===");
@@ -527,6 +522,8 @@ SipBasicCallTest::audio_only_test()
     // Test with video enabled on Alice's side and disabled
     // on Bob's side.
 
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
     auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
     auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
 
@@ -563,6 +560,8 @@ SipBasicCallTest::audio_only_test()
 void
 SipBasicCallTest::audio_video_test()
 {
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
     auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
     auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
 
@@ -599,6 +598,8 @@ SipBasicCallTest::audio_video_test()
 void
 SipBasicCallTest::peer_answer_with_all_media_disabled()
 {
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
     auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
 
     std::vector<MediaAttribute> offer;
@@ -621,6 +622,187 @@ SipBasicCallTest::peer_answer_with_all_media_disabled()
 
     // Run the scenario
     audio_video_call(offer, answer, false, false);
+}
+
+void
+SipBasicCallTest::hold_resume_test()
+{
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
+    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+
+    std::vector<MediaAttribute> offer;
+    std::vector<MediaAttribute> answer;
+
+    MediaAttribute audio(MediaType::MEDIA_AUDIO);
+    MediaAttribute video(MediaType::MEDIA_VIDEO);
+
+    audio.enabled_ = true;
+    audio.label_ = "audio_0";
+
+    // Alice's media
+    offer.emplace_back(audio);
+
+    // Bob's media
+    answer.emplace_back(audio);
+
+    {
+        configureTest(aliceData_, bobData_);
+
+        JAMI_INFO("=== Start a call and validate ===");
+
+        std::string bobUri = "127.0.0.1:" + std::to_string(bobData_.listeningPort_);
+
+        aliceData_.callId_ = DRing::placeCallWithMedia(aliceData_.accountId_,
+                                                       bobUri,
+                                                       MediaAttribute::mediaAttributesToMediaMaps(
+                                                           offer));
+
+        CPPUNIT_ASSERT(not aliceData_.callId_.empty());
+
+        JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
+                  aliceData_.accountId_.c_str(),
+                  bobData_.accountId_.c_str());
+
+        // Give it some time to ring
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+        // Wait for call to be processed.
+        CPPUNIT_ASSERT(
+            waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+
+        // Wait for incoming call signal.
+        CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
+
+        // Answer the call.
+        DRing::acceptWithMedia(bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
+
+        // Wait for media negotiation complete signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(bobData_,
+                          DRing::CallSignal::MediaNegotiationStatus::name,
+                          DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+
+        // Wait for the StateChange signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+
+        JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
+
+        // Wait for media negotiation complete signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(aliceData_,
+                          DRing::CallSignal::MediaNegotiationStatus::name,
+                          DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+
+        // Validate Alice's side of media direction
+        {
+            auto call = std::static_pointer_cast<SIPCall>(
+                Manager::instance().getCallFromCallID(aliceData_.callId_));
+            auto& sdp = call->getSDP();
+            auto mediaStreams = sdp.getMediaSlots();
+            for (auto const& media : mediaStreams) {
+                CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::SENDRECV);
+                CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::SENDRECV);
+            }
+        }
+
+        // Validate Bob's side of media direction
+        {
+            auto call = std::static_pointer_cast<SIPCall>(
+                Manager::instance().getCallFromCallID(bobData_.callId_));
+            auto& sdp = call->getSDP();
+            auto mediaStreams = sdp.getMediaSlots();
+            for (auto const& media : mediaStreams) {
+                CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::SENDRECV);
+                CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::SENDRECV);
+            }
+        }
+
+        // Give some time to media to start and flow
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+        // Hold/Resume the call
+        JAMI_INFO("Hold Alice's call");
+        DRing::hold(aliceData_.callId_);
+        // Wait for the StateChange signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HOLD));
+
+        // Wait for media negotiation complete signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(aliceData_,
+                          DRing::CallSignal::MediaNegotiationStatus::name,
+                          DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+        {
+            // Validate hold state.
+            auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
+            for (const auto& mediaAttr : activeMediaList) {
+                CPPUNIT_ASSERT(mediaAttr.onHold_);
+            }
+        }
+
+        // Validate Alice's side of media direction
+        {
+            auto call = std::static_pointer_cast<SIPCall>(
+                Manager::instance().getCallFromCallID(aliceData_.callId_));
+            auto& sdp = call->getSDP();
+            auto mediaStreams = sdp.getMediaSlots();
+            for (auto const& media : mediaStreams) {
+                CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::SENDONLY);
+                CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::RECVONLY);
+            }
+        }
+
+        // Validate Bob's side of media direction
+        {
+            auto call = std::static_pointer_cast<SIPCall>(
+                Manager::instance().getCallFromCallID(bobData_.callId_));
+            auto& sdp = call->getSDP();
+            auto mediaStreams = sdp.getMediaSlots();
+            for (auto const& media : mediaStreams) {
+                CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::RECVONLY);
+                CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::SENDONLY);
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+        JAMI_INFO("Resume Alice's call");
+        DRing::unhold(aliceData_.callId_);
+
+        // Wait for the StateChange signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+
+        // Wait for media negotiation complete signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(aliceData_,
+                          DRing::CallSignal::MediaNegotiationStatus::name,
+                          DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+        {
+            // Validate hold state.
+            auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
+            for (const auto& mediaAttr : activeMediaList) {
+                CPPUNIT_ASSERT(not mediaAttr.onHold_);
+            }
+        }
+
+        // Bob hang-up.
+        JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
+        DRing::hangUp(bobData_.callId_);
+
+        // The hang-up signal will be emitted on caller's side (Alice) in both
+        // success and failure scenarios.
+
+        CPPUNIT_ASSERT(
+            waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
+
+        JAMI_INFO("Call terminated on both sides");
+    }
 }
 
 } // namespace test
