@@ -16,6 +16,24 @@
       "message": "In commit description: varialbe -\u003e variable",
       "revId": "2ba6a1c4f0153484e5b8150cdf8742668b66981a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "68967141_8f2a3492",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-14T13:35:46Z",
+      "side": 1,
+      "message": "done ;)",
+      "parentUuid": "50247245_8f46b4ae",
+      "revId": "2ba6a1c4f0153484e5b8150cdf8742668b66981a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
