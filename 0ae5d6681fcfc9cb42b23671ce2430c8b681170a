@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "993ac1ed_5c75e4e7",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3069,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T17:57:01Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "d36707b5_13a06faf",
+      "revId": "0ae5d6681fcfc9cb42b23671ce2430c8b681170a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3d3daadb_b3cad206",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-10-15T00:12:12Z",
       "side": 1,
       "message": "use fmt",
+      "revId": "0ae5d6681fcfc9cb42b23671ce2430c8b681170a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "84add766_7bbe0ff5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 3072,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T17:57:01Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "3d3daadb_b3cad206",
       "revId": "0ae5d6681fcfc9cb42b23671ce2430c8b681170a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
