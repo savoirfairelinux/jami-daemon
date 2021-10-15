@@ -20,50 +20,52 @@
   #:use-module (ice-9 threads)
   #:use-module ((jami account) #:prefix account:)
   #:use-module ((jami call)    #:prefix call:)
-  #:use-module ((jami signal)  #:prefix jami:))
+  #:use-module ((jami signal)  #:prefix jami:)
+  #:export (ensure-account
+            ensure-account-from-archive))
 
-(define-public account-id "afafafafafafafaf")
-(define-public peer-id #f)
+(define-public account-id (make-fluid "afafafafafafafaf"))
+(define-public peer-id (make-fluid))
 
-(define (wait-for-announcement-of% accounts)
-  (let ((mtx (make-mutex))
-        (cnd (make-condition-variable)))
-    (map (lambda (this-account)
-           (jami:on-signal 'volatile-details-changed
-                           (lambda (accountID details)
-                             (cond
-                              ((not (string= accountID this-account)) #f)
-                              ((not (string= "true" (assoc-ref details "Account.deviceAnnounced"))) #f)
-                              (else
-                               (with-mutex mtx
-                                 (signal-condition-variable cnd))
-                               #t))))
-           (with-mutex mtx
-             (wait-condition-variable cnd mtx)))
-         accounts)))
+(define* (ensure-account% this-account-id account-details #:optional (wait-for-announcement? #t))
+  (if wait-for-announcement?
+      (let ((mtx (make-mutex))
+            (cnd (make-condition-variable)))
+        (jami:on-signal 'volatile-details-changed
+                        (lambda (accountID details)
+                          (cond
+                           ((and (string= accountID this-account-id)
+                                 (string= "true" (assoc-ref details "Account.deviceAnnounced")))
+                            (with-mutex mtx
+                              (signal-condition-variable cnd)
+                              #f))
+                           (else #t))))
+        (when (null? (account:get-details this-account-id))
+          (account:add account-details this-account-id))
 
-(define (wait-for-announcement-of accounts)
-  (if (string? accounts)
-      (wait-for-announcement-of% (list accounts))
-      (wait-for-announcement-of% accounts)))
+        (with-mutex mtx
+          (wait-condition-variable cnd mtx)))
 
-(define-public (ensure-account)
+      (when (null? (account:get-details this-account-id))
+        (account:add account-details this-account-id)))
 
-  (when (null? (account:get-details account-id))
-    (account:add '(("Account.type"            . "RING")
-                   ("Account.displayName"     . "AGENT")
-                   ("Account.alias"           . "AGENT")
-                   ("Account.archivePassword" . "")
-                   ("Account.archivePIN"      . "")
-                   ("Account.archivePath"     . ""))
-                 account-id))
+  (let ((details (account:get-details this-account-id)))
+    (fluid-set! peer-id (assoc-ref details "Account.username"))))
 
-  (let ((result (wait-for-announcement-of account-id)))
-    (display result)
-    (newline)
-    (unless (car result)
-      (format #t "Timeout while waiting for account announcement~%")))
+(define* (ensure-account #:key (wait-for-announcement? #t))
+  (ensure-account% (fluid-ref account-id) '(("Account.type"            . "RING")
+                                            ("Account.displayName"     . "AGENT")
+                                            ("Account.alias"           . "AGENT")
+                                            ("Account.archivePassword" . "")
+                                            ("Account.archivePIN"      . "")
+                                            ("Account.archivePath"     . ""))
+                   wait-for-announcement?))
 
-
-  (let ((details (account:get-details account-id)))
-    (set! peer-id (assoc-ref details "Account.username"))))
+(define* (ensure-account-from-archive path #:key (wait-for-announcement? #t))
+  (ensure-account% (fluid-ref account-id) `(("Account.type"            . "RING")
+                                            ("Account.displayName"     . "AGENT")
+                                            ("Account.alias"           . "AGENT")
+                                            ("Account.archivePassword" . "")
+                                            ("Account.archivePIN"      . "")
+                                            ("Account.archivePath"     . ,path))
+                   wait-for-announcement?))
