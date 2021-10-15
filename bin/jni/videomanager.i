@@ -426,7 +426,7 @@ void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 void setDeviceOrientation(const std::string& name, int angle);
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
-std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
+std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
 void stopLocalRecorder(const std::string& filepath);
 bool getDecodingAccelerated();
 void setDecodingAccelerated(bool state);

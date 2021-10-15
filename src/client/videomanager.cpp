@@ -470,7 +470,8 @@ openVideoInput(const std::string& path)
     auto id = path.empty() ? vm.videoDeviceMonitor.getMRLForDefaultDevice() : path;
     auto& input = vm.clientVideoInputs[id];
     if (not input) {
-        input = vm.getVideoInput(id);
+        input = std::make_shared<jami::video::VideoInput>(jami::video::VideoInputMode::Undefined, id);
+        vm.clientVideoInputs[id] = input;
     }
     return id;
 }
@@ -479,16 +480,6 @@ bool
 closeVideoInput(const std::string& id)
 {
     return jami::Manager::instance().getVideoManager().clientVideoInputs.erase(id) > 0;
-}
-
-std::string
-startLocalRecorder(bool isAudioOnly, const std::string& filepath)
-{
-    return startLocalMediaRecorder(isAudioOnly ? ""
-                                               : jami::Manager::instance()
-                                                     .getVideoManager()
-                                                     .videoDeviceMonitor.getMRLForDefaultDevice(),
-                                   filepath);
 }
 
 std::string

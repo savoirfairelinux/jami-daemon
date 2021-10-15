@@ -65,7 +65,7 @@ class DRING_PUBLIC DBusVideoManager :
         void setEncodingAccelerated(const bool& state);
         void setDeviceOrientation(const std::string& deviceId, const int& angle);
         std::map<std::string, std::string> getRenderer(const std::string& callId);
-        std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
+        std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
         void stopLocalRecorder(const std::string& filepath);
         std::string openVideoInput(const std::string& inputUri);
         bool closeVideoInput(const std::string& inputId);

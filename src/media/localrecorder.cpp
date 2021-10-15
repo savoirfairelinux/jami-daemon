@@ -32,7 +32,8 @@ namespace jami {
 
 LocalRecorder::LocalRecorder(const std::string& inputUri)
 {
-    isAudioOnly_ = inputUri.empty();
+    inputUri_ = inputUri;
+    isAudioOnly_ = inputUri_.empty();
     recorder_->audioOnly(isAudioOnly_);
 }
 

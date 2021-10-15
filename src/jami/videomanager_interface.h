@@ -209,7 +209,6 @@ DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget
 DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
-DRING_PUBLIC std::string startLocalRecorder(bool isAudioOnly, const std::string& filepath);
 DRING_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
 DRING_PUBLIC void stopLocalRecorder(const std::string& filepath);
 
