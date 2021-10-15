@@ -52,15 +52,20 @@ using namespace std::literals;
 
 namespace jami {
 
-Conference::Conference()
+Conference::Conference(bool enableVideo)
     : id_(Manager::instance().callFactory.getNewCallID())
 #ifdef ENABLE_VIDEO
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
+    , videoEnabled_(enableVideo)
 #endif
 {
     JAMI_INFO("Create new conference %s", id_.c_str());
 
 #ifdef ENABLE_VIDEO
+    // We are done if the video is disabled.
+    if (not videoEnabled_)
+        return;
+
     getVideoMixer()->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
@@ -376,7 +381,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
 }
 
 void
-Conference::add(const std::string& participant_id)
+Conference::addParticipant(const std::string& participant_id)
 {
     JAMI_DBG("Adding call %s to conference %s", participant_id.c_str(), id_.c_str());
 
@@ -574,7 +579,7 @@ Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
 }
 
 void
-Conference::remove(const std::string& participant_id)
+Conference::removeParticipant(const std::string& participant_id)
 {
     if (participants_.erase(participant_id)) {
         if (auto call = getCall(participant_id)) {
@@ -589,7 +594,7 @@ Conference::remove(const std::string& participant_id)
 }
 
 void
-Conference::attach()
+Conference::attachLocalParticipant()
 {
     JAMI_INFO("Attach local participant to conference %s", id_.c_str());
 
@@ -610,10 +615,12 @@ Conference::attach()
         rbPool.flush(RingBufferPool::DEFAULT_ID);
 
 #ifdef ENABLE_VIDEO
-        if (auto mixer = getVideoMixer()) {
-            mixer->switchInput(mediaInput_);
-            if (not mediaSecondaryInput_.empty())
-                mixer->switchSecondaryInput(mediaSecondaryInput_);
+        if (isVideoEnabled()) {
+            if (auto mixer = getVideoMixer()) {
+                mixer->switchInput(mediaInput_);
+                if (not mediaSecondaryInput_.empty())
+                    mixer->switchSecondaryInput(mediaSecondaryInput_);
+            }
         }
 #endif
         setState(State::ACTIVE_ATTACHED);
@@ -626,7 +633,7 @@ Conference::attach()
 }
 
 void
-Conference::detach()
+Conference::detachLocalParticipant()
 {
     JAMI_INFO("Detach local participant from conference %s", id_.c_str());
 
@@ -636,8 +643,10 @@ Conference::detach()
                                                                  RingBufferPool::DEFAULT_ID);
         }
 #ifdef ENABLE_VIDEO
-        if (auto mixer = getVideoMixer()) {
-            mixer->stopInput();
+        if (isVideoEnabled()) {
+            if (auto mixer = getVideoMixer()) {
+                mixer->stopInput();
+            }
         }
 #endif
         setState(State::ACTIVE_DETACHED);
@@ -747,6 +756,11 @@ Conference::switchInput(const std::string& input)
 {
 #ifdef ENABLE_VIDEO
     mediaInput_ = input;
+
+    // Done if the video is disabled
+    if (not isVideoEnabled())
+        return;
+
     if (auto mixer = getVideoMixer()) {
         mixer->switchInput(input);
 #ifdef ENABLE_PLUGIN
@@ -766,8 +780,16 @@ Conference::switchSecondaryInput(const std::string& input)
 {
 #ifdef ENABLE_VIDEO
     mediaSecondaryInput_ = input;
-    getVideoMixer()->switchSecondaryInput(input);
+    if (isVideoEnabled()) {
+        getVideoMixer()->switchSecondaryInput(input);
+    }
 #endif
+}
+
+bool
+Conference::isVideoEnabled() const
+{
+    return videoEnabled_;
 }
 
 #ifdef ENABLE_VIDEO
@@ -846,7 +868,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
                       peerID.data());
             return;
         }
-        if (root.isMember("layout")) {
+        if (isVideoEnabled() and root.isMember("layout")) {
             setLayout(root["layout"].asUInt());
         }
         if (root.isMember("activeParticipant")) {
@@ -1107,6 +1129,11 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         return;
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef ENABLE_VIDEO
+        if (not isVideoEnabled()) {
+            JAMI_ERR("Cant't mute, the video is disabled!");
+            return;
+        }
+
         if (is_muted == (isMediaSourceMuted(MediaType::MEDIA_VIDEO))) {
             JAMI_DBG("Local video source already in [%s] state", is_muted ? "muted" : "un-muted");
             return;
@@ -1210,7 +1237,7 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
         updateNeeded = true;
     }
     // Send confInfo only if needed to avoid loops
-    if (updateNeeded) {
+    if (updateNeeded and isVideoEnabled()) {
         // Trigger the layout update in the mixer because the frame resolution may
         // change from participant to conference and cause a mismatch between
         // confInfo layout and rendering layout.

@@ -996,7 +996,7 @@
               <tp:docstring>
                 The acceptable states are:
                 <ul>
-                  <li>NEGOTIATION_SUCCESS: Media negitiation succeded</li>
+                  <li>NEGOTIATION_SUCCESS: Media negotiation succeeded</li>
                   <li>NEGOTIATION_FAIL: Media negotiation failed</li>
                 </ul>
               </tp:docstring>
