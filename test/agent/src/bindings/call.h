@@ -30,6 +30,8 @@
 static SCM
 place_call_binding(SCM accountID_str, SCM contact_str, SCM call_details_alist_optional)
 {
+    LOG_BINDING();
+
     if (SCM_UNBNDP(call_details_alist_optional)) {
         return to_guile(DRing::placeCall(from_guile(accountID_str),
                                          from_guile(contact_str)));
@@ -43,6 +45,8 @@ place_call_binding(SCM accountID_str, SCM contact_str, SCM call_details_alist_op
 static SCM
 place_call_with_media_binding(SCM accountID_str, SCM contact_str, SCM call_media_vector_alist_optional)
 {
+    LOG_BINDING();
+
     if (SCM_UNBNDP(call_media_vector_alist_optional)) {
         call_media_vector_alist_optional = scm_c_make_vector(0, SCM_UNDEFINED);
     }
@@ -55,12 +59,16 @@ place_call_with_media_binding(SCM accountID_str, SCM contact_str, SCM call_media
 static SCM
 hang_up_binding(SCM callID_str)
 {
+    LOG_BINDING();
+
     return to_guile(DRing::hangUp(from_guile(callID_str)));
 }
 
 static SCM
 accept_binding(SCM callID_str, SCM call_media_vector_alist_optional)
 {
+    LOG_BINDING();
+
     if (SCM_UNBNDP(call_media_vector_alist_optional)) {
         return to_guile(DRing::accept(from_guile(callID_str)));
     }
@@ -72,18 +80,24 @@ accept_binding(SCM callID_str, SCM call_media_vector_alist_optional)
 static SCM
 refuse_binding(SCM callID_str)
 {
+    LOG_BINDING();
+
     return to_guile(DRing::refuse(from_guile(callID_str)));
 }
 
 static SCM
 hold_binding(SCM callID_str)
 {
+    LOG_BINDING();
+
     return to_guile(DRing::hold(from_guile(callID_str)));
 }
 
 static SCM
 unhold_binding(SCM callID_str)
 {
+    LOG_BINDING();
+
     return to_guile(DRing::unhold(from_guile(callID_str)));
 }
 
