@@ -183,7 +183,7 @@ public:
     /**
      * Constructor for this class, increment static counter
      */
-    Conference();
+    explicit Conference(bool enableVideo);
 
     /**
      * Destructor for this class, decrement static counter
@@ -246,22 +246,22 @@ public:
     /**
      * Add a new participant to the conference
      */
-    void add(const std::string& participant_id);
+    void addParticipant(const std::string& participant_id);
 
     /**
      * Remove a participant from the conference
      */
-    void remove(const std::string& participant_id);
+    void removeParticipant(const std::string& participant_id);
 
     /**
      * Attach local audio/video to the conference
      */
-    void attach();
+    void attachLocalParticipant();
 
     /**
      * Detach local audio/video from the conference
      */
-    void detach();
+    void detachLocalParticipant();
 
     /**
      * Bind a participant to the conference
@@ -304,6 +304,8 @@ public:
 
     void onConfOrder(const std::string& callId, const std::string& order);
 
+    bool isVideoEnabled() const;
+
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
     std::string getVideoInput() const { return mediaInput_; }
@@ -338,6 +340,7 @@ private:
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
     ParticipantSet participants_;
+    bool videoEnabled_ {false};
 
     mutable std::mutex confInfoMutex_ {};
     ConfInfo confInfo_ {};
