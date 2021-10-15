@@ -196,6 +196,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f62d0f68_e3d8fc11",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T14:08:55Z",
+      "side": 1,
+      "message": "ok, I get it",
+      "parentUuid": "c6a61f22_9640522a",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f388a9e1_9fcec5d8",

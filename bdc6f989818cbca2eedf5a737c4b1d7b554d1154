@@ -84,6 +84,23 @@
       "message": "new line",
       "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7e4e635b_2a42aa9f",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 480,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T14:08:55Z",
+      "side": 1,
+      "message": "Is there a reason not to use the erase variant that takes the id:\n\nreturn vm.clientVideoInputs.erase(id) \u003d\u003d 1;",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
