@@ -3,7 +3,7 @@
 ;;; The passive agent ensure that an account is created and then wait for
 ;;; incomming call of any peer.
 
-(use-modules ((agent) #:prefix agent:)
+(use-modules ((jami agent) #:prefix agent:)
              ((jami signal) #:prefix jami:)
              ((jami call) #:prefix call:))
 

@@ -5,7 +5,7 @@
 
 (use-modules
  (ice-9 threads)
- ((agent) #:prefix agent:)
+ ((jami agent) #:prefix agent:)
  ((jami account) #:prefix account:)
  ((jami signal) #:prefix jami:)
  ((jami call) #:prefix call:))
