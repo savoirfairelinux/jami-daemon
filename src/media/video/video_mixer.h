@@ -53,7 +53,7 @@ enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
 class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
 {
 public:
-    VideoMixer(const std::string& id);
+    VideoMixer(const std::string& id, const std::string& localInput = {});
     ~VideoMixer();
 
     void setParameters(int width, int height, AVPixelFormat format = AV_PIX_FMT_YUV422P);
