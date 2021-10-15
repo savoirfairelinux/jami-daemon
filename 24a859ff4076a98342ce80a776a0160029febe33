@@ -178,6 +178,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6a61f22_9640522a",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-15T00:18:48Z",
+      "side": 1,
+      "message": "It is used. Input is a reference to the map value, potentially created above. So this line assigns the value to the map in case it wasn\u0027t in the map before (and actually creates the Input, making it the most important line of code of this patch).",
+      "parentUuid": "b6af1614_a070d18f",
+      "revId": "24a859ff4076a98342ce80a776a0160029febe33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f388a9e1_9fcec5d8",
