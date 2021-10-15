@@ -29,6 +29,8 @@
 
 static SCM set_details_binding(SCM accountID_str, SCM details_alist)
 {
+	LOG_BINDING();
+
         DRing::setAccountDetails(from_guile(accountID_str),
                                  from_guile(details_alist));
         return SCM_UNDEFINED;
@@ -36,11 +38,15 @@ static SCM set_details_binding(SCM accountID_str, SCM details_alist)
 
 static SCM get_details_binding(SCM accountID_str)
 {
+	LOG_BINDING();
+
         return to_guile(DRing::getAccountDetails(from_guile(accountID_str)));
 }
 
 static SCM send_register_binding(SCM accountID_str, SCM enable_boolean)
 {
+	LOG_BINDING();
+
         DRing::sendRegister(from_guile(accountID_str),
                             from_guile(enable_boolean));
 
@@ -49,6 +55,8 @@ static SCM send_register_binding(SCM accountID_str, SCM enable_boolean)
 
 static SCM export_to_file_binding(SCM accountID_str, SCM path_str, SCM passwd_str_optional)
 {
+	LOG_BINDING();
+
         if (SCM_UNBNDP(passwd_str_optional)) {
                 return to_guile(DRing::exportToFile(from_guile(accountID_str),
                                                     from_guile(path_str)));
@@ -61,6 +69,8 @@ static SCM export_to_file_binding(SCM accountID_str, SCM path_str, SCM passwd_st
 
 static SCM add_account_binding(SCM details_alist, SCM accountID_str_optional)
 {
+	LOG_BINDING();
+
         if (SCM_UNBNDP(accountID_str_optional)) {
                 return to_guile(DRing::addAccount(from_guile(details_alist)));
         }
