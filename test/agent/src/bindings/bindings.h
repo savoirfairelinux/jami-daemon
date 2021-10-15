@@ -26,5 +26,15 @@
 /* Agent */
 #include "utils.h"
 
+#define DEFINE_AND_EXPORT(NAME, VALUE, TYPE)     \
+        do {                                     \
+                scm_c_define(NAME, TYPE(VALUE)); \
+                scm_c_export(NAME, NULL);        \
+        } while (0)
+
+#define DEFINE_INT(NAME)    DEFINE_AND_EXPORT(#NAME, NAME, scm_from_int)
+#define DEFINE_UINT(NAME)   DEFINE_AND_EXPORT(#NAME, NAME, scm_from_uint)
+#define DEFINE_UINT32(NAME) DEFINE_AND_EXPORT(#NAME, NAME, scm_from_uint32)
+
 extern void define_primitive(const char* name, int req, int opt, int rst, void* func);
 extern void install_scheme_primitives();
