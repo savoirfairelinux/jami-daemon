@@ -693,7 +693,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
 
     base_.getRingBufferPool().unBindAll(call_id);
 
-    conf.add(call_id);
+    conf.addParticipant(call_id);
     call.setConfId(conf_id);
 
     if (state == "HOLD") {
@@ -1477,7 +1477,7 @@ Manager::holdConference(const std::string& id)
     JAMI_INFO("Hold conference %s", id.c_str());
 
     if (auto conf = getConferenceFromID(id)) {
-        conf->detach();
+        conf->detachLocalParticipant();
         emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
         return true;
     }
@@ -1567,7 +1567,7 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
-        conf.attach();
+        conf.attachLocalParticipant();
     }
     emitSignal<DRing::CallSignal::ConferenceChanged>(conf.getConfID(), conf.getStateStr());
     switchCall(conf.getConfID());
@@ -1617,8 +1617,19 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
         return false;
     }
 
-    auto conf = std::make_shared<Conference>();
+    // NOTE: The current API does not provide the account that owns
+    // the conference that is about to be created. Thus, the video
+    // will be enabled if enabled on one account.
+    bool videoEnabled {false};
+    {
+        auto acc1 = call1->getAccount().lock();
+        auto acc2 = call2->getAccount().lock();
+        if (acc1 and acc2) {
+            videoEnabled = acc1->isVideoEnabled() or acc2->isVideoEnabled();
+        }
+    }
 
+    auto conf = std::make_shared<Conference>(videoEnabled);
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
 
     // Bind calls according to their state
@@ -1630,7 +1641,7 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
         pimpl_->switchCall(conf->getConfID());
         conf->setState(Conference::State::ACTIVE_ATTACHED);
     } else {
-        conf->detach();
+        conf->detachLocalParticipant();
     }
 
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
@@ -1646,7 +1657,21 @@ Manager::createConfFromParticipantList(const std::vector<std::string>& participa
         return;
     }
 
-    auto conf = std::make_shared<Conference>();
+    // Check if we need to enable video.
+    // NOTE: The current API does not provide the account that owns
+    // the conference that is about to be created. Thus, the video
+    // will be enabled if enabled on one account.
+    bool videoEnabled {false};
+    for (const auto& numberaccount : participantList) {
+        std::string tostr(numberaccount.substr(0, numberaccount.find(',')));
+        std::string accountId(numberaccount.substr(numberaccount.find(',') + 1, numberaccount.size()));
+        auto account = getAccount(accountId);
+        if (account) {
+            videoEnabled |= account->isVideoEnabled();
+        }
+    }
+
+    auto conf = std::make_shared<Conference>(videoEnabled);
 
     int successCounter = 0;
 
@@ -1662,7 +1687,7 @@ Manager::createConfFromParticipantList(const std::vector<std::string>& participa
             continue;
 
         // Manager methods may behave differently if the call id participates in a conference
-        conf->add(call_id);
+        conf->addParticipant(call_id);
         successCounter++;
     }
 
@@ -1677,7 +1702,8 @@ void
 Manager::setConferenceLayout(const std::string& confId, int layout)
 {
     if (auto conf = getConferenceFromID(confId)) {
-        conf->setLayout(layout);
+        if (conf->isVideoEnabled())
+            conf->setLayout(layout);
     } else if (auto call = getCallFromCallID(confId)) {
         std::map<std::string, std::string> messages;
         Json::Value root;
@@ -1718,7 +1744,7 @@ Manager::detachLocalParticipant(const std::string& conf_id)
     JAMI_INFO("Detach local participant from conference %s", conf_id.c_str());
 
     if (auto conf = getConferenceFromID(conf_id.empty() ? getCurrentCallId() : conf_id)) {
-        conf->detach();
+        conf->detachLocalParticipant();
         emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
         pimpl_->unsetCurrentCall();
         return true;
@@ -1770,7 +1796,7 @@ Manager::removeParticipant(const std::string& call_id)
         return;
     }
 
-    conf->remove(call_id);
+    conf->removeParticipant(call_id);
     call->setConfId("");
 
     removeAudio(*call);
@@ -1811,7 +1837,7 @@ Manager::joinConference(const std::string& conf_id1, const std::string& conf_id2
             continue;
         }
 
-        conf->remove(p);
+        conf->removeParticipant(p);
         call->setConfId("");
         removeAudio(*call);
     }
@@ -2802,13 +2828,20 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
                     }
                 }
             }
+            auto acc = call->getAccount().lock();
+            if (not acc) {
+                JAMI_ERR("No account detected");
+                return;
+            }
+
             // First call
-            auto conf = std::make_shared<Conference>();
+            auto conf = std::make_shared<Conference>(acc->isVideoEnabled());
+
             conferenceMap_.emplace(conf->getConfID(), conf);
 
             // Bind calls according to their state
             bindCallToConference(*call, *conf);
-            conf->detach();
+            conf->detachLocalParticipant();
 
             emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
         });
@@ -2849,6 +2882,7 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
         }
     }
 }
+
 
 AudioFormat
 Manager::hardwareAudioFormatChanged(AudioFormat format)

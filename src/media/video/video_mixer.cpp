@@ -90,6 +90,8 @@ VideoMixer::VideoMixer(const std::string& id)
         videoLocal_->attach(this);
     loop_.start();
     nextProcess_ = std::chrono::steady_clock::now();
+
+    JAMI_DBG("[mixer:%s] New instance created", id_.c_str());
 }
 
 VideoMixer::~VideoMixer()
@@ -108,6 +110,8 @@ VideoMixer::~VideoMixer()
     }
 
     loop_.join();
+
+    JAMI_DBG("[mixer:%s] Instance destroyed", id_.c_str());
 }
 
 void
@@ -127,7 +131,7 @@ VideoMixer::switchInput(const std::string& input)
     }
 
     if (input.empty()) {
-        JAMI_DBG("Input is empty, don't add it in the mixer");
+        JAMI_DBG("[mixer:%s] Input is empty, don't add it in the mixer", id_.c_str());
         return;
     }
 
@@ -156,7 +160,7 @@ VideoMixer::switchSecondaryInput(const std::string& input)
     videoLocalSecondary_ = getVideoInput(input);
 
     if (input.empty()) {
-        JAMI_DBG("Input is empty, don't add it in the mixer");
+        JAMI_DBG("[mixer:%s] Input is empty, don't add it in the mixer", id_.c_str());
         return;
     }
 
@@ -244,7 +248,7 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
                                                             AV_PIX_FMT_NV12);
                 x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("Accel failure: %s", e.what());
+                JAMI_ERR("[mixer:%s] Accel failure: %s", id_.c_str(), e.what());
                 return;
             }
 #else
@@ -267,7 +271,7 @@ VideoMixer::process()
     try {
         output.reserve(format_, width_, height_);
     } catch (const std::bad_alloc& e) {
-        JAMI_ERR("VideoFrame::allocBuffer() failed");
+        JAMI_ERR("[mixer:%s] VideoFrame::allocBuffer() failed", id_.c_str());
         return;
     }
 
@@ -329,7 +333,7 @@ VideoMixer::process()
                     if (fooInput)
                         successfullyRendered |= render_frame(output, fooInput, x);
                     else
-                        JAMI_WARN("Nothing to render for %p", x->source);
+                        JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
                 }
 
                 x->hasVideo = !blackFrame && successfullyRendered;
@@ -502,12 +506,12 @@ VideoMixer::start_sink()
     stop_sink();
 
     if (width_ == 0 or height_ == 0) {
-        JAMI_WARN("MX: unable to start with zero-sized output");
+        JAMI_WARN("[mixer:%s] MX: unable to start with zero-sized output", id_.c_str());
         return;
     }
 
     if (not sink_->start()) {
-        JAMI_ERR("MX: sink startup failed");
+        JAMI_ERR("[mixer:%s] MX: sink startup failed", id_.c_str());
         return;
     }
 
