@@ -1974,7 +1974,7 @@ SIPCall::startAllMedia()
     readyToRecord_ = false;
     resetMediaReady();
 #ifdef ENABLE_VIDEO
-    bool isVideoEnabled = false;
+    bool hasActiveVideo = false;
 #endif
 
     int currentCompId = 1;
@@ -1986,7 +1986,7 @@ SIPCall::startAllMedia()
 
 #ifdef ENABLE_VIDEO
         if (iter->mediaAttribute_->type_ == MEDIA_VIDEO)
-            isVideoEnabled |= iter->mediaAttribute_->enabled_;
+            hasActiveVideo |= iter->mediaAttribute_->enabled_;
 #endif
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
@@ -2009,9 +2009,10 @@ SIPCall::startAllMedia()
 
 #ifdef ENABLE_VIDEO
     // TODO. Move this elsewhere (when adding participant to conf?)
-    if (!isVideoEnabled && !getConfId().empty()) {
+    if (!hasActiveVideo && !getConfId().empty()) {
         auto conference = Manager::instance().getConferenceFromID(getConfId());
-        conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
+        if (conference->isVideoEnabled())
+            conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
     }
 #endif
 
@@ -2694,17 +2695,15 @@ SIPCall::enterConference(const std::string& confId)
         return;
     }
 
-    auto videoRtp = getVideoRtp();
-    if (not videoRtp) {
-        // In conference, we need to have a video RTP session even
-        // if it's an audio only call
-        videoRtp = addDummyVideoRtpSession();
+    if (conf->isVideoEnabled()) {
+        auto videoRtp = getVideoRtp();
         if (not videoRtp) {
-            throw std::runtime_error("Failed to create dummy RTP video session");
+            JAMI_ERR("[call:%s] Failed to get a valid video RTP session", getCallId().c_str());
+            throw std::runtime_error("Failed to get a valid video RTP session");
         }
+        videoRtp->enterConference(conf.get());
     }
 
-    videoRtp->enterConference(conf.get());
 #endif
 
 #ifdef ENABLE_PLUGIN
