@@ -1,6 +1,7 @@
 {
   "comments": [
     {
+      "unresolved": true,
       "key": {
         "uuid": "49c87128_c3a3d0b2",
         "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
@@ -20,8 +21,31 @@
         "endChar": 40
       },
       "revId": "1d7f82946ec50fe0726cd1ac1384bf40b048d4d4",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a7d7020_cbab9321",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 9
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "is this comment still relevant ?",
+      "parentUuid": "49c87128_c3a3d0b2",
+      "range": {
+        "startLine": 77,
+        "startChar": 22,
+        "endLine": 77,
+        "endChar": 40
+      },
+      "revId": "1d7f82946ec50fe0726cd1ac1384bf40b048d4d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

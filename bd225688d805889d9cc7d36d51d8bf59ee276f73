@@ -1,0 +1,192 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e3c38a80_cfbf77a3",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 12
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "may be \u0027through ...\u0027 or \u0027using ...\u0027",
+      "range": {
+        "startLine": 8,
+        "startChar": 133,
+        "endLine": 8,
+        "endChar": 148
+      },
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b9e4537_367e3b97",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 12
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "no \u0027s\u0027",
+      "range": {
+        "startLine": 8,
+        "startChar": 81,
+        "endLine": 8,
+        "endChar": 82
+      },
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ababa189_a0329986",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "still use the manager ?",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96c2ac87_ea6cc5c2",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "same",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9fbba85c_cb8d1376",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "same",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb396c77_8f832788",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "same ...",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dce5dcae_ff25df15",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "may as shortcut, we can use a helper like: getCall(accountId, callId)",
+      "range": {
+        "startLine": 157,
+        "startChar": 1,
+        "endLine": 158,
+        "endChar": 50
+      },
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1eaca677_b3711d06",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "nice, exactly what I need!",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a193f61_fd430d88",
+        "filename": "src/jami/callmanager_interface.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "@param accountId ...",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4dce2758_18f7cdad",
+        "filename": "src/manager.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-15T20:04:33Z",
+      "side": 1,
+      "message": "should not be private ?",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
