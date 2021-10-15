@@ -3056,23 +3056,24 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri,
 std::string
 JamiAccount::getContactHeader(SipTransport* sipTransport)
 {
-    std::string quotedDisplayName = "\"" + displayName_ + "\" " + (displayName_.empty() ? "" : " ");
-    std::ostringstream contact;
+    std::string quotedDisplayName = "\"" + displayName_ + "\" ";
 
     if (auto transport = sipTransport->get()) {
         auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(transport);
         auto address = td->self->getLocalAddress().toString(true);
         bool reliable = transport->flag & PJSIP_TRANSPORT_RELIABLE;
-
-        contact << quotedDisplayName << "<sips:" << id_.second->getId().toString()
-                << (address.empty() ? "" : "@") << address
-                << (reliable ? ";transport=tls>" : ";transport=dtls");
+        return fmt::format("{}<sips:{}{}{};transport={}>",
+                           quotedDisplayName,
+                           id_.second->getId().toString(),
+                           address.empty() ? "" : "@",
+                           address,
+                           reliable ? "tls" : "dtls");
     } else {
         JAMI_ERR("getContactHeader: no SIP transport provided");
-        contact << quotedDisplayName << "<sips:" << id_.second->getId().toString() << "@ring.dht>";
+        return fmt::format("{}<sips:{}@ring.dht>",
+                           quotedDisplayName,
+                           id_.second->getId().toString());
     }
-
-    return contact.str();
 }
 
 /* contacts */
