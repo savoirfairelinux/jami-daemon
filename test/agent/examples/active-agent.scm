@@ -8,9 +8,11 @@
  ((jami agent) #:prefix agent:)
  ((jami account) #:prefix account:)
  ((jami signal) #:prefix jami:)
- ((jami call) #:prefix call:))
+ ((jami call) #:prefix call:)
+ ((jami logger) #:prefix jami:))
 
 (define (make-a-call from to)
+  (jami:info "Placing call from:~a to:~a" from to)
   (let ((mtx (make-mutex))
         (cnd (make-condition-variable))
         (this-call-id "")
@@ -53,7 +55,9 @@
 (while #t
   (begin
     (make-a-call agent:account-id "bcebc2f134fc15eb06c64366c1882de2e0f1e54f")
+    (jami:info "Disabling account")
     (account:send-register agent:account-id #f)
     (sleep 30)
+    (jami:info "Enabling account")
     (account:send-register agent:account-id #t)
     (sleep 30)))
