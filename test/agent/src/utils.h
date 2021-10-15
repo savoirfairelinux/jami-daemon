@@ -116,6 +116,13 @@ struct from_guile
         return scm_to_bool(value);
     }
 
+    operator int()
+    {
+        AGENT_ASSERT(scm_is_integer(value), "Scheme value must be of type integer");
+
+        return scm_to_int(value);
+    }
+
     operator std::string()
     {
         AGENT_ASSERT(scm_is_string(value), "Scheme value must be of type string");
