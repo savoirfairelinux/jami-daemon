@@ -120,9 +120,9 @@ DBusVideoManager::getRenderer(const std::string& callId)
 }
 
 std::string
-DBusVideoManager::startLocalRecorder(const bool& audioOnly, const std::string& filepath)
+DBusVideoManager::startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath)
 {
-    return DRing::startLocalRecorder(audioOnly, filepath);
+    return DRing::startLocalMediaRecorder(videoInputId, filepath);
 }
 
 void
