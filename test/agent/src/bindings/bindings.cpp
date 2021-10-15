@@ -24,15 +24,21 @@
 /* Include module's bindings here */
 #include "bindings/account.h"
 #include "bindings/call.h"
+#include "bindings/logger.h"
 #include "bindings/signal.h"
 
 void
 install_scheme_primitives()
 {
     /* Define modules here */
-    scm_c_define_module("jami account", install_account_primitives, NULL);
-    scm_c_define_module("jami call", install_call_primitives, NULL);
-    scm_c_define_module("jami signal", install_signal_primitives, NULL);
+    auto load_module = [](auto name, auto init){
+	scm_c_define_module(name, init, NULL);
+    };
+
+    load_module("jami account", install_account_primitives);
+    load_module("jami call", install_call_primitives);
+    load_module("jami logger bindings", install_logger_primitives);
+    load_module("jami signal", install_signal_primitives);
 }
 
 /*
