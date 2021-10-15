@@ -29,44 +29,54 @@
 
 static SCM set_details_binding(SCM accountID_str, SCM details_alist)
 {
-        DRing::setAccountDetails(from_guile(accountID_str),
-                                 from_guile(details_alist));
-        return SCM_UNDEFINED;
+    LOG_BINDING();
+
+    DRing::setAccountDetails(from_guile(accountID_str),
+                             from_guile(details_alist));
+    return SCM_UNDEFINED;
 }
 
 static SCM get_details_binding(SCM accountID_str)
 {
-        return to_guile(DRing::getAccountDetails(from_guile(accountID_str)));
+    LOG_BINDING();
+
+    return to_guile(DRing::getAccountDetails(from_guile(accountID_str)));
 }
 
 static SCM send_register_binding(SCM accountID_str, SCM enable_boolean)
 {
-        DRing::sendRegister(from_guile(accountID_str),
-                            from_guile(enable_boolean));
+    LOG_BINDING();
 
-        return SCM_UNDEFINED;
+    DRing::sendRegister(from_guile(accountID_str),
+                        from_guile(enable_boolean));
+
+    return SCM_UNDEFINED;
 }
 
 static SCM export_to_file_binding(SCM accountID_str, SCM path_str, SCM passwd_str_optional)
 {
-        if (SCM_UNBNDP(passwd_str_optional)) {
-                return to_guile(DRing::exportToFile(from_guile(accountID_str),
-                                                    from_guile(path_str)));
-        }
+    LOG_BINDING();
 
+    if (SCM_UNBNDP(passwd_str_optional)) {
         return to_guile(DRing::exportToFile(from_guile(accountID_str),
-                                            from_guile(path_str),
-                                            from_guile(passwd_str_optional)));
+                                            from_guile(path_str)));
+    }
+
+    return to_guile(DRing::exportToFile(from_guile(accountID_str),
+                                        from_guile(path_str),
+                                        from_guile(passwd_str_optional)));
 }
 
 static SCM add_account_binding(SCM details_alist, SCM accountID_str_optional)
 {
-        if (SCM_UNBNDP(accountID_str_optional)) {
-                return to_guile(DRing::addAccount(from_guile(details_alist)));
-        }
+    LOG_BINDING();
 
-        return to_guile(DRing::addAccount(from_guile(details_alist),
-                                          from_guile(accountID_str_optional)));
+    if (SCM_UNBNDP(accountID_str_optional)) {
+        return to_guile(DRing::addAccount(from_guile(details_alist)));
+    }
+
+    return to_guile(DRing::addAccount(from_guile(details_alist),
+                                      from_guile(accountID_str_optional)));
 }
 
 static void
