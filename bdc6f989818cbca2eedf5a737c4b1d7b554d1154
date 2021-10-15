@@ -35,6 +35,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8fdaecf_93b8518f",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-15T15:44:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7d88f7c8_1cdf8d20",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fe788f45_4cabf737",
@@ -54,6 +72,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "16d69d55_5b63cc26",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 456,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-15T15:44:13Z",
+      "side": 1,
+      "message": "This part of the code wasn\u0027t changed in this patch, except some cleanup to avoid repeating \"jami::Manager::instance().getVideoManager()\"",
+      "parentUuid": "fe788f45_4cabf737",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "dcd4b741_9054f5bc",
         "filename": "src/client/videomanager.cpp",
         "patchSetId": 12
@@ -65,6 +101,24 @@
       "writtenOn": "2021-10-13T13:52:19Z",
       "side": 1,
       "message": "needs new line after the return type as per SFL coding style.",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f60c916d_2700527a",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 465,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-15T15:44:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dcd4b741_9054f5bc",
       "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -99,6 +153,24 @@
       "writtenOn": "2021-10-15T14:08:55Z",
       "side": 1,
       "message": "Is there a reason not to use the erase variant that takes the id:\n\nreturn vm.clientVideoInputs.erase(id) \u003d\u003d 1;",
+      "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8a0d6311_8630d7c3",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 480,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-15T15:44:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7e4e635b_2a42aa9f",
       "revId": "bdc6f989818cbca2eedf5a737c4b1d7b554d1154",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
