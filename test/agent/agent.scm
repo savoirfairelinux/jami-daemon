@@ -18,6 +18,7 @@
 
 (define-module (agent)
   #:use-module (ice-9 threads)
+  #:use-module ((jami logger) #:prefix jami:)
   #:use-module ((jami account) #:prefix account:)
   #:use-module ((jami call)    #:prefix call:)
   #:use-module ((jami signal)  #:prefix jami:)
@@ -53,6 +54,7 @@
     (set! peer-id (assoc-ref details "Account.username"))))
 
 (define* (ensure-account #:key (wait-for-announcement? #t))
+  (jami:info "Ensure account ~a")
   (ensure-account% (fluid-ref account-id) '(("Account.type"            . "RING")
                                             ("Account.displayName"     . "AGENT")
                                             ("Account.alias"           . "AGENT")
@@ -62,10 +64,10 @@
                    wait-for-announcement?))
 
 (define* (ensure-account-from-archive path #:key (wait-for-announcement? #t))
+  (jami:info "Ensure account from archive ~a" path)
   (ensure-account% (fluid-ref account-id) `(("Account.type"            . "RING")
                                             ("Account.displayName"     . "AGENT")
                                             ("Account.alias"           . "AGENT")
                                             ("Account.archivePassword" . "")
                                             ("Account.archivePIN"      . "")
-                                            ("Account.archivePath"     . ,path))
-                   wait-for-announcement?))
+                                            ("Account.archivePath"     . ,path))))
