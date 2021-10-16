@@ -112,11 +112,10 @@ VideoRtpSession::startSender()
         }
 
         if (not conference_) {
-            videoLocal_ = getVideoCamera();
-            if (auto input = Manager::instance().getVideoManager().videoInput.lock()) {
-                std::static_pointer_cast<VideoInput>(videoLocal_)
-                    ->setSuccessfulSetupCb(onSuccessfulSetup_);
-                auto newParams = input->switchInput(input_);
+            auto input = getVideoInput(input_);
+            videoLocal_ = input;
+            if (input) {
+                auto newParams = input->getParams();
                 try {
                     if (newParams.valid()
                         && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
@@ -584,7 +583,7 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
 
 #if __ANDROID__
         if (auto input_device = std::dynamic_pointer_cast<VideoInput>(videoLocal_))
-            emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getParams().name, (int) newBR);
+            emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getConfig().name, (int) newBR);
 #endif
 
         if (sender_) {
