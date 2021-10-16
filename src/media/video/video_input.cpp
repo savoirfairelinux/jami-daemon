@@ -76,6 +76,7 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
         sink_ = Manager::instance().createSinkClient(id_);
     }
 #endif
+    switchInput(id_);
 }
 
 VideoInput::~VideoInput()
@@ -577,12 +578,6 @@ VideoInput::switchInput(const std::string& resource)
     futureDecOpts_ = foundDecOpts_.get_future().share();
     startLoop();
     return futureDecOpts_;
-}
-
-const DeviceParams&
-VideoInput::getParams() const
-{
-    return decOpts_;
 }
 
 MediaStream

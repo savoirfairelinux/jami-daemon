@@ -149,10 +149,14 @@ int AndroidFormatToAVFormat(int androidformat) {
     }
 }
 
-JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoPacket(JNIEnv *jenv, jclass jcls, jobject buffer, jint size, jint offset, jboolean keyframe, jlong timestamp, jint rotation)
+JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoPacket(JNIEnv *jenv, jclass jcls, jstring inputId, jobject buffer, jint size, jint offset, jboolean keyframe, jlong timestamp, jint rotation)
 {
     try {
-        auto frame = DRing::getNewFrame();
+        const char *inputId_pstr = (const char *)jenv->GetStringUTFChars(inputId, 0);
+        if (!inputId_pstr)
+            return;
+        std::string_view input(inputId_pstr);
+        auto frame = DRing::getNewFrame(input);
         if (not frame)
             return;
         auto packet = std::unique_ptr<AVPacket, void(*)(AVPacket*)>(new AVPacket, [](AVPacket* pkt){
@@ -174,13 +178,13 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoPacket(JN
         packet->size = size;
         packet->pts = timestamp;
         frame->setPacket(std::move(packet));
-        DRing::publishFrame();
+        DRing::publishFrame(input);
     } catch (const std::exception& e) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception capturing video packet: %s", e.what());
     }
 }
 
-JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoFrame(JNIEnv *jenv, jclass jcls, jobject image, jint rotation)
+JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoFrame(JNIEnv *jenv, jclass jcls, jstring inputId, jobject image, jint rotation)
 {
     static jclass imageClass = jenv->GetObjectClass(image);
     static jmethodID imageGetFormat = jenv->GetMethodID(imageClass, "getFormat", "()I");
@@ -189,9 +193,18 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoFrame(JNI
     static jmethodID imageGetCropRect = jenv->GetMethodID(imageClass, "getCropRect", "()Landroid/graphics/Rect;");
     static jmethodID imageGetPlanes = jenv->GetMethodID(imageClass, "getPlanes", "()[Landroid/media/Image$Plane;");
     static jmethodID imageClose = jenv->GetMethodID(imageClass, "close", "()V");
+    if(!inputId) {
+        SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null string");
+        return;
+    }
 
     try {
-        auto frame = DRing::getNewFrame();
+        const char *inputId_pstr = (const char *)jenv->GetStringUTFChars(inputId, 0);
+        if (!inputId_pstr)
+            return;
+        std::string_view input(inputId_pstr);
+
+        auto frame = DRing::getNewFrame(input);
         if (not frame) {
             jenv->CallVoidMethod(image, imageClose);
             return;
@@ -277,7 +290,8 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoFrame(JNI
             if (justAttached)
                 gJavaVM->DetachCurrentThread();
         });
-        DRing::publishFrame();
+        DRing::publishFrame(input);
+        jenv->ReleaseStringUTFChars(inputId, inputId_pstr);
     } catch (const std::exception& e) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception capturing video frame: %s", e.what());
     }
@@ -352,7 +366,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCallback
     const char *arg1_pstr = (const char *)jenv->GetStringUTFChars(sinkId, 0);
     if (!arg1_pstr)
         return;
-    const std::string sink(arg1_pstr);
+    std::string sink(arg1_pstr);
     jenv->ReleaseStringUTFChars(sinkId, arg1_pstr);
 
     ANativeWindow* nativeWindow = (ANativeWindow*)((intptr_t) window);
@@ -395,19 +409,16 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_unregisterVideoCallba
 %native(registerVideoCallback) void registerVideoCallback(jstring, jlong);
 %native(unregisterVideoCallback) void unregisterVideoCallback(jstring, jlong);
 
-%native(captureVideoFrame) void captureVideoFrame(jobject, jint);
-%native(captureVideoPacket) void captureVideoPacket(jobject, jint, jint, jboolean, jlong, jint);
+%native(captureVideoFrame) void captureVideoFrame(jstring, jobject, jint);
+%native(captureVideoPacket) void captureVideoPacket(jstring, jobject, jint, jint, jboolean, jlong, jint);
 
 namespace DRing {
 
 void setDefaultDevice(const std::string& name);
 std::string getDefaultDevice();
 
-void startCamera();
-void stopCamera();
 void startAudioDevice();
 void stopAudioDevice();
-bool switchInput(const std::string& resource);
 std::map<std::string, std::string> getSettings(const std::string& name);
 void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
 
@@ -415,12 +426,15 @@ void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 void setDeviceOrientation(const std::string& name, int angle);
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
-std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
+std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
 void stopLocalRecorder(const std::string& filepath);
 bool getDecodingAccelerated();
 void setDecodingAccelerated(bool state);
 bool getEncodingAccelerated();
 void setEncodingAccelerated(bool state);
+
+std::string openVideoInput(const std::string& path);
+bool closeVideoInput(const std::string& id);
 }
 
 class VideoCallback {
