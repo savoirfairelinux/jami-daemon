@@ -30,10 +30,11 @@
 
 namespace jami {
 
-LocalRecorder::LocalRecorder(const bool& audioOnly)
+LocalRecorder::LocalRecorder(const std::string& inputUri)
 {
-    isAudioOnly_ = audioOnly;
-    recorder_->audioOnly(audioOnly);
+    inputUri_ = inputUri;
+    isAudioOnly_ = inputUri_.empty();
+    recorder_->audioOnly(isAudioOnly_);
 }
 
 LocalRecorder::~LocalRecorder()
@@ -76,7 +77,7 @@ LocalRecorder::startRecording()
     // create read offset in RingBuffer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
 
-    audioInput_ = jami::getAudioInput(path_);
+    audioInput_ = getAudioInput(path_);
     audioInput_->setFormat(AudioFormat::STEREO());
     audioInput_->attach(recorder_->addStream(audioInput_->getInfo()));
     audioInput_->switchInput("");
@@ -84,7 +85,7 @@ LocalRecorder::startRecording()
 #ifdef ENABLE_VIDEO
     // video recording
     if (!isAudioOnly_) {
-        videoInput_ = std::static_pointer_cast<video::VideoInput>(jami::getVideoCamera());
+        videoInput_ = std::static_pointer_cast<video::VideoInput>(getVideoInput(inputUri_));
         if (videoInput_) {
             videoInput_->attach(recorder_->addStream(videoInput_->getInfo()));
         } else {

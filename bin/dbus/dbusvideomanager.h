@@ -57,19 +57,18 @@ class DRING_PUBLIC DBusVideoManager :
         void applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings);
         void setDefaultDevice(const std::string& deviceId);
         std::string getDefaultDevice();
-        void startCamera();
-        void stopCamera();
         void startAudioDevice();
         void stopAudioDevice();
-        bool switchInput(const std::string& resource);
         bool getDecodingAccelerated();
         void setDecodingAccelerated(const bool& state);
         bool getEncodingAccelerated();
         void setEncodingAccelerated(const bool& state);
         void setDeviceOrientation(const std::string& deviceId, const int& angle);
         std::map<std::string, std::string> getRenderer(const std::string& callId);
-        std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
+        std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
         void stopLocalRecorder(const std::string& filepath);
+        std::string openVideoInput(const std::string& inputUri);
+        bool closeVideoInput(const std::string& inputId);
 };
 
 #endif // __RING_DBUSVIDEOMANAGER_H__
