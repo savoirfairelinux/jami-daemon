@@ -66,7 +66,7 @@ Conference::Conference(bool enableVideo)
     if (not videoEnabled_)
         return;
 
-    videoMixer_ = std::make_shared<video::VideoMixer>(id_);
+    videoMixer_ = std::make_shared<video::VideoMixer>(id_, mediaInput_);
     videoMixer_->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();

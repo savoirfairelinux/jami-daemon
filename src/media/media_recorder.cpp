@@ -407,6 +407,10 @@ MediaRecorder::setupVideoOutput()
     int ret = -1;
     int streams = peer.isValid() + local.isValid() + mixer.isValid();
     switch (streams) {
+    case 0: {
+        JAMI_ERR("Trying to record a stream but none is valid");
+        break;
+    }
     case 1: {
         MediaStream inputStream;
         if (peer.isValid())
