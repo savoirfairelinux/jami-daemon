@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "acfead8d_df6608ec",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-16T15:01:11Z",
+      "side": 1,
+      "message": "why ? technically the agent is a user of the API, not a part of the Jami API",
+      "revId": "002e86c2bc067dc7d7f386c01634d01538942ae0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
