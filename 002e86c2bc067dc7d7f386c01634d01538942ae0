@@ -16,6 +16,24 @@
       "message": "why ? technically the agent is a user of the API, not a part of the Jami API",
       "revId": "002e86c2bc067dc7d7f386c01634d01538942ae0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c953b5bf_ffb94efe",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-10-16T18:29:39Z",
+      "side": 1,
+      "message": "I agree.  This was just to be able to do:\n\n(use-modules (jami agent))\n\ninstead of\n\n(use-modules (agent))\n\nAt the end there is not much difference here.  I don\u0027t mind",
+      "parentUuid": "acfead8d_df6608ec",
+      "revId": "002e86c2bc067dc7d7f386c01634d01538942ae0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
