@@ -49,9 +49,9 @@
             </arg>
         </method>
 
-        <method name="startLocalRecorder" tp:name-for-bindings="startLocalRecorder">
-            <tp:docstring> Starts a local recorder. Video and/or audio are recorded from preferred devices.</tp:docstring>
-            <arg type="b" name="audioOnly" direction="in">
+        <method name="startLocalMediaRecorder" tp:name-for-bindings="startLocalMediaRecorder">
+            <tp:docstring> Starts a local recorder. Video and/or audio.</tp:docstring>
+            <arg type="s" name="videoInputId" direction="in">
             </arg>
             <arg type="s" name="filepath" direction="in">
             <tp:docstring> Base file path for local recording. This is not the final path as the file extension will be added (final path can be obtained as return value of this method).</tp:docstring>
@@ -63,15 +63,8 @@
 
         <method name="stopLocalRecorder" tp:name-for-bindings="stopLocalRecorder">
             <arg type="s" name="filepath" direction="in">
-            <tp:docstring> Identifier for local recorder to be stopped (obtained as return value of startLocalRecorder).</tp:docstring>
+            <tp:docstring> Identifier for local recorder to be stopped (obtained as return value of startLocalMediaRecorder).</tp:docstring>
             </arg>
-        </method>
-
-        <method name="startCamera" tp:name-for-bindings="startCamera">
-            <tp:docstring> Starts the video camera, which renders the active v4l2 device's video to shared memory. Useful for testing/debugging camera settings</tp:docstring>
-        </method>
-
-        <method name="stopCamera" tp:name-for-bindings="stopCamera">
         </method>
 
         <method name="startAudioDevice" tp:name-for-bindings="startAudioDevice">
@@ -81,8 +74,9 @@
         <method name="stopAudioDevice" tp:name-for-bindings="stopAudioDevice">
         </method>
 
-        <method name="switchInput" tp:name-for-bindings="switchInput">
-            <arg type="s" name="resource" direction="in">
+        <method name="openVideoInput" tp:name-for-bindings="openVideoInput">
+            <tp:docstring>Open a video input by URI. A Sink is made available.</tp:docstring>
+            <arg type="s" name="inputUri" direction="in">
                 <tp:docstring>
                     A media resource locator (MRL).
                     Currently, the following are supported:
@@ -93,8 +87,18 @@
                     </ul>
                 </tp:docstring>
             </arg>
-            <arg type="b" name="switched" direction="out">
-                <tp:docstring>Returns true if the input stream was successfully changed, false otherwise</tp:docstring>
+            <arg type="s" name="inputId" direction="out">
+            <tp:docstring>The ID of the input. A sink with this ID is also made available.</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="closeVideoInput" tp:name-for-bindings="closeVideoInput">
+            <tp:docstring>Closes a video input by ID</tp:docstring>
+            <arg type="s" name="inputId" direction="in">
+            <tp:docstring>The ID of the input to close, as returned by openVideoInput.</tp:docstring>
+            </arg>
+            <arg type="b" name="closed" direction="out">
+            <tp:docstring>Returns true if the input was closed</tp:docstring>
             </arg>
         </method>
 

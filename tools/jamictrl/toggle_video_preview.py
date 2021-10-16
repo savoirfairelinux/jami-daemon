@@ -25,7 +25,6 @@ import sys
 import os
 from random import randint
 
-
 class DRingToggleVideo():
     def start(self):
         bus = dbus.SessionBus()
@@ -35,6 +34,6 @@ class DRingToggleVideo():
 
         while True:
             time.sleep(2)
-            videoControl.startCamera()
+            id = videoControl.openVideoInput("")
             time.sleep(2)
-            videoControl.stopCamera()
+            videoControl.closeVideoInput(id)

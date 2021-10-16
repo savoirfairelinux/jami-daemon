@@ -62,18 +62,6 @@ DBusVideoManager::getDefaultDevice() -> decltype(DRing::getDefaultDevice())
 }
 
 void
-DBusVideoManager::startCamera()
-{
-    DRing::startCamera();
-}
-
-void
-DBusVideoManager::stopCamera()
-{
-    DRing::stopCamera();
-}
-
-void
 DBusVideoManager::startAudioDevice()
 {
     DRing::startAudioDevice();
@@ -85,10 +73,14 @@ DBusVideoManager::stopAudioDevice()
     DRing::stopAudioDevice();
 }
 
-auto
-DBusVideoManager::switchInput(const std::string& resource) -> decltype(DRing::switchInput(resource))
-{
-    return DRing::switchInput(resource);
+std::string
+DBusVideoManager::openVideoInput(const std::string& inputUri)  {
+    return DRing::openVideoInput(inputUri);
+}
+
+bool
+DBusVideoManager::closeVideoInput(const std::string& inputId) {
+    return DRing::closeVideoInput(inputId);
 }
 
 auto
@@ -128,9 +120,9 @@ DBusVideoManager::getRenderer(const std::string& callId)
 }
 
 std::string
-DBusVideoManager::startLocalRecorder(const bool& audioOnly, const std::string& filepath)
+DBusVideoManager::startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath)
 {
-    return DRing::startLocalRecorder(audioOnly, filepath);
+    return DRing::startLocalMediaRecorder(videoInputId, filepath);
 }
 
 void
