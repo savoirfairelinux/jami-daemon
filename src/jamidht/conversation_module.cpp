@@ -34,6 +34,8 @@
 
 namespace jami {
 
+using ConvInfoMap = std::map<std::string, ConvInfo>;
+
 struct PendingConversationFetch
 {
     bool ready {false};
@@ -77,6 +79,7 @@ public:
      */
     void checkConversationsEvents();
     bool handlePendingConversations();
+    void handlePendingConversation(const std::string& conversationId, const std::string& deviceId);
 
     // Requests
     std::optional<ConversationRequest> getRequest(const std::string& id) const;
@@ -397,8 +400,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 void
 ConversationModule::Impl::checkConversationsEvents()
 {
-    bool hasHandler = conversationsEventHandler and not conversationsEventHandler->isCancelled();
     std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+    bool hasHandler = conversationsEventHandler and not conversationsEventHandler->isCancelled();
     if (not pendingConversationsFetch_.empty() and not hasHandler) {
         conversationsEventHandler = Manager::instance().scheduler().scheduleAtFixedRate(
             [w = weak()] {
@@ -413,6 +416,94 @@ ConversationModule::Impl::checkConversationsEvents()
     }
 }
 
+// Clone and store conversation
+void
+ConversationModule::Impl::handlePendingConversation(const std::string& conversationId,
+                                                    const std::string& deviceId)
+{
+    auto erasePending = [&] {
+        std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+        pendingConversationsFetch_.erase(conversationId);
+    };
+    try {
+        auto conversation = std::make_shared<Conversation>(account_, deviceId, conversationId);
+        if (!conversation->isMember(username_, true)) {
+            JAMI_ERR("Conversation cloned but doesn't seems to be a valid member");
+            conversation->erase();
+            erasePending();
+            return;
+        }
+        auto removeRepo = false;
+        {
+            std::lock_guard<std::mutex> lk(conversationsMtx_);
+            // Note: a removeContact while cloning. In this case, the conversation
+            // must not be announced and removed.
+            auto itConv = convInfos_.find(conversationId);
+            if (itConv != convInfos_.end() && itConv->second.removed)
+                removeRepo = true;
+            conversations_.emplace(conversationId, conversation);
+        }
+        if (removeRepo) {
+            removeRepository(conversationId, false, true);
+            erasePending();
+            return;
+        }
+        auto commitId = conversation->join();
+        std::vector<std::map<std::string, std::string>> messages;
+        {
+            std::lock_guard<std::mutex> lk(replayMtx_);
+            auto replayIt = replay_.find(conversationId);
+            if (replayIt != replay_.end()) {
+                messages = std::move(replayIt->second);
+                replay_.erase(replayIt);
+            }
+        }
+        if (!commitId.empty())
+            sendMessageNotification(conversationId, commitId, false);
+        // Inform user that the conversation is ready
+        emitSignal<DRing::ConversationSignal::ConversationReady>(accountId_, conversationId);
+        needsSyncingCb_();
+        std::vector<Json::Value> values;
+        values.reserve(messages.size());
+        for (const auto& message : messages) {
+            // For now, only replay text messages.
+            // File transfers will need more logic, and don't care about calls for now.
+            if (message.at("type") == "text/plain" && message.at("author") == username_) {
+                Json::Value json;
+                json["body"] = message.at("body");
+                json["type"] = "text/plain";
+                values.emplace_back(std::move(json));
+            }
+        }
+        if (!values.empty())
+            conversation->sendMessages(std::move(values),
+                                       "",
+                                       [w = weak(), conversationId](const auto& commits) {
+                                           auto shared = w.lock();
+                                           if (shared and not commits.empty())
+                                               shared->sendMessageNotification(conversationId,
+                                                                               *commits.rbegin(),
+                                                                               true);
+                                       });
+        // Download members profile on first sync
+        if (auto cert = tls::CertificateStore::instance().getCertificate(deviceId)) {
+            if (cert->issuer && cert->issuer->getId().toString() == username_) {
+                if (auto acc = account_.lock()) {
+                    for (const auto& member : conversation->memberUris(username_))
+                        acc->askForProfile(conversationId, deviceId, member);
+                }
+            }
+        }
+    } catch (const std::exception& e) {
+        emitSignal<DRing::ConversationSignal::OnConversationError>(accountId_,
+                                                                   conversationId,
+                                                                   EFETCH,
+                                                                   e.what());
+        JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
+    }
+    erasePending();
+}
+
 bool
 ConversationModule::Impl::handlePendingConversations()
 {
@@ -420,105 +511,11 @@ ConversationModule::Impl::handlePendingConversations()
     for (auto it = pendingConversationsFetch_.begin(); it != pendingConversationsFetch_.end();) {
         if (it->second.ready && !it->second.cloning) {
             it->second.cloning = true;
-            dht::ThreadPool::io().run([w = weak(),
-                                       conversationId = it->first,
-                                       deviceId = it->second.deviceId]() {
-                auto sthis = w.lock();
-                if (!sthis)
-                    return;
-                // Clone and store conversation
-                auto erasePending = [&] {
-                    std::lock_guard<std::mutex> lk(sthis->pendingConversationsFetchMtx_);
-                    sthis->pendingConversationsFetch_.erase(conversationId);
-                };
-                try {
-                    auto conversation = std::make_shared<Conversation>(sthis->account_,
-                                                                       deviceId,
-                                                                       conversationId);
-                    if (!conversation->isMember(sthis->username_, true)) {
-                        JAMI_ERR("Conversation cloned but doesn't seems to be a valid member");
-                        conversation->erase();
-                        erasePending();
-                        return;
-                    }
-                    if (conversation) {
-                        auto removeRepo = false;
-                        {
-                            std::lock_guard<std::mutex> lk(sthis->conversationsMtx_);
-                            // Note: a removeContact while cloning. In this case, the conversation
-                            // must not be announced and removed.
-                            auto itConv = sthis->convInfos_.find(conversationId);
-                            if (itConv != sthis->convInfos_.end() && itConv->second.removed)
-                                removeRepo = true;
-                            sthis->conversations_.emplace(conversationId, conversation);
-                        }
-                        if (removeRepo) {
-                            sthis->removeRepository(conversationId, false, true);
-                            erasePending();
-                            return;
-                        }
-                        auto commitId = conversation->join();
-                        std::vector<std::map<std::string, std::string>> messages;
-                        {
-                            std::lock_guard<std::mutex> lk(sthis->replayMtx_);
-                            auto replayIt = sthis->replay_.find(conversationId);
-                            if (replayIt != sthis->replay_.end()) {
-                                messages = std::move(replayIt->second);
-                                sthis->replay_.erase(replayIt);
-                            }
-                        }
-                        if (!commitId.empty())
-                            sthis->sendMessageNotification(conversationId, commitId, false);
-                        // Inform user that the conversation is ready
-                        emitSignal<DRing::ConversationSignal::ConversationReady>(sthis->accountId_,
-                                                                                 conversationId);
-                        sthis->needsSyncingCb_();
-                        std::vector<Json::Value> values;
-                        values.reserve(messages.size());
-                        for (const auto& message : messages) {
-                            // For now, only replay text messages.
-                            // File transfers will need more logic, and don't care about calls for now.
-                            if (message.at("type") == "text/plain"
-                                && message.at("author") == sthis->username_) {
-                                Json::Value json;
-                                json["body"] = message.at("body");
-                                json["type"] = "text/plain";
-                                values.emplace_back(std::move(json));
-                            }
-                        }
-                        if (!values.empty())
-                            conversation->sendMessages(
-                                std::move(values), "", [w, conversationId](const auto& commits) {
-                                    auto shared = w.lock();
-                                    if (!shared || !commits.empty())
-                                        shared->sendMessageNotification(conversationId,
-                                                                        *commits.rbegin(),
-                                                                        true);
-                                });
-                        // Download members profile on first sync
-                        if (auto cert = tls::CertificateStore::instance().getCertificate(deviceId)) {
-                            if (cert->issuer
-                                && cert->issuer->getId().toString() == sthis->username_) {
-                                if (auto acc = sthis->account_.lock()) {
-                                    for (const auto& member : conversation->getMembers()) {
-                                        if (member.at("uri") != sthis->username_)
-                                            acc->askForProfile(conversationId,
-                                                               deviceId,
-                                                               member.at("uri"));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch (const std::exception& e) {
-                    emitSignal<DRing::ConversationSignal::OnConversationError>(sthis->accountId_,
-                                                                               conversationId,
-                                                                               EFETCH,
-                                                                               e.what());
-                    JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
-                }
-                erasePending();
-            });
+            dht::ThreadPool::io().run(
+                [w = weak(), conversationId = it->first, deviceId = it->second.deviceId]() {
+                    if (auto sthis = w.lock())
+                        sthis->handlePendingConversation(conversationId, deviceId);
+                });
         }
         ++it;
     }
@@ -593,13 +590,10 @@ ConversationModule::Impl::sendMessageNotification(const Conversation& conversati
     message["deviceId"] = deviceId_;
     Json::StreamWriterBuilder builder;
     const auto text = Json::writeString(builder, message);
-    for (const auto& members : conversation.getMembers()) {
-        auto uri = members.at("uri");
-        // Do not send to ourself, it's synced via convInfos
-        if (!sync && username_.find(uri) != std::string::npos)
-            continue;
+    for (const auto& member : conversation.memberUris(username_)) {
         // Announce to all members that a new message is sent
-        sendMsgCb_(uri, std::map<std::string, std::string> {{"application/im-gitmessage-id", text}});
+        sendMsgCb_(member,
+                   std::map<std::string, std::string> {{"application/im-gitmessage-id", text}});
     }
 }
 
@@ -665,16 +659,14 @@ ConversationModule::saveConvRequestsToPath(
 }
 
 void
-ConversationModule::saveConvInfos(const std::string& accountId,
-                                  const std::map<std::string, ConvInfo>& conversations)
+ConversationModule::saveConvInfos(const std::string& accountId, const ConvInfoMap& conversations)
 {
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
     saveConvInfosToPath(path, conversations);
 }
 
 void
-ConversationModule::saveConvInfosToPath(const std::string& path,
-                                        const std::map<std::string, ConvInfo>& conversations)
+ConversationModule::saveConvInfosToPath(const std::string& path, const ConvInfoMap& conversations)
 {
     std::ofstream file(path + DIR_SEPARATOR_STR + "convInfo", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversations);
