@@ -16,6 +16,24 @@
       "message": "only for one-to-one ?",
       "revId": "8e4fdb3b55e6952390f186f1ad7f964e8ca1ca52",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "696cb502_66b2901a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1415,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-18T16:03:59Z",
+      "side": 1,
+      "message": "If a request for a non one-to-one is removed, we will have the possibility to accept request for groups but without the contact.\n\nIf accept for untrusted contacts is off, it will not sync (or sync indefinitely). I can recheck what we decided (will do tomorrow!)",
+      "parentUuid": "607e9893_12fc25bd",
+      "revId": "8e4fdb3b55e6952390f186f1ad7f964e8ca1ca52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
