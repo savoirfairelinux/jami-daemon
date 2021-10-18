@@ -175,6 +175,8 @@ public:
      */
     std::string commitMessage(const std::string& msg);
 
+    std::vector<std::string> commitMessages(const std::vector<std::string>& msgs);
+
     /**
      * Amend a commit message
      * @param id      The commit to amend

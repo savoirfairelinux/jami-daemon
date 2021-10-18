@@ -104,6 +104,7 @@ public:
                                  const std::string& parentId) const;
 
     bool add(const std::string& path);
+    void addUserDevice();
     std::string commit(const std::string& msg);
     ConversationMode mode() const;
 
@@ -1224,10 +1225,10 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     }
 
     auto hasDevice = false, hasAdmin = false;
-    std::string adminsFile = std::string("admins") + "/" + userUri + ".crt";
-    std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
-    std::string crlFile = std::string("CRLs") + "/" + userUri;
-    std::string invitedFile = std::string("invited") + "/" + invited;
+    std::string adminsFile = fmt::format("admins/{}.crt", userUri);
+    std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
+    std::string crlFile = fmt::format("CRLs/{}", userUri);
+    std::string invitedFile = fmt::format("invited/{}", invited);
     // Check that admin cert is added
     // Check that device cert is added
     // Check CRLs added
@@ -2378,38 +2379,52 @@ ConversationRepository::remoteHead(const std::string& remoteDeviceId,
     return commit_str;
 }
 
-std::string
-ConversationRepository::commitMessage(const std::string& msg)
+void
+ConversationRepository::Impl::addUserDevice()
 {
-    auto account = pimpl_->account_.lock();
+    auto account = account_.lock();
     if (!account)
-        return {};
-    auto deviceId = std::string(account->currentDeviceId());
+        return;
 
     // First, we need to add device file to the repository if not present
-    auto repo = pimpl_->repository();
+    auto repo = repository();
     if (!repo)
-        return {};
-    std::string repoPath = git_repository_workdir(repo.get());
+        return;
     // NOTE: libgit2 uses / for files
-    std::string path = std::string("devices") + "/" + deviceId + ".crt";
-    std::string devicePath = repoPath + path;
+    std::string path = fmt::format("devices/{}.crt", account->currentDeviceId());
+    std::string devicePath = git_repository_workdir(repo.get()) + path;
     if (!fileutils::isFile(devicePath)) {
         auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERR("Could not write data to %s", devicePath.c_str());
-            return {};
+            return;
         }
         auto cert = account->identity().second;
         auto deviceCert = cert->toString(false);
         file << deviceCert;
         file.close();
 
-        if (!pimpl_->add(path))
+        if (!add(path))
             JAMI_WARN("Couldn't add file %s", devicePath.c_str());
     }
+}
 
+std::string
+ConversationRepository::commitMessage(const std::string& msg)
+{
+    pimpl_->addUserDevice();
     return pimpl_->commit(msg);
+}
+
+std::vector<std::string>
+ConversationRepository::commitMessages(const std::vector<std::string>& msgs)
+{
+    pimpl_->addUserDevice();
+    std::vector<std::string> ret;
+    ret.reserve(msgs.size());
+    for (const auto& msg : msgs)
+        ret.emplace_back(pimpl_->commit(msg));
+    return ret;
 }
 
 std::vector<ConversationCommit>
