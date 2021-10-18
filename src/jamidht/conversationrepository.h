@@ -175,6 +175,8 @@ public:
      */
     std::string commitMessage(const std::string& msg);
 
+    std::vector<std::string> commitMessages(const std::vector<std::string>& msgs);
+
     /**
      * Amend a commit message
      * @param id      The commit to amend
@@ -285,6 +287,7 @@ public:
      * @return members
      */
     std::vector<ConversationMember> members() const;
+    std::vector<std::string> memberUris(std::string_view excludeUri = {}) const;
 
     /**
      * To use after a merge with member's events, refresh members knowledge

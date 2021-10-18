@@ -126,6 +126,8 @@ public:
     std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited = false,
                                                                bool includeLeft = false) const;
 
+    std::vector<std::string> getMemberUris(std::string_view excludeUri = {}) const;
+
     /**
      * Join a conversation
      * @return commit id to send
