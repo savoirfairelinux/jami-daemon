@@ -51,7 +51,7 @@ SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, Connec
 }
 
 bool
-SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& deviceId, const std::string& /* name */)
+SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& /* name */)
 {
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)

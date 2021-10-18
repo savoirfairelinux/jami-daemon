@@ -559,10 +559,6 @@ std::vector<std::map<std::string, std::string>>
 Conversation::getMembers(bool includeInvited, bool includeLeft) const
 {
     std::vector<std::map<std::string, std::string>> result;
-
-    auto shared = pimpl_->account_.lock();
-    if (!shared)
-        return result;
     auto members = pimpl_->repository_->members();
     std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
     for (const auto& member : members) {
@@ -582,6 +578,12 @@ Conversation::getMembers(bool includeInvited, bool includeLeft) const
         result.emplace_back(std::move(mm));
     }
     return result;
+}
+
+std::vector<std::string>
+Conversation::getMemberUris(std::string_view filter) const
+{
+    return pimpl_->repository_->memberUris(filter);
 }
 
 std::string
