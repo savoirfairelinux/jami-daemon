@@ -3294,6 +3294,9 @@ JamiAccount::sendTextMessage(const std::string& to,
         return;
     }
 
+    JAMI_ERR() << "@@@ SEND. ID : " << getAccountID() << ": "
+               << std::string(payloads.begin()->first);
+
     auto toH = dht::InfoHash(toUri);
     auto now = clock::to_time_t(clock::now());
 
@@ -3326,6 +3329,8 @@ JamiAccount::sendTextMessage(const std::string& to,
         ctx->confirmation = confirm;
 
         try {
+            JAMI_ERR() << "@@@ SEND.  VIA SIP : " << getAccountID() << ": "
+                       << std::string(payloads.begin()->first);
             auto res = sendSIPMessage(
                 conn, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
                     std::unique_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
@@ -3355,6 +3360,8 @@ JamiAccount::sendTextMessage(const std::string& to,
                             acc->messageEngine_.onPeerOnline(c->to, false);
                     }
                 });
+
+            JAMI_ERR() << "@@@ SEND. RES : " << getAccountID() << ": " << res;
             if (!res) {
                 if (!onlyConnected)
                     messageEngine_.onMessageSent(to, token, false);
@@ -3395,6 +3402,8 @@ JamiAccount::sendTextMessage(const std::string& to,
             }
 
             // Else, ask for a channel and send a DHT message
+            JAMI_ERR() << "@@@ SEND.  REQ SIP : " << getAccountID() << ": "
+                       << std::string(payloads.begin()->first);
             requestSIPConnection(to, deviceId);
             {
                 std::lock_guard<std::mutex> lock(messageMutex_);
@@ -3441,6 +3450,8 @@ JamiAccount::sendTextMessage(const std::string& to,
                       return false;
                   });
             confirm->listenTokens.emplace(h, std::move(list_token));
+            JAMI_ERR() << "@@@ SEND. SEND DHT : " << getAccountID() << ": "
+                       << std::string(payloads.begin()->first);
             dht_->putEncrypted(h,
                                dev,
                                dht::ImMessage(token,
@@ -3758,7 +3769,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             return false;
         }
 
-        JAMI_WARN("Received indication for new commit available in conversation %s",
+        JAMI_WARN("@@@Received indication for new commit available in conversation %s",
                   json["id"].asString().c_str());
 
         convModule()->onNewCommit(from,
@@ -4146,6 +4157,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
         auto shared = w.lock();
         if (!shared)
             return;
+        JAMI_ERR() << "@@@ GO SEND";
         auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, ctx, cb);
         if (status != PJ_SUCCESS)
             JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
