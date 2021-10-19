@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f099e2b2_ac33cbee",
+        "filename": "src/account.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 519,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-19T15:44:45Z",
+      "side": 1,
+      "message": "a test should be added ;)",
+      "range": {
+        "startLine": 519,
+        "startChar": 9,
+        "endLine": 519,
+        "endChar": 29
+      },
+      "revId": "c1ce81966190c43a82ce18e323ce744c4c4aa629",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ff54a9e_8322710d",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2055,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-19T15:44:45Z",
+      "side": 1,
+      "message": "This introduces a new behaviour that I\u0027m not convinced we want:\n\nIf alice got 2 devices, one with an active call, and receives a new call, the call will be declined for both devices. Was this point discussed?",
+      "range": {
+        "startLine": 2055,
+        "startChar": 8,
+        "endLine": 2055,
+        "endChar": 18
+      },
+      "revId": "c1ce81966190c43a82ce18e323ce744c4c4aa629",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ff6d3263_b16c0d24",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3180,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-19T15:44:45Z",
+      "side": 1,
+      "message": "reserve callFactory.getAllCalls().size()",
+      "range": {
+        "startLine": 3180,
+        "startChar": 29,
+        "endLine": 3180,
+        "endChar": 36
+      },
+      "revId": "c1ce81966190c43a82ce18e323ce744c4c4aa629",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "025e20e3_418455fc",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3184,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-19T15:44:45Z",
+      "side": 1,
+      "message": "emplace_back",
+      "range": {
+        "startLine": 3184,
+        "startChar": 20,
+        "endLine": 3184,
+        "endChar": 29
+      },
+      "revId": "c1ce81966190c43a82ce18e323ce744c4c4aa629",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
