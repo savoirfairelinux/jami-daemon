@@ -39,6 +39,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
                                              const IpAddr& remote,
                                              onShutdownCb&& cb)
     : socket_(socket)
+    , shutdownCb_(std::move(cb))
     , local_ {local}
     , remote_ {remote}
     , trData_()
@@ -150,9 +151,13 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     // Register callbacks
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
+}
 
+void
+ChanneledSIPTransport::linkChannelCbs()
+{
     // Link to Channel Socket
-    socket->setOnRecv([this](const uint8_t* buf, size_t len) {
+    socket_->setOnRecv([this](const uint8_t* buf, size_t len) {
         pj_gettimeofday(&rdata_.pkt_info.timestamp);
         size_t remaining {len};
         while (remaining) {
@@ -165,6 +170,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
             remaining -= added;
 
             // Consume packet
+            JAMI_ERR() << "@@@ CONSUME " << len;
             auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
             if (eaten == rdata_.pkt_info.len) {
                 rdata_.pkt_info.len = 0;
@@ -176,7 +182,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
         }
         return len;
     });
-    socket->onShutdown([cb = std::move(cb), this] {
+    socket_->onShutdown([this] {
         disconnected_ = true;
         if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
             JAMI_WARN("[SIPS] process disconnect event");
@@ -185,7 +191,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
             state_info.status = PJ_SUCCESS;
             (*state_cb)(&trData_.base, PJSIP_TP_STATE_DISCONNECTED, &state_info);
         }
-        cb();
+        shutdownCb_();
     });
 }
 
