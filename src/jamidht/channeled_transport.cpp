@@ -165,6 +165,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
             remaining -= added;
 
             // Consume packet
+            JAMI_ERR() << "@@@ CONSUME " << len;
             auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
             if (eaten == rdata_.pkt_info.len) {
                 rdata_.pkt_info.len = 0;
