@@ -278,14 +278,16 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                           const std::string& conversationId,
                                           const std::string& commitId)
 {
-    JAMI_DBG("[Account %s] fetch commits for peer %s on device %s",
+    JAMI_ERR("[Account %s] @@@ fetch commits for peer %s on device %s",
              accountId_.c_str(),
              peer.c_str(),
              deviceId.c_str());
 
     std::unique_lock<std::mutex> lk(conversationsMtx_);
+    JAMI_ERR("[Account %s] @@@ 2s", accountId_.c_str());
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
+        JAMI_ERR("[Account %s] @@@ 3s", accountId_.c_str());
         if (!conversation->second->isMember(peer, true)) {
             JAMI_WARN("[Account %s] %s is not a member of %s",
                       accountId_.c_str(),
@@ -314,6 +316,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                       conversationId.c_str());
             return;
         }
+        JAMI_ERR("[Account %s] @@@ 4s", accountId_.c_str());
         onNeedSocket_(conversationId,
                       deviceId,
                       [this,
@@ -357,14 +360,18 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                           return true;
                       });
     } else {
-        if (getRequest(conversationId) != std::nullopt)
+        JAMI_ERR("[Account %s] @@@ 5s", accountId_.c_str());
+        if (getRequest(conversationId) != std::nullopt) {
+            JAMI_ERR("[Account %s] @@@ 6s", accountId_.c_str());
             return;
+        }
         {
             // Check if the conversation is cloning
             std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
             if (pendingConversationsFetch_.find(conversationId) != pendingConversationsFetch_.end())
                 return;
         }
+        JAMI_ERR("[Account %s] @@@ 7s", accountId_.c_str());
         bool clone = false;
         {
             std::lock_guard<std::mutex> lkCi(convInfosMtx_);
