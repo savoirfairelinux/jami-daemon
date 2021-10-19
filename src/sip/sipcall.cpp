@@ -2244,7 +2244,12 @@ SIPCall::isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList)
         auto streamIdx = findRtpStreamIndex(newAttr.label_);
 
         if (streamIdx == rtpStreams_.size()) {
-            // Always needs a reinvite when a new media is added.
+            // Always needs a re-invite when a new media is added.
+            return true;
+        }
+
+        // Changing the source needs a re-invite
+        if (newAttr.sourceUri_ != rtpStreams_[streamIdx].mediaAttribute_->sourceUri_) {
             return true;
         }
 
