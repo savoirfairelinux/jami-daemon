@@ -116,6 +116,7 @@ ConversationRequestTest::setUp()
 void
 ConversationRequestTest::tearDown()
 {
+    JAMI_ERR() << "@@@TD";
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
 

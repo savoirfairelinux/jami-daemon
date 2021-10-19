@@ -120,11 +120,16 @@ public:
         clearSockets();
     }
 
-    std::shared_ptr<ChannelSocket> makeSocket(const std::string& name, uint16_t channel, bool isInitiator = false)
+    std::shared_ptr<ChannelSocket> makeSocket(const std::string& name,
+                                              uint16_t channel,
+                                              bool isInitiator = false)
     {
         auto& channelSocket = sockets[channel];
         if (not channelSocket)
-            channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel, isInitiator);
+            channelSocket = std::make_shared<ChannelSocket>(parent_.weak(),
+                                                            name,
+                                                            channel,
+                                                            isInitiator);
         else {
             JAMI_WARN("A channel is already present on that socket, accepting "
                       "the request will close the previous one %s",
@@ -252,9 +257,13 @@ void
 MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
 {
     std::lock_guard<std::mutex> lkSockets(socketsMutex);
+    JAMI_ERR() << "@@@ onAccept " << name;
     auto socket = makeSocket(name, channel);
+    JAMI_ERR() << "@@@ onAccept2 " << name;
     onChannelReady_(deviceId, socket);
+    JAMI_ERR() << "@@@ onAccept3 " << name;
     socket->ready();
+    JAMI_ERR() << "@@@ onAccept4 " << name;
 }
 
 void
@@ -353,6 +362,7 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
     std::shared_ptr<ChannelSocket> channelSocket;
     if (accept) {
         std::lock_guard<std::mutex> lkSockets(socketsMutex);
+        JAMI_ERR() << "@@@ onRequest";
         channelSocket = makeSocket(name, channel);
     }
 
@@ -510,6 +520,7 @@ MultiplexedSocket::addChannel(const std::string& name)
         if (c == CONTROL_CHANNEL || c == PROTOCOL_CHANNEL
             || pimpl_->sockets.find(c) != pimpl_->sockets.end())
             continue;
+        JAMI_ERR() << "@@@ addChannel";
         return pimpl_->makeSocket(name, c, true);
     }
     return {};
@@ -705,7 +716,10 @@ MultiplexedSocket::sendVersion()
 class ChannelSocket::Impl
 {
 public:
-    Impl(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel, bool isInitiator)
+    Impl(std::weak_ptr<MultiplexedSocket> endpoint,
+         const std::string& name,
+         const uint16_t& channel,
+         bool isInitiator)
         : name(name)
         , channel(channel)
         , endpoint(std::move(endpoint))
@@ -790,9 +804,18 @@ void
 ChannelSocket::setOnRecv(RecvCb&& cb)
 {
     std::lock_guard<std::mutex> lkSockets(pimpl_->mutex);
+    if (name() == "sip") {
+        JAMI_ERR() << "@@@ setOnRecv " << channel();
+    }
     pimpl_->cb = std::move(cb);
     if (!pimpl_->buf.empty() && pimpl_->cb) {
+        if (name() == "sip") {
+            JAMI_ERR() << "@@@ GO BUFFER " << channel() << " " << pimpl_->buf.size();
+        }
         pimpl_->cb(pimpl_->buf.data(), pimpl_->buf.size());
+        if (name() == "sip") {
+            JAMI_ERR() << "@@@ GO BUFFER END " << channel() << " " << pimpl_->buf.size();
+        }
         pimpl_->buf.clear();
     }
 }
@@ -800,10 +823,19 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
 void
 ChannelSocket::onRecv(std::vector<uint8_t>&& pkt)
 {
+    if (name() == "sip") {
+        JAMI_ERR() << "@@@ GOT SIP DATA " << channel();
+    }
     std::lock_guard<std::mutex> lkSockets(pimpl_->mutex);
     if (pimpl_->cb) {
+        if (name() == "sip") {
+            JAMI_ERR() << "@@@ CALLBACK" << channel();
+        }
         pimpl_->cb(&pkt[0], pkt.size());
         return;
+    }
+    if (name() == "sip") {
+        JAMI_ERR() << "@@@ BUFFERIZE" << channel() << " " << pkt.size();
     }
     pimpl_->buf.insert(pimpl_->buf.end(),
                        std::make_move_iterator(pkt.begin()),
