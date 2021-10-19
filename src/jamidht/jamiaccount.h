@@ -871,7 +871,7 @@ private:
      * @param peerId    The contact who owns the device
      * @param deviceId  Device linked to that transport
      */
-    void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& channel,
+    void cacheSIPConnection(std::shared_ptr<ChannelSocket> channel,
                             const std::string& peerId,
                             const DeviceId& deviceId);
     /**
