@@ -2405,7 +2405,8 @@ JamiAccount::doRegister_()
                                                   peer_account.toString(),
                                                   pk->getLongId().toString(),
                                                   payloads);
-                                    JAMI_DBG() << "Sending message confirmation " << v.id;
+                                    JAMI_DBG() << "Sending message confirmation " << v.id
+                                               << "@@@@@@ FOR " << datatype;
                                     dht_->putEncrypted(inboxDeviceKey,
                                                        v.from,
                                                        dht::ImMessage(v.id, std::string(), now));
@@ -2444,7 +2445,9 @@ JamiAccount::convModule()
                 });
             },
             [this](auto&& uri, auto&& msg) {
+                JAMI_ERR() << "@@@@ " << getAccountID() << "@@@ SEND MSG to " << uri;
                 runOnMainThread([w = weak(), uri, msg] {
+                    JAMI_ERR() << "@@@@ " << getAccountID() << "@@@ SEND MSG2 to " << uri;
                     if (auto shared = w.lock())
                         shared->sendTextMessage(uri, msg);
                 });
@@ -3396,6 +3399,9 @@ JamiAccount::sendTextMessage(const std::string& to,
             }
 
             // Else, ask for a channel and send a DHT message
+            JAMI_ERR() << "@@@ requestSIPConnection " << getAccountID() << " "
+                       << std::string(payloads.begin()->first) << ": "
+                       << std::string(payloads.begin()->second);
             requestSIPConnection(to, deviceId);
             {
                 std::lock_guard<std::mutex> lock(messageMutex_);
@@ -3749,6 +3755,7 @@ JamiAccount::sendInstantMessage(const std::string& convId,
 bool
 JamiAccount::handleMessage(const std::string& from, const std::pair<std::string, std::string>& m)
 {
+    JAMI_ERR() << "@@@ handleMessage " << m.first;
     if (m.first == MIME_TYPE_GIT) {
         Json::Value json;
         std::string err;
