@@ -76,21 +76,21 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationRequestTest);
-    CPPUNIT_TEST(testAcceptTrustRemoveConvReq);
-    CPPUNIT_TEST(acceptConvReqAlsoAddContact);
-    CPPUNIT_TEST(testGetRequests);
-    CPPUNIT_TEST(testDeclineRequest);
-    CPPUNIT_TEST(testAddContact);
-    CPPUNIT_TEST(testAddContactDeleteAndReAdd);
+    // CPPUNIT_TEST(testAcceptTrustRemoveConvReq);
+    // CPPUNIT_TEST(acceptConvReqAlsoAddContact);
+    // CPPUNIT_TEST(testGetRequests);
+    // CPPUNIT_TEST(testDeclineRequest);
+    // CPPUNIT_TEST(testAddContact);
+    // CPPUNIT_TEST(testAddContactDeleteAndReAdd);
     CPPUNIT_TEST(testInviteFromMessageAfterRemoved);
-    CPPUNIT_TEST(testRemoveContact);
-    CPPUNIT_TEST(testRemoveConversationUpdateContactDetails);
-    CPPUNIT_TEST(testBanContact);
-    CPPUNIT_TEST(testAddOfflineContactThenConnect);
-    CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
-    CPPUNIT_TEST(testRemoveContactRemoveSyncing);
+    // CPPUNIT_TEST(testRemoveContact);
+    // CPPUNIT_TEST(testRemoveConversationUpdateContactDetails);
+    // CPPUNIT_TEST(testBanContact);
+    // CPPUNIT_TEST(testAddOfflineContactThenConnect);
+    // CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
+    // CPPUNIT_TEST(testRemoveContactRemoveSyncing);
     CPPUNIT_TEST(testRemoveConversationRemoveSyncing);
-    CPPUNIT_TEST(testCacheRequestFromClient);
+    // CPPUNIT_TEST(testCacheRequestFromClient);
     CPPUNIT_TEST_SUITE_END();
 };
 
