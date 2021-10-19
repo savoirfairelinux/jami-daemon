@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5084d358_906c7202",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 832,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-19T18:27:52Z",
+      "side": 0,
+      "message": "technically it\u0027s not an error to have component without a valid pair. This could happen, for instance, when we send an offer with audio+video, but the peer only answers with audio, in this case video components will be disabled.",
+      "revId": "d714733105af7699f3ab6a5ce00ebcc8262e97b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
