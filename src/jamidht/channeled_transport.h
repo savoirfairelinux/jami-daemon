@@ -56,6 +56,8 @@ public:
                           onShutdownCb&& cb);
     ~ChanneledSIPTransport();
 
+    void linkChannelCbs();
+
     pjsip_transport* getTransportBase() override { return &trData_.base; }
 
     IpAddr getLocalAddress() const override { return local_; }
@@ -65,6 +67,7 @@ private:
 
     // The SIP transport uses a ChannelSocket to send and receive datas
     std::shared_ptr<ChannelSocket> socket_ {};
+    onShutdownCb shutdownCb_ {};
     IpAddr local_ {};
     IpAddr remote_ {};
 

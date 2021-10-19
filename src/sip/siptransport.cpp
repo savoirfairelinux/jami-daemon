@@ -397,7 +397,8 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& socket,
+SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>& account,
+                                          const std::shared_ptr<ChannelSocket>& socket,
                                           onShutdownCb&& cb)
 {
     auto ice = socket->underlyingICE();
@@ -415,6 +416,8 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& 
     auto tr = sips_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
     sip_tr->setDeviceId(socket->deviceId().toString());
+    sip_tr->setAccount(account);
+    sips_tr->linkChannelCbs();
     sips_tr.release(); // managed by PJSIP now
 
     {
