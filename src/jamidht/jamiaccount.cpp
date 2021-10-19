@@ -3762,10 +3762,14 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         JAMI_WARN("Received indication for new commit available in conversation %s",
                   json["id"].asString().c_str());
 
-        convModule()->onNewCommit(from,
-                                  json["deviceId"].asString(),
-                                  json["id"].asString(),
-                                  json["commit"].asString());
+        dht::ThreadPool::io().run([w = weak(), from, json = std::move(json)] {
+            if (auto shared = w.lock()) {
+                shared->convModule()->onNewCommit(from,
+                                                  json["deviceId"].asString(),
+                                                  json["id"].asString(),
+                                                  json["commit"].asString());
+            }
+        });
         return true;
     } else if (m.first == MIME_TYPE_INVITE) {
         convModule()->onNeedConversationRequest(from, m.second);
