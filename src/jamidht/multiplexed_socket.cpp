@@ -120,11 +120,16 @@ public:
         clearSockets();
     }
 
-    std::shared_ptr<ChannelSocket> makeSocket(const std::string& name, uint16_t channel, bool isInitiator = false)
+    std::shared_ptr<ChannelSocket> makeSocket(const std::string& name,
+                                              uint16_t channel,
+                                              bool isInitiator = false)
     {
         auto& channelSocket = sockets[channel];
         if (not channelSocket)
-            channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel, isInitiator);
+            channelSocket = std::make_shared<ChannelSocket>(parent_.weak(),
+                                                            name,
+                                                            channel,
+                                                            isInitiator);
         else {
             JAMI_WARN("A channel is already present on that socket, accepting "
                       "the request will close the previous one %s",
@@ -705,7 +710,10 @@ MultiplexedSocket::sendVersion()
 class ChannelSocket::Impl
 {
 public:
-    Impl(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel, bool isInitiator)
+    Impl(std::weak_ptr<MultiplexedSocket> endpoint,
+         const std::string& name,
+         const uint16_t& channel,
+         bool isInitiator)
         : name(name)
         , channel(channel)
         , endpoint(std::move(endpoint))
