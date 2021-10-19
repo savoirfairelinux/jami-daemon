@@ -2234,7 +2234,11 @@ JamiAccount::doRegister_()
                 auto isFile = name.substr(0, 7) == FILE_URI;
                 auto isVCard = name.substr(0, 8) == VCARD_URI;
                 if (name == "sip") {
-                    cacheSIPConnection(std::move(channel), peerId, deviceId);
+                    dht::ThreadPool::io().run(
+                        [w = weak(), channel = std::move(channel), peerId, deviceId] {
+                            if (auto shared = w.lock())
+                                shared->cacheSIPConnection(std::move(channel), peerId, deviceId);
+                        });
                 } else if (isFile or isVCard) {
                     auto tid = isFile ? name.substr(7) : name.substr(8);
                     std::unique_lock<std::mutex> lk(transfersMtx_);
@@ -2450,10 +2454,14 @@ JamiAccount::convModule()
                 });
             },
             [this](const auto& convId, const auto& deviceId, auto&& cb) {
-                runOnMainThread([w = weak(), convId, deviceId, cb = std::move(cb)] {
+                JAMI_ERR() << "@@@ NEED GS " << getAccountID();
+                // NOTE: callbacks for gitsocket can take time, so run in a dedicated thread
+                // and avoid to block main
+                dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::move(cb)] {
                     auto shared = w.lock();
                     if (!shared)
                         return;
+                    JAMI_ERR() << "@@@ 2NEED GS " << shared->getAccountID();
                     auto gs = shared->gitSocket(DeviceId(deviceId), convId);
                     if (gs != std::nullopt) {
                         if (auto socket = gs->lock()) {
@@ -2461,14 +2469,18 @@ JamiAccount::convModule()
                                 socket->shutdown();
                             else
                                 cb({});
+                            JAMI_ERR() << "@@@ OK NEED GS " << getAccountID();
                             return;
                         }
                     }
+                    JAMI_ERR() << "@@@ 3NEED GS " << shared->getAccountID();
                     std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
+                    JAMI_ERR() << "@@@ 4NEED GS " << shared->getAccountID();
                     if (!shared->connectionManager_) {
                         cb({});
                         return;
                     }
+                    JAMI_ERR() << "@@@ 5NEED GS " << shared->getAccountID();
                     shared->connectionManager_
                         ->connectDevice(DeviceId(deviceId),
                                         "git://" + deviceId + "/" + convId,
@@ -3294,6 +3306,9 @@ JamiAccount::sendTextMessage(const std::string& to,
         return;
     }
 
+    JAMI_ERR() << "@@@ SEND. ID : " << getAccountID() << ": "
+               << std::string(payloads.begin()->first);
+
     auto toH = dht::InfoHash(toUri);
     auto now = clock::to_time_t(clock::now());
 
@@ -3326,6 +3341,8 @@ JamiAccount::sendTextMessage(const std::string& to,
         ctx->confirmation = confirm;
 
         try {
+            JAMI_ERR() << "@@@ SEND.  VIA SIP : " << getAccountID() << ": "
+                       << std::string(payloads.begin()->first);
             auto res = sendSIPMessage(
                 conn, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
                     std::unique_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
@@ -3355,6 +3372,8 @@ JamiAccount::sendTextMessage(const std::string& to,
                             acc->messageEngine_.onPeerOnline(c->to, false);
                     }
                 });
+
+            JAMI_ERR() << "@@@ SEND. RES : " << getAccountID() << ": " << res;
             if (!res) {
                 if (!onlyConnected)
                     messageEngine_.onMessageSent(to, token, false);
@@ -3395,6 +3414,8 @@ JamiAccount::sendTextMessage(const std::string& to,
             }
 
             // Else, ask for a channel and send a DHT message
+            JAMI_ERR() << "@@@ SEND.  REQ SIP : " << getAccountID() << ": "
+                       << std::string(payloads.begin()->first);
             requestSIPConnection(to, deviceId);
             {
                 std::lock_guard<std::mutex> lock(messageMutex_);
@@ -3441,6 +3462,8 @@ JamiAccount::sendTextMessage(const std::string& to,
                       return false;
                   });
             confirm->listenTokens.emplace(h, std::move(list_token));
+            JAMI_ERR() << "@@@ SEND. SEND DHT : " << getAccountID() << ": "
+                       << std::string(payloads.begin()->first);
             dht_->putEncrypted(h,
                                dev,
                                dht::ImMessage(token,
@@ -3758,7 +3781,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             return false;
         }
 
-        JAMI_WARN("Received indication for new commit available in conversation %s",
+        JAMI_WARN("@@@Received indication for new commit available in conversation %s",
                   json["id"].asString().c_str());
 
         convModule()->onNewCommit(from,
@@ -4146,6 +4169,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
         auto shared = w.lock();
         if (!shared)
             return;
+        JAMI_ERR() << "@@@ GO SEND";
         auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, ctx, cb);
         if (status != PJ_SUCCESS)
             JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
@@ -4182,7 +4206,7 @@ JamiAccount::profilePath() const
 }
 
 void
-JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
+JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket> socket,
                                 const std::string& peerId,
                                 const DeviceId& deviceId)
 {

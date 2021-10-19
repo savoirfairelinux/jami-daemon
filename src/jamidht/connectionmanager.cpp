@@ -470,7 +470,9 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         if (auto info = sthis->getInfo(deviceId)) {
             std::lock_guard<std::mutex> lk(info->mutex_);
             if (info->socket_) {
-                JAMI_DBG("Peer already connected to %s. Add a new channel", deviceId.to_c_str());
+                JAMI_DBG("Peer already connected to %s. Add a new channel %s",
+                         deviceId.to_c_str(),
+                         name.c_str());
                 info->cbIds_.emplace(cbId);
                 sthis->sendChannelRequest(info->socket_, name, deviceId, vid);
                 return;
