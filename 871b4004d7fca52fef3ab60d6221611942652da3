@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f2f73db_e43ca41e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 631,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-19T15:26:43Z",
+      "side": 1,
+      "message": "This doesn\u0027t work.\n\nAt this point, the call and the SIP channel are still existing. Thus, sendRequest will not work and we will see \"A SIP connection with %s already exists\" and we see he call stuck in connecting",
+      "range": {
+        "startLine": 631,
+        "startChar": 17,
+        "endLine": 631,
+        "endChar": 38
+      },
+      "revId": "871b4004d7fca52fef3ab60d6221611942652da3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
