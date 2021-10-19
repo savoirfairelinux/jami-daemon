@@ -161,8 +161,10 @@ public:
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 
-    std::shared_ptr<SipTransport> getChanneledTransport(const std::shared_ptr<ChannelSocket>& socket,
-                                                        onShutdownCb&& cb);
+    std::shared_ptr<SipTransport> getChanneledTransport(
+        const std::shared_ptr<SIPAccountBase>& account,
+        const std::shared_ptr<ChannelSocket>& socket,
+        onShutdownCb&& cb);
 
     /**
      * Start graceful shutdown procedure for all transports
