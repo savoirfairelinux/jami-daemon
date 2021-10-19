@@ -4213,12 +4213,13 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         // SIP channel to make the call pass through
         shared->callConnectionClosed(key.second, false);
     };
-    auto sip_tr = link_.sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
+    auto sip_tr = link_.sipTransportBroker->getChanneledTransport(shared(),
+                                                                  socket,
+                                                                  std::move(onShutdown));
     if (!sip_tr) {
         JAMI_ERR() << "No channeled transport found";
         return;
     }
-    sip_tr->setAccount(shared());
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
     JAMI_WARN("[Account %s] New SIP channel opened with %s",
