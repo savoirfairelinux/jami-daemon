@@ -113,12 +113,14 @@ private:
     void audio_and_video_then_mute_video();
     void audio_only_then_add_video();
     void audio_and_video_then_mute_audio();
+    void audio_and_video_then_change_video_source();
     void audio_only_then_add_video_but_peer_disabled_multistream();
 
     CPPUNIT_TEST_SUITE(MediaNegotiationTest);
     CPPUNIT_TEST(audio_and_video_then_mute_video);
     CPPUNIT_TEST(audio_only_then_add_video);
     CPPUNIT_TEST(audio_and_video_then_mute_audio);
+    CPPUNIT_TEST(audio_and_video_then_change_video_source);
     CPPUNIT_TEST(audio_only_then_add_video_but_peer_disabled_multistream);
     CPPUNIT_TEST_SUITE_END();
 
@@ -832,6 +834,53 @@ MediaNegotiationTest::audio_and_video_then_mute_audio()
         scenario.answerUpdate_.emplace_back(video);
 
         scenario.expectMediaRenegotiation_ = false;
+        scenario.expectMediaChangeRequest_ = false;
+
+        testWithScenario(aliceData_, bobData_, scenario);
+    }
+
+    DRing::unregisterSignalHandlers();
+
+    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+}
+
+void
+MediaNegotiationTest::audio_and_video_then_change_video_source()
+{
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
+    configureScenario(aliceData_, bobData_);
+
+    MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
+    defaultAudio.label_ = "audio_0";
+    defaultAudio.enabled_ = true;
+
+    MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
+    defaultVideo.label_ = "video_0";
+    defaultVideo.enabled_ = true;
+
+    {
+        MediaAttribute audio(defaultAudio);
+        MediaAttribute video(defaultVideo);
+
+        TestScenario scenario;
+        // First offer/answer
+        scenario.offer_.emplace_back(audio);
+        scenario.offer_.emplace_back(video);
+        scenario.answer_.emplace_back(audio);
+        scenario.answer_.emplace_back(video);
+
+        // Updated offer/answer
+        scenario.offerUpdate_.emplace_back(audio);
+        // Just change the media source to validate that a new
+        // media negotiation (re-invite) will be triggered.
+        video.sourceUri_ = "Fake source";
+        scenario.offerUpdate_.emplace_back(video);
+
+        scenario.answerUpdate_.emplace_back(audio);
+        scenario.answerUpdate_.emplace_back(video);
+
+        scenario.expectMediaRenegotiation_ = true;
         scenario.expectMediaChangeRequest_ = false;
 
         testWithScenario(aliceData_, bobData_, scenario);
