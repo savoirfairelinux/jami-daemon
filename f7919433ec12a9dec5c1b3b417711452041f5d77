@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc48993b_828957c1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 572,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-19T15:13:18Z",
+      "side": 1,
+      "message": "why \u0027this\u0027 is captured? use weak_ptr instead.\nThe account could be disabled before the callback is invoked. Unlikely in production but still possible, especially in a test setup.",
+      "revId": "f7919433ec12a9dec5c1b3b417711452041f5d77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
