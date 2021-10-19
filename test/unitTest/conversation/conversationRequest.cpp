@@ -76,21 +76,21 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationRequestTest);
-    CPPUNIT_TEST(testAcceptTrustRemoveConvReq);
-    CPPUNIT_TEST(acceptConvReqAlsoAddContact);
-    CPPUNIT_TEST(testGetRequests);
-    CPPUNIT_TEST(testDeclineRequest);
-    CPPUNIT_TEST(testAddContact);
-    CPPUNIT_TEST(testAddContactDeleteAndReAdd);
+    // CPPUNIT_TEST(testAcceptTrustRemoveConvReq);
+    // CPPUNIT_TEST(acceptConvReqAlsoAddContact);
+    // CPPUNIT_TEST(testGetRequests);
+    // CPPUNIT_TEST(testDeclineRequest);
+    // CPPUNIT_TEST(testAddContact);
+    // CPPUNIT_TEST(testAddContactDeleteAndReAdd);
     CPPUNIT_TEST(testInviteFromMessageAfterRemoved);
     CPPUNIT_TEST(testRemoveContact);
     CPPUNIT_TEST(testRemoveConversationUpdateContactDetails);
     CPPUNIT_TEST(testBanContact);
-    CPPUNIT_TEST(testAddOfflineContactThenConnect);
-    CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
+    // CPPUNIT_TEST(testAddOfflineContactThenConnect);
+    // CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
     CPPUNIT_TEST(testRemoveContactRemoveSyncing);
     CPPUNIT_TEST(testRemoveConversationRemoveSyncing);
-    CPPUNIT_TEST(testCacheRequestFromClient);
+    // CPPUNIT_TEST(testCacheRequestFromClient);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -116,6 +116,7 @@ ConversationRequestTest::setUp()
 void
 ConversationRequestTest::tearDown()
 {
+    JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@tearDown";
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
 
@@ -475,6 +476,7 @@ ConversationRequestTest::testInviteFromMessageAfterRemoved()
 
     // bob sends a message, this should generate a new request for Alice
     requestReceived = false;
+    JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
     DRing::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
     conversationReady = false;

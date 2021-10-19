@@ -3749,6 +3749,7 @@ JamiAccount::sendInstantMessage(const std::string& convId,
 bool
 JamiAccount::handleMessage(const std::string& from, const std::pair<std::string, std::string>& m)
 {
+    JAMI_ERR() << "@@@ handleMessage " << m.first;
     if (m.first == MIME_TYPE_GIT) {
         Json::Value json;
         std::string err;
