@@ -347,7 +347,7 @@ public:
      * Get the contact header for
      * @return The contact header based on account information
      */
-    std::string getContactHeader(SipTransport* transport = nullptr) override;
+    std::string getContactHeader();
 
     std::string getServiceRoute() const { return serviceRoute_; }
 
@@ -493,6 +493,12 @@ private:
     void doRegister1_();
     void doRegister2_();
 
+    // Initialize the address to be used in contact header. Might
+    // be updated after the registration. It can typically happens
+    // when the connection is through a NAT.
+    bool initContactAddress();
+    void updateContactHeader();
+
     void setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType);
 
     /**
@@ -610,11 +616,12 @@ private:
     /**
      * Print contact header in certain format
      */
-    std::string printContactHeader(const std::string& displayName,
-                                   const char* scheme,
-                                   const std::string& address,
-                                   pj_uint16_t port,
-                                   const char* transport);
+    static std::string printContactHeader(std::string username,
+                                          const std::string& displayName,
+                                          const std::string& address,
+                                          pj_uint16_t port,
+                                          bool secure,
+                                          std::string deviceKey = {});
 
     /**
      * Resolved IP of hostname_ (for registration)
@@ -746,11 +753,12 @@ private:
      */
     std::string upnpIpAddr_;
 
-    std::string contact_;
-    int contactRewriteMethod_;
+    std::mutex contactMutex_;
+    // Contact header
+    std::string contactHeader_;
+    // Contact address (the address part of a SIP URI)
+    IpAddr contactAddress_ {};
     bool allowIPAutoRewrite_;
-    /* Undocumented feature in pjsip, this can == 2 */
-    bool contactOverwritten_;
     pjsip_transport* via_tp_;
 
     /**

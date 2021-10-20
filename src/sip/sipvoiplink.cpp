@@ -419,12 +419,6 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     call->setPeerUaVersion(sip_utils::getPeerUserAgent(rdata));
 
-    call->setTransport(transport);
-
-    // JAMI_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s
-    // peerNumber: %s" , viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(),
-    // addrSdp.toString().c_str(), peerNumber.c_str());
-
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(
         pjsip_transport_get_type_from_flag(transport->get()->flag));

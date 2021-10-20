@@ -253,7 +253,7 @@ public:
      * Get the contact header for
      * @return The contact header based on account information
      */
-    std::string getContactHeader(SipTransport* transport = nullptr) override;
+    std::string getContactHeader(SipTransport* transport);
 
     /* Returns true if the username and/or hostname match this account */
     MatchRank matches(std::string_view username, std::string_view hostname) const override;
@@ -724,6 +724,8 @@ private:
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
     void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::string_view toUri);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
+
+    void updateContactHeader();
 
 #if HAVE_RINGNS
     std::string nameServer_;
