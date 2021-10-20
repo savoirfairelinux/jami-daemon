@@ -53,7 +53,8 @@ VideoDeviceMonitor::getDeviceList() const
     vector<string> ids;
     ids.reserve(devices_.size());
     for (const auto& dev : devices_) {
-        ids.emplace_back(dev.getDeviceId());
+        if (dev.name != DEVICE_DESKTOP)
+            ids.emplace_back(dev.getDeviceId());
     }
     return ids;
 }
@@ -213,7 +214,7 @@ VideoDeviceMonitor::addDevice(const string& id,
         }
 
         // in case there is no default device on a fresh run
-        if (defaultDevice_.empty())
+        if (defaultDevice_.empty() && id != DEVICE_DESKTOP)
             defaultDevice_ = dev.getDeviceId();
 
         devices_.emplace_back(std::move(dev));
@@ -235,12 +236,18 @@ VideoDeviceMonitor::removeDevice(const string& id)
             return;
 
         devices_.erase(it);
+        std::vector<std::string> devs;
+        devs.reserve(devices_.size());
+        for (const auto& dev : devices_) {
+            if (dev.name != DEVICE_DESKTOP)
+                devs.emplace_back(dev.getDeviceId());
+        }
 
         if (defaultDevice_.find(id) != std::string::npos) {
-            if (devices_.size() == 0) {
+            if (devs.size() == 0) {
                 defaultDevice_.clear();
             } else {
-                defaultDevice_ = devices_[0].getDeviceId();
+                defaultDevice_ = devs[0];
             }
         }
     }
@@ -310,9 +317,15 @@ VideoDeviceMonitor::unserialize(const YAML::Node& in)
 
     // Restore the default device if present, or select the first one
     const string prefId = preferences_.empty() ? "" : preferences_[0].unique_id;
-    const string firstId = devices_.empty() ? "" : devices_[0].getDeviceId();
+    std::vector<std::string> devs;
+    devs.reserve(devices_.size());
+    for (const auto& dev : devices_) {
+        if (dev.name != DEVICE_DESKTOP)
+            devs.emplace_back(dev.getDeviceId());
+    }
+    const string firstId = devs.empty() ? "" : devs[0];
     const auto devIter = findDeviceById(prefId);
-    if (devIter != devices_.end()) {
+    if (devIter != devices_.end() && prefId != DEVICE_DESKTOP) {
         defaultDevice_ = devIter->getDeviceId();
     } else {
         defaultDevice_ = firstId;
