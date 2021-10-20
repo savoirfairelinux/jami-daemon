@@ -722,10 +722,14 @@ ConversationModule::getConversations() const
     std::lock_guard<std::mutex> lk(pimpl_->convInfosMtx_);
     result.reserve(pimpl_->convInfos_.size());
     for (const auto& [key, conv] : pimpl_->convInfos_) {
-        if (conv.removed)
+        if (conv.removed) {
+            JAMI_ERR() << "@@@ IGNORE";
             continue;
+        }
+        JAMI_ERR("@@@ %p EMPLACE %s %u - %u", this, key.c_str(), (bool) conv.removed, conv.removed);
         result.emplace_back(key);
     }
+    JAMI_ERR() << "@@@ RET " << result.size();
     return result;
 }
 
@@ -1413,6 +1417,7 @@ ConversationModule::removeContact(const std::string& uri, bool)
     auto updateClient = [&](const auto& convId) {
         if (pimpl_->updateConvReqCb_)
             pimpl_->updateConvReqCb_(convId, uri, false);
+        JAMI_ERR() << "@@@ EMIT " << convId;
         emitSignal<DRing::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
     };
     {
@@ -1472,6 +1477,7 @@ ConversationModule::removeConversation(const std::string& conversationId)
     auto hasMembers = !isSyncing
                       && !(members.size() == 1 && pimpl_->username_ == members[0]["uri"]);
     itConv->second.removed = std::time(nullptr);
+    JAMI_ERR("@@@@ %p MARK %s as removed", this, conversationId.c_str());
     if (isSyncing)
         itConv->second.erased = std::time(nullptr);
     // Sync now, because it can take some time to really removes the datas
@@ -1479,6 +1485,7 @@ ConversationModule::removeConversation(const std::string& conversationId)
         pimpl_->needsSyncingCb_();
     pimpl_->saveConvInfos();
     lockCi.unlock();
+    JAMI_ERR("@@@@ %p GO! %s", this, conversationId.c_str());
     emitSignal<DRing::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, conversationId);
     if (isSyncing)
         return true;
