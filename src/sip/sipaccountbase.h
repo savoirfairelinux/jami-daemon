@@ -214,12 +214,6 @@ public:
 
     virtual bool getSrtpFallback() const = 0;
 
-    /**
-     * Get the contact header for
-     * @return The contact header based on account information
-     */
-    virtual std::string getContactHeader(SipTransport* transport = nullptr) = 0;
-
     virtual std::string getToUri(const std::string& username) const = 0;
 
     /**
