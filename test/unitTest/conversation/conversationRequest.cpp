@@ -902,8 +902,8 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string&) {
-            if (accountId == bobId) {
+        [&](const std::string& accountId, const std::string& cid) {
+            if (accountId == bobId && cid == convId) {
                 conversationRemoved = true;
             }
             cv.notify_one();
@@ -917,9 +917,12 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
+    JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@";
     DRing::removeConversation(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationRemoved; }));
 
+    JAMI_ERR() << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+               << DRing::getConversations(bobId).size();
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 0);
 }
 
