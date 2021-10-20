@@ -62,6 +62,12 @@ DRing::VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const string& id) const
 {
     std::lock_guard<std::mutex> l(lock_);
+    if (id == "desktop") {
+        auto ret = DRing::VideoCapabilities();
+        ret["default"] = {{"auto", {"5", "10", "15", "20", "25", "30"}}};
+        return ret;
+    }
+
     const auto iter = findDeviceById(id);
     if (iter == devices_.end())
         return DRing::VideoCapabilities();
@@ -74,6 +80,13 @@ VideoDeviceMonitor::getSettings(const string& id)
 {
     std::lock_guard<std::mutex> l(lock_);
 
+    if (id == "desktop") {
+        return VideoSettings(
+            {{"id", id},
+             {"size", "auto"},
+             {"rate", std::to_string(Manager::instance().videoPreferences.getScreenSharingFrameRate())}});
+    }
+
     const auto prefIter = findPreferencesById(id);
     if (prefIter == preferences_.end())
         return VideoSettings();
@@ -85,6 +98,10 @@ void
 VideoDeviceMonitor::applySettings(const string& id, const VideoSettings& settings)
 {
     std::lock_guard<std::mutex> l(lock_);
+    if (id == "desktop") {
+        Manager::instance().videoPreferences.setScreenSharingFrameRate(settings.framerate);
+        return;
+    }
     const auto iter = findDeviceById(id);
 
     if (iter == devices_.end())

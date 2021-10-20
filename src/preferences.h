@@ -358,12 +358,20 @@ public:
 
     void setConferenceResolution(const std::string& res) { conferenceResolution_ = res; }
 
+    float getScreenSharingFrameRate() const { return screenSharingFrameRate_; }
+
+    const std::string& setScreenSharingFrameRate(const std::string& fps)
+    {
+        screenSharingFrameRate_ = std::stof(fps);
+    }
+
 private:
     bool decodingAccelerated_;
     bool encodingAccelerated_;
     bool recordPreview_;
     int recordQuality_;
     std::string conferenceResolution_;
+    float screenSharingFrameRate_;
     constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // ENABLE_VIDEO
