@@ -79,6 +79,7 @@ constexpr const char* const Preferences::CONFIG_LABEL;
 const char* const Preferences::DFT_ZONE = "North America";
 const char* const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
 constexpr std::string_view DEFAULT_CONFERENCE_RESOLUTION {"1280x720"};
+static const int DEFAULT_SCREEN_SHARING_FPS = 30;
 
 // general preferences
 static constexpr const char* ORDER_KEY {"order"};
@@ -139,6 +140,7 @@ static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
 static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
 static constexpr const char* CONFERENCE_RESOLUTION_KEY {"conferenceResolution"};
+static constexpr const char* SCREEN_SHARING_FPS_KEY {"screensharingframerate"};
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -576,6 +578,7 @@ VideoPreferences::VideoPreferences()
     , recordPreview_(true)
     , recordQuality_(0)
     , conferenceResolution_(DEFAULT_CONFERENCE_RESOLUTION)
+    , screenSharingFrameRate_(DEFAULT_SCREEN_SHARING_FPS)
 {}
 
 void
@@ -589,6 +592,7 @@ VideoPreferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
 #endif
     out << YAML::Key << CONFERENCE_RESOLUTION_KEY << YAML::Value << conferenceResolution_;
+    out << YAML::Key << SCREEN_SHARING_FPS_KEY << YAML::Value << screenSharingFrameRate_;
     getVideoDeviceMonitor().serialize(out);
     out << YAML::EndMap;
 }
@@ -618,6 +622,11 @@ VideoPreferences::unserialize(const YAML::Node& in)
         parseValue(node, CONFERENCE_RESOLUTION_KEY, conferenceResolution_);
     } catch (...) {
         conferenceResolution_ = DEFAULT_CONFERENCE_RESOLUTION;
+    }
+    try {
+        parseValue(node, SCREEN_SHARING_FPS_KEY, screenSharingFrameRate_);
+    } catch (...) {
+        screenSharingFrameRate_ = 30;
     }
     getVideoDeviceMonitor().unserialize(in);
 }

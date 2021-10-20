@@ -41,6 +41,7 @@ namespace jami {
 namespace video {
 
 constexpr const char* const VideoDeviceMonitor::CONFIG_LABEL;
+constexpr const char* const VideoDeviceMonitor::CONFIG_LABEL_DESKTOP;
 
 using std::map;
 using std::string;
@@ -62,6 +63,12 @@ DRing::VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const string& id) const
 {
     std::lock_guard<std::mutex> l(lock_);
+    if (id == CONFIG_LABEL_DESKTOP) {
+        auto ret = DRing::VideoCapabilities();
+        ret["default"] = {{"auto", {"5", "10", "15", "20", "25", "30", "60"}}};
+        return ret;
+    }
+
     const auto iter = findDeviceById(id);
     if (iter == devices_.end())
         return DRing::VideoCapabilities();
@@ -74,6 +81,13 @@ VideoDeviceMonitor::getSettings(const string& id)
 {
     std::lock_guard<std::mutex> l(lock_);
 
+    if (id == CONFIG_LABEL_DESKTOP) {
+        return VideoSettings(
+            {{"id", id},
+             {"size", "auto"},
+             {"rate", std::to_string(Manager::instance().videoPreferences.getScreenSharingFrameRate())}});
+    }
+
     const auto prefIter = findPreferencesById(id);
     if (prefIter == preferences_.end())
         return VideoSettings();
@@ -85,6 +99,16 @@ void
 VideoDeviceMonitor::applySettings(const string& id, const VideoSettings& settings)
 {
     std::lock_guard<std::mutex> l(lock_);
+    if (id == CONFIG_LABEL_DESKTOP) {
+        if (!settings.framerate.empty()) {
+            try {
+                auto fps = std::stof(settings.framerate);
+                Manager::instance().videoPreferences.setScreenSharingFrameRate(fps);  
+            } catch (...) {
+            }
+        }
+        return;
+    }
     const auto iter = findDeviceById(id);
 
     if (iter == devices_.end())

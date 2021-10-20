@@ -100,6 +100,7 @@ private:
     std::unique_ptr<VideoDeviceMonitorImpl> monitorImpl_;
 
     constexpr static const char* CONFIG_LABEL = "video";
+    constexpr static const char* CONFIG_LABEL_DESKTOP = "desktop";
 };
 
 } // namespace video
