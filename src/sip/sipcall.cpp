@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -175,7 +175,7 @@ SIPCall::~SIPCall()
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
 
-    setTransport({});
+    setSipTransport({});
     setInviteSession(); // prevents callback usage
 }
 
@@ -234,7 +234,7 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
         throw std::runtime_error("Must have a valid RTP Session");
 
     // Configure the media stream
-    auto new_mtu = transport_->getTlsMtu();
+    auto new_mtu = sipTransport_->getTlsMtu();
     rtpSession->setMtu(new_mtu);
     rtpSession->updateMedia(remoteMedia, localMedia);
 
@@ -419,12 +419,6 @@ SIPCall::generateMediaPorts()
 #endif
 }
 
-void
-SIPCall::setContactHeader(const std::string& contact)
-{
-    contactHeader_ = contact;
-}
-
 const std::string&
 SIPCall::getContactHeader() const
 {
@@ -432,39 +426,48 @@ SIPCall::getContactHeader() const
 }
 
 void
-SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
+SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport,
+                         const std::string& contactHdr)
 {
-    if (t != transport_) {
-        JAMI_WARN("[call:%s] Setting tranport to [%p]", getCallId().c_str(), t.get());
-    }
-
-    transport_ = t;
-
-    if (not t) {
-        return;
-    }
     auto account = getSIPAccount();
     if (not account) {
         JAMI_ERR("[call:%s] No account detected", getCallId().c_str());
     }
 
-    setContactHeader(account->getContactHeader(transport_.get()));
+    if (transport != sipTransport_) {
+        JAMI_DBG("[call:%s] Setting tranport to [%p]", getCallId().c_str(), transport.get());
+    }
 
-    if (isSrtpEnabled() and not transport_->isSecure()) {
+    // TODO. Should we lock the call here ? Data members might be accessed from other threads
+
+    sipTransport_ = transport;
+    contactHeader_ = contactHdr;
+
+    if (not transport) {
+        // Done.
+        return;
+    }
+
+    if (contactHeader_.empty()) {
+        JAMI_WARN("[call:%s] Contact header is empty, the call will likely fail",
+                  getCallId().c_str());
+    }
+
+    if (isSrtpEnabled() and not sipTransport_->isSecure()) {
         JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an un-encrypted signaling channel",
                   getCallId().c_str());
     }
 
-    if (not isSrtpEnabled() and transport_->isSecure()) {
+    if (not isSrtpEnabled() and sipTransport_->isSecure()) {
         JAMI_WARN("[call:%s] The signaling channel is encrypted but the media is not encrypted",
                   getCallId().c_str());
     }
 
     const auto list_id = reinterpret_cast<uintptr_t>(this);
-    transport_->removeStateListener(list_id);
+    sipTransport_->removeStateListener(list_id);
 
     // listen for transport destruction
-    transport_->addStateListener(
+    sipTransport_->addStateListener(
         list_id, [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
             if (auto this_ = wthis_.lock()) {
                 JAMI_DBG("[call:%s] SIP transport state [%i] - connection state [%u]",
@@ -1467,7 +1470,7 @@ SIPCall::removeCall()
     }
 
     setInviteSession();
-    setTransport({});
+    setSipTransport({});
 }
 
 void
@@ -1867,7 +1870,7 @@ SIPCall::updateNegotiatedMedia()
 {
     JAMI_DBG("[call:%s] updating negotiated media", getCallId().c_str());
 
-    if (not transport_ or not sdp_) {
+    if (not sipTransport_ or not sdp_) {
         JAMI_ERR("[call:%s] the call is in invalid state", getCallId().c_str());
         return;
     }
@@ -1969,12 +1972,12 @@ SIPCall::startAllMedia()
 {
     JAMI_DBG("[call:%s] starting the media", getCallId().c_str());
 
-    if (not transport_ or not sdp_) {
+    if (not sipTransport_ or not sdp_) {
         JAMI_ERR("[call:%s] the call is in invalid state", getCallId().c_str());
         return;
     }
 
-    if (isSrtpEnabled() && not transport_->isSecure()) {
+    if (isSrtpEnabled() && not sipTransport_->isSecure()) {
         JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an insecure signaling transport",
                   getCallId().c_str());
     }
@@ -3044,7 +3047,7 @@ SIPCall::merge(Call& call)
     inviteSession_ = std::move(subcall.inviteSession_);
     if (inviteSession_)
         inviteSession_->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
-    setTransport(std::move(subcall.transport_));
+    setSipTransport(std::move(subcall.sipTransport_));
     sdp_ = std::move(subcall.sdp_);
     peerHolding_ = subcall.peerHolding_;
     upnp_ = std::move(subcall.upnp_);
