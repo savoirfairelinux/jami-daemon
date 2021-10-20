@@ -401,6 +401,9 @@ JamiAccount::newIncomingCall(const std::string& from,
                                                                            mediaList);
                     call->setPeerUri(RING_URI_PREFIX + from);
                     call->setPeerNumber(from);
+
+                    call->setSipTransport(sipTransp, getContactHeader(sipTransp));
+
                     return call;
                 }
             }
@@ -646,8 +649,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                   call->getCallId().c_str());
 
         auto dev_call = createSubCall(call);
-
-        dev_call->setTransport(transport);
+        dev_call->setSipTransport(transport, getContactHeader(transport));
         call->addSubCall(*dev_call);
         dev_call->setIceMedia(call->getIceMedia());
 
@@ -801,7 +803,7 @@ JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
     std::string targetStr = getToUri(target.toString(true));
     pj_str_t pjTarget = sip_utils::CONST_PJ_STR(targetStr);
 
-    auto contact = getContactHeader(call.getTransport());
+    auto contact = call.getContactHeader();
     auto pjContact = sip_utils::CONST_PJ_STR(contact);
 
     JAMI_DBG("contact header: %s / %s -> %s / %s",
@@ -2982,9 +2984,10 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri,
 }
 
 std::string
-JamiAccount::getContactHeader(SipTransport* sipTransport)
+JamiAccount::getContactHeader(const std::shared_ptr<SipTransport>& sipTransport)
 {
-    if (auto transport = sipTransport->get()) {
+    if (sipTransport and sipTransport->get() != nullptr) {
+        auto transport = sipTransport->get();
         auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(transport);
         auto address = td->self->getLocalAddress().toString(true);
         bool reliable = transport->flag & PJSIP_TRANSPORT_RELIABLE;
@@ -3001,8 +3004,6 @@ JamiAccount::getContactHeader(SipTransport* sipTransport)
                            id_.second->getId().toString());
     }
 }
-
-/* contacts */
 
 void
 JamiAccount::addContact(const std::string& uri, bool confirmed)
@@ -4173,7 +4174,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         if (pc->getConnectionState() != Call::ConnectionState::TRYING
             and pc->getConnectionState() != Call::ConnectionState::PROGRESSING)
             return;
-        pc->setTransport(sip_tr);
+        pc->setSipTransport(sip_tr, getContactHeader(sip_tr));
         pc->setState(Call::ConnectionState::PROGRESSING);
         if (auto ice = socket->underlyingICE()) {
             auto remoted_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
