@@ -880,7 +880,8 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, conversationRemoved = false;
+    bool conversationReady = false, contactAdded = false, requestReceived = false,
+         conversationRemoved = false;
     std::string convId = "";
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
@@ -908,6 +909,13 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
             }
             cv.notify_one();
         }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ContactAdded>(
+        [&](const std::string& accountId, const std::string& uri, bool confirmed) {
+            if (accountId == bobId && uri == aliceUri) {
+                contactAdded = true;
+            }
+            cv.notify_one();
+        }));
     DRing::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
@@ -915,6 +923,8 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
 
     Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return contactAdded; }));
+    // At this point the conversation should be there and syncing.
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
     DRing::removeConversation(bobId, convId);
