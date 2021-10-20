@@ -1035,6 +1035,8 @@ SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     std::unique_lock<std::mutex> lock(configurationMutex_);
 
     tlsListener_.reset();
+    contact_.clear();
+    contactOverwritten_ = false;
 
     if (!isIP2IP()) {
         try {
@@ -1566,8 +1568,12 @@ SIPAccount::getServerUri() const
 std::string
 SIPAccount::getContactHeader(SipTransport* sipTransport)
 {
-    if (not contact_.empty() and contactOverwritten_)
-        return contact_;
+    {
+        std::lock_guard<std::mutex> lock(contactMutex_);
+
+        if (not contact_.empty() and contactOverwritten_)
+            return contact_;
+    }
 
     if (not sipTransport && transport_)
         sipTransport = transport_.get();
@@ -1633,6 +1639,8 @@ SIPAccount::getContactHeader(SipTransport* sipTransport)
     }
 
     std::string quotedDisplayName = displayName_.empty() ? "" : "\"" + displayName_ + "\" ";
+
+    std::lock_guard<std::mutex> lock(contactMutex_);
     contact_ = printContactHeader(quotedDisplayName, scheme, address, port, transport);
     return contact_;
 }
@@ -1659,12 +1667,12 @@ SIPAccount::printContactHeader(const std::string& displayName,
     if (not deviceKey_.empty()) {
         contact
 #if defined(__ANDROID__) || defined(ANDROID)
-            << "pn-provider=" << PN_FCM
+            << ";pn-provider=" << PN_FCM
 #elif defined(__Apple__)
-            << "pn-provider=" << PN_APNS
+            << ";pn-provider=" << PN_APNS
 #endif
-            << "pn-param=;"
-            << "pn-prid=" << deviceKey_;
+            << ";pn-param="
+            << ";pn-prid=" << deviceKey_;
     }
     contact << ">";
 
@@ -1999,7 +2007,8 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     setPublishedAddress(IpAddr(via_addrstr));
 
     /* Compare received and rport with the URI in our registration */
-    auto pjContact = sip_utils::CONST_PJ_STR(getContactHeader());
+    auto contact = getContactHeader();
+    auto pjContact = sip_utils::CONST_PJ_STR(contact);
     const pj_str_t STR_CONTACT = {(char*) "Contact", 7};
     pjsip_contact_hdr* contact_hdr = (pjsip_contact_hdr*)
         pjsip_parse_hdr(pool, &STR_CONTACT, pjContact.ptr, pjContact.slen, nullptr);
