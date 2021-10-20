@@ -93,8 +93,8 @@ static constexpr unsigned DEFAULT_REGISTRATION_EXPIRE = 3600;     // seconds
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
 static const char* const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
-
 constexpr const char* const SIPAccount::ACCOUNT_TYPE;
+static constexpr int CONTACT_REWRITE_METHOD = 2;
 
 struct ctx
 {
@@ -147,9 +147,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
-    , contactRewriteMethod_(2)
     , allowIPAutoRewrite_(true)
-    , contactOverwritten_(false)
     , via_tp_(nullptr)
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
 {
@@ -171,9 +169,14 @@ SIPAccount::~SIPAccount() noexcept
 std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& from UNUSED,
                             const std::vector<DRing::MediaMap>& mediaList,
-                            const std::shared_ptr<SipTransport>&)
+                            const std::shared_ptr<SipTransport>& transport)
 {
-    return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::INCOMING, mediaList);
+    auto call = Manager::instance().callFactory.newSipCall(shared(),
+                                                           Call::CallType::INCOMING,
+                                                           mediaList);
+    auto contactHdr = getContactHeader();
+    call->setSipTransport(transport, contactHdr);
+    return call;
 }
 
 template<>
@@ -202,12 +205,14 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
                                                               IpAddr(sip_utils::getHostFromUri(to)))
                   : transport_;
         setTransport(t);
-        call->setTransport(t);
+        auto contactHdr = getContactHeader();
+        call->setSipTransport(t, contactHdr);
 
         JAMI_DBG("New %s IP to IP call to %s", ipv6 ? "IPv6" : "IPv4", to.c_str());
     } else {
         to = toUrl;
-        call->setTransport(transport_);
+        auto contactHdr = getContactHeader();
+        call->setSipTransport(transport_, contactHdr);
         // FIXME : for now, use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
 
@@ -292,12 +297,14 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Med
                                                               IpAddr(sip_utils::getHostFromUri(to)))
                   : transport_;
         setTransport(t);
-        call->setTransport(t);
+        auto contactHdr = getContactHeader();
+        call->setSipTransport(t);
 
         JAMI_DBG("New %s IP to IP call to %s", ipv6 ? "IPv6" : "IPv4", to.c_str());
     } else {
         to = toUrl;
-        call->setTransport(transport_);
+        auto contactHdr = getContactHeader();
+        call->setSipTransport(transport_, contactHdr);
         // Use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
 
@@ -399,20 +406,28 @@ SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
     if (t == transport_)
         return;
     if (transport_) {
-        JAMI_DBG("Removing transport from account");
+        JAMI_DBG("Removing old transport [%p] from account", transport_.get());
         if (regc_)
             pjsip_regc_release_transport(regc_);
         transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
     }
 
     transport_ = t;
+    JAMI_DBG("Set new transport [%p]", transport_.get());
 
-    if (transport_)
+    if (transport_) {
         transport_->addStateListener(reinterpret_cast<uintptr_t>(this),
                                      std::bind(&SIPAccount::onTransportStateChanged,
                                                this,
                                                std::placeholders::_1,
                                                std::placeholders::_2));
+        // Update contact address and header
+        if (not initContactAddress()) {
+            JAMI_DBG("Can not register: invalid address");
+            return;
+        }
+        updateContactHeader();
+    }
 }
 
 pjsip_tpselector
@@ -450,7 +465,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    std::string contact = getContactHeader(transport);
+    std::string contact = getContactHeader();
     JAMI_DBG("contact header: %s / %s -> %s", contact.c_str(), from.c_str(), toUri.c_str());
 
     pj_str_t pjContact = sip_utils::CONST_PJ_STR(contact);
@@ -877,7 +892,7 @@ SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
         return;
 
     deviceKey_ = pushDeviceToken;
-    contact_.clear();
+    contactHeader_.clear();
 
     if (enabled_)
         doUnregister([&](bool /* transport_free */) { doRegister(); });
@@ -1033,6 +1048,7 @@ SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     std::unique_lock<std::mutex> lock(configurationMutex_);
 
     tlsListener_.reset();
+    contactHeader_.clear();
 
     if (!isIP2IP()) {
         try {
@@ -1090,11 +1106,9 @@ SIPAccount::sendRegister()
     // Get the received header
     const std::string& received(getReceivedParameter());
 
-    // Get the contact header
     std::string contact = getContactHeader();
-    pj_str_t pjContact = sip_utils::CONST_PJ_STR(contact);
 
-    JAMI_DBG("Using contact header %.*s in registration", (int) pjContact.slen, pjContact.ptr);
+    JAMI_DBG("Using contact header %s in registration", contact.c_str());
 
     if (transport_) {
         if (getUPnPActive() or not getPublishedSameasLocal()
@@ -1113,7 +1127,8 @@ SIPAccount::sendRegister()
         }
     }
 
-    pj_status_t status;
+    pj_status_t status = PJ_SUCCESS;
+    pj_str_t pjContact = sip_utils::CONST_PJ_STR(contact);
 
     if ((status
          = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, getRegistrationExpire()))
@@ -1224,7 +1239,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
             // update_rfc5626_status(acc, param->rdata);
 
             if (checkNATAddress(param, link_.getPool()))
-                JAMI_WARN("Contact overwritten");
+                JAMI_WARN("New contact: %s", getContactHeader().c_str());
 
             /* TODO Check and update Service-Route header */
             if (hasServiceRoute())
@@ -1554,14 +1569,46 @@ SIPAccount::getServerUri() const
 }
 
 std::string
-SIPAccount::getContactHeader(SipTransport* sipTransport)
+SIPAccount::getContactHeader()
 {
-    if (not contact_.empty() and contactOverwritten_)
-        return contact_;
+    std::lock_guard<std::mutex> lock(contactMutex_);
+    return contactHeader_;
+}
 
-    if (not sipTransport && transport_)
-        sipTransport = transport_.get();
-    if (not sipTransport) {
+void
+SIPAccount::updateContactHeader()
+{
+    std::lock_guard<std::mutex> lock(contactMutex_); // TODO. Use config mutex
+
+    if (not transport_ or not transport_->get()) {
+        JAMI_ERR("Transport not created yet");
+        return;
+    }
+
+    if (not contactAddress_) {
+        JAMI_ERR("Invalid contact address: %s", contactAddress_.toString(true).c_str());
+        return;
+    }
+
+    auto contactHdr = printContactHeader(username_,
+                                         displayName_,
+                                         contactAddress_.toString(false, true),
+                                         contactAddress_.getPort(),
+                                         PJSIP_TRANSPORT_IS_SECURE(transport_->get()),
+                                         deviceKey_);
+
+    contactHeader_ = std::move(contactHdr);
+}
+
+bool
+SIPAccount::initContactAddress()
+{
+    // This method tries to determine the address to be used in the
+    // contact header using the available information (current transpon,
+    // UPNP, STUN, ...). The contact address may be updated after the
+    // registration (see checkNATAddress).
+
+    if (not transport_ or not transport_->get()) {
         JAMI_ERR("Transport not created yet");
         return {};
     }
@@ -1572,11 +1619,11 @@ SIPAccount::getContactHeader(SipTransport* sipTransport)
     if (transportType == PJSIP_TRANSPORT_START_OTHER)
         transportType = PJSIP_TRANSPORT_UDP;
 
-    // Else we determine this infor based on transport information
     std::string address;
     pj_uint16_t port;
 
-    link_.findLocalAddressFromTransport(sipTransport->get(), transportType, hostname_, address, port);
+    // Init the address to the local address.
+    link_.findLocalAddressFromTransport(transport_->get(), transportType, hostname_, address, port);
 
     if (getUPnPActive() and getUPnPIpAddress()) {
         address = getUPnPIpAddress().toString();
@@ -1588,13 +1635,7 @@ SIPAccount::getContactHeader(SipTransport* sipTransport)
         port = publishedPort_;
         JAMI_DBG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
-        auto success = link_.findLocalAddressFromSTUN(sipTransport->get(),
-                                                      &stunServerName_,
-                                                      stunPort_,
-                                                      address,
-                                                      port);
-        if (not success)
-            emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
+        link_.findLocalAddressFromSTUN(transport_->get(), &stunServerName_, stunPort_, address, port);
         setPublishedAddress({address});
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
@@ -1604,35 +1645,25 @@ SIPAccount::getContactHeader(SipTransport* sipTransport)
             JAMI_DBG("Using received address %s", address.c_str());
         }
 
-        if (rPort_ != -1 and rPort_ != 0) {
+        if (rPort_ > 0) {
             port = rPort_;
             JAMI_DBG("Using received port %d", port);
         }
     }
 
-    /* Enclose IPv6 address in square brackets */
-    if (IpAddr::isIpv6(address)) {
-        address = IpAddr(address).toString(false, true);
-    }
+    contactAddress_ = IpAddr(address);
+    contactAddress_.setPort(port);
 
-    const char* scheme = "sip";
-    const char* transport = "";
-    if (PJSIP_TRANSPORT_IS_SECURE(sipTransport->get())) {
-        scheme = "sips";
-        transport = ";transport=tls";
-    }
-
-    std::string quotedDisplayName = displayName_.empty() ? "" : "\"" + displayName_ + "\" ";
-    contact_ = printContactHeader(quotedDisplayName, scheme, address, port, transport);
-    return contact_;
+    return contactAddress_;
 }
 
 std::string
-SIPAccount::printContactHeader(const std::string& displayName,
-                               const char* scheme,
+SIPAccount::printContactHeader(std::string username,
+                               const std::string& displayName,
                                const std::string& address,
                                pj_uint16_t port,
-                               const char* transport)
+                               bool secure,
+                               std::string deviceKey)
 {
     // This method generates SIP contact header field, with push
     // notification parameters if any.
@@ -1641,20 +1672,24 @@ SIPAccount::printContactHeader(const std::string& displayName,
     // Example with push notification:
     // John Doe<sips:jdoe@10.10.10.10:5060;transport=tls;pn-provider=XXX;pn-param=YYY;pn-prid=ZZZ>
 
+    std::string quotedDisplayName = displayName.empty() ? "" : "\"" + displayName + "\" ";
+
     std::ostringstream contact;
+    auto scheme = secure ? "sips" : "sip";
+    auto transport = secure ? ";transport=tls" : "";
 
-    contact << displayName << "<" << scheme << ":" << username_ << (username_.empty() ? "" : "@")
-            << address << ":" << port << transport;
+    contact << quotedDisplayName << "<" << scheme << ":" << username
+            << (username.empty() ? "" : "@") << address << ":" << port << transport;
 
-    if (not deviceKey_.empty()) {
+    if (not deviceKey.empty()) {
         contact
 #if defined(__ANDROID__) || defined(ANDROID)
-            << "pn-provider=" << PN_FCM
+            << ";pn-provider=" << PN_FCM
 #elif defined(__Apple__)
-            << "pn-provider=" << PN_APNS
+            << ";pn-provider=" << PN_APNS
 #endif
-            << "pn-param=;"
-            << "pn-prid=" << deviceKey_;
+            << ";pn-param="
+            << ";pn-prid=" << deviceKey;
     }
     contact << ">";
 
@@ -1950,11 +1985,13 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     if (not allowIPAutoRewrite_)
         return false;
 
+    JAMI_DBG("[Account %s] Checking IP route after the registration", accountID_.c_str());
+
     pjsip_transport* tp = param->rdata->tp_info.transport;
 
     /* Get the received and rport info */
     pjsip_via_hdr* via = param->rdata->msg_info.via;
-    int rport;
+    int rport = 0;
     if (via->rport_param < 1) {
         /* Remote doesn't support rport */
         rport = via->sent_by.port;
@@ -1973,6 +2010,8 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     if (IpAddr::isIpv6(via_addrstr))
         via_addrstr = IpAddr(via_addrstr).toString(false, true);
 
+    JAMI_DBG("Checking received VIA address: %s", via_addrstr.c_str());
+
     if (via_addr_.host.slen == 0 or via_tp_ != tp) {
         if (pj_strcmp(&via_addr_.host, via_addr))
             pj_strdup(pool, &via_addr_.host, via_addr);
@@ -1989,36 +2028,32 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     setPublishedAddress(IpAddr(via_addrstr));
 
     /* Compare received and rport with the URI in our registration */
-    auto pjContact = sip_utils::CONST_PJ_STR(getContactHeader());
-    const pj_str_t STR_CONTACT = {(char*) "Contact", 7};
-    pjsip_contact_hdr* contact_hdr = (pjsip_contact_hdr*)
-        pjsip_parse_hdr(pool, &STR_CONTACT, pjContact.ptr, pjContact.slen, nullptr);
-    pj_assert(contact_hdr != nullptr);
-    pjsip_sip_uri* uri = (pjsip_sip_uri*) contact_hdr->uri;
-    pj_assert(uri != nullptr);
-    uri = (pjsip_sip_uri*) pjsip_uri_get_uri(uri);
+    if (getContactHeader().empty()) {
+        JAMI_WARN("No contact header set yet");
+        return false;
+    }
+    // We must have a valid transport at this point.
+    assert(transport_);
+    IpAddr contact_addr = contactAddress_;
 
-    if (uri->port == 0) {
+    // TODO. Why note save the port in contact uri/header?
+    if (contact_addr.getPort() == 0) {
         pjsip_transport_type_e tp_type;
         tp_type = (pjsip_transport_type_e) tp->key.type;
-        uri->port = pjsip_transport_get_default_port_for_type(tp_type);
+        contact_addr.setPort(pjsip_transport_get_default_port_for_type(tp_type));
     }
 
-    /* Convert IP address strings into sockaddr for comparison.
-     * (http://trac.pjsip.org/repos/ticket/863)
-     */
-    IpAddr contact_addr, recv_addr;
-    pj_status_t status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, &uri->host, contact_addr.pjPtr());
-    if (status == PJ_SUCCESS)
-        status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, via_addr, recv_addr.pjPtr());
-
-    bool matched;
+    bool matched = false;
+    IpAddr recv_addr {};
+    auto status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, via_addr, recv_addr.pjPtr());
+    recv_addr.setPort(rport);
     if (status == PJ_SUCCESS) {
         // Compare the addresses as sockaddr according to the ticket above
-        matched = (uri->port == rport and contact_addr == recv_addr);
+        matched = contact_addr == recv_addr;
     } else {
         // Compare the addresses as string, as before
-        matched = (uri->port == rport and pj_stricmp(&uri->host, via_addr) == 0);
+        auto pjContactAddr = sip_utils::CONST_PJ_STR(contact_addr.toString());
+        matched = (contact_addr.getPort() == rport and pj_stricmp(&pjContactAddr, via_addr) == 0);
     }
 
     if (matched) {
@@ -2056,40 +2091,23 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
         return false;
     }
 
-    JAMI_WARN("IP address change detected for account %s "
-              "(%.*s:%d --> %s:%d). Updating registration "
-              "(using method %d)",
+    JAMI_WARN("[account %s] Contact address changed: "
+              "(%s --> %s:%d). Updating registration.",
               accountID_.c_str(),
-              (int) uri->host.slen,
-              uri->host.ptr,
-              uri->port,
+              contact_addr.toString(true).c_str(),
               via_addrstr.data(),
-              rport,
-              contactRewriteMethod_);
-
-    pj_assert(contactRewriteMethod_ == 1 or contactRewriteMethod_ == 2);
-
-    std::shared_ptr<SipTransport> tmp_tp {nullptr};
-    if (contactRewriteMethod_ == 1) {
-        /* Save transport in case we're gonna reuse it */
-        tmp_tp = transport_;
-        /* Unregister current contact */
-        sendUnregister();
-        destroyRegistrationInfo();
-    }
-
+              rport);
     /*
      * Build new Contact header
      */
     {
-        const char* scheme = "sip";
-        const char* transport_param = "";
-        if (PJSIP_TRANSPORT_IS_SECURE(tp)) {
-            scheme = "sips";
-            transport_param = ";transport=tls";
-        }
-
-        auto tmp = printContactHeader("", scheme, via_addrstr, rport, transport_param);
+        // TODO. Why display name is omitted here ?
+        auto tmp = printContactHeader(username_,
+                                      "",
+                                      via_addrstr,
+                                      rport,
+                                      PJSIP_TRANSPORT_IS_SECURE(tp),
+                                      deviceKey_);
 
         if (tmp.empty()) {
             JAMI_ERR("Invalid contact header");
@@ -2097,12 +2115,13 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
         }
 
         // Update
-        contact_ = std::move(tmp);
-        pjContact = sip_utils::CONST_PJ_STR(contact_);
+        contactHeader_ = std::move(tmp);
     }
 
-    if (contactRewriteMethod_ == 2 && regc_ != nullptr) {
-        contactOverwritten_ = true;
+    if (regc_ != nullptr) {
+        auto contactHdr = getContactHeader();
+        assert(not contactHdr.empty());
+        auto pjContact = sip_utils::CONST_PJ_STR(contactHeader_);
         pjsip_regc_update_contact(regc_, 1, &pjContact);
 
         /*  Perform new registration at the next registration cycle */
