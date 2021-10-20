@@ -52,6 +52,24 @@
       "parentUuid": "7995e96c_8f3316c1",
       "revId": "02e53134c21f15eb0c2184c17306326a8a0a8fba",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c639c055_0cf8cbac",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 995,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-20T19:04:20Z",
+      "side": 1,
+      "message": "Done (created https://git.jami.net/savoirfairelinux/jami-project/-/issues/1329)",
+      "parentUuid": "22f97aa2_2cce8966",
+      "revId": "02e53134c21f15eb0c2184c17306326a8a0a8fba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
