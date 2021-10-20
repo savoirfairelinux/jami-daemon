@@ -219,12 +219,12 @@ public:
     void onMediaNegotiationComplete();
     // End fo SiPVoipLink events
 
-    void setContactHeader(const std::string& contact);
     const std::string& getContactHeader() const;
 
-    void setTransport(const std::shared_ptr<SipTransport>& t);
+    void setSipTransport(const std::shared_ptr<SipTransport>& transport,
+                         const std::string& contactHdr = {});
 
-    SipTransport* getTransport() { return transport_.get(); }
+    SipTransport* getTransport() { return sipTransport_.get(); }
 
     void sendSIPInfo(std::string_view body, std::string_view subtype);
 
@@ -419,7 +419,7 @@ private:
      * Will be different from the account registration transport for
      * non-IP2IP calls.
      */
-    std::shared_ptr<SipTransport> transport_ {};
+    std::shared_ptr<SipTransport> sipTransport_ {};
 
     /**
      * The SDP session
