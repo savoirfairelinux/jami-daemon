@@ -1413,6 +1413,7 @@ ConversationModule::removeContact(const std::string& uri, bool)
     auto updateClient = [&](const auto& convId) {
         if (pimpl_->updateConvReqCb_)
             pimpl_->updateConvReqCb_(convId, uri, false);
+        JAMI_ERR() << "@@@ EMIT " << convId;
         emitSignal<DRing::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
     };
     {
