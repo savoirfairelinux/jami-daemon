@@ -396,8 +396,8 @@ VideoInput::initX11(std::string display)
     size_t space = display.find(' ');
 
     clearOptions();
+    decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
     decOpts_.format = "x11grab";
-    decOpts_.framerate = 25;
 
     if (space != std::string::npos) {
         std::istringstream iss(display.substr(space + 1));
@@ -428,7 +428,8 @@ VideoInput::initAVFoundation(const std::string& display)
     decOpts_.pixel_format = "nv12";
     decOpts_.name = "Capture screen 0";
     decOpts_.input = "Capture screen 0";
-    decOpts_.framerate = 30;
+    decOpts_.framerate
+        = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP).framerate;
 
     if (space != std::string::npos) {
         std::istringstream iss(display.substr(space + 1));
@@ -449,9 +450,8 @@ VideoInput::initGdiGrab(const std::string& params)
 {
     size_t space = params.find(' ');
     clearOptions();
+    decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
     decOpts_.format = "gdigrab";
-    decOpts_.input = "desktop";
-    decOpts_.framerate = 30;
 
     if (space != std::string::npos) {
         std::istringstream iss(params.substr(space + 1));
