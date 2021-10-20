@@ -746,6 +746,7 @@ private:
      */
     std::string upnpIpAddr_;
 
+    std::mutex contactMutex_;
     std::string contact_;
     int contactRewriteMethod_;
     bool allowIPAutoRewrite_;
