@@ -441,6 +441,11 @@ VideoDeviceImpl::VideoDeviceImpl(const string& id, const std::string& path)
     , size_(-1, -1)
     , rate_(-1, 1, 0)
 {
+    if (id == DEVICE_DESKTOP) {
+        name = DEVICE_DESKTOP;
+        rate_.frame_rate = 30;
+        return;
+    }
     int fd = open(path.c_str(), O_RDWR);
     if (fd == -1)
         throw std::runtime_error("could not open device");
@@ -514,6 +519,8 @@ VideoV4l2Rate::libAvPixelformat() const
 vector<string>
 VideoDeviceImpl::getChannelList() const
 {
+    if (unique_id == DEVICE_DESKTOP)
+        return {"default"};
     vector<string> v;
     v.reserve(channels_.size());
     for (const auto& itr : channels_)
@@ -525,12 +532,25 @@ VideoDeviceImpl::getChannelList() const
 vector<VideoSize>
 VideoDeviceImpl::getSizeList(const string& channel) const
 {
+    if (unique_id == DEVICE_DESKTOP) {
+        return {VideoSize(0, 0)};
+    }
     return getChannel(channel).getSizeList();
 }
 
 vector<FrameRate>
 VideoDeviceImpl::getRateList(const string& channel, VideoSize size) const
 {
+    if (unique_id == DEVICE_DESKTOP) {
+        return {FrameRate(5),
+                FrameRate(10),
+                FrameRate(15),
+                FrameRate(20),
+                FrameRate(25),
+                FrameRate(30),
+                FrameRate(60),
+                FrameRate(120)};
+    }
     return getChannel(channel).getSize(size).getRateList();
 }
 
@@ -552,6 +572,11 @@ VideoDeviceImpl::getDeviceParams() const
     params.name = name;
     params.unique_id = unique_id;
     params.input = path;
+    if (unique_id == DEVICE_DESKTOP) {
+        params.format = "x11grab";
+        params.framerate = rate_.frame_rate;
+        return params;
+    }
     params.format = "video4linux2";
     params.channel_name = channel_.name;
     params.channel = channel_.idx;
@@ -565,6 +590,10 @@ VideoDeviceImpl::getDeviceParams() const
 void
 VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
+    if (unique_id == DEVICE_DESKTOP) {
+        rate_.frame_rate = params.framerate;
+        return;
+    }
     // Set preferences or fallback to defaults.
     channel_ = getChannel(params.channel_name);
     size_ = channel_.getSize({params.width, params.height});

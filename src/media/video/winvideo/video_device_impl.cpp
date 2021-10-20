@@ -64,6 +64,7 @@ private:
     std::vector<VideoSize> sizeList_;
     std::map<VideoSize, std::vector<FrameRate>> rateList_;
     std::map<VideoSize, AM_MEDIA_TYPE*> capMap_;
+    FrameRate desktopFrameRate_ = {30};
 
     void fail(const std::string& error);
 };
@@ -79,6 +80,20 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
 void
 VideoDeviceImpl::setup()
 {
+    if (id == DEVICE_DESKTOP) {
+        name = DEVICE_DESKTOP;
+        VideoSize size {0, 0};
+        sizeList_.emplace_back(size);
+        rateList_[size] = {FrameRate(5),
+                           FrameRate(10),
+                           FrameRate(15),
+                           FrameRate(20),
+                           FrameRate(25),
+                           FrameRate(30),
+                           FrameRate(60),
+                           FrameRate(120)};
+        return;
+    }
     HRESULT hr = CoCreateInstance(CLSID_CaptureGraphBuilder2,
                                   nullptr,
                                   CLSCTX_INPROC_SERVER,
@@ -264,6 +279,12 @@ VideoDeviceImpl::getDeviceParams() const
     params.name = name;
     params.unique_id = id;
     params.input = id;
+    if (id == DEVICE_DESKTOP) {
+        params.format = "gdigrab";
+        params.framerate = desktopFrameRate_;
+        return params;
+    }
+
     params.format = "dshow";
 
     AM_MEDIA_TYPE* pmt;
@@ -282,6 +303,10 @@ VideoDeviceImpl::getDeviceParams() const
 void
 VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
+    if (id == DEVICE_DESKTOP) {
+        desktopFrameRate_ = params.framerate;
+        return;
+    }
     if (params.width and params.height) {
         auto pmt = capMap_.at(std::make_pair(params.width, params.height));
         if (pmt != nullptr) {
