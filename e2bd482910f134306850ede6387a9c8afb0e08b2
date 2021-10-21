@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "aac7b4a5_60e09c8e",
+        "filename": "contrib/src/pjproject/0001-android.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-21T15:06:24Z",
+      "side": 1,
+      "message": "I already mentioned that I did not cleanup the patches until we agree on the solution, to avoid wasting time:\nhttps://mattermost.savoirfairelinux.com/sfl/pl/dn8e5mr6b38n9qek6n8s7ahgsy",
+      "parentUuid": "4c971640_045e9397",
+      "revId": "e2bd482910f134306850ede6387a9c8afb0e08b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "694772a8_1761589b",
         "filename": "contrib/src/pjproject/0001-rfc6544.patch",
         "patchSetId": 1
@@ -61,6 +79,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3f5f15a7_18e7d4ca",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-21T15:06:24Z",
+      "side": 1,
+      "message": "default ?",
+      "parentUuid": "694772a8_1761589b",
+      "range": {
+        "startLine": 73,
+        "startChar": 42,
+        "endLine": 73,
+        "endChar": 45
+      },
+      "revId": "e2bd482910f134306850ede6387a9c8afb0e08b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1ef050d1_31419108",
         "filename": "contrib/src/pjproject/0001-rfc6544.patch",
         "patchSetId": 1
@@ -72,6 +114,30 @@
       "writtenOn": "2021-10-20T19:31:55Z",
       "side": 1,
       "message": "imho, with DHT delays, we can say that 3/5 seconds is a max, 1.5secs seems a bit low and may fail.\n\nMore than that is a problem and the user will probably stop the call .\n\nWill add the patch in my stack",
+      "range": {
+        "startLine": 82,
+        "startChar": 46,
+        "endLine": 82,
+        "endChar": 47
+      },
+      "revId": "e2bd482910f134306850ede6387a9c8afb0e08b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a192cf8_a9b10fb2",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-21T15:06:24Z",
+      "side": 1,
+      "message": "May be, the reconection delay and max count are not final (just a suggestion), I am open to any other suggestion.\nMost importantly, the connection retry must be bound to avoid the infinite loop.",
+      "parentUuid": "1ef050d1_31419108",
       "range": {
         "startLine": 82,
         "startChar": 46,
