@@ -49,6 +49,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5a61150a_9c559210",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2455,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-21T18:17:39Z",
+      "side": 1,
+      "message": "AFAIK, there is no transition from active to inactive only the opposite.\nBut I agree, we should be prepared for such cases. So I changed the logic to return true if any significant change occurred in the media. We can add other conditions in the future if needed.\n\nWe might need a test for this.",
+      "parentUuid": "0da5e191_c34f6f25",
+      "range": {
+        "startLine": 2450,
+        "startChar": 0,
+        "endLine": 2455,
+        "endChar": 23
+      },
+      "revId": "7501ff2399967372da3f7d1240dfe74d15172e77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "07987c6f_2e4a87b2",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 6
@@ -60,6 +84,30 @@
       "writtenOn": "2021-10-21T17:35:32Z",
       "side": 1,
       "message": "\u003d\u003d DUMMY_VIDEO_STR is shorter",
+      "range": {
+        "startLine": 2827,
+        "startChar": 49,
+        "endLine": 2827,
+        "endChar": 80
+      },
+      "revId": "7501ff2399967372da3f7d1240dfe74d15172e77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "79ef0d53_30ff2822",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2827,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-21T18:17:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "07987c6f_2e4a87b2",
       "range": {
         "startLine": 2827,
         "startChar": 49,
