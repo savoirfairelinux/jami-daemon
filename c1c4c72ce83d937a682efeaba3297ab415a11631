@@ -22,6 +22,30 @@
       },
       "revId": "c1c4c72ce83d937a682efeaba3297ab415a11631",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d3d1ebde_6e32d6b4",
+        "filename": "src/jamidht/channeled_transport.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T14:21:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cc2e9ea8_a5d4945d",
+      "range": {
+        "startLine": 62,
+        "startChar": 9,
+        "endLine": 62,
+        "endChar": 23
+      },
+      "revId": "c1c4c72ce83d937a682efeaba3297ab415a11631",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
