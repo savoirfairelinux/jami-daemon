@@ -1,6 +1,7 @@
 {
   "comments": [
     {
+      "unresolved": true,
       "key": {
         "uuid": "23e23d63_6a068234",
         "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
@@ -20,10 +21,34 @@
         "endChar": 59
       },
       "revId": "4937fa022a1fd5597d8f093c3257b0c826cb4989",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a9c0094_c24d952f",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T20:39:55Z",
+      "side": 1,
+      "message": "Can be interesting to get all calls",
+      "parentUuid": "23e23d63_6a068234",
+      "range": {
+        "startLine": 551,
+        "startChar": 27,
+        "endLine": 552,
+        "endChar": 59
+      },
+      "revId": "4937fa022a1fd5597d8f093c3257b0c826cb4989",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
       "key": {
         "uuid": "05cb591a_0bdca04e",
         "filename": "src/account.h",
@@ -43,8 +68,31 @@
         "endChar": 44
       },
       "revId": "4937fa022a1fd5597d8f093c3257b0c826cb4989",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8d9b9c8_2e86e6ad",
+        "filename": "src/account.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T20:39:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "05cb591a_0bdca04e",
+      "range": {
+        "startLine": 288,
+        "startChar": 0,
+        "endLine": 289,
+        "endChar": 44
+      },
+      "revId": "4937fa022a1fd5597d8f093c3257b0c826cb4989",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

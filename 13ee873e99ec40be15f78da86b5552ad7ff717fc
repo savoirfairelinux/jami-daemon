@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a4fc933_2c42b5de",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 14
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T20:39:55Z",
+      "side": 1,
+      "message": "Note: we may want to remove this. it\u0027s from version 0.9.14 and I see no client using it.",
+      "range": {
+        "startLine": 317,
+        "startChar": 22,
+        "endLine": 317,
+        "endChar": 51
+      },
+      "revId": "13ee873e99ec40be15f78da86b5552ad7ff717fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9329b0c9_e1a35fa7",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 14
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T20:39:55Z",
+      "side": 1,
+      "message": "still needed?",
+      "range": {
+        "startLine": 401,
+        "startChar": 22,
+        "endLine": 401,
+        "endChar": 40
+      },
+      "revId": "13ee873e99ec40be15f78da86b5552ad7ff717fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4484e87_8593f835",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 14
+      },
+      "lineNbr": 416,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T20:39:55Z",
+      "side": 1,
+      "message": "same?",
+      "range": {
+        "startLine": 416,
+        "startChar": 22,
+        "endLine": 416,
+        "endChar": 44
+      },
+      "revId": "13ee873e99ec40be15f78da86b5552ad7ff717fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24735169_d8ae285b",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 14
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T20:39:55Z",
+      "side": 1,
+      "message": "Imho accountId\u003d \"\" should return active conferences for all accounts. Can be interesting to get",
+      "range": {
+        "startLine": 485,
+        "startChar": 24,
+        "endLine": 485,
+        "endChar": 50
+      },
+      "revId": "13ee873e99ec40be15f78da86b5552ad7ff717fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a154a262_3d7332c3",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 14
+      },
+      "lineNbr": 876,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T20:39:55Z",
+      "side": 1,
+      "message": "not for this one?",
+      "range": {
+        "startLine": 876,
+        "startChar": 22,
+        "endLine": 876,
+        "endChar": 39
+      },
+      "revId": "13ee873e99ec40be15f78da86b5552ad7ff717fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
