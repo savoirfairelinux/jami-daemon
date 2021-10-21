@@ -1,0 +1,85 @@
+ include/opendht/proxy.h  | 4 ++--
+ src/dht_proxy_client.cpp | 6 ++++--
+ src/dht_proxy_server.cpp | 7 ++++---
+ 3 files changed, 10 insertions(+), 7 deletions(-)
+
+diff --git a/include/opendht/proxy.h b/include/opendht/proxy.h
+index 2cc292a..6768c6b 100644
+--- a/include/opendht/proxy.h
++++ b/include/opendht/proxy.h
+@@ -22,8 +22,8 @@
+ namespace dht {
+ namespace proxy {
+ 
+-constexpr const std::chrono::hours OP_TIMEOUT {24}; // one day
+-constexpr const std::chrono::hours OP_MARGIN {2}; // two hours
++constexpr const std::chrono::minutes OP_TIMEOUT {30}; // one day
++constexpr const std::chrono::minutes OP_MARGIN {10}; // two hours
+ constexpr const char* const HTTP_PROTO {"http://"};
+ using ListenToken = uint64_t;
+ 
+diff --git a/src/dht_proxy_client.cpp b/src/dht_proxy_client.cpp
+index f713d4b..baa77ea 100644
+--- a/src/dht_proxy_client.cpp
++++ b/src/dht_proxy_client.cpp
+@@ -438,16 +438,18 @@ DhtProxyClient::handleRefreshPut(const asio::error_code &ec, InfoHash key, Value
+         return;
+     else if (ec){
+         if (logger_)
+-            logger_->e("[proxy:client] [put] [refresh %s] %s", key.toString().c_str(), ec.message().c_str());
++            logger_->e("@@@@@@[proxy:client] [put] [refresh %s] %s", key.toString().c_str(), ec.message().c_str());
+         return;
+     }
+     if (logger_)
+-        logger_->d("[proxy:client] [put] [refresh %s]", key.to_c_str());
++        logger_->e("@@@@@@@[proxy:client] [put] [refresh %s]", key.to_c_str());
+     std::lock_guard<std::mutex> lock(searchLock_);
+     auto search = searches_.find(key);
+     if (search != searches_.end()) {
+         auto p = search->second.puts.find(id);
+         if (p != search->second.puts.end()){
++            if (logger_)
++                logger_->e("@@@@@@@2[proxy:client] [put] [refresh %s] RELAUNCH TIMER", key.to_c_str());
+             doPut(key, p->second.value, [ok = p->second.ok](bool result){
+                 *ok = result;
+             }, time_point::max(), true);
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index ce5393b..ecf37b2 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -1099,10 +1099,8 @@ DhtProxyServer::put(restinio::request_handle_t request,
+         if (reader->parse(char_data, char_data + request->body().size(), &root, &err)){
+             auto value = std::make_shared<Value>(root);
+             bool permanent = root.isMember("permanent");
+-            if (logger_)
+-                logger_->d("[proxy:server] [put %s] %s %s", infoHash.toString().c_str(),
+-                          value->toString().c_str(), (permanent ? "permanent" : ""));
+             if (permanent) {
++                printf("@@@@@@ [proxy:server] [put %s] %u %s\n", infoHash.toString().c_str(), value->id, (permanent ? "permanent" : ""));
+                 std::string pushToken, clientId, sessionId, platform;
+                 auto& pVal = root["permanent"];
+                 if (pVal.isObject()){
+@@ -1149,6 +1147,7 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                     pput.expireTimer = std::make_unique<asio::steady_timer>(ctx, timeout);
+ #ifdef OPENDHT_PUSH_NOTIFICATIONS
+                     if (not pushToken.empty()){
++                        printf("@@@@@@ %ld [proxy:server] [put %s] %u %s NEW TIMER\n", std::time(nullptr), infoHash.toString().c_str(), value->id, (permanent ? "permanent" : ""));
+                         bool isAndroid = platform == "android";
+                         pput.pushToken = pushToken;
+                         pput.clientId = clientId;
+@@ -1160,6 +1159,7 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                             json["timeout"] = infoHash.toString();
+                             json["to"] = clientId;
+                             json["vid"] = std::to_string(vid);
++                            printf("@@@@@@ %ld [proxy:server] [put %s] %u SEND PUSH NOTIFICATION\n", std::time(nullptr), infoHash.toString().c_str(), vid);
+                             std::lock_guard<std::mutex> l(sessionCtx->lock);
+                             json["s"] = sessionCtx->sessionId;
+                             return json;
+@@ -1183,6 +1183,7 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                             pput.sessionCtx->sessionId = sessionId;
+                         }
+                     }
++                    printf("@@@@@@ %ld [proxy:server] [put %s] %u %s REFRESH TIMER\n", std::time(nullptr), infoHash.toString().c_str(), value->id, (permanent ? "permanent" : ""));
+                     pput.expireTimer->expires_at(timeout);
+                     if (pput.expireNotifyTimer)
+                         pput.expireNotifyTimer->expires_at(timeout - proxy::OP_MARGIN);
