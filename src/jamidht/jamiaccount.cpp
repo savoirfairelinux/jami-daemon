@@ -2027,7 +2027,7 @@ JamiAccount::doRegister_()
         dht::DhtRunner::Context context {};
         context.peerDiscovery = peerDiscovery_;
 
-        auto dht_log_level = Manager::instance().dhtLogLevel.load();
+        auto dht_log_level = 3; // Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
             static auto silent = [](char const* /*m*/, va_list /*args*/) {
             };
@@ -2101,6 +2101,7 @@ JamiAccount::doRegister_()
             setRegistrationState(state);
         };
         context.identityAnnouncedCb = [this](bool ok) {
+            JAMI_ERR() << "@@@@ CALL identityAnnouncedCb with ok: " << ok;
             if (!ok)
                 return;
             accountManager_->startSync(
