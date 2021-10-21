@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "20218903_1384fc57",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T15:01:44Z",
+      "side": 1,
+      "message": "can be a static constexpr",
+      "range": {
+        "startLine": 65,
+        "startChar": 14,
+        "endLine": 65,
+        "endChar": 24
+      },
+      "revId": "b56b9f3f797590fe5aea0b3d13ec2cf9ac510879",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "069ed0ca_50a4b8e5",
+        "filename": "src/preferences.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 580,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T15:01:44Z",
+      "side": 1,
+      "message": "should be a const",
+      "range": {
+        "startLine": 580,
+        "startChar": 30,
+        "endLine": 580,
+        "endChar": 32
+      },
+      "revId": "b56b9f3f797590fe5aea0b3d13ec2cf9ac510879",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5fee77b1_d237fa65",
+        "filename": "src/preferences.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T15:01:44Z",
+      "side": 1,
+      "message": "this is crashing, the method return a const std::string\u0026 on nothing (should be a void)\nalso std::stof can throw, and as it\u0027s an user input, it should be protected",
+      "range": {
+        "startLine": 363,
+        "startChar": 11,
+        "endLine": 366,
+        "endChar": 5
+      },
+      "revId": "b56b9f3f797590fe5aea0b3d13ec2cf9ac510879",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
