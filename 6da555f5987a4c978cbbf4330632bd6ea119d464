@@ -47,6 +47,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "a6988294_9eb82815",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1567,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-21T19:59:27Z",
+      "side": 1,
+      "message": "this method called from two different threads at least, without protection.\nlocking all this method is risky business (deadlock), too much things are done here.\nI will need to completely rewrite this method I guess.",
+      "parentUuid": "22ec9057_d0440500",
+      "range": {
+        "startLine": 1561,
+        "startChar": 0,
+        "endLine": 1567,
+        "endChar": 0
+      },
+      "revId": "6da555f5987a4c978cbbf4330632bd6ea119d464",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "74c10b27_061c2e19",
