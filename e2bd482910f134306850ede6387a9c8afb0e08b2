@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4c971640_045e9397",
+        "filename": "contrib/src/pjproject/0001-android.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-10-21T00:20:21Z",
+      "side": 1,
+      "message": "Agree.  This line is only used if you\u0027re sending the mail with git-sendemail.  We could remove the line for less noise.",
+      "parentUuid": "7b64decd_a9f00244",
+      "revId": "e2bd482910f134306850ede6387a9c8afb0e08b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "694772a8_1761589b",
         "filename": "contrib/src/pjproject/0001-rfc6544.patch",
         "patchSetId": 1
