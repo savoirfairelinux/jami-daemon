@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8a73079c_05040315",
+        "filename": "src/manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2934,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T17:35:32Z",
+      "side": 1,
+      "message": "note: can be simplified soon, as isMultiStream is now true for supported platforms",
+      "range": {
+        "startLine": 2934,
+        "startChar": 16,
+        "endLine": 2934,
+        "endChar": 36
+      },
+      "revId": "7501ff2399967372da3f7d1240dfe74d15172e77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0da5e191_c34f6f25",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2455,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T17:35:32Z",
+      "side": 1,
+      "message": "question.\nIf remote goes from {video (active)/audio (disabled)} to {video (disabled)/audio (active)} ; this will pass from 1 active to one other active. In this case, should this method returns true? Is this possible?",
+      "range": {
+        "startLine": 2450,
+        "startChar": 0,
+        "endLine": 2455,
+        "endChar": 23
+      },
+      "revId": "7501ff2399967372da3f7d1240dfe74d15172e77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07987c6f_2e4a87b2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2827,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-21T17:35:32Z",
+      "side": 1,
+      "message": "\u003d\u003d DUMMY_VIDEO_STR is shorter",
+      "range": {
+        "startLine": 2827,
+        "startChar": 49,
+        "endLine": 2827,
+        "endChar": 80
+      },
+      "revId": "7501ff2399967372da3f7d1240dfe74d15172e77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
