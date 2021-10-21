@@ -24,6 +24,29 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "22ec9057_d0440500",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1567,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-21T19:29:38Z",
+      "side": 1,
+      "message": "why not lock for the whole function to make sure the operation is atomic? Reentrancy would be a bug anyway and is not supported for this method.",
+      "range": {
+        "startLine": 1561,
+        "startChar": 0,
+        "endLine": 1567,
+        "endChar": 0
+      },
+      "revId": "6da555f5987a4c978cbbf4330632bd6ea119d464",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "74c10b27_061c2e19",
