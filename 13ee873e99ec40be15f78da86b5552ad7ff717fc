@@ -49,6 +49,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f2dd2cf5_7f55cf23",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 14
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "yes",
+      "parentUuid": "9329b0c9_e1a35fa7",
+      "range": {
+        "startLine": 401,
+        "startChar": 22,
+        "endLine": 401,
+        "endChar": 40
+      },
+      "revId": "13ee873e99ec40be15f78da86b5552ad7ff717fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d4484e87_8593f835",
         "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
         "patchSetId": 14
@@ -60,6 +84,30 @@
       "writtenOn": "2021-10-21T20:39:55Z",
       "side": 1,
       "message": "same?",
+      "range": {
+        "startLine": 416,
+        "startChar": 22,
+        "endLine": 416,
+        "endChar": 44
+      },
+      "revId": "13ee873e99ec40be15f78da86b5552ad7ff717fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cd5c5a8a_811e0a79",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 14
+      },
+      "lineNbr": 416,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "yes",
+      "parentUuid": "d4484e87_8593f835",
       "range": {
         "startLine": 416,
         "startChar": 22,
@@ -106,6 +154,30 @@
       "writtenOn": "2021-10-21T20:39:55Z",
       "side": 1,
       "message": "not for this one?",
+      "range": {
+        "startLine": 876,
+        "startChar": 22,
+        "endLine": 876,
+        "endChar": 39
+      },
+      "revId": "13ee873e99ec40be15f78da86b5552ad7ff717fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c1b46ab_b5fc5142",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 14
+      },
+      "lineNbr": 876,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a154a262_3d7332c3",
       "range": {
         "startLine": 876,
         "startChar": 22,

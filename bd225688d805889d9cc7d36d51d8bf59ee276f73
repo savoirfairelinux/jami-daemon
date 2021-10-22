@@ -66,6 +66,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f6325a24_c7ef5bfa",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "Yes for now. To be refactored later. Note that the manager uses the accountId to retrieve the call.",
+      "parentUuid": "ababa189_a0329986",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "96c2ac87_ea6cc5c2",
         "filename": "src/client/callmanager.cpp",
         "patchSetId": 12
@@ -77,6 +95,24 @@
       "writtenOn": "2021-10-15T20:04:33Z",
       "side": 1,
       "message": "same",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "01cf7f34_47da16ba",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "Yes for now. To be refactored later. Note that the manager uses the accountId to retrieve the call.",
+      "parentUuid": "96c2ac87_ea6cc5c2",
       "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -100,6 +136,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1c23d937_368036aa",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "Yes for now. To be refactored later. Note that the manager uses the accountId to retrieve the call.",
+      "parentUuid": "9fbba85c_cb8d1376",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "bb396c77_8f832788",
         "filename": "src/client/callmanager.cpp",
         "patchSetId": 12
@@ -117,6 +171,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "993c3bd9_690c6284",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "Yes for now. To be refactored later. Note that the manager uses the accountId to retrieve the call.",
+      "parentUuid": "bb396c77_8f832788",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "dce5dcae_ff25df15",
         "filename": "src/client/callmanager.cpp",
         "patchSetId": 12
@@ -128,6 +200,30 @@
       "writtenOn": "2021-10-15T20:04:33Z",
       "side": 1,
       "message": "may as shortcut, we can use a helper like: getCall(accountId, callId)",
+      "range": {
+        "startLine": 157,
+        "startChar": 1,
+        "endLine": 158,
+        "endChar": 50
+      },
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df776ba0_3e639385",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "Indeed. However in some cases (like here) the id might refer to either a conference or a call so we need the two ifs.",
+      "parentUuid": "dce5dcae_ff25df15",
       "range": {
         "startLine": 157,
         "startChar": 1,
@@ -168,6 +264,24 @@
       "writtenOn": "2021-10-15T20:04:33Z",
       "side": 1,
       "message": "@param accountId ...",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5542f8e_5a359e65",
+        "filename": "src/jami/callmanager_interface.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:21:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2a193f61_fd430d88",
       "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
