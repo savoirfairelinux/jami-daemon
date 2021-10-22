@@ -68,6 +68,7 @@ Conference::Conference()
                 return;
             ConfInfo newInfo;
             auto subCalls = shared->participants_;
+            auto hostAdded = false;
             // Handle participants showing their video
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
             for (const auto& info : infos) {
@@ -95,6 +96,7 @@ Conference::Conference()
                 std::string_view peerId = string_remove_suffix(uri, '@');
                 auto isModerator = shared->isModerator(peerId);
                 if (uri.empty()) {
+                    hostAdded = true;
                     peerId = "host"sv;
                     isLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
                 }
@@ -118,30 +120,11 @@ Conference::Conference()
                 newInfo.w = videoMixer->getWidth();
             }
             lk.unlock();
-            // Handle participants not present in the video mixer
-            for (const auto& subCall : subCalls) {
-                std::string uri {};
-                if (auto call = getCall(subCall))
-                    uri = call->getPeerNumber();
-                auto isModerator = shared->isModerator(uri);
-                auto sinkId = shared->getConfID() + string_remove_suffix(uri, '@');
-                newInfo.emplace_back(ParticipantInfo {std::move(uri),
-                                                      {},
-                                                      std::move(sinkId),
-                                                      false,
-                                                      0,
-                                                      0,
-                                                      0,
-                                                      0,
-                                                      true,
-                                                      false,
-                                                      false,
-                                                      isModerator});
+            if (!hostAdded) {
+                auto audioLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
+                newInfo.emplace_back(ParticipantInfo {
+                    "", "", "", false, 0, 0, 0, 0, true, audioLocalMuted, false, true});
             }
-            // Add host in confInfo with audio and video muted if detached
-            if (shared->getState() == State::ACTIVE_DETACHED)
-                newInfo.emplace_back(
-                    ParticipantInfo {"", "", "", false, 0, 0, 0, 0, true, true, false, true});
 
             shared->updateConferenceInfo(std::move(newInfo));
         });
@@ -342,6 +325,9 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
             // If the source state for the specified media type is not set
             // yet, the state will initialized using the state of the first
             // participant with a valid media source.
+            if (call->getAccount().lock()->isRendezVous()) {
+                iter->muted_ = true;
+            }
             setMediaSourceState(iter->type_, iter->muted_);
         } else {
             // To mute the local source, all the sources of the participating
@@ -616,6 +602,8 @@ Conference::attach()
                 mixer->switchSecondaryInput(mediaSecondaryInput_);
         }
 #endif
+        setMediaSourceState(MediaType::MEDIA_AUDIO, false);
+        setMediaSourceState(MediaType::MEDIA_VIDEO, false);
         setState(State::ACTIVE_ATTACHED);
     } else {
         JAMI_WARN(
@@ -640,6 +628,8 @@ Conference::detach()
             mixer->stopInput();
         }
 #endif
+        setMediaSourceState(MediaType::MEDIA_AUDIO, true);
+        setMediaSourceState(MediaType::MEDIA_VIDEO, true);
         setState(State::ACTIVE_DETACHED);
     } else {
         JAMI_WARN(
@@ -1111,6 +1101,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
             JAMI_DBG("Local video source already in [%s] state", is_muted ? "muted" : "un-muted");
             return;
         }
+        setMediaSourceState(MediaType::MEDIA_VIDEO, is_muted);
         if (is_muted) {
             if (auto mixer = getVideoMixer()) {
                 JAMI_DBG("Muting local video source");
@@ -1119,21 +1110,9 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         } else {
             if (auto mixer = getVideoMixer()) {
                 JAMI_DBG("Un-muting local video source");
-                mixer->switchInput(mediaInput_);
-#ifdef ENABLE_PLUGIN
-                // Preview
-                if (auto& videoPreview = mixer->getVideoLocal()) {
-                    auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-                    StreamData previewStreamData {getConfID(),
-                                                  false,
-                                                  StreamType::video,
-                                                  getConfID()};
-                    createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
-                }
-#endif
+                switchInput(mediaInput_);
             }
         }
-        setMediaSourceState(MediaType::MEDIA_VIDEO, is_muted);
         emitSignal<DRing::CallSignal::VideoMuted>(id_, is_muted);
         return;
 #endif
