@@ -68,6 +68,7 @@ public:
     void testRemoveContactRemoveSyncing();
     void testRemoveConversationRemoveSyncing();
     void testCacheRequestFromClient();
+    void testNeedsSyncingWithForCloning();
 
     std::string aliceId;
     std::string bobId;
@@ -91,6 +92,7 @@ private:
     CPPUNIT_TEST(testRemoveContactRemoveSyncing);
     CPPUNIT_TEST(testRemoveConversationRemoveSyncing);
     CPPUNIT_TEST(testCacheRequestFromClient);
+    CPPUNIT_TEST(testNeedsSyncingWithForCloning);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -978,6 +980,52 @@ ConversationRequestTest::testCacheRequestFromClient()
     DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
     CPPUNIT_ASSERT(!fileutils::isFile(cachedPath));
+}
+
+void
+ConversationRequestTest::testNeedsSyncingWithForCloning()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    auto aliceDevice = std::string(aliceAccount->currentDeviceId());
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool contactAdded = false, requestReceived = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& convId,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId && !convId.empty())
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ContactAdded>(
+        [&](const std::string& accountId, const std::string& uri, bool confirmed) {
+            if (accountId == bobId && uri == aliceUri) {
+                contactAdded = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    CPPUNIT_ASSERT(!bobAccount->convModule()->needsSyncingWith(aliceUri, aliceDevice));
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return contactAdded; }));
+    // At this point the conversation should be there and syncing.
+
+    CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
+    CPPUNIT_ASSERT(bobAccount->convModule()->needsSyncingWith(aliceUri, aliceDevice));
 }
 
 } // namespace test

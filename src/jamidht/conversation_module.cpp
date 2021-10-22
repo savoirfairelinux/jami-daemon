@@ -1185,10 +1185,22 @@ ConversationModule::onSyncData(const SyncMsg& msg,
 bool
 ConversationModule::needsSyncingWith(const std::string& memberUri, const std::string& deviceId) const
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    for (const auto& [_, conv] : pimpl_->conversations_)
-        if (conv->isMember(memberUri, false) && conv->needsFetch(deviceId))
+    // Check if a conversation needs to fetch remote or to be cloned
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::lock_guard<std::mutex> lkCI(pimpl_->convInfosMtx_);
+    for (const auto& [key, ci] : pimpl_->convInfos_) {
+        auto it = pimpl_->conversations_.find(key);
+        if (it != pimpl_->conversations_.end() && it->second) {
+            if (!it->second->isRemoving() && it->second->isMember(memberUri, false)
+                && it->second->needsFetch(deviceId))
+                return true;
+        } else if (!ci.removed
+                   && std::find(ci.members.begin(), ci.members.end(), memberUri)
+                          != ci.members.end()) {
+            // In this case the conversation was never cloned (can be after an import)
             return true;
+        }
+    }
     return false;
 }
 
