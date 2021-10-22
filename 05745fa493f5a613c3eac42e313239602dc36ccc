@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f0dd5010_17d48fb1",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-22T20:19:18Z",
+      "side": 1,
+      "message": ":facepalm: indeed\n\nReplaced by linked interactionId. Because if it\u0027s a profile, it\u0027s an internal transfer.",
+      "parentUuid": "46a1b5c2_851b1d36",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8a37e319_b68c0cab",
@@ -53,6 +71,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b9e8650_e5ab278b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 488,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-22T20:19:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d34d110a_c61745f0",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "755b4c00_8afc9064",
@@ -66,6 +102,24 @@
       "writtenOn": "2021-10-01T19:09:29Z",
       "side": 1,
       "message": "this seems generally inefficient. Could be something like\n\n    getMemberUris(includeMyself \u003d false)\n\n(doesn\u0027t have to be in this patchset)",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "368d8531_1bb18710",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-22T20:19:18Z",
+      "side": 1,
+      "message": "getMembers already have some options (includeInvited), will do another patch",
+      "parentUuid": "755b4c00_8afc9064",
       "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -87,6 +141,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "894242c2_19821aa5",
+        "filename": "src/jamidht/transfer_channel_handler.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-22T20:19:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7b9912f7_a381700c",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "79175eaf_a55af7e6",
@@ -100,6 +172,24 @@
       "writtenOn": "2021-10-01T19:09:29Z",
       "side": 1,
       "message": "shared_ptr or const reference, stored as weak_ptr (signals the account mush be non-null at this point)",
+      "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c82419fa_553fbb27",
+        "filename": "src/jamidht/transfer_channel_handler.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-22T20:19:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "79175eaf_a55af7e6",
       "revId": "05745fa493f5a613c3eac42e313239602dc36ccc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
