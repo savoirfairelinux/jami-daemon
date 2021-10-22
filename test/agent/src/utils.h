@@ -104,28 +104,50 @@ apply_to_guile(SCM body_proc, Args... args)
 struct from_guile
 {
     SCM value;
+    const char* expr;
+    const char* file;
+    int line;
 
-    from_guile(SCM val)
-        : value(val)
+    from_guile(SCM val, const char* expr_, const char* file_, int line_)
+        : value(val),
+          expr(expr_),
+          file(file_),
+          line(line_)
     {}
+
+    template<typename Pred>
+    void ensure_type(const char* msg, Pred&& pred)
+    {
+        if (!pred(value)) {
+            jami::Logger::log(LOG_ERR,
+                              file,
+                              line,
+                              false,
+                              "[GUILE] For expression `%s`: "
+                              "Scheme value must be of type %s\n",
+                              expr,
+                              msg);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     operator bool()
     {
-        AGENT_ASSERT(scm_is_bool(value), "Scheme value must be of type bool");
+        ensure_type("bool", scm_is_bool);
 
         return scm_to_bool(value);
     }
 
     operator int()
     {
-        AGENT_ASSERT(scm_is_integer(value), "Scheme value must be of type integer");
+        ensure_type("integer", scm_is_integer);
 
         return scm_to_int(value);
     }
 
     operator std::string()
     {
-        AGENT_ASSERT(scm_is_string(value), "Scheme value must be of type string");
+        ensure_type("string", scm_is_string);
 
         char* str_raw = scm_to_locale_string(value);
         std::string ret(str_raw);
@@ -137,7 +159,7 @@ struct from_guile
     template<typename T>
     operator std::vector<T>()
     {
-        AGENT_ASSERT(scm_is_simple_vector(value), "Scheme value must be a simple vector");
+        ensure_type("simple vector", scm_is_simple_vector);
 
         std::vector<T> ret;
 
@@ -146,7 +168,7 @@ struct from_guile
         for (size_t i = 0; i < SCM_SIMPLE_VECTOR_LENGTH(value); ++i) {
             SCM val = SCM_SIMPLE_VECTOR_REF(value, i);
 
-            ret.emplace_back(from_guile(val));
+            ret.emplace_back(from_guile(val, expr, file, line));
         }
 
         return ret;
@@ -155,15 +177,15 @@ struct from_guile
     template<typename K, typename V>
     operator std::map<K, V>()
     {
-        AGENT_ASSERT(scm_is_true(scm_list_p(value)), "Scheme value mut be a list");
+        ensure_type("list", [](SCM v){ return scm_is_true(scm_list_p(v)); });
 
         std::map<K, V> ret;
 
         while (not scm_is_null(value)) {
             SCM pair = scm_car(value);
 
-            K key = from_guile(scm_car(pair));
-            V val = from_guile(scm_cdr(pair));
+            K key = from_guile(scm_car(pair), expr, file, line);
+            V val = from_guile(scm_cdr(pair), expr, file, line);
 
             ret[key] = val;
 
@@ -173,3 +195,5 @@ struct from_guile
         return ret;
     }
 };
+
+#define from_guile(EXPR) from_guile(EXPR, #EXPR, __FILE__, __LINE__)
