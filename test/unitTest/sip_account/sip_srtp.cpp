@@ -231,7 +231,8 @@ SipSrtpTest::onIncomingCallWithMedia(const std::string& accountId,
 }
 
 void
-SipSrtpTest::onCallStateChange(const std::string& callId,
+SipSrtpTest::onCallStateChange(const std::string& accountId,
+                               const std::string& callId,
                                const std::string& state,
                                CallData& callData)
 {
@@ -389,10 +390,10 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string& callId, const std::string& state, signed) {
+        [&](const std::string& accountId, const std::string& callId, const std::string& state, signed) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onCallStateChange(callId, state, user == aliceData.alias_ ? aliceData : bobData);
+                onCallStateChange(accountId, callId, state, user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
