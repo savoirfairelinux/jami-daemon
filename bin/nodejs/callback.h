@@ -662,62 +662,66 @@ onConversationError(const std::string& accountId, const std::string& conversatio
 }
 
 void
-conferenceCreated(const std::string& confId){
+conferenceCreated(const std::string& accountId, const std::string& confId){
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
-    pendingSignals.emplace([confId]() {
+    pendingSignals.emplace([accountId, confId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conferenceCreatedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {
+                V8_STRING_NEW_LOCAL(accountId),
                 V8_STRING_NEW_LOCAL(confId)
             };
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 1, callback_args);
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
         }
     });
     uv_async_send(&signalAsync);
 }
 
 void
-conferenceChanged(const std::string& confId, const std::string& state){
+conferenceChanged(const std::string& accountId, const std::string& confId, const std::string& state){
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
-    pendingSignals.emplace([confId, state]() {
+    pendingSignals.emplace([accountId, confId, state]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conferenceChangedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {
+                V8_STRING_NEW_LOCAL(accountId),
                 V8_STRING_NEW_LOCAL(confId),
                 V8_STRING_NEW_LOCAL(state)
             };
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
     uv_async_send(&signalAsync);
 }
 
 void
-conferenceRemoved(const std::string& confId){
+conferenceRemoved(const std::string& accountId, const std::string& confId){
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
-    pendingSignals.emplace([confId]() {
+    pendingSignals.emplace([accountId, confId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conferenceRemovedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {
+                V8_STRING_NEW_LOCAL(accountId),
                 V8_STRING_NEW_LOCAL(confId)
             };
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 1, callback_args);
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
         }
     });
     uv_async_send(&signalAsync);
 }
 
 void
-onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {
+onConferenceInfosUpdated(const std::string& accountId, const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
-    pendingSignals.emplace([confId, infos]() {
+    pendingSignals.emplace([accountId, confId, infos]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), onConferenceInfosUpdatedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {
+                V8_STRING_NEW_LOCAL(accountId),
                 V8_STRING_NEW_LOCAL(confId),
                 stringMapVecToJsMapArray(infos)
             };
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
     uv_async_send(&signalAsync);

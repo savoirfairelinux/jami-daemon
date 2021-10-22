@@ -192,7 +192,8 @@ install_signal_primitives(void *)
                              &onCallStateChanged,
                              _1,
                              _2,
-                             _3)));
+                             _3,
+                             _4)));
 
     handlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
                         bind(&Handler<const std::string&,
