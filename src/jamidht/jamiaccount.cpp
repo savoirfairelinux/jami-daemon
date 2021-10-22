@@ -3229,7 +3229,11 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         JAMI_ERR("Could not write data to %s", cachedFile.c_str());
         return;
     }
-    req.write(reinterpret_cast<const char*>(&payload[0]), payload.size());
+
+    if (not payload.empty()) {
+        req.write(reinterpret_cast<const char*>(payload.data()), payload.size());
+    }
+
     if (payload.size() > 64000) {
         JAMI_WARN() << "Trust request is too big";
     }
