@@ -82,6 +82,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e1974204_27c2189e",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:22:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f6325a24_c7ef5bfa",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "96c2ac87_ea6cc5c2",
@@ -113,6 +131,24 @@
       "side": 1,
       "message": "Yes for now. To be refactored later. Note that the manager uses the accountId to retrieve the call.",
       "parentUuid": "96c2ac87_ea6cc5c2",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "40a4b13c_0c703be0",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:22:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "01cf7f34_47da16ba",
       "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -152,6 +188,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c4611e8_4dadb352",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:22:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1c23d937_368036aa",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bb396c77_8f832788",
@@ -183,6 +237,24 @@
       "side": 1,
       "message": "Yes for now. To be refactored later. Note that the manager uses the accountId to retrieve the call.",
       "parentUuid": "bb396c77_8f832788",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "31c51a46_a7da32ef",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:22:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "993c3bd9_690c6284",
       "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -224,6 +296,30 @@
       "side": 1,
       "message": "Indeed. However in some cases (like here) the id might refer to either a conference or a call so we need the two ifs.",
       "parentUuid": "dce5dcae_ff25df15",
+      "range": {
+        "startLine": 157,
+        "startChar": 1,
+        "endLine": 158,
+        "endChar": 50
+      },
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab247de6_6afe879a",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-22T17:22:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "df776ba0_3e639385",
       "range": {
         "startLine": 157,
         "startChar": 1,
