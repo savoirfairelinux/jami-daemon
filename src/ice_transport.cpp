@@ -372,8 +372,8 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
     streamsCount_ = options.streamsCount;
     compCountPerStream_ = options.compCountPerStream;
     compCount_ = streamsCount_ * compCountPerStream_;
-    compIO_ = std::move(std::vector<ComponentIO>(compCount_));
-    peerChannels_ = std::move(std::vector<PeerChannel>(compCount_));
+    compIO_ = std::vector<ComponentIO>(compCount_);
+    peerChannels_ = std::vector<PeerChannel>(compCount_);
     iceDefaultRemoteAddr_.reserve(compCount_);
     initiatorSession_ = options.master;
     accountLocalAddr_ = std::move(options.accountLocalAddr);
