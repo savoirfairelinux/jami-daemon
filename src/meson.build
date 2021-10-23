@@ -28,6 +28,8 @@ libjami_sources = files(
     'jamidht/connectionmanager.cpp',
     'jamidht/contact_list.cpp',
     'jamidht/conversation.cpp',
+    'jamidht/conversation_channel_handler.cpp',
+    'jamidht/conversation_module.cpp',
     'jamidht/conversationrepository.cpp',
     'jamidht/gitserver.cpp',
     'jamidht/jamiaccount.cpp',
@@ -35,6 +37,8 @@ libjami_sources = files(
     'jamidht/namedirectory.cpp',
     'jamidht/p2p.cpp',
     'jamidht/server_account_manager.cpp',
+    'jamidht/sync_channel_handler.cpp',
+    'jamidht/sync_module.cpp',
     'media/audio/echo-cancel/null_echo_canceller.cpp',
     'media/audio/sound/audiofile.cpp',
     'media/audio/sound/dtmf.cpp',
@@ -115,6 +119,7 @@ libjami_sources = files(
     'smartools.cpp',
     'string_utils.cpp',
     'threadloop.cpp',
+    'uri.cpp',
     'utf8_utils.cpp'
 )
 if host_machine.system() == 'windows'
