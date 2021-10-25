@@ -168,6 +168,7 @@ install_signal_primitives(void *)
     add_handler<DRing::CallSignal::StateChange,
                 const std::string&,
                 const std::string&,
+                const std::string&,
                 signed>
         (handlers, "state-changed");
 
