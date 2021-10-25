@@ -91,7 +91,7 @@ public:
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
-    void enterConference(Conference* conference);
+    void enterConference(Conference& conference);
     void exitConference();
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
@@ -110,8 +110,7 @@ public:
     {
         if (isReceiving() && receiveThread_)
             return std::static_pointer_cast<VideoFrameActiveWriter>(receiveThread_);
-        else
-            return dummyVideoReceive_;
+        return {};
     }
 
 private:
@@ -126,8 +125,6 @@ private:
 
     std::unique_ptr<VideoSender> sender_;
     std::shared_ptr<VideoReceiveThread> receiveThread_;
-    std::shared_ptr<VideoFrameActiveWriter> dummyVideoReceive_
-        = std::make_shared<VideoFrameActiveWriter>();
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
