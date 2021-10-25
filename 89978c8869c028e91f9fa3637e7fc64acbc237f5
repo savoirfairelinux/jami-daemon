@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc9936e5_0df06f2e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2172,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-25T20:45:37Z",
+      "side": 1,
+      "message": "removed",
+      "range": {
+        "startLine": 2172,
+        "startChar": 40,
+        "endLine": 2172,
+        "endChar": 43
+      },
+      "revId": "89978c8869c028e91f9fa3637e7fc64acbc237f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2f5e2eb7_e92c4fef",
+        "filename": "src/jamidht/sync_channel_handler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-25T20:45:37Z",
+      "side": 1,
+      "message": "renamed to cert in order to build",
+      "range": {
+        "startLine": 54,
+        "startChar": 79,
+        "endLine": 54,
+        "endChar": 87
+      },
+      "revId": "89978c8869c028e91f9fa3637e7fc64acbc237f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
