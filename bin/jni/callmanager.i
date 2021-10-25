@@ -51,6 +51,8 @@ public:
     virtual void onRtcpReportReceived(const std::string& call_id, const std::map<std::string, int>& stats){}
     virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& call_id, bool holding){}
+    virtual void audioMuted(const std::string& call_id, bool muted){}
+    virtual void videoMuted(const std::string& call_id, bool muted){}
     virtual void connectionUpdate(const std::string& id, int state){}
     virtual void remoteRecordingChanged(const std::string& call_id, const std::string& peer_number, bool state){}
     virtual void mediaNegotiationStatus(const std::string& call_id, const std::string& event,
@@ -154,6 +156,8 @@ public:
     virtual void onRtcpReportReceived(const std::string& call_id, const std::map<std::string, int>& stats){}
     virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& call_id, bool holding){}
+    virtual void audioMuted(const std::string& call_id, bool muted){}
+    virtual void videoMuted(const std::string& call_id, bool muted){}
     virtual void connectionUpdate(const std::string& id, int state){}
     virtual void remoteRecordingChanged(const std::string& call_id, const std::string& peer_number, bool state){}
     virtual void mediaNegotiationStatus(const std::string& call_id, const std::string& event,
