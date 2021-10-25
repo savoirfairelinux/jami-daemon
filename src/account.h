@@ -27,6 +27,7 @@
 #include "config.h"
 #endif
 
+#include "client/ring_signal.h"
 #include "configurationmanager_interface.h"
 #include "noncopyable.h"
 #include "config/serializable.h"
@@ -37,6 +38,7 @@
 #include "media/media_attribute.h"
 #include "logger.h"
 #include "compiler_intrinsics.h" // include the "UNUSED" macro
+#include "call_set.h"
 
 #include <functional>
 #include <string>
@@ -284,9 +286,6 @@ public:
 
     bool isReadReceiptEnabled() const { return sendReadReceipt_; }
 
-    void attachCall(const std::string& id);
-    void detachCall(const std::string& id);
-
     static const char* const VIDEO_CODEC_ENABLED;
     static const char* const VIDEO_CODEC_NAME;
     static const char* const VIDEO_CODEC_PARAMETERS;
@@ -387,6 +386,27 @@ public:
     bool isIceCompIdRfc5245Compliant() const { return iceCompIdRfc5245Compliant_; }
     void enableIceCompIdRfc5245Compliance(bool enable) { iceCompIdRfc5245Compliant_ = enable; }
 
+    std::shared_ptr<Call> getCall(const std::string& callId) const
+    {
+        return callSet_.getCall(callId);
+    }
+    std::vector<std::string> getCallList() const { return callSet_.getCallIds(); }
+    std::shared_ptr<Conference> getConference(const std::string& confId) const
+    {
+        return callSet_.getConference(confId);
+    }
+    std::vector<std::string> getConferenceList() const { return callSet_.getConferenceIds(); }
+    void attach(const std::shared_ptr<Call>& call) { callSet_.add(call); }
+    bool detach(const std::shared_ptr<Call>& call) { return callSet_.remove(call); }
+    void attach(const std::shared_ptr<Conference>& conf) { callSet_.add(conf); }
+    bool removeConference(const std::string& confId)
+    {
+        auto result = callSet_.removeConference(confId);
+        if (result)
+            emitSignal<DRing::CallSignal::ConferenceRemoved>(getAccountID(), confId);
+        return result;
+    }
+
 public:
     // virtual methods that has to be implemented by concrete classes
     /**
@@ -399,10 +419,9 @@ private:
     NON_COPYABLE(Account);
 
     /**
-     * Set of call's ID attached to the account.
+     * Set of calls attached to the account.
      */
-    std::mutex callIDSetMtx_;
-    std::set<std::string> callIDSet_;
+    CallSet callSet_;
 
 protected:
     void updateUpnpController();

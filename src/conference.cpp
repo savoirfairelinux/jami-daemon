@@ -52,18 +52,18 @@ using namespace std::literals;
 
 namespace jami {
 
-Conference::Conference(bool enableVideo)
+Conference::Conference(const std::shared_ptr<Account>& account)
     : id_(Manager::instance().callFactory.getNewCallID())
+    , account_(account)
 #ifdef ENABLE_VIDEO
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
-    , videoEnabled_(enableVideo)
 #endif
 {
     JAMI_INFO("Create new conference %s", id_.c_str());
 
 #ifdef ENABLE_VIDEO
     // We are done if the video is disabled.
-    if (not videoEnabled_)
+    if (not account->isVideoEnabled())
         return;
 
     getVideoMixer()->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
@@ -107,7 +107,7 @@ Conference::Conference(bool enableVideo)
                 }
                 auto isHandRaised = shared->isHandRaised(peerId);
                 auto isModeratorMuted = shared->isMuted(peerId);
-                auto sinkId = shared->getConfID() + peerId;
+                auto sinkId = shared->getConfId() + peerId;
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       {},
                                                       std::move(sinkId),
@@ -159,7 +159,7 @@ Conference::~Conference()
 
             // Continue the recording for the call if the conference was recorded
             if (this->isRecording()) {
-                JAMI_DBG("Stop recording for conf %s", getConfID().c_str());
+                JAMI_DBG("Stop recording for conf %s", getConfId().c_str());
                 this->toggleRecording();
                 if (not call->isRecording()) {
                     JAMI_DBG("Conference was recorded, start recording for conf %s",
@@ -185,9 +185,9 @@ Conference::~Conference()
         jami::Manager::instance()
             .getJamiPluginManager()
             .getCallServicesManager()
-            .clearCallHandlerMaps(getConfID());
+            .clearCallHandlerMaps(getConfId());
         Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
-            getConfID());
+            getConfId());
         confAVStreams.clear();
     }
 #endif // ENABLE_PLUGIN
@@ -214,11 +214,11 @@ Conference::createConfAVStreams()
     };
 
     // Preview and Received
-    if ((audioMixer_ = jami::getAudioInput(getConfID()))) {
+    if ((audioMixer_ = jami::getAudioInput(getConfId()))) {
         auto audioSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData previewStreamData {getConfID(), false, StreamType::audio, getConfID()};
+        StreamData previewStreamData {getConfId(), false, StreamType::audio, getConfId()};
         createConfAVStream(previewStreamData, *audioMixer_, audioSubject);
-        StreamData receivedStreamData {getConfID(), true, StreamType::audio, getConfID()};
+        StreamData receivedStreamData {getConfId(), true, StreamType::audio, getConfId()};
         createConfAVStream(receivedStreamData, *audioMixer_, audioSubject);
     }
 
@@ -227,13 +227,13 @@ Conference::createConfAVStreams()
     if (videoMixer_) {
         // Review
         auto receiveSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-        StreamData receiveStreamData {getConfID(), true, StreamType::video, getConfID()};
+        StreamData receiveStreamData {getConfId(), true, StreamType::video, getConfId()};
         createConfAVStream(receiveStreamData, *videoMixer_, receiveSubject);
 
         // Preview
         if (auto& videoPreview = videoMixer_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-            StreamData previewStreamData {getConfID(), false, StreamType::video, getConfID()};
+            StreamData previewStreamData {getConfId(), false, StreamType::video, getConfId()};
             createConfAVStream(previewStreamData, *videoPreview, previewSubject);
         }
     }
@@ -415,14 +415,14 @@ Conference::addParticipant(const std::string& participant_id)
         }
 #ifdef ENABLE_VIDEO
         if (auto call = getCall(participant_id)) {
-            call->enterConference(getConfID());
+            call->enterConference(*this);
             // Continue the recording for the conference if one participant was recording
             if (call->isRecording()) {
                 JAMI_DBG("Stop recording for call %s", call->getCallId().c_str());
                 call->toggleRecording();
                 if (not this->isRecording()) {
                     JAMI_DBG("One participant was recording, start recording for conference %s",
-                             getConfID().c_str());
+                             getConfId().c_str());
                     this->toggleRecording();
                 }
             }
@@ -445,8 +445,8 @@ Conference::setActiveParticipant(const std::string& participant_id)
         return;
     }
     if (auto call = getCallFromPeerID(participant_id)) {
-        auto videoRecv = call->getReceiveVideoFrameActiveWriter().get();
-        videoMixer_->setActiveParticipant(videoRecv);
+        if (auto videoRecv = call->getReceiveVideoFrameActiveWriter())
+            videoMixer_->setActiveParticipant(videoRecv.get());
         return;
     }
 
@@ -541,7 +541,7 @@ Conference::createSinks(const ConfInfo& infos)
     if (!videoMixer_)
         return;
 
-    Manager::instance().createSinkClients(getConfID(),
+    Manager::instance().createSinkClients(getConfId(),
                                           infos,
                                           std::static_pointer_cast<video::VideoGenerator>(
                                               videoMixer_),
@@ -740,10 +740,12 @@ Conference::toggleRecording()
     return Recordable::toggleRecording();
 }
 
-const std::string&
-Conference::getConfID() const
+std::string
+Conference::getAccountId() const
 {
-    return id_;
+    if (auto account = getAccount())
+        return account->getAccountID();
+    return {};
 }
 
 void
@@ -762,7 +764,7 @@ Conference::switchInput(const std::string& input)
         // Preview
         if (auto& videoPreview = mixer->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-            StreamData previewStreamData {getConfID(), false, StreamType::video, getConfID()};
+            StreamData previewStreamData {getConfId(), false, StreamType::video, getConfId()};
             createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
         }
 #endif
@@ -784,7 +786,9 @@ Conference::switchSecondaryInput(const std::string& input)
 bool
 Conference::isVideoEnabled() const
 {
-    return videoEnabled_;
+    if (auto shared = account_.lock())
+        return shared->isVideoEnabled();
+    return false;
 }
 
 #ifdef ENABLE_VIDEO
@@ -810,13 +814,13 @@ Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
     // Audio
     // Create ghost participant for ringbufferpool
     auto& rbPool = Manager::instance().getRingBufferPool();
-    ghostRingBuffer_ = rbPool.createRingBuffer(getConfID());
+    ghostRingBuffer_ = rbPool.createRingBuffer(getConfId());
 
     // Bind it to ringbufferpool in order to get the all mixed frames
-    bindParticipant(getConfID());
+    bindParticipant(getConfId());
 
     // Add stream to recorder
-    audioMixer_ = jami::getAudioInput(getConfID());
+    audioMixer_ = jami::getAudioInput(getConfId());
     if (auto ob = rec->addStream(audioMixer_->getInfo("a:mixer"))) {
         audioMixer_->attach(ob);
     }
@@ -836,7 +840,7 @@ Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
     if (auto ob = rec->getStream("a:mixer"))
         audioMixer_->detach(ob);
     audioMixer_.reset();
-    Manager::instance().getRingBufferPool().unBindAll(getConfID());
+    Manager::instance().getRingBufferPool().unBindAll(getConfId());
     ghostRingBuffer_.reset();
 }
 
@@ -877,8 +881,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
             hangupParticipant(root["hangupParticipant"].asString());
         }
         if (root.isMember("handRaised")) {
-            setHandRaised(root["handRaised"].asString(),
-                                 root["handState"].asString() == "true");
+            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
         }
     }
 }
@@ -1131,7 +1134,7 @@ void
 Conference::hangupParticipant(const std::string& participant_id)
 {
     if (isHost(participant_id)) {
-        Manager::instance().detachLocalParticipant(id_);
+        Manager::instance().detachLocalParticipant(shared_from_this());
         return;
     }
 

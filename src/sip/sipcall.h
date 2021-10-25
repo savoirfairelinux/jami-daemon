@@ -151,7 +151,7 @@ public:
     void sendKeyframe() override;
     bool isIceEnabled() const override;
     std::map<std::string, std::string> getDetails() const override;
-    void enterConference(const std::string& confId) override;
+    void enterConference(Conference& conference) override;
     void exitConference() override;
     std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> getReceiveVideoFrameActiveWriter()
         override;
