@@ -123,10 +123,9 @@ Smartools::setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::s
     std::lock_guard<std::mutex> lk(mutexInfo_);
     information_["remote video codec"] = remoteVideoCodec;
     if (auto call = Manager::instance().getCallFromCallID(callID)) {
-        auto confID = call->getConfId();
-        if (not confID.empty()) {
+        if (auto conf = call->getConference()) {
             information_["type"] = "conference";
-            information_["callID"] = confID;
+            information_["callID"] = conf->getConfId();
         } else {
             information_["type"] = "no conference";
             information_["callID"] = callID;

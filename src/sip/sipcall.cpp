@@ -2014,10 +2014,11 @@ SIPCall::startAllMedia()
 
 #ifdef ENABLE_VIDEO
     // TODO. Move this elsewhere (when adding participant to conf?)
-    if (!hasActiveVideo && !getConfId().empty()) {
-        auto conference = Manager::instance().getConferenceFromID(getConfId());
-        if (conference->isVideoEnabled())
-            conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
+    if (not hasActiveVideo) {
+        if (auto conference = conf_.lock())
+            if (conference->isVideoEnabled())
+                if (auto recv = getReceiveVideoFrameActiveWriter())
+                    conference->attachVideo(recv.get(), getCallId());
     }
 #endif
 
@@ -2700,24 +2701,22 @@ SIPCall::getDetails() const
 }
 
 void
-SIPCall::enterConference(const std::string& confId)
+SIPCall::enterConference(Conference& conference)
 {
 #ifdef ENABLE_VIDEO
-    auto conf = Manager::instance().getConferenceFromID(confId);
-    if (conf == nullptr) {
-        JAMI_ERR("Unknown conference [%s]", confId.c_str());
-        return;
-    }
-
-    if (conf->isVideoEnabled()) {
+    if (conference.isVideoEnabled()) {
         auto videoRtp = getVideoRtp();
         if (not videoRtp) {
-            JAMI_ERR("[call:%s] Failed to get a valid video RTP session", getCallId().c_str());
-            throw std::runtime_error("Failed to get a valid video RTP session");
+            // In conference, we need to have a video RTP session even
+            // if it's an audio only call
+            videoRtp = addDummyVideoRtpSession();
+            if (not videoRtp) {
+                JAMI_ERR("[call:%s] Failed to get a valid video RTP session", getCallId().c_str());
+                throw std::runtime_error("Failed to get a valid video RTP session");
+            }
         }
-        videoRtp->enterConference(conf.get());
+        videoRtp->enterConference(conference);
     }
-
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -2784,7 +2783,8 @@ SIPCall::createSinks(const ConfInfo& infos)
     auto& videoReceive = videoRtp->getVideoReceive();
     if (!videoReceive)
         return;
-    auto id = getConfId().empty() ? getCallId() : getConfId();
+    auto conf = conf_.lock();
+    const auto& id = conf ? conf->getConfId() : getCallId();
     Manager::instance().createSinkClients(id,
                                           infos,
                                           std::static_pointer_cast<video::VideoGenerator>(
@@ -3180,7 +3180,8 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
 void
 SIPCall::peerRecording(bool state)
 {
-    const std::string& id = getConfId().empty() ? getCallId() : getConfId();
+    auto conference = conf_.lock();
+    const std::string& id = conference ? conference->getConfId() : getCallId();
     if (state) {
         JAMI_WARN("Peer is recording");
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
@@ -3200,9 +3201,8 @@ SIPCall::peerMuted(bool muted)
         JAMI_WARN("Peer un-muted");
     }
     peerMuted_ = muted;
-    if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
+    if (auto conf = conf_.lock())
         conf->updateMuted();
-    }
 }
 
 void
