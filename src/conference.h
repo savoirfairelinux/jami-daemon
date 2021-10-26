@@ -70,6 +70,7 @@ struct ParticipantInfo
     bool audioLocalMuted {false};
     bool audioModeratorMuted {false};
     bool isModerator {false};
+    bool handRaised {false};
 
     void fromJson(const Json::Value& v)
     {
@@ -85,6 +86,7 @@ struct ParticipantInfo
         audioLocalMuted = v["audioLocalMuted"].asBool();
         audioModeratorMuted = v["audioModeratorMuted"].asBool();
         isModerator = v["isModerator"].asBool();
+        handRaised = v["handRaised"].asBool();
     }
 
     Json::Value toJson() const
@@ -102,6 +104,7 @@ struct ParticipantInfo
         val["audioLocalMuted"] = audioLocalMuted;
         val["audioModeratorMuted"] = audioModeratorMuted;
         val["isModerator"] = isModerator;
+        val["handRaised"] = handRaised;
         return val;
     }
 
@@ -118,7 +121,8 @@ struct ParticipantInfo
                 {"videoMuted", videoMuted ? "true" : "false"},
                 {"audioLocalMuted", audioLocalMuted ? "true" : "false"},
                 {"audioModeratorMuted", audioModeratorMuted ? "true" : "false"},
-                {"isModerator", isModerator ? "true" : "false"}};
+                {"isModerator", isModerator ? "true" : "false"},
+                {"handRaised", handRaised ? "true" : "false"}};
     }
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -128,7 +132,7 @@ struct ParticipantInfo
                and p1.h == p2.h and p1.videoMuted == p2.videoMuted
                and p1.audioLocalMuted == p2.audioLocalMuted
                and p1.audioModeratorMuted == p2.audioModeratorMuted
-               and p1.isModerator == p2.isModerator;
+               and p1.isModerator == p2.isModerator and p1.handRaised == p2.handRaised;
     }
 
     friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -318,6 +322,7 @@ public:
     void updateConferenceInfo(ConfInfo confInfo);
     void createSinks(const ConfInfo& infos);
     void setModerator(const std::string& uri, const bool& state);
+    void setHandRaised(const std::string& uri, const bool& state);
     void muteParticipant(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& participant_id);
     void updateMuted();
@@ -333,7 +338,9 @@ private:
 
     static std::shared_ptr<Call> getCall(const std::string& callId);
     bool isModerator(std::string_view uri) const;
+    bool isHandRaised(std::string_view uri) const;
     void updateModerators();
+    void updateHandsRaised();
 
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
@@ -358,6 +365,7 @@ private:
     std::shared_ptr<jami::AudioInput> audioMixer_;
     std::set<std::string, std::less<>> moderators_ {};
     std::set<std::string, std::less<>> participantsMuted_ {};
+    std::set<std::string, std::less<>> handsRaised_;
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);

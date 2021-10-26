@@ -97,6 +97,9 @@ DRING_PUBLIC void setModerator(const std::string& confId,
 DRING_PUBLIC void muteParticipant(const std::string& confId,
                                   const std::string& peerId,
                                   const bool& state);
+DRING_PUBLIC void raiseParticipantHand(const std::string& confId,
+                                       const std::string& peerId,
+                                       const bool& state);
 DRING_PUBLIC void hangupParticipant(const std::string& confId, const std::string& participant);
 
 /* Statistic related methods */
