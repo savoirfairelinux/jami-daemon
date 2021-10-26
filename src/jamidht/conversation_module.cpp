@@ -1158,7 +1158,6 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                     lk.unlock();
                     pimpl_->removeRepository(convId, false);
                 }
-                break;
             }
         }
     }
