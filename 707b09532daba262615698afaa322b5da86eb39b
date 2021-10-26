@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5eac61a2_3ed180a9",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1597,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-26T19:38:24Z",
+      "side": 0,
+      "message": "why removed?",
+      "range": {
+        "startLine": 1596,
+        "startChar": 16,
+        "endLine": 1597,
+        "endChar": 17
+      },
+      "revId": "707b09532daba262615698afaa322b5da86eb39b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f0ba7640_0fc3eee2",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1623,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-26T19:38:24Z",
+      "side": 0,
+      "message": "removed?",
+      "range": {
+        "startLine": 1619,
+        "startChar": 23,
+        "endLine": 1623,
+        "endChar": 5
+      },
+      "revId": "707b09532daba262615698afaa322b5da86eb39b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
