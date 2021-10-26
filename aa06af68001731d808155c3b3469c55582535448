@@ -45,6 +45,98 @@
       },
       "revId": "aa06af68001731d808155c3b3469c55582535448",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d66110a_a3dd10b1",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-26T18:30:54Z",
+      "side": 1,
+      "message": "this is a bit unreadable, imho we can just do\n\nParticipantInfo pi;\npi.videoMuted \u003d true;\npi.audioLocalMuted \u003d audioLocalMuted;\npi.isModerator \u003d true;",
+      "range": {
+        "startLine": 128,
+        "startChar": 20,
+        "endLine": 128,
+        "endChar": 92
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "42c1d7b5_ee032379",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 433,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-26T18:30:54Z",
+      "side": 1,
+      "message": "remove todo (it should not)",
+      "range": {
+        "startLine": 433,
+        "startChar": 13,
+        "endLine": 433,
+        "endChar": 53
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "164f1e1c_3c342818",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 887,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-26T18:30:54Z",
+      "side": 1,
+      "message": "we can add a log like below",
+      "range": {
+        "startLine": 887,
+        "startChar": 25,
+        "endLine": 887,
+        "endChar": 32
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6fea7321_bd0fa006",
+        "filename": "src/jami/callmanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-26T18:30:54Z",
+      "side": 1,
+      "message": "bool",
+      "range": {
+        "startLine": 102,
+        "startChar": 39,
+        "endLine": 102,
+        "endChar": 50
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
