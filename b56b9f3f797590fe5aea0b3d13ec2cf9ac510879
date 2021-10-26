@@ -116,6 +116,30 @@
       },
       "revId": "b56b9f3f797590fe5aea0b3d13ec2cf9ac510879",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "10026be4_bad3f004",
+        "filename": "src/preferences.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-26T18:25:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5fee77b1_d237fa65",
+      "range": {
+        "startLine": 363,
+        "startChar": 11,
+        "endLine": 366,
+        "endChar": 5
+      },
+      "revId": "b56b9f3f797590fe5aea0b3d13ec2cf9ac510879",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
