@@ -96,6 +96,7 @@ std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::st
 void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
 void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
 void hangupParticipant(const std::string& confId, const std::string& peerId);
+void raiseParticipantHand(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
 
 /* File Playback methods */
 bool startRecordedFilePlayback(const std::string& filepath);
