@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "043b2c9e_ff1e6ded",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1664,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-10-26T17:03:31Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027username\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "01fbc848_70b1dde5",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1669,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-10-26T17:03:31Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027deviceKey\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
