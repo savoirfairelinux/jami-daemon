@@ -118,6 +118,10 @@ public:
     void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
     void hangupParticipant(const std::string& confId, const std::string& peerId);
+    void raiseParticipantHand(const std::string& accountId,
+                              const std::string& confId,
+                              const std::string& peerId,
+                              const bool& state);
 };
 
 #endif // __RING_CALLMANAGER_H__

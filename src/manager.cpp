@@ -3584,6 +3584,22 @@ Manager::muteParticipant(const std::string& confId,
 }
 
 void
+Manager::raiseParticipantHand(const std::string& confId,
+                              const std::string& participant,
+                              const bool& state)
+{
+    if (auto conf = getConferenceFromID(confId)) {
+        conf->setHandRaised(participant, state);
+    } else if (auto call = getCallFromCallID(confId)) {
+        std::map<std::string, std::string> messages;
+        Json::Value root;
+        root["handRaised"] = participant;
+        root["handState"] = state ? TRUE_STR : FALSE_STR;
+        call->sendConfOrder(root);
+    }
+}
+
+void
 Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)
 {
     auto acc = getAccount(accountID);

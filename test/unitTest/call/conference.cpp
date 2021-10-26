@@ -43,12 +43,14 @@ struct CallData
     std::string callId {};
     std::string state {};
     std::atomic_bool moderatorMuted {false};
+    std::atomic_bool raisedHand {false};
 
     void reset()
     {
         callId = "";
         state = "";
         moderatorMuted = false;
+        raisedHand = false;
     }
 };
 
@@ -73,6 +75,7 @@ private:
     void testAudioVideoMutedStates();
     void testCreateParticipantsSinks();
     void testMuteStatusAfterRemove();
+    void testHandsUp();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -80,6 +83,7 @@ private:
     CPPUNIT_TEST(testAudioVideoMutedStates);
     CPPUNIT_TEST(testCreateParticipantsSinks);
     CPPUNIT_TEST(testMuteStatusAfterRemove);
+    CPPUNIT_TEST(testHandsUp);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -179,10 +183,13 @@ ConferenceTest::registerSignalHandlers()
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
                     bobCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
+                    bobCall.raisedHand = infos.at("handRaised") == "true";
                 } else if (infos.at("uri").find(carlaUri) != std::string::npos) {
                     carlaCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
+                    carlaCall.raisedHand = infos.at("handRaised") == "true";
                 } else if (infos.at("uri").find(daviUri) != std::string::npos) {
                     daviCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
+                    daviCall.raisedHand = infos.at("handRaised") == "true";
                 }
             }
             cv.notify_one();
@@ -397,6 +404,65 @@ ConferenceTest::testMuteStatusAfterRemove()
 
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !daviCall.moderatorMuted.load(); }));
+
+    Manager::instance().hangupCall(daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "OVER"; }));
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testHandsUp()
+{
+    registerSignalHandlers();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
+    auto daviUri = daviAccount->getUsername();
+
+    startConference();
+
+    JAMI_INFO("Play with raise hand");
+    Manager::instance().raiseParticipantHand(confId, bobUri, true);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return bobCall.raisedHand.load(); }));
+
+    Manager::instance().raiseParticipantHand(confId, bobUri, false);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.raisedHand.load(); }));
+
+    JAMI_INFO("Start call between Alice and Davi");
+    auto call1 = aliceAccount->newOutgoingCall(daviUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
+    Manager::instance().answerCall(daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
+    Manager::instance().addParticipant(daviCall.callId, confId);
+
+    Manager::instance().raiseParticipantHand(confId, daviUri, true);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return daviCall.raisedHand.load(); }));
+
+    Manager::instance().hangupCall(daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "OVER"; }));
+    daviCall.reset();
+
+    auto call2 = aliceAccount->newOutgoingCall(daviUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
+    Manager::instance().answerCall(daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
+    Manager::instance().addParticipant(daviCall.callId, confId);
+
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return !daviCall.raisedHand.load(); }));
 
     Manager::instance().hangupCall(daviCall.callId);
     CPPUNIT_ASSERT(
