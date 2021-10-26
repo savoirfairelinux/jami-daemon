@@ -26,6 +26,30 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "89003f41_5f46c799",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1597,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 0,
+      "message": "I checked everywhere, I could not find who\u0027s using it.\nAny way, put it back.",
+      "parentUuid": "5eac61a2_3ed180a9",
+      "range": {
+        "startLine": 1596,
+        "startChar": 16,
+        "endLine": 1597,
+        "endChar": 17
+      },
+      "revId": "707b09532daba262615698afaa322b5da86eb39b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "f0ba7640_0fc3eee2",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 9
@@ -43,6 +67,98 @@
         "endLine": 1623,
         "endChar": 5
       },
+      "revId": "707b09532daba262615698afaa322b5da86eb39b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "44d8c1e5_8f969e4a",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1623,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 0,
+      "message": "moved to printContactHeader",
+      "parentUuid": "f0ba7640_0fc3eee2",
+      "range": {
+        "startLine": 1619,
+        "startChar": 23,
+        "endLine": 1623,
+        "endChar": 5
+      },
+      "revId": "707b09532daba262615698afaa322b5da86eb39b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f2062c41_b30aa8db",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1991,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 0,
+      "message": "this code was removed because we were parsing the contact header (that we set earlier) to get the contact address used to generate the contact header. So, instead, we just save the contact address.",
+      "revId": "707b09532daba262615698afaa322b5da86eb39b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d8039cb_357b9e2d",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 0,
+      "message": "doe not need to be an API anymore ...",
+      "revId": "707b09532daba262615698afaa322b5da86eb39b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f46060ef_26f54f74",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 221,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 0,
+      "message": "it\u0027s a private method now.",
+      "revId": "707b09532daba262615698afaa322b5da86eb39b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e75000ae_b94da2d7",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 422,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 0,
+      "message": "the transport will be set by the account",
       "revId": "707b09532daba262615698afaa322b5da86eb39b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

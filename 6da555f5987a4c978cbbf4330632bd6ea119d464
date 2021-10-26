@@ -121,6 +121,30 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "b43ea25a_c9649817",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1567,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 1,
+      "message": "The code was reworked, so we should not need to lock everything now.\nAck",
+      "parentUuid": "445ace22_996eef2a",
+      "range": {
+        "startLine": 1561,
+        "startChar": 0,
+        "endLine": 1567,
+        "endChar": 0
+      },
+      "revId": "6da555f5987a4c978cbbf4330632bd6ea119d464",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "74c10b27_061c2e19",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 5

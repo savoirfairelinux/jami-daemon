@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "aa01a92a_0a6a5f08",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 9
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 1,
+      "message": "indeed.\nDone",
+      "parentUuid": "1c4f646a_b4f422da",
+      "range": {
+        "startLine": 9,
+        "startChar": 15,
+        "endLine": 11,
+        "endChar": 14
+      },
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e0b153a2_5ff78ec5",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "57aa95e6_bde46ce9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 1,
+      "message": "no.\nDone",
+      "parentUuid": "e0b153a2_5ff78ec5",
+      "range": {
+        "startLine": 405,
+        "startChar": 51,
+        "endLine": 406,
+        "endChar": 52
+      },
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "269bcad2_6fe90209",
@@ -60,6 +108,30 @@
       "writtenOn": "2021-10-26T19:38:24Z",
       "side": 1,
       "message": "auto*",
+      "range": {
+        "startLine": 2992,
+        "startChar": 8,
+        "endLine": 2992,
+        "endChar": 12
+      },
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "51a66c38_57b2fe6f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2992,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "269bcad2_6fe90209",
       "range": {
         "startLine": 2992,
         "startChar": 8,
@@ -107,6 +179,24 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "0147bafc_6b00592b",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1664,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e2325fc1_c9ece491",
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "01fbc848_70b1dde5",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 9
@@ -136,6 +226,41 @@
       "side": 1,
       "message": "^",
       "parentUuid": "01fbc848_70b1dde5",
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "616c6266_37e7a32e",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1669,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "11d79fe1_2b0e329e",
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2288e0b1_9aa8f14b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 441,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-26T20:53:57Z",
+      "side": 1,
+      "message": "any idea ?",
       "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
