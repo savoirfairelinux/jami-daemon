@@ -105,6 +105,7 @@ Conference::Conference(bool enableVideo)
                     peerId = "host"sv;
                     isLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
                 }
+                auto isHandRaised = shared->isHandRaised(peerId);
                 auto isModeratorMuted = shared->isMuted(peerId);
                 auto sinkId = shared->getConfID() + peerId;
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
@@ -118,7 +119,8 @@ Conference::Conference(bool enableVideo)
                                                       !info.hasVideo,
                                                       isLocalMuted,
                                                       isModeratorMuted,
-                                                      isModerator});
+                                                      isModerator,
+                                                      isHandRaised});
             }
             if (auto videoMixer = shared->getVideoMixer()) {
                 newInfo.h = videoMixer->getHeight();
@@ -127,8 +129,11 @@ Conference::Conference(bool enableVideo)
             lk.unlock();
             if (!hostAdded) {
                 auto audioLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
-                newInfo.emplace_back(ParticipantInfo {
-                    "", "", "", false, 0, 0, 0, 0, true, audioLocalMuted, false, true});
+                ParticipantInfo pi;
+                pi.videoMuted = true;
+                pi.audioLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
+                pi.isModerator = true;
+                newInfo.emplace_back(pi);
             }
 
             shared->updateConferenceInfo(std::move(newInfo));
@@ -433,7 +438,6 @@ Conference::addParticipant(const std::string& participant_id)
 void
 Conference::setActiveParticipant(const std::string& participant_id)
 {
-    // TODO. Shouldn't be protected by ENABLE_VIDEO define ?
     if (!videoMixer_)
         return;
     if (isHost(participant_id)) {
@@ -570,6 +574,7 @@ Conference::removeParticipant(const std::string& participant_id)
     if (participants_.erase(participant_id)) {
         if (auto call = getCall(participant_id)) {
             participantsMuted_.erase(std::string(string_remove_suffix(call->getPeerNumber(), '@')));
+            handsRaised_.erase(std::string(string_remove_suffix(call->getPeerNumber(), '@')));
 #ifdef ENABLE_VIDEO
             call->exitConference();
             if (call->isPeerRecording())
@@ -871,6 +876,10 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("hangupParticipant")) {
             hangupParticipant(root["hangupParticipant"].asString());
         }
+        if (root.isMember("handRaised")) {
+            setHandRaised(root["handRaised"].asString(),
+                                 root["handState"].asString() == "true");
+        }
     }
 }
 
@@ -884,6 +893,50 @@ bool
 Conference::isModerator(std::string_view uri) const
 {
     return moderators_.find(uri) != moderators_.end() or isHost(uri);
+}
+
+bool
+Conference::isHandRaised(std::string_view uri) const
+{
+    return isHost(uri) ? handsRaised_.find("host"sv) != handsRaised_.end()
+                       : handsRaised_.find(uri) != handsRaised_.end();
+}
+
+void
+Conference::setHandRaised(const std::string& participant_id, const bool& state)
+{
+    if (isHost(participant_id)) {
+        auto isPeerRequiringAttention = isHandRaised("host"sv);
+        if (state and not isPeerRequiringAttention) {
+            JAMI_DBG("Raise host hand");
+            handsRaised_.emplace("host"sv);
+            updateHandsRaised();
+        } else if (not state and isPeerRequiringAttention) {
+            JAMI_DBG("Lower host hand");
+            handsRaised_.erase("host");
+            updateHandsRaised();
+        }
+        return;
+    } else {
+        for (const auto& p : participants_) {
+            if (auto call = getCall(p)) {
+                auto isPeerRequiringAttention = isHandRaised(participant_id);
+                if (participant_id == string_remove_suffix(call->getPeerNumber(), '@')) {
+                    if (state and not isPeerRequiringAttention) {
+                        JAMI_DBG("Raise %s hand", participant_id.c_str());
+                        handsRaised_.emplace(participant_id);
+                        updateHandsRaised();
+                    } else if (not state and isPeerRequiringAttention) {
+                        JAMI_DBG("Remove %s raised hand", participant_id.c_str());
+                        handsRaised_.erase(participant_id);
+                        updateHandsRaised();
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    JAMI_WARN("Fail to raise %s hand (participant not found)", participant_id.c_str());
 }
 
 void
@@ -915,6 +968,16 @@ Conference::updateModerators()
     std::lock_guard<std::mutex> lk(confInfoMutex_);
     for (auto& info : confInfo_) {
         info.isModerator = isModerator(string_remove_suffix(info.uri, '@'));
+    }
+    sendConferenceInfos();
+}
+
+void
+Conference::updateHandsRaised()
+{
+    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    for (auto& info : confInfo_) {
+        info.handRaised = isHandRaised(string_remove_suffix(info.uri, '@'));
     }
     sendConferenceInfos();
 }
