@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "980cbec7_cd0c6335",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-26T13:34:46Z",
+      "side": 1,
+      "message": "Beak tests (connectionManager, conversationRepo, compatibility) due to signature changes",
+      "revId": "5beea7e602d365bb0b7af7117446807821074980",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
