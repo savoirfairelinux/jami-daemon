@@ -377,3 +377,12 @@ DBusCallManager::hangupParticipant(const std::string& confId, const std::string&
 {
     DRing::hangupParticipant(confId, peerId);
 }
+
+void
+DBusCallManager::raiseParticipantHand(const std::string& accountId,
+                                      const std::string& confId,
+                                      const std::string& peerId,
+                                      const bool& state)
+{
+    DRing::raiseParticipantHand(accountId, confId, peerId, state);
+}

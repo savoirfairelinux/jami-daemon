@@ -391,6 +391,15 @@ muteParticipant(const std::string& confId, const std::string& peerId, const bool
 }
 
 void
+raiseParticipantHand(const std::string& accountId,
+                     const std::string& confId,
+                     const std::string& peerId,
+                     const bool& state)
+{
+    jami::Manager::instance().raiseParticipantHand(confId, peerId, state);
+}
+
+void
 hangupParticipant(const std::string& confId, const std::string& participant)
 {
     jami::Manager::instance().hangupParticipant(confId, participant);
