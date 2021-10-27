@@ -262,6 +262,8 @@ VideoInput::configureFilePlayback(const std::string&,
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
 }
 
+#pragma optimize("", off)
+
 void
 VideoInput::createDecoder()
 {
@@ -344,7 +346,7 @@ VideoInput::createDecoder()
     /* Signal the client about readable sink */
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
 }
-
+#pragma optimize("", on)
 void
 VideoInput::deleteDecoder()
 {
@@ -446,25 +448,36 @@ VideoInput::initAVFoundation(const std::string& display)
 bool
 VideoInput::initGdiGrab(const std::string& params)
 {
-    size_t space = params.find(' ');
+    DeviceParams p;
+    p.format = "gdigrab";
+    p.input = "title=icons";
+    p.name = "title=icons";
+    auto dec = std::make_unique<MediaDecoder>();
+    if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
+        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
+    }
+    auto w = dec->getStream().width;
+    auto h = dec->getStream().height;
+
+
     clearOptions();
     decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
+    decOpts_.input = "title=icons";
 
+    size_t space = params.find(' ');
     if (space != std::string::npos) {
         std::istringstream iss(params.substr(space + 1));
-        char sep;
-        unsigned w, h;
-        iss >> w >> sep >> h;
         decOpts_.width = round2pow(w, 3);
-        decOpts_.height = round2pow(h, 3);
+        decOpts_.height = round2pow(h, 3) - 50;
 
-        size_t plus = params.find('+');
+        /*size_t plus = params.find('+');
         std::istringstream dss(params.substr(plus + 1, space - plus));
-        dss >> decOpts_.offset_x >> sep >> decOpts_.offset_y;
+        dss >> decOpts_.offset_x >> sep >> decOpts_.offset_y;*/
     } else {
         decOpts_.width = default_grab_width;
         decOpts_.height = default_grab_height;
     }
+
 
     return true;
 }

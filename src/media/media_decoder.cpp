@@ -312,6 +312,7 @@ MediaDemuxer::setIOContext(MediaIOHandle* ioctx)
     inputCtx_->pb = ioctx->getContext();
 }
 
+#pragma optimize("", off)
 MediaDemuxer::Status
 MediaDemuxer::decode()
 {
@@ -360,6 +361,7 @@ MediaDemuxer::decode()
     }
     return Status::Success;
 }
+#pragma optimize("", on)
 
 MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index)
     : demuxer_(demuxer)
@@ -531,6 +533,8 @@ MediaDecoder::prepareDecoderContext()
         return -1;
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
+    decoderCtx_->width = avStream_->codecpar->width;
+    decoderCtx_->height = avStream_->codecpar->height;
     width_ = decoderCtx_->width;
     height_ = decoderCtx_->height;
     decoderCtx_->framerate = avStream_->avg_frame_rate;
@@ -561,6 +565,11 @@ MediaDecoder::decode(AVPacket& packet)
 {
     int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
+    //if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO) {
+    //    JAMI_DBG() << "Decoding " << avStream_->codec->codec_id
+    //               << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
+    //}
+
     if (ret < 0 && ret != AVERROR(EAGAIN)) {
 #ifdef RING_ACCEL
         if (accel_) {
