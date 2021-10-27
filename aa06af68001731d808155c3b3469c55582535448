@@ -70,6 +70,78 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2cadb12b_3be0129c",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 394,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:50:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "20b5730f_95223234",
+      "range": {
+        "startLine": 394,
+        "startChar": 75,
+        "endLine": 394,
+        "endChar": 87
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "680a92ab_6f6fb116",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 394,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:50:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2789278d_77027add",
+      "range": {
+        "startLine": 394,
+        "startChar": 18,
+        "endLine": 394,
+        "endChar": 23
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "65e84d62_43bb7dcb",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 394,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:50:03Z",
+      "side": 1,
+      "message": "Done - need to run yet",
+      "parentUuid": "0a4a652a_7e664439",
+      "range": {
+        "startLine": 394,
+        "startChar": 0,
+        "endLine": 394,
+        "endChar": 20
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2d66110a_a3dd10b1",
@@ -83,6 +155,30 @@
       "writtenOn": "2021-10-26T18:30:54Z",
       "side": 1,
       "message": "this is a bit unreadable, imho we can just do\n\nParticipantInfo pi;\npi.videoMuted \u003d true;\npi.audioLocalMuted \u003d audioLocalMuted;\npi.isModerator \u003d true;",
+      "range": {
+        "startLine": 128,
+        "startChar": 20,
+        "endLine": 128,
+        "endChar": 92
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "72f38e4f_73aa3fce",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:50:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2d66110a_a3dd10b1",
       "range": {
         "startLine": 128,
         "startChar": 20,
@@ -116,6 +212,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6198a209_d7b56cf9",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 433,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:50:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "42c1d7b5_ee032379",
+      "range": {
+        "startLine": 433,
+        "startChar": 13,
+        "endLine": 433,
+        "endChar": 53
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "164f1e1c_3c342818",
@@ -139,6 +259,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "98319515_54653893",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 887,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:50:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "164f1e1c_3c342818",
+      "range": {
+        "startLine": 887,
+        "startChar": 25,
+        "endLine": 887,
+        "endChar": 32
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6fea7321_bd0fa006",
@@ -152,6 +296,30 @@
       "writtenOn": "2021-10-26T18:30:54Z",
       "side": 1,
       "message": "bool",
+      "range": {
+        "startLine": 102,
+        "startChar": 39,
+        "endLine": 102,
+        "endChar": 50
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "85dc2137_916b58d3",
+        "filename": "src/jami/callmanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:50:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6fea7321_bd0fa006",
       "range": {
         "startLine": 102,
         "startChar": 39,
