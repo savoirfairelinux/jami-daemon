@@ -20,6 +20,52 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7e1846dc_faacba34",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-27T15:36:46Z",
+      "side": 1,
+      "message": "config should be stored like other devices.",
+      "range": {
+        "startLine": 66,
+        "startChar": 0,
+        "endLine": 70,
+        "endChar": 5
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07facb9e_cc257b0c",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-27T15:36:46Z",
+      "side": 1,
+      "message": "should be saved in the device list, not as a separate preference.",
+      "range": {
+        "startLine": 84,
+        "startChar": 0,
+        "endLine": 89,
+        "endChar": 5
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "94921552_80227259",
         "filename": "src/media/video/video_device_monitor.cpp",
         "patchSetId": 4
@@ -36,6 +82,92 @@
         "startChar": 82,
         "endLine": 106,
         "endChar": 86
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e883c9e6_cff7e173",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-27T15:36:46Z",
+      "side": 1,
+      "message": "should be transmitted as part of device params like for other devices.",
+      "range": {
+        "startLine": 400,
+        "startChar": 25,
+        "endLine": 400,
+        "endChar": 90
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b469de48_c83a0278",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-27T15:36:46Z",
+      "side": 1,
+      "message": "should be transmitted as part of device params like for other devices.",
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd82cc2e_961b632b",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-27T15:36:46Z",
+      "side": 1,
+      "message": "should be transmitted as part of device params like for other devices.",
+      "range": {
+        "startLine": 454,
+        "startChar": 25,
+        "endLine": 454,
+        "endChar": 90
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e315f628_cbe99187",
+        "filename": "src/preferences.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-27T15:36:46Z",
+      "side": 1,
+      "message": "should be stored with other device params, not as a new preference",
+      "range": {
+        "startLine": 371,
+        "startChar": 4,
+        "endLine": 371,
+        "endChar": 34
       },
       "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
