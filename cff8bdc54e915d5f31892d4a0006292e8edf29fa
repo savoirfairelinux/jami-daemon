@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cdb5b4f8_d9ba2ee7",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:45:04Z",
+      "side": 1,
+      "message": "indeed. Leftover from the last clean-up\nremoved",
+      "parentUuid": "1a1e8444_7d7c4e64",
+      "range": {
+        "startLine": 97,
+        "startChar": 21,
+        "endLine": 97,
+        "endChar": 43
+      },
+      "revId": "cff8bdc54e915d5f31892d4a0006292e8edf29fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ab4cb45c_47ffb232",
@@ -73,6 +97,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "540142d2_1a80a318",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1105,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:45:04Z",
+      "side": 1,
+      "message": "for std::srting ?",
+      "parentUuid": "ab4cb45c_47ffb232",
+      "range": {
+        "startLine": 1105,
+        "startChar": 34,
+        "endLine": 1105,
+        "endChar": 37
+      },
+      "revId": "cff8bdc54e915d5f31892d4a0006292e8edf29fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "536ee60a_9c42a754",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 11
@@ -84,6 +132,30 @@
       "writtenOn": "2021-10-27T15:12:37Z",
       "side": 1,
       "message": "I guess changing contactAddress_ here is not useful, checkNAT is only called on register and depends on the return of the STUN or preferences",
+      "range": {
+        "startLine": 2038,
+        "startChar": 30,
+        "endLine": 2038,
+        "endChar": 47
+      },
+      "revId": "cff8bdc54e915d5f31892d4a0006292e8edf29fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b382868c_f91c0fc8",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 2038,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:45:04Z",
+      "side": 1,
+      "message": "It\u0027s not changed here.",
+      "parentUuid": "536ee60a_9c42a754",
       "range": {
         "startLine": 2038,
         "startChar": 30,

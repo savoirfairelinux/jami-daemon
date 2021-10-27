@@ -121,6 +121,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "31632096_63abcee8",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:45:04Z",
+      "side": 1,
+      "message": "The info to build the contact header comes from transport and user info (held by the account). So, it\u0027s the account who knows how to build the header.\nSo basically what changed from the sipcall perspective, it will not request the contact header from the account, but set for it when the transport is set.",
+      "parentUuid": "d8422e86_76208ba3",
+      "range": {
+        "startLine": 405,
+        "startChar": 51,
+        "endLine": 406,
+        "endChar": 52
+      },
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "269bcad2_6fe90209",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 9
@@ -303,6 +327,24 @@
       "side": 1,
       "message": "we should, but later",
       "parentUuid": "2288e0b1_9aa8f14b",
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d4cbc954_d22356ba",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 441,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:45:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5e2ba384_7df914f9",
       "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
