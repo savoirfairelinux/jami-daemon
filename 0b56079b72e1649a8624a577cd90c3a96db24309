@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5ffce49f_3fcb7a16",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-27T20:24:36Z",
+      "side": 1,
+      "message": "No changes for package.json? (else it\u0027s ok for me), same for libressl",
+      "revId": "0b56079b72e1649a8624a577cd90c3a96db24309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
