@@ -43,6 +43,48 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "cf37d464_5d44c608",
+        "filename": "src/conference.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 799,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:59:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d1454a44_0eab577c",
+      "range": {
+        "startLine": 799,
+        "startChar": 11,
+        "endLine": 799,
+        "endChar": 12
+      },
+      "revId": "c8c4d8cfc7b5cc121200c77b3007e32aa2923309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5a703f84_89d2238b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 799,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:59:01Z",
+      "side": 1,
+      "message": "may be in another patch",
+      "parentUuid": "37bc9951_c60520d9",
+      "revId": "c8c4d8cfc7b5cc121200c77b3007e32aa2923309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "2b7114ba_df47a24b",
         "filename": "src/conference.h",
         "patchSetId": 7
@@ -87,6 +129,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "af4c899e_31387042",
+        "filename": "src/conference.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:59:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ee91a599_b0158ca5",
+      "range": {
+        "startLine": 186,
+        "startChar": 4,
+        "endLine": 186,
+        "endChar": 14
+      },
+      "revId": "c8c4d8cfc7b5cc121200c77b3007e32aa2923309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "af8b4dd6_c32acb5d",
@@ -100,6 +166,30 @@
       "writtenOn": "2021-10-27T15:30:37Z",
       "side": 1,
       "message": "changed by https://review.jami.net/c/jami-daemon/+/17797/21",
+      "range": {
+        "startLine": 1661,
+        "startChar": 64,
+        "endLine": 1663,
+        "endChar": 49
+      },
+      "revId": "c8c4d8cfc7b5cc121200c77b3007e32aa2923309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "caa6882b_cdb2f220",
+        "filename": "src/manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1663,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-27T17:59:01Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "af8b4dd6_c32acb5d",
       "range": {
         "startLine": 1661,
         "startChar": 64,
