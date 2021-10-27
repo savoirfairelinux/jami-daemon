@@ -97,6 +97,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d8422e86_76208ba3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-27T15:12:37Z",
+      "side": 1,
+      "message": "I was unclear, my question is why\n\ncall-\u003esetSipTransport(sipTransp, contactHdr)\n\nand not\n\ncall-\u003esetSipTransport(sipTransp)\n\ncause the contactHdr seems to be from the transport.",
+      "parentUuid": "57aa95e6_bde46ce9",
+      "range": {
+        "startLine": 405,
+        "startChar": 51,
+        "endLine": 406,
+        "endChar": 52
+      },
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "269bcad2_6fe90209",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 9
@@ -261,6 +285,24 @@
       "writtenOn": "2021-10-26T20:53:57Z",
       "side": 1,
       "message": "any idea ?",
+      "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e2ba384_7df914f9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 441,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-27T15:12:37Z",
+      "side": 1,
+      "message": "we should, but later",
+      "parentUuid": "2288e0b1_9aa8f14b",
       "revId": "d5f511452a07cf534da5439575810a9e43713bf4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
