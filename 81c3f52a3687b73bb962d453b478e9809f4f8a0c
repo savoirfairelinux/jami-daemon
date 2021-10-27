@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "997e93bd_497a080e",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:47:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7e1846dc_faacba34",
+      "range": {
+        "startLine": 66,
+        "startChar": 0,
+        "endLine": 70,
+        "endChar": 5
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "07facb9e_cc257b0c",
@@ -54,6 +78,30 @@
       "writtenOn": "2021-10-27T15:36:46Z",
       "side": 1,
       "message": "should be saved in the device list, not as a separate preference.",
+      "range": {
+        "startLine": 84,
+        "startChar": 0,
+        "endLine": 89,
+        "endChar": 5
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6f895cb0_76fae1e7",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:47:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "07facb9e_cc257b0c",
       "range": {
         "startLine": 84,
         "startChar": 0,
@@ -87,6 +135,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0cd9d66_5c735c19",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:47:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "94921552_80227259",
+      "range": {
+        "startLine": 106,
+        "startChar": 82,
+        "endLine": 106,
+        "endChar": 86
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e883c9e6_cff7e173",
@@ -100,6 +172,30 @@
       "writtenOn": "2021-10-27T15:36:46Z",
       "side": 1,
       "message": "should be transmitted as part of device params like for other devices.",
+      "range": {
+        "startLine": 400,
+        "startChar": 25,
+        "endLine": 400,
+        "endChar": 90
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ec0b8779_a90df817",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:47:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e883c9e6_cff7e173",
       "range": {
         "startLine": 400,
         "startChar": 25,
@@ -127,6 +223,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "47f60358_399a82e8",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:47:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b469de48_c83a0278",
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dd82cc2e_961b632b",
@@ -150,6 +264,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "942cc069_2279082a",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:47:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dd82cc2e_961b632b",
+      "range": {
+        "startLine": 454,
+        "startChar": 25,
+        "endLine": 454,
+        "endChar": 90
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e315f628_cbe99187",
@@ -163,6 +301,30 @@
       "writtenOn": "2021-10-27T15:36:46Z",
       "side": 1,
       "message": "should be stored with other device params, not as a new preference",
+      "range": {
+        "startLine": 371,
+        "startChar": 4,
+        "endLine": 371,
+        "endChar": 34
+      },
+      "revId": "81c3f52a3687b73bb962d453b478e9809f4f8a0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "103ddb68_937d1a12",
+        "filename": "src/preferences.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-10-27T20:47:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e315f628_cbe99187",
       "range": {
         "startLine": 371,
         "startChar": 4,
