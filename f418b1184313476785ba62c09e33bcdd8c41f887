@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "882dff3a_a352c8ed",
+        "filename": "src/manager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-28T21:17:57Z",
+      "side": 1,
+      "message": "IMO, should put accountId first to be consistent",
+      "revId": "f418b1184313476785ba62c09e33bcdd8c41f887",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88e5af2d_6808e062",
+        "filename": "src/manager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-28T21:17:57Z",
+      "side": 1,
+      "message": "should not take the accountId too ?",
+      "revId": "f418b1184313476785ba62c09e33bcdd8c41f887",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b32f55c_3a37a5f0",
+        "filename": "src/manager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-28T21:17:57Z",
+      "side": 1,
+      "message": "same",
+      "revId": "f418b1184313476785ba62c09e33bcdd8c41f887",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74ddf619_a7f5025c",
+        "filename": "src/manager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-28T21:17:57Z",
+      "side": 1,
+      "message": "accountId ?",
+      "revId": "f418b1184313476785ba62c09e33bcdd8c41f887",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ce3b32f_43180044",
+        "filename": "src/manager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 373,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-28T21:17:57Z",
+      "side": 1,
+      "message": "accountId?",
+      "revId": "f418b1184313476785ba62c09e33bcdd8c41f887",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
