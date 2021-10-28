@@ -54,6 +54,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5849cf3_7e623984",
+        "filename": "contrib/src/pjproject/0001-android.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-28T15:23:53Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "aac7b4a5_60e09c8e",
+      "revId": "e2bd482910f134306850ede6387a9c8afb0e08b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "694772a8_1761589b",
@@ -115,6 +133,30 @@
       "side": 1,
       "message": "Comment at line 70 says 500 ms but default is set to 400 ms.",
       "parentUuid": "3f5f15a7_18e7d4ca",
+      "range": {
+        "startLine": 73,
+        "startChar": 42,
+        "endLine": 73,
+        "endChar": 45
+      },
+      "revId": "e2bd482910f134306850ede6387a9c8afb0e08b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "11b4f7b8_9f067210",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-28T15:23:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5be60551_6ac98007",
       "range": {
         "startLine": 73,
         "startChar": 42,
