@@ -142,6 +142,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "72b995aa_4f1c565c",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 394,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-28T17:51:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "65e84d62_43bb7dcb",
+      "range": {
+        "startLine": 394,
+        "startChar": 0,
+        "endLine": 394,
+        "endChar": 20
+      },
+      "revId": "aa06af68001731d808155c3b3469c55582535448",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2d66110a_a3dd10b1",
