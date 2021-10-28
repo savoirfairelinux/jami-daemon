@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0a79263_c1e7d26e",
+        "filename": "src/manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2914,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-10-28T15:21:19Z",
+      "side": 1,
+      "message": "Should not be different between RDV or any conference.\nCould simply check if the call is attached to a conference.",
+      "range": {
+        "startLine": 2910,
+        "startChar": 0,
+        "endLine": 2914,
+        "endChar": 9
+      },
+      "revId": "66043a3a34fd5dd3e7ce67bbbd50a127fc773b8b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
