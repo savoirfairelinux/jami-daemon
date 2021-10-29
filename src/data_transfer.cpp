@@ -778,6 +778,12 @@ OutgoingFile::process()
     } catch (...) {
     }
     if (!isUserCancelled_) {
+        // NOTE: emit(code) MUST be changed to improve handling of multiple destinations
+        // But for now, we can just avoid to emit errors to the client, because for outgoing
+        // transfer in a swarm, for outgoingFiles, we know that the file is ok. And the peer
+        // will retry the transfer if they need, so we don't need to show errors.
+        if (interactionId_.empty() && !correct)
+            return;
         auto code = correct ? DRing::DataTransferEventCode::finished
                             : DRing::DataTransferEventCode::closed_by_peer;
         emit(code);
