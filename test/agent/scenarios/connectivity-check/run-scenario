@@ -1,0 +1,38 @@
+#!/usr/bin/env -S guile -e run-agents -s
+!#
+
+(include "common.scm")
+
+(use-modules (ice-9 threads))
+
+(define *alice-pid* 0)
+(define *bob-pid* 0)
+
+(define (run-agents . args)
+
+  (define (exec-agent agent-name . args)
+    (let ((log-file (format #f "~a.log" agent-name)))
+      (call-with-output-file log-file
+	(lambda (port)
+          (with-output-to-port port
+	    (lambda ()
+	      (with-error-to-port (dup port)
+		(lambda ()
+		  (setenv "JAMI_LOG_FILE" (format #f "jami-~a" log-file))
+		  (setenv "SIPLOGLEVEL" "5")
+		  (status:exit-val
+		   (apply system* (append
+				   (list "./run-agent.scm")
+				   (cons agent-name args)))))))))))
+    (exit 0))
+
+  (with-fork (lambda () (exec-agent "alice"))
+	     (lambda (alice-pid)
+	       (set! *alice-pid* alice-pid)
+	       (with-fork (lambda ()
+			    (exec-agent "bob"))
+			  (lambda (bob-pid)
+			    (set! *bob-pid* bob-pid)
+			    (waitpid *alice-pid*)
+			    (waitpid *bob-pid*)))))
+  (exit 0))
