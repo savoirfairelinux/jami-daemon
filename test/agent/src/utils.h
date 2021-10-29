@@ -138,6 +138,13 @@ struct from_guile
         return scm_to_bool(value);
     }
 
+    operator uint8_t()
+    {
+        ensure_type("uint8", [](SCM v){ return scm_is_unsigned_integer(v, 0, 255); });
+
+        return scm_to_int(value);
+    }
+
     operator int()
     {
         ensure_type("integer", scm_is_integer);
