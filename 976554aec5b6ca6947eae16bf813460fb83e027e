@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49bce4ae_f8cba2dc",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-29T14:28:19Z",
+      "side": 1,
+      "message": "More a question of logic.\n\nWe set mediaAttributes to onHold_ only if state is Connected (make sense), but setState is called anyway? Is this even possible to call setState(CallState::HOLD) if connectionState !\u003d connected (like ringing or disconnected?)",
+      "range": {
+        "startLine": 1259,
+        "startChar": 10,
+        "endLine": 1259,
+        "endChar": 38
+      },
+      "revId": "976554aec5b6ca6947eae16bf813460fb83e027e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a42af60_509a5036",
+        "filename": "test/unitTest/Makefile.am",
+        "patchSetId": 9
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-29T14:28:19Z",
+      "side": 1,
+      "message": "NOTE: when merged, update daemon-tests",
+      "range": {
+        "startLine": 159,
+        "startChar": 21,
+        "endLine": 159,
+        "endChar": 69
+      },
+      "revId": "976554aec5b6ca6947eae16bf813460fb83e027e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "032586e0_7430cc6f",
+        "filename": "test/unitTest/media_negotiation/hold_resume.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 689,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-29T14:28:19Z",
+      "side": 1,
+      "message": "btw those blocks are not really useful",
+      "range": {
+        "startLine": 689,
+        "startChar": 4,
+        "endLine": 689,
+        "endChar": 5
+      },
+      "revId": "976554aec5b6ca6947eae16bf813460fb83e027e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
