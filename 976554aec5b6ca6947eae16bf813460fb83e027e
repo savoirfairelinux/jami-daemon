@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "09ff18fb_d86a82da",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-29T15:03:56Z",
+      "side": 1,
+      "message": "yeah, good question. \nFrom SIP perspective, it\u0027s possible to send a re-invite (the hold) before the peer answers, it\u0027s up to the application if it wants to do so.\nThe problem here is that we are not consistent because we set the call on hold but we dont send the re-invite ...\n\nI guess we should ignore the hold/resume if not connected, unless ...",
+      "parentUuid": "49bce4ae_f8cba2dc",
+      "range": {
+        "startLine": 1259,
+        "startChar": 10,
+        "endLine": 1259,
+        "endChar": 38
+      },
+      "revId": "976554aec5b6ca6947eae16bf813460fb83e027e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8a42af60_509a5036",
         "filename": "test/unitTest/Makefile.am",
         "patchSetId": 9
@@ -37,6 +61,30 @@
       "writtenOn": "2021-10-29T14:28:19Z",
       "side": 1,
       "message": "NOTE: when merged, update daemon-tests",
+      "range": {
+        "startLine": 159,
+        "startChar": 21,
+        "endLine": 159,
+        "endChar": 69
+      },
+      "revId": "976554aec5b6ca6947eae16bf813460fb83e027e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0e0a7a1_582ba2bc",
+        "filename": "test/unitTest/Makefile.am",
+        "patchSetId": 9
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-29T15:03:56Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "8a42af60_509a5036",
       "range": {
         "startLine": 159,
         "startChar": 21,
@@ -60,6 +108,30 @@
       "writtenOn": "2021-10-29T14:28:19Z",
       "side": 1,
       "message": "btw those blocks are not really useful",
+      "range": {
+        "startLine": 689,
+        "startChar": 4,
+        "endLine": 689,
+        "endChar": 5
+      },
+      "revId": "976554aec5b6ca6947eae16bf813460fb83e027e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5d6163f_290913de",
+        "filename": "test/unitTest/media_negotiation/hold_resume.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 689,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-10-29T15:03:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "032586e0_7430cc6f",
       "range": {
         "startLine": 689,
         "startChar": 4,
