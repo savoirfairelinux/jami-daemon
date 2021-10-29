@@ -1,0 +1,10 @@
+#!/bin/sh
+
+tmp=$(mktemp --directory)
+export XDG_CONFIG_HOME="$tmp"
+export XDG_CACHE_HOME="$tmp"
+export XDG_DATA_HOME="$tmp"
+
+./configure.scm
+
+rm -rf "$tmp"
