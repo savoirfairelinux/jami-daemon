@@ -16,6 +16,24 @@
       "message": "TODO LIST before merging:\n\nTo check: recording\n\nTo fix:\nclient-qt, start share screen-\u003eCan\u0027t stop\nclient-qt, unplug camera in a call: freeze or don\u0027t go to the other camera",
       "revId": "50572799473e9a05ae6f4f5cd37536e9ea0c3337",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8bbea4c7_27a52c60",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 25
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-10-29T15:15:25Z",
+      "side": 1,
+      "message": "d",
+      "parentUuid": "addf0a20_d3219c32",
+      "revId": "50572799473e9a05ae6f4f5cd37536e9ea0c3337",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
