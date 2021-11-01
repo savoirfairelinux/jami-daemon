@@ -16,6 +16,24 @@
       "message": "Move entire logic to SipCall. No need to be in the manager",
       "revId": "229a7dfc5b108b4e9366d7cb06ce33480ad648e1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0fe06178_f75a2014",
+        "filename": "src/manager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 2889,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T13:55:39Z",
+      "side": 1,
+      "message": "not sure handling conference logic in the call is better.\nSo I dispatch the handling of the request to call/conf accordingly.",
+      "parentUuid": "818f9f1a_be2e95ee",
+      "revId": "229a7dfc5b108b4e9366d7cb06ce33480ad648e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
