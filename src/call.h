@@ -213,6 +213,8 @@ public:
      * The media attributes set by the caller of this method will
      * determine the response sent to the peer and the configuration
      * of the local media.
+     * If the media list is empty, the current media set when the call
+     * was created will be used.
      */
     virtual void answer(const std::vector<DRing::MediaMap>& mediaList) = 0;
 

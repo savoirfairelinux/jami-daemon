@@ -698,12 +698,12 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
         base_.offHoldCall(call_id);
     } else if (state == "INCOMING") {
         conf.bindParticipant(call_id);
-        base_.answerCall(call_id);
+        base_.answerCallWithMedia(call_id, {});
     } else if (state == "CURRENT") {
         conf.bindParticipant(call_id);
     } else if (state == "INACTIVE") {
         conf.bindParticipant(call_id);
-        base_.answerCall(call_id);
+        base_.answerCallWithMedia(call_id, {});
     } else
         JAMI_WARN("[call:%s] call state %s not recognized for conference",
                   call_id.c_str(),
@@ -1165,7 +1165,6 @@ Manager::answerCallWithMedia(const std::string& callId,
 
     // If ringing
     stopTone();
-
     try {
         call->answer(mediaList);
     } catch (const std::runtime_error& e) {
@@ -2785,7 +2784,7 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
     if (account->isRendezVous()) {
         dht::ThreadPool::io().run([this, incomCallId] {
             auto& mgr = Manager::instance();
-            mgr.answerCall(incomCallId);
+            mgr.answerCallWithMedia(incomCallId, {});
             auto call = mgr.getCallFromCallID(incomCallId);
             auto accountId = call->getAccountId();
             for (const auto& cid : mgr.getCallList()) {
@@ -2822,7 +2821,8 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
             emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
         });
     } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
-        dht::ThreadPool::io().run([incomCallId] { Manager::instance().answerCall(incomCallId); });
+        dht::ThreadPool::io().run(
+            [incomCallId] { Manager::instance().answerCallWithMedia(incomCallId, {}); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {
         // Test if already calling this person
         if (currentCall->getAccountId() == account->getAccountID()
@@ -2851,7 +2851,7 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
                 auto currentCallID = currentCall->getCallId();
                 runOnMainThread([currentCallID, incomCallId] {
                     auto& mgr = Manager::instance();
-                    mgr.answerCall(incomCallId);
+                    mgr.answerCallWithMedia(incomCallId, {});
                     mgr.hangupCall(currentCallID);
                 });
             }
