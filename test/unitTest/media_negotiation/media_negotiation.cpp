@@ -110,16 +110,20 @@ public:
 
 private:
     // Test cases.
-    void audio_and_video_then_mute_video();
-    void audio_only_then_add_video();
-    void audio_and_video_then_mute_audio();
+    void audio_and_video_then_caller_mute_video();
+    void audio_only_then_caller_add_video();
+    void audio_and_video_then_caller_mute_audio();
+    void audio_and_video_answer_muted_audio_then_mute_audio();
+    void audio_and_video_answer_muted_video_then_mute_video();
     void audio_and_video_then_change_video_source();
     void audio_only_then_add_video_but_peer_disabled_multistream();
 
     CPPUNIT_TEST_SUITE(MediaNegotiationTest);
-    CPPUNIT_TEST(audio_and_video_then_mute_video);
-    CPPUNIT_TEST(audio_only_then_add_video);
-    CPPUNIT_TEST(audio_and_video_then_mute_audio);
+    CPPUNIT_TEST(audio_and_video_then_caller_mute_video);
+    CPPUNIT_TEST(audio_only_then_caller_add_video);
+    CPPUNIT_TEST(audio_and_video_then_caller_mute_audio);
+    CPPUNIT_TEST(audio_and_video_answer_muted_audio_then_mute_audio);
+    CPPUNIT_TEST(audio_and_video_answer_muted_video_then_mute_video);
     CPPUNIT_TEST(audio_and_video_then_change_video_source);
     CPPUNIT_TEST(audio_only_then_add_video_but_peer_disabled_multistream);
     CPPUNIT_TEST_SUITE_END();
@@ -149,13 +153,19 @@ private:
     static void configureScenario(CallData& bob, CallData& alice);
     void testWithScenario(CallData& aliceData, CallData& bobData, const TestScenario& scenario);
     static std::string getUserAlias(const std::string& callId);
-    // Infer media direction from the mute state.
-    // Note that when processing caller side, local is the caller and
-    // remote is the callee, and when processing the callee, the local is
-    // callee and remote is the caller.
-    static MediaDirection inferDirection(bool localMute, bool remoteMute);
+    // Infer media direction of an offer.
+    static uint8_t directionToBitset(MediaDirection direction, bool isLocal);
+    static MediaDirection bitsetToDirection(uint8_t val);
+    static MediaDirection inferInitialDirection(const MediaAttribute& offer);
+    // Infer media direction of an answer.
+    static MediaDirection inferNegotiatedDirection(MediaDirection local, MediaDirection answer);
     // Wait for a signal from the callbacks. Some signals also report the event that
     // triggered the signal a like the StateChange signal.
+    static bool validateMuteState(std::vector<MediaAttribute> expected,
+                                  std::vector<MediaAttribute> actual);
+    static bool validateMediaDirection(std::vector<MediaDescription> descrList,
+                                       std::vector<MediaAttribute> listInOffer,
+                                       std::vector<MediaAttribute> listInAnswer);
     static bool waitForSignal(CallData& callData,
                               const std::string& signal,
                               const std::string& expectedEvent = {});
@@ -209,26 +219,113 @@ MediaNegotiationTest::getUserAlias(const std::string& callId)
 }
 
 MediaDirection
-MediaNegotiationTest::inferDirection([[maybe_unused]] bool localMute,
-                                     [[maybe_unused]] bool remoteMute)
+MediaNegotiationTest::inferInitialDirection(const MediaAttribute& mediaAttr)
 {
-#if 1
-    return MediaDirection::SENDRECV;
-#else
-    // NOTE. The media direction inferred here should be the correct one
-    // according to the spec (RFC-3264 and RFC-6337). However, the current
-    // implementation always set 'sendrecv' regardless of the mute state.
-    if (not localMute and not remoteMute)
-        return MediaDirection::SENDRECV;
+    if (not mediaAttr.enabled_)
+        return MediaDirection::INACTIVE;
 
-    if (localMute and not remoteMute)
+    if (mediaAttr.muted_) {
+        if (mediaAttr.onHold_)
+            return MediaDirection::INACTIVE;
         return MediaDirection::RECVONLY;
+    }
 
-    if (not localMute and remoteMute)
+    if (mediaAttr.onHold_)
         return MediaDirection::SENDONLY;
 
+    return MediaDirection::SENDRECV;
+}
+
+uint8_t
+MediaNegotiationTest::directionToBitset(MediaDirection direction, bool isLocal)
+{
+    if (direction == MediaDirection::SENDRECV)
+        return 3;
+    if (direction == MediaDirection::RECVONLY)
+        return isLocal ? 2 : 1;
+    if (direction == MediaDirection::SENDONLY)
+        return isLocal ? 1 : 2;
+    return 0;
+}
+
+MediaDirection
+MediaNegotiationTest::bitsetToDirection(uint8_t val)
+{
+    if (val == 3)
+        return MediaDirection::SENDRECV;
+    if (val == 2)
+        return MediaDirection::RECVONLY;
+    if (val == 1)
+        return MediaDirection::SENDONLY;
     return MediaDirection::INACTIVE;
+}
+
+MediaDirection
+MediaNegotiationTest::inferNegotiatedDirection(MediaDirection local, MediaDirection remote)
+{
+    uint8_t val = directionToBitset(local, true) & directionToBitset(remote, false);
+    auto dir = bitsetToDirection(val);
+    return dir;
+#if 0
+    if (local == MediaDirection::INACTIVE or remote == MediaDirection::INACTIVE)
+        return MediaDirection::INACTIVE;
+
+    if (local == MediaDirection::SENDONLY and remote == MediaDirection::SENDONLY)
+        return MediaDirection::INACTIVE;
+
+    if (local == MediaDirection::RECVONLY and remote == MediaDirection::RECVONLY)
+        return MediaDirection::INACTIVE;
+
+    if (local == MediaDirection::SENDRECV and remote == MediaDirection::RECVONLY)
+        return MediaDirection::SENDONLY;
+
+    if (local == MediaDirection::SENDRECV and remote == MediaDirection::SENDONLY)
+        return MediaDirection::RECVONLY;
+    
+    if (local == MediaDirection::RECVONLY and remote == MediaDirection::SENDRECV)
+        return MediaDirection::RECVONLY;
+    
+    return MediaDirection::SENDRECV;
 #endif
+}
+
+bool
+MediaNegotiationTest::validateMuteState(std::vector<MediaAttribute> expected,
+                                        std::vector<MediaAttribute> actual)
+{
+    CPPUNIT_ASSERT_EQUAL(expected.size(), actual.size());
+
+    for (size_t idx = 0; idx < expected.size(); idx++) {
+        if (expected[idx].muted_ != actual[idx].muted_)
+            return false;
+    }
+
+    return true;
+}
+
+bool
+MediaNegotiationTest::validateMediaDirection(std::vector<MediaDescription> descrList,
+                                             std::vector<MediaAttribute> localMediaList,
+                                             std::vector<MediaAttribute> remoteMediaList)
+{
+    CPPUNIT_ASSERT_EQUAL(descrList.size(), localMediaList.size());
+    CPPUNIT_ASSERT_EQUAL(descrList.size(), remoteMediaList.size());
+
+    for (size_t idx = 0; idx < descrList.size(); idx++) {
+        auto local = inferInitialDirection(localMediaList[idx]);
+        auto remote = inferInitialDirection(remoteMediaList[idx]);
+        auto negotiated = inferNegotiatedDirection(local, remote);
+
+        if (descrList[idx].direction_ != negotiated) {
+            JAMI_WARN("Media [%lu] direction mismatch: expected %i - found %i",
+                      idx,
+                      static_cast<int>(negotiated),
+                      static_cast<int>(descrList[idx].direction_));
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void
@@ -621,10 +718,20 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
 
     // Validate Alice's media
     {
-        auto mediaAttr = aliceCall->getMediaAttributeList();
-        CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
-        for (size_t idx = 0; idx < mediaCount; idx++) {
-            CPPUNIT_ASSERT_EQUAL(scenario.offer_[idx].muted_, mediaAttr[idx].muted_);
+        auto mediaList = aliceCall->getMediaAttributeList();
+        CPPUNIT_ASSERT_EQUAL(mediaCount, mediaList.size());
+
+        // Validate mute state
+        CPPUNIT_ASSERT(validateMuteState(scenario.offer_, mediaList));
+
+        auto& sdp = aliceCall->getSDP();
+
+        // Validate local media direction
+        {
+            auto descrList = sdp.getActiveMediaDescription(false);
+            CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
+            // For Alice, local is the offer and remote is the answer.
+            CPPUNIT_ASSERT(validateMediaDirection(descrList, scenario.offer_, scenario.answer_));
         }
     }
 
@@ -632,10 +739,20 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
     {
         auto const& bobCall = std::dynamic_pointer_cast<SIPCall>(
             Manager::instance().getCallFromCallID(bobData.callId_));
-        auto mediaAttr = bobCall->getMediaAttributeList();
-        CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
-        for (size_t idx = 0; idx < mediaCount; idx++) {
-            CPPUNIT_ASSERT_EQUAL(scenario.answer_[idx].muted_, mediaAttr[idx].muted_);
+        auto mediaList = bobCall->getMediaAttributeList();
+        CPPUNIT_ASSERT_EQUAL(mediaCount, mediaList.size());
+
+        // Validate mute state
+        CPPUNIT_ASSERT(validateMuteState(scenario.answer_, mediaList));
+
+        auto& sdp = bobCall->getSDP();
+
+        // Validate local media direction
+        {
+            auto descrList = sdp.getActiveMediaDescription(false);
+            CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
+            // For Bob, local is the answer and remote is the offer.
+            CPPUNIT_ASSERT(validateMediaDirection(descrList, scenario.answer_, scenario.offer_));
         }
     }
 
@@ -672,14 +789,29 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
 
         // Validate Alice's media
         {
-            auto mediaAttr = aliceCall->getMediaAttributeList();
-            CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
-            for (size_t idx = 0; idx < mediaCount; idx++) {
-                CPPUNIT_ASSERT_EQUAL(scenario.offerUpdate_[idx].muted_, mediaAttr[idx].muted_);
+            auto mediaList = aliceCall->getMediaAttributeList();
+            CPPUNIT_ASSERT_EQUAL(mediaCount, mediaList.size());
 
-                // Check isCaptureDeviceMuted API
-                CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_,
-                                     aliceCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
+            // Validate mute state
+            CPPUNIT_ASSERT(validateMuteState(scenario.offerUpdate_, mediaList));
+
+            auto& sdp = aliceCall->getSDP();
+
+            // Validate local media direction
+            {
+                auto descrList = sdp.getActiveMediaDescription(false);
+                CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
+                CPPUNIT_ASSERT(validateMediaDirection(descrList,
+                                                      scenario.offerUpdate_,
+                                                      scenario.answerUpdate_));
+            }
+            // Validate remote media direction
+            {
+                auto descrList = sdp.getActiveMediaDescription(true);
+                CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
+                CPPUNIT_ASSERT(validateMediaDirection(descrList,
+                                                      scenario.answerUpdate_,
+                                                      scenario.offerUpdate_));
             }
         }
 
@@ -687,15 +819,14 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
         {
             auto const& bobCall = std::dynamic_pointer_cast<SIPCall>(
                 Manager::instance().getCallFromCallID(bobData.callId_));
-            auto mediaAttr = bobCall->getMediaAttributeList();
-            CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
-            for (size_t idx = 0; idx < mediaCount; idx++) {
-                CPPUNIT_ASSERT_EQUAL(scenario.answerUpdate_[idx].muted_, mediaAttr[idx].muted_);
+            auto mediaList = bobCall->getMediaAttributeList();
+            CPPUNIT_ASSERT_EQUAL(mediaCount, mediaList.size());
 
-                // Check isCaptureDeviceMuted API
-                CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_,
-                                     bobCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
-            }
+            // Validate mute state
+            CPPUNIT_ASSERT(validateMuteState(scenario.answerUpdate_, mediaList));
+
+            // NOTE:
+            // It should be enough to validate media direction on Alice's side
         }
     }
 
@@ -714,7 +845,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
 }
 
 void
-MediaNegotiationTest::audio_and_video_then_mute_video()
+MediaNegotiationTest::audio_and_video_then_caller_mute_video()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
@@ -728,30 +859,28 @@ MediaNegotiationTest::audio_and_video_then_mute_video()
     defaultVideo.label_ = "video_0";
     defaultVideo.enabled_ = true;
 
-    {
-        MediaAttribute audio(defaultAudio);
-        MediaAttribute video(defaultVideo);
+    MediaAttribute audio(defaultAudio);
+    MediaAttribute video(defaultVideo);
 
-        TestScenario scenario;
-        // First offer/answer
-        scenario.offer_.emplace_back(audio);
-        scenario.offer_.emplace_back(video);
-        scenario.answer_.emplace_back(audio);
-        scenario.answer_.emplace_back(video);
+    TestScenario scenario;
+    // First offer/answer
+    scenario.offer_.emplace_back(audio);
+    scenario.offer_.emplace_back(video);
+    scenario.answer_.emplace_back(audio);
+    scenario.answer_.emplace_back(video);
 
-        // Updated offer/answer
-        scenario.offerUpdate_.emplace_back(audio);
-        video.muted_ = true;
-        scenario.offerUpdate_.emplace_back(video);
+    // Updated offer/answer
+    scenario.offerUpdate_.emplace_back(audio);
+    video.muted_ = true;
+    scenario.offerUpdate_.emplace_back(video);
 
-        scenario.answerUpdate_.emplace_back(audio);
-        video.muted_ = false;
-        scenario.answerUpdate_.emplace_back(video);
-        scenario.expectMediaRenegotiation_ = true;
-        scenario.expectMediaChangeRequest_ = false;
+    scenario.answerUpdate_.emplace_back(audio);
+    video.muted_ = false;
+    scenario.answerUpdate_.emplace_back(video);
+    scenario.expectMediaRenegotiation_ = true;
+    scenario.expectMediaChangeRequest_ = false;
 
-        testWithScenario(aliceData_, bobData_, scenario);
-    }
+    testWithScenario(aliceData_, bobData_, scenario);
 
     DRing::unregisterSignalHandlers();
 
@@ -759,7 +888,7 @@ MediaNegotiationTest::audio_and_video_then_mute_video()
 }
 
 void
-MediaNegotiationTest::audio_only_then_add_video()
+MediaNegotiationTest::audio_only_then_caller_add_video()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
@@ -773,25 +902,23 @@ MediaNegotiationTest::audio_only_then_add_video()
     defaultVideo.label_ = "video_0";
     defaultVideo.enabled_ = true;
 
-    {
-        MediaAttribute audio(defaultAudio);
-        MediaAttribute video(defaultVideo);
+    MediaAttribute audio(defaultAudio);
+    MediaAttribute video(defaultVideo);
 
-        TestScenario scenario;
-        // First offer/answer
-        scenario.offer_.emplace_back(audio);
-        scenario.answer_.emplace_back(audio);
+    TestScenario scenario;
+    // First offer/answer
+    scenario.offer_.emplace_back(audio);
+    scenario.answer_.emplace_back(audio);
 
-        // Updated offer/answer
-        scenario.offerUpdate_.emplace_back(audio);
-        scenario.offerUpdate_.emplace_back(video);
-        scenario.answerUpdate_.emplace_back(audio);
-        scenario.answerUpdate_.emplace_back(video);
-        scenario.expectMediaRenegotiation_ = true;
-        scenario.expectMediaChangeRequest_ = true;
+    // Updated offer/answer
+    scenario.offerUpdate_.emplace_back(audio);
+    scenario.offerUpdate_.emplace_back(video);
+    scenario.answerUpdate_.emplace_back(audio);
+    scenario.answerUpdate_.emplace_back(video);
+    scenario.expectMediaRenegotiation_ = true;
+    scenario.expectMediaChangeRequest_ = true;
 
-        testWithScenario(aliceData_, bobData_, scenario);
-    }
+    testWithScenario(aliceData_, bobData_, scenario);
 
     DRing::unregisterSignalHandlers();
 
@@ -799,7 +926,7 @@ MediaNegotiationTest::audio_only_then_add_video()
 }
 
 void
-MediaNegotiationTest::audio_and_video_then_mute_audio()
+MediaNegotiationTest::audio_and_video_then_caller_mute_audio()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
@@ -813,31 +940,119 @@ MediaNegotiationTest::audio_and_video_then_mute_audio()
     defaultVideo.label_ = "video_0";
     defaultVideo.enabled_ = true;
 
-    {
-        MediaAttribute audio(defaultAudio);
-        MediaAttribute video(defaultVideo);
+    MediaAttribute audio(defaultAudio);
+    MediaAttribute video(defaultVideo);
 
-        TestScenario scenario;
-        // First offer/answer
-        scenario.offer_.emplace_back(audio);
-        scenario.offer_.emplace_back(video);
-        scenario.answer_.emplace_back(audio);
-        scenario.answer_.emplace_back(video);
+    TestScenario scenario;
+    // First offer/answer
+    scenario.offer_.emplace_back(audio);
+    scenario.offer_.emplace_back(video);
+    scenario.answer_.emplace_back(audio);
+    scenario.answer_.emplace_back(video);
 
-        // Updated offer/answer
-        audio.muted_ = true;
-        scenario.offerUpdate_.emplace_back(audio);
-        scenario.offerUpdate_.emplace_back(video);
+    // Updated offer/answer
+    audio.muted_ = true;
+    scenario.offerUpdate_.emplace_back(audio);
+    scenario.offerUpdate_.emplace_back(video);
 
-        audio.muted_ = false;
-        scenario.answerUpdate_.emplace_back(audio);
-        scenario.answerUpdate_.emplace_back(video);
+    audio.muted_ = false;
+    scenario.answerUpdate_.emplace_back(audio);
+    scenario.answerUpdate_.emplace_back(video);
 
-        scenario.expectMediaRenegotiation_ = false;
-        scenario.expectMediaChangeRequest_ = false;
+    scenario.expectMediaRenegotiation_ = false;
+    scenario.expectMediaChangeRequest_ = false;
 
-        testWithScenario(aliceData_, bobData_, scenario);
-    }
+    testWithScenario(aliceData_, bobData_, scenario);
+
+    DRing::unregisterSignalHandlers();
+
+    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+}
+
+void
+MediaNegotiationTest::audio_and_video_answer_muted_audio_then_mute_audio()
+{
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
+    configureScenario(aliceData_, bobData_);
+
+    MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
+    defaultAudio.label_ = "audio_0";
+    defaultAudio.enabled_ = true;
+
+    MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
+    defaultVideo.label_ = "video_0";
+    defaultVideo.enabled_ = true;
+
+    MediaAttribute audio(defaultAudio);
+    MediaAttribute video(defaultVideo);
+
+    TestScenario scenario;
+    // First offer/answer
+    scenario.offer_.emplace_back(audio);
+    scenario.offer_.emplace_back(video);
+    audio.muted_ = true;
+    scenario.answer_.emplace_back(audio);
+    scenario.answer_.emplace_back(video);
+
+    // Updated offer/answer
+    audio.muted_ = true;
+    scenario.offerUpdate_.emplace_back(audio);
+    scenario.offerUpdate_.emplace_back(video);
+
+    audio.muted_ = true;
+    scenario.answerUpdate_.emplace_back(audio);
+    scenario.answerUpdate_.emplace_back(video);
+
+    scenario.expectMediaChangeRequest_ = false;
+    scenario.expectMediaRenegotiation_ = true;
+
+    testWithScenario(aliceData_, bobData_, scenario);
+
+    DRing::unregisterSignalHandlers();
+
+    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+}
+
+void
+MediaNegotiationTest::audio_and_video_answer_muted_video_then_mute_video()
+{
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
+    configureScenario(aliceData_, bobData_);
+
+    MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
+    defaultAudio.label_ = "audio_0";
+    defaultAudio.enabled_ = true;
+
+    MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
+    defaultVideo.label_ = "video_0";
+    defaultVideo.enabled_ = true;
+
+    MediaAttribute audio(defaultAudio);
+    MediaAttribute video(defaultVideo);
+
+    TestScenario scenario;
+    // First offer/answer
+    scenario.offer_.emplace_back(audio);
+    scenario.offer_.emplace_back(video);
+    video.muted_ = true;
+    scenario.answer_.emplace_back(audio);
+    scenario.answer_.emplace_back(video);
+
+    // Updated offer/answer
+    video.muted_ = true;
+    scenario.offerUpdate_.emplace_back(audio);
+    scenario.offerUpdate_.emplace_back(video);
+
+    video.muted_ = true;
+    scenario.answerUpdate_.emplace_back(audio);
+    scenario.answerUpdate_.emplace_back(video);
+
+    scenario.expectMediaChangeRequest_ = false;
+    scenario.expectMediaRenegotiation_ = true;
+
+    testWithScenario(aliceData_, bobData_, scenario);
 
     DRing::unregisterSignalHandlers();
 
@@ -859,32 +1074,30 @@ MediaNegotiationTest::audio_and_video_then_change_video_source()
     defaultVideo.label_ = "video_0";
     defaultVideo.enabled_ = true;
 
-    {
-        MediaAttribute audio(defaultAudio);
-        MediaAttribute video(defaultVideo);
+    MediaAttribute audio(defaultAudio);
+    MediaAttribute video(defaultVideo);
 
-        TestScenario scenario;
-        // First offer/answer
-        scenario.offer_.emplace_back(audio);
-        scenario.offer_.emplace_back(video);
-        scenario.answer_.emplace_back(audio);
-        scenario.answer_.emplace_back(video);
+    TestScenario scenario;
+    // First offer/answer
+    scenario.offer_.emplace_back(audio);
+    scenario.offer_.emplace_back(video);
+    scenario.answer_.emplace_back(audio);
+    scenario.answer_.emplace_back(video);
 
-        // Updated offer/answer
-        scenario.offerUpdate_.emplace_back(audio);
-        // Just change the media source to validate that a new
-        // media negotiation (re-invite) will be triggered.
-        video.sourceUri_ = "Fake source";
-        scenario.offerUpdate_.emplace_back(video);
+    // Updated offer/answer
+    scenario.offerUpdate_.emplace_back(audio);
+    // Just change the media source to validate that a new
+    // media negotiation (re-invite) will be triggered.
+    video.sourceUri_ = "Fake source";
+    scenario.offerUpdate_.emplace_back(video);
 
-        scenario.answerUpdate_.emplace_back(audio);
-        scenario.answerUpdate_.emplace_back(video);
+    scenario.answerUpdate_.emplace_back(audio);
+    scenario.answerUpdate_.emplace_back(video);
 
-        scenario.expectMediaRenegotiation_ = true;
-        scenario.expectMediaChangeRequest_ = false;
+    scenario.expectMediaRenegotiation_ = true;
+    scenario.expectMediaChangeRequest_ = false;
 
-        testWithScenario(aliceData_, bobData_, scenario);
-    }
+    testWithScenario(aliceData_, bobData_, scenario);
 
     DRing::unregisterSignalHandlers();
 
