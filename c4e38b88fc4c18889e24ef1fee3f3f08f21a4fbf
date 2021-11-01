@@ -3,6 +3,91 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "89e79de9_3122c631",
+        "filename": "src/call.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-01T17:19:47Z",
+      "side": 1,
+      "message": "It determine -\u003e It determines\nsif -\u003e if",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "621dad7a_4138602d",
+        "filename": "src/call.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-01T17:19:47Z",
+      "side": 1,
+      "message": "public -\u003e private: Is this voluntary?",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a7f72147_83b83c8c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-01T17:19:47Z",
+      "side": 1,
+      "message": "What has changed here?  Looks like noise.",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f3ef115c_60597264",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 402,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-01T17:19:47Z",
+      "side": 1,
+      "message": "so accept -\u003e accept",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bf0b1c9_b274019f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 404,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-01T17:19:47Z",
+      "side": 1,
+      "message": "will enabled -\u003e will be enabled",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "19116dd6_8d84a836",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 13
