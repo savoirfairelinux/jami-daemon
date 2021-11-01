@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9f07dc02_e45293d9",
+        "filename": "src/call.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T18:38:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8b27346b_fac9d63a",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "621dad7a_4138602d",
@@ -49,6 +67,24 @@
       "writtenOn": "2021-11-01T17:19:47Z",
       "side": 1,
       "message": "public -\u003e private: Is this voluntary?",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f78e9ed4_d0757519",
+        "filename": "src/call.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T18:38:26Z",
+      "side": 1,
+      "message": "already public (line 72)",
+      "parentUuid": "621dad7a_4138602d",
       "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -70,6 +106,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "203c3ee9_560d3df8",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T18:38:26Z",
+      "side": 1,
+      "message": "init order warning (videoEnabled_ declared first).",
+      "parentUuid": "a7f72147_83b83c8c",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f3ef115c_60597264",
@@ -83,6 +137,24 @@
       "writtenOn": "2021-11-01T17:19:47Z",
       "side": 1,
       "message": "so accept -\u003e accept",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b63fe78b_2ae08e9e",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 402,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T18:38:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f3ef115c_60597264",
       "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -104,6 +176,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7356ffba_8a61eb04",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 404,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T18:38:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2bf0b1c9_b274019f",
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "19116dd6_8d84a836",
@@ -117,6 +207,30 @@
       "writtenOn": "2021-11-01T16:02:36Z",
       "side": 1,
       "message": "Move logic from Manager here (no processMediaChangeRequest function needed in the manager)",
+      "range": {
+        "startLine": 2554,
+        "startChar": 4,
+        "endLine": 2554,
+        "endChar": 75
+      },
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6942aec3_3aaacde0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 2554,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T18:38:26Z",
+      "side": 1,
+      "message": "I thought we agreed not to do conference stuff in the call ...\nanyway ...",
+      "parentUuid": "19116dd6_8d84a836",
       "range": {
         "startLine": 2554,
         "startChar": 4,
