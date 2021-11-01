@@ -168,23 +168,20 @@ Sdp::mediaDirection(MediaType type, bool onHold)
 
 // Direction inference based on RFC-3264 and RFC-6337
 char const*
-Sdp::mediaDirection(const MediaAttribute& localAttr, const MediaAttribute& remoteAttr)
+Sdp::mediaDirection(const MediaAttribute& mediaAttr)
 {
-    if (not localAttr.enabled_ or not remoteAttr.enabled_)
+    if (not mediaAttr.enabled_)
         return "inactive";
 
-    if (localAttr.muted_) {
-        if (remoteAttr.muted_)
+    if (mediaAttr.muted_) {
+        if (mediaAttr.onHold_)
             return "inactive";
-        else
-            return "recvonly";
+        return "recvonly";
     }
 
-    // Local is enabled and not muted. Check remote.
-    if (remoteAttr.muted_)
+    if (mediaAttr.onHold_)
         return "sendonly";
 
-    // Both enabled and not muted.
     return "sendrecv";
 }
 
@@ -340,7 +337,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         addRTCPAttribute(med, localVideoRtcpPort_);
     }
 
-    char const* direction = mediaDirection(type, mediaAttr.onHold_);
+    char const* direction = mediaDirection(mediaAttr);
 
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), direction, NULL);
 
@@ -588,12 +585,10 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 
     printSession(remoteSession_, "Remote session:", SdpDirection::OFFER);
 
-    if (not localSession_) {
-        createLocalSession(SdpDirection::ANSWER);
-        if (validateSession() != PJ_SUCCESS) {
-            JAMI_ERR("Failed to create local session");
-            return false;
-        }
+    createLocalSession(SdpDirection::ANSWER);
+    if (validateSession() != PJ_SUCCESS) {
+        JAMI_ERR("Failed to create local session");
+        return false;
     }
 
     localSession_->media_count = 0;
