@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19116dd6_8d84a836",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 2554,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-01T16:02:36Z",
+      "side": 1,
+      "message": "Move logic from Manager here (no processMediaChangeRequest function needed in the manager)",
+      "range": {
+        "startLine": 2554,
+        "startChar": 4,
+        "endLine": 2554,
+        "endChar": 75
+      },
+      "revId": "c4e38b88fc4c18889e24ef1fee3f3f08f21a4fbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
