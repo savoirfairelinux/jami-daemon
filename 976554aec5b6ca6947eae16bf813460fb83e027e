@@ -72,6 +72,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c5be69a8_2b0889df",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T14:19:00Z",
+      "side": 1,
+      "message": "unless we want to support more complex scenarios, such as sending a hold while ringing ... \nSo I cant implement all these use cases unless there is an explicit request.",
+      "parentUuid": "4c46b1db_eb30e16b",
+      "range": {
+        "startLine": 1259,
+        "startChar": 10,
+        "endLine": 1259,
+        "endChar": 38
+      },
+      "revId": "976554aec5b6ca6947eae16bf813460fb83e027e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8a42af60_509a5036",
