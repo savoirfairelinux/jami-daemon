@@ -768,37 +768,47 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
         return;
     }
 
-    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
-
-    if (mediaAttrList.empty()) {
-        JAMI_DBG("[call:%s] Media list must not be empty!", getCallId().c_str());
-        return;
-    }
-
     if (not inviteSession_)
         JAMI_DBG("[call:%s] No invite session for this call", getCallId().c_str());
 
-    JAMI_DBG("[call:%s] Answering incoming call with %lu media:",
-             getCallId().c_str(),
-             mediaAttrList.size());
+    if (not sdp_)
+        JAMI_DBG("[call:%s] No SDP session for this call", getCallId().c_str());
 
-    if (mediaAttrList.size() != rtpStreams_.size()) {
-        JAMI_ERR("[call:%s] Media list size %lu in answer does not match. Expected %lu",
-                 getCallId().c_str(),
-                 mediaAttrList.size(),
-                 rtpStreams_.size());
+    auto newMediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+
+    if (newMediaAttrList.empty() and rtpStreams_.empty()) {
+        JAMI_ERR("[call:%s] Media list must not be empty!", getCallId().c_str());
         return;
     }
 
+    // If the media list is empty, use the current media (this could happen
+    // with auto-answer for instance), otherwise update the current media.
+    if (newMediaAttrList.empty()) {
+        JAMI_DBG("[call:%s] Media list is empty, using current media", getCallId().c_str());
+    } else {
+        // Media count is not expected to change
+        if (newMediaAttrList.size() != rtpStreams_.size()) {
+            JAMI_ERR("[call:%s] Media list size %lu in answer does not match. Expected %lu",
+                     getCallId().c_str(),
+                     newMediaAttrList.size(),
+                     rtpStreams_.size());
+            return;
+        }
+    }
+
+    auto const& mediaAttrList = newMediaAttrList.empty() ? getMediaAttributeList()
+                                                         : newMediaAttrList;
+
+    JAMI_DBG("[call:%s] Answering incoming call with following media:", getCallId().c_str());
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         auto const& mediaAttr = mediaAttrList.at(idx);
-        JAMI_DBG("[call:%s] Media @%lu: %s",
+        JAMI_DBG("[call:%s] Media @%lu - %s",
                  getCallId().c_str(),
                  idx,
                  mediaAttr.toString(true).c_str());
     }
 
-    // Apply the media attributes provided by the user.
+    // Apply the media attributes.
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         updateMediaStream(mediaAttrList[idx], idx);
     }
@@ -806,6 +816,13 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
     if (not inviteSession_)
         throw VoipLinkException("[call:" + getCallId()
                                 + "] answer: no invite session for this call");
+
+    // Create the SDP answer
+    sdp_->processIncomingOffer(mediaAttrList);
+
+    if (isIceEnabled()) {
+        setupIceResponse();
+    }
 
     if (not inviteSession_->neg) {
         // We are answering to an INVITE that did not include a media offer (SDP).
@@ -855,15 +872,9 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
     if (!inviteSession_->last_answer)
         throw std::runtime_error("Should only be called for initial answer");
 
-    // Answer with an SDP offer if the initial invite was empty,
-    // otherwise, set the local_sdp session to null to use the
-    // current SDP session.
+    // Set the SIP final answer (200 OK).
     pjsip_tx_data* tdata;
-    if (pjsip_inv_answer(inviteSession_.get(),
-                         PJSIP_SC_OK,
-                         NULL,
-                         not inviteSession_->neg ? sdp_->getLocalSdpSession() : NULL,
-                         &tdata)
+    if (pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_OK, NULL, sdp_->getLocalSdpSession(), &tdata)
         != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
@@ -912,8 +923,8 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList)
     }
 
     if (mediaAttrList.empty()) {
-        JAMI_DBG("[call:%s] Media list size is empty. Ignoring the media change request",
-                 getCallId().c_str());
+        JAMI_WARN("[call:%s] Media list is empty. Ignoring the media change request",
+                  getCallId().c_str());
         return;
     }
 
