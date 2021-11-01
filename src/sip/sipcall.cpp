@@ -812,6 +812,9 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
     if (not inviteSession_)
         JAMI_DBG("[call:%s] No invite session for this call", getCallId().c_str());
 
+    if (not sdp_)
+        JAMI_DBG("[call:%s] No SDP session for this call", getCallId().c_str());
+
     JAMI_DBG("[call:%s] Answering incoming call with %lu media:",
              getCallId().c_str(),
              mediaAttrList.size());
@@ -840,6 +843,13 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
     if (not inviteSession_)
         throw VoipLinkException("[call:" + getCallId()
                                 + "] answer: no invite session for this call");
+
+    // Create the SDP answer
+    sdp_->processIncomingOffer(mediaAttrList);
+
+    if (isIceEnabled()) {
+        setupIceResponse();
+    }
 
     if (not inviteSession_->neg) {
         // We are answering to an INVITE that did not include a media offer (SDP).
@@ -889,15 +899,9 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
     if (!inviteSession_->last_answer)
         throw std::runtime_error("Should only be called for initial answer");
 
-    // Answer with an SDP offer if the initial invite was empty,
-    // otherwise, set the local_sdp session to null to use the
-    // current SDP session.
+    // Set the SIP final answer (200 OK).
     pjsip_tx_data* tdata;
-    if (pjsip_inv_answer(inviteSession_.get(),
-                         PJSIP_SC_OK,
-                         NULL,
-                         not inviteSession_->neg ? sdp_->getLocalSdpSession() : NULL,
-                         &tdata)
+    if (pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_OK, NULL, sdp_->getLocalSdpSession(), &tdata)
         != PJ_SUCCESS)
         throw std::runtime_error("Could not init invite request answer (200 OK)");
 
@@ -946,8 +950,8 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList)
     }
 
     if (mediaAttrList.empty()) {
-        JAMI_DBG("[call:%s] Media list size is empty. Ignoring the media change request",
-                 getCallId().c_str());
+        JAMI_WARN("[call:%s] Media list is empty. Ignoring the media change request",
+                  getCallId().c_str());
         return;
     }
 
