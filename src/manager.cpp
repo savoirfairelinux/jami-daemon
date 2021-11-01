@@ -1080,10 +1080,7 @@ Manager::answerCall(Call& call, const std::vector<DRing::MediaMap>& mediaList)
     pimpl_->removeWaitingCall(call.getCallId());
 
     try {
-        if (mediaList.empty())
-            call.answer();
-        else
-            call.answer(mediaList);
+        call.answer(mediaList);
     } catch (const std::runtime_error& e) {
         JAMI_ERR("%s", e.what());
         return false;
