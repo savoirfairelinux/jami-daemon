@@ -1,0 +1,267 @@
+diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
+index fe58be9c9..c709d9d29 100644
+--- a/pjnath/include/pjnath/config.h
++++ b/pjnath/include/pjnath/config.h
+@@ -393,6 +393,33 @@
+ #   define ICE_CONTROLLING_PASSIVE_TIMEOUT	10000
+ #endif
+ 
++/**
++ * Allowed timeout for pending connections. TCP only.
++ *
++ * Default: 15000 (milliseconds)
++ */
++#ifndef PJ_ICE_TCP_CONNECTION_TIMEOUT
++#   define PJ_ICE_TCP_CONNECTION_TIMEOUT	15000
++#endif
++
++/**
++ * Delay between two reconnection attempts. TCP only.
++ *
++ * Default: 500 (milliseconds)
++ */
++#ifndef PJ_ICE_TCP_RECONNECTION_DELAY
++#   define PJ_ICE_TCP_RECONNECTION_DELAY	500
++#endif
++
++/**
++ * Maximum number of reconnection attempts. TCP only.
++ *
++ * Default: 8
++ */
++#ifndef PJ_ICE_TCP_MAX_RECONNECTION_COUNT
++#   define PJ_ICE_TCP_MAX_RECONNECTION_COUNT 8 
++#endif
++
+ /**
+  * For controlling agent if it uses regular nomination, specify the delay to
+  * perform nominated check (connectivity check with USE-CANDIDATE attribute)
+diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
+index 97069ed9e..0ad30d3f1 100644
+--- a/pjnath/include/pjnath/ice_session.h
++++ b/pjnath/include/pjnath/ice_session.h
+@@ -486,6 +486,13 @@ struct pj_ice_sess_check
+      * STUN transaction.
+      */
+     pj_status_t		 err_code;
++
++#if PJ_HAS_TCP
++    /**
++     * TCP reconnection attemps counter.
++     */
++    int reconnect_count;
++#endif
+ };
+ 
+ 
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 34d81f147..80681e5ae 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2261,6 +2261,9 @@ static pj_status_t add_rcand_and_update_checklist(
+ 	    chk->state = PJ_ICE_SESS_CHECK_STATE_FROZEN;
+ 	    chk->foundation_idx = get_check_foundation_idx(ice, lcand, rcand,
+ 							   PJ_TRUE);
++#if PJ_HAS_TCP
++	    chk->reconnect_count = 0;
++#endif
+ 
+ 	    /* Check if foundation cannot be added (e.g: list is full) */
+ 	    if (chk->foundation_idx < 0)
+@@ -2664,9 +2667,13 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+             if (ice->timer_connect.id != TIMER_NONE) {
+                 pj_assert(!"Not expected any timer active");
+             } else {
++                LOG5((ice->obj_name, 
++                    "Scheduling connection time-out for check %s", 
++                    dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), clist, check)));
++
+                 pj_time_val delay = {
+-                    .sec  = 15,
+-                    .msec = 0,
++                    .sec  = 0,
++                    .msec = PJ_ICE_TCP_CONNECTION_TIMEOUT,
+                 };
+                 pj_time_val_normalize(&delay);
+                 pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
+@@ -2720,6 +2727,8 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     td = (struct timer_data*) te->user_data;
+     ice = td->ice;
+     clist = td->clist;
++    // Default Ta timer
++    pj_time_val timeout = {0, PJ_ICE_TA_VAL};
+ 
+     pj_grp_lock_acquire(ice->grp_lock);
+ 
+@@ -2736,6 +2745,31 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 
+     pj_ice_sess_check *check = NULL;
+ 
++    /* Send STUN Binding request for check with highest priority on
++     * Waiting state.
++     */
++
++    if (start_count == 0) {
++	for (i = 0; i < clist->count; ++i) {
++	    check = &clist->checks[i];
++
++	    if (check->state == PJ_ICE_SESS_CHECK_STATE_WAITING) {
++		LOG5((ice->obj_name, "Starting periodic check for check %i (was waiting)", i));
++		pj_log_push_indent();
++
++		status = perform_check(ice, clist, i, ice->is_nominating);
++		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
++				    status);
++		    on_check_complete(ice, check);
++		}
++		++start_count;
++		break;
++	    }
++	}
++    }
++
++#if PJ_HAS_TCP
+     /* Send STUN Binding request for check with highest priority on
+      * Retry state.
+      */
+@@ -2753,6 +2787,9 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 				    status);
+ 		    on_check_complete(ice, check);
+ 		}
++		timeout.msec = PJ_ICE_TCP_RECONNECTION_DELAY;
++		timeout.sec = 0;
++
+ 		++start_count;
+ 		break;
+ 	    }
+@@ -2784,30 +2821,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	    }
+ 	}
+     }
+-
+-    /* Send STUN Binding request for check with highest priority on
+-     * Waiting state.
+-     */
+-
+-    if (start_count == 0) {
+-	for (i = 0; i < clist->count; ++i) {
+-	    check = &clist->checks[i];
+-
+-	    if (check->state == PJ_ICE_SESS_CHECK_STATE_WAITING) {
+-		LOG5((ice->obj_name, "Starting periodic check for check %i (was waiting)", i));
+-		pj_log_push_indent();
+-
+-		status = perform_check(ice, clist, i, ice->is_nominating);
+-		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+-		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+-				    status);
+-		    on_check_complete(ice, check);
+-		}
+-		++start_count;
+-		break;
+-	    }
+-	}
+-    }
++#endif
+ 
+     /* If we don't have anything in Waiting state, perform check to
+      * highest priority pair that is in Frozen state.
+@@ -2830,6 +2844,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	}
+     }
+ 
++#if PJ_HAS_TCP
+     if (start_count == 0) {
+ 	// If all sockets are pending, do nothing
+ 	for (i = 0; i < clist->count; ++i) {
+@@ -2840,13 +2855,13 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	    }
+ 	}
+     }
++#endif
+ 
+     // The checks are performed at the rate of 1 check per Ta
+     // interval. If a new check was started, we need to re-schedule
+     // for the next one (if any).
+     if (start_count!=0) {
+ 	pj_assert(check != NULL);
+-	pj_time_val timeout = {0, PJ_ICE_TA_VAL};
+ 
+ 	pj_time_val_normalize(&timeout);
+ 	pj_timer_heap_schedule_w_grp_lock(th, te, &timeout, PJ_TRUE,
+@@ -3158,12 +3173,22 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	 * the relayed candidate. This is done by set_perm from the other case.
+ 	 * But from this side, we can't know if the peer has authorized us. If it's
+ 	 * not the case, the connection will got a CONNECTION RESET BY PEER status.
+-	 * In this case, we can try to reconnect a bit after and this until the check
+-	 * reached its timeout.
++	 * In this case, we try to reconnect few times with a delay between two
++	 * attempts.
+ 	 */
+-	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
+-	check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
+-			status);
++	if (check->reconnect_count < PJ_ICE_TCP_MAX_RECONNECTION_COUNT) {
++		check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
++		check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
++				status);
++		check->reconnect_count++;
++	} else {
++		// Max attempts reached. Fail this check.
++		LOG4((ice->obj_name, "Check %s: connection failed after %d attempts",
++			dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), &ice->clist, check),
++			PJ_ICE_TCP_MAX_RECONNECTION_COUNT));
++		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++		on_check_complete(ice, check);
++	}
+ 	pj_grp_lock_release(ice->grp_lock);
+ 	return;
+     } else if (status != PJ_SUCCESS) {
+@@ -3221,8 +3246,21 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 		 * In this case, we can try to reconnect a bit after and this until the check
+ 		 * reached its timeout.
+ 		 */
+-		check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
+-				status);
++
++		if (check->reconnect_count < PJ_ICE_TCP_MAX_RECONNECTION_COUNT) {
++			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
++					status);
++			check->reconnect_count++;
++		} else {
++			// Max attempts reached. Fail this check.
++			LOG4((ice->obj_name, "Check %s: connection failed after %d attempts",
++				dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), &ice->clist, check),
++				PJ_ICE_TCP_MAX_RECONNECTION_COUNT));
++			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++			on_check_complete(ice, check);
++			pj_grp_lock_release(ice->grp_lock);
++			return;
++		}
+     } else if (status == PJ_EBUSY /* EBUSY */) {
+ 		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+ 				status);
+@@ -3653,6 +3691,9 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+ 	new_check->state = PJ_ICE_SESS_CHECK_STATE_SUCCEEDED;
+ 	new_check->nominated = check->nominated;
+ 	new_check->err_code = PJ_SUCCESS;
++#if PJ_HAS_TCP
++	new_check->reconnect_count = 0;
++#endif
+     } else {
+ 	new_check = &ice->valid_list.checks[i];
+ 	ice->valid_list.checks[i].nominated = check->nominated;
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index d54eb4bf1..67bc28785 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -893,7 +893,7 @@ static pj_bool_t add_local_candidate(pj_ice_sess_cand *cand,
+             return PJ_SUCCESS;
+         }
+         else if (stun_cfg->af == pj_AF_INET6()) {
+-            pj_in6_addr in6addr = {{0}};
++            pj_in6_addr in6addr = {0};
+             in6addr.s6_addr[15] = 1;
+ 	    if (pj_memcmp(&in6addr, &addr->ipv6.sin6_addr,
+ 			  sizeof(in6addr))==0)
