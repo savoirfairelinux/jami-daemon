@@ -458,11 +458,6 @@ transaction_request_cb(pjsip_rx_data* rdata)
     // the accept from the client.
     if (r_sdp != nullptr) {
         call->getSDP().setReceivedOffer(r_sdp);
-        call->getSDP().processIncomingOffer(localMediaList);
-    }
-
-    if (r_sdp and call->isIceEnabled()) {
-        call->setupIceResponse();
     }
 
     pjsip_dialog* dialog = nullptr;
@@ -488,11 +483,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     pjsip_inv_session* inv = nullptr;
-    pjsip_inv_create_uas(dialog,
-                         rdata,
-                         call->getSDP().getLocalSdpSession(),
-                         PJSIP_INV_SUPPORT_ICE,
-                         &inv);
+    // Create UAS for the invite.
+    // Dont set the SDP yet, it will be done when the call is
+    // accepted and the media attributes of the answer are known.
+    pjsip_inv_create_uas(dialog, rdata, NULL, PJSIP_INV_SUPPORT_ICE, &inv);
     if (!inv) {
         JAMI_ERR("Call invite is not initialized");
         pjsip_dlg_dec_lock(dialog);
@@ -981,9 +975,13 @@ on_rx_offer2(pjsip_inv_session* inv, struct pjsip_inv_on_rx_offer_cb_param* para
     if (not call)
         return;
 
-    const auto msg = param->rdata->msg_info.msg;
-    if (msg->type != PJSIP_RESPONSE_MSG) {
-        JAMI_ERR("[call:%s] Ignore offer in '200 OK' answer", call->getCallId().c_str());
+    // This callback is called whenever a new media offer is found in a
+    // SIP message, typically in a re-invite and in a '200 OK' (as a
+    // response to an empty invite).
+    // Here we only handle the second case. The first case is handled
+    // in reinvite_received_cb.
+    if (inv->cause != PJSIP_SC_OK) {
+        // Silently ignore if it's not a '200 OK'
         return;
     }
 
@@ -1064,7 +1062,7 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
         throw VoipLinkException("Unexpected empty media attribute list");
     }
 
-    JAMI_DBG("Creating and SDP offer using the following media:");
+    JAMI_DBG("Creating a SDP offer using the following media:");
     for (auto const& media : mediaList) {
         JAMI_DBG("[call %s] Media %s", call->getCallId().c_str(), media.toString(true).c_str());
     }
