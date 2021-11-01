@@ -283,7 +283,7 @@ private:
 
     // Determine media direction
     char const* mediaDirection(MediaType type, bool onHold);
-    char const* mediaDirection(const MediaAttribute& localAttr, const MediaAttribute& peerAttr);
+    char const* mediaDirection(const MediaAttribute& mediaAttr);
 
     // Get media direction
     static MediaDirection getMediaDirection(pjmedia_sdp_media* media);
