@@ -22,6 +22,30 @@
       },
       "revId": "22db154462462f9f5a2063d7b8b4205dfb086b9f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "37acc3ea_c8e91bd0",
+        "filename": "contrib/src/pjproject/SHA512SUMS",
+        "patchSetId": 6
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-01T15:06:05Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "31c5388f_a8a92b38",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 1,
+        "endChar": 6
+      },
+      "revId": "22db154462462f9f5a2063d7b8b4205dfb086b9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
