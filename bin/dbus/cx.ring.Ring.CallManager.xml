@@ -25,30 +25,6 @@
             <arg type="s" name="callID" direction="out"/>
         </method>
 
-        <method name="placeCallWithDetails" tp:name-for-bindings="placeCallWithDetails">
-            <tp:added version="4.1.0"/>
-            <tp:docstring>
-              <p>This is a method in order to place a new call. This version allows to pass some call details. The call is registered with the daemon using this method.</p>
-            </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
-              <tp:docstring>
-                The ID of the account with which you want to make a call. If the call is to be placed without any account by means of a SIP URI (i.e. sip:num@server), the "IP2IP_PROFILE" is passed as the accountID. For more details on accounts see the configuration manager interface.
-              </tp:docstring>
-            </arg>
-            <arg type="s" name="to" direction="in">
-              <tp:docstring>
-                If bound to a VoIP account, then the argument is the phone number. In case of calls involving "IP2IP_PROFILE", a complete SIP URI must be specified.
-              </tp:docstring>
-            </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
-            <arg type="a{ss}" name="VolatileCallDetails" direction="in">
-              <tp:docstring>
-                TBD.
-              </tp:docstring>
-            </arg>
-            <arg type="s" name="callID" direction="out"/>
-        </method>
-
         <method name="placeCallWithMedia" tp:name-for-bindings="placeCallWithMedia">
             <tp:added version="9.10.0"/>
             <tp:docstring>

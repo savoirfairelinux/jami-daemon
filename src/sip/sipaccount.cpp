@@ -177,97 +177,6 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
     return call;
 }
 
-template<>
-std::shared_ptr<SIPCall>
-SIPAccount::newOutgoingCall(std::string_view toUrl,
-                            const std::map<std::string, std::string>& volatileCallDetails)
-{
-    std::string to;
-    int family;
-
-    JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
-
-    auto& manager = Manager::instance();
-    auto call = manager.callFactory.newSipCall(shared(),
-                                               Call::CallType::OUTGOING,
-                                               volatileCallDetails);
-    if (isIP2IP()) {
-        bool ipv6 = IpAddr::isIpv6(toUrl);
-        to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
-        family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
-
-        // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
-        std::shared_ptr<SipTransport> t
-            = isTlsEnabled()
-                  ? link_.sipTransportBroker->getTlsTransport(tlsListener_,
-                                                              IpAddr(sip_utils::getHostFromUri(to)))
-                  : transport_;
-        setTransport(t);
-        call->setSipTransport(t, getContactHeader());
-
-        JAMI_DBG("New %s IP to IP call to %s", ipv6 ? "IPv6" : "IPv4", to.c_str());
-    } else {
-        to = toUrl;
-        auto contactHdr = getContactHeader();
-        call->setSipTransport(transport_, contactHdr);
-        // FIXME : for now, use the same address family as the SIP transport
-        family = pjsip_transport_type_get_af(getTransportType());
-
-        JAMI_DBG("UserAgent: New registered account call to %.*s", (int) toUrl.size(), toUrl.data());
-    }
-
-    auto toUri = getToUri(to);
-    if (call->isIceEnabled()) {
-        call->createIceMediaTransport();
-        call->initIceMediaTransport(true);
-    }
-    call->setPeerNumber(toUri);
-    call->setPeerUri(toUri);
-
-    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
-
-    IpAddr addrSdp;
-    if (getUPnPActive()) {
-        /* use UPnP addr, or published addr if its set */
-        addrSdp = getPublishedSameasLocal() ? getUPnPIpAddress() : getPublishedIpAddress();
-    } else {
-        addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ? getPublishedIpAddress()
-                                                                     : localAddress;
-    }
-
-    /* fallback on local address */
-    if (not addrSdp)
-        addrSdp = localAddress;
-
-    // Building the local SDP offer
-    auto& sdp = call->getSDP();
-
-    if (getPublishedSameasLocal())
-        sdp.setPublishedIP(addrSdp);
-    else
-        sdp.setPublishedIP(getPublishedAddress());
-
-    auto mediaList = createDefaultMediaList(videoEnabled_ and not call->isAudioOnly());
-    const bool created = sdp.createOffer(mediaList);
-
-    if (created) {
-        std::weak_ptr<SIPCall> weak_call = call;
-        manager.scheduler().run([this, weak_call] {
-            if (auto call = weak_call.lock()) {
-                if (not SIPStartCall(call)) {
-                    JAMI_ERR("Could not send outgoing INVITE request for new call");
-                    call->onFailure();
-                }
-            }
-            return false;
-        });
-    } else {
-        throw VoipLinkException("Could not send outgoing INVITE request for new call");
-    }
-
-    return call;
-}
-
 std::shared_ptr<Call>
 SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::MediaMap>& mediaList)
 {
@@ -308,7 +217,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Med
 
     auto toUri = getToUri(to);
 
-    // Do not init ICE yet if the the media list is empty. This may occur
+    // Do not init ICE yet if the media list is empty. This may occur
     // if we are sending an invite with no SDP offer.
     if (call->isIceEnabled() and not mediaList.empty()) {
         call->createIceMediaTransport();
@@ -431,13 +340,6 @@ SIPAccount::getTransportSelector()
     if (!transport_)
         return SIPVoIPLink::getTransportSelector(nullptr);
     return SIPVoIPLink::getTransportSelector(transport_->get());
-}
-
-std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(std::string_view toUrl,
-                            const std::map<std::string, std::string>& volatileCallDetails)
-{
-    return newOutgoingCall<SIPCall>(toUrl, volatileCallDetails);
 }
 
 bool
@@ -1525,7 +1427,7 @@ SIPAccount::getToUri(const std::string& username) const
         scheme = "sip:";
 
     // Check if scheme is already specified
-    if (username.find("sip") == 0)
+    if (username.find("sip") != std::string::npos)
         scheme = "";
 
     // Check if hostname is already specified
@@ -1535,7 +1437,11 @@ SIPAccount::getToUri(const std::string& username) const
     if (not hostname.empty() and IpAddr::isIpv6(hostname))
         hostname = IpAddr(hostname).toString(false, true);
 
-    return "<" + scheme + username + (hostname.empty() ? "" : "@") + hostname + transport + ">";
+    auto ltSymbol = username.find("<") == std::string::npos ? "<" : "";
+    auto gtSymbol = username.find(">") == std::string::npos ? ">" : "";
+
+    return ltSymbol + scheme + username + (hostname.empty() ? "" : "@") + hostname + transport
+           + gtSymbol;
 }
 
 std::string
