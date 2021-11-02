@@ -916,18 +916,6 @@ public:
 
     /**
      * Create a new outgoing call
-     * @param toUrl The address to call
-     * @param accountId account to use
-     * @return Call*  A shared pointer on a valid call.
-     * @note This function raises VoipLinkException() on errors.
-     */
-    std::shared_ptr<Call> newOutgoingCall(
-        std::string_view toUrl,
-        const std::string& accountId,
-        const std::map<std::string, std::string>& volatileCallDetails = {});
-
-    /**
-     * Create a new outgoing call
      * @param toUrl Destination address
      * @param accountId local account
      * @param mediaList the list of medias

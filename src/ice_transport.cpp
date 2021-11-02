@@ -528,9 +528,6 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
             handleEvents(HANDLE_EVENT_DURATION);
         }
     });
-
-    // Init to invalid addresses
-    iceDefaultRemoteAddr_.reserve(compCount_);
 }
 
 bool

@@ -415,29 +415,6 @@ JamiAccount::newIncomingCall(const std::string& from,
 }
 
 std::shared_ptr<Call>
-JamiAccount::newOutgoingCall(std::string_view toUrl,
-                             const std::map<std::string, std::string>& volatileCallDetails)
-{
-    auto& manager = Manager::instance();
-    auto call = manager.callFactory.newSipCall(shared(),
-                                               Call::CallType::OUTGOING,
-                                               volatileCallDetails);
-    if (not call)
-        return {};
-
-    if (call->isIceEnabled()) {
-        call->createIceMediaTransport();
-        getIceOptions([=](auto&& opts) {
-            call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
-        });
-    }
-
-    newOutgoingCallHelper(call, toUrl);
-
-    return call;
-}
-
-std::shared_ptr<Call>
 JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::MediaMap>& mediaList)
 {
     auto suffix = stripPrefix(toUrl);
@@ -506,15 +483,7 @@ std::shared_ptr<SIPCall>
 JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
 {
     auto mediaList = MediaAttribute::mediaAttributesToMediaMaps(mainCall->getMediaAttributeList());
-    if (not mediaList.empty()) {
-        return Manager::instance().callFactory.newSipCall(shared(),
-                                                          Call::CallType::OUTGOING,
-                                                          mediaList);
-    } else {
-        return Manager::instance().callFactory.newSipCall(shared(),
-                                                          Call::CallType::OUTGOING,
-                                                          mainCall->getDetails());
-    }
+    return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
 }
 
 void

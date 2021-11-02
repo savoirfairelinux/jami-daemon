@@ -1017,34 +1017,8 @@ Manager::outgoingCall(const std::string& account_id,
                       const std::string& conf_id,
                       const std::map<std::string, std::string>& volatileCallDetails)
 {
-    if (not conf_id.empty() and not isConference(conf_id)) {
-        JAMI_ERR("outgoingCall() failed, invalid conference id");
-        return {};
-    }
-
-    JAMI_DBG() << "try outgoing call to '" << to << "'"
-               << " with account '" << account_id << "'";
-
-    std::shared_ptr<Call> call;
-
-    try {
-        call = newOutgoingCall(trim(to), account_id, volatileCallDetails);
-    } catch (const std::exception& e) {
-        JAMI_ERR("%s", e.what());
-        return {};
-    }
-
-    if (not call)
-        return {};
-
-    auto call_id = call->getCallId();
-
-    stopTone();
-
-    pimpl_->switchCall(call);
-    call->setConfId(conf_id);
-
-    return call_id;
+    JAMI_ERR("Deprecated method");
+    return {};
 }
 
 std::string
@@ -2076,32 +2050,23 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         return;
     }
 
-    if (account->isMultiStreamEnabled()) {
-        // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
-        auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
-            call.getMediaAttributeList());
+    // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
+    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList());
 
-        if (mediaList.empty()) {
-            JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
-        }
-
-        JAMI_INFO("Incoming call %s on account %s with %lu media",
-                  call.getCallId().c_str(),
-                  accountId.c_str(),
-                  mediaList.size());
-
-        // Report the call using new API.
-        emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
-                                                             call.getCallId(),
-                                                             call.getPeerDisplayName() + " " + from,
-                                                             mediaList);
-    } else {
-        JAMI_INFO("Incoming call %s on account %s", call.getCallId().c_str(), accountId.c_str());
-
-        emitSignal<DRing::CallSignal::IncomingCall>(accountId,
-                                                    call.getCallId(),
-                                                    call.getPeerDisplayName() + " " + from);
+    if (mediaList.empty()) {
+        JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
     }
+
+    JAMI_INFO("Incoming call %s on account %s with %lu media",
+              call.getCallId().c_str(),
+              accountId.c_str(),
+              mediaList.size());
+
+    // Report the call using new API.
+    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+                                                         call.getCallId(),
+                                                         call.getPeerDisplayName() + " " + from,
+                                                         mediaList);
 
     // Process the call.
     pimpl_->processIncomingCall(call, accountId);
@@ -3363,20 +3328,6 @@ std::shared_ptr<AudioLayer>
 Manager::getAudioDriver()
 {
     return pimpl_->audiodriver_;
-}
-
-std::shared_ptr<Call>
-Manager::newOutgoingCall(std::string_view toUrl,
-                         const std::string& accountId,
-                         const std::map<std::string, std::string>& volatileCallDetails)
-{
-    auto account = getAccount(accountId);
-    if (!account or !account->isUsable()) {
-        JAMI_WARN("Account is not usable for calling");
-        return nullptr;
-    }
-
-    return account->newOutgoingCall(toUrl, volatileCallDetails);
 }
 
 std::shared_ptr<Call>
