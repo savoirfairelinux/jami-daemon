@@ -203,12 +203,6 @@ public:
      * Peer closed the connection
      */
     void onClosed();
-    /**
-     * Report a new offer from peer on a existing invite session
-     * (aka re-invite)
-     */
-    [[deprecated("Replaced by onReceiveReinvite")]] int onReceiveOffer(
-        const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata);
 
     pj_status_t onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
     void onReceiveOfferIn200OK(const pjmedia_sdp_session* offer);
