@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1dd420f5_de482f89",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-02T01:09:25Z",
+      "side": 1,
+      "message": "NOTE:\n\nNot sure that localtime_r and strtfime is available on all platforms.  Waiting the CI to know that.",
+      "revId": "ce8ee6b2db3d26d1826e5c2befc886711dee2152",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
