@@ -420,31 +420,6 @@ public:
     void supportPresence(int function, bool enable);
 
     /**
-     * Implementation of Account::newOutgoingCall()
-     * Note: keep declaration before newOutgoingCall template.
-     */
-    std::shared_ptr<Call> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {}) override;
-
-    /**
-     * Create outgoing SIPCall.
-     * @param[in] toUrl The address to call
-     * @return std::shared_ptr<T> A shared pointer on the created call.
-     *      The type of this instance is given in template argument.
-     *      This type can be any base class of SIPCall class (included).
-     */
-#ifndef _MSC_VER
-    template<class T = SIPCall>
-    std::shared_ptr<enable_if_base_of<T, SIPCall>> newOutgoingCall(
-        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
-#else
-    template<class T>
-    std::shared_ptr<T> newOutgoingCall(
-        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
-#endif
-
-    /**
      * Create outgoing SIPCall.
      * @param[in] toUrl the address to call
      * @param[in] mediaList list of medias

@@ -81,7 +81,6 @@ struct CallData
     std::string userName_ {};
     std::string alias_ {};
     std::string callId_ {};
-    bool enableMultiStream_ {true};
     std::vector<Signal> signals_;
     std::condition_variable cv_ {};
     std::mutex mtx_;
@@ -163,9 +162,7 @@ HoldResumeTest::setUp()
 
     JAMI_INFO("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceData_.accountId_);
-    aliceAccount->enableMultiStream(true);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData_.accountId_);
-    bobAccount->enableMultiStream(true);
 
     wait_for_announcement_of({aliceAccount->getAccountID(), bobAccount->getAccountID()});
 }
@@ -402,7 +399,6 @@ HoldResumeTest::configureScenario(CallData& aliceData, CallData& bobData)
         auto const& account = Manager::instance().getAccount<JamiAccount>(aliceData.accountId_);
         aliceData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableMultiStream(aliceData.enableMultiStream_);
     }
 
     {
@@ -410,7 +406,6 @@ HoldResumeTest::configureScenario(CallData& aliceData, CallData& bobData)
         auto const& account = Manager::instance().getAccount<JamiAccount>(bobData.accountId_);
         bobData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableMultiStream(bobData.enableMultiStream_);
     }
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
@@ -493,11 +488,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData,
               bobData.accountId_.c_str());
 
     // Wait for incoming call signal.
-    if (bobData.enableMultiStream_) {
-        CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCallWithMedia::name));
-    } else {
-        CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCall::name));
-    }
+    CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
     {
