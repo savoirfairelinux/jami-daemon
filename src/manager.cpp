@@ -1003,29 +1003,6 @@ Manager::unregisterAccounts()
 std::string
 Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
-                      std::shared_ptr<Conference>,
-                      const std::map<std::string, std::string>& volatileCallDetails)
-{
-    JAMI_DBG() << "try outgoing call to '" << to << "'"
-               << " with account '" << account_id << "'";
-
-    try {
-        if (auto call = newOutgoingCall(trim(to), account_id, volatileCallDetails)) {
-            stopTone();
-
-            pimpl_->switchCall(call->getCallId());
-
-            return call->getCallId();
-        }
-    } catch (const std::exception& e) {
-        JAMI_ERR("%s", e.what());
-    }
-    return {};
-}
-
-std::string
-Manager::outgoingCall(const std::string& account_id,
-                      const std::string& to,
                       const std::vector<DRing::MediaMap>& mediaList,
                       std::shared_ptr<Conference> conference)
 {
@@ -1499,7 +1476,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
         pimpl_->unsetCurrentCall();
 
         // Create call
-        auto callId = outgoingCall(account, tostr, conf);
+        auto callId = outgoingCall(account, tostr, {}, conf);
         if (callId.empty())
             continue;
 
@@ -1846,32 +1823,23 @@ Manager::incomingCall(const std::string& accountId, Call& call)
         return;
     }
 
-    if (account->isMultiStreamEnabled()) {
-        // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
-        auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
-            call.getMediaAttributeList());
+    // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
+    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList());
 
-        if (mediaList.empty()) {
-            JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
-        }
-
-        JAMI_INFO("Incoming call %s on account %s with %lu media",
-                  call.getCallId().c_str(),
-                  accountId.c_str(),
-                  mediaList.size());
-
-        // Report the call using new API.
-        emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
-                                                             call.getCallId(),
-                                                             call.getPeerDisplayName() + " " + from,
-                                                             mediaList);
-    } else {
-        JAMI_INFO("Incoming call %s on account %s", call.getCallId().c_str(), accountId.c_str());
-
-        emitSignal<DRing::CallSignal::IncomingCall>(accountId,
-                                                    call.getCallId(),
-                                                    call.getPeerDisplayName() + " " + from);
+    if (mediaList.empty()) {
+        JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
     }
+
+    JAMI_INFO("Incoming call %s on account %s with %lu media",
+              call.getCallId().c_str(),
+              accountId.c_str(),
+              mediaList.size());
+
+    // Report the call using new API.
+    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+                                                         call.getCallId(),
+                                                         call.getPeerDisplayName() + " " + from,
+                                                         mediaList);
 
     // Process the call.
     pimpl_->processIncomingCall(accountId, call);
@@ -3021,20 +2989,6 @@ std::shared_ptr<AudioLayer>
 Manager::getAudioDriver()
 {
     return pimpl_->audiodriver_;
-}
-
-std::shared_ptr<Call>
-Manager::newOutgoingCall(std::string_view toUrl,
-                         const std::string& accountId,
-                         const std::map<std::string, std::string>& volatileCallDetails)
-{
-    auto account = getAccount(accountId);
-    if (!account or !account->isUsable()) {
-        JAMI_WARN("Account is not usable for calling");
-        return nullptr;
-    }
-
-    return account->newOutgoingCall(toUrl, volatileCallDetails);
 }
 
 std::shared_ptr<Call>

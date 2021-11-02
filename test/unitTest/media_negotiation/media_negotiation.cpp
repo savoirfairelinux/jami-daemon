@@ -83,7 +83,6 @@ struct CallData
     std::string userName_ {};
     std::string alias_ {};
     std::string callId_ {};
-    bool enableMultiStream_ {true};
     std::vector<Signal> signals_;
     std::condition_variable cv_ {};
     std::mutex mtx_;
@@ -114,14 +113,12 @@ private:
     void audio_only_then_add_video();
     void audio_and_video_then_mute_audio();
     void audio_and_video_then_change_video_source();
-    void audio_only_then_add_video_but_peer_disabled_multistream();
 
     CPPUNIT_TEST_SUITE(MediaNegotiationTest);
     CPPUNIT_TEST(audio_and_video_then_mute_video);
     CPPUNIT_TEST(audio_only_then_add_video);
     CPPUNIT_TEST(audio_and_video_then_mute_audio);
     CPPUNIT_TEST(audio_and_video_then_change_video_source);
-    CPPUNIT_TEST(audio_only_then_add_video_but_peer_disabled_multistream);
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
@@ -178,9 +175,7 @@ MediaNegotiationTest::setUp()
 
     JAMI_INFO("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceData_.accountId_);
-    aliceAccount->enableMultiStream(true);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData_.accountId_);
-    bobAccount->enableMultiStream(true);
 
     wait_for_announcement_of({aliceAccount->getAccountID(), bobAccount->getAccountID()});
 }
@@ -490,7 +485,6 @@ MediaNegotiationTest::configureScenario(CallData& aliceData, CallData& bobData)
         auto const& account = Manager::instance().getAccount<JamiAccount>(aliceData.accountId_);
         aliceData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableMultiStream(aliceData.enableMultiStream_);
     }
 
     {
@@ -498,7 +492,6 @@ MediaNegotiationTest::configureScenario(CallData& aliceData, CallData& bobData)
         auto const& account = Manager::instance().getAccount<JamiAccount>(bobData.accountId_);
         bobData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableMultiStream(bobData.enableMultiStream_);
     }
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
@@ -594,11 +587,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
               bobData.accountId_.c_str());
 
     // Wait for incoming call signal.
-    if (bobData.enableMultiStream_) {
-        CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCallWithMedia::name));
-    } else {
-        CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCall::name));
-    }
+    CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
     {
@@ -889,49 +878,6 @@ MediaNegotiationTest::audio_and_video_then_change_video_source()
         scenario.answerUpdate_.emplace_back(video);
 
         scenario.expectMediaRenegotiation_ = true;
-        scenario.expectMediaChangeRequest_ = false;
-
-        testWithScenario(aliceData_, bobData_, scenario);
-    }
-
-    DRing::unregisterSignalHandlers();
-
-    JAMI_INFO("=== End test %s ===", __FUNCTION__);
-}
-
-void
-MediaNegotiationTest::audio_only_then_add_video_but_peer_disabled_multistream()
-{
-    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
-
-    // Disable multi-stream on Bob's side
-    bobData_.enableMultiStream_ = false;
-
-    configureScenario(aliceData_, bobData_);
-
-    MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
-    defaultAudio.label_ = "audio_0";
-    defaultAudio.enabled_ = true;
-
-    MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
-    defaultVideo.label_ = "video_0";
-    defaultVideo.enabled_ = true;
-
-    {
-        MediaAttribute audio(defaultAudio);
-        MediaAttribute video(defaultVideo);
-
-        TestScenario scenario;
-        // First offer/answer
-        scenario.offer_.emplace_back(audio);
-        scenario.answer_.emplace_back(audio);
-
-        // Updated offer/answer
-        scenario.offerUpdate_.emplace_back(audio);
-        scenario.offerUpdate_.emplace_back(video);
-        scenario.answerUpdate_.emplace_back(audio);
-        scenario.answerUpdate_.emplace_back(video);
-        scenario.expectMediaRenegotiation_ = false;
         scenario.expectMediaChangeRequest_ = false;
 
         testWithScenario(aliceData_, bobData_, scenario);
