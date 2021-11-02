@@ -128,13 +128,13 @@ CallTest::testCall()
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri);
+    auto call = DRing::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
     JAMI_INFO("Stop call between alice and Bob");
     callStopped = 0;
-    Manager::instance().hangupCall(aliceId, call->getCallId());
+    Manager::instance().hangupCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
 }
 
@@ -186,12 +186,12 @@ CallTest::testCachedCall()
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return successfullyConnected.load(); }));
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri);
+    auto call = DRing::placeCallWithMedia(aliceId, bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
     callStopped = 0;
     JAMI_INFO("Stop call between alice and Bob");
-    Manager::instance().hangupCall(aliceId, call->getCallId());
+    Manager::instance().hangupCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
 }
 
@@ -221,7 +221,7 @@ CallTest::testStopSearching()
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri);
+    auto call = DRing::placeCallWithMedia(aliceId, bobUri, {});
 
     // Bob not there, so we should get a SEARCHING STATUS
     JAMI_INFO("Wait OVER state");
@@ -282,7 +282,7 @@ CallTest::testDeclineMultiDevice()
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri);
+    auto call = DRing::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
         return callReceived == 2 && !callIdBob.empty();

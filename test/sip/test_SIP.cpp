@@ -144,7 +144,7 @@ test_SIP::testSimpleOutgoingIpCall()
     CPPUNIT_ASSERT(!Manager::instance().hasCurrentCall());
 
     // start a new call sending INVITE message to sipp instance
-    testcallid = Manager::instance().outgoingCall(testaccount, testcallnumber);
+    testcallid = DRing::placeCallWithMedia(testaccount, testcallnumber, {});
 
     // wait for receiving 180 and 200 message from peer
     std::this_thread::sleep_for(std::chrono::seconds(1)); // should be enough
@@ -256,7 +256,7 @@ test_SIP::testMultipleOutgoingIpCall()
         // start a user agent server waiting for a call
         sippThread("sipp -sn uas -i 127.0.0.1 -p 5061 -m " + std::to_string(numberOfCall) + " -bg");
 
-        callID[i] = Manager::instance().outgoingCall(testaccount, callNumber);
+        callID[i] = DRing::placeCallWithMedia(testaccount, callNumber, {});
         auto newCall = Manager::instance().getCallFromCallID(callID[i]);
         CPPUNIT_ASSERT(newCall);
 
@@ -302,7 +302,7 @@ test_SIP::testHoldIpCall()
 
     auto callThread = sippThread("sipp -sf sippxml/test_3.xml -i 127.0.0.1 -p 5062 -m 1 -bg");
 
-    auto testCallId = Manager::instance().outgoingCall(testAccount, testCallNumber);
+    auto testCallId = DRing::placeCallWithMedia(testAccount, testCallNumber, {});
     auto call = Manager::instance().getCallFromCallID(testCallId);
 
     std::this_thread::sleep_for(std::chrono::seconds(2));

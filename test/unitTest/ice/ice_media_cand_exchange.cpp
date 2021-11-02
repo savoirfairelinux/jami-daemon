@@ -328,8 +328,6 @@ IceMediaCandExchangeTest::setupJamiAccount(CallData& user)
     details[ConfProperties::UPNP_ENABLED] = user.upnpEnabled_ ? "true" : "false";
     details[ConfProperties::TURN::ENABLED] = user.turnEnabled_ ? "true" : "false";
     DRing::setAccountDetails(user.accountId_, details);
-
-    account->enableMultiStream(true);
 }
 
 void
@@ -359,7 +357,6 @@ IceMediaCandExchangeTest::setupSipAccount(CallData& user)
     user.alias_ = details[ConfProperties::ALIAS];
 
     account->enableIceForMedia(true);
-    account->enableMultiStream(true);
 
     user.dest_ = ip_utils::getLocalAddr(AF_INET);
     user.dest_.setPort(user.listeningPort_);
