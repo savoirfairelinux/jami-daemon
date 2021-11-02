@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2366f20_8153a318",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-02T19:38:39Z",
+      "side": 1,
+      "message": "I\u0027m not sure we should allow 60/120 fps. Most of the computers will not follow in software and I don\u0027t really see a use case where 120 fps is needed.",
+      "range": {
+        "startLine": 550,
+        "startChar": 30,
+        "endLine": 552,
+        "endChar": 32
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d1bfe3c9_1b15ae75",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-02T19:38:39Z",
+      "side": 1,
+      "message": "reserve devices_.size()",
+      "range": {
+        "startLine": 239,
+        "startChar": 38,
+        "endLine": 239,
+        "endChar": 41
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0014a795_4a15d937",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-02T19:38:39Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 319,
+        "startChar": 36,
+        "endLine": 319,
+        "endChar": 37
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
