@@ -40,15 +40,15 @@ namespace DRing {
 
 /* Call related methods */
 DRING_PUBLIC std::string placeCall(const std::string& accountID, const std::string& to);
-DRING_PUBLIC std::string placeCall(const std::string& accountID,
-                                   const std::string& to,
-                                   const std::map<std::string, std::string>& VolatileCallDetails);
+
 DRING_PUBLIC std::string placeCallWithMedia(
     const std::string& accountID,
     const std::string& to,
     const std::vector<std::map<std::string, std::string>>& mediaList);
 DRING_PUBLIC bool refuse(const std::string& callID);
 DRING_PUBLIC bool accept(const std::string& callID);
+DRING_PUBLIC bool acceptWithMedia(const std::string& callID,
+                                  const std::vector<DRing::MediaMap>& mediaList);
 DRING_PUBLIC bool hangUp(const std::string& callID);
 DRING_PUBLIC bool hold(const std::string& callID);
 DRING_PUBLIC bool unhold(const std::string& callID);
@@ -57,14 +57,6 @@ DRING_PUBLIC bool transfer(const std::string& callID, const std::string& to);
 DRING_PUBLIC bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 DRING_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::string> getCallList();
-
-/* APIs that supports an arbitrary number of media */
-DRING_PUBLIC std::string placeCall(const std::string& accountID,
-                                   const std::string& to,
-                                   const std::vector<DRing::MediaMap>& mediaList);
-DRING_PUBLIC bool accept(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList);
-DRING_PUBLIC bool acceptWithMedia(const std::string& callID,
-                                  const std::vector<DRing::MediaMap>& mediaList);
 DRING_PUBLIC bool requestMediaChange(const std::string& callID,
                                      const std::vector<DRing::MediaMap>& mediaList);
 DRING_PUBLIC bool answerMediaChangeRequest(const std::string& callID,

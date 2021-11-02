@@ -415,37 +415,24 @@ JamiAccount::newIncomingCall(const std::string& from,
 }
 
 std::shared_ptr<Call>
-JamiAccount::newOutgoingCall(std::string_view toUrl,
-                             const std::map<std::string, std::string>& volatileCallDetails)
-{
-    auto& manager = Manager::instance();
-    auto call = manager.callFactory.newSipCall(shared(),
-                                               Call::CallType::OUTGOING,
-                                               volatileCallDetails);
-    if (not call)
-        return {};
-
-    if (call->isIceEnabled()) {
-        call->createIceMediaTransport();
-        getIceOptions([=](auto&& opts) {
-            call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
-        });
-    }
-
-    newOutgoingCallHelper(call, toUrl);
-
-    return call;
-}
-
-std::shared_ptr<Call>
 JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::MediaMap>& mediaList)
 {
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling peer " << suffix;
 
     auto& manager = Manager::instance();
+    std::shared_ptr<SIPCall> call;
 
-    auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
+    // SIP allows sending empty invites, this use case is not used with Jami accounts.
+    if (not mediaList.empty()) {
+        call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
+    } else {
+        JAMI_WARN("Media list is empty, setting a default list");
+        call = manager.callFactory.newSipCall(shared(),
+                                              Call::CallType::OUTGOING,
+                                              MediaAttribute::mediaAttributesToMediaMaps(
+                                                  createDefaultMediaList(isVideoEnabled())));
+    }
 
     if (not call)
         return {};
@@ -506,15 +493,7 @@ std::shared_ptr<SIPCall>
 JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
 {
     auto mediaList = MediaAttribute::mediaAttributesToMediaMaps(mainCall->getMediaAttributeList());
-    if (not mediaList.empty()) {
-        return Manager::instance().callFactory.newSipCall(shared(),
-                                                          Call::CallType::OUTGOING,
-                                                          mediaList);
-    } else {
-        return Manager::instance().callFactory.newSipCall(shared(),
-                                                          Call::CallType::OUTGOING,
-                                                          mainCall->getDetails());
-    }
+    return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
 }
 
 void

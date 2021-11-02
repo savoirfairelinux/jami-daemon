@@ -80,15 +80,15 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
                                             pjsip_inv_session** inv)
 {
     JAMI_DBG("Creating SIP dialog: \n"
-             "from: %s\n"
-             "contact: %s\n"
-             "to: %s\n",
+             "From: %s\n"
+             "Contact: %s\n"
+             "To: %s\n",
              from->ptr,
              contact->ptr,
              to->ptr);
 
     if (target) {
-        JAMI_DBG("target: %s", target->ptr);
+        JAMI_DBG("Target: %s", target->ptr);
     } else {
         JAMI_DBG("No target provided, using 'to' as target");
     }
