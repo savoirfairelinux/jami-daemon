@@ -2076,32 +2076,23 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         return;
     }
 
-    if (account->isMultiStreamEnabled()) {
-        // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
-        auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
-            call.getMediaAttributeList());
+    // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
+    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList());
 
-        if (mediaList.empty()) {
-            JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
-        }
-
-        JAMI_INFO("Incoming call %s on account %s with %lu media",
-                  call.getCallId().c_str(),
-                  accountId.c_str(),
-                  mediaList.size());
-
-        // Report the call using new API.
-        emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
-                                                             call.getCallId(),
-                                                             call.getPeerDisplayName() + " " + from,
-                                                             mediaList);
-    } else {
-        JAMI_INFO("Incoming call %s on account %s", call.getCallId().c_str(), accountId.c_str());
-
-        emitSignal<DRing::CallSignal::IncomingCall>(accountId,
-                                                    call.getCallId(),
-                                                    call.getPeerDisplayName() + " " + from);
+    if (mediaList.empty()) {
+        JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
     }
+
+    JAMI_INFO("Incoming call %s on account %s with %lu media",
+              call.getCallId().c_str(),
+              accountId.c_str(),
+              mediaList.size());
+
+    // Report the call using new API.
+    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+                                                         call.getCallId(),
+                                                         call.getPeerDisplayName() + " " + from,
+                                                         mediaList);
 
     // Process the call.
     pimpl_->processIncomingCall(call, accountId);
