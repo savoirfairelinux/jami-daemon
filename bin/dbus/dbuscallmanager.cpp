@@ -31,16 +31,6 @@ DBusCallManager::placeCall(const std::string& accountId, const std::string& to)
 {
     return DRing::placeCall(accountId, to);
 }
-
-auto
-DBusCallManager::placeCallWithDetails(const std::string& accountId,
-                                      const std::string& to,
-                                      const std::map<std::string, std::string>& VolatileCallDetails)
-    -> decltype(DRing::placeCall(accountId, to, VolatileCallDetails))
-{
-    return DRing::placeCall(accountId, to, VolatileCallDetails);
-}
-
 auto
 DBusCallManager::placeCallWithMedia(const std::string& accountId,
                                     const std::string& to,

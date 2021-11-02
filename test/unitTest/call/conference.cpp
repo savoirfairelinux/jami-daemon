@@ -212,7 +212,7 @@ ConferenceTest::startConference()
     auto carlaUri = carlaAccount->getUsername();
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1 = aliceAccount->newOutgoingCall(bobUri);
+    auto call1 = DRing::placeCallWithMedia(aliceId, bobUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
@@ -220,7 +220,7 @@ ConferenceTest::startConference()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.state == "CURRENT"; }));
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2 = aliceAccount->newOutgoingCall(carlaUri);
+    auto call2 = DRing::placeCallWithMedia(aliceId, carlaUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
@@ -228,7 +228,7 @@ ConferenceTest::startConference()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return carlaCall.state == "CURRENT"; }));
 
     JAMI_INFO("Start conference");
-    Manager::instance().joinParticipant(aliceId, call1->getCallId(), aliceId, call2->getCallId());
+    Manager::instance().joinParticipant(aliceId, call1, aliceId, call2);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return !confId.empty(); }));
 }
 
@@ -297,29 +297,30 @@ ConferenceTest::testAudioVideoMutedStates()
     auto carlaUri = carlaAccount->getUsername();
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1 = aliceAccount->newOutgoingCall(bobUri);
+    auto call1Id = DRing::placeCallWithMedia(aliceId, bobUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.state == "CURRENT"; }));
-
+    auto call1 = aliceAccount->getCall(call1Id);
     call1->muteMedia(DRing::Media::MediaAttributeValue::AUDIO, true);
     call1->muteMedia(DRing::Media::MediaAttributeValue::VIDEO, true);
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2 = aliceAccount->newOutgoingCall(carlaUri);
+    auto call2Id = DRing::placeCallWithMedia(aliceId, carlaUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return carlaCall.state == "CURRENT"; }));
 
+    auto call2 = aliceAccount->getCall(call2Id);
     call2->muteMedia(DRing::Media::MediaAttributeValue::AUDIO, true);
     call2->muteMedia(DRing::Media::MediaAttributeValue::VIDEO, true);
 
     JAMI_INFO("Start conference");
-    Manager::instance().joinParticipant(aliceId, call1->getCallId(), aliceId, call2->getCallId());
+    Manager::instance().joinParticipant(aliceId, call1Id, aliceId, call2Id);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return !confId.empty(); }));
 
     auto conf = aliceAccount->getConference(confId);
@@ -380,13 +381,13 @@ ConferenceTest::testMuteStatusAfterRemove()
     startConference();
 
     JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = aliceAccount->newOutgoingCall(daviUri);
+    auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call1->getCallId(), aliceId, confId);
+    Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
 
     DRing::muteParticipant(aliceId, confId, daviUri, true);
     CPPUNIT_ASSERT(
@@ -397,13 +398,13 @@ ConferenceTest::testMuteStatusAfterRemove()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = aliceAccount->newOutgoingCall(daviUri);
+    auto call2 = DRing::placeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call2->getCallId(), aliceId, confId);
+    Manager::instance().addParticipant(aliceId, call2, aliceId, confId);
 
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !daviCall.moderatorMuted.load(); }));
@@ -439,13 +440,13 @@ ConferenceTest::testHandsUp()
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.raisedHand.load(); }));
 
     JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = aliceAccount->newOutgoingCall(daviUri);
+    auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call1->getCallId(), aliceId, confId);
+    Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
 
     DRing::raiseParticipantHand(aliceId, confId, daviUri, true);
     CPPUNIT_ASSERT(
@@ -456,13 +457,13 @@ ConferenceTest::testHandsUp()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = aliceAccount->newOutgoingCall(daviUri);
+    auto call2 = DRing::placeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call2->getCallId(), aliceId, confId);
+    Manager::instance().addParticipant(aliceId, call2, aliceId, confId);
 
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !daviCall.raisedHand.load(); }));
@@ -516,7 +517,7 @@ ConferenceTest::testJoinCallFromOtherAccount()
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.raisedHand.load(); }));
 
     JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = aliceAccount->newOutgoingCall(daviUri);
+    auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);

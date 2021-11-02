@@ -40,9 +40,7 @@ namespace DRing {
 
 /* Call related methods */
 DRING_PUBLIC std::string placeCall(const std::string& accountId, const std::string& to);
-DRING_PUBLIC std::string placeCall(const std::string& accountId,
-                                   const std::string& to,
-                                   const std::map<std::string, std::string>& VolatileCallDetails);
+
 DRING_PUBLIC std::string placeCallWithMedia(
     const std::string& accountId,
     const std::string& to,
@@ -67,12 +65,6 @@ DRING_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string
 DRING_PUBLIC std::vector<std::string> getCallList(const std::string& accountId);
 
 /* APIs that supports an arbitrary number of media */
-DRING_PUBLIC std::string placeCall(const std::string& accountId,
-                                   const std::string& to,
-                                   const std::vector<DRing::MediaMap>& mediaList);
-DRING_PUBLIC bool accept(const std::string& accountId,
-                         const std::string& callId,
-                         const std::vector<DRing::MediaMap>& mediaList);
 DRING_PUBLIC bool acceptWithMedia(const std::string& accountId,
                                   const std::string& callId,
                                   const std::vector<DRing::MediaMap>& mediaList);

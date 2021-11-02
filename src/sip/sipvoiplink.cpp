@@ -993,11 +993,7 @@ reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, p
         return !PJ_SUCCESS;
     if (auto call = getCallFromInvite(inv)) {
         if (auto const& account = call->getAccount().lock()) {
-            if (account->isMultiStreamEnabled()) {
-                return call->onReceiveReinvite(offer, rdata);
-            } else {
-                return call->onReceiveOffer(offer, rdata);
-            }
+            return call->onReceiveReinvite(offer, rdata);
         }
     }
 
@@ -1240,7 +1236,10 @@ transferCall(SIPCall& call, const std::string& refer_to)
     const auto& callId = call.getCallId();
     JAMI_WARN("[call:%s] Trying to transfer to %s", callId.c_str(), refer_to.c_str());
     try {
-        Manager::instance().newOutgoingCall(refer_to, call.getAccountId());
+        Manager::instance().newOutgoingCall(refer_to,
+                                            call.getAccountId(),
+                                            MediaAttribute::mediaAttributesToMediaMaps(
+                                                call.getMediaAttributeList()));
         Manager::instance().hangupCall(call.getAccountId(), callId);
     } catch (const std::exception& e) {
         JAMI_ERR("[call:%s] SIP transfer failed: %s", callId.c_str(), e.what());
