@@ -45,27 +45,9 @@ registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapper
 std::string
 placeCall(const std::string& accountID, const std::string& to)
 {
-    // Check if a destination number is available
-    if (to.empty()) {
-        JAMI_DBG("No number entered - Call stopped");
-        return {};
-    } else {
-        return jami::Manager::instance().outgoingCall(accountID, to);
-    }
-}
-
-std::string
-placeCall(const std::string& accountID,
-          const std::string& to,
-          const std::map<std::string, std::string>& volatileCallDetails)
-{
-    // Check if a destination number is available
-    if (to.empty()) {
-        JAMI_DBG("No number entered - Call stopped");
-        return {};
-    } else {
-        return jami::Manager::instance().outgoingCall(accountID, to, "", volatileCallDetails);
-    }
+    // TODO. Remove ASAP.
+    JAMI_WARN("This API is deprecated, use placeCallWithMedia() instead");
+    return placeCallWithMedia(accountID, to, {});
 }
 
 std::string
