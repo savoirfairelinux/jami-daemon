@@ -141,9 +141,7 @@ SipEmptyOfferTest::setUp()
 
     JAMI_INFO("Initialize accounts ...");
     auto aliceAccount = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
-    aliceAccount->enableMultiStream(true);
     auto bobAccount = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
-    bobAccount->enableMultiStream(true);
 }
 
 void

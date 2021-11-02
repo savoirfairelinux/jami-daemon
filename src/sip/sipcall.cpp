@@ -2465,83 +2465,16 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
 
     // Report the change request.
     auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
-    // TODO_MC. Validate this assessment.
+    // TODO. Validate this assessment.
     // Report re-invites only if the number of media changed, otherwise answer
     // using the current local attributes.
-    if (acc->isMultiStreamEnabled() and remoteMediaList.size() != rtpStreams_.size()) {
+    if (remoteMediaList.size() != rtpStreams_.size()) {
         Manager::instance().mediaChangeRequested(getCallId(), getAccountId(), remoteMediaList);
     } else {
         auto localMediaList = MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList());
         answerMediaChangeRequest(localMediaList);
     }
-
     return res;
-}
-
-int
-SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata)
-{
-    if (!sdp_)
-        return !PJ_SUCCESS;
-    sdp_->clearIce();
-    auto acc = getSIPAccount();
-    if (!acc) {
-        JAMI_ERR("No account detected");
-        return !PJ_SUCCESS;
-    }
-
-    JAMI_DBG("[call:%s] Received a new offer (re-invite)", getCallId().c_str());
-
-    sdp_->setReceivedOffer(offer);
-
-    // Use current media list.
-    sdp_->processIncomingOffer(getMediaAttributeList());
-
-    if (isIceEnabled() and offer != nullptr) {
-        setupIceResponse();
-    }
-
-    sdp_->startNegotiation();
-
-    pjsip_tx_data* tdata = nullptr;
-
-    if (pjsip_inv_initial_answer(inviteSession_.get(),
-                                 const_cast<pjsip_rx_data*>(rdata),
-                                 PJSIP_SC_OK,
-                                 NULL,
-                                 NULL,
-                                 &tdata)
-        != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Could not create initial answer OK", getCallId().c_str());
-        return !PJ_SUCCESS;
-    }
-
-    // Add user-agent header
-    sip_utils::addUserAgentHeader(getSIPAccount()->getUserAgentName(), tdata);
-
-    if (pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_OK, NULL, sdp_->getLocalSdpSession(), &tdata)
-        != PJ_SUCCESS) {
-        JAMI_ERR("Could not create answer OK");
-        return !PJ_SUCCESS;
-    }
-
-    if (contactHeader_.empty()) {
-        JAMI_ERR("[call:%s] Contact header is empty!", getCallId().c_str());
-        return !PJ_SUCCESS;
-    }
-
-    sip_utils::addContactHeader(contactHeader_, tdata);
-
-    if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Could not send msg OK", getCallId().c_str());
-        return !PJ_SUCCESS;
-    }
-
-    if (upnp_) {
-        openPortsUPnP();
-    }
-
-    return PJ_SUCCESS;
 }
 
 void
