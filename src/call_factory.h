@@ -42,17 +42,6 @@ public:
         : rand_(rand)
     {}
 
-    /**
-     * Create and register a new SIPCall instance.
-     * @param account Account used to create this call
-     * @param type The call type (incoming/outgoing)
-     * @param details Call details
-     * @return A shared pointer to the created call
-     */
-    std::shared_ptr<SIPCall> newSipCall(const std::shared_ptr<SIPAccountBase>& account,
-                                        Call::CallType type,
-                                        const std::map<std::string, std::string>& details = {});
-
     std::string getNewCallID() const;
 
     /**

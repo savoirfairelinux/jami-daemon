@@ -150,16 +150,6 @@ public:
      * Create a new outgoing call.
      *
      * @param toUrl The address to call
-     * @return std::shared_ptr<Call> A pointer on the created call
-     */
-    virtual std::shared_ptr<Call> newOutgoingCall(
-        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {})
-        = 0;
-
-    /**
-     * Create a new outgoing call.
-     *
-     * @param toUrl The address to call
      * @param mediaList A list of media
      * @return The created call
      */
@@ -357,13 +347,6 @@ public:
     bool isEmptyOffersEnabled() const { return emptyOffersEnabled_; }
     void enableEmptyOffers(bool enable) { emptyOffersEnabled_ = enable; }
 
-    // Enable/disable multi-stream feature.
-    // Multi-stream feature changes the callflow of the re-invite process. All
-    // clients must support this feature before it can be enabled by default.
-    // These two internal APIs allow controlling the callflow accordingly. They
-    // should be removed once the multi-stream feature is fully supported.
-    bool isMultiStreamEnabled() const { return multiStreamEnabled_; }
-    void enableMultiStream(bool enable) { multiStreamEnabled_ = enable; }
     // Check if a Daemon version (typically peer's version) satisfies the
     // minimum required version. This check is typically used to disable a
     // feature if it's not backward compatible with the peer's version.
