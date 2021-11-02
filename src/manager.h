@@ -143,19 +143,6 @@ public:
     }
 
     /**
-     * Functions which occur with a user's action
-     * Place a new call
-     * @param accountId The account to make the call with
-     * @param to  The recipient of the call
-     * @param conf_id The conference identifier if any
-     * @return id The call ID on success, empty string otherwise
-     */
-    std::string outgoingCall(const std::string& accountId,
-                             const std::string& to,
-                             std::shared_ptr<Conference> conference = {},
-                             const std::map<std::string, std::string>& volatileCallDetails = {});
-
-    /**
      * Place a new call
      * @param accountId the user's account ID
      * @param callee the callee's ID/URI. Depends on the account type.
@@ -782,18 +769,6 @@ public:
     /**
      * Call periodically to poll for VoIP events */
     void pollEvents();
-
-    /**
-     * Create a new outgoing call
-     * @param toUrl The address to call
-     * @param accountId account to use
-     * @return Call*  A shared pointer on a valid call.
-     * @note This function raises VoipLinkException() on errors.
-     */
-    std::shared_ptr<Call> newOutgoingCall(
-        std::string_view toUrl,
-        const std::string& accountId,
-        const std::map<std::string, std::string>& volatileCallDetails = {});
 
     /**
      * Create a new outgoing call

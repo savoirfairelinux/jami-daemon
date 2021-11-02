@@ -93,40 +93,6 @@ constexpr auto DUMMY_VIDEO_STR = "dummy video session";
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
                  Call::CallType type,
-                 const std::map<std::string, std::string>& details)
-    : Call(account, callId, type, details)
-    , sdp_(new Sdp(callId))
-    , enableIce_(account->isIceForMediaEnabled())
-    , srtpEnabled_(account->isSrtpEnabled())
-{
-    if (account->getUPnPActive())
-        upnp_.reset(new upnp::Controller());
-
-    setCallMediaLocal();
-
-    // Set the media caps.
-    sdp_->setLocalMediaCapabilities(MediaType::MEDIA_AUDIO,
-                                    account->getActiveAccountCodecInfoList(MEDIA_AUDIO));
-#ifdef ENABLE_VIDEO
-    sdp_->setLocalMediaCapabilities(MediaType::MEDIA_VIDEO,
-                                    account->getActiveAccountCodecInfoList(MEDIA_VIDEO));
-#endif
-    auto mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled()
-                                                                     and not isAudioOnly(),
-                                                                 getState() == CallState::HOLD);
-    JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu media",
-             getCallId().c_str(),
-             type == Call::CallType::INCOMING
-                 ? "INCOMING"
-                 : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
-             mediaAttrList.size());
-
-    initMediaStreams(mediaAttrList);
-}
-
-SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
-                 const std::string& callId,
-                 Call::CallType type,
                  const std::vector<DRing::MediaMap>& mediaList)
     : Call(account, callId, type)
     , peerSupportMultiStream_(false)
@@ -2511,11 +2477,11 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
         return;
     }
 
-    // If multi-stream is supported and the offered media differ from
-    // the current media, the request is reported to the client to be
-    // processed. Otherwise, we answer with the current local media.
+    // If the offered media differ from the current local media, the
+    // request is reported to the client to be processed. Otherwise,
+    // it will be processed using the current local media.
 
-    if (account->isMultiStreamEnabled() and checkMediaChangeRequest(remoteMediaList)) {
+    if (checkMediaChangeRequest(remoteMediaList)) {
         // Report the media change request.
         emitSignal<DRing::CallSignal::MediaChangeRequested>(getAccountId(),
                                                             getCallId(),
@@ -2574,74 +2540,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
     } else {
         handleMediaChangeRequest(remoteMediaList);
     }
-
     return res;
-}
-
-int
-SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata)
-{
-    if (!sdp_)
-        return !PJ_SUCCESS;
-    sdp_->clearIce();
-    auto acc = getSIPAccount();
-    if (!acc) {
-        JAMI_ERR("No account detected");
-        return !PJ_SUCCESS;
-    }
-
-    JAMI_DBG("[call:%s] Received a new offer (re-invite)", getCallId().c_str());
-
-    sdp_->setReceivedOffer(offer);
-
-    // Use current media list.
-    sdp_->processIncomingOffer(getMediaAttributeList());
-
-    if (isIceEnabled() and offer != nullptr) {
-        setupIceResponse();
-    }
-
-    sdp_->startNegotiation();
-
-    pjsip_tx_data* tdata = nullptr;
-
-    if (pjsip_inv_initial_answer(inviteSession_.get(),
-                                 const_cast<pjsip_rx_data*>(rdata),
-                                 PJSIP_SC_OK,
-                                 NULL,
-                                 NULL,
-                                 &tdata)
-        != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Could not create initial answer OK", getCallId().c_str());
-        return !PJ_SUCCESS;
-    }
-
-    // Add user-agent header
-    sip_utils::addUserAgentHeader(getSIPAccount()->getUserAgentName(), tdata);
-
-    if (pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_OK, NULL, sdp_->getLocalSdpSession(), &tdata)
-        != PJ_SUCCESS) {
-        JAMI_ERR("Could not create answer OK");
-        return !PJ_SUCCESS;
-    }
-
-    if (contactHeader_.empty()) {
-        JAMI_ERR("[call:%s] Contact header is empty!", getCallId().c_str());
-        return !PJ_SUCCESS;
-    }
-
-    sip_utils::addContactHeader(contactHeader_, tdata);
-
-    if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Could not send msg OK", getCallId().c_str());
-        return !PJ_SUCCESS;
-    }
-
-    if (upnp_) {
-        openPortsUPnP();
-    }
-
-    return PJ_SUCCESS;
 }
 
 void
