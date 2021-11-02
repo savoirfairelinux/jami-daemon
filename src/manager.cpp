@@ -1664,7 +1664,8 @@ Manager::createConfFromParticipantList(const std::vector<std::string>& participa
     bool videoEnabled {false};
     for (const auto& numberaccount : participantList) {
         std::string tostr(numberaccount.substr(0, numberaccount.find(',')));
-        std::string accountId(numberaccount.substr(numberaccount.find(',') + 1, numberaccount.size()));
+        std::string accountId(
+            numberaccount.substr(numberaccount.find(',') + 1, numberaccount.size()));
         auto account = getAccount(accountId);
         if (account) {
             videoEnabled |= account->isVideoEnabled();
@@ -2076,32 +2077,23 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         return;
     }
 
-    if (account->isMultiStreamEnabled()) {
-        // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
-        auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
-            call.getMediaAttributeList());
+    // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
+    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList());
 
-        if (mediaList.empty()) {
-            JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
-        }
-
-        JAMI_INFO("Incoming call %s on account %s with %lu media",
-                  call.getCallId().c_str(),
-                  accountId.c_str(),
-                  mediaList.size());
-
-        // Report the call using new API.
-        emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
-                                                             call.getCallId(),
-                                                             call.getPeerDisplayName() + " " + from,
-                                                             mediaList);
-    } else {
-        JAMI_INFO("Incoming call %s on account %s", call.getCallId().c_str(), accountId.c_str());
-
-        emitSignal<DRing::CallSignal::IncomingCall>(accountId,
-                                                    call.getCallId(),
-                                                    call.getPeerDisplayName() + " " + from);
+    if (mediaList.empty()) {
+        JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
     }
+
+    JAMI_INFO("Incoming call %s on account %s with %lu media",
+              call.getCallId().c_str(),
+              accountId.c_str(),
+              mediaList.size());
+
+    // Report the call using new API.
+    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+                                                         call.getCallId(),
+                                                         call.getPeerDisplayName() + " " + from,
+                                                         mediaList);
 
     // Process the call.
     pimpl_->processIncomingCall(call, accountId);
@@ -2882,7 +2874,6 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
         }
     }
 }
-
 
 AudioFormat
 Manager::hardwareAudioFormatChanged(AudioFormat format)

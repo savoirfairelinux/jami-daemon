@@ -993,11 +993,7 @@ reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, p
         return !PJ_SUCCESS;
     if (auto call = getCallFromInvite(inv)) {
         if (auto const& account = call->getAccount().lock()) {
-            if (account->isMultiStreamEnabled()) {
-                return call->onReceiveReinvite(offer, rdata);
-            } else {
-                return call->onReceiveOffer(offer, rdata);
-            }
+            return call->onReceiveReinvite(offer, rdata);
         }
     }
 
