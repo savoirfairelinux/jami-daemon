@@ -67,7 +67,6 @@ public:
 namespace DRing {
 
 /* Call related methods */
-std::string placeCall(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& volatileCallDetails);
 std::string placeCallWithMedia(const std::string& accountID,
                                const std::string& to,
                                const std::vector<std::map<std::string, std::string>>& mediaList);
