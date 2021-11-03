@@ -287,6 +287,12 @@ public:
     std::vector<ConversationMember> members() const;
 
     /**
+     * @param filter    If we want to remove one members
+     * @return members' uris
+     */
+    std::vector<std::string> memberUris(std::string_view filter = {}) const;
+
+    /**
      * To use after a merge with member's events, refresh members knowledge
      */
     void refreshMembers() const;
