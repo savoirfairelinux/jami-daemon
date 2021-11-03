@@ -2476,11 +2476,11 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
         return;
     }
 
-    // If multi-stream is supported and the offered media differ from
-    // the current media, the request is reported to the client to be
-    // processed. Otherwise, we answer with the current local media.
+    // If the offered media differ from the current local media, the
+    // request is reported to the client to be processed. Otherwise,
+    // it will be processed using the current local media.
 
-    if (account->isMultiStreamEnabled() and checkMediaChangeRequest(remoteMediaList)) {
+    if (checkMediaChangeRequest(remoteMediaList)) {
         // Report the media change request.
         emitSignal<DRing::CallSignal::MediaChangeRequested>(getAccountId(),
                                                             getCallId(),
