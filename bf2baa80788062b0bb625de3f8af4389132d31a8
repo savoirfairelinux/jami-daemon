@@ -50,6 +50,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "bf3428b8_6bb05eb3",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-03T14:48:52Z",
+      "side": 1,
+      "message": "it\u0027s not hardcoded, it\u0027s defined in video_device.h:\nstatic constexpr const char DEVICE_DESKTOP[] \u003d \"desktop\";\n\nanyway, may be it\u0027s not the right time to change it.",
+      "parentUuid": "3f946910_890ea1e3",
+      "range": {
+        "startLine": 445,
+        "startChar": 14,
+        "endLine": 445,
+        "endChar": 28
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a2366f20_8153a318",
         "filename": "src/media/video/v4l2/video_device_impl.cpp",
         "patchSetId": 7
