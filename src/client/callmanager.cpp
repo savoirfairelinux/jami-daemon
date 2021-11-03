@@ -55,20 +55,6 @@ placeCall(const std::string& accountID, const std::string& to)
 }
 
 std::string
-placeCall(const std::string& accountID,
-          const std::string& to,
-          const std::map<std::string, std::string>& volatileCallDetails)
-{
-    // Check if a destination number is available
-    if (to.empty()) {
-        JAMI_DBG("No number entered - Call stopped");
-        return {};
-    } else {
-        return jami::Manager::instance().outgoingCall(accountID, to, "", volatileCallDetails);
-    }
-}
-
-std::string
 placeCallWithMedia(const std::string& accountID,
                    const std::string& to,
                    const std::vector<DRing::MediaMap>& mediaList)
