@@ -98,17 +98,6 @@ public:
     /**
      * Constructor
      * @param id The call identifier
-     * @param type The type of the call. Could be Incoming or Outgoing
-     * @param details Extra infos
-     */
-    SIPCall(const std::shared_ptr<SIPAccountBase>& account,
-            const std::string& id,
-            Call::CallType type,
-            const std::map<std::string, std::string>& details = {});
-
-    /**
-     * Constructor
-     * @param id The call identifier
      * @param type The type of the call (incoming/outgoing)
      * @param mediaList A list of medias to include in the call
      */

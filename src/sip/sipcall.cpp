@@ -93,40 +93,6 @@ constexpr auto DUMMY_VIDEO_STR = "dummy video session";
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
                  Call::CallType type,
-                 const std::map<std::string, std::string>& details)
-    : Call(account, callId, type, details)
-    , sdp_(new Sdp(callId))
-    , enableIce_(account->isIceForMediaEnabled())
-    , srtpEnabled_(account->isSrtpEnabled())
-{
-    if (account->getUPnPActive())
-        upnp_.reset(new upnp::Controller());
-
-    setCallMediaLocal();
-
-    // Set the media caps.
-    sdp_->setLocalMediaCapabilities(MediaType::MEDIA_AUDIO,
-                                    account->getActiveAccountCodecInfoList(MEDIA_AUDIO));
-#ifdef ENABLE_VIDEO
-    sdp_->setLocalMediaCapabilities(MediaType::MEDIA_VIDEO,
-                                    account->getActiveAccountCodecInfoList(MEDIA_VIDEO));
-#endif
-    auto mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled()
-                                                                     and not isAudioOnly(),
-                                                                 getState() == CallState::HOLD);
-    JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu media",
-             getCallId().c_str(),
-             type == Call::CallType::INCOMING
-                 ? "INCOMING"
-                 : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
-             mediaAttrList.size());
-
-    initMediaStreams(mediaAttrList);
-}
-
-SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
-                 const std::string& callId,
-                 Call::CallType type,
                  const std::vector<DRing::MediaMap>& mediaList)
     : Call(account, callId, type)
     , peerSupportMultiStream_(false)
