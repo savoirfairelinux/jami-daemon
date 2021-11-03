@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "000a9d47_de25ea2b",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-03T15:51:22Z",
+      "side": 1,
+      "message": "use rate_",
+      "range": {
+        "startLine": 150,
+        "startChar": 14,
+        "endLine": 150,
+        "endChar": 31
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aa5bc507_28e92a0c",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 576,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-03T15:51:22Z",
+      "side": 1,
+      "message": "params.format \u003d \"x11grab\"",
+      "range": {
+        "startLine": 576,
+        "startChar": 9,
+        "endLine": 576,
+        "endChar": 45
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea042706_1e58ccec",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-03T15:51:22Z",
+      "side": 1,
+      "message": "The goal is just to find a new default device if the previous default device was removed. No need to build a new array.\n\n    if (defaultDevice_.find(id) !\u003d std::string::npos) {\n        defaultDevice_.clear();\n        for (const auto\u0026 dev : devices_)\n            if (dev.name !\u003d DEVICE_DESKTOP) {\n                defaultDevice_ \u003d dev.getDeviceId();\n                break;\n            }\n    }",
+      "range": {
+        "startLine": 239,
+        "startChar": 8,
+        "endLine": 244,
+        "endChar": 9
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a15db1f7_6220b6d5",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-03T15:51:22Z",
+      "side": 1,
+      "message": "If the user explicitly set the default device to be the screen sharing we should not prevent it. Just not use it as the default automatically.",
+      "range": {
+        "startLine": 328,
+        "startChar": 33,
+        "endLine": 328,
+        "endChar": 61
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7da7c265_0a9a0f93",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 332,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-03T15:51:22Z",
+      "side": 1,
+      "message": "New array not neeeded:\n\n    const string prefId \u003d preferences_.empty() ? \"\" : preferences_[0].unique_id;\n    const auto devIter \u003d findDeviceById(prefId);\n    if (devIter !\u003d devices_.end()) {\n        defaultDevice_ \u003d devIter-\u003egetDeviceId();\n    } else {\n        defaultDevice_.clear();\n        for (const auto\u0026 dev : devices_)\n            if (dev.name !\u003d DEVICE_DESKTOP) {\n                defaultDevice_ \u003d dev.getDeviceId();\n                break;\n            }\n    }\n\nThe else part could even be moved in a method \"getDefaultDevice()\"",
+      "range": {
+        "startLine": 320,
+        "startChar": 0,
+        "endLine": 332,
+        "endChar": 5
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0202c30a_6b2b271d",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-03T15:51:22Z",
+      "side": 1,
+      "message": "not needed (should be provided by getVideoDeviceMonitor)",
+      "range": {
+        "startLine": 400,
+        "startChar": 4,
+        "endLine": 400,
+        "endChar": 32
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b514ae39_01a4f38f",
+        "filename": "src/media/video/winvideo/video_device_impl.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-03T15:51:22Z",
+      "side": 1,
+      "message": "add params.format \u003d \"gdigrab\";",
+      "range": {
+        "startLine": 283,
+        "startChar": 8,
+        "endLine": 283,
+        "endChar": 14
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
