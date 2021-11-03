@@ -148,16 +148,6 @@ public:
      * Create a new outgoing call.
      *
      * @param toUrl The address to call
-     * @return std::shared_ptr<Call> A pointer on the created call
-     */
-    virtual std::shared_ptr<Call> newOutgoingCall(
-        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {})
-        = 0;
-
-    /**
-     * Create a new outgoing call.
-     *
-     * @param toUrl The address to call
      * @param mediaList A list of media
      * @return The created call
      */
