@@ -766,6 +766,7 @@ Conference::switchInput(const std::string& input)
             createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
         }
 #endif
+        setMediaSourceState(MediaType::MEDIA_VIDEO, false);
     }
 #endif
 }
@@ -877,8 +878,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
             hangupParticipant(root["hangupParticipant"].asString());
         }
         if (root.isMember("handRaised")) {
-            setHandRaised(root["handRaised"].asString(),
-                                 root["handState"].asString() == "true");
+            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
         }
     }
 }
