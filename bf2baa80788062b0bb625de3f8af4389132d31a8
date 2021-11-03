@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3f946910_890ea1e3",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-03T14:39:26Z",
+      "side": 1,
+      "message": "DEVICE_DESKTOP is the media name as already used in video_input, not the media type.\ninitgdigrab() and initx11grab() both hardcoded \"desktop\" as the media name.",
+      "parentUuid": "0efd06e5_112c581e",
+      "range": {
+        "startLine": 445,
+        "startChar": 14,
+        "endLine": 445,
+        "endChar": 28
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a2366f20_8153a318",
         "filename": "src/media/video/v4l2/video_device_impl.cpp",
         "patchSetId": 7
@@ -70,6 +94,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee90a2c4_3cb35796",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-03T14:39:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d1bfe3c9_1b15ae75",
+      "range": {
+        "startLine": 239,
+        "startChar": 38,
+        "endLine": 239,
+        "endChar": 41
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0014a795_4a15d937",
@@ -83,6 +131,30 @@
       "writtenOn": "2021-11-02T19:38:39Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 319,
+        "startChar": 36,
+        "endLine": 319,
+        "endChar": 37
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "246e563f_8c94fa98",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-03T14:39:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0014a795_4a15d937",
       "range": {
         "startLine": 319,
         "startChar": 36,
