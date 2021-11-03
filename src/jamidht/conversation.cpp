@@ -584,6 +584,12 @@ Conversation::getMembers(bool includeInvited, bool includeLeft) const
     return result;
 }
 
+std::vector<std::string>
+Conversation::memberUris(std::string_view filter) const
+{
+    return pimpl_->repository_->memberUris(filter);
+}
+
 std::string
 Conversation::join()
 {

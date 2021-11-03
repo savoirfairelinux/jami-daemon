@@ -233,7 +233,7 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
 
 void
 ConversationModule::Impl::cloneConversation(const std::string& deviceId,
-                                            const std::string&,
+                                            const std::string& peerUri,
                                             const std::string& convId)
 {
     JAMI_DBG("[Account %s] Clone conversation on device %s", accountId_.c_str(), deviceId.c_str());
@@ -267,6 +267,16 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                   accountId_.c_str(),
                   convId.c_str(),
                   deviceId.c_str());
+        ConvInfo info;
+        info.id = convId;
+        info.created = std::time(nullptr);
+        info.members.emplace_back(username_);
+        if (peerUri != username_)
+            info.members.emplace_back(peerUri);
+
+        std::lock_guard<std::mutex> lk(convInfosMtx_);
+        convInfos_[info.id] = std::move(info);
+        saveConvInfos();
     } else {
         JAMI_INFO("[Account %s] Already have conversation %s", accountId_.c_str(), convId.c_str());
     }
@@ -694,19 +704,27 @@ ConversationModule::loadConversations()
         fileutils::get_data_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_ + DIR_SEPARATOR_STR
         + "conversations");
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
     pimpl_->conversations_.clear();
     for (const auto& repository : conversationsRepositories) {
         try {
-            pimpl_->conversations_.emplace(repository,
-                                           std::make_shared<Conversation>(pimpl_->account_,
-                                                                          repository));
+            auto conv = std::make_shared<Conversation>(pimpl_->account_, repository);
+            auto convInfo = pimpl_->convInfos_.find(repository);
+            if (convInfo == pimpl_->convInfos_.end()) {
+                JAMI_ERR() << "Missing conv info for " << repository << ". This is a bug!";
+                ConvInfo info;
+                info.id = repository;
+                info.created = std::time(nullptr);
+                info.members = conv->memberUris();
+                addConvInfo(info);
+            }
+            pimpl_->conversations_.emplace(repository, std::move(conv));
         } catch (const std::logic_error& e) {
             JAMI_WARN("[Account %s] Conversations not loaded : %s",
                       pimpl_->accountId_.c_str(),
                       e.what());
         }
     }
-    pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
 
     // Prune any invalid conversations without members and
     // set the removed flag if needed
@@ -1127,6 +1145,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                                const std::string& deviceId)
 {
     for (const auto& [key, convInfo] : msg.c) {
+
         auto convId = convInfo.id;
         auto removed = convInfo.removed;
         pimpl_->rmConversationRequest(convId);

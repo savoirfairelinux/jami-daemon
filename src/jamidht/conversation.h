@@ -127,6 +127,12 @@ public:
                                                                bool includeLeft = false) const;
 
     /**
+     * @param excludeUri    If we want to remove one members
+     * @return members' uris
+     */
+    std::vector<std::string> memberUris(std::string_view excludeUri = {}) const;
+
+    /**
      * Join a conversation
      * @return commit id to send
      */
