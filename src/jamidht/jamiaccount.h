@@ -261,17 +261,6 @@ public:
     /**
      * Create outgoing SIPCall.
      * @param[in] toUrl The address to call
-     * @return std::shared_ptr<T> A shared pointer on the created call.
-     *      The type of this instance is given in template argument.
-     *      This type can be any base class of SIPCall class (included).
-     */
-    std::shared_ptr<Call> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {}) override;
-
-    /**
-     * Create outgoing SIPCall.
-     * @param[in] toUrl The address to call
      * @param[in] mediaList list of medias
      * @return A shared pointer on the created call.
      */

@@ -1018,34 +1018,8 @@ Manager::outgoingCall(const std::string& account_id,
                       const std::string& conf_id,
                       const std::map<std::string, std::string>& volatileCallDetails)
 {
-    if (not conf_id.empty() and not isConference(conf_id)) {
-        JAMI_ERR("outgoingCall() failed, invalid conference id");
-        return {};
-    }
-
-    JAMI_DBG() << "try outgoing call to '" << to << "'"
-               << " with account '" << account_id << "'";
-
-    std::shared_ptr<Call> call;
-
-    try {
-        call = newOutgoingCall(trim(to), account_id, volatileCallDetails);
-    } catch (const std::exception& e) {
-        JAMI_ERR("%s", e.what());
-        return {};
-    }
-
-    if (not call)
-        return {};
-
-    auto call_id = call->getCallId();
-
-    stopTone();
-
-    pimpl_->switchCall(call);
-    call->setConfId(conf_id);
-
-    return call_id;
+    JAMI_ERR("Deprecated method");
+    return {};
 }
 
 std::string
@@ -3376,13 +3350,8 @@ Manager::newOutgoingCall(std::string_view toUrl,
                          const std::string& accountId,
                          const std::map<std::string, std::string>& volatileCallDetails)
 {
-    auto account = getAccount(accountId);
-    if (!account or !account->isUsable()) {
-        JAMI_WARN("Account is not usable for calling");
-        return nullptr;
-    }
-
-    return account->newOutgoingCall(toUrl, volatileCallDetails);
+    assert(false);
+    return {};
 }
 
 std::shared_ptr<Call>
