@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cacbad3_f3dbecd7",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-11-04T17:16:04Z",
+      "side": 1,
+      "message": "it\u0027s a little confusing to see this parameter named differently, can you homogenize them? maybe just `filter` and explain it in the comment?",
+      "range": {
+        "startLine": 133,
+        "startChar": 57,
+        "endLine": 133,
+        "endChar": 68
+      },
+      "revId": "37f1cdf2b3c165c6e9989627995349044f45966d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
