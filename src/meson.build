@@ -39,6 +39,7 @@ libjami_sources = files(
     'jamidht/server_account_manager.cpp',
     'jamidht/sync_channel_handler.cpp',
     'jamidht/sync_module.cpp',
+    'jamidht/transfer_channel_handler.cpp',
     'media/audio/echo-cancel/null_echo_canceller.cpp',
     'media/audio/sound/audiofile.cpp',
     'media/audio/sound/dtmf.cpp',
@@ -130,6 +131,7 @@ libjami_dependencies = [
     depthreads,
     depopendht,
     depgnutls,
+    depnettle,
     deplibpjproject,
     deplibgit2,
     deplibsecp256k1,
@@ -298,7 +300,12 @@ if conf.get('ENABLE_PLUGIN')
         'plugin/pluginpreferencesutils.cpp',
         'plugin/pluginsutils.cpp'
     )
-    libjami_dependencies += [deplibarchive, depdl]
+    if host_machine.system() == 'darwin'
+        libjami_dependencies += depminizip
+    else
+        libjami_dependencies += deplibarchive
+    endif
+    libjami_dependencies += depdl
 endif
 
 libjami = library('jami',
