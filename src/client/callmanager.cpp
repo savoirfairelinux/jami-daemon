@@ -89,10 +89,13 @@ requestMediaChange(const std::string& accountId,
                    const std::string& callId,
                    const std::vector<DRing::MediaMap>& mediaList)
 {
-    if (auto account = jami::Manager::instance().getAccount(accountId))
+    if (auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
             return call->requestMediaChange(mediaList);
+        } else if (auto conf = account->getConference(callId)) {
+            return conf->requestMediaChange(mediaList);
         }
+    }
     return false;
 }
 
@@ -165,13 +168,15 @@ muteLocalMedia(const std::string& accountId,
 {
     if (auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
+            JAMI_DBG("Muting [%s] for call %s", mediaType.c_str(), callId.c_str());
             call->muteMedia(mediaType, mute);
             return true;
         } else if (auto conf = account->getConference(callId)) {
+            JAMI_DBG("Muting local host [%s] for conference %s", mediaType.c_str(), callId.c_str());
             conf->muteLocalHost(mute, mediaType);
             return true;
         } else {
-            JAMI_DBG("CallID %s doesn't exist in call muting", callId.c_str());
+            JAMI_WARN("ID %s doesn't match any call or conference", callId.c_str());
         }
     }
     return false;

@@ -1432,6 +1432,11 @@ Manager::joinParticipant(const std::string& accountId,
         return false;
     }
 
+    JAMI_INFO("Creating conference for participants %s and %s. Attach host [%s]",
+              callId1.c_str(),
+              callId2.c_str(),
+              attached ? "YES" : "NO");
+
     if (callId1 == callId2) {
         JAMI_ERR("Cannot join participant %s to itself", callId1.c_str());
         return false;

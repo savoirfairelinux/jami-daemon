@@ -224,7 +224,6 @@ std::string
 MediaAttribute::toString(bool full) const
 {
     std::ostringstream descr;
-    descr << "[" << this << "] ";
     descr << "type " << (type_ == MediaType::MEDIA_AUDIO ? "[AUDIO]" : "[VIDEO]");
     descr << " ";
     descr << "enabled " << (enabled_ ? "[YES]" : "[NO]");
