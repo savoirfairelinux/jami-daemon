@@ -1086,6 +1086,10 @@ Manager::outgoingCall(const std::string& account_id,
 bool
 Manager::requestMediaChange(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList)
 {
+    if (auto conf = getConferenceFromID(callID)) {
+        return conf->requestMediaChange(mediaList);
+    }
+
     auto call = getCallFromCallID(callID);
     if (not call) {
         JAMI_ERR("No call with ID %s", callID.c_str());
@@ -1595,7 +1599,10 @@ Manager::getCallFromCallID(const std::string& callID) const
 bool
 Manager::joinParticipant(const std::string& callId1, const std::string& callId2, bool attached)
 {
-    JAMI_INFO("JoinParticipant(%s, %s, %i)", callId1.c_str(), callId2.c_str(), attached);
+    JAMI_INFO("Creating conference for participants %s and %s. Attach host [%s]",
+              callId1.c_str(),
+              callId2.c_str(),
+              attached ? "YES" : "NO");
 
     if (callId1 == callId2) {
         JAMI_ERR("Cannot join participant %s to itself", callId1.c_str());
@@ -1631,10 +1638,6 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
     auto conf = std::make_shared<Conference>(videoEnabled);
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
 
-    // Bind calls according to their state
-    pimpl_->bindCallToConference(*call1, *conf);
-    pimpl_->bindCallToConference(*call2, *conf);
-
     // Switch current call id to this conference
     if (attached) {
         pimpl_->switchCall(conf->getConfID());
@@ -1642,6 +1645,10 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
     } else {
         conf->detachLocalParticipant();
     }
+
+    // Bind calls according to their state
+    pimpl_->bindCallToConference(*call1, *conf);
+    pimpl_->bindCallToConference(*call2, *conf);
 
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     return true;
