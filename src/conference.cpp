@@ -376,6 +376,32 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
     }
 }
 
+bool
+Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
+{
+    JAMI_DBG("[conf %s] Request media change", getConfID().c_str());
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);
+    auto isVideo = [](auto const& attr) {
+        return attr.type_ == MediaType::MEDIA_VIDEO;
+    };
+
+    auto count = std::count_if(mediaAttrList.begin(), mediaAttrList.end(), isVideo);
+
+    // For now, this method is only used to change video media (change input,
+    // mute, ...).
+
+    if (count != 1) {
+        JAMI_WARN("[conf %s] Expected 1 video stream, found %lu", getConfID().c_str(), count);
+        return false;
+    }
+
+    auto mediaAttr = std::find_if(mediaAttrList.begin(), mediaAttrList.end(), isVideo);
+    switchInput(mediaAttr->sourceUri_);
+    setMediaSourceState(mediaAttr->type_, mediaAttr->muted_);
+
+    return true;
+}
+
 void
 Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      const std::vector<DRing::MediaMap>& remoteMediaList)
@@ -678,8 +704,12 @@ Conference::detachLocalParticipant()
 
     if (getState() == State::ACTIVE_ATTACHED) {
         for (const auto& p : participants_) {
-            Manager::instance().getRingBufferPool().unBindCallID(getCall(p)->getCallId(),
-                                                                 RingBufferPool::DEFAULT_ID);
+            if (auto const& call = getCall(p)) {
+                Manager::instance().getRingBufferPool().unBindCallID(call->getCallId(),
+                                                                     RingBufferPool::DEFAULT_ID);
+            } else {
+                JAMI_WARN("[conf %s] no valid call for participant %s", id_.c_str(), p.c_str());
+            }
         }
 #ifdef ENABLE_VIDEO
         if (isVideoEnabled()) {
