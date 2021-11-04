@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b6936991_13f28309",
+        "filename": "src/conference.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 409,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-04T21:18:11Z",
+      "side": 1,
+      "message": "yes it\u0027s hacky ... because the underlying code is messy ...",
+      "parentUuid": "7adaeb5a_0f7ac67b",
+      "range": {
+        "startLine": 407,
+        "startChar": 26,
+        "endLine": 409,
+        "endChar": 5
+      },
+      "revId": "b237c9987762d1e96fe79e585c9fb31f801610cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5e771a93_15ec9a28",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 17
@@ -37,6 +61,30 @@
       "writtenOn": "2021-11-04T14:00:15Z",
       "side": 1,
       "message": "std::erase_if to avoid a loop",
+      "range": {
+        "startLine": 2900,
+        "startChar": 24,
+        "endLine": 2910,
+        "endChar": 24
+      },
+      "revId": "b237c9987762d1e96fe79e585c9fb31f801610cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "07d2b6f9_e8891424",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 2910,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-04T21:18:11Z",
+      "side": 1,
+      "message": "erase_if is c++ 20 feature ...",
+      "parentUuid": "5e771a93_15ec9a28",
       "range": {
         "startLine": 2900,
         "startChar": 24,
