@@ -14,6 +14,7 @@ modcmake = import('cmake')
 depthreads = dependency('threads')
 depopendht = dependency('opendht', version: '>= 2.1.0')
 depgnutls = dependency('gnutls', version: '>= 3.6.7')
+depnettle = dependency('nettle', version: '>= 3.0.0')
 deplibpjproject = dependency('libpjproject')
 deplibgit2 = dependency('libgit2', version: '>= 1.1.0')
 deplibsecp256k1 = dependency('libsecp256k1', version: '>= 0.1')
@@ -129,17 +130,21 @@ endif
 
 if get_option('plugins')
     conf.set('ENABLE_PLUGIN', true)
-    deplibarchive = dependency('libarchive', version: '>= 3.4.0', required: false)
-    if not deplibarchive.found()
-        deplibarchive = modcmake.subproject('libarchive', cmake_options: [
-            '-DCMAKE_BUILD_TYPE=Release',
-            '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
-            '-DENABLE_TEST=OFF',
-            '-DENABLE_TAR=OFF',
-            '-DENABLE_CPIO=OFF',
-            '-DENABLE_CAT=OFF',
-            '-DENABLE_LIBXML2=OFF'
-        ]).dependency('archive_static')
+    if host_machine.system() == 'darwin'
+        depminizip = dependency('minizip', version: '>= 3.0.0')
+    else
+        deplibarchive = dependency('libarchive', version: '>= 3.4.0', required: false)
+        if not deplibarchive.found()
+            deplibarchive = modcmake.subproject('libarchive', cmake_options: [
+                '-DCMAKE_BUILD_TYPE=Release',
+                '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
+                '-DENABLE_TEST=OFF',
+                '-DENABLE_TAR=OFF',
+                '-DENABLE_CPIO=OFF',
+                '-DENABLE_CAT=OFF',
+                '-DENABLE_LIBXML2=OFF'
+            ]).dependency('archive_static')
+        endif
     endif
     depdl = meson.get_compiler('cpp').find_library('dl', required: false)
 else
