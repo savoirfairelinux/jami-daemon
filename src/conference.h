@@ -33,6 +33,7 @@
 #include <functional>
 
 #include "audio/audio_input.h"
+#include "media_attribute.h"
 
 #include <json/json.h>
 
@@ -229,9 +230,14 @@ public:
     const char* getStateStr() const { return getStateStr(confState_); }
 
     /**
+     * Set default media source for the local host
+     */
+    void setLocalHostDefaultMediaSource();
+
+    /**
      * Set the mute state of the local host
      */
-    void setMediaSourceState(MediaType type, bool muted);
+    void setLocalHostMuteState(MediaType type, bool muted);
 
     /**
      * Get the mute state of the local host
@@ -248,7 +254,16 @@ public:
     void takeOverMediaSourceControl(const std::string& callId);
 
     /**
-     *  Process incoming media change request.
+     * Process a media change request.
+     * Used to change the media attributes of the host.
+     *
+     * @param remoteMediaList new media list from the remote
+     * @return true on success
+     */
+    bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList);
+
+    /**
+     * Process incoming media change request.
      *
      * @param callId the call ID
      * @param remoteMediaList new media list from the remote
@@ -321,7 +336,7 @@ public:
 
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
-    std::string getVideoInput() const { return mediaInput_; }
+    std::string getVideoInput() const { return hostVideoSource_.sourceUri_; }
 #endif
 
     std::vector<std::map<std::string, std::string>> getConferenceInfos() const
@@ -368,7 +383,6 @@ private:
     std::shared_ptr<RingBuffer> ghostRingBuffer_;
 
 #ifdef ENABLE_VIDEO
-    std::string mediaInput_ {};
     std::string mediaSecondaryInput_ {};
     std::shared_ptr<video::VideoMixer> videoMixer_;
     std::map<std::string, std::shared_ptr<video::SinkClient>> confSinksMap_ {};
@@ -399,8 +413,10 @@ private:
      * media source states regardless of the media type (capture device,
      * display, ...)
      */
-    MediaSourceState audioSourceMuted_ {MediaSourceState::NONE};
-    MediaSourceState videoSourceMuted_ {MediaSourceState::NONE};
+    MediaAttribute hostAudioSource_ {MediaType::MEDIA_AUDIO, false, false, true, {}, "audio_0"};
+#ifdef ENABLE_VIDEO
+    MediaAttribute hostVideoSource_ {MediaType::MEDIA_VIDEO, false, false, true, {}, "video_0"};
+#endif
 
     bool localModAdded_ {false};
 
