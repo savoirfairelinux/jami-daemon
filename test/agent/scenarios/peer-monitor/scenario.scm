@@ -67,10 +67,12 @@
 
                        (let ((account (fluid-ref agent:account-id))
                              (details (next-details!)))
-                         (progress "SIGALRM - Chaning account details: ~a" details)
+                         (progress "SIGALRM - Changing account details: ~a" details)
                          (account:send-register account #f)
                          (account:set-details account details)
-                         (account:send-register account #t))))
+                         (account:send-register account #t))
+
+                       (pause)))
 
   ;; Setup timer to trigger at next midnigh of UTC+0.  This means that peers can
   ;; have different timezones and still synchronize at the same time.
