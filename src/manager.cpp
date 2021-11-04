@@ -1086,6 +1086,11 @@ Manager::outgoingCall(const std::string& account_id,
 bool
 Manager::requestMediaChange(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList)
 {
+    if (auto conf = getConferenceFromID(callID)) {
+        conf->requestMediaChange(mediaList);
+        return true;
+    }
+
     auto call = getCallFromCallID(callID);
     if (not call) {
         JAMI_ERR("No call with ID %s", callID.c_str());
