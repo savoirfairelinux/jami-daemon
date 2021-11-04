@@ -248,7 +248,16 @@ public:
     void takeOverMediaSourceControl(const std::string& callId);
 
     /**
-     *  Process incoming media change request.
+     * Process a media change request.
+     * Used to change the media attributes of the host.
+     *
+     * @param remoteMediaList new media list from the remote
+     * @return true on success
+     */
+    bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList);
+
+    /**
+     * Process incoming media change request.
      *
      * @param callId the call ID
      * @param remoteMediaList new media list from the remote
