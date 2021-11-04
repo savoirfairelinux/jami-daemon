@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a154e004_4362bc3d",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 769,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-04T15:21:06Z",
+      "side": 1,
+      "message": "I dont think that the switch input should decide to unmute the media, it\u0027s up to caller to do so.\nIf the media was muted and we change the media source, the mute state should not change.",
+      "revId": "34b7839e5e135e172f4f8a1c4ccc0d509b30614f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
