@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2155cc90_6a690de2",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-04T19:06:23Z",
+      "side": 1,
+      "message": "seems unused",
+      "range": {
+        "startLine": 136,
+        "startChar": 6,
+        "endLine": 136,
+        "endChar": 29
+      },
+      "revId": "3c2dab85af0180f110a0aad50ff822c91e3b61c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
