@@ -93,6 +93,30 @@
       },
       "revId": "b237c9987762d1e96fe79e585c9fb31f801610cf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0c052df_1721f21d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 2910,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-04T21:33:54Z",
+      "side": 1,
+      "message": "simply:\n\n    auto removed_it \u003d std::remove_if(rtpStreams_.begin(), rtpStreams_.end(),\n        [](const RtpStream\u0026 stream) {\n            return stream.mediaAttribute_-\u003elabel_ \u003d\u003d DUMMY_VIDEO_STR;\n        });\n    auto removed_count \u003d std::distance(removed_it, rtpStreams_.end());\n    rtpStreams_.erase(removed_it, rtpStreams_.end());",
+      "parentUuid": "07d2b6f9_e8891424",
+      "range": {
+        "startLine": 2900,
+        "startChar": 24,
+        "endLine": 2910,
+        "endChar": 24
+      },
+      "revId": "b237c9987762d1e96fe79e585c9fb31f801610cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
