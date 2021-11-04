@@ -269,6 +269,11 @@ VideoMixer::process()
     if (delay.count() > 0)
         std::this_thread::sleep_for(delay);
 
+    // Nothing to do.
+    if (width_ == 0 or height_ == 0) {
+        return;
+    }
+
     VideoFrame& output = getNewFrame();
     try {
         output.reserve(format_, width_, height_);
