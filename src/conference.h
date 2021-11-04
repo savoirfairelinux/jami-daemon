@@ -33,6 +33,7 @@
 #include <functional>
 
 #include "audio/audio_input.h"
+#include "media_attribute.h"
 
 #include <json/json.h>
 
@@ -172,12 +173,6 @@ struct ConfInfo : public std::vector<ParticipantInfo>
     std::string toString() const;
 };
 
-enum class MediaSourceState : unsigned {
-    NONE = 0, // Not set yet
-    MUTED,
-    UNMUTED
-};
-
 using ParticipantSet = std::set<std::string>;
 
 class Conference : public Recordable, public std::enable_shared_from_this<Conference>
@@ -234,14 +229,18 @@ public:
     const char* getStateStr() const { return getStateStr(confState_); }
 
     /**
+     * Set default media source for the local host
+     */
+    void setLocalHostDefaultMediaSource();
+
+    /**
      * Set the mute state of the local host
      */
-    void setMediaSourceState(MediaType type, bool muted);
+    void setLocalHostMuteState(MediaType type, bool muted);
 
     /**
      * Get the mute state of the local host
      */
-    MediaSourceState getMediaSourceState(MediaType type) const;
     bool isMediaSourceMuted(MediaType type) const;
 
     /**
@@ -253,7 +252,16 @@ public:
     void takeOverMediaSourceControl(const std::string& callId);
 
     /**
-     *  Process incoming media change request.
+     * Process a media change request.
+     * Used to change the media attributes of the host.
+     *
+     * @param remoteMediaList new media list from the remote
+     * @return true on success
+     */
+    bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList);
+
+    /**
+     * Process incoming media change request.
      *
      * @param callId the call ID
      * @param remoteMediaList new media list from the remote
@@ -326,7 +334,7 @@ public:
 
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
-    std::string getVideoInput() const { return mediaInput_; }
+    std::string getVideoInput() const { return hostVideoSource_.sourceUri_; }
 #endif
 
     std::vector<std::map<std::string, std::string>> getConferenceInfos() const
@@ -377,7 +385,6 @@ private:
 
 #ifdef ENABLE_VIDEO
     bool videoEnabled_;
-    std::string mediaInput_ {};
     std::string mediaSecondaryInput_ {};
     std::shared_ptr<video::VideoMixer> videoMixer_;
     std::map<std::string, std::shared_ptr<video::SinkClient>> confSinksMap_ {};
@@ -405,11 +412,12 @@ private:
      * Currently, the conference and the client support only one stream
      * per media type, even if the call supports an arbitrary number of
      * streams per media type. Thus, these two variables will hold the
-     * media source states regardless of the media type (capture device,
-     * display, ...)
+     * current media source attributes
      */
-    MediaSourceState audioSourceMuted_ {MediaSourceState::NONE};
-    MediaSourceState videoSourceMuted_ {MediaSourceState::NONE};
+    MediaAttribute hostAudioSource_ {};
+#ifdef ENABLE_VIDEO
+    MediaAttribute hostVideoSource_ {};
+#endif
 
     bool localModAdded_ {false};
 
