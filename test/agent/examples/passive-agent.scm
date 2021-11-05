@@ -10,11 +10,13 @@
 
 (agent:ensure-account)
 
-(jami:on-signal 'incomming-call
-                (lambda (account-id call-id peer-display-name media-list)
-                  (when (string= account-id agent:account-id)
-                    (jami:info
-                     "Incoming [call:~a] from peer ~a~%"
-                     call-id peer-display-name)
-                    (call:accept call-id media-list))
-                  #t))
+(jami:info "Agent peer-id: ~a" (fluid-ref agent:peer-id))
+
+(let ((account (fluid-ref agent:account-id)))
+  (jami:on-signal 'incoming-call/media
+                  (lambda (account-id call-id peer media-lst)
+                    (when (string= account-id account)
+                      (jami:info "Incoming [call:~a] from peer ~a~%" call-id peer)
+                      (call:accept call-id media-lst))
+                    #t)))
+(while #t (pause))

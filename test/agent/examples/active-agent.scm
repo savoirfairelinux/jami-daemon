@@ -19,7 +19,7 @@
         (success #f)
         (over #f))
 
-    (jami:on-signal 'call-state-changed
+    (jami:on-signal 'state-changed
                     (lambda (call-id state code)
                       (with-mutex mtx
                         (let ((ret (cond
@@ -52,12 +52,13 @@
 
 (agent:ensure-account)
 
-(while #t
+(let ((account (fluid-ref agent:account-id)))
+  (while #t
   (begin
-    (make-a-call agent:account-id "bcebc2f134fc15eb06c64366c1882de2e0f1e54f")
+    (make-a-call account  "79661eab61279a1127f9fa6168adab1424bc8d2b")
     (jami:info "Disabling account")
-    (account:send-register agent:account-id #f)
+    (account:send-register account #f)
     (sleep 30)
     (jami:info "Enabling account")
-    (account:send-register agent:account-id #t)
-    (sleep 30)))
+    (account:send-register account #t)
+    (sleep 30))))
