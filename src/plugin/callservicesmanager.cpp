@@ -282,7 +282,7 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
 #ifndef __ANDROID__
     if (applyRestart) {
         auto call = Manager::instance().callFactory.getCall<SIPCall>(callId);
-        if (call && call->getConfId().empty()) {
+        if (call && !call->isConferenceParticipant()) {
             if (auto const& videoRtp = call->getVideoRtp())
                 videoRtp->restartSender();
         }

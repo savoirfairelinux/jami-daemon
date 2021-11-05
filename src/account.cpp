@@ -139,29 +139,10 @@ Account::Account(const std::string& accountID)
 Account::~Account() {}
 
 void
-Account::attachCall(const std::string& id)
-{
-    std::lock_guard<std::mutex> lk {callIDSetMtx_};
-    callIDSet_.insert(id);
-}
-
-void
-Account::detachCall(const std::string& id)
-{
-    std::lock_guard<std::mutex> lk {callIDSetMtx_};
-    callIDSet_.erase(id);
-}
-
-void
 Account::hangupCalls()
 {
-    decltype(callIDSet_) calls;
-    {
-        std::lock_guard<std::mutex> lk {callIDSetMtx_};
-        calls = callIDSet_;
-    }
-    for (const auto& id : calls)
-        Manager::instance().hangupCall(id);
+    for (const auto& callId : callSet_.getCallIds())
+        Manager::instance().hangupCall(getAccountID(), callId);
 }
 
 void

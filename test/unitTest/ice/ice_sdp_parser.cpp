@@ -148,7 +148,8 @@ private:
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
-    static void onCallStateChange(const std::string& callId,
+    static void onCallStateChange(const std::string& accountId,
+                                  const std::string& callId,
                                   const std::string& state,
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
@@ -268,7 +269,8 @@ IceSdpParsingTest::onIncomingCallWithMedia(const std::string& accountId,
 }
 
 void
-IceSdpParsingTest::onCallStateChange(const std::string& callId,
+IceSdpParsingTest::onCallStateChange(const std::string&,
+                                     const std::string& callId,
                                      const std::string& state,
                                      CallData& callData)
 {
@@ -468,11 +470,17 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
                                         user == aliceData.alias_ ? aliceData : bobData);
         }));
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string& callId, const std::string& state, signed) {
+    signalHandlers.insert(
+        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+                                                                       const std::string& callId,
+                                                                       const std::string& state,
+                                                                       signed) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onCallStateChange(callId, state, user == aliceData.alias_ ? aliceData : bobData);
+                onCallStateChange(accountId,
+                                  callId,
+                                  state,
+                                  user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
@@ -545,7 +553,9 @@ IceSdpParsingTest::test_call()
     CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
-    DRing::acceptWithMedia(bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
+    DRing::acceptWithMedia(bobData_.accountId_,
+                           bobData_.callId_,
+                           MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_,
