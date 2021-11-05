@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "594dbe07_7f6e55f8",
+        "filename": "test/agent/examples/passive-agent.scm",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-05T19:41:01Z",
+      "side": 1,
+      "message": "we should remove this, will be removed soon from master",
+      "revId": "37e2ebb5abab45298b7abd188a4018eeceb458a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94aae2b9_41ab22fb",
+        "filename": "test/agent/examples/passive-agent.scm",
+        "patchSetId": 2
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-05T19:41:01Z",
+      "side": 1,
+      "message": "dont use tab",
+      "revId": "37e2ebb5abab45298b7abd188a4018eeceb458a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
