@@ -10,7 +10,9 @@
 
 (agent:ensure-account)
 
-(jami:on-signal 'incomming-call
+(jami:info "Agent peer-id: ~a" (fluid-ref agent:peer-id))
+
+(jami:on-signal 'incoming-call
                 (lambda (account-id call-id peer-display-name media-list)
                   (when (string= account-id agent:account-id)
                     (jami:info
@@ -18,3 +20,5 @@
                      call-id peer-display-name)
                     (call:accept call-id media-list))
                   #t))
+
+(while #t (pause))
