@@ -4182,27 +4182,30 @@ JamiAccount::sendFile(const std::string& conversationId,
             value["sha3sum"] = fileutils::sha3File(path);
             value["type"] = "application/data-transfer+json";
 
-            shared->convModule()
-                ->sendMessage(conversationId,
-                              std::move(value),
-                              parent,
-                              true,
-                              [accId = shared->getAccountID(),
-                               conversationId,
-                               tid,
-                               path](bool, const std::string& commitId) {
-                                  // Create a symlink to answer to re-ask
-                                  auto filelinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                                                      + accId + DIR_SEPARATOR_STR
-                                                      + "conversation_data" + DIR_SEPARATOR_STR
-                                                      + conversationId + DIR_SEPARATOR_STR
-                                                      + commitId + "_" + std::to_string(tid);
-                                  auto extension = fileutils::getFileExtension(path);
-                                  if (!extension.empty())
-                                      filelinkPath += "." + extension;
-                                  if (path != filelinkPath && !fileutils::isSymLink(filelinkPath))
-                                      fileutils::createFileLink(filelinkPath, path, true);
-                              });
+            shared->convModule()->sendMessage(
+                conversationId,
+                std::move(value),
+                parent,
+                true,
+                [accId = shared->getAccountID(),
+                 conversationId,
+                 tid,
+                 path](bool, const std::string& commitId) {
+                    // Create a symlink to answer to re-ask
+                    auto filelinkPath = fmt::format("{}" DIR_SEPARATOR_STR "{}" DIR_SEPARATOR_STR
+                                                    "conversation_data" DIR_SEPARATOR_STR
+                                                    "{}" DIR_SEPARATOR_STR "{}_{}{}",
+                                                    fileutils::get_data_dir(),
+                                                    accId,
+                                                    conversationId,
+                                                    commitId,
+                                                    tid);
+                    auto extension = fileutils::getFileExtension(path);
+                    if (!extension.empty())
+                        filelinkPath += "." + extension;
+                    if (path != filelinkPath && !fileutils::isSymLink(filelinkPath))
+                        fileutils::createFileLink(filelinkPath, path, true);
+                });
         }
     });
 }
