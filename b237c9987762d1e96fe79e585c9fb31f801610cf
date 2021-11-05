@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f035c85_00bdb278",
+        "filename": "src/conference.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 409,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-05T17:19:41Z",
+      "side": 1,
+      "message": "will be revisited when the handling of media sources in the mixer is improved.",
+      "parentUuid": "b6936991_13f28309",
+      "range": {
+        "startLine": 407,
+        "startChar": 26,
+        "endLine": 409,
+        "endChar": 5
+      },
+      "revId": "b237c9987762d1e96fe79e585c9fb31f801610cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5e771a93_15ec9a28",
