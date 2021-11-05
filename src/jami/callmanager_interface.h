@@ -39,69 +39,109 @@ namespace DRing {
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 /* Call related methods */
-DRING_PUBLIC std::string placeCall(const std::string& accountID, const std::string& to);
-DRING_PUBLIC std::string placeCall(const std::string& accountID,
+DRING_PUBLIC std::string placeCall(const std::string& accountId, const std::string& to);
+DRING_PUBLIC std::string placeCall(const std::string& accountId,
                                    const std::string& to,
                                    const std::map<std::string, std::string>& VolatileCallDetails);
 DRING_PUBLIC std::string placeCallWithMedia(
-    const std::string& accountID,
+    const std::string& accountId,
     const std::string& to,
     const std::vector<std::map<std::string, std::string>>& mediaList);
-DRING_PUBLIC bool refuse(const std::string& callID);
-DRING_PUBLIC bool accept(const std::string& callID);
-DRING_PUBLIC bool hangUp(const std::string& callID);
-DRING_PUBLIC bool hold(const std::string& callID);
-DRING_PUBLIC bool unhold(const std::string& callID);
-DRING_PUBLIC bool muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute);
-DRING_PUBLIC bool transfer(const std::string& callID, const std::string& to);
-DRING_PUBLIC bool attendedTransfer(const std::string& transferID, const std::string& targetID);
-DRING_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string& callID);
-DRING_PUBLIC std::vector<std::string> getCallList();
+DRING_PUBLIC bool refuse(const std::string& accountId, const std::string& callId);
+DRING_PUBLIC bool accept(const std::string& accountId, const std::string& callId);
+DRING_PUBLIC bool hangUp(const std::string& accountId, const std::string& callId);
+DRING_PUBLIC bool hold(const std::string& accountId, const std::string& callId);
+DRING_PUBLIC bool unhold(const std::string& accountId, const std::string& callId);
+DRING_PUBLIC bool muteLocalMedia(const std::string& accountId,
+                                 const std::string& callId,
+                                 const std::string& mediaType,
+                                 bool mute);
+DRING_PUBLIC bool transfer(const std::string& accountId,
+                           const std::string& callId,
+                           const std::string& to);
+DRING_PUBLIC bool attendedTransfer(const std::string& accountId,
+                                   const std::string& callId,
+                                   const std::string& targetID);
+DRING_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string& accountId,
+                                                               const std::string& callId);
+DRING_PUBLIC std::vector<std::string> getCallList(const std::string& accountId);
 
 /* APIs that supports an arbitrary number of media */
-DRING_PUBLIC std::string placeCall(const std::string& accountID,
+DRING_PUBLIC std::string placeCall(const std::string& accountId,
                                    const std::string& to,
                                    const std::vector<DRing::MediaMap>& mediaList);
-DRING_PUBLIC bool accept(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList);
-DRING_PUBLIC bool acceptWithMedia(const std::string& callID,
+DRING_PUBLIC bool accept(const std::string& accountId,
+                         const std::string& callId,
+                         const std::vector<DRing::MediaMap>& mediaList);
+DRING_PUBLIC bool acceptWithMedia(const std::string& accountId,
+                                  const std::string& callId,
                                   const std::vector<DRing::MediaMap>& mediaList);
-DRING_PUBLIC bool requestMediaChange(const std::string& callID,
+DRING_PUBLIC bool requestMediaChange(const std::string& accountId,
+                                     const std::string& callId,
                                      const std::vector<DRing::MediaMap>& mediaList);
-DRING_PUBLIC bool answerMediaChangeRequest(const std::string& callID,
+
+/**
+ * Answer a media change request
+ * @param accountId
+ * @param callId
+ * @param mediaList the list of media attributes. The client can
+ * control the media through the attributes. The list should have
+ * the same size as the list reported in the media change request.
+ * The client can ignore the media update request by not calling this
+ * method, or calling it with an empty media list.
+ */
+DRING_PUBLIC bool answerMediaChangeRequest(const std::string& accountId,
+                                           const std::string& callId,
                                            const std::vector<DRing::MediaMap>& mediaList);
 
 /* Conference related methods */
-DRING_PUBLIC void removeConference(const std::string& conference_id);
-DRING_PUBLIC bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
-DRING_PUBLIC void createConfFromParticipantList(const std::vector<std::string>& participants);
-DRING_PUBLIC void setConferenceLayout(const std::string& confId, uint32_t layout);
-DRING_PUBLIC void setActiveParticipant(const std::string& confId, const std::string& callId);
-DRING_PUBLIC bool isConferenceParticipant(const std::string& call_id);
-DRING_PUBLIC bool addParticipant(const std::string& callID, const std::string& confID);
-DRING_PUBLIC bool addMainParticipant(const std::string& confID);
+DRING_PUBLIC bool joinParticipant(const std::string& accountId,
+                                  const std::string& sel_callId,
+                                  const std::string& drag_callId);
+DRING_PUBLIC void createConfFromParticipantList(const std::string& accountId,
+                                                const std::vector<std::string>& participants);
+DRING_PUBLIC void setConferenceLayout(const std::string& accountId,
+                                      const std::string& confId,
+                                      uint32_t layout);
+DRING_PUBLIC void setActiveParticipant(const std::string& accountId,
+                                       const std::string& confId,
+                                       const std::string& callId);
+DRING_PUBLIC bool isConferenceParticipant(const std::string& accountId, const std::string& callId);
+DRING_PUBLIC bool addParticipant(const std::string& accountId,
+                                 const std::string& callId,
+                                 const std::string& confId);
+DRING_PUBLIC bool addMainParticipant(const std::string& accountId, const std::string& confId);
 DRING_PUBLIC bool detachLocalParticipant();
-DRING_PUBLIC bool detachParticipant(const std::string& callID);
-DRING_PUBLIC bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
-DRING_PUBLIC bool hangUpConference(const std::string& confID);
-DRING_PUBLIC bool holdConference(const std::string& confID);
-DRING_PUBLIC bool unholdConference(const std::string& confID);
-DRING_PUBLIC std::vector<std::string> getConferenceList();
-DRING_PUBLIC std::vector<std::string> getParticipantList(const std::string& confID);
-DRING_PUBLIC std::string getConferenceId(const std::string& callID);
-DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
+DRING_PUBLIC bool detachParticipant(const std::string& accountId, const std::string& callId);
+DRING_PUBLIC bool joinConference(const std::string& accountId,
+                                 const std::string& sel_confId,
+                                 const std::string& drag_confId);
+DRING_PUBLIC bool hangUpConference(const std::string& accountId, const std::string& confId);
+DRING_PUBLIC bool holdConference(const std::string& accountId, const std::string& confId);
+DRING_PUBLIC bool unholdConference(const std::string& accountId, const std::string& confId);
+DRING_PUBLIC std::vector<std::string> getConferenceList(const std::string& accountId);
+DRING_PUBLIC std::vector<std::string> getParticipantList(const std::string& accountId,
+                                                         const std::string& confId);
+DRING_PUBLIC std::string getConferenceId(const std::string& accountId, const std::string& callId);
+DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& accountId,
+                                                                     const std::string& callId);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
-    const std::string& confId);
-DRING_PUBLIC void setModerator(const std::string& confId,
+    const std::string& accountId, const std::string& confId);
+DRING_PUBLIC void setModerator(const std::string& accountId,
+                               const std::string& confId,
                                const std::string& peerId,
                                const bool& state);
-DRING_PUBLIC void muteParticipant(const std::string& confId,
+DRING_PUBLIC void muteParticipant(const std::string& accountId,
+                                  const std::string& confId,
                                   const std::string& peerId,
                                   const bool& state);
+DRING_PUBLIC void hangupParticipant(const std::string& accountId,
+                                    const std::string& confId,
+                                    const std::string& participant);
 DRING_PUBLIC void raiseParticipantHand(const std::string& accountId,
                                        const std::string& confId,
                                        const std::string& peerId,
                                        const bool& state);
-DRING_PUBLIC void hangupParticipant(const std::string& confId, const std::string& participant);
 
 /* Statistic related methods */
 DRING_PUBLIC void startSmartInfo(uint32_t refreshTimeMs);
@@ -112,21 +152,25 @@ DRING_PUBLIC bool startRecordedFilePlayback(const std::string& filepath);
 DRING_PUBLIC void stopRecordedFilePlayback();
 
 /* General audio methods */
-DRING_PUBLIC bool toggleRecording(const std::string& callID);
+DRING_PUBLIC bool toggleRecording(const std::string& accountId, const std::string& callId);
 /* DEPRECATED */
-DRING_PUBLIC void setRecording(const std::string& callID);
+DRING_PUBLIC void setRecording(const std::string& accountId, const std::string& callId);
 
 DRING_PUBLIC void recordPlaybackSeek(double value);
-DRING_PUBLIC bool getIsRecording(const std::string& callID);
-DRING_PUBLIC std::string getCurrentAudioCodecName(const std::string& callID);
+DRING_PUBLIC bool getIsRecording(const std::string& accountId, const std::string& callId);
 DRING_PUBLIC void playDTMF(const std::string& key);
 DRING_PUBLIC void startTone(int32_t start, int32_t type);
 
-DRING_PUBLIC bool switchInput(const std::string& callID, const std::string& resource);
-DRING_PUBLIC bool switchSecondaryInput(const std::string& confId, const std::string& resource);
+DRING_PUBLIC bool switchInput(const std::string& accountId,
+                              const std::string& callId,
+                              const std::string& resource);
+DRING_PUBLIC bool switchSecondaryInput(const std::string& accountId,
+                                       const std::string& confId,
+                                       const std::string& resource);
 
 /* Instant messaging */
-DRING_PUBLIC void sendTextMessage(const std::string& callID,
+DRING_PUBLIC void sendTextMessage(const std::string& accountId,
+                                  const std::string& callId,
                                   const std::map<std::string, std::string>& messages,
                                   const std::string& from,
                                   bool isMixed);
@@ -137,7 +181,7 @@ struct DRING_PUBLIC CallSignal
     struct DRING_PUBLIC StateChange
     {
         constexpr static const char* name = "StateChange";
-        using cb_type = void(const std::string&, const std::string&, int);
+        using cb_type = void(const std::string&, const std::string&, const std::string&, int);
     };
     struct DRING_PUBLIC TransferFailed
     {
@@ -194,12 +238,12 @@ struct DRING_PUBLIC CallSignal
     struct DRING_PUBLIC ConferenceCreated
     {
         constexpr static const char* name = "ConferenceCreated";
-        using cb_type = void(const std::string&);
+        using cb_type = void(const std::string&, const std::string&);
     };
     struct DRING_PUBLIC ConferenceChanged
     {
         constexpr static const char* name = "ConferenceChanged";
-        using cb_type = void(const std::string&, const std::string&);
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
     };
     struct DRING_PUBLIC UpdatePlaybackScale
     {
@@ -209,7 +253,7 @@ struct DRING_PUBLIC CallSignal
     struct DRING_PUBLIC ConferenceRemoved
     {
         constexpr static const char* name = "ConferenceRemoved";
-        using cb_type = void(const std::string&);
+        using cb_type = void(const std::string&, const std::string&);
     };
     struct DRING_PUBLIC RecordingStateChanged
     {

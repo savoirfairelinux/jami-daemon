@@ -91,7 +91,8 @@ private:
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
-    static void onCallStateChange(const std::string& callId,
+    static void onCallStateChange(const std::string& accountId,
+                                  const std::string& callId,
                                   const std::string& state,
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
@@ -231,7 +232,8 @@ SipSrtpTest::onIncomingCallWithMedia(const std::string& accountId,
 }
 
 void
-SipSrtpTest::onCallStateChange(const std::string& callId,
+SipSrtpTest::onCallStateChange(const std::string&,
+                               const std::string& callId,
                                const std::string& state,
                                CallData& callData)
 {
@@ -388,11 +390,17 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
                                         user == aliceData.alias_ ? aliceData : bobData);
         }));
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string& callId, const std::string& state, signed) {
+    signalHandlers.insert(
+        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+                                                                       const std::string& callId,
+                                                                       const std::string& state,
+                                                                       signed) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onCallStateChange(callId, state, user == aliceData.alias_ ? aliceData : bobData);
+                onCallStateChange(accountId,
+                                  callId,
+                                  state,
+                                  user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
@@ -444,7 +452,9 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
     CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
-    DRing::acceptWithMedia(bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
+    DRing::acceptWithMedia(bobData_.accountId_,
+                           bobData_.callId_,
+                           MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_,
@@ -464,7 +474,8 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     // Validate Alice's media
     if (validateMedia) {
-        auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
+        auto call = Manager::instance().getCallFromCallID(aliceData_.callId_);
+        auto activeMediaList = call->getMediaAttributeList();
         CPPUNIT_ASSERT_EQUAL(offer.size(), activeMediaList.size());
         // Audio
         CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
@@ -479,7 +490,8 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     // Validate Bob's media
     if (validateMedia) {
-        auto activeMediaList = Manager::instance().getMediaAttributeList(bobData_.callId_);
+        auto call = Manager::instance().getCallFromCallID(bobData_.callId_);
+        auto activeMediaList = call->getMediaAttributeList();
         CPPUNIT_ASSERT_EQUAL(answer.size(), activeMediaList.size());
         // Audio
         CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
@@ -497,7 +509,7 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    DRing::hangUp(bobData_.callId_);
+    DRing::hangUp(bobData_.accountId_, bobData_.callId_);
 
     CPPUNIT_ASSERT(
         waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
