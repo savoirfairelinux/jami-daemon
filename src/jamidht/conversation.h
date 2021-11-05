@@ -288,7 +288,7 @@ public:
      * @return if we accept the channel request
      */
     bool onFileChannelRequest(const std::string& member,
-                              const std::string& fileId,
+                              std::string_view fileId,
                               bool verifyShaSum = true) const;
     /**
      * Adds a file to the waiting list and ask members

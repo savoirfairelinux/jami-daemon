@@ -225,7 +225,7 @@ public:
      * Retrieve path of a file
      * @param id
      */
-    std::string path(const std::string& fileId) const;
+    std::string path(std::string_view fileId) const;
 
     /**
      * Retrieve waiting files
