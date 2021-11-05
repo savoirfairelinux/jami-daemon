@@ -19,7 +19,7 @@
         (success #f)
         (over #f))
 
-    (jami:on-signal 'call-state-changed
+    (jami:on-signal 'state-changed
                     (lambda (call-id state code)
                       (with-mutex mtx
                         (let ((ret (cond
@@ -52,12 +52,18 @@
 
 (agent:ensure-account)
 
-(while #t
-  (begin
-    (make-a-call agent:account-id "bcebc2f134fc15eb06c64366c1882de2e0f1e54f")
-    (jami:info "Disabling account")
-    (account:send-register agent:account-id #f)
-    (sleep 30)
-    (jami:info "Enabling account")
-    (account:send-register agent:account-id #t)
-    (sleep 30)))
+(let ((account (fluid-ref agent:account-id))
+      (peer "FIXME"))
+
+  (when (string= peer "FIXME")
+    (throw 'bad-peer
+           "Peer was not set! Please set variable `peer` to a valid Jami's ID"))
+  (while #t
+    (begin
+      (make-a-call account peer)
+      (jami:info "Disabling account")
+      (account:send-register account #f)
+      (sleep 30)
+      (jami:info "Enabling account")
+      (account:send-register account #t)
+      (sleep 30))))
