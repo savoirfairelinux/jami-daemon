@@ -125,7 +125,8 @@ private:
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
-    static void onCallStateChange(const std::string& callId,
+    static void onCallStateChange(const std::string& accountId,
+                                  const std::string& callId,
                                   const std::string& state,
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
@@ -326,7 +327,8 @@ MediaNegotiationTest::onMediaChangeRequested(const std::string& accountId,
 }
 
 void
-MediaNegotiationTest::onCallStateChange(const std::string& callId,
+MediaNegotiationTest::onCallStateChange(const std::string&,
+                                        const std::string& callId,
                                         const std::string& state,
                                         CallData& callData)
 {
@@ -535,11 +537,17 @@ MediaNegotiationTest::configureScenario(CallData& aliceData, CallData& bobData)
                                        user == aliceData.alias_ ? aliceData : bobData);
         }));
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string& callId, const std::string& state, signed) {
+    signalHandlers.insert(
+        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+                                                                       const std::string& callId,
+                                                                       const std::string& state,
+                                                                       signed) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onCallStateChange(callId, state, user == aliceData.alias_ ? aliceData : bobData);
+                onCallStateChange(accountId,
+                                  callId,
+                                  state,
+                                  user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::VideoMuted>(
@@ -595,7 +603,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
     // Answer the call.
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.answer_);
-        Manager::instance().answerCallWithMedia(bobData.callId_, mediaList);
+        Manager::instance().answerCall(bobData.accountId_, bobData.callId_, mediaList);
     }
 
     // Wait for media negotiation complete signal.
@@ -644,7 +652,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
     JAMI_INFO("=== Request Media Change and validate ===");
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.offerUpdate_);
-        Manager::instance().requestMediaChange(aliceData.callId_, mediaList);
+        DRing::requestMediaChange(aliceData.accountId_, aliceData.callId_, mediaList);
     }
 
     // Update and validate media count.
@@ -659,7 +667,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
 
         // Answer the change request.
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.answerUpdate_);
-        Manager::instance().answerMediaChangeRequest(bobData.callId_, mediaList);
+        DRing::answerMediaChangeRequest(bobData.accountId_, bobData.callId_, mediaList);
     }
 
     if (scenario.expectMediaRenegotiation_) {
@@ -703,7 +711,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
 
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    Manager::instance().hangupCall(bobData.callId_);
+    Manager::instance().hangupCall(bobData.accountId_, bobData.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(aliceData,

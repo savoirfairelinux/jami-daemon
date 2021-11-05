@@ -98,7 +98,8 @@ private:
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
-    static void onCallStateChange(const std::string& callId,
+    static void onCallStateChange(const std::string& accountId,
+                                  const std::string& callId,
                                   const std::string& state,
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
@@ -232,7 +233,8 @@ SipBasicCallTest::onIncomingCallWithMedia(const std::string& accountId,
 }
 
 void
-SipBasicCallTest::onCallStateChange(const std::string& callId,
+SipBasicCallTest::onCallStateChange(const std::string&,
+                                    const std::string& callId,
                                     const std::string& state,
                                     CallData& callData)
 {
@@ -389,11 +391,17 @@ SipBasicCallTest::configureTest(CallData& aliceData, CallData& bobData)
                                         user == aliceData.alias_ ? aliceData : bobData);
         }));
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string& callId, const std::string& state, signed) {
+    signalHandlers.insert(
+        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+                                                                       const std::string& callId,
+                                                                       const std::string& state,
+                                                                       signed) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onCallStateChange(callId, state, user == aliceData.alias_ ? aliceData : bobData);
+                onCallStateChange(accountId,
+                                  callId,
+                                  state,
+                                  user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
@@ -444,7 +452,9 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
     CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
-    DRing::acceptWithMedia(bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
+    DRing::acceptWithMedia(bobData_.accountId_,
+                           bobData_.callId_,
+                           MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     if (expectedToSucceed) {
         // Wait for media negotiation complete signal.
@@ -466,7 +476,8 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
                           DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
         // Validate Alice's media
         if (validateMedia) {
-            auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
+            auto call = Manager::instance().getCallFromCallID(aliceData_.callId_);
+            auto activeMediaList = call->getMediaAttributeList();
             CPPUNIT_ASSERT_EQUAL(offer.size(), activeMediaList.size());
             // Audio
             CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
@@ -481,7 +492,8 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
 
         // Validate Bob's media
         if (validateMedia) {
-            auto activeMediaList = Manager::instance().getMediaAttributeList(bobData_.callId_);
+            auto call = Manager::instance().getCallFromCallID(bobData_.callId_);
+            auto activeMediaList = call->getMediaAttributeList();
             CPPUNIT_ASSERT_EQUAL(answer.size(), activeMediaList.size());
             // Audio
             CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
@@ -499,7 +511,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
 
         // Bob hang-up.
         JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-        DRing::hangUp(bobData_.callId_);
+        DRing::hangUp(bobData_.accountId_, bobData_.callId_);
     } else {
         // The media negotiation for the call is expected to fail, so we
         // should receive the signal.
@@ -676,7 +688,9 @@ SipBasicCallTest::hold_resume_test()
         CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
 
         // Answer the call.
-        DRing::acceptWithMedia(bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
+        DRing::acceptWithMedia(bobData_.accountId_,
+                               bobData_.callId_,
+                               MediaAttribute::mediaAttributesToMediaMaps(answer));
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(
@@ -725,7 +739,7 @@ SipBasicCallTest::hold_resume_test()
 
         // Hold/Resume the call
         JAMI_INFO("Hold Alice's call");
-        DRing::hold(aliceData_.callId_);
+        DRing::hold(aliceData_.accountId_, aliceData_.callId_);
         // Wait for the StateChange signal.
         CPPUNIT_ASSERT(
             waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HOLD));
@@ -737,7 +751,8 @@ SipBasicCallTest::hold_resume_test()
                           DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
         {
             // Validate hold state.
-            auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
+            auto call = Manager::instance().getCallFromCallID(aliceData_.callId_);
+            auto activeMediaList = call->getMediaAttributeList();
             for (const auto& mediaAttr : activeMediaList) {
                 CPPUNIT_ASSERT(mediaAttr.onHold_);
             }
@@ -770,7 +785,7 @@ SipBasicCallTest::hold_resume_test()
         std::this_thread::sleep_for(std::chrono::seconds(2));
 
         JAMI_INFO("Resume Alice's call");
-        DRing::unhold(aliceData_.callId_);
+        DRing::unhold(aliceData_.accountId_, aliceData_.callId_);
 
         // Wait for the StateChange signal.
         CPPUNIT_ASSERT(
@@ -785,7 +800,8 @@ SipBasicCallTest::hold_resume_test()
 
         {
             // Validate hold state.
-            auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
+            auto call = Manager::instance().getCallFromCallID(aliceData_.callId_);
+            auto activeMediaList = call->getMediaAttributeList();
             for (const auto& mediaAttr : activeMediaList) {
                 CPPUNIT_ASSERT(not mediaAttr.onHold_);
             }
@@ -793,7 +809,7 @@ SipBasicCallTest::hold_resume_test()
 
         // Bob hang-up.
         JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-        DRing::hangUp(bobData_.callId_);
+        DRing::hangUp(bobData_.accountId_, bobData_.callId_);
 
         // The hang-up signal will be emitted on caller's side (Alice) in both
         // success and failure scenarios.

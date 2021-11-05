@@ -28,13 +28,16 @@
 #include "media/video/video_input.h"
 #include "media_const.h"
 #include "jami.h"
+#include "manager.h"
 
 #include <map>
 #include <string>
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class VideoInputTest : public CppUnit::TestFixture {
+class VideoInputTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "video_input"; }
 
@@ -60,11 +63,13 @@ void
 VideoInputTest::testInput()
 {
     static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
-    std::string resource = DRing::Media::VideoProtocolPrefix::DISPLAY + sep + std::string(getenv("DISPLAY") ? : ":0.0");
+    std::string resource = DRing::Media::VideoProtocolPrefix::DISPLAY + sep
+                           + std::string(getenv("DISPLAY") ?: ":0.0");
     video::VideoInput video;
-    video.switchInput(resource);
+    DRing::switchInput("", "", resource);
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 RING_TEST_RUNNER(jami::test::VideoInputTest::name());

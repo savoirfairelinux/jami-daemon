@@ -52,7 +52,7 @@ class SinkClient;
 class VideoReceiveThread : public VideoGenerator
 {
 public:
-    VideoReceiveThread(const std::string& id, const std::string& sdp, uint16_t mtu);
+    VideoReceiveThread(const std::string& id, bool useSink, const std::string& sdp, uint16_t mtu);
     ~VideoReceiveThread();
     void startLoop();
 
@@ -61,8 +61,8 @@ public:
     {
         keyFrameRequestCallback_ = std::move(cb);
     };
-    void enterConference();
-    void exitConference();
+    void startSink();
+    void stopSink();
 
     // as VideoGenerator
     int getWidth() const;
@@ -78,7 +78,9 @@ public:
     void setRotation(int angle);
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-        { onSuccessfulSetup_ = cb; }
+    {
+        onSuccessfulSetup_ = cb;
+    }
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -89,17 +91,18 @@ private:
     /* These variables should be used in thread (i.e. run()) only! */
     /*-------------------------------------------------------------*/
     std::unique_ptr<MediaDecoder> videoDecoder_;
-    int dstWidth_;
-    int dstHeight_;
+    int dstWidth_ {0};
+    int dstHeight_ {0};
     const std::string id_;
     std::istringstream stream_;
     MediaIOHandle sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;
     std::shared_ptr<SinkClient> sink_;
-    bool isReset_;
-    bool isVideoConfigured_;
+    bool isVideoConfigured_ {false};
+    bool useSink_;
     uint16_t mtu_;
-    int rotation_;
+    int rotation_ {0};
+
     std::shared_ptr<AVBufferRef> displayMatrix_;
 
     void openDecoder();
