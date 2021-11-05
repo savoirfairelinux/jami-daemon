@@ -1630,6 +1630,7 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
 
     auto conf = std::make_shared<Conference>(videoEnabled);
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
+    emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
 
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
@@ -1642,8 +1643,8 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
     } else {
         conf->detachLocalParticipant();
     }
+    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
-    emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     return true;
 }
 
@@ -2824,12 +2825,12 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
             auto conf = std::make_shared<Conference>(acc->isVideoEnabled());
 
             conferenceMap_.emplace(conf->getConfID(), conf);
+            emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
 
             // Bind calls according to their state
             bindCallToConference(*call, *conf);
             conf->detachLocalParticipant();
-
-            emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
+            emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
         });
     } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
         dht::ThreadPool::io().run([incomCallId] { Manager::instance().answerCall(incomCallId); });
