@@ -79,8 +79,8 @@ ninja install
 
 Done !
 
-More details available here:
-https://git.jami.net/savoirfairelinux/ring-project/wikis/technical/Build-instructions
+Note:
+If you don't want SHM to be used, you can build with `--without-dbus`
 
 How to compile on Linux for Android
 -----------------------------------

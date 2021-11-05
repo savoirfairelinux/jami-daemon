@@ -147,7 +147,7 @@ else
 endif
 
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')
-conf.set10('HAVE_SHM', host_machine.system() == 'linux' and meson.get_compiler('cpp').get_define('__ANDROID__') != '1')
+conf.set10('HAVE_SHM', get_option('interfaces').contains('dbus'))
 
 configure_file(
     output: 'config.h',
