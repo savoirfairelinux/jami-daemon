@@ -239,7 +239,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 {
     std::string name {n};
     if (not validateName(name)) {
-        cb(name, Response::invalidResponse);
+        cb("", Response::invalidResponse);
         return;
     }
     toLower(name);
