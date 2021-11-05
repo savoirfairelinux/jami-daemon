@@ -606,9 +606,14 @@ AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP],
   [Define if you have libnatpmp])
 AM_CONDITIONAL([BUILD_NATPMP], test "x$with_natpmp" = "xyes")
 
+# SHM
+dnl check for shm
+
+AC_ARG_ENABLE([shm], [AS_HELP_STRING([--enable-shm],
+  [Enable support for SHM])])
+
 AC_DEFINE_UNQUOTED([HAVE_SHM],
-  `if test -z "${HAVE_LINUX_TRUE}" && \
-test -z "${HAVE_ANDROID_FALSE}"; then echo 1; else echo 0; fi`,
+  `if test "x$enable_shm" == xyes; then echo 1; else echo 0; fi`,
   [Define if you have shared memory support])
 
 # DOXYGEN

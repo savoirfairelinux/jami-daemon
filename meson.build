@@ -127,6 +127,8 @@ else
     conf.set('ENABLE_VIDEOTOOLBOX', false)
 endif
 
+conf.set10('HAVE_SHM', get_option('shm'))
+
 if get_option('plugins')
     conf.set('ENABLE_PLUGIN', true)
     deplibarchive = dependency('libarchive', version: '>= 3.4.0', required: false)

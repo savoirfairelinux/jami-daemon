@@ -79,8 +79,8 @@ ninja install
 
 Done !
 
-More details available here:
-https://git.jami.net/savoirfairelinux/ring-project/wikis/technical/Build-instructions
+Note:
+If running without dbus (like if libwrap is enabled) you need to enable SHM (with autotools it's `--enable-shm` and `-Dshm=true` for meson)
 
 How to compile on Linux for Android
 -----------------------------------
