@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2fdd2f7e_c2725b52",
+        "filename": "test/agent/examples/passive-agent.scm",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-05T20:19:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "594dbe07_7f6e55f8",
+      "revId": "37e2ebb5abab45298b7abd188a4018eeceb458a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "94aae2b9_41ab22fb",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-11-05T19:41:01Z",
       "side": 1,
       "message": "dont use tab",
+      "revId": "37e2ebb5abab45298b7abd188a4018eeceb458a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1fa561ad_e66ee650",
+        "filename": "test/agent/examples/passive-agent.scm",
+        "patchSetId": 2
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-05T20:19:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "94aae2b9_41ab22fb",
       "revId": "37e2ebb5abab45298b7abd188a4018eeceb458a5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
