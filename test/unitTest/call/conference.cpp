@@ -159,7 +159,7 @@ ConferenceTest::registerSignalHandlers()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [=](const std::string& callId, const std::string& state, signed) {
+        [=](const std::string&, const std::string& callId, const std::string& state, signed) {
             if (bobCall.callId == callId)
                 bobCall.state = state;
             else if (carlaCall.callId == callId)
