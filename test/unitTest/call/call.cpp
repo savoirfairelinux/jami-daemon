@@ -118,7 +118,7 @@ CallTest::testCall()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string&, const std::string& state, signed) {
+        [&](const std::string&, const std::string&, const std::string& state, signed) {
             if (state == "OVER") {
                 callStopped += 1;
                 if (callStopped == 2)
@@ -163,7 +163,7 @@ CallTest::testCachedCall()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string&, const std::string& state, signed) {
+        [&](const std::string&, const std::string&, const std::string& state, signed) {
             if (state == "OVER") {
                 callStopped += 1;
                 if (callStopped == 2)
@@ -212,7 +212,7 @@ CallTest::testStopSearching()
     std::atomic_bool callStopped {false};
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string&, const std::string& state, signed) {
+        [&](const std::string&, const std::string&, const std::string& state, signed) {
             if (state == "OVER") {
                 callStopped = true;
                 cv.notify_one();
@@ -274,7 +274,7 @@ CallTest::testDeclineMultiDevice()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string&, const std::string& state, signed) {
+        [&](const std::string&, const std::string&, const std::string& state, signed) {
             if (state == "OVER")
                 callStopped++;
             cv.notify_one();

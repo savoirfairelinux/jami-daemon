@@ -47,6 +47,14 @@
 #include <list>
 #include <functional>
 
+template<typename T>
+bool
+is_uninitialized(std::weak_ptr<T> const& weak)
+{
+    using wt = std::weak_ptr<T>;
+    return !weak.owner_before(wt {}) && !wt {}.owner_before(weak);
+}
+
 namespace jami {
 
 class VoIPLink;
@@ -55,6 +63,7 @@ struct AccountVideoCodecInfo;
 class AudioDeviceGuard;
 
 class Call;
+class Conference;
 
 using CallMap = std::map<std::string, std::shared_ptr<Call>>;
 
@@ -133,7 +142,8 @@ public:
      * Return a reference on the conference id
      * @return call id
      */
-    const std::string& getConfId() const { return confID_; }
+    std::shared_ptr<Conference> getConference() const { return conf_.lock(); }
+    bool isConferenceParticipant() const { return not is_uninitialized(conf_); }
 
     std::weak_ptr<Account> getAccount() const { return account_; }
     std::string getAccountId() const;
@@ -200,7 +210,6 @@ public:
     void setIPToIP(bool IPToIP) { isIPToIP_ = IPToIP; }
 
     virtual std::map<std::string, std::string> getDetails() const;
-    static std::map<std::string, std::string> getNullDetails();
 
     /**
      * Answer the call
@@ -416,7 +425,7 @@ public:
      */
     void setConferenceInfo(const std::string& msg);
 
-    virtual void enterConference(const std::string& confId) = 0;
+    virtual void enterConference(std::shared_ptr<Conference> conference) = 0;
     virtual void exitConference() = 0;
     virtual std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
     getReceiveVideoFrameActiveWriter() = 0;
@@ -487,7 +496,7 @@ private:
 
 protected:
     /** Unique conference ID, used exclusively in case of a conference */
-    std::string confID_ {};
+    std::weak_ptr<Conference> conf_ {};
 
     /** Type of the call */
     CallType type_;

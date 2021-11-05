@@ -109,7 +109,8 @@ private:
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
-    static void onCallStateChange(const std::string& callId,
+    static void onCallStateChange(const std::string& accountId,
+                                  const std::string& callId,
                                   const std::string& state,
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
@@ -209,7 +210,8 @@ IceMediaCandExchangeTest::onIncomingCallWithMedia(const std::string& accountId,
 }
 
 void
-IceMediaCandExchangeTest::onCallStateChange(const std::string& callId,
+IceMediaCandExchangeTest::onCallStateChange(const std::string&,
+                                            const std::string& callId,
                                             const std::string& state,
                                             CallData& callData)
 {
@@ -423,8 +425,11 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
             }
         }));
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string& callId, const std::string& state, signed) {
+    signalHandlers.insert(
+        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+                                                                       const std::string& callId,
+                                                                       const std::string& state,
+                                                                       signed) {
             auto user = getUserAlias(callId);
             if (user.empty()) {
                 // The call was probably already removed, in this case, just
@@ -435,7 +440,10 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
                     user = bobData.alias_;
             }
             if (not user.empty()) {
-                onCallStateChange(callId, state, user == aliceData.alias_ ? aliceData : bobData);
+                onCallStateChange(accountId,
+                                  callId,
+                                  state,
+                                  user == aliceData.alias_ ? aliceData : bobData);
             } else {
                 JAMI_WARN("Received [StateChange::%s] for a removed call [%s]",
                           state.c_str(),
