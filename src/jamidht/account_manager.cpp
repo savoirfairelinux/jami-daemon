@@ -475,12 +475,12 @@ AccountManager::getContacts() const
 std::map<std::string, std::string>
 AccountManager::getContactDetails(const std::string& uri) const
 {
-    dht::InfoHash h(uri);
-    if (not h) {
+    if (auto h = dht::InfoHash(uri)) {
+        return info_->contacts->getContactDetails(h);
+    } else {
         JAMI_ERR("getContactDetails: invalid contact URI");
         return {};
     }
-    return info_->contacts->getContactDetails(h);
 }
 
 bool

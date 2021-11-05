@@ -37,7 +37,7 @@ public:
         UNRECOGNIZED   // Anything that doesn't fit in other categories
     };
 
-    Uri(const std::string_view& uri);
+    Uri(std::string_view uri);
 
     const std::string& authority() const;
     Scheme scheme() const;
