@@ -118,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "948ada04_0cd82f8e",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-05T20:03:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ea042706_1e58ccec",
+      "range": {
+        "startLine": 239,
+        "startChar": 8,
+        "endLine": 244,
+        "endChar": 9
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a15db1f7_6220b6d5",
