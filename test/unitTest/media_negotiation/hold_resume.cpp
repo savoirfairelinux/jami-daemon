@@ -450,7 +450,7 @@ HoldResumeTest::configureScenario(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string& callId, const std::string& state, signed) {
+        [&](const std::string&, const std::string& callId, const std::string& state, signed) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onCallStateChange(callId, state, user == aliceData.alias_ ? aliceData : bobData);
@@ -502,7 +502,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData,
     // Answer the call.
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.answer_);
-        Manager::instance().answerCallWithMedia(bobData.callId_, mediaList);
+        Manager::instance().answerCall(bobData.accountId_, bobData.callId_, mediaList);
     }
 
     // Wait for media negotiation complete signal.
@@ -565,7 +565,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData,
     JAMI_INFO("=== Hold the call and validate ===");
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.offerUpdate_);
-        DRing::hold(aliceData.callId_);
+        DRing::hold(aliceData.accountId_, aliceData.callId_);
     }
 
     // Update and validate media count.
@@ -614,7 +614,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData,
     JAMI_INFO("=== Resume the call and validate ===");
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.offerUpdate_);
-        DRing::unhold(aliceData.callId_);
+        DRing::unhold(aliceData.accountId_, aliceData.callId_);
     }
 
     // Update and validate media count.
@@ -661,7 +661,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData,
 
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    Manager::instance().hangupCall(bobData.callId_);
+    Manager::instance().hangupCall(bobData.accountId_, bobData.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(aliceData,

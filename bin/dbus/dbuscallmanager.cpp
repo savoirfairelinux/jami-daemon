@@ -26,176 +26,195 @@ DBusCallManager::DBusCallManager(DBus::Connection& connection)
 {}
 
 auto
-DBusCallManager::placeCall(const std::string& accountID, const std::string& to)
-    -> decltype(DRing::placeCall(accountID, to))
+DBusCallManager::placeCall(const std::string& accountId, const std::string& to)
+    -> decltype(DRing::placeCall(accountId, to))
 {
-    return DRing::placeCall(accountID, to);
+    return DRing::placeCall(accountId, to);
 }
 
 auto
-DBusCallManager::placeCallWithDetails(const std::string& accountID,
+DBusCallManager::placeCallWithDetails(const std::string& accountId,
                                       const std::string& to,
                                       const std::map<std::string, std::string>& VolatileCallDetails)
-    -> decltype(DRing::placeCall(accountID, to, VolatileCallDetails))
+    -> decltype(DRing::placeCall(accountId, to, VolatileCallDetails))
 {
-    return DRing::placeCall(accountID, to, VolatileCallDetails);
+    return DRing::placeCall(accountId, to, VolatileCallDetails);
 }
 
 auto
-DBusCallManager::placeCallWithMedia(const std::string& accountID,
+DBusCallManager::placeCallWithMedia(const std::string& accountId,
                                     const std::string& to,
                                     const std::vector<std::map<std::string, std::string>>& mediaList)
-    -> decltype(DRing::placeCallWithMedia(accountID, to, mediaList))
+    -> decltype(DRing::placeCallWithMedia(accountId, to, mediaList))
 {
-    return DRing::placeCallWithMedia(accountID, to, mediaList);
+    return DRing::placeCallWithMedia(accountId, to, mediaList);
 }
 
 auto
-DBusCallManager::requestMediaChange(const std::string& callID,
+DBusCallManager::requestMediaChange(const std::string& accountId,
+                                    const std::string& callId,
                                     const std::vector<std::map<std::string, std::string>>& mediaList)
-    -> decltype(DRing::requestMediaChange(callID, mediaList))
+    -> decltype(DRing::requestMediaChange(accountId, callId, mediaList))
 {
-    return DRing::requestMediaChange(callID, mediaList);
+    return DRing::requestMediaChange(accountId, callId, mediaList);
 }
 
 auto
-DBusCallManager::refuse(const std::string& callID) -> decltype(DRing::refuse(callID))
+DBusCallManager::refuse(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::refuse(accountId, callId))
 {
-    return DRing::refuse(callID);
+    return DRing::refuse(accountId, callId);
 }
 
 auto
-DBusCallManager::accept(const std::string& callID) -> decltype(DRing::accept(callID))
+DBusCallManager::accept(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::accept(accountId, callId))
 {
-    return DRing::accept(callID);
+    return DRing::accept(accountId, callId);
 }
 
 auto
-DBusCallManager::acceptWithMedia(const std::string& callID,
+DBusCallManager::acceptWithMedia(const std::string& accountId,
+                                 const std::string& callId,
                                  const std::vector<std::map<std::string, std::string>>& mediaList)
-    -> decltype(DRing::acceptWithMedia(callID, mediaList))
+    -> decltype(DRing::acceptWithMedia(accountId, callId, mediaList))
 {
-    return DRing::acceptWithMedia(callID, mediaList);
+    return DRing::acceptWithMedia(accountId, callId, mediaList);
 }
 
 auto
 DBusCallManager::answerMediaChangeRequest(
-    const std::string& callID, const std::vector<std::map<std::string, std::string>>& mediaList)
-    -> decltype(DRing::answerMediaChangeRequest(callID, mediaList))
+    const std::string& accountId,
+    const std::string& callId,
+    const std::vector<std::map<std::string, std::string>>& mediaList)
+    -> decltype(DRing::answerMediaChangeRequest(accountId, callId, mediaList))
 {
-    return DRing::answerMediaChangeRequest(callID, mediaList);
+    return DRing::answerMediaChangeRequest(accountId, callId, mediaList);
 }
 
 auto
-DBusCallManager::hangUp(const std::string& callID) -> decltype(DRing::hangUp(callID))
+DBusCallManager::hangUp(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::hangUp(accountId, callId))
 {
-    return DRing::hangUp(callID);
+    return DRing::hangUp(accountId, callId);
 }
 
 auto
-DBusCallManager::hold(const std::string& callID) -> decltype(DRing::hold(callID))
+DBusCallManager::hold(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::hold(accountId, callId))
 {
-    return DRing::hold(callID);
+    return DRing::hold(accountId, callId);
 }
 
 auto
-DBusCallManager::unhold(const std::string& callID) -> decltype(DRing::unhold(callID))
+DBusCallManager::unhold(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::unhold(accountId, callId))
 {
-    return DRing::unhold(callID);
+    return DRing::unhold(accountId, callId);
 }
 
 auto
-DBusCallManager::muteLocalMedia(const std::string& callid,
+DBusCallManager::muteLocalMedia(const std::string& accountId,
+                                const std::string& callId,
                                 const std::string& mediaType,
                                 const bool& mute)
-    -> decltype(DRing::muteLocalMedia(callid, mediaType, mute))
+    -> decltype(DRing::muteLocalMedia(accountId, callId, mediaType, mute))
 {
-    return DRing::muteLocalMedia(callid, mediaType, mute);
+    return DRing::muteLocalMedia(accountId, callId, mediaType, mute);
 }
 
 auto
-DBusCallManager::transfer(const std::string& callID, const std::string& to)
-    -> decltype(DRing::transfer(callID, to))
+DBusCallManager::transfer(const std::string& accountId,
+                          const std::string& callId,
+                          const std::string& to) -> decltype(DRing::transfer(accountId, callId, to))
 {
-    return DRing::transfer(callID, to);
+    return DRing::transfer(accountId, callId, to);
 }
 
 auto
-DBusCallManager::attendedTransfer(const std::string& transferID, const std::string& targetID)
-    -> decltype(DRing::attendedTransfer(transferID, targetID))
+DBusCallManager::attendedTransfer(const std::string& accountId,
+                                  const std::string& callId,
+                                  const std::string& targetId)
+    -> decltype(DRing::attendedTransfer(accountId, callId, targetId))
 {
-    return DRing::attendedTransfer(transferID, targetID);
+    return DRing::attendedTransfer(accountId, callId, targetId);
 }
 
 auto
-DBusCallManager::getCallDetails(const std::string& callID)
-    -> decltype(DRing::getCallDetails(callID))
+DBusCallManager::getCallDetails(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::getCallDetails(accountId, callId))
 {
-    return DRing::getCallDetails(callID);
+    return DRing::getCallDetails(accountId, callId);
 }
 
 auto
-DBusCallManager::getCallList() -> decltype(DRing::getCallList())
+DBusCallManager::getCallList(const std::string& accountId)
+    -> decltype(DRing::getCallList(accountId))
 {
-    return DRing::getCallList();
+    return DRing::getCallList(accountId);
 }
 
 std::vector<std::map<std::string, std::string>>
-DBusCallManager::getConferenceInfos(const std::string& confId)
+DBusCallManager::getConferenceInfos(const std::string& accountId, const std::string& confId)
 {
-    return DRing::getConferenceInfos(confId);
-}
-
-void
-DBusCallManager::removeConference(const std::string& conference_id)
-{
-    DRing::removeConference(conference_id);
+    return DRing::getConferenceInfos(accountId, confId);
 }
 
 auto
-DBusCallManager::joinParticipant(const std::string& sel_callID, const std::string& drag_callID)
-    -> decltype(DRing::joinParticipant(sel_callID, drag_callID))
+DBusCallManager::joinParticipant(const std::string& accountId,
+                                 const std::string& sel_callId,
+                                 const std::string& account2Id,
+                                 const std::string& drag_callId)
+    -> decltype(DRing::joinParticipant(accountId, sel_callId, account2Id, drag_callId))
 {
-    return DRing::joinParticipant(sel_callID, drag_callID);
+    return DRing::joinParticipant(accountId, sel_callId, account2Id, drag_callId);
 }
 
 void
-DBusCallManager::createConfFromParticipantList(const std::vector<std::string>& participants)
+DBusCallManager::createConfFromParticipantList(const std::string& accountId,
+                                               const std::vector<std::string>& participants)
 {
-    DRing::createConfFromParticipantList(participants);
+    DRing::createConfFromParticipantList(accountId, participants);
 }
 
 void
-DBusCallManager::setConferenceLayout(const std::string& confId, const uint32_t& layout)
+DBusCallManager::setConferenceLayout(const std::string& accountId,
+                                     const std::string& confId,
+                                     const uint32_t& layout)
 {
-    DRing::setConferenceLayout(confId, layout);
+    DRing::setConferenceLayout(accountId, confId, layout);
 }
 
 void
-DBusCallManager::setActiveParticipant(const std::string& confId, const std::string& callId)
+DBusCallManager::setActiveParticipant(const std::string& accountId,
+                                      const std::string& confId,
+                                      const std::string& callId)
 {
-    DRing::setActiveParticipant(confId, callId);
+    DRing::setActiveParticipant(accountId, confId, callId);
 }
 
 auto
-DBusCallManager::isConferenceParticipant(const std::string& call_id)
-    -> decltype(DRing::isConferenceParticipant(call_id))
+DBusCallManager::isConferenceParticipant(const std::string& accountId, const std::string& call_id)
+    -> decltype(DRing::isConferenceParticipant(accountId, call_id))
 {
-    return DRing::isConferenceParticipant(call_id);
+    return DRing::isConferenceParticipant(accountId, call_id);
 }
 
 auto
-DBusCallManager::addParticipant(const std::string& callID, const std::string& confID)
-    -> decltype(DRing::addParticipant(callID, confID))
+DBusCallManager::addParticipant(const std::string& accountId,
+                                const std::string& callId,
+                                const std::string& account2Id,
+                                const std::string& confId)
+    -> decltype(DRing::addParticipant(accountId, callId, account2Id, confId))
 {
-    return DRing::addParticipant(callID, confID);
+    return DRing::addParticipant(accountId, callId, account2Id, confId);
 }
 
 auto
-DBusCallManager::addMainParticipant(const std::string& confID)
-    -> decltype(DRing::addMainParticipant(confID))
+DBusCallManager::addMainParticipant(const std::string& accountId, const std::string& confId)
+    -> decltype(DRing::addMainParticipant(accountId, confId))
 {
-    return DRing::addMainParticipant(confID);
+    return DRing::addMainParticipant(accountId, confId);
 }
 
 auto
@@ -205,65 +224,69 @@ DBusCallManager::detachLocalParticipant() -> decltype(DRing::detachLocalParticip
 }
 
 auto
-DBusCallManager::detachParticipant(const std::string& callID)
-    -> decltype(DRing::detachParticipant(callID))
+DBusCallManager::detachParticipant(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::detachParticipant(accountId, callId))
 {
-    return DRing::detachParticipant(callID);
+    return DRing::detachParticipant(accountId, callId);
 }
 
 auto
-DBusCallManager::joinConference(const std::string& sel_confID, const std::string& drag_confID)
-    -> decltype(DRing::joinConference(sel_confID, drag_confID))
+DBusCallManager::joinConference(const std::string& accountId,
+                                const std::string& sel_confId,
+                                const std::string& account2Id,
+                                const std::string& drag_confId)
+    -> decltype(DRing::joinConference(accountId, sel_confId, account2Id, drag_confId))
 {
-    return DRing::joinConference(sel_confID, drag_confID);
+    return DRing::joinConference(accountId, sel_confId, account2Id, drag_confId);
 }
 
 auto
-DBusCallManager::hangUpConference(const std::string& confID)
-    -> decltype(DRing::hangUpConference(confID))
+DBusCallManager::hangUpConference(const std::string& accountId, const std::string& confId)
+    -> decltype(DRing::hangUpConference(accountId, confId))
 {
-    return DRing::hangUpConference(confID);
+    return DRing::hangUpConference(accountId, confId);
 }
 
 auto
-DBusCallManager::holdConference(const std::string& confID)
-    -> decltype(DRing::holdConference(confID))
+DBusCallManager::holdConference(const std::string& accountId, const std::string& confId)
+    -> decltype(DRing::holdConference(accountId, confId))
 {
-    return DRing::holdConference(confID);
+    return DRing::holdConference(accountId, confId);
 }
 
 auto
-DBusCallManager::unholdConference(const std::string& confID)
-    -> decltype(DRing::unholdConference(confID))
+DBusCallManager::unholdConference(const std::string& accountId, const std::string& confId)
+    -> decltype(DRing::unholdConference(accountId, confId))
 {
-    return DRing::unholdConference(confID);
+    return DRing::unholdConference(accountId, confId);
 }
 
 auto
-DBusCallManager::getConferenceList() -> decltype(DRing::getConferenceList())
+DBusCallManager::getConferenceList(const std::string& accountId)
+    -> decltype(DRing::getConferenceList(accountId))
 {
-    return DRing::getConferenceList();
+    return DRing::getConferenceList(accountId);
 }
 
 auto
-DBusCallManager::getParticipantList(const std::string& confID)
-    -> decltype(DRing::getParticipantList(confID))
+DBusCallManager::getParticipantList(const std::string& accountId, const std::string& confId)
+    -> decltype(DRing::getParticipantList(accountId, confId))
 {
-    return DRing::getParticipantList(confID);
+    return DRing::getParticipantList(accountId, confId);
 }
 
 auto
-DBusCallManager::getConferenceId(const std::string& callID)
-    -> decltype(DRing::getConferenceId(callID))
+DBusCallManager::getConferenceId(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::getConferenceId(accountId, callId))
 {
-    return DRing::getConferenceId(callID);
+    return DRing::getConferenceId(accountId, callId);
 }
 
 auto
-DBusCallManager::getConferenceDetails(const std::string& callID)
-    -> decltype(DRing::getConferenceDetails(callID))
+DBusCallManager::getConferenceDetails(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::getConferenceDetails(accountId, callId))
 {
-    return DRing::getConferenceDetails(callID);
+    return DRing::getConferenceDetails(accountId, callId);
 }
 
 auto
@@ -280,16 +303,16 @@ DBusCallManager::stopRecordedFilePlayback()
 }
 
 auto
-DBusCallManager::toggleRecording(const std::string& callID)
-    -> decltype(DRing::toggleRecording(callID))
+DBusCallManager::toggleRecording(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::toggleRecording(accountId, callId))
 {
-    return DRing::toggleRecording(callID);
+    return DRing::toggleRecording(accountId, callId);
 }
 
 void
-DBusCallManager::setRecording(const std::string& callID)
+DBusCallManager::setRecording(const std::string& accountId, const std::string& callId)
 {
-    DRing::setRecording(callID);
+    DRing::setRecording(accountId, callId);
 }
 
 void
@@ -299,29 +322,26 @@ DBusCallManager::recordPlaybackSeek(const double& value)
 }
 
 auto
-DBusCallManager::getIsRecording(const std::string& callID)
-    -> decltype(DRing::getIsRecording(callID))
+DBusCallManager::getIsRecording(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::getIsRecording(accountId, callId))
 {
-    return DRing::getIsRecording(callID);
+    return DRing::getIsRecording(accountId, callId);
 }
 
 bool
-DBusCallManager::switchInput(const std::string& callID, const std::string& input)
+DBusCallManager::switchInput(const std::string& accountId,
+                             const std::string& callId,
+                             const std::string& input)
 {
-    return DRing::switchInput(callID, input);
+    return DRing::switchInput(accountId, callId, input);
 }
 
 bool
-DBusCallManager::switchSecondaryInput(const std::string& conferenceId, const std::string& input)
+DBusCallManager::switchSecondaryInput(const std::string& accountId,
+                                      const std::string& conferenceId,
+                                      const std::string& input)
 {
-    return DRing::switchSecondaryInput(conferenceId, input);
-}
-
-auto
-DBusCallManager::getCurrentAudioCodecName(const std::string& callID)
-    -> decltype(DRing::getCurrentAudioCodecName(callID))
-{
-    return DRing::getCurrentAudioCodecName(callID);
+    return DRing::switchSecondaryInput(accountId, conferenceId, input);
 }
 
 void
@@ -337,11 +357,12 @@ DBusCallManager::startTone(const int32_t& start, const int32_t& type)
 }
 
 void
-DBusCallManager::sendTextMessage(const std::string& callID,
+DBusCallManager::sendTextMessage(const std::string& accountId,
+                                 const std::string& callId,
                                  const std::map<std::string, std::string>& messages,
                                  const bool& isMixed)
 {
-    DRing::sendTextMessage(callID, messages, "Me", isMixed);
+    DRing::sendTextMessage(accountId, callId, messages, "Me", isMixed);
 }
 
 void
@@ -357,25 +378,29 @@ DBusCallManager::stopSmartInfo()
 }
 
 void
-DBusCallManager::setModerator(const std::string& confId,
+DBusCallManager::setModerator(const std::string& accountId,
+                              const std::string& confId,
                               const std::string& peerId,
                               const bool& state)
 {
-    DRing::setModerator(confId, peerId, state);
+    DRing::setModerator(accountId, confId, peerId, state);
 }
 
 void
-DBusCallManager::muteParticipant(const std::string& confId,
+DBusCallManager::muteParticipant(const std::string& accountId,
+                                 const std::string& confId,
                                  const std::string& peerId,
                                  const bool& state)
 {
-    DRing::muteParticipant(confId, peerId, state);
+    DRing::muteParticipant(accountId, confId, peerId, state);
 }
 
 void
-DBusCallManager::hangupParticipant(const std::string& confId, const std::string& peerId)
+DBusCallManager::hangupParticipant(const std::string& accountId,
+                                   const std::string& confId,
+                                   const std::string& peerId)
 {
-    DRing::hangupParticipant(confId, peerId);
+    DRing::hangupParticipant(accountId, confId, peerId);
 }
 
 void
