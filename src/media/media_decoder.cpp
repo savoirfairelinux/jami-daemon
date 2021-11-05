@@ -313,6 +313,12 @@ MediaDemuxer::setIOContext(MediaIOHandle* ioctx)
 }
 
 #pragma optimize("", off)
+static constexpr unsigned
+round2pow(unsigned i, unsigned n)
+{
+    return (i >> n) << n;
+}
+
 MediaDemuxer::Status
 MediaDemuxer::decode()
 {
@@ -322,7 +328,22 @@ MediaDemuxer::decode()
                                                                                     av_packet_free(
                                                                                         &p);
                                                                             });
-
+    if (std::string(inputParams_.format) == "gdigrab") {
+        auto input = std::wstring(inputParams_.input.begin() + 6, inputParams_.input.end());
+        HWND hwnd = FindWindow(NULL, input.c_str());
+        if (hwnd) {
+            RECT virtual_rect;
+            GetWindowRect(hwnd, &virtual_rect);
+            if (std::abs(inputCtx_->streams[0]->codecpar->width
+                - (int) round2pow(virtual_rect.right - virtual_rect.left, 3)) > 100) {
+                return Status::EndOfFile;
+            }
+            if (std::abs(inputCtx_->streams[0]->codecpar->height
+                - (int) round2pow(virtual_rect.bottom - virtual_rect.top, 3)) > 100) {
+                return Status::EndOfFile;
+            }
+        }
+    }
     int ret = av_read_frame(inputCtx_, packet.get());
     if (ret == AVERROR(EAGAIN)) {
         /*no data available. Calculate time until next frame.
@@ -416,6 +437,7 @@ MediaDecoder::flushBuffers()
 int
 MediaDecoder::openInput(const DeviceParams& p)
 {
+    inputParams_ = p;
     return demuxer_->openInput(p);
 }
 
@@ -564,11 +586,11 @@ DecodeStatus
 MediaDecoder::decode(AVPacket& packet)
 {
     int frameFinished = 0;
-    auto ret = avcodec_send_packet(decoderCtx_, &packet);
-    //if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO) {
+    if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO) {
     //    JAMI_DBG() << "Decoding " << avStream_->codec->codec_id
     //               << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
-    //}
+    }
+    auto ret = avcodec_send_packet(decoderCtx_, &packet);
 
     if (ret < 0 && ret != AVERROR(EAGAIN)) {
 #ifdef RING_ACCEL

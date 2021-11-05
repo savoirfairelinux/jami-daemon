@@ -290,6 +290,10 @@ VideoInput::createDecoder()
     bool ready = false, restartSink = false;
     while (!ready && !isStopped_) {
         // Retry to open the video till the input is opened
+        if (decOpts_.format == "gdigrab") {
+            decOpts_.width = 0;
+            decOpts_.height = 0;
+        }
         auto ret = decoder->openInput(decOpts_);
         ready = ret >= 0;
         if (ret < 0 && -ret != EBUSY) {
@@ -445,42 +449,56 @@ VideoInput::initAVFoundation(const std::string& display)
     return true;
 }
 
+#pragma optimize("", off)
 bool
 VideoInput::initGdiGrab(const std::string& params)
 {
     DeviceParams p;
     p.format = "gdigrab";
-    p.input = "title=icons";
-    p.name = "title=icons";
+
+    p.input = "desktop";
+    p.name = "desktop";
+
+    if (params.find("title") != std::string::npos) {
+        p.input = params.substr(1);
+        p.name = p.input;
+    }
+
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
         return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
     }
-    auto w = dec->getStream().width;
-    auto h = dec->getStream().height;
+    auto width = dec->getStream().width;
+    auto height = dec->getStream().height;
 
 
     clearOptions();
     decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
-    decOpts_.input = "title=icons";
+    decOpts_.input = p.input;
+    decOpts_.name = p.name;
+    decOpts_.format = p.format;
+    decOpts_.width = round2pow(width, 3);
+    decOpts_.height = round2pow(height, 3);
 
     size_t space = params.find(' ');
-    if (space != std::string::npos) {
+    if (params.find("title") == std::string::npos && space != std::string::npos) {
         std::istringstream iss(params.substr(space + 1));
+        char sep;
+        unsigned w, h;
+        iss >> w >> sep >> h;
         decOpts_.width = round2pow(w, 3);
-        decOpts_.height = round2pow(h, 3) - 50;
+        decOpts_.height = round2pow(h, 3);
 
-        /*size_t plus = params.find('+');
-        std::istringstream dss(params.substr(plus + 1, space - plus));
-        dss >> decOpts_.offset_x >> sep >> decOpts_.offset_y;*/
-    } else {
-        decOpts_.width = default_grab_width;
-        decOpts_.height = default_grab_height;
+        size_t plus = params.find('+');
+        if (plus != std::string::npos) {
+            std::istringstream dss(params.substr(plus + 1, space - plus));
+            dss >> decOpts_.offset_x >> sep >> decOpts_.offset_y;
+        }
     }
-
 
     return true;
 }
+#pragma optimize("", on)
 
 bool
 VideoInput::initFile(std::string path)

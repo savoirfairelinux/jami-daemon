@@ -439,6 +439,12 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     }
     int ret = 0;
     AVCodecContext* encoderCtx = encoders_[streamIdx];
+    if (initialized_ && frame
+        && (frame->width != encoderCtx->width || frame->height != encoderCtx->height)) {
+        encoderCtx->width = frame->width;
+        encoderCtx->height = frame->height;
+        startIO();
+    }
     AVPacket pkt;
     av_init_packet(&pkt);
     pkt.data = nullptr; // packet data will be allocated by the encoder
