@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "45e94980_f1537a69",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-05T20:01:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "000a9d47_de25ea2b",
+      "range": {
+        "startLine": 150,
+        "startChar": 14,
+        "endLine": 150,
+        "endChar": 31
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aa5bc507_28e92a0c",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-11-03T15:51:22Z",
       "side": 1,
       "message": "params.format \u003d \"x11grab\"",
+      "range": {
+        "startLine": 576,
+        "startChar": 9,
+        "endLine": 576,
+        "endChar": 45
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f276e29d_1ea9b770",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 576,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-05T20:01:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa5bc507_28e92a0c",
       "range": {
         "startLine": 576,
         "startChar": 9,
@@ -139,6 +187,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "db0ed9a3_17b91463",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-05T20:01:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0202c30a_6b2b271d",
+      "range": {
+        "startLine": 400,
+        "startChar": 4,
+        "endLine": 400,
+        "endChar": 32
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b514ae39_01a4f38f",
@@ -152,6 +224,30 @@
       "writtenOn": "2021-11-03T15:51:22Z",
       "side": 1,
       "message": "add params.format \u003d \"gdigrab\";",
+      "range": {
+        "startLine": 283,
+        "startChar": 8,
+        "endLine": 283,
+        "endChar": 14
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bdd9158b_1679f5d9",
+        "filename": "src/media/video/winvideo/video_device_impl.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-05T20:01:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b514ae39_01a4f38f",
       "range": {
         "startLine": 283,
         "startChar": 8,

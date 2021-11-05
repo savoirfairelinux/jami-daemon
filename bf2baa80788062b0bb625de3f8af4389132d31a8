@@ -72,6 +72,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f4af8bf3_a40b52ce",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-05T20:01:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bf3428b8_6bb05eb3",
+      "range": {
+        "startLine": 445,
+        "startChar": 14,
+        "endLine": 445,
+        "endChar": 28
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a2366f20_8153a318",
@@ -85,6 +109,30 @@
       "writtenOn": "2021-11-02T19:38:39Z",
       "side": 1,
       "message": "I\u0027m not sure we should allow 60/120 fps. Most of the computers will not follow in software and I don\u0027t really see a use case where 120 fps is needed.",
+      "range": {
+        "startLine": 550,
+        "startChar": 30,
+        "endLine": 552,
+        "endChar": 32
+      },
+      "revId": "bf2baa80788062b0bb625de3f8af4389132d31a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "58e77174_1d29145e",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-05T20:01:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a2366f20_8153a318",
       "range": {
         "startLine": 550,
         "startChar": 30,
