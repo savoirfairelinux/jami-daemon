@@ -308,6 +308,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d587d8b3_4317f3bf",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 332,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-05T20:03:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7da7c265_0a9a0f93",
+      "range": {
+        "startLine": 320,
+        "startChar": 0,
+        "endLine": 332,
+        "endChar": 5
+      },
+      "revId": "6a460698dbbdd05e31ac5903dc0bb5eda69fe814",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0202c30a_6b2b271d",
