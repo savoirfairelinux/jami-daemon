@@ -42,18 +42,18 @@ namespace video {
 
 using std::string;
 
-VideoReceiveThread::VideoReceiveThread(const std::string& id, const std::string& sdp, uint16_t mtu)
+VideoReceiveThread::VideoReceiveThread(const std::string& id,
+                                       bool useSink,
+                                       const std::string& sdp,
+                                       uint16_t mtu)
     : VideoGenerator::VideoGenerator()
     , args_()
-    , dstWidth_(0)
-    , dstHeight_(0)
     , id_(id)
+    , useSink_(useSink)
     , stream_(sdp)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
-    , isVideoConfigured_(false)
     , mtu_(mtu)
-    , rotation_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::decodeFrame, this),
             std::bind(&VideoReceiveThread::cleanup, this))
@@ -82,7 +82,7 @@ VideoReceiveThread::setup()
                                             av_buffer_ref(displayMatrix.get()));
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
-    videoDecoder_->setResolutionChangedCallback([this] (int width, int height){
+    videoDecoder_->setResolutionChangedCallback([this](int width, int height) {
         dstWidth_ = width;
         dstHeight_ = height;
         sink_->setFrameSize(dstWidth_, dstHeight_);
@@ -209,9 +209,8 @@ VideoReceiveThread::configureVideoOutput()
         return false;
     }
 
-    auto conf = Manager::instance().getConferenceFromCallID(id_);
-    if (!conf)
-        exitConference();
+    if (useSink_)
+        startSink();
 
     // Send remote video codec in SmartInfo
     Smartools::getInstance().setRemoteVideoCodec(videoDecoder_->getDecoderName(), id_);
@@ -226,7 +225,7 @@ VideoReceiveThread::configureVideoOutput()
 }
 
 void
-VideoReceiveThread::enterConference()
+VideoReceiveThread::stopSink()
 {
     if (!loop_.isRunning())
         return;
@@ -236,7 +235,7 @@ VideoReceiveThread::enterConference()
 }
 
 void
-VideoReceiveThread::exitConference()
+VideoReceiveThread::startSink()
 {
     if (!loop_.isRunning())
         return;

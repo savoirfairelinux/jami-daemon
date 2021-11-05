@@ -92,8 +92,7 @@ Call::Call(const std::shared_ptr<Account>& account,
                             Call::ConnectionState cnx_state,
                             UNUSED int code) {
         checkPendingIM();
-        std::weak_ptr<Call> callWkPtr = shared_from_this();
-        runOnMainThread([callWkPtr] {
+        runOnMainThread([callWkPtr = weak()] {
             if (auto call = callWkPtr.lock())
                 call->checkAudio();
         });
@@ -103,9 +102,8 @@ Call::Call(const std::shared_ptr<Account>& account,
             auto timeout = Manager::instance().getRingingTimeout();
             JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
 
-            std::weak_ptr<Call> callWkPtr = shared_from_this();
             Manager::instance().scheduler().scheduleIn(
-                [callWkPtr] {
+                [callWkPtr = weak()] {
                     if (auto callShPtr = callWkPtr.lock()) {
                         if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
                             JAMI_DBG(
@@ -139,15 +137,9 @@ Call::Call(const std::shared_ptr<Account>& account,
     });
 
     time(&timestamp_start_);
-    if (auto shared = account_.lock())
-        shared->attachCall(id_);
 }
 
-Call::~Call()
-{
-    if (auto shared = account_.lock())
-        shared->detachCall(id_);
-}
+Call::~Call() {}
 
 void
 Call::removeCall()
@@ -157,6 +149,8 @@ Call::removeCall()
     setState(CallState::OVER);
     if (Recordable::isRecording())
         Recordable::stopRecording();
+    if (auto account = account_.lock())
+        account->detach(this_);
 }
 
 std::string
@@ -281,7 +275,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
                      new_client_state.c_str(),
                      code);
             lock.unlock();
-            emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
+            emitSignal<DRing::CallSignal::StateChange>(getAccountId(), id_, new_client_state, code);
         }
     }
 
@@ -377,13 +371,13 @@ Call::updateDetails(const std::map<std::string, std::string>& details)
 std::map<std::string, std::string>
 Call::getDetails() const
 {
+    auto conference = conf_.lock();
     return {
-
         {DRing::Call::Details::CALL_TYPE, std::to_string((unsigned) type_)},
         {DRing::Call::Details::PEER_NUMBER, peerNumber_},
         {DRing::Call::Details::DISPLAY_NAME, peerDisplayName_},
         {DRing::Call::Details::CALL_STATE, getStateStr()},
-        {DRing::Call::Details::CONF_ID, confID_},
+        {DRing::Call::Details::CONF_ID, conference ? conference->getConfId() : ""},
         {DRing::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID, getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED,
@@ -391,22 +385,6 @@ Call::getDetails() const
         {DRing::Call::Details::VIDEO_MUTED,
          std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_VIDEO)))},
         {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(not hasVideo()))},
-    };
-}
-
-std::map<std::string, std::string>
-Call::getNullDetails()
-{
-    return {
-        {DRing::Call::Details::CALL_TYPE, "0"},
-        {DRing::Call::Details::PEER_NUMBER, ""},
-        {DRing::Call::Details::DISPLAY_NAME, ""},
-        {DRing::Call::Details::CALL_STATE, "UNKNOWN"},
-        {DRing::Call::Details::CONF_ID, ""},
-        {DRing::Call::Details::TIMESTAMP_START, ""},
-        {DRing::Call::Details::ACCOUNTID, ""},
-        {DRing::Call::Details::VIDEO_SOURCE, "UNKNOWN"},
-        {DRing::Call::Details::AUDIO_ONLY, ""},
     };
 }
 
@@ -421,7 +399,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
 
     it = messages.find("application/confOrder+json");
     if (it != messages.end()) {
-        if (auto conf = Manager::instance().getConferenceFromID(confID_))
+        if (auto conf = conf_.lock())
             conf->onConfOrder(getCallId(), it->second);
         return;
     }
@@ -440,7 +418,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
             std::make_shared<JamiMessage>(getAccountId(), getPeerNumber(), true, messages, false));
     }
 #endif
-    Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
+    Manager::instance().incomingMessage(getAccountId(), getCallId(), getPeerNumber(), messages);
 }
 
 void
@@ -615,7 +593,10 @@ Call::checkPendingIM()
     if (not parent_) {
         if (state == DRing::Call::StateEvent::CURRENT) {
             for (const auto& msg : pendingInMessages_)
-                Manager::instance().incomingMessage(getCallId(), getPeerNumber(), msg.first);
+                Manager::instance().incomingMessage(getAccountId(),
+                                                    getCallId(),
+                                                    getPeerNumber(),
+                                                    msg.first);
             pendingInMessages_.clear();
 
             std::weak_ptr<Call> callWkPtr = shared_from_this();
@@ -692,7 +673,7 @@ Call::setConferenceInfo(const std::string& msg)
 
     {
         std::lock_guard<std::mutex> lk(confInfoMutex_);
-        if (confID_.empty()) {
+        if (not isConferenceParticipant()) {
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
             // Create sink for each participant
@@ -700,7 +681,7 @@ Call::setConferenceInfo(const std::string& msg)
             // Inform client that layout has changed
             jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
                 id_, confInfo_.toVectorMapStringString());
-        } else if (auto conf = Manager::instance().getConferenceFromID(confID_)) {
+        } else if (auto conf = conf_.lock()) {
             conf->mergeConfInfo(newInfo, getPeerNumber());
         }
     }
