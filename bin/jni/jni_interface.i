@@ -235,7 +235,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
 
     // Call event handlers
     const std::map<std::string, SharedCallback> callEvHandlers = {
-        exportable_callback<CallSignal::StateChange>(bind(&Callback::callStateChanged, callM, _1, _2, _3)),
+        exportable_callback<CallSignal::StateChange>(bind(&Callback::callStateChanged, callM, _1, _2, _3, _4)),
         exportable_callback<CallSignal::TransferFailed>(bind(&Callback::transferFailed, callM)),
         exportable_callback<CallSignal::TransferSucceeded>(bind(&Callback::transferSucceeded, callM)),
         exportable_callback<CallSignal::RecordPlaybackStopped>(bind(&Callback::recordPlaybackStopped, callM, _1)),
@@ -245,10 +245,10 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<CallSignal::IncomingCallWithMedia>(bind(&Callback::incomingCallWithMedia, callM, _1, _2, _3, _4)),
         exportable_callback<CallSignal::MediaChangeRequested>(bind(&Callback::mediaChangeRequested, callM, _1, _2, _3)),
         exportable_callback<CallSignal::RecordPlaybackFilepath>(bind(&Callback::recordPlaybackFilepath, callM, _1, _2)),
-        exportable_callback<CallSignal::ConferenceCreated>(bind(&Callback::conferenceCreated, callM, _1)),
-        exportable_callback<CallSignal::ConferenceChanged>(bind(&Callback::conferenceChanged, callM, _1, _2)),
+        exportable_callback<CallSignal::ConferenceCreated>(bind(&Callback::conferenceCreated, callM, _1, _2)),
+        exportable_callback<CallSignal::ConferenceChanged>(bind(&Callback::conferenceChanged, callM, _1, _2, _3)),
+        exportable_callback<CallSignal::ConferenceRemoved>(bind(&Callback::conferenceRemoved, callM, _1, _2)),
         exportable_callback<CallSignal::UpdatePlaybackScale>(bind(&Callback::updatePlaybackScale, callM, _1, _2, _3)),
-        exportable_callback<CallSignal::ConferenceRemoved>(bind(&Callback::conferenceRemoved, callM, _1)),
         exportable_callback<CallSignal::RecordingStateChanged>(bind(&Callback::recordingStateChanged, callM, _1, _2)),
         exportable_callback<CallSignal::RtcpReportReceived>(bind(&Callback::onRtcpReportReceived, callM, _1, _2)),
         exportable_callback<CallSignal::OnConferenceInfosUpdated>(bind(&Callback::onConferenceInfosUpdated, callM, _1, _2)),

@@ -120,7 +120,7 @@ void init(const SWIGV8_VALUE& funcMap){
     using DRing::ConversationSignal;
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
     const std::map<std::string, SharedCallback> callEvHandlers = {
-        exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3)),
+        exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3, _4)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&incomingMessage, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingCall>(bind(&incomingCall, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingCallWithMedia>(bind(&incomingCallWithMedia, _1, _2, _3, _4)),
