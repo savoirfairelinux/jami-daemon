@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21b8b10e_4878a8fd",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1091,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-05T17:43:39Z",
+      "side": 1,
+      "message": "return conf-\u003erequestMediaChange(mediaList);",
+      "range": {
+        "startLine": 1090,
+        "startChar": 8,
+        "endLine": 1091,
+        "endChar": 20
+      },
+      "revId": "e1e8f4d093ba37d6aabffa5a78a11f1159ebab10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
