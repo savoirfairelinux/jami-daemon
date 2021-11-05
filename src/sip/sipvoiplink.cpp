@@ -562,7 +562,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     call->setState(Call::ConnectionState::RINGING);
 
-    Manager::instance().incomingCall(*call, account->getAccountID());
+    Manager::instance().incomingCall(account->getAccountID(), *call);
 
     if (replaced_dlg) {
         // Get the INVITE session associated with the replaced dialog.
@@ -1241,7 +1241,7 @@ transferCall(SIPCall& call, const std::string& refer_to)
     JAMI_WARN("[call:%s] Trying to transfer to %s", callId.c_str(), refer_to.c_str());
     try {
         Manager::instance().newOutgoingCall(refer_to, call.getAccountId());
-        Manager::instance().hangupCall(callId);
+        Manager::instance().hangupCall(call.getAccountId(), callId);
     } catch (const std::exception& e) {
         JAMI_ERR("[call:%s] SIP transfer failed: %s", callId.c_str(), e.what());
         return false;

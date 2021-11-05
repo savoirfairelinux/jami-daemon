@@ -1136,7 +1136,7 @@ transfer_client_cb(pjsip_evsub* sub, pjsip_event* event)
         if (status_line.code / 100 == 2) {
             if (call->inviteSession_)
                 call->terminateSipSession(PJSIP_SC_GONE);
-            Manager::instance().hangupCall(call->getCallId());
+            Manager::instance().hangupCall(call->getAccountId(), call->getCallId());
             pjsip_evsub_set_mod_data(sub, mod_ua_id, NULL);
         }
 
@@ -2043,10 +2043,11 @@ SIPCall::startAllMedia()
 
 #ifdef ENABLE_VIDEO
     // TODO. Move this elsewhere (when adding participant to conf?)
-    if (!hasActiveVideo && !getConfId().empty()) {
-        auto conference = Manager::instance().getConferenceFromID(getConfId());
-        if (conference->isVideoEnabled())
-            conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
+    if (not hasActiveVideo) {
+        if (auto conference = conf_.lock())
+            if (conference->isVideoEnabled())
+                if (auto recv = getReceiveVideoFrameActiveWriter())
+                    conference->attachVideo(recv.get(), getCallId());
     }
 #endif
 
@@ -2568,7 +2569,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
     // Report the change request.
     auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
 
-    if (auto conf = Manager::instance().getConferenceFromCallID(getCallId())) {
+    if (auto conf = getConference()) {
         conf->handleMediaChangeRequest(shared_from_this(), remoteMediaList);
     } else {
         handleMediaChangeRequest(remoteMediaList);
@@ -2799,27 +2800,26 @@ SIPCall::getDetails() const
 }
 
 void
-SIPCall::enterConference(const std::string& confId)
+SIPCall::enterConference(std::shared_ptr<Conference> conference)
 {
-    JAMI_DBG("[call:%s] Entering conference [%s]", getCallId().c_str(), confId.c_str());
-    confID_ = confId;
+    JAMI_DBG("[call:%s] Entering conference [%s]",
+             getCallId().c_str(),
+             conference->getConfId().c_str());
+    conf_ = conference;
 
 #ifdef ENABLE_VIDEO
-    auto conf = Manager::instance().getConferenceFromID(confId);
-    if (conf == nullptr) {
-        JAMI_ERR("[call:%s] Unknown conference [%s]", getCallId().c_str(), confId.c_str());
-        return;
-    }
-
-    if (conf->isVideoEnabled()) {
+    if (conference->isVideoEnabled()) {
         auto videoRtp = getVideoRtp();
         if (not videoRtp) {
-            JAMI_ERR("[call:%s] Failed to get a valid video RTP session", getCallId().c_str());
-            throw std::runtime_error("Failed to get a valid video RTP session");
+            // In conference, we need to have a video RTP session even
+            // if it's an audio only call
+            if (not addDummyVideoRtpSession()) {
+                JAMI_ERR("[call:%s] Failed to get a valid video RTP session", getCallId().c_str());
+                throw std::runtime_error("Failed to get a valid video RTP session");
+            }
         }
-        videoRtp->enterConference(conf.get());
+        videoRtp->enterConference(*conference);
     }
-
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -2830,13 +2830,7 @@ SIPCall::enterConference(const std::string& confId)
 void
 SIPCall::exitConference()
 {
-    auto confId = getConfId();
-    if (not confId.empty()) {
-        JAMI_DBG("[call:%s] Leaving conference [%s]", getCallId().c_str(), confId.c_str());
-    } else {
-        JAMI_ERR("[call:%s] The call is not bound to any conference", getCallId().c_str());
-        return;
-    }
+    JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
     auto const& audioRtp = getAudioRtp();
     if (audioRtp && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
@@ -2852,7 +2846,6 @@ SIPCall::exitConference()
 #ifdef ENABLE_PLUGIN
     createCallAVStreams();
 #endif
-    confID_ = "";
 }
 
 std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
@@ -2924,7 +2917,8 @@ SIPCall::createSinks(const ConfInfo& infos)
     auto& videoReceive = videoRtp->getVideoReceive();
     if (!videoReceive)
         return;
-    auto id = getConfId().empty() ? getCallId() : getConfId();
+    auto conf = conf_.lock();
+    const auto& id = conf ? conf->getConfId() : getCallId();
     Manager::instance().createSinkClients(id,
                                           infos,
                                           std::static_pointer_cast<video::VideoGenerator>(
@@ -3320,7 +3314,8 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
 void
 SIPCall::peerRecording(bool state)
 {
-    const std::string& id = getConfId().empty() ? getCallId() : getConfId();
+    auto conference = conf_.lock();
+    const std::string& id = conference ? conference->getConfId() : getCallId();
     if (state) {
         JAMI_WARN("Peer is recording");
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
@@ -3340,9 +3335,8 @@ SIPCall::peerMuted(bool muted)
         JAMI_WARN("Peer un-muted");
     }
     peerMuted_ = muted;
-    if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
+    if (auto conf = conf_.lock())
         conf->updateMuted();
-    }
 }
 
 void

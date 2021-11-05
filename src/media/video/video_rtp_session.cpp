@@ -206,7 +206,8 @@ VideoRtpSession::startReceiver()
     if (receive_.enabled and not receive_.onHold) {
         if (receiveThread_)
             JAMI_WARN("Restarting video receiver");
-        receiveThread_.reset(new VideoReceiveThread(callID_, receive_.receiving_sdp, mtu_));
+        receiveThread_.reset(
+            new VideoReceiveThread(callID_, !conference_, receive_.receiving_sdp, mtu_));
 
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
@@ -336,7 +337,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
 {
     JAMI_DBG("[call:%s] Setup video pipeline on conference %s",
              callID_.c_str(),
-             conference.getConfID().c_str());
+             conference.getConfId().c_str());
     videoMixer_ = conference.getVideoMixer();
     if (sender_) {
         // Swap sender from local video to conference video mixer
@@ -349,27 +350,27 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
 
     if (receiveThread_) {
         conference.detachVideo(dummyVideoReceive_.get());
-        receiveThread_->enterConference();
+        receiveThread_->stopSink();
         conference.attachVideo(receiveThread_.get(), callID_);
     } else
         JAMI_WARN("[call:%s] no receiver", callID_.c_str());
 }
 
 void
-VideoRtpSession::enterConference(Conference* conference)
+VideoRtpSession::enterConference(Conference& conference)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     exitConference();
 
-    conference_ = conference;
+    conference_ = &conference;
     JAMI_DBG("[call:%s] enterConference (conf: %s)",
              callID_.c_str(),
-             conference->getConfID().c_str());
+             conference.getConfId().c_str());
 
     // TODO is this correct? The video Mixer should be enabled for a detached conference even if we
     // are not sending values
-    videoMixer_ = conference->getVideoMixer();
+    videoMixer_ = conference.getVideoMixer();
     auto conf_res = split_string_to_unsigned(jami::Manager::instance()
                                                  .videoPreferences.getConferenceResolution(),
                                              'x');
@@ -383,7 +384,7 @@ VideoRtpSession::enterConference(Conference* conference)
     videoMixer_->setParameters(conf_res[0], conf_res[1]);
 #endif
     if (send_.enabled or receiveThread_) {
-        setupConferenceVideoPipeline(*conference_);
+        setupConferenceVideoPipeline(conference);
 
         // Restart encoder with conference parameter ON in order to unlink HW encoder
         // from HW decoder.
@@ -401,7 +402,7 @@ VideoRtpSession::exitConference()
 
     JAMI_DBG("[call:%s] exitConference (conf: %s)",
              callID_.c_str(),
-             conference_->getConfID().c_str());
+             conference_->getConfId().c_str());
 
     if (videoMixer_) {
         if (sender_)
@@ -409,7 +410,7 @@ VideoRtpSession::exitConference()
 
         if (receiveThread_) {
             conference_->detachVideo(receiveThread_.get());
-            receiveThread_->exitConference();
+            receiveThread_->startSink();
         } else {
             conference_->detachVideo(dummyVideoReceive_.get());
         }

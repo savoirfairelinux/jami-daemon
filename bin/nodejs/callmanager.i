@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
- *          Alexandre Lision <alexnadre.L@savoirfairelinux.com>
+ *          Alexandre Lision <alexandre.lision@savoirfairelinux.com>
  *          Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,29 +28,32 @@
 class Callback {
 public:
     virtual ~Callback() {}
-    virtual void callStateChanged(const std::string& call_id, const std::string& state, int detail_code){}
+    virtual void callStateChanged(const std::string& callId, const std::string& state, int detail_code){}
     virtual void transferFailed(void){}
     virtual void transferSucceeded(void){}
     virtual void recordPlaybackStopped(const std::string& path){}
     virtual void voiceMailNotify(const std::string& accountId, int newCount, int oldCount, int urgentCount){}
-    virtual void incomingMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& messages){}
-    virtual void incomingCall(const std::string& account_id, const std::string& call_id, const std::string& from){}
-    virtual void incomingCallWithMedia(const std::string& account_id, const std::string& call_id, const std::string& from,
+    virtual void incomingMessage(const std::string& accountId, const std::string& callId, const std::string& from, const std::map<std::string, std::string>& messages){}
+    virtual void incomingCall(const std::string& accountId, const std::string& callId, const std::string& from){}
+    virtual void incomingCallWithMedia(const std::string& accountId, const std::string& callId, const std::string& from,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
-    virtual void mediaChangeRequested(const std::string& account_id, const std::string& call_id,
+    virtual void mediaChangeRequested(const std::string& accountId, const std::string& callId,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
-    virtual void conferenceCreated(const std::string& conf_id){}
-    virtual void conferenceChanged(const std::string& conf_id, const std::string& state){}
-    virtual void conferenceRemoved(const std::string& conf_id){}
+    virtual void conferenceCreated(const std::string& accountId, const std::string& conf_id){}
+    virtual void conferenceChanged(const std::string& accountId, const std::string& conf_id, const std::string& state){}
+    virtual void conferenceRemoved(const std::string& accountId, const std::string& conf_id){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
-    virtual void newCall(const std::string& account_id, const std::string& call_id, const std::string& to){}
-    virtual void sipCallStateChange(const std::string& call_id, const std::string& state, int code){}
-    virtual void recordingStateChanged(const std::string& call_id, int code){}
-    virtual void recordStateChange(const std::string& call_id, int state){}
-    virtual void onRtcpReportReceived(const std::string& call_id, const std::map<std::string, int>& stats){}
+    virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
+    virtual void recordingStateChanged(const std::string& callId, int code){}
+    virtual void recordStateChange(const std::string& callId, int state){}
+    virtual void onRtcpReportReceived(const std::string& callId, const std::map<std::string, int>& stats){}
     virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
-    virtual void peerHold(const std::string& call_id, bool holding){}
+    virtual void peerHold(const std::string& callId, bool holding){}
+    virtual void connectionUpdate(const std::string& id, int state){}
+    virtual void remoteRecordingChanged(const std::string& callId, const std::string& peer_number, bool state){}
+    virtual void mediaNegotiationStatus(const std::string& callId, const std::string& event,
+        const std::vector<std::map<std::string, std::string>>& mediaList){}
 };
 
 
@@ -61,41 +64,45 @@ public:
 namespace DRing {
 
 /* Call related methods */
-std::string placeCall(const std::string& accountID, const std::string& to);
-
-bool refuse(const std::string& callID);
-bool accept(const std::string& callID);
-bool hangUp(const std::string& callID);
-bool hold(const std::string& callID);
-bool unhold(const std::string& callID);
-bool muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute);
-bool transfer(const std::string& callID, const std::string& to);
-bool attendedTransfer(const std::string& transferID, const std::string& targetID);
-std::map<std::string, std::string> getCallDetails(const std::string& callID);
-std::vector<std::string> getCallList();
+std::string placeCall(const std::string& accountId, const std::string& to, const std::map<std::string, std::string>& volatileCallDetails);
+std::string placeCallWithMedia(const std::string& accountId,
+                               const std::string& to,
+                               const std::vector<std::map<std::string, std::string>>& mediaList);
+bool requestMediaChange(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
+bool refuse(const std::string& accountId, const std::string& callId);
+bool accept(const std::string& accountId, const std::string& callId);
+bool acceptWithMedia(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
+bool answerMediaChangeRequest(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
+bool hangUp(const std::string& accountId, const std::string& callId);
+bool hold(const std::string& accountId, const std::string& callId);
+bool unhold(const std::string& accountId, const std::string& callId);
+bool muteLocalMedia(const std::string& accountId, const std::string& callId, const std::string& mediaType, bool mute);
+bool transfer(const std::string& accountId, const std::string& callId, const std::string& to);
+bool attendedTransfer(const std::string& accountId, const std::string& transferID, const std::string& targetID);
+std::map<std::string, std::string> getCallDetails(const std::string& accountId, const std::string& callId);
+std::vector<std::string> getCallList(const std::string& accountId);
 
 /* Conference related methods */
-void removeConference(const std::string& conference_id);
-bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
-void createConfFromParticipantList(const std::vector<std::string>& participants);
-void setConferenceLayout(const std::string& confId, int layout);
-void setActiveParticipant(const std::string& confId, const std::string& callId);
-bool isConferenceParticipant(const std::string& call_id);
-bool addParticipant(const std::string& callID, const std::string& confID);
-bool addMainParticipant(const std::string& confID);
-bool detachParticipant(const std::string& callID);
-bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
-bool hangUpConference(const std::string& confID);
-bool holdConference(const std::string& confID);
-bool unholdConference(const std::string& confID);
-std::vector<std::string> getConferenceList();
-std::vector<std::string> getParticipantList(const std::string& confID);
-std::string getConferenceId(const std::string& callID);
-std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
-std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& confId);
-void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
-void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
-void hangupParticipant(const std::string& confId, const std::string& peerId);
+bool joinParticipant(const std::string& accountId, const std::string& sel_callId, const std::string& drag_callId);
+void createConfFromParticipantList(const std::string& accountId, const std::vector<std::string>& participants);
+void setConferenceLayout(const std::string& accountId, const std::string& confId, int layout);
+void setActiveParticipant(const std::string& accountId, const std::string& confId, const std::string& callId);
+bool isConferenceParticipant(const std::string& accountId, const std::string& callId);
+bool addParticipant(const std::string& accountId, const std::string& callId, const std::string& confId);
+bool addMainParticipant(const std::string& accountId, const std::string& confId);
+bool detachParticipant(const std::string& accountId, const std::string& callId);
+bool joinConference(const std::string& accountId, const std::string& sel_confId, const std::string& drag_confId);
+bool hangUpConference(const std::string& accountId, const std::string& confId);
+bool holdConference(const std::string& accountId, const std::string& confId);
+bool unholdConference(const std::string& accountId, const std::string& confId);
+std::vector<std::string> getConferenceList(const std::string& accountId);
+std::vector<std::string> getParticipantList(const std::string& accountId, const std::string& confId);
+std::string getConferenceId(const std::string& accountId, const std::string& callId);
+std::map<std::string, std::string> getConferenceDetails(const std::string& accountId, const std::string& callId);
+std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& accountId, const std::string& confId);
+void setModerator(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
+void muteParticipant(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
+void hangupParticipant(const std::string& accountId, const std::string& confId, const std::string& peerId);
 void raiseParticipantHand(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
 
 /* File Playback methods */
@@ -103,47 +110,49 @@ bool startRecordedFilePlayback(const std::string& filepath);
 void stopRecordedFilePlayback();
 
 /* General audio methods */
-bool toggleRecording(const std::string& callID);
+bool toggleRecording(const std::string& accountId, const std::string& callId);
 /* DEPRECATED */
-void setRecording(const std::string& callID);
+void setRecording(const std::string& accountId, const std::string& callId);
 
 void recordPlaybackSeek(double value);
-bool getIsRecording(const std::string& callID);
-std::string getCurrentAudioCodecName(const std::string& callID);
+bool getIsRecording(const std::string& accountId, const std::string& callId);
 void playDTMF(const std::string& key);
 void startTone(int32_t start, int32_t type);
 
-bool switchInput(const std::string& callID, const std::string& resource);
+bool switchInput(const std::string& accountId, const std::string& callId, const std::string& resource);
 
 /* Instant messaging */
-void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, const bool& isMixed);
+void sendTextMessage(const std::string& accountId, const std::string& callId, const std::map<std::string, std::string>& messages, const std::string& from, const bool& isMixed);
 
 }
 
 class Callback {
 public:
     virtual ~Callback() {}
-    virtual void callStateChanged(const std::string& call_id, const std::string& state, int detail_code){}
+    virtual void callStateChanged(const std::string& callId, const std::string& state, int detail_code){}
     virtual void transferFailed(void){}
     virtual void transferSucceeded(void){}
     virtual void recordPlaybackStopped(const std::string& path){}
     virtual void voiceMailNotify(const std::string& accountId, int newCount, int oldCount, int urgentCount){}
-    virtual void incomingMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& messages){}
-    virtual void incomingCall(const std::string& account_id, const std::string& call_id, const std::string& from){}
-    virtual void incomingCallWithMedia(const std::string& account_id, const std::string& call_id, const std::string& from,
+    virtual void incomingMessage(const std::string& accountId, const std::string& callId, const std::string& from, const std::map<std::string, std::string>& messages){}
+    virtual void incomingCall(const std::string& accountId, const std::string& callId, const std::string& from){}
+    virtual void incomingCallWithMedia(const std::string& accountId, const std::string& callId, const std::string& from,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
-    virtual void mediaChangeRequested(const std::string& account_id, const std::string& call_id,
+    virtual void mediaChangeRequested(const std::string& accountId, const std::string& callId,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
-    virtual void conferenceCreated(const std::string& conf_id){}
-    virtual void conferenceChanged(const std::string& conf_id, const std::string& state){}
-    virtual void conferenceRemoved(const std::string& conf_id){}
+    virtual void conferenceCreated(const std::string& accountId, const std::string& conf_id){}
+    virtual void conferenceChanged(const std::string& accountId, const std::string& conf_id, const std::string& state){}
+    virtual void conferenceRemoved(const std::string& accountId, const std::string& conf_id){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
-    virtual void newCall(const std::string& account_id, const std::string& call_id, const std::string& to){}
-    virtual void sipCallStateChange(const std::string& call_id, const std::string& state, int code){}
-    virtual void recordingStateChanged(const std::string& call_id, int code){}
-    virtual void recordStateChange(const std::string& call_id, int state){}
-    virtual void onRtcpReportReceived(const std::string& call_id, const std::map<std::string, int>& stats){}
+    virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
+    virtual void recordingStateChanged(const std::string& callId, int code){}
+    virtual void recordStateChange(const std::string& callId, int state){}
+    virtual void onRtcpReportReceived(const std::string& callId, const std::map<std::string, int>& stats){}
     virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
-    virtual void peerHold(const std::string& call_id, bool holding){}
+    virtual void peerHold(const std::string& callId, bool holding){}
+    virtual void connectionUpdate(const std::string& id, int state){}
+    virtual void remoteRecordingChanged(const std::string& callId, const std::string& peer_number, bool state){}
+    virtual void mediaNegotiationStatus(const std::string& callId, const std::string& event,
+        const std::vector<std::map<std::string, std::string>>& mediaList){}
 };

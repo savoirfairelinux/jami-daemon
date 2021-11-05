@@ -38,7 +38,7 @@ static pthread_mutex_t count_mutex;
 static pthread_cond_t count_nb_thread;
 static int counter = 0;
 
-CPPUNIT_TEST_SUITE_REGISTRATION( test_SIP );
+CPPUNIT_TEST_SUITE_REGISTRATION(test_SIP);
 
 /*
 return an error if all call are not successful
@@ -52,7 +52,7 @@ sippThreadWithCount(void* str)
     pthread_mutex_unlock(&count_mutex);
 
     // display what is send on the parameter of the method
-    std::string *command = (std::string *)(str);
+    std::string* command = (std::string*) (str);
 
     std::cout << "test_SIP: " << command << std::endl;
 
@@ -63,7 +63,7 @@ sippThreadWithCount(void* str)
     // 99: Normal exit without calls processed
     // -1: Fatal error
     // -2: Fatal error binding a socket
-    int i = system(command->c_str()); //c_str() retrieve the *char of the string
+    int i = system(command->c_str()); // c_str() retrieve the *char of the string
 
     CPPUNIT_ASSERT(i);
 
@@ -105,7 +105,7 @@ test_SIP::setUp()
     pthread_mutex_unlock(&count_mutex);
 
     running_ = true;
-    eventLoop_ = RAIIThread(std::thread([this]{
+    eventLoop_ = RAIIThread(std::thread([this] {
         while (running_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
@@ -123,8 +123,7 @@ test_SIP::tearDown()
     int ret = system("killall sipp");
     if (ret)
         std::cout << "test_SIP: Error from system call, killall sipp"
-                  << ", ret=" << ret
-                  << '\n';
+                  << ", ret=" << ret << '\n';
     Manager::instance().callFactory.clear();
 }
 
@@ -160,7 +159,7 @@ test_SIP::testSimpleOutgoingIpCall()
 
     // hangup call
     std::cout << ">>>> hangup the call " << '\n';
-    Manager::instance().hangupCall(testcallid);
+    Manager::instance().hangupCall(testaccount, testcallid);
     state = call->getStateStr();
     std::cout << ">>>> call state is now " << state << '\n';
     CPPUNIT_ASSERT(state == DRing::Call::StateEvent::OVER);
@@ -168,7 +167,6 @@ test_SIP::testSimpleOutgoingIpCall()
     // Call must not not be available (except for thus how already own a pointer like us)
     CPPUNIT_ASSERT(not Manager::instance().getCallFromCallID(testcallid));
 }
-
 
 void
 test_SIP::testSimpleIncomingIpCall()
@@ -187,27 +185,29 @@ test_SIP::testSimpleIncomingIpCall()
     // Answer this call
     const auto& calls = Manager::instance().callFactory.getAllCalls();
     const auto call = *calls.cbegin();
-    CPPUNIT_ASSERT(Manager::instance().answerCall(call->getCallId()));
+    CPPUNIT_ASSERT(Manager::instance().answerCall("", call->getCallId()));
 
     // hangup this call
-    Manager::instance().hangupCall(call->getCallId());
+    Manager::instance().hangupCall("", call->getCallId());
     auto state = call->getStateStr();
     std::cout << ">>>> call state is now " << state << '\n';
     CPPUNIT_ASSERT(state == DRing::Call::StateEvent::OVER);
 }
 
 void
-test_SIP::testMultipleIncomingIpCall(){
+test_SIP::testMultipleIncomingIpCall()
+{
     std::cout << ">>>> test multiple incoming IP call <<<< " << '\n';
 
     CPPUNIT_ASSERT(Manager::instance().callFactory.empty());
 
     // this value change the number of outgoing call we do
-    int numberOfCall =5;
+    int numberOfCall = 5;
 
-    for(int i = 0; i < numberOfCall; i++){
+    for (int i = 0; i < numberOfCall; i++) {
         // start a user agent server waiting for a call
-        sippThread("sipp -sf sippxml/test_2.xml 127.0.0.1 -i 127.0.0.1 -p 506"+std::to_string(i+1)+" -m 1 -bg");
+        sippThread("sipp -sf sippxml/test_2.xml 127.0.0.1 -i 127.0.0.1 -p 506"
+                   + std::to_string(i + 1) + " -m 1 -bg");
 
         // sleep a while to make sure that sipp insdtance is initialized and jami received
         // the incoming invite.
@@ -216,24 +216,26 @@ test_SIP::testMultipleIncomingIpCall(){
         const auto& calls = Manager::instance().callFactory.getAllCalls();
         const auto call = *calls.cbegin();
         auto state = call->getStateStr();
-        std::cout << ">>>> current call (call number: "+std::to_string(i)+") state:" << state << '\n';
-        CPPUNIT_ASSERT(state == DRing::Call::StateEvent::INCOMING); //TODO this state is sometime HOLD
+        std::cout << ">>>> current call (call number: " + std::to_string(i) + ") state:" << state
+                  << '\n';
+        CPPUNIT_ASSERT(state
+                       == DRing::Call::StateEvent::INCOMING); // TODO this state is sometime HOLD
 
         // Answer this call
-        CPPUNIT_ASSERT(Manager::instance().answerCall(call->getCallId()));
+        CPPUNIT_ASSERT(Manager::instance().answerCall("", call->getCallId()));
 
         state = call->getStateStr();
-        std::cout << ">>>> current call (call number: "+std::to_string(i)+") state:" << state << '\n';
+        std::cout << ">>>> current call (call number: " + std::to_string(i) + ") state:" << state
+                  << '\n';
         CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CURRENT);
 
-        Manager::instance().onHoldCall(call->getCallId());
+        Manager::instance().onHoldCall("", call->getCallId());
         state = call->getStateStr();
-        std::cout << ">>>> current call (call number: "+std::to_string(i)+") state:" << state << '\n';
+        std::cout << ">>>> current call (call number: " + std::to_string(i) + ") state:" << state
+                  << '\n';
         CPPUNIT_ASSERT(state == DRing::Call::StateEvent::HOLD);
     }
-
 }
-
 
 void
 test_SIP::testMultipleOutgoingIpCall()
@@ -243,16 +245,16 @@ test_SIP::testMultipleOutgoingIpCall()
     CPPUNIT_ASSERT(Manager::instance().callFactory.empty());
 
     // this value change the number of outgoing call we do
-    int numberOfCall =5;
+    int numberOfCall = 5;
 
-    //setup of the calls
+    // setup of the calls
     std::string callNumber("sip:test@127.0.0.1:5061");
     std::string testaccount("IP2IP");
     std::string callID[numberOfCall];
 
-    for(int i = 0; i < numberOfCall; i++){
+    for (int i = 0; i < numberOfCall; i++) {
         // start a user agent server waiting for a call
-        sippThread("sipp -sn uas -i 127.0.0.1 -p 5061 -m "+std::to_string(numberOfCall)+" -bg");
+        sippThread("sipp -sn uas -i 127.0.0.1 -p 5061 -m " + std::to_string(numberOfCall) + " -bg");
 
         callID[i] = Manager::instance().outgoingCall(testaccount, callNumber);
         auto newCall = Manager::instance().getCallFromCallID(callID[i]);
@@ -262,25 +264,27 @@ test_SIP::testMultipleOutgoingIpCall()
         std::this_thread::sleep_for(std::chrono::seconds(1)); // should be enough
 
         auto state = newCall->getStateStr();
-        std::cout << ">>>> current call (call number: "+std::to_string(i)+") state:" << state << '\n';
+        std::cout << ">>>> current call (call number: " + std::to_string(i) + ") state:" << state
+                  << '\n';
         CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CURRENT);
 
         // test the changement of calls states after doing a new call
-        if(i){
-            for(int j = 0; j<i; j++){
+        if (i) {
+            for (int j = 0; j < i; j++) {
                 auto oldCall = Manager::instance().getCallFromCallID(callID[j]);
                 CPPUNIT_ASSERT(oldCall);
                 auto oldState = oldCall->getStateStr();
-                std::cout << ">>>> old call (call number: "+std::to_string(j)+") state:" << oldState << '\n';
+                std::cout << ">>>> old call (call number: " + std::to_string(j) + ") state:"
+                          << oldState << '\n';
                 CPPUNIT_ASSERT(oldState == DRing::Call::StateEvent::HOLD);
-                }
             }
         }
+    }
 
-    //hangup  all calls
-    for(int i = 0; i < numberOfCall; i++){
+    // hangup  all calls
+    for (int i = 0; i < numberOfCall; i++) {
         auto call = Manager::instance().getCallFromCallID(callID[i]);
-        Manager::instance().hangupCall(callID[i]);
+        Manager::instance().hangupCall(testaccount, callID[i]);
         auto state = call->getStateStr();
         CPPUNIT_ASSERT(state == DRing::Call::StateEvent::OVER);
     }
@@ -307,26 +311,26 @@ test_SIP::testHoldIpCall()
     std::cout << ">>>> call state is now " << state << '\n';
     CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CURRENT);
 
-    Manager::instance().onHoldCall(testCallId);
+    Manager::instance().onHoldCall(testAccount, testCallId);
 
     state = call->getStateStr();
     std::cout << ">>>> call state is now " << state << '\n';
     CPPUNIT_ASSERT(state == DRing::Call::StateEvent::HOLD);
 
-    Manager::instance().offHoldCall(testCallId);
+    Manager::instance().offHoldCall(testAccount, testCallId);
 
     state = call->getStateStr();
     std::cout << ">>>> call state is now " << state << '\n';
     CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CURRENT);
 
-    Manager::instance().hangupCall(testCallId);
+    Manager::instance().hangupCall(testAccount, testCallId);
     state = call->getStateStr();
     std::cout << ">>>> call state is now " << state << '\n';
     CPPUNIT_ASSERT(state == DRing::Call::StateEvent::OVER);
 }
 
-
-void test_SIP::testSIPURI()
+void
+test_SIP::testSIPURI()
 {
     std::cout << ">>>> test SIPURI <<<< " << '\n';
 
