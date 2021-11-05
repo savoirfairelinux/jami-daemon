@@ -391,7 +391,7 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
                     type = cm[id].asString();
                     continue;
                 }
-                message.insert({id, cm[id].asString()});
+                message.emplace(id, cm[id].asString());
             }
         } else {
             JAMI_WARN("%s", err.c_str());
@@ -1013,7 +1013,7 @@ Conversation::dataTransfer() const
 
 bool
 Conversation::onFileChannelRequest(const std::string& member,
-                                   const std::string& fileId,
+                                   std::string_view fileId,
                                    bool verifyShaSum) const
 {
     if (!isMember(member))
@@ -1028,7 +1028,7 @@ Conversation::onFileChannelRequest(const std::string& member,
         return false;
 
     auto interactionId = fileId.substr(0, sep);
-    auto commit = getCommit(interactionId);
+    auto commit = getCommit(std::string(interactionId));
     if (commit == std::nullopt || commit->find("type") == commit->end()
         || commit->find("tid") == commit->end() || commit->find("sha3sum") == commit->end()
         || commit->at("type") != "application/data-transfer+json")
@@ -1041,19 +1041,19 @@ Conversation::onFileChannelRequest(const std::string& member,
         if (fileutils::isSymLink(path)) {
             fileutils::remove(path, true);
         }
-        JAMI_DBG("[Account %s] %s asked for non existing file %s in %s",
+        JAMI_DBG("[Account %s] %s asked for non existing file %.*s in %s",
                  account->getAccountID().c_str(),
                  member.c_str(),
-                 fileId.c_str(),
+                 (int)fileId.size(), fileId.data(),
                  id().c_str());
         return false;
     }
     // Check that our file is correct before sending
     if (verifyShaSum && commit->at("sha3sum") != fileutils::sha3File(path)) {
-        JAMI_DBG("[Account %s] %s asked for file %s in %s, but our version is not complete",
+        JAMI_DBG("[Account %s] %s asked for file %.*s in %s, but our version is not complete",
                  account->getAccountID().c_str(),
                  member.c_str(),
-                 fileId.c_str(),
+                 (int)fileId.size(), fileId.data(),
                  id().c_str());
         return false;
     }

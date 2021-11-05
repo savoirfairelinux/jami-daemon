@@ -233,7 +233,7 @@ public:
      * @param diffStats     The stats to analyze
      * @return get the changed files from a git diff
      */
-    static std::vector<std::string> changedFiles(const std::string_view& diffStats);
+    static std::vector<std::string> changedFiles(std::string_view diffStats);
 
     /**
      * Join a repository
