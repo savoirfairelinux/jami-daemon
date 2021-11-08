@@ -119,7 +119,7 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     trust_.setCertificateStatus(uri,
                                 ban ? tls::TrustStore::PermissionStatus::BANNED
                                     : tls::TrustStore::PermissionStatus::UNDEFINED);
-    if (ban and trustRequests_.erase(h) > 0)
+    if (trustRequests_.erase(h) > 0)
         saveTrustRequests();
     saveContacts();
 #ifdef ENABLE_PLUGIN
@@ -198,6 +198,7 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
         stateChanged = c->second.update(contact);
     }
     if (stateChanged) {
+        JAMI_ERR() << "@@@ IS ACTIVE? " << c->second.isActive();
         if (c->second.isActive()) {
             trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::ALLOWED);
             callbacks_.contactAdded(id.toString(), c->second.confirmed);
@@ -205,6 +206,9 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
             if (c->second.banned)
                 trust_.setCertificateStatus(id.toString(),
                                             tls::TrustStore::PermissionStatus::BANNED);
+            JAMI_ERR() << "@@@ REMOVED " << id.toString();
+            if (trustRequests_.erase(id) > 0)
+                saveTrustRequests();
             callbacks_.contactRemoved(id.toString(), c->second.banned);
         }
     }

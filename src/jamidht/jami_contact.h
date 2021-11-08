@@ -81,7 +81,11 @@ struct Contact
         if (c.confirmed != confirmed) {
             confirmed = c.confirmed or confirmed;
         }
-        return hasDifferentState(copy);
+        if (hasDifferentState(copy)) {
+            conversationId = c.conversationId;
+            return true;
+        }
+        return false;
     }
     bool hasDifferentState(const Contact& other) const
     {
@@ -145,7 +149,8 @@ public:
     MSGPACK_DEFINE_MAP(dev, pk)
 };
 
-struct KnownDeviceSync {
+struct KnownDeviceSync
+{
     std::string name;
     dht::InfoHash sha1;
     MSGPACK_DEFINE_MAP(name, sha1)
