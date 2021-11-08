@@ -205,6 +205,7 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
             if (c->second.banned)
                 trust_.setCertificateStatus(id.toString(),
                                             tls::TrustStore::PermissionStatus::BANNED);
+            JAMI_ERR() << "@@@ REMOVED " << id.toString();
             callbacks_.contactRemoved(id.toString(), c->second.banned);
         }
     }
