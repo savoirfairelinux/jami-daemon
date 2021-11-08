@@ -712,6 +712,7 @@ FileInfo::emit(DRing::DataTransferEventCode code)
     if (finishedCb_ && code >= DRing::DataTransferEventCode::finished)
         finishedCb_(uint32_t(code));
     if (interactionId_ != "") {
+        JAMI_ERR() << "@@@ EMIT FILE: " << (int) code;
         // Else it's an internal transfer
         runOnMainThread([info = info_, iid = interactionId_, fid = fileId_, code]() {
             emitSignal<DRing::DataTransferSignal::DataTransferEvent>(info.accountId,
@@ -786,6 +787,7 @@ OutgoingFile::process()
             return;
         auto code = correct ? DRing::DataTransferEventCode::finished
                             : DRing::DataTransferEventCode::closed_by_peer;
+        JAMI_ERR() << "@@@ EMIT CODE: " << (int) code;
         emit(code);
     }
 }
@@ -800,6 +802,7 @@ OutgoingFile::cancel()
     if (fileutils::isSymLink(path))
         fileutils::remove(path);
     isUserCancelled_ = true;
+    JAMI_ERR() << "@@@ EMIT CLOSED";
     emit(DRing::DataTransferEventCode::closed_by_host);
 }
 

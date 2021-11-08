@@ -153,10 +153,15 @@ public:
             return true;
         }
         auto& pf = it->second;
-        if (pf.ready)
+        if (pf.ready) {
+            JAMI_ERR() << "@@@ READY" << convId << " - " << deviceId;
             return false; // Already doing stuff
-        if (pf.connectingTo.find(deviceId) != pf.connectingTo.end())
+        }
+        if (pf.connectingTo.find(deviceId) != pf.connectingTo.end()) {
+            JAMI_ERR() << "@@@ CONNECTING" << convId << " - " << deviceId;
             return false; // Already connecting to this device
+        }
+        JAMI_ERR() << "@@@ ADD " << convId << " - " << deviceId;
         pf.connectingTo.insert(deviceId);
         return true;
     }
@@ -200,13 +205,14 @@ public:
                 return false;
         }
         conversationsRequests_[id] = req;
+        JAMI_ERR() << "@@@ ADD CONV REQ " << id;
         saveConvRequests();
         return true;
     }
     void rmConversationRequest(const std::string& id)
     {
         std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
-        conversationsRequests_.erase(id);
+        JAMI_ERR() << "@@@ ERASE REQ " << id << ": " << conversationsRequests_.erase(id);
         saveConvRequests();
     }
 
@@ -254,6 +260,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         // cloning.
         // This avoid the case when we try to clone from convInfos + sync message
         // at the same time.
+        JAMI_ERR() << "@@@ FETCH" << convId << " - " << deviceId;
         if (!startFetch(convId, deviceId)) {
             JAMI_WARN("[Account %s] Already fetching %s", accountId_.c_str(), convId.c_str());
             return;
@@ -287,6 +294,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         std::lock_guard<std::mutex> lk(convInfosMtx_);
         convInfos_[info.id] = std::move(info);
         saveConvInfos();
+        JAMI_ERR() << "@@@ ADD!!!!! " << convId;
     } else {
         JAMI_INFO("[Account %s] Already have conversation %s", accountId_.c_str(), convId.c_str());
     }
@@ -328,12 +336,14 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
 
+        JAMI_ERR() << "@@@ FETCH" << conversationId << " - " << deviceId;
         if (!startFetch(conversationId, deviceId)) {
             JAMI_WARN("[Account %s] Already fetching %s",
                       accountId_.c_str(),
                       conversationId.c_str());
             return;
         }
+        JAMI_ERR() << "@@@ LAUNCH" << conversationId << " - " << deviceId;
         onNeedSocket_(conversationId,
                       deviceId,
                       [this,
@@ -341,11 +351,13 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                        peer = std::move(peer),
                        deviceId = std::move(deviceId),
                        commitId = std::move(commitId)](const auto& channel) {
+                          JAMI_ERR() << "@@@ IN CB" << conversationId << " - " << deviceId;
                           auto conversation = conversations_.find(conversationId);
                           auto acc = account_.lock();
                           if (!channel || !acc || conversation == conversations_.end()
                               || !conversation->second) {
                               std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                              JAMI_ERR() << "@@@ ERASE" << conversationId << " - " << deviceId;
                               pendingConversationsFetch_.erase(conversationId);
                               return false;
                           }
@@ -371,6 +383,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                                 conversationId.c_str());
                                   }
                                   std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                                  JAMI_ERR() << "@@@ ERASE" << conversationId << " - " << deviceId;
                                   pendingConversationsFetch_.erase(conversationId);
                               },
                               commitId);
@@ -430,6 +443,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
 {
     auto erasePending = [&] {
         std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+        JAMI_ERR() << "@@@ ERASE" << conversationId << " - " << deviceId;
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
@@ -653,6 +667,7 @@ ConversationModule::saveConvRequests(
     const std::map<std::string, ConversationRequest>& conversationsRequests)
 {
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
+    JAMI_ERR() << "@@@ SAVE " << path;
     saveConvRequestsToPath(path, conversationsRequests);
 }
 
@@ -830,6 +845,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
     req.metadatas = ConversationRepository::infosFromVCard(details);
     auto reqMap = req.toMap();
     pimpl_->addConversationRequest(conversationId, std::move(req));
+    JAMI_ERR() << "@@ EMIT CONV REQ";
     emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
                                                                        conversationId,
                                                                        reqMap);
@@ -857,6 +873,7 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     pimpl_->addConversationRequest(convId, std::move(req));
     // Note: no need to sync here because other connected devices should receive
     // the same conversation request. Will sync when the conversation will be added
+    JAMI_ERR() << "@@ EMIT CONV REQ";
 
     emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
                                                                        convId,
@@ -968,6 +985,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId, con
             if (!sthis or deviceId == sthis->deviceId_)
                 return;
 
+            JAMI_ERR() << "@@@ FETCH" << conversationId << " - " << deviceId;
             if (!sthis->startFetch(conversationId, deviceId)) {
                 JAMI_WARN("[Account %s] Already fetching %s",
                           sthis->accountId_.c_str(),
@@ -1143,6 +1161,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                                const std::string& peerId,
                                const std::string& deviceId)
 {
+    JAMI_ERR() << "@@@ SIZE CONV:  " << msg.c.size();
     for (const auto& [key, convInfo] : msg.c) {
         auto convId = convInfo.id;
         auto removed = convInfo.removed;
@@ -1153,8 +1172,10 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             auto itConv = pimpl_->convInfos_.find(convId);
             if (itConv != pimpl_->convInfos_.end() && itConv->second.removed)
                 continue;
+            JAMI_ERR() << "@@@ ADD!!!!! " << convId;
             pimpl_->cloneConversation(deviceId, peerId, convId);
         } else {
+            JAMI_ERR() << "@@@ SET REMOVED " << convId;
             {
                 std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
                 auto itConv = pimpl_->conversations_.find(convId);
@@ -1179,6 +1200,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
         }
     }
 
+    JAMI_ERR() << "@@@ CONV REQ SIZE: " << msg.cr.size();
     for (const auto& [convId, req] : msg.cr) {
         if (pimpl_->isConversation(convId)) {
             // Already accepted request
@@ -1206,6 +1228,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                   convId.c_str(),
                   deviceId.c_str());
 
+        JAMI_ERR() << "@@ EMIT CONV REQ";
         emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
                                                                            convId,
                                                                            req.toMap());
@@ -1646,6 +1669,7 @@ std::map<std::string, ConversationRequest>
 ConversationModule::convRequests(const std::string& accountId)
 {
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
+    JAMI_ERR() << "@@@ LOAD " << path;
     return convRequestsFromPath(path);
 }
 
