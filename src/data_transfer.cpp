@@ -712,6 +712,7 @@ FileInfo::emit(DRing::DataTransferEventCode code)
     if (finishedCb_ && code >= DRing::DataTransferEventCode::finished)
         finishedCb_(uint32_t(code));
     if (interactionId_ != "") {
+        JAMI_ERR() << "@@@ EMIT FILE: " << (int) code;
         // Else it's an internal transfer
         runOnMainThread([info = info_, iid = interactionId_, fid = fileId_, code]() {
             emitSignal<DRing::DataTransferSignal::DataTransferEvent>(info.accountId,
@@ -782,10 +783,11 @@ OutgoingFile::process()
         // But for now, we can just avoid to emit errors to the client, because for outgoing
         // transfer in a swarm, for outgoingFiles, we know that the file is ok. And the peer
         // will retry the transfer if they need, so we don't need to show errors.
-        if (interactionId_.empty() && !correct)
+        if (!interactionId_.empty() && !correct)
             return;
         auto code = correct ? DRing::DataTransferEventCode::finished
                             : DRing::DataTransferEventCode::closed_by_peer;
+        JAMI_ERR() << "@@@ EMIT CODE: " << (int) code;
         emit(code);
     }
 }
@@ -800,6 +802,7 @@ OutgoingFile::cancel()
     if (fileutils::isSymLink(path))
         fileutils::remove(path);
     isUserCancelled_ = true;
+    JAMI_ERR() << "@@@ EMIT CLOSED";
     emit(DRing::DataTransferEventCode::closed_by_host);
 }
 
