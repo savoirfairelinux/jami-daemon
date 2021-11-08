@@ -597,7 +597,7 @@ ConversationModule::Impl::sendMessageNotification(const Conversation& conversati
     message["deviceId"] = deviceId_;
     Json::StreamWriterBuilder builder;
     const auto text = Json::writeString(builder, message);
-    for (const auto& member : conversation.memberUris(username_)) {
+    for (const auto& member : conversation.memberUris(sync ? "" : username_)) {
         // Announce to all members that a new message is sent
         sendMsgCb_(member,
                    std::map<std::string, std::string> {{"application/im-gitmessage-id", text}});
