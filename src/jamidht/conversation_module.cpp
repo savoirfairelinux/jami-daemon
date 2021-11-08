@@ -153,10 +153,15 @@ public:
             return true;
         }
         auto& pf = it->second;
-        if (pf.ready)
+        if (pf.ready) {
+            JAMI_ERR() << "@@@ READY" << convId << " - " << deviceId;
             return false; // Already doing stuff
-        if (pf.connectingTo.find(deviceId) != pf.connectingTo.end())
+        }
+        if (pf.connectingTo.find(deviceId) != pf.connectingTo.end()) {
+            JAMI_ERR() << "@@@ CONNECTING" << convId << " - " << deviceId;
             return false; // Already connecting to this device
+        }
+        JAMI_ERR() << "@@@ ADD " << convId << " - " << deviceId;
         pf.connectingTo.insert(deviceId);
         return true;
     }
@@ -254,6 +259,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         // cloning.
         // This avoid the case when we try to clone from convInfos + sync message
         // at the same time.
+        JAMI_ERR() << "@@@ FETCH" << convId << " - " << deviceId;
         if (!startFetch(convId, deviceId)) {
             JAMI_WARN("[Account %s] Already fetching %s", accountId_.c_str(), convId.c_str());
             return;
@@ -328,12 +334,14 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
 
+        JAMI_ERR() << "@@@ FETCH" << conversationId << " - " << deviceId;
         if (!startFetch(conversationId, deviceId)) {
             JAMI_WARN("[Account %s] Already fetching %s",
                       accountId_.c_str(),
                       conversationId.c_str());
             return;
         }
+        JAMI_ERR() << "@@@ LAUNCH" << conversationId << " - " << deviceId;
         onNeedSocket_(conversationId,
                       deviceId,
                       [this,
@@ -341,11 +349,13 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                        peer = std::move(peer),
                        deviceId = std::move(deviceId),
                        commitId = std::move(commitId)](const auto& channel) {
+                          JAMI_ERR() << "@@@ IN CB" << conversationId << " - " << deviceId;
                           auto conversation = conversations_.find(conversationId);
                           auto acc = account_.lock();
                           if (!channel || !acc || conversation == conversations_.end()
                               || !conversation->second) {
                               std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                              JAMI_ERR() << "@@@ ERASE" << conversationId << " - " << deviceId;
                               pendingConversationsFetch_.erase(conversationId);
                               return false;
                           }
@@ -371,6 +381,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                                 conversationId.c_str());
                                   }
                                   std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                                  JAMI_ERR() << "@@@ ERASE" << conversationId << " - " << deviceId;
                                   pendingConversationsFetch_.erase(conversationId);
                               },
                               commitId);
@@ -430,6 +441,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
 {
     auto erasePending = [&] {
         std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+        JAMI_ERR() << "@@@ ERASE" << conversationId << " - " << deviceId;
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
@@ -968,6 +980,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId, con
             if (!sthis or deviceId == sthis->deviceId_)
                 return;
 
+            JAMI_ERR() << "@@@ FETCH" << conversationId << " - " << deviceId;
             if (!sthis->startFetch(conversationId, deviceId)) {
                 JAMI_WARN("[Account %s] Already fetching %s",
                           sthis->accountId_.c_str(),

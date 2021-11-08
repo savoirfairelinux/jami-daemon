@@ -2395,7 +2395,9 @@ JamiAccount::convModule()
                         ->connectDevice(DeviceId(deviceId),
                                         "git://" + deviceId + "/" + convId,
                                         [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId&) {
+                                                             const DeviceId& deviceId) {
+                                            JAMI_ERR() << "@@@ " << deviceId.toString() << ": "
+                                                       << (bool) socket;
                                             if (socket) {
                                                 socket->onShutdown(
                                                     [shared, deviceId = socket->deviceId(), convId] {
