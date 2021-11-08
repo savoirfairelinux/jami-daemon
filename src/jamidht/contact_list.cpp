@@ -198,6 +198,11 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
         stateChanged = c->second.update(contact);
     }
     if (stateChanged) {
+        JAMI_ERR() << "@@@ IS ACTIVE? " << c->second.isActive();
+        if (c->second.conversationId != contact.conversationId) {
+            JAMI_ERR() << "@@@ ### UPDATE CONV";
+            c->second.conversationId = contact.conversationId;
+        }
         if (c->second.isActive()) {
             trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::ALLOWED);
             callbacks_.contactAdded(id.toString(), c->second.confirmed);
@@ -205,6 +210,7 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
             if (c->second.banned)
                 trust_.setCertificateStatus(id.toString(),
                                             tls::TrustStore::PermissionStatus::BANNED);
+            JAMI_ERR() << "@@@ REMOVED " << id.toString();
             callbacks_.contactRemoved(id.toString(), c->second.banned);
         }
     }

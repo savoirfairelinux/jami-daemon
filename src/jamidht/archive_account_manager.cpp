@@ -519,6 +519,7 @@ ArchiveAccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
     // saveKnownDevices();
 
     // Sync contacts
+    JAMI_ERR() << "@@@ SYNC CONTACTS";
     for (const auto& peer : sync.peers)
         info_->contacts->updateContact(peer.first, peer.second);
     info_->contacts->saveContacts();

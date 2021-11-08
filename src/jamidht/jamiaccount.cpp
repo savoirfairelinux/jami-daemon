@@ -1134,6 +1134,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             if (auto cm = convModule()) {
                 auto activeConv = cm->getOneToOneConversation(uri);
                 if (activeConv != conversationId) {
+                    JAMI_ERR() << "@@@ " << activeConv << ": " << conversationId;
                     cm->onTrustRequest(uri, conversationId, payload, received);
                 }
             }
@@ -2395,7 +2396,9 @@ JamiAccount::convModule()
                         ->connectDevice(DeviceId(deviceId),
                                         "git://" + deviceId + "/" + convId,
                                         [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId&) {
+                                                             const DeviceId& deviceId) {
+                                            JAMI_ERR() << "@@@ " << deviceId.toString() << ": "
+                                                       << (bool) socket;
                                             if (socket) {
                                                 socket->onShutdown(
                                                     [shared, deviceId = socket->deviceId(), convId] {

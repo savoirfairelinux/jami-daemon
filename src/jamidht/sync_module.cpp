@@ -65,6 +65,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
             msg.ds = info->contacts->getSyncData();
     msg.c = ConversationModule::convInfos(acc->getAccountID());
     msg.cr = ConversationModule::convRequests(acc->getAccountID());
+    JAMI_ERR() << "@@@ SEND " << msg.cr.size();
     msgpack::pack(buffer, msg);
     socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
     if (ec)

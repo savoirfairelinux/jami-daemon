@@ -253,7 +253,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             true,
             [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
                       dht::InfoHash peer_account) mutable {
-                JAMI_WARN("Got trust request (confirm: %u) from: %s / %s. ConversationId: %s",
+                JAMI_WARN("@@@Got trust request (confirm: %u) from: %s / %s. ConversationId: %s",
                           v.confirm,
                           peer_account.toString().c_str(),
                           v.from.toString().c_str(),
