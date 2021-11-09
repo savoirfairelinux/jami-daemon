@@ -16,6 +16,24 @@
       "message": "to what renderer signal are you referring to ?",
       "revId": "6dbb8b25ae0d0447a97994ef7d1b403bd717b113",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05b5b15b_d462daa7",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1634,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-09T17:22:31Z",
+      "side": 1,
+      "message": "// Bind calls according to their state\n    pimpl_-\u003ebindCallToConference(*call1, *conf);\n    pimpl_-\u003ebindCallToConference(*call2, *conf);\n    // Switch current call id to this conference\n    if (attached) {\n        pimpl_-\u003eswitchCall(conf-\u003egetConfID());\n        conf-\u003esetState(Conference::State::ACTIVE_ATTACHED);\n    } else {\n        conf-\u003edetachLocalParticipant();\n    }\n\nThis change the video stream",
+      "parentUuid": "b91719df_c8c9fef8",
+      "revId": "6dbb8b25ae0d0447a97994ef7d1b403bd717b113",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
