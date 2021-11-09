@@ -52,7 +52,7 @@
 
 (agent:ensure-account)
 
-(let ((account (fluid-ref agent:account-id)))
+(let ((account (agent:account-id)))
   (while #t
   (begin
     (make-a-call account  "79661eab61279a1127f9fa6168adab1424bc8d2b")

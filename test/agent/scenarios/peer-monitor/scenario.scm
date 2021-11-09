@@ -65,7 +65,7 @@
 
                        (sigaction SIGALRM (lambda _ (setup-timer)))
 
-                       (let ((account (fluid-ref agent:account-id))
+                       (let ((account (agent:account-id))
                              (details (next-details!)))
                          (progress "SIGALRM - Changing account details: ~a" details)
                          (account:send-register account #f)
@@ -104,13 +104,13 @@
                                   #t))
                             #f)))
       (with-mutex mtx
-        (set! this-call-id (call:place-call (fluid-ref agent:account-id) peer))
+        (set! this-call-id (call:place-call (agent:account-id) peer))
         (let ((ret (wait-condition-variable cnd mtx
                                             (+ (current-time) timeout))))
           (unless ret (atomic-box-set! continue #f))
           ret))))
 
-  (let ((account (fluid-ref agent:account-id))
+  (let ((account (agent:account-id))
         (success 0)
         (failure 0)
         (reset (call/cc (lambda (k)

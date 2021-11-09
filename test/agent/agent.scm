@@ -25,8 +25,8 @@
   #:export (ensure-account
             ensure-account-from-archive))
 
-(define-public account-id (make-fluid "afafafafafafafaf"))
-(define-public peer-id (make-fluid))
+(define-public account-id (make-parameter "afafafafafafafaf"))
+(define-public peer-id (make-parameter #f))
 
 (define* (ensure-account% this-account-id account-details #:optional (wait-for-announcement? #t))
   (if wait-for-announcement?
@@ -51,24 +51,24 @@
         (account:add account-details this-account-id)))
 
   (let ((details (account:get-details this-account-id)))
-    (fluid-set! peer-id (assoc-ref details "Account.username"))))
+    (peer-id (assoc-ref details "Account.username"))))
 
 (define* (ensure-account #:key (wait-for-announcement? #t))
   (jami:info "Ensure account")
-  (ensure-account% (fluid-ref account-id) '(("Account.type"            . "RING")
-                                            ("Account.displayName"     . "AGENT")
-                                            ("Account.alias"           . "AGENT")
-                                            ("Account.archivePassword" . "")
-                                            ("Account.archivePIN"      . "")
-                                            ("Account.archivePath"     . ""))
+  (ensure-account% (account-id) '(("Account.type"            . "RING")
+                                  ("Account.displayName"     . "AGENT")
+                                  ("Account.alias"           . "AGENT")
+                                  ("Account.archivePassword" . "")
+                                  ("Account.archivePIN"      . "")
+                                  ("Account.archivePath"     . ""))
                    wait-for-announcement?))
 
 (define* (ensure-account-from-archive path #:key (wait-for-announcement? #t))
   (jami:info "Ensure account from archive ~a" path)
-  (ensure-account% (fluid-ref account-id) `(("Account.type"            . "RING")
-                                            ("Account.displayName"     . "AGENT")
-                                            ("Account.alias"           . "AGENT")
-                                            ("Account.archivePassword" . "")
-                                            ("Account.archivePIN"      . "")
-                                            ("Account.archivePath"     . ,path))
+  (ensure-account% (account-id) `(("Account.type"            . "RING")
+                                  ("Account.displayName"     . "AGENT")
+                                  ("Account.alias"           . "AGENT")
+                                  ("Account.archivePassword" . "")
+                                  ("Account.archivePIN"      . "")
+                                  ("Account.archivePath"     . ,path))
                    wait-for-announcement?))
