@@ -20,7 +20,7 @@ coverage-html:
 	$(AM_V_at)lcov --no-external --capture --initial --directory $(top_builddir) --output-file jami-coverage-base.info
 	$(AM_V_at)lcov --no-external --capture --directory $(top_builddir) --output-file jami-coverage-tests.info
 	$(AM_V_at)lcov --add-tracefile jami-coverage-base.info --add-tracefile jami-coverage-tests.info --output-file jami-coverage.info
-	$(AM_V_at)lcov --remove jami-coverage.info "$(abs_top_builddir)/contrib/*" "$(abs_top_builddir)/bin/*"  --output-file jami-coverage-filtered.info
+	$(AM_V_at)lcov --remove jami-coverage.info "$(abs_top_builddir)/contrib/*" "$(abs_top_builddir)/bin/dbus/*"  --output-file jami-coverage-filtered.info
 	$(MKDIR_P) html-coverage-output
 	genhtml -o html-coverage-output jami-coverage-filtered.info
 
