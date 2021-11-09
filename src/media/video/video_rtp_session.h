@@ -102,8 +102,6 @@ public:
 
     std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() { return videoLocal_; }
 
-    std::shared_ptr<VideoMixer>& getVideoMixer() { return videoMixer_; }
-
     std::shared_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
 
     std::shared_ptr<VideoFrameActiveWriter> getReceiveVideoFrameActiveWriter()
@@ -129,7 +127,7 @@ private:
     std::shared_ptr<VideoFrameActiveWriter> dummyVideoReceive_
         = std::make_shared<VideoFrameActiveWriter>();
     Conference* conference_ {nullptr};
-    std::shared_ptr<VideoMixer> videoMixer_;
+    std::weak_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
     uint16_t initSeqVal_ = 0;
 

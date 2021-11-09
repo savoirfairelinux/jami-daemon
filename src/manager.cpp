@@ -563,7 +563,6 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
             if (account->isRendezVous())
                 return;
 
-            call->setConfId("");
             if (current_call_id != conf.getConfID())
                 base_.onHoldCall(call->getCallId());
             else
@@ -1797,7 +1796,6 @@ Manager::removeParticipant(const std::string& call_id)
     }
 
     conf->removeParticipant(call_id);
-    call->setConfId("");
 
     removeAudio(*call);
 
@@ -1838,7 +1836,6 @@ Manager::joinConference(const std::string& conf_id1, const std::string& conf_id2
         }
 
         conf->removeParticipant(p);
-        call->setConfId("");
         removeAudio(*call);
     }
     // Remove conf1

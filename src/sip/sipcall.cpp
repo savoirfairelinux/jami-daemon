@@ -2851,6 +2851,7 @@ SIPCall::exitConference()
 #ifdef ENABLE_PLUGIN
     createCallAVStreams();
 #endif
+    confID_ = "";
 }
 
 std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>

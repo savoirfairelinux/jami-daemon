@@ -106,8 +106,8 @@ VideoRtpSession::startSender()
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
-            if (videoMixer_)
-                videoMixer_->detach(sender_.get());
+            if (auto vm = videoMixer_.lock())
+                vm->detach(sender_.get());
             JAMI_WARN("Restarting video sender");
         }
 
@@ -157,16 +157,18 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
-            MediaStream ms
-                = !conference_
-                      ? MediaStream("video sender",
-                                    AV_PIX_FMT_YUV420P,
-                                    1 / static_cast<rational<int>>(localVideoParams_.framerate),
-                                    localVideoParams_.width,
-                                    localVideoParams_.height,
-                                    send_.bitrate,
-                                    static_cast<rational<int>>(localVideoParams_.framerate))
-                      : conference_->getVideoMixer()->getStream("Video Sender");
+            MediaStream ms;
+            if (auto vm = videoMixer_.lock()) {
+                ms = vm->getStream("Video Sender");
+            } else {
+                ms = MediaStream("video sender",
+                                 AV_PIX_FMT_YUV420P,
+                                 1 / static_cast<rational<int>>(localVideoParams_.framerate),
+                                 localVideoParams_.width,
+                                 localVideoParams_.height,
+                                 send_.bitrate,
+                                 static_cast<rational<int>>(localVideoParams_.framerate));
+            }
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_));
             if (changeOrientationCallback_)
@@ -217,8 +219,9 @@ VideoRtpSession::startReceiver()
             receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
     } else {
         JAMI_DBG("Video receiving disabled");
+        auto vm = videoMixer_.lock();
         if (receiveThread_)
-            receiveThread_->detach(videoMixer_.get());
+            receiveThread_->detach(vm.get());
         receiveThread_.reset();
     }
 }
@@ -278,10 +281,10 @@ VideoRtpSession::stop()
     if (videoLocal_)
         videoLocal_->detach(sender_.get());
 
-    if (videoMixer_) {
-        videoMixer_->detach(sender_.get());
+    if (auto vm = videoMixer_.lock()) {
+        vm->detach(sender_.get());
         if (receiveThread_)
-            receiveThread_->detach(videoMixer_.get());
+            receiveThread_->detach(vm.get());
     }
 
     if (socketPair_)
@@ -320,9 +323,9 @@ VideoRtpSession::setRotation(int rotation)
 void
 VideoRtpSession::setupVideoPipeline()
 {
-    if (conference_)
+    if (conference_) {
         setupConferenceVideoPipeline(*conference_);
-    else if (sender_) {
+    } else if (sender_) {
         if (videoLocal_) {
             JAMI_DBG("[call:%s] Setup video pipeline on local capture device", callID_.c_str());
             videoLocal_->attach(sender_.get());
@@ -343,8 +346,8 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
         // Swap sender from local video to conference video mixer
         if (videoLocal_)
             videoLocal_->detach(sender_.get());
-        if (videoMixer_)
-            videoMixer_->attach(sender_.get());
+        if (auto vm = videoMixer_.lock())
+            vm->attach(sender_.get());
     } else
         JAMI_WARN("[call:%s] no sender", callID_.c_str());
 
@@ -378,11 +381,14 @@ VideoRtpSession::enterConference(Conference* conference)
         JAMI_ERR("Conference resolution is invalid");
         return;
     }
+    if (auto vm = videoMixer_.lock()) {
 #if defined(__APPLE__) && TARGET_OS_MAC
-    videoMixer_->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
+        vm->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
 #else
-    videoMixer_->setParameters(conf_res[0], conf_res[1]);
+        vm->setParameters(conf_res[0], conf_res[1]);
 #endif
+    }
+
     if (send_.enabled or receiveThread_) {
         setupConferenceVideoPipeline(*conference_);
 
@@ -404,9 +410,9 @@ VideoRtpSession::exitConference()
              callID_.c_str(),
              conference_->getConfID().c_str());
 
-    if (videoMixer_) {
+    if (auto vm = videoMixer_.lock()) {
         if (sender_)
-            videoMixer_->detach(sender_.get());
+            vm->detach(sender_.get());
 
         if (receiveThread_) {
             conference_->detachVideo(receiveThread_.get());
@@ -414,8 +420,6 @@ VideoRtpSession::exitConference()
         } else {
             conference_->detachVideo(dummyVideoReceive_.get());
         }
-
-        videoMixer_.reset();
     }
 
     conference_ = nullptr;
