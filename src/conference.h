@@ -299,7 +299,7 @@ public:
     /**
      * Get the participant list for this conference
      */
-    const ParticipantSet& getParticipantList() const;
+    ParticipantSet getParticipantList() const;
 
     /**
      * Start/stop recording toggle
@@ -353,8 +353,11 @@ private:
     void updateModerators();
     void updateHandsRaised();
 
+    void foreachCall(const std::function<void(const std::shared_ptr<Call>& call)>& cb);
+
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
+    mutable std::mutex participantsMtx_ {};
     ParticipantSet participants_;
     bool videoEnabled_ {false};
 
