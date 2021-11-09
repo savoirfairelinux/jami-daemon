@@ -76,6 +76,7 @@ private:
     void testCreateParticipantsSinks();
     void testMuteStatusAfterRemove();
     void testHandsUp();
+    void testPeerLeaveConference();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -84,6 +85,7 @@ private:
     CPPUNIT_TEST(testCreateParticipantsSinks);
     CPPUNIT_TEST(testMuteStatusAfterRemove);
     CPPUNIT_TEST(testHandsUp);
+    CPPUNIT_TEST(testPeerLeaveConference);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -471,6 +473,25 @@ ConferenceTest::testHandsUp()
 
     DRing::unregisterSignalHandlers();
 }
+
+void
+ConferenceTest::testPeerLeaveConference()
+{
+    registerSignalHandlers();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    startConference();
+    Manager::instance().hangupCall(bobCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] {
+        return bobCall.state == "OVER" && confId.empty();
+    }));
+
+    DRing::unregisterSignalHandlers();
+}
+
 } // namespace test
 } // namespace jami
 

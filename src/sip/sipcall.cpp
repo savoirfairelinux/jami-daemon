@@ -2802,6 +2802,7 @@ void
 SIPCall::enterConference(const std::string& confId)
 {
     JAMI_DBG("[call:%s] Entering conference [%s]", getCallId().c_str(), confId.c_str());
+    confID_ = confId;
 
 #ifdef ENABLE_VIDEO
     auto conf = Manager::instance().getConferenceFromID(confId);
@@ -2851,6 +2852,7 @@ SIPCall::exitConference()
 #ifdef ENABLE_PLUGIN
     createCallAVStreams();
 #endif
+    confID_ = "";
 }
 
 std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
