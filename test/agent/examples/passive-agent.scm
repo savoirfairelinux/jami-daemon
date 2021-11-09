@@ -10,9 +10,9 @@
 
 (agent:ensure-account)
 
-(jami:info "Agent peer-id: ~a" (fluid-ref agent:peer-id))
+(jami:info "Agent peer-id: ~a" (agent:peer-id))
 
-(let ((account (fluid-ref agent:account-id)))
+(let ((account (agent:account-id)))
   (jami:on-signal 'incoming-call/media
                   (lambda (account-id call-id peer media-lst)
                     (when (string= account-id account)
