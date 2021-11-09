@@ -52,6 +52,24 @@
       "parentUuid": "05b5b15b_d462daa7",
       "revId": "6dbb8b25ae0d0447a97994ef7d1b403bd717b113",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fd0cbe83_69e472d2",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1634,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-09T19:03:34Z",
+      "side": 1,
+      "message": "Just to explain more. This is just needed because lrc is whitelisting calls and conference to only register on calls/conf: https://review.jami.net/c/jami-libclient/+/19713\n\nHowever, as explained in https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/658 the final idea is to only register when showing the sink from the client (but this needs a lot of changes in the architecture of LRC, so it\u0027s in hold)\n\nFinally, I don\u0027t see any reason to delay ConferenceCreated. It should be announced as soon as it\u0027s in the map imho",
+      "parentUuid": "5a016bcd_d5cfe283",
+      "revId": "6dbb8b25ae0d0447a97994ef7d1b403bd717b113",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
