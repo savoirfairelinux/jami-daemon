@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e09fed78_d808ab7f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-09T22:01:45Z",
+      "side": 1,
+      "message": "videoMixer is still used and can call onSourceUpdated while destoying",
+      "parentUuid": "a83ff9c7_61350ee7",
+      "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ed47492e_b977175f",
         "filename": "src/conference.cpp",
         "patchSetId": 2
