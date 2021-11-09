@@ -71,8 +71,9 @@ Conference::Conference(bool enableVideo)
             auto shared = w.lock();
             if (!shared)
                 return;
+            if (shared->isDestroying_.load())
+                return;
             ConfInfo newInfo;
-            auto subCalls = shared->participants_;
             auto hostAdded = false;
             // Handle participants showing their video
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
@@ -97,7 +98,6 @@ Conference::Conference(bool enableVideo)
                 auto active = false;
                 if (auto videoMixer = shared->getVideoMixer())
                     active = info.source == videoMixer->getActiveParticipant();
-                subCalls.erase(it->second);
                 std::string_view peerId = string_remove_suffix(uri, '@');
                 auto isModerator = shared->isModerator(peerId);
                 if (uri.empty()) {
@@ -144,33 +144,36 @@ Conference::Conference(bool enableVideo)
 Conference::~Conference()
 {
     JAMI_INFO("Destroy conference %s", id_.c_str());
+    isDestroying_.store(true);
 
 #ifdef ENABLE_VIDEO
-    for (const auto& participant_id : participants_) {
-        if (auto call = getCall(participant_id)) {
-            call->exitConference();
-            // Reset distant callInfo
-            call->resetConfInfo();
-            // Trigger the SIP negotiation to update the resolution for the remaining call
-            // ideally this sould be done without renegotiation
-            call->switchInput(
-                Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
-
-            // Continue the recording for the call if the conference was recorded
-            if (this->isRecording()) {
-                JAMI_DBG("Stop recording for conf %s", getConfID().c_str());
-                this->toggleRecording();
-                if (not call->isRecording()) {
-                    JAMI_DBG("Conference was recorded, start recording for conf %s",
-                             call->getCallId().c_str());
-                    call->toggleRecording();
-                }
-            }
-            // Notify that the remaining peer is still recording after conference
-            if (call->isPeerRecording())
-                call->peerRecording(true);
-        }
+    {
+        std::lock_guard<std::mutex> lk(videoToCallMtx_);
+        videoToCall_.clear();
     }
+    foreachCall([&](auto call) {
+        call->exitConference();
+        // Reset distant callInfo
+        call->resetConfInfo();
+        // Trigger the SIP negotiation to update the resolution for the remaining call
+        // ideally this sould be done without renegotiation
+        call->switchInput(
+            Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
+
+        // Continue the recording for the call if the conference was recorded
+        if (isRecording()) {
+            JAMI_DBG("Stop recording for conf %s", getConfID().c_str());
+            toggleRecording();
+            if (not call->isRecording()) {
+                JAMI_DBG("Conference was recorded, start recording for conf %s",
+                         call->getCallId().c_str());
+                call->toggleRecording();
+            }
+        }
+        // Notify that the remaining peer is still recording after conference
+        if (call->isPeerRecording())
+            call->peerRecording(true);
+    });
     for (auto it = confSinksMap_.begin(); it != confSinksMap_.end();) {
         if (videoMixer_)
             videoMixer_->detach(it->second.get());
@@ -414,71 +417,75 @@ Conference::addParticipant(const std::string& participant_id)
 {
     JAMI_DBG("Adding call %s to conference %s", participant_id.c_str(), id_.c_str());
 
-    if (participants_.insert(participant_id).second) {
-        // Check if participant was muted before conference
-        if (auto call = getCall(participant_id)) {
-            if (call->isPeerMuted()) {
-                participantsMuted_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
-            }
+    {
+        std::lock_guard<std::mutex> lk(participantsMtx_);
+        if (!participants_.insert(participant_id).second)
+            return;
+    }
 
-            // When a call joins a conference, the control if the media
-            // source sates (mainly mute/un-mute states) will be handled
-            // by the conference.
-            takeOverMediaSourceControl(participant_id);
+    // Check if participant was muted before conference
+    if (auto call = getCall(participant_id)) {
+        if (call->isPeerMuted()) {
+            participantsMuted_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
         }
 
-        if (auto call = getCall(participant_id)) {
-            auto w = call->getAccount();
-            auto account = w.lock();
-            if (account) {
-                // Add defined moderators for the account link to the call
-                for (const auto& mod : account->getDefaultModerators()) {
-                    moderators_.emplace(mod);
-                }
+        // When a call joins a conference, the control if the media
+        // source sates (mainly mute/un-mute states) will be handled
+        // by the conference.
+        takeOverMediaSourceControl(participant_id);
+    }
 
-                // Check for localModeratorsEnabled preference
-                if (account->isLocalModeratorsEnabled() && not localModAdded_) {
-                    auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
-                    for (const auto& account : accounts) {
-                        moderators_.emplace(account->getUsername());
-                    }
-                    localModAdded_ = true;
-                }
+    if (auto call = getCall(participant_id)) {
+        auto w = call->getAccount();
+        auto account = w.lock();
+        if (account) {
+            // Add defined moderators for the account link to the call
+            for (const auto& mod : account->getDefaultModerators()) {
+                moderators_.emplace(mod);
+            }
 
-                // Check for allModeratorEnabled preference
-                if (account->isAllModerators()) {
-                    moderators_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
+            // Check for localModeratorsEnabled preference
+            if (account->isLocalModeratorsEnabled() && not localModAdded_) {
+                auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
+                for (const auto& account : accounts) {
+                    moderators_.emplace(account->getUsername());
                 }
+                localModAdded_ = true;
+            }
+
+            // Check for allModeratorEnabled preference
+            if (account->isAllModerators()) {
+                moderators_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
             }
         }
+    }
 #ifdef ENABLE_VIDEO
-        if (auto call = getCall(participant_id)) {
-            // In conference, all participants need to have video session
-            // (with a sink) in order to display the participant info in
-            // the layout. So, if a participant joins with an audio only
-            // call, a dummy video stream is added to the call.
-            auto mediaList = call->getMediaAttributeList();
-            if (not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
-                call->addDummyVideoRtpSession();
+    if (auto call = getCall(participant_id)) {
+        // In conference, all participants need to have video session
+        // (with a sink) in order to display the participant info in
+        // the layout. So, if a participant joins with an audio only
+        // call, a dummy video stream is added to the call.
+        auto mediaList = call->getMediaAttributeList();
+        if (not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
+            call->addDummyVideoRtpSession();
+        }
+        call->enterConference(getConfID());
+        // Continue the recording for the conference if one participant was recording
+        if (call->isRecording()) {
+            JAMI_DBG("Stop recording for call %s", call->getCallId().c_str());
+            call->toggleRecording();
+            if (not this->isRecording()) {
+                JAMI_DBG("One participant was recording, start recording for conference %s",
+                         getConfID().c_str());
+                this->toggleRecording();
             }
-            call->enterConference(getConfID());
-            // Continue the recording for the conference if one participant was recording
-            if (call->isRecording()) {
-                JAMI_DBG("Stop recording for call %s", call->getCallId().c_str());
-                call->toggleRecording();
-                if (not this->isRecording()) {
-                    JAMI_DBG("One participant was recording, start recording for conference %s",
-                             getConfID().c_str());
-                    this->toggleRecording();
-                }
-            }
-        } else
-            JAMI_ERR("no call associate to participant %s", participant_id.c_str());
+        }
+    } else
+        JAMI_ERR("no call associate to participant %s", participant_id.c_str());
 #endif // ENABLE_VIDEO
 #ifdef ENABLE_PLUGIN
-        createConfAVStreams();
+    createConfAVStreams();
 #endif
-    }
 }
 
 void
@@ -553,23 +560,21 @@ void
 Conference::sendConferenceInfos()
 {
     // Inform calls that the layout has changed
-    for (const auto& participant_id : participants_) {
+    foreachCall([&](auto call) {
         // Produce specific JSON for each participant (2 separate accounts can host ...
         // a conference on a same device, the conference is not link to one account).
-        if (auto call = getCall(participant_id)) {
-            auto w = call->getAccount();
-            auto account = w.lock();
-            if (!account)
-                continue;
+        auto w = call->getAccount();
+        auto account = w.lock();
+        if (!account)
+            return;
 
-            dht::ThreadPool::io().run(
-                [call,
-                 confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht",
-                                               call->getPeerNumber())] {
-                    call->sendConfInfo(confInfo.toString());
-                });
-        }
-    }
+        dht::ThreadPool::io().run(
+            [call,
+             confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht",
+                                           call->getPeerNumber())] {
+                call->sendConfInfo(confInfo.toString());
+            });
+    });
 
     auto confInfo = getConfInfoHostUri("", "");
     createSinks(confInfo);
@@ -617,16 +622,19 @@ Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
 void
 Conference::removeParticipant(const std::string& participant_id)
 {
-    if (participants_.erase(participant_id)) {
-        if (auto call = getCall(participant_id)) {
-            participantsMuted_.erase(std::string(string_remove_suffix(call->getPeerNumber(), '@')));
-            handsRaised_.erase(std::string(string_remove_suffix(call->getPeerNumber(), '@')));
+    {
+        std::lock_guard<std::mutex> lk(participantsMtx_);
+        if (!participants_.erase(participant_id))
+            return;
+    }
+    if (auto call = getCall(participant_id)) {
+        participantsMuted_.erase(std::string(string_remove_suffix(call->getPeerNumber(), '@')));
+        handsRaised_.erase(std::string(string_remove_suffix(call->getPeerNumber(), '@')));
 #ifdef ENABLE_VIDEO
-            call->exitConference();
-            if (call->isPeerRecording())
-                call->peerRecording(false);
+        call->exitConference();
+        if (call->isPeerRecording())
+            call->peerRecording(false);
 #endif // ENABLE_VIDEO
-        }
     }
 }
 
@@ -677,10 +685,10 @@ Conference::detachLocalParticipant()
     JAMI_INFO("Detach local participant from conference %s", id_.c_str());
 
     if (getState() == State::ACTIVE_ATTACHED) {
-        for (const auto& p : participants_) {
-            Manager::instance().getRingBufferPool().unBindCallID(getCall(p)->getCallId(),
+        foreachCall([&](auto call) {
+            Manager::instance().getRingBufferPool().unBindCallID(call->getCallId(),
                                                                  RingBufferPool::DEFAULT_ID);
-        }
+        });
 #ifdef ENABLE_VIDEO
         if (isVideoEnabled()) {
             if (auto mixer = getVideoMixer()) {
@@ -706,7 +714,7 @@ Conference::bindParticipant(const std::string& participant_id)
 
     auto& rbPool = Manager::instance().getRingBufferPool();
 
-    for (const auto& item : participants_) {
+    for (const auto& item : getParticipantList()) {
         if (participant_id != item) {
             // Do not attach muted participants
             if (auto call = Manager::instance().getCallFromCallID(item)) {
@@ -744,7 +752,7 @@ Conference::bindHost()
 
     auto& rbPool = Manager::instance().getRingBufferPool();
 
-    for (const auto& item : participants_) {
+    for (const auto& item : getParticipantList()) {
         if (auto call = Manager::instance().getCallFromCallID(item)) {
             if (isMuted(string_remove_suffix(call->getPeerNumber(), '@')))
                 continue;
@@ -761,9 +769,10 @@ Conference::unbindHost()
     Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::DEFAULT_ID);
 }
 
-const ParticipantSet&
+ParticipantSet
 Conference::getParticipantList() const
 {
+    std::lock_guard<std::mutex> lk(participantsMtx_);
     return participants_;
 }
 
@@ -777,11 +786,7 @@ Conference::toggleRecording()
         deinitRecorder(recorder_);
 
     // Notify each participant
-    for (const auto& participant_id : participants_) {
-        if (auto call = getCall(participant_id)) {
-            call->updateRecState(newState);
-        }
-    }
+    foreachCall([&](auto call) { call->updateRecState(newState); });
 
     return Recordable::toggleRecording();
 }
@@ -965,7 +970,7 @@ Conference::setHandRaised(const std::string& participant_id, const bool& state)
         }
         return;
     } else {
-        for (const auto& p : participants_) {
+        for (const auto& p : getParticipantList()) {
             if (auto call = getCall(p)) {
                 auto isPeerRequiringAttention = isHandRaised(participant_id);
                 if (participant_id == string_remove_suffix(call->getPeerNumber(), '@')) {
@@ -989,7 +994,7 @@ Conference::setHandRaised(const std::string& participant_id, const bool& state)
 void
 Conference::setModerator(const std::string& participant_id, const bool& state)
 {
-    for (const auto& p : participants_) {
+    for (const auto& p : getParticipantList()) {
         if (auto call = getCall(p)) {
             auto isPeerModerator = isModerator(participant_id);
             if (participant_id == string_remove_suffix(call->getPeerNumber(), '@')) {
@@ -1027,6 +1032,15 @@ Conference::updateHandsRaised()
         info.handRaised = isHandRaised(string_remove_suffix(info.uri, '@'));
     }
     sendConferenceInfos();
+}
+
+void
+Conference::foreachCall(const std::function<void(const std::shared_ptr<Call>& call)>& cb)
+{
+    std::lock_guard<std::mutex> lk(participantsMtx_);
+    for (const auto& p : participants_)
+        if (auto call = getCall(p))
+            cb(call);
 }
 
 bool
@@ -1155,7 +1169,7 @@ Conference::isHost(std::string_view uri) const
 
     // Check if the URI is a local URI (AccountID) for at least one of the subcall
     // (a local URI can be in the call with another device)
-    for (const auto& p : participants_) {
+    for (const auto& p : getParticipantList()) {
         if (auto call = getCall(p)) {
             if (auto account = call->getAccount().lock()) {
                 if (account->getUsername() == uri)
@@ -1349,7 +1363,7 @@ Conference::findHostforRemoteParticipant(std::string_view uri)
 std::shared_ptr<Call>
 Conference::getCallFromPeerID(std::string_view peerID)
 {
-    for (const auto& p : participants_) {
+    for (const auto& p : getParticipantList()) {
         auto call = getCall(p);
         if (call && string_remove_suffix(call->getPeerNumber(), '@') == peerID) {
             return call;
