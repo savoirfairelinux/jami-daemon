@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "763bc8f0_1d4a9534",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-09T21:53:37Z",
+      "side": 1,
+      "message": "IMHO, this will always be false (set to true in the dtor). See my comment below.",
+      "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a83ff9c7_61350ee7",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-09T21:53:37Z",
+      "side": 1,
+      "message": "I dont think this is useful.\nIf we get here (destructor), it means all references have released.",
+      "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed47492e_b977175f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1040,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-09T21:53:37Z",
+      "side": 1,
+      "message": "I think it\u0027s dangerous to lock here, as we have not control what cb() might or could do.\nWhy not using the same pattern as elsewhere (or (const auto\u0026 p : getParticipantList()) {} ) ?",
+      "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
