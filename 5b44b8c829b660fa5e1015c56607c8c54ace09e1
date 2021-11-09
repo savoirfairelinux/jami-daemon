@@ -16,6 +16,24 @@
       "message": "clean-up message.",
       "revId": "5b44b8c829b660fa5e1015c56607c8c54ace09e1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a89619f6_860c4f17",
+        "filename": "configure.ac",
+        "patchSetId": 2
+      },
+      "lineNbr": 612,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-09T17:34:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e8eb4d06_563953ea",
+      "revId": "5b44b8c829b660fa5e1015c56607c8c54ace09e1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
