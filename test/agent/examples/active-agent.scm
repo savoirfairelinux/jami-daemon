@@ -52,7 +52,7 @@
 
 (agent:ensure-account)
 
-(let ((account (fluid-ref agent:account-id))
+(let ((account (agent:account-id))
       (peer "FIXME"))
 
   (when (string= peer "FIXME")
