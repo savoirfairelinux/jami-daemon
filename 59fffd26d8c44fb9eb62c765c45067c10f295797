@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9782b5ed_7df65f64",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-10T17:04:25Z",
+      "side": 1,
+      "message": "yes, if onSourcesUpdated_ is called then, w.lock() will return null, because we are destroying (refcount \u003d 0) :\n\n auto shared \u003d w.lock();\n   if (!shared)\n      return;",
+      "parentUuid": "e09fed78_d808ab7f",
+      "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ed47492e_b977175f",
         "filename": "src/conference.cpp",
         "patchSetId": 2
