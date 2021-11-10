@@ -70,6 +70,7 @@ public:
     void testRemoveConversationRemoveSyncing();
     void testCacheRequestFromClient();
     void testNeedsSyncingWithForCloning();
+    void testRemoveContactRemoveTrustRequest();
 
     std::string aliceId;
     std::string bobId;
@@ -95,6 +96,7 @@ private:
     CPPUNIT_TEST(testRemoveConversationRemoveSyncing);
     CPPUNIT_TEST(testCacheRequestFromClient);
     CPPUNIT_TEST(testNeedsSyncingWithForCloning);
+    CPPUNIT_TEST(testRemoveContactRemoveTrustRequest);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1086,6 +1088,109 @@ ConversationRequestTest::testNeedsSyncingWithForCloning()
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
     CPPUNIT_ASSERT(bobAccount->convModule()->needsSyncingWith(aliceUri, aliceDevice));
+}
+
+void
+ConversationRequestTest::testRemoveContactRemoveTrustRequest()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
+    // Add second device for Bob
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+
+    bob2Id = Manager::instance().addAccount(details);
+
+    wait_for_announcement_of(bob2Id);
+    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+
+    bool conversationB1Ready = false, conversationB2Ready = false, conversationB1Removed = false,
+         conversationB2Removed = false, requestB1Received = false, requestB2Received = false,
+         memberMessageGenerated = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestB1Received = true;
+            else if (account_id == bob2Id)
+                requestB2Received = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationB1Ready = true;
+            } else if (accountId == bob2Id) {
+                conversationB2Ready = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
+        [&](const std::string& accountId, const std::string&) {
+            if (accountId == bobId) {
+                conversationB1Removed = true;
+            } else if (accountId == bob2Id) {
+                conversationB2Removed = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // First, Alice adds Bob
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return !convId.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return requestB1Received && requestB2Received;
+    }));
+
+    // Bob1 accepts, both device should get it
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationB1Ready && conversationB2Ready && memberMessageGenerated;
+    }));
+
+    // Bob2 remove Alice ; Bob1 should not have any trust requests
+    bob2Account->removeContact(aliceUri, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationB1Removed && conversationB2Removed;
+    }));
+    std::this_thread::sleep_for(
+        std::chrono::seconds(10)); // Wait a bit to ensure that everything is update (via synced)
+    CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
+    CPPUNIT_ASSERT(bob2Account->getTrustRequests().size() == 0);
 }
 
 } // namespace test
