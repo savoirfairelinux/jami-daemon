@@ -198,6 +198,8 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
         stateChanged = c->second.update(contact);
     }
     if (stateChanged) {
+        if (trustRequests_.erase(id) > 0)
+            saveTrustRequests();
         if (c->second.isActive()) {
             trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::ALLOWED);
             callbacks_.contactAdded(id.toString(), c->second.confirmed);
