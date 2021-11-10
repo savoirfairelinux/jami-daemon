@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ccbaca65_08064f4c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-10T21:14:31Z",
+      "side": 1,
+      "message": "why?\nUp until this we could add camera/microphone if we were dettached.",
+      "range": {
+        "startLine": 445,
+        "startChar": 4,
+        "endLine": 449,
+        "endChar": 5
+      },
+      "revId": "96a2bf994c793745f9715af3c029bf10a57a19ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

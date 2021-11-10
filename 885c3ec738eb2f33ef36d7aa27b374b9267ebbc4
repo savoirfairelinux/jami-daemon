@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bf80c0a1_3db53aa4",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-10T21:14:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cc7ea210_5d0c78da",
+      "revId": "885c3ec738eb2f33ef36d7aa27b374b9267ebbc4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3d7b1e4a_3f32fe45",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-11-10T19:28:04Z",
       "side": 1,
       "message": "ffmpeg does not like null dimensions",
+      "revId": "885c3ec738eb2f33ef36d7aa27b374b9267ebbc4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "08cb2e81_b069d73a",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-10T21:14:31Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "3d7b1e4a_3f32fe45",
       "revId": "885c3ec738eb2f33ef36d7aa27b374b9267ebbc4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

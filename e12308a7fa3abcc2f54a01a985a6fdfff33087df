@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "705eddbf_aec63a5f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-10T21:14:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d5bc13fa_9cedf857",
+      "range": {
+        "startLine": 348,
+        "startChar": 4,
+        "endLine": 350,
+        "endChar": 21
+      },
+      "revId": "e12308a7fa3abcc2f54a01a985a6fdfff33087df",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8de24487_b0236dd3",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-11-10T19:09:01Z",
       "side": 1,
       "message": "if not present, it is muted",
+      "range": {
+        "startLine": 361,
+        "startChar": 8,
+        "endLine": 361,
+        "endChar": 21
+      },
+      "revId": "e12308a7fa3abcc2f54a01a985a6fdfff33087df",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5968dce0_9b6e4c7a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 361,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-10T21:14:31Z",
+      "side": 1,
+      "message": "return true",
+      "parentUuid": "8de24487_b0236dd3",
       "range": {
         "startLine": 361,
         "startChar": 8,
