@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc7ea210_5d0c78da",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-10T19:28:04Z",
+      "side": 1,
+      "message": "I did not have a better place, if you have any suggestion let me know.",
+      "revId": "885c3ec738eb2f33ef36d7aa27b374b9267ebbc4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d7b1e4a_3f32fe45",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-10T19:28:04Z",
+      "side": 1,
+      "message": "ffmpeg does not like null dimensions",
+      "revId": "885c3ec738eb2f33ef36d7aa27b374b9267ebbc4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
