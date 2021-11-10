@@ -119,7 +119,7 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     trust_.setCertificateStatus(uri,
                                 ban ? tls::TrustStore::PermissionStatus::BANNED
                                     : tls::TrustStore::PermissionStatus::UNDEFINED);
-    if (ban and trustRequests_.erase(h) > 0)
+    if (trustRequests_.erase(h) > 0)
         saveTrustRequests();
     saveContacts();
 #ifdef ENABLE_PLUGIN
