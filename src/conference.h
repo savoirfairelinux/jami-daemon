@@ -56,6 +56,17 @@ class VideoMixer;
 }
 #endif
 
+// Actions that can be performed by moderators only
+static constexpr const char* CONF_LAYOUT = "layout";
+static constexpr const char* CONF_ACTIVE_PARTICIPANT = "activeParticipant";
+static constexpr const char* CONF_MUTE_PARTICIPANT = "muteParticipant";
+static constexpr const char* CONF_MUTE_STATE = "muteState";
+static constexpr const char* CONF_HANGUP_PARTICIPANT = "hangupParticipant";
+
+// Actions that can be performed by all participants (including moderators)
+static constexpr const char* CONF_HAND_UP = "handUp";
+static constexpr const char* CONF_HAND_DOWN = "handDown";
+
 struct ParticipantInfo
 {
     std::string uri;
@@ -352,6 +363,9 @@ private:
     bool isHandRaised(std::string_view uri) const;
     void updateModerators();
     void updateHandsRaised();
+    std::string getModeratorAction(const Json::Value& action) const;
+    void handleModeratorAction(Json::Value& action);
+    void handleParticipantAction(Json::Value& action);
 
     void foreachCall(const std::function<void(const std::shared_ptr<Call>& call)>& cb);
 
