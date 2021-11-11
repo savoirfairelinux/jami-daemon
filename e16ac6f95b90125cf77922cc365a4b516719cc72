@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "53420a8e_65e3f445",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 612,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T15:38:32Z",
+      "side": 1,
+      "message": "I didn\u0027t touch this part",
+      "parentUuid": "c317fc56_a748ed2e",
+      "range": {
+        "startLine": 612,
+        "startChar": 17,
+        "endLine": 612,
+        "endChar": 37
+      },
+      "revId": "e16ac6f95b90125cf77922cc365a4b516719cc72",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b843f0cc_c146522d",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-11-11T15:29:05Z",
       "side": 1,
       "message": "observers depend on other components (here the RTP session) to make sure the observable stays live. So we need the mixer to be a shared_ptr to make sure it stays alive.",
+      "range": {
+        "startLine": 224,
+        "startChar": 0,
+        "endLine": 224,
+        "endChar": 45
+      },
+      "revId": "e16ac6f95b90125cf77922cc365a4b516719cc72",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8779e3a_7080e5a9",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T15:38:32Z",
+      "side": 1,
+      "message": "In the latest patch, the logic is the same as before.",
+      "parentUuid": "b843f0cc_c146522d",
       "range": {
         "startLine": 224,
         "startChar": 0,

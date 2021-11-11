@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ffb147f2_8765e1ab",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T15:38:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "763bc8f0_1d4a9534",
+      "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a83ff9c7_61350ee7",
@@ -71,6 +89,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "05ab1826_52b9eb66",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T15:38:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9782b5ed_7df65f64",
+      "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ed47492e_b977175f",
@@ -84,6 +120,24 @@
       "writtenOn": "2021-11-09T21:53:37Z",
       "side": 1,
       "message": "I think it\u0027s dangerous to lock here, as we have not control what cb() might or could do.\nWhy not using the same pattern as elsewhere (or (const auto\u0026 p : getParticipantList()) {} ) ?",
+      "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4eac9561_1c635402",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1040,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T15:38:32Z",
+      "side": 1,
+      "message": "yeah you\u0027re right",
+      "parentUuid": "ed47492e_b977175f",
       "revId": "59fffd26d8c44fb9eb62c765c45067c10f295797",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
