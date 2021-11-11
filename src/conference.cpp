@@ -894,13 +894,6 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
     // Check if the peer is a master
     if (auto call = Manager::instance().getCallFromCallID(callId)) {
         auto peerID = string_remove_suffix(call->getPeerNumber(), '@');
-        if (!isModerator(peerID)) {
-            JAMI_WARN("Received conference order from a non master (%.*s)",
-                      (int) peerID.size(),
-                      peerID.data());
-            return;
-        }
-
         std::string err;
         Json::Value root;
         Json::CharReaderBuilder rbuilder;
@@ -911,6 +904,19 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
                       peerID.data());
             return;
         }
+
+        // Participant should be able to raise his hand even if he is not a moderator
+        if (root.isMember("handRaised")) {
+            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
+        }
+
+        if (!isModerator(peerID)) {
+            JAMI_WARN("Received conference order from a non master (%.*s)",
+                      (int) peerID.size(),
+                      peerID.data());
+            return;
+        }
+        // Actions that requires moderation priviledges
         if (isVideoEnabled() and root.isMember("layout")) {
             setLayout(root["layout"].asUInt());
         }
@@ -923,9 +929,6 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         }
         if (root.isMember("hangupParticipant")) {
             hangupParticipant(root["hangupParticipant"].asString());
-        }
-        if (root.isMember("handRaised")) {
-            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
         }
     }
 }
