@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "061dff86_4fc3ec01",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 26
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T21:42:51Z",
+      "side": 1,
+      "message": "Problematic scenario:\nAlice and Bob on the same computer. Bob in auto answer, Alice call Bob \u003d\u003e Lock",
+      "revId": "c1ec1500af291dcd77241115a72c7cf2e5eb6835",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
