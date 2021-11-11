@@ -3180,6 +3180,12 @@ uint64_t
 JamiAccount::sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads)
 {
+    Uri uri(to);
+    if (uri.scheme() == Uri::Scheme::SWARM) {
+        sendInstantMessage(uri.authority(), payloads);
+        return 0;
+    }
+
     std::string toUri;
     try {
         toUri = parseJamiUri(to);
