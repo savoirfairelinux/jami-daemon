@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5bd29518_74b90c99",
+        "filename": "src/manager.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 1004,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-11-11T16:52:37Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027conference\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d091844a6bbe09fd8925fdb56cbc4d96eaf6accc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "adf9a530_c9313641",
+        "filename": "src/manager.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 1028,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-11-11T16:52:37Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027conference\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d091844a6bbe09fd8925fdb56cbc4d96eaf6accc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
