@@ -8,6 +8,10 @@ project('jami-daemon', ['c', 'cpp'],
 modpkgconfig = import('pkgconfig')
 modcmake = import('cmake')
 
+if host_machine.system() == 'darwin'
+    add_languages('objc')
+endif
+
 #################################################
 # Required dependencies
 #################################################
