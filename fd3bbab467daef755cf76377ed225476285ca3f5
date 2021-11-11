@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "099f5218_f4fa7cd5",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1246,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T17:30:34Z",
+      "side": 1,
+      "message": "true, it was just an auto replace of getVideoMixer()",
+      "parentUuid": "3d952584_7e7637e8",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f2b0a4ae_676ee607",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3bad98b5_f7310557",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1251,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T17:30:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f2b0a4ae_676ee607",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9c0c1e0c_934a4507",
@@ -48,6 +84,24 @@
       "writtenOn": "2021-11-11T16:56:20Z",
       "side": 1,
       "message": "I guess the presence of the mixer implies that the video is enabled",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "60afaa6a_a653aa66",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1332,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T17:30:34Z",
+      "side": 1,
+      "message": "indeed, as if video is not enabled, it will not be created, else it will.",
+      "parentUuid": "9c0c1e0c_934a4507",
       "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -82,6 +136,24 @@
       "writtenOn": "2021-11-11T16:56:20Z",
       "side": 1,
       "message": "entering/leaving the conf can be done on separate thread. Wonder if we need to make it read/write confID_ atomic, without ?\nThe problem was already there with SetConfId()",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3bdb0c4c_0c7a2007",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2805,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-11T17:30:34Z",
+      "side": 1,
+      "message": "confID_ will be removed in a future patch (cf topic: accountId)",
+      "parentUuid": "03e7181f_3e6d283a",
       "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
