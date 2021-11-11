@@ -881,16 +881,8 @@ Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 void
 Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 {
-    // Check if the peer is a master
     if (auto call = Manager::instance().getCallFromCallID(callId)) {
         auto peerID = string_remove_suffix(call->getPeerNumber(), '@');
-        if (!isModerator(peerID)) {
-            JAMI_WARN("Received conference order from a non master (%.*s)",
-                      (int) peerID.size(),
-                      peerID.data());
-            return;
-        }
-
         std::string err;
         Json::Value root;
         Json::CharReaderBuilder rbuilder;
@@ -901,21 +893,30 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
                       peerID.data());
             return;
         }
-        if (isVideoEnabled() and root.isMember("layout")) {
-            setLayout(root["layout"].asUInt());
+
+        // Handle moderator's action
+        auto modAction = getModeratorAction(root);
+        if (not modAction.empty()) {
+            if (not isModerator(peerID)) {
+                JAMI_ERR("[conf %s] Peer %.*s tries to perform [%s] action which is for moderators "
+                         "only. Ignoring!",
+                         id_.c_str(),
+                         (int) peerID.size(),
+                         peerID.data(),
+                         modAction.c_str());
+                return;
+            }
+            handleModeratorAction(root);
+        } else {
+            handleParticipantAction(root);
         }
-        if (root.isMember("activeParticipant")) {
-            setActiveParticipant(root["activeParticipant"].asString());
-        }
-        if (root.isMember("muteParticipant") and root.isMember("muteState")) {
-            muteParticipant(root["muteParticipant"].asString(),
-                            root["muteState"].asString() == "true");
-        }
-        if (root.isMember("hangupParticipant")) {
-            hangupParticipant(root["hangupParticipant"].asString());
-        }
-        if (root.isMember("handRaised")) {
-            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
+
+        // NOTE:
+        // The current implementation expects one action only per request.
+        if (auto size = root.size()) {
+            JAMI_ERR("[conf %s] Current action only support one action per conf order, found (%lu)",
+                     id_.c_str(),
+                     size + 1lu);
         }
     }
 }
@@ -1019,6 +1020,62 @@ Conference::updateHandsRaised()
     sendConferenceInfos();
 }
 
+std::string
+Conference::getModeratorAction(const Json::Value& actions) const
+{
+    // Actions that require moderation privileges
+    if (actions.isMember(CONF_LAYOUT))
+        return CONF_LAYOUT;
+    if (actions.isMember(CONF_ACTIVE_PARTICIPANT))
+        return CONF_ACTIVE_PARTICIPANT;
+    if (actions.isMember(CONF_MUTE_PARTICIPANT))
+        return CONF_MUTE_PARTICIPANT;
+    if (actions.isMember(CONF_HANGUP_PARTICIPANT))
+        return CONF_HANGUP_PARTICIPANT;
+    return {};
+}
+
+void
+Conference::handleModeratorAction(Json::Value& actions)
+{
+    // Actions that require moderation privileges
+    if (isVideoEnabled() and actions.isMember(CONF_LAYOUT)) {
+        setLayout(actions[CONF_LAYOUT].asUInt());
+        actions.removeMember(CONF_LAYOUT);
+        return;
+    }
+    if (actions.isMember(CONF_ACTIVE_PARTICIPANT)) {
+        setActiveParticipant(actions[CONF_ACTIVE_PARTICIPANT].asString());
+        actions.removeMember(CONF_ACTIVE_PARTICIPANT);
+        return;
+    }
+    if (actions.isMember(CONF_MUTE_PARTICIPANT) and actions.isMember("muteState")) {
+        muteParticipant(actions[CONF_MUTE_PARTICIPANT].asString(),
+                        actions[CONF_MUTE_STATE].asString() == "true");
+        actions.removeMember(CONF_MUTE_PARTICIPANT);
+        actions.removeMember(CONF_MUTE_STATE);
+        return;
+    }
+    if (actions.isMember(CONF_HANGUP_PARTICIPANT)) {
+        hangupParticipant(actions[CONF_HANGUP_PARTICIPANT].asString());
+        actions.removeMember(CONF_HANGUP_PARTICIPANT);
+    }
+}
+
+void
+Conference::handleParticipantAction(Json::Value& actions)
+{
+    if (actions.isMember(CONF_RAISE_HAND)) {
+        setHandRaised(actions[CONF_RAISE_HAND].asString(), true);
+        actions.removeMember(CONF_RAISE_HAND);
+        return;
+    }
+    if (actions.isMember(CONF_DOWN_HAND)) {
+        setHandRaised(actions[CONF_DOWN_HAND].asString(), false);
+        actions.removeMember(CONF_DOWN_HAND);
+    }
+}
+
 void
 Conference::foreachCall(const std::function<void(const std::shared_ptr<Call>& call)>& cb)
 {
@@ -1049,7 +1106,7 @@ Conference::muteParticipant(const std::string& participant_id, const bool& state
             if (!account)
                 return;
             Json::Value root;
-            root["muteParticipant"] = participant_id;
+            root[CONF_MUTE_PARTICIPANT] = participant_id;
             root["muteState"] = state ? TRUE_STR : FALSE_STR;
             call->sendConfOrder(root);
             return;
@@ -1198,7 +1255,7 @@ Conference::hangupParticipant(const std::string& participant_id)
             return;
 
         Json::Value root;
-        root["hangupParticipant"] = participant_id;
+        root[CONF_HANGUP_PARTICIPANT] = participant_id;
         call->sendConfOrder(root);
         return;
     }

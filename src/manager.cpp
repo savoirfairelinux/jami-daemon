@@ -1704,7 +1704,7 @@ Manager::setConferenceLayout(const std::string& confId, int layout)
     } else if (auto call = getCallFromCallID(confId)) {
         std::map<std::string, std::string> messages;
         Json::Value root;
-        root["layout"] = layout;
+        root[CONF_LAYOUT] = layout;
         call->sendConfOrder(root);
     }
 }
@@ -1717,7 +1717,7 @@ Manager::setActiveParticipant(const std::string& confId, const std::string& part
     } else if (auto call = getCallFromCallID(confId)) {
         std::map<std::string, std::string> messages;
         Json::Value root;
-        root["activeParticipant"] = participant;
+        root[CONF_ACTIVE_PARTICIPANT] = participant;
         call->sendConfOrder(root);
     }
 }
@@ -1730,7 +1730,7 @@ Manager::hangupParticipant(const std::string& confId, const std::string& partici
     } else if (auto call = getCallFromCallID(confId)) {
         std::map<std::string, std::string> messages;
         Json::Value root;
-        root["hangupParticipant"] = participant;
+        root[CONF_HANGUP_PARTICIPANT] = participant;
         call->sendConfOrder(root);
     }
 }
@@ -3557,8 +3557,8 @@ Manager::muteParticipant(const std::string& confId,
     } else if (auto call = getCallFromCallID(confId)) {
         std::map<std::string, std::string> messages;
         Json::Value root;
-        root["muteParticipant"] = participant;
-        root["muteState"] = state ? TRUE_STR : FALSE_STR;
+        root[CONF_MUTE_PARTICIPANT] = participant;
+        root[CONF_MUTE_STATE] = state ? TRUE_STR : FALSE_STR;
         call->sendConfOrder(root);
     }
 }
@@ -3573,8 +3573,11 @@ Manager::raiseParticipantHand(const std::string& confId,
     } else if (auto call = getCallFromCallID(confId)) {
         std::map<std::string, std::string> messages;
         Json::Value root;
-        root["handRaised"] = participant;
-        root["handState"] = state ? TRUE_STR : FALSE_STR;
+        if (state) {
+            root[CONF_RAISE_HAND] = participant;
+        } else {
+            root[CONF_DOWN_HAND] = participant;
+        }
         call->sendConfOrder(root);
     }
 }
