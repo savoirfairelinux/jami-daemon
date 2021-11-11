@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "adc35854_f49dedf4",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 350,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-11T15:24:36Z",
+      "side": 1,
+      "message": "yeah ... the comment was good but the return not, my bad.",
+      "parentUuid": "d5bc13fa_9cedf857",
+      "range": {
+        "startLine": 348,
+        "startChar": 4,
+        "endLine": 350,
+        "endChar": 21
+      },
+      "revId": "e12308a7fa3abcc2f54a01a985a6fdfff33087df",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8de24487_b0236dd3",
@@ -84,6 +108,30 @@
       "writtenOn": "2021-11-10T21:14:31Z",
       "side": 1,
       "message": "return true",
+      "parentUuid": "8de24487_b0236dd3",
+      "range": {
+        "startLine": 361,
+        "startChar": 8,
+        "endLine": 361,
+        "endChar": 21
+      },
+      "revId": "e12308a7fa3abcc2f54a01a985a6fdfff33087df",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "94a95854_56660f29",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 361,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-11T15:24:36Z",
+      "side": 1,
+      "message": "Done",
       "parentUuid": "8de24487_b0236dd3",
       "range": {
         "startLine": 361,
