@@ -93,6 +93,30 @@
       },
       "revId": "e16ac6f95b90125cf77922cc365a4b516719cc72",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "65eaa0e4_3a51e86a",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-11T16:56:20Z",
+      "side": 1,
+      "message": "this is an important matter but it\u0027s outside of the scope of this patch.\nWe should open a separate issue for it.",
+      "parentUuid": "a8779e3a_7080e5a9",
+      "range": {
+        "startLine": 224,
+        "startChar": 0,
+        "endLine": 224,
+        "endChar": 45
+      },
+      "revId": "e16ac6f95b90125cf77922cc365a4b516719cc72",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

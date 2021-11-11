@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d952584_7e7637e8",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1246,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-11T16:56:20Z",
+      "side": 1,
+      "message": "why not using videoMixer_ directly ?",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2b0a4ae_676ee607",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1251,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-11T16:56:20Z",
+      "side": 1,
+      "message": "same",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c0c1e0c_934a4507",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1332,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-11T16:56:20Z",
+      "side": 1,
+      "message": "I guess the presence of the mixer implies that the video is enabled",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "132ec5bb_08d54b5b",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-11T16:56:20Z",
+      "side": 1,
+      "message": "may be not related to this patch, but the rtp_session needs not to know if the input is a mixer, a camera or any other type.",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03e7181f_3e6d283a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2805,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-11T16:56:20Z",
+      "side": 1,
+      "message": "entering/leaving the conf can be done on separate thread. Wonder if we need to make it read/write confID_ atomic, without ?\nThe problem was already there with SetConfId()",
+      "revId": "fd3bbab467daef755cf76377ed225476285ca3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
