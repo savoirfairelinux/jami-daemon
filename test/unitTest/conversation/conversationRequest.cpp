@@ -61,6 +61,7 @@ public:
     void testAddContactDeleteAndReAdd();
     void testInviteFromMessageAfterRemoved();
     void testRemoveContact();
+    void testRemoveSelfDoesntRemoveConversation();
     void testRemoveConversationUpdateContactDetails();
     void testBanContact();
     void testBanContactRemoveTrustRequest();
@@ -87,6 +88,7 @@ private:
     CPPUNIT_TEST(testAddContactDeleteAndReAdd);
     CPPUNIT_TEST(testInviteFromMessageAfterRemoved);
     CPPUNIT_TEST(testRemoveContact);
+    CPPUNIT_TEST(testRemoveSelfDoesntRemoveConversation);
     CPPUNIT_TEST(testRemoveConversationUpdateContactDetails);
     CPPUNIT_TEST(testBanContact);
     CPPUNIT_TEST(testBanContactRemoveTrustRequest);
@@ -566,6 +568,76 @@ ConversationRequestTest::testRemoveContact()
     repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
+}
+
+void
+ConversationRequestTest::testRemoveSelfDoesntRemoveConversation()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
+         conversationRemoved = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
+        [&](const std::string& accountId, const std::string&) {
+            if (accountId == bobId)
+                conversationRemoved = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    // Check created files
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return !convId.empty() && requestReceived;
+    }));
+    memberMessageGenerated = false;
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && memberMessageGenerated;
+    }));
+
+    conversationRemoved = false;
+    aliceAccount->removeContact(aliceUri, false);
+    CPPUNIT_ASSERT(
+        !cv.wait_for(lk, std::chrono::seconds(10), [&]() { return conversationRemoved; }));
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
 }
 
 void
