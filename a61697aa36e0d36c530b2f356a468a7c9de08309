@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ffaabdfc_00b032bc",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 5
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-12T16:13:27Z",
+      "side": 1,
+      "message": "I think we should not set a default target and leave empty and log an error message if not set.",
+      "revId": "a61697aa36e0d36c530b2f356a468a7c9de08309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
