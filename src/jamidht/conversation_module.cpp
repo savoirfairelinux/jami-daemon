@@ -1487,8 +1487,9 @@ ConversationModule::removeContact(const std::string& uri, bool)
                     if (itConv->second->mode() == ConversationMode::ONE_TO_ONE) {
                         auto initMembers = itConv->second->getInitialMembers();
                         if ((isSelf && initMembers.size() == 1)
-                            || std::find(initMembers.begin(), initMembers.end(), uri)
-                                   != initMembers.end()) {
+                            || (!isSelf
+                                && std::find(initMembers.begin(), initMembers.end(), uri)
+                                       != initMembers.end())) {
                             // Mark as removed
                             conv.removed = std::time(nullptr);
                             toRm.emplace_back(convId);
