@@ -1576,6 +1576,19 @@ SIPCall::onAnswered()
 }
 
 void
+SIPCall::onProgressing()
+{
+    JAMI_WARN("[call:%s] onProgressing()", getCallId().c_str());
+    runOnMainThread([w = weak()] {
+        if (auto shared = w.lock()) {
+            if (not shared->isSubcall()) {
+                Manager::instance().progressing(*shared);
+            }
+        }
+    });
+}
+
+void
 SIPCall::sendKeyframe()
 {
 #ifdef ENABLE_VIDEO

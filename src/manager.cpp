@@ -1980,6 +1980,26 @@ Manager::peerAnsweredCall(Call& call)
     }
 }
 
+// THREAD=VoIP CALL=Outgoing
+void
+Manager::progressing(Call& call)
+{
+    const auto& call_id = call.getCallId();
+    JAMI_DBG("[call:%s] Progressing", call_id.c_str());
+
+    // The if statement is useful only if we sent two calls at the same time.
+    if (isCurrentCall(call))
+        stopTone();
+
+    addAudio(call);
+
+    if (pimpl_->audiodriver_) {
+        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        getRingBufferPool().flushAllBuffers();
+        pimpl_->audiodriver_->flushUrgent();
+    }
+}
+
 // THREAD=VoIP Call=Outgoing
 void
 Manager::peerRingingCall(Call& call)
