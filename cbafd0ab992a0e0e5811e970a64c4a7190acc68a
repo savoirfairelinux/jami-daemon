@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17e0839a_911721f5",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 909,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-12T16:35:19Z",
+      "side": 1,
+      "message": "The confOrder was designed to handle moderator actions.\nIMHO to have a clean design, we should have a distinction between actions can be done only by moderators, and actions that can be done by everyone.\nthe onConfOrder (the name can be changed though) will be called only if the action is only a moderator\u0027s action and the requester is a moderator.\nAnd the other actions will be done another method (e.g. onParticipantRequest ()).\nI dont think this will be overly complicated, and will be less prone to error with future feature requests.",
+      "revId": "cbafd0ab992a0e0e5811e970a64c4a7190acc68a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
