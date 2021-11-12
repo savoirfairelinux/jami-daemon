@@ -420,6 +420,13 @@ public:
     void peerAnsweredCall(Call& call);
 
     /**
+     * Notify the user that the session is progressing and put the
+     * call in Current state
+     * @param id  The call identifier
+     */
+    void progressing(Call& call);
+
+    /**
      * Rings back because the outgoing call is ringing and the put the
      * call in Ringing state
      * @param id  The call identifier

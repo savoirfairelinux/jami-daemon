@@ -922,6 +922,8 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     case PJSIP_INV_STATE_EARLY:
         if (status_code == PJSIP_SC_RINGING)
             call->onPeerRinging();
+        else
+            call->onProgressing();
         break;
 
     case PJSIP_INV_STATE_CONFIRMED:
