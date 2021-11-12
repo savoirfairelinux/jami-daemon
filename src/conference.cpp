@@ -447,9 +447,6 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
     JAMI_DBG("[conf %s] Request media change", getConfID().c_str());
 
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);
-    auto isVideo = [](auto const& attr) {
-        return attr.type_ == MediaType::MEDIA_VIDEO;
-    };
 
     for (auto const& mediaAttr : mediaAttrList) {
         JAMI_DBG("[conf %s] New requested media: %s",
@@ -457,35 +454,51 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  mediaAttr.toString(true).c_str());
     }
 
-    auto count = std::count_if(mediaAttrList.begin(), mediaAttrList.end(), isVideo);
+    // NOTE:
+    // The current design support only one stream per media type. The
+    // request will be ignored if this condition is not respected.
+    for (auto mediaType : {MediaType::MEDIA_AUDIO, MediaType::MEDIA_VIDEO}) {
+        auto count = std::count_if(mediaAttrList.begin(),
+                                   mediaAttrList.end(),
+                                   [&mediaType](auto const& attr) {
+                                       return attr.type_ == mediaType;
+                                   });
 
-    // For now, this method is only used to change video media (change input,
-    // mute, ...).
-    if (count != 1) {
-        JAMI_WARN("[conf %s] Expected 1 video stream, found %lu", getConfID().c_str(), count);
-        return false;
-    }
-
-    auto mediaAttr = std::find_if(mediaAttrList.begin(), mediaAttrList.end(), isVideo);
-
-    // Update the media source if changed.
-    if (not mediaAttr->sourceUri_.empty() and hostVideoSource_.sourceUri_ != mediaAttr->sourceUri_) {
-        hostVideoSource_.sourceUri_ = mediaAttr->sourceUri_;
-        hostVideoSource_.sourceType_ = mediaAttr->sourceType_;
-
-        if (hostVideoSource_.muted_ != mediaAttr->muted_) {
-            // If the current media source is muted, just call un-mute, it
-            // set the new source as input.
-            muteLocalHost(mediaAttr->muted_, DRing::Media::Details::MEDIA_TYPE_VIDEO);
-        } else {
-            switchInput(hostVideoSource_.sourceUri_);
+        if (count > 1) {
+            JAMI_ERR("[conf %s] Cant handle more than 1 stream per media type (found %lu)",
+                     getConfID().c_str(),
+                     count);
+            return false;
         }
-        return true;
     }
 
-    // Update the mute state if changed.
-    if (hostVideoSource_.muted_ != mediaAttr->muted_) {
-        muteLocalHost(mediaAttr->muted_, DRing::Media::Details::MEDIA_TYPE_VIDEO);
+    for (auto const& mediaAttr : mediaAttrList) {
+        auto& mediaSource = mediaAttr.type_ == MediaType::MEDIA_AUDIO ? hostAudioSource_
+                                                                      : hostVideoSource_;
+
+        if (not mediaAttr.sourceUri_.empty() and mediaSource.sourceUri_ != mediaAttr.sourceUri_) {
+            mediaSource.sourceUri_ = mediaAttr.sourceUri_;
+            mediaSource.sourceType_ = mediaAttr.sourceType_;
+
+            if (mediaSource.muted_ != mediaAttr.muted_) {
+                // If the current media source is muted, just call un-mute, it
+                // set the new source as input.
+                muteLocalHost(mediaAttr.muted_,
+                              mediaAttr.type_ == MediaType::MEDIA_AUDIO
+                                  ? DRing::Media::Details::MEDIA_TYPE_AUDIO
+                                  : DRing::Media::Details::MEDIA_TYPE_VIDEO);
+            } else {
+                switchInput(mediaSource.sourceUri_);
+            }
+        }
+
+        // Update the mute state if changed.
+        if (mediaSource.muted_ != mediaAttr.muted_) {
+            muteLocalHost(mediaAttr.muted_,
+                          mediaAttr.type_ == MediaType::MEDIA_AUDIO
+                              ? DRing::Media::Details::MEDIA_TYPE_AUDIO
+                              : DRing::Media::Details::MEDIA_TYPE_VIDEO);
+        }
     }
 
     return true;
