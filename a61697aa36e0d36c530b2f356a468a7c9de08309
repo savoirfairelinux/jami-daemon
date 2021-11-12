@@ -16,6 +16,24 @@
       "message": "I think we should not set a default target and leave empty and log an error message if not set.",
       "revId": "a61697aa36e0d36c530b2f356a468a7c9de08309",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fd658961_09bfc4d0",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 5
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-12T16:20:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ffaabdfc_00b032bc",
+      "revId": "a61697aa36e0d36c530b2f356a468a7c9de08309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
