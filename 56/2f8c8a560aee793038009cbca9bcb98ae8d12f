@@ -1,0 +1,7 @@
+Code-Review+2: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Olivier Dion <olivier.dion@savoirfairelinux.com>
+Submitted-at: Fri, 12 Nov 2021 12:43:49 -0500
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/19720
+Project: jami-daemon
+Branch: refs/heads/master
