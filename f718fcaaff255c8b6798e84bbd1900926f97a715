@@ -22,6 +22,30 @@
       },
       "revId": "f718fcaaff255c8b6798e84bbd1900926f97a715",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8798838_b6b0d712",
+        "filename": "test/agent/scenarios/peer-monitor/scenario.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-12T14:43:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "074d87a4_f56e32b5",
+      "range": {
+        "startLine": 75,
+        "startChar": 1,
+        "endLine": 75,
+        "endChar": 2
+      },
+      "revId": "f718fcaaff255c8b6798e84bbd1900926f97a715",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
