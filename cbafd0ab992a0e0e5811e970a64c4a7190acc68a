@@ -57,6 +57,30 @@
       },
       "revId": "cbafd0ab992a0e0e5811e970a64c4a7190acc68a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bcd66cae_cc3b9fa3",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 911,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-12T20:57:28Z",
+      "side": 1,
+      "message": "In fact, the protocol should be able to contains more than one order to be able to send less data if multiple orders is sent.\n\nSo the code should be\n\n```cpp\nhandleParticipantsOrders(json)\nif (isModerator(peer))\n   handleModeratorsOrders(json)\n```\n\nand we can remove the warning",
+      "parentUuid": "e466dcd0_7f3f7ffa",
+      "range": {
+        "startLine": 910,
+        "startChar": 13,
+        "endLine": 911,
+        "endChar": 9
+      },
+      "revId": "cbafd0ab992a0e0e5811e970a64c4a7190acc68a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
