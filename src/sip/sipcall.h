@@ -192,6 +192,10 @@ public:
      */
     void onAnswered();
     /**
+     * Session is progressing
+     */
+    void onProgressing();
+    /**
      * Called to report server/internal errors
      * @param cause Optional error code
      */
