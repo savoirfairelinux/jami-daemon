@@ -16,6 +16,47 @@
       "message": "The confOrder was designed to handle moderator actions.\nIMHO to have a clean design, we should have a distinction between actions can be done only by moderators, and actions that can be done by everyone.\nthe onConfOrder (the name can be changed though) will be called only if the action is only a moderator\u0027s action and the requester is a moderator.\nAnd the other actions will be done another method (e.g. onParticipantRequest ()).\nI dont think this will be overly complicated, and will be less prone to error with future feature requests.",
       "revId": "cbafd0ab992a0e0e5811e970a64c4a7190acc68a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4eaa7be_8cbc9421",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 909,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-12T17:07:12Z",
+      "side": 1,
+      "message": "confOrder is designed to send order to a conference. I don\u0027t mind if, depending of the level you have you can send some orders like here. And https://git.jami.net/savoirfairelinux/jami-project/-/wikis/technical/6.1.-Conference-Protocol should be updated. Also a test.\n\nTo be more clear, maybe it can be splitted in two functions:\n\nhandleParticipantOrders\nhandleModeratorsOrders",
+      "parentUuid": "17e0839a_911721f5",
+      "revId": "cbafd0ab992a0e0e5811e970a64c4a7190acc68a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e466dcd0_7f3f7ffa",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 911,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-12T17:07:12Z",
+      "side": 1,
+      "message": "If we keep it here, we must return there, because the warning must not be shown as the order is handled before.",
+      "range": {
+        "startLine": 910,
+        "startChar": 13,
+        "endLine": 911,
+        "endChar": 9
+      },
+      "revId": "cbafd0ab992a0e0e5811e970a64c4a7190acc68a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
