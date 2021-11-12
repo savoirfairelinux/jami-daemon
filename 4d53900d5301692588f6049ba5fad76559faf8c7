@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae715013_f50b6a0e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 935
+      },
+      "writtenOn": "2021-11-12T02:45:07Z",
+      "side": 1,
+      "message": "The gitlab issue is for the android client https://git.jami.net/savoirfairelinux/jami-client-android/-/issues/965",
+      "revId": "4d53900d5301692588f6049ba5fad76559faf8c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
