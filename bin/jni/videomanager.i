@@ -47,7 +47,7 @@ public:
     virtual void setBitrate(const std::string&, const int bitrate) {}
     virtual void requestKeyFrame(){}
     virtual void startCapture(const std::string& camid) {}
-    virtual void stopCapture() {}
+    virtual void stopCapture(const std::string& camid) {}
     virtual void decodingStarted(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer) {}
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
 };
@@ -445,7 +445,7 @@ public:
     virtual void setBitrate(const std::string&, const int bitrate) {}
     virtual void requestKeyFrame(){}
     virtual void startCapture(const std::string& camid) {}
-    virtual void stopCapture() {}
+    virtual void stopCapture(const std::string& camid) {}
     virtual void decodingStarted(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer) {}
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
 };

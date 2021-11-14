@@ -33,7 +33,7 @@ public:
     virtual void getCameraInfo(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates) {}
     virtual void setParameters(const std::string, const int format, const int width, const int height, const int rate) {}
     virtual void startCapture(const std::string& camid) {}
-    virtual void stopCapture() {}
+    virtual void stopCapture(const std::string& camid) {}
     virtual void decodingStarted(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer) {}
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
 };
@@ -65,7 +65,7 @@ public:
     virtual void getCameraInfo(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates){}
     virtual void setParameters(const std::string, const int format, const int width, const int height, const int rate) {}
     virtual void startCapture(const std::string& camid) {}
-    virtual void stopCapture() {}
+    virtual void stopCapture(const std::string& camid) {}
     virtual void decodingStarted(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer) {}
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
 };
