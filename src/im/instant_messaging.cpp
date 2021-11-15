@@ -87,7 +87,7 @@ createMessageBody(pj_pool_t* pool,
         // split paramPair into arg and value by '='
         auto paramSplit = paramPair.find('=');
         if (std::string::npos == paramSplit) {
-            JAMI_DBG("bad parameter: '%.*s'", (int)paramPair.size(), paramPair.data());
+            JAMI_DBG("bad parameter: '%.*s'", (int) paramPair.size(), paramPair.data());
             throw im::InstantMessageException("invalid parameter");
         }
 
@@ -149,7 +149,8 @@ im::sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::
         return;
     }
 
-    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
+                                         CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE)};
 
     {
         auto dialog = session->dlg;
@@ -183,8 +184,8 @@ im::sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::
 static std::pair<std::string, std::string>
 parseMessageBody(const pjsip_msg_body* body)
 {
-    std::string header = sip_utils::as_view(body->content_type.type)
-                 + "/" + sip_utils::as_view(body->content_type.subtype);
+    std::string header = sip_utils::as_view(body->content_type.type) + "/"
+                         + sip_utils::as_view(body->content_type.subtype);
 
     // iterate over parameters
     auto param = body->content_type.param.next;
@@ -194,8 +195,7 @@ parseMessageBody(const pjsip_msg_body* body)
     }
 
     // get the payload, assume we can interpret it as chars
-    return {std::move(header),
-            std::string(static_cast<char*>(body->data), (size_t)body->len)};
+    return {std::move(header), std::string(static_cast<char*>(body->data), (size_t) body->len)};
 }
 
 /**
