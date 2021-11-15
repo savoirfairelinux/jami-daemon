@@ -299,7 +299,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     if (method->id == PJSIP_OTHER_METHOD) {
         std::string_view request = sip_utils::as_view(method->name);
 
-        if (request.find("NOTIFY") != std::string_view::npos) {
+        if (request.find(sip_utils::SIP_METHODS::NOTIFY) != std::string_view::npos) {
             if (body and body->data) {
                 std::string_view body_view(static_cast<char*>(body->data), body->len);
                 auto pos = body_view.find("Voice-Message: ");
@@ -323,7 +323,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                                                                        urgentCount);
                 }
             }
-        } else if (request.find("MESSAGE") != std::string_view::npos) {
+        } else if (request.find(sip_utils::SIP_METHODS::MESSAGE) != std::string_view::npos) {
             // Reply 200 immediately (RFC 3428, ch. 7)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
@@ -452,6 +452,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     call->setPeerDisplayName(peerDisplayName);
     call->setState(Call::ConnectionState::PROGRESSING);
     call->getSDP().setPublishedIP(addrSdp);
+    call->setPeerAllowMethods(sip_utils::getPeerAllowMethods(rdata));
 
     // Set the temporary media list. Might change when we receive
     // the accept from the client.
@@ -714,10 +715,10 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
     static constexpr pj_str_t allowed[] = {
-        CONST_PJ_STR("INFO"),
-        CONST_PJ_STR("OPTIONS"),
-        CONST_PJ_STR("MESSAGE"),
-        CONST_PJ_STR("PUBLISH"),
+        CONST_PJ_STR(sip_utils::SIP_METHODS::INFO),
+        CONST_PJ_STR(sip_utils::SIP_METHODS::OPTIONS),
+        CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE),
+        CONST_PJ_STR(sip_utils::SIP_METHODS::PUBLISH),
     };
 
     pjsip_endpt_add_capability(endpt_,
@@ -911,11 +912,15 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
                  pjsip_inv_state_name(inv->state),
                  inv->cause);
     }
-
+    pjsip_rx_data* rdata {nullptr};
     if (ev->type == PJSIP_EVENT_RX_MSG) {
-        call->setPeerUaVersion(sip_utils::getPeerUserAgent(ev->body.rx_msg.rdata));
+        rdata = ev->body.rx_msg.rdata;
     } else if (ev->type == PJSIP_EVENT_TSX_STATE and ev->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
-        call->setPeerUaVersion(sip_utils::getPeerUserAgent(ev->body.tsx_state.src.rdata));
+        rdata = ev->body.tsx_state.src.rdata;
+    }
+    if (rdata != nullptr) {
+        call->setPeerUaVersion(sip_utils::getPeerUserAgent(rdata));
+        call->setPeerAllowMethods(sip_utils::getPeerAllowMethods(rdata));
     }
 
     switch (inv->state) {
@@ -1348,15 +1353,15 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     JAMI_DBG("%s", msgbuf);
 #endif // DEBUG_SIP_MESSAGE
 
-    if (methodName == "REFER")
+    if (methodName == sip_utils::SIP_METHODS::REFER)
         onRequestRefer(inv, rdata, msg, *call);
-    else if (methodName == "INFO")
+    else if (methodName == sip_utils::SIP_METHODS::INFO)
         onRequestInfo(inv, rdata, msg, *call);
-    else if (methodName == "NOTIFY")
+    else if (methodName == sip_utils::SIP_METHODS::NOTIFY)
         onRequestNotify(inv, rdata, msg, *call);
-    else if (methodName == "OPTIONS")
+    else if (methodName == sip_utils::SIP_METHODS::OPTIONS)
         handleIncomingOptions(rdata);
-    else if (methodName == "MESSAGE") {
+    else if (methodName == sip_utils::SIP_METHODS::MESSAGE) {
         if (msg->body)
             runOnMainThread([call, m = im::parseSipMessage(msg)]() mutable {
                 call->onTextMessage(std::move(m));
