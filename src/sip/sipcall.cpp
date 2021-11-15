@@ -1460,8 +1460,25 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
     } else {
         if (inviteSession_) {
             try {
+                // Ignore if the peer does not allow "MESSAGE" SIP method
+                // NOTE:
+                // The SIP "Allow" header is not mandatory as per RFC-3261. If it's
+                // not present and since "MESSAGE" method is an extention method,
+                // we choose to assume that the peer does not support the "MESSAGE"
+                // method to prevent unexpected behavior when interoperating with
+                // some SIP implementations.
+                const std::string msgMethod {"MESSAGE"};
+                if (not peerAllowsMethod(msgMethod)) {
+                    JAMI_WARN("[call:%s] Peer does not allow \"%s\" method",
+                              getCallId().c_str(),
+                              msgMethod.c_str());
+                    return;
+                }
+
                 im::sendSipMessage(inviteSession_.get(), messages);
+
             } catch (...) {
+                JAMI_ERR("[call:%s] Failed to send SIP text message", getCallId().c_str());
             }
         } else {
             pendingOutMessages_.emplace_back(messages, from);
@@ -1648,6 +1665,30 @@ SIPCall::setPeerUaVersion(std::string_view ua)
             (int) MULTISTREAM_REQUIRED_VERSION_STR.size(),
             MULTISTREAM_REQUIRED_VERSION_STR.data());
     }
+}
+
+void
+SIPCall::setPeerAllowMethods(std::vector<std::string> methods)
+{
+    std::lock_guard<std::recursive_mutex> lock {callMutex_};
+    peerAllowedMethods_ = methods;
+}
+
+bool
+SIPCall::peerAllowsMethod(const std::string& method) const
+{
+    std::lock_guard<std::recursive_mutex> lock {callMutex_};
+
+    if (std::find(peerAllowedMethods_.begin(), peerAllowedMethods_.end(), method)
+        != peerAllowedMethods_.end()) {
+        return true;
+    }
+
+    // Print peer's allowed methods
+    JAMI_WARN() << fmt::format("[call:{}] Peer's allowed methods: {}",
+                               getCallId(),
+                               peerAllowedMethods_);
+    return false;
 }
 
 void
@@ -3188,6 +3229,7 @@ SIPCall::merge(Call& call)
     localVideoPort_ = subcall.localVideoPort_;
     peerUserAgent_ = subcall.peerUserAgent_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
+    peerAllowedMethods_ = subcall.peerAllowedMethods_;
 
     Call::merge(subcall);
     if (isIceEnabled())
@@ -3240,8 +3282,8 @@ SIPCall::setupIceResponse()
 
     if (not remoteHasValidIceAttributes()) {
         // If ICE attributes are not present, skip the ICE initialization
-        // step (most likely ICE is not used).
-        JAMI_ERR("[call:%s] no ICE data in remote SDP", getCallId().c_str());
+        // step (most likely peer does not support/enable ICE).
+        JAMI_WARN("[call:%s] no ICE data in remote SDP", getCallId().c_str());
         return;
     }
 
