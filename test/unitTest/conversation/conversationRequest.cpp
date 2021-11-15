@@ -805,7 +805,7 @@ ConversationRequestTest::testBanContactRemoveTrustRequest()
         }));
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestDeclined>(
-            [&](const std::string& accountId, const std::string& conversationId) {
+            [&](const std::string& accountId, const std::string&) {
                 if (accountId == bobId)
                     requestDeclined = true;
                 cv.notify_one();
@@ -984,7 +984,7 @@ ConversationRequestTest::testRemoveContactRemoveSyncing()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ContactAdded>(
-        [&](const std::string& accountId, const std::string& uri, bool confirmed) {
+        [&](const std::string& accountId, const std::string& uri, bool) {
             if (accountId == bobId && uri == aliceUri) {
                 contactAdded = true;
             }
@@ -1000,6 +1000,7 @@ ConversationRequestTest::testRemoveContactRemoveSyncing()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return contactAdded; }));
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
+    contactAdded = false;
     bobAccount->removeContact(aliceUri, false);
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 0);
@@ -1046,7 +1047,7 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ContactAdded>(
-        [&](const std::string& accountId, const std::string& uri, bool confirmed) {
+        [&](const std::string& accountId, const std::string& uri, bool) {
             if (accountId == bobId && uri == aliceUri) {
                 contactAdded = true;
             }
@@ -1141,7 +1142,7 @@ ConversationRequestTest::testNeedsSyncingWithForCloning()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ContactAdded>(
-        [&](const std::string& accountId, const std::string& uri, bool confirmed) {
+        [&](const std::string& accountId, const std::string& uri, bool) {
             if (accountId == bobId && uri == aliceUri) {
                 contactAdded = true;
             }
