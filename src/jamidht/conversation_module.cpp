@@ -161,6 +161,18 @@ public:
         return true;
     }
 
+    void stopFetch(const std::string& convId, const std::string& deviceId)
+    {
+        auto it = pendingConversationsFetch_.find(convId);
+        if (it == pendingConversationsFetch_.end()) {
+            return;
+        }
+        auto& pf = it->second;
+        pf.connectingTo.erase(deviceId);
+        if (pf.connectingTo.empty())
+            pendingConversationsFetch_.erase(it);
+    }
+
     // Message send/load
     void sendMessage(const std::string& conversationId,
                      Json::Value&& value,
@@ -262,13 +274,17 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
             auto acc = account_.lock();
             std::unique_lock<std::mutex> lk(pendingConversationsFetchMtx_);
             auto& pending = pendingConversationsFetch_[convId];
-            if (channel && !pending.ready) {
-                pending.ready = true;
-                pending.deviceId = channel->deviceId().toString();
-                lk.unlock();
-                acc->addGitSocket(channel->deviceId(), convId, channel);
-                checkConversationsEvents();
-                return true;
+            if (!pending.ready) {
+                if (channel) {
+                    pending.ready = true;
+                    pending.deviceId = channel->deviceId().toString();
+                    lk.unlock();
+                    acc->addGitSocket(channel->deviceId(), convId, channel);
+                    checkConversationsEvents();
+                    return true;
+                } else {
+                    stopFetch(convId, deviceId);
+                }
             }
             return false;
         });
@@ -346,7 +362,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                           if (!channel || !acc || conversation == conversations_.end()
                               || !conversation->second) {
                               std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                              pendingConversationsFetch_.erase(conversationId);
+                              stopFetch(conversationId, deviceId);
                               return false;
                           }
                           acc->addGitSocket(channel->deviceId(), conversationId, channel);
@@ -978,14 +994,18 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId, con
                 auto acc = sthis->account_.lock();
                 std::unique_lock<std::mutex> lk(sthis->pendingConversationsFetchMtx_);
                 auto& pending = sthis->pendingConversationsFetch_[conversationId];
-                if (channel && !pending.ready) {
-                    pending.ready = true;
-                    pending.deviceId = channel->deviceId().toString();
-                    lk.unlock();
-                    // Save the git socket
-                    acc->addGitSocket(channel->deviceId(), conversationId, channel);
-                    sthis->checkConversationsEvents();
-                    return true;
+                if (!pending.ready) {
+                    if (channel) {
+                        pending.ready = true;
+                        pending.deviceId = channel->deviceId().toString();
+                        lk.unlock();
+                        // Save the git socket
+                        acc->addGitSocket(channel->deviceId(), conversationId, channel);
+                        sthis->checkConversationsEvents();
+                        return true;
+                    } else {
+                        sthis->stopFetch(conversationId, deviceId);
+                    }
                 }
                 return false;
             });
