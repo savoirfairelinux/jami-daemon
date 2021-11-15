@@ -39,6 +39,18 @@
 namespace jami {
 namespace sip_utils {
 
+// SIP methods. Only list methods that need to be explicitly
+// handled
+
+namespace SIP_METHODS {
+constexpr std::string_view MESSAGE = "MESSAGE";
+constexpr std::string_view INFO = "INFO";
+constexpr std::string_view OPTIONS = "OPTIONS";
+constexpr std::string_view PUBLISH = "PUBLISH";
+constexpr std::string_view REFER = "REFER";
+constexpr std::string_view NOTIFY = "NOTIFY";
+} // namespace SIP_METHODS
+
 static constexpr int DEFAULT_SIP_PORT {5060};
 static constexpr int DEFAULT_SIP_TLS_PORT {5061};
 static constexpr int DEFAULT_AUTO_SELECT_PORT {0};
@@ -99,6 +111,7 @@ std::string_view getHostFromUri(std::string_view sipUri);
 void addContactHeader(const std::string& contact, pjsip_tx_data* tdata);
 void addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata);
 std::string_view getPeerUserAgent(const pjsip_rx_data* rdata);
+std::vector<std::string> getPeerAllowMethods(const pjsip_rx_data* rdata);
 void logMessageHeaders(const pjsip_hdr* hdr_list);
 
 std::string sip_strerror(pj_status_t code);
