@@ -179,6 +179,16 @@ public:
     void setPeerUaVersion(std::string_view ua);
 
     /**
+     * Set peer's allowed methods
+     */
+    void setPeerAllowMethods(std::vector<std::string> methods);
+
+    /**
+     * Check if a SIP method is allowed by peer
+     */
+    bool isSipMethodAllowedByPeer(const std::string_view method) const;
+
+    /**
      * Return the SDP's manager of this call
      */
     Sdp& getSDP() { return *sdp_; }
@@ -414,6 +424,9 @@ private:
     std::string peerUserAgent_ {};
     // Flag to indicate the the peer's Daemon version support multi-stream.
     bool peerSupportMultiStream_ {false};
+
+    // Peer's allowed methods.
+    std::vector<std::string> peerAllowedMethods_;
 
     // Vector holding the current RTP sessions.
     std::vector<RtpStream> rtpStreams_;
