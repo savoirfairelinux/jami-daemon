@@ -99,6 +99,7 @@ std::string_view getHostFromUri(std::string_view sipUri);
 void addContactHeader(const std::string& contact, pjsip_tx_data* tdata);
 void addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata);
 std::string_view getPeerUserAgent(const pjsip_rx_data* rdata);
+std::vector<std::string> getPeerAllowMethods(const pjsip_rx_data* rdata);
 void logMessageHeaders(const pjsip_hdr* hdr_list);
 
 std::string sip_strerror(pj_status_t code);

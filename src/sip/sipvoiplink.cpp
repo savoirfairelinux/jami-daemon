@@ -452,6 +452,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     call->setPeerDisplayName(peerDisplayName);
     call->setState(Call::ConnectionState::PROGRESSING);
     call->getSDP().setPublishedIP(addrSdp);
+    call->setPeerAllowMethods(sip_utils::getPeerAllowMethods(rdata));
 
     // Set the temporary media list. Might change when we receive
     // the accept from the client.
@@ -911,11 +912,15 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
                  pjsip_inv_state_name(inv->state),
                  inv->cause);
     }
-
+    pjsip_rx_data* rdata {nullptr};
     if (ev->type == PJSIP_EVENT_RX_MSG) {
-        call->setPeerUaVersion(sip_utils::getPeerUserAgent(ev->body.rx_msg.rdata));
+        rdata = ev->body.rx_msg.rdata;
     } else if (ev->type == PJSIP_EVENT_TSX_STATE and ev->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
-        call->setPeerUaVersion(sip_utils::getPeerUserAgent(ev->body.tsx_state.src.rdata));
+        rdata = ev->body.tsx_state.src.rdata;
+    }
+    if (rdata != nullptr) {
+        call->setPeerUaVersion(sip_utils::getPeerUserAgent(rdata));
+        call->setPeerAllowMethods(sip_utils::getPeerAllowMethods(rdata));
     }
 
     switch (inv->state) {
