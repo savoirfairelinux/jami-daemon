@@ -518,33 +518,6 @@ JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
 }
 
 void
-initICE(const std::vector<uint8_t>& msg,
-        const std::shared_ptr<IceTransport>& ice,
-        const std::shared_ptr<IceTransport>& ice_tcp,
-        bool& udp_failed,
-        bool& tcp_failed)
-{
-    auto sdp_list = IceTransport::parseSDPList(msg);
-    for (const auto& sdp : sdp_list) {
-        if (sdp.candidates.size() > 0) {
-            if (sdp.candidates[0].find("TCP") != std::string::npos) {
-                // It is a SDP for the TCP component
-                tcp_failed = (ice_tcp && !ice_tcp->startIce(sdp));
-            } else {
-                // For UDP
-                udp_failed = (ice && !ice->startIce(sdp));
-            }
-        }
-    }
-
-    // During the ICE reply we can start the ICE negotiation
-    if (tcp_failed && ice_tcp) {
-        ice_tcp->stop();
-        JAMI_WARN("ICE over TCP not started, will only use UDP");
-    }
-}
-
-void
 JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
     if (not accountManager_ or not dht_) {
@@ -1587,61 +1560,6 @@ JamiAccount::searchUser(const std::string& query)
                                                                               result);
             });
     return false;
-}
-
-pj_status_t
-JamiAccount::checkPeerTlsCertificate(dht::InfoHash from,
-                                     dht::InfoHash from_account,
-                                     unsigned status,
-                                     const gnutls_datum_t* cert_list,
-                                     unsigned cert_num,
-                                     std::shared_ptr<dht::crypto::Certificate>& cert_out)
-{
-    if (cert_num == 0) {
-        JAMI_ERR("[peer:%s] No certificate", from.toString().c_str());
-        return PJ_SSL_CERT_EUNKNOWN;
-    }
-    if (status & GNUTLS_CERT_EXPIRED or status & GNUTLS_CERT_NOT_ACTIVATED) {
-        JAMI_ERR("[peer:%s] Expired certificate", from.toString().c_str());
-        return PJ_SSL_CERT_EVALIDITY_PERIOD;
-    }
-
-    // Unserialize certificate chain
-    std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
-    crt_data.reserve(cert_num);
-    for (unsigned i = 0; i < cert_num; i++)
-        crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
-    auto crt = std::make_shared<dht::crypto::Certificate>(crt_data);
-
-    // Check expected peer identity
-    dht::InfoHash tls_account_id;
-    if (not accountManager_->onPeerCertificate(crt, dhtPublicInCalls_, tls_account_id)) {
-        JAMI_ERR("[peer:%s] Discarding message from invalid peer certificate.",
-                 from.toString().c_str());
-        return PJ_SSL_CERT_EUNKNOWN;
-    }
-    if (from_account != tls_account_id) {
-        JAMI_ERR("[peer:%s] Discarding message from wrong peer account %s.",
-                 from.toString().c_str(),
-                 tls_account_id.toString().c_str());
-        return PJ_SSL_CERT_EUNTRUSTED;
-    }
-
-    const auto tls_id = crt->getId();
-    if (crt->getUID() != tls_id.toString()) {
-        JAMI_ERR("[peer:%s] Certificate UID must be the public key ID", from.toString().c_str());
-        return PJ_SSL_CERT_EUNTRUSTED;
-    }
-    if (tls_id != from) {
-        JAMI_ERR("[peer:%s] Certificate public key ID doesn't match (%s)",
-                 from.toString().c_str(),
-                 tls_id.toString().c_str());
-        return PJ_SSL_CERT_EUNTRUSTED;
-    }
-
-    JAMI_DBG("[peer:%s] Certificate verified", from.toString().c_str());
-    cert_out = std::move(crt);
-    return PJ_SUCCESS;
 }
 
 void

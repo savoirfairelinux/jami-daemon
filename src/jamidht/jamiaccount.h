@@ -645,17 +645,6 @@ private:
     bool SIPStartCall(SIPCall& call, const IpAddr& target);
 
     /**
-     * For a call with (from_device, from_account), check the peer certificate chain (cert_list,
-     * cert_num) with session check status. Put deserialized certificate to cert_out;
-     */
-    pj_status_t checkPeerTlsCertificate(dht::InfoHash from_device,
-                                        dht::InfoHash from_account,
-                                        unsigned status,
-                                        const gnutls_datum_t* cert_list,
-                                        unsigned cert_num,
-                                        std::shared_ptr<dht::crypto::Certificate>& cert_out);
-
-    /**
      * Update tracking info when buddy appears offline.
      */
     void onTrackedBuddyOffline(const dht::InfoHash&);
