@@ -223,7 +223,7 @@ std::string_view
 getPeerUserAgent(const pjsip_rx_data* rdata)
 {
     if (rdata == nullptr or rdata->msg_info.msg == nullptr) {
-        JAMI_ERR("Unexpected null poiter!");
+        JAMI_ERR("Unexpected null pointer!");
         return {};
     }
 
@@ -234,6 +234,29 @@ getPeerUserAgent(const pjsip_rx_data* rdata)
         return as_view(uaHdr->hvalue);
     }
     return {};
+}
+
+std::vector<std::string>
+getPeerAllowMethods(const pjsip_rx_data* rdata)
+{
+    if (rdata == nullptr or rdata->msg_info.msg == nullptr) {
+        JAMI_ERR("Unexpected null pointer!");
+        return {};
+    }
+
+    std::vector<std::string> methods;
+
+    pjsip_allow_hdr* allow = static_cast<pjsip_allow_hdr*>(
+        pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_ALLOW, nullptr));
+
+    if (allow != nullptr) {
+        methods.reserve(allow->count);
+        for (unsigned i = 0; i < allow->count; i++) {
+            methods.emplace_back(allow->values[i].ptr, allow->values[i].slen);
+        }
+    }
+
+    return methods;
 }
 
 void
