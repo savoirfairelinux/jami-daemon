@@ -445,6 +445,24 @@
       "message": "should not be private ?",
       "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6ac2f715_0c9d5fb3",
+        "filename": "src/manager.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-15T21:18:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4dce2758_18f7cdad",
+      "revId": "bd225688d805889d9cc7d36d51d8bf59ee276f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
