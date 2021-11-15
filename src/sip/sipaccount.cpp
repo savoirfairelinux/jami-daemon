@@ -2243,7 +2243,8 @@ SIPAccount::sendTextMessage(const std::string& to,
 
     auto toUri = getToUri(to);
 
-    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
+                                         CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE)};
     std::string from(getFromUri());
     pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);

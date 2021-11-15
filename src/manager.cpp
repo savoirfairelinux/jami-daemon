@@ -1950,7 +1950,7 @@ Manager::sendCallTextMessage(const std::string& accountId,
             }
         }
     } else {
-        JAMI_ERR("Failed to send message to %s: inexistant call ID", callID.c_str());
+        JAMI_ERR("Failed to send message to %s: inexistent call ID", callID.c_str());
     }
 }
 
