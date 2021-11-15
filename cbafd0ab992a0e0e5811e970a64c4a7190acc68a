@@ -81,6 +81,30 @@
       },
       "revId": "cbafd0ab992a0e0e5811e970a64c4a7190acc68a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f382489b_ea510090",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 911,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-15T14:19:29Z",
+      "side": 1,
+      "message": "As is, the protocol does not handle (at least in the current implementation) multiple actions in one conf order. If we put \"mute Participant 1\" followed by \"un-mute participant 2\" both will be muted since the mute state is not matched with the participant and not removed from the root when read.",
+      "parentUuid": "bcd66cae_cc3b9fa3",
+      "range": {
+        "startLine": 910,
+        "startChar": 13,
+        "endLine": 911,
+        "endChar": 9
+      },
+      "revId": "cbafd0ab992a0e0e5811e970a64c4a7190acc68a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
