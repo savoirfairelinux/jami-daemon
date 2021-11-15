@@ -1,6 +1,138 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e652419f_7ce893db",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-15T19:05:36Z",
+      "side": 1,
+      "message": "not tested yet but some nitpicks",
+      "revId": "071b34d5637d13facc11bf4cf993b859060c5aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "85d43a61_83370e08",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-15T19:05:36Z",
+      "side": 1,
+      "message": "old C cast style",
+      "range": {
+        "startLine": 249,
+        "startChar": 29,
+        "endLine": 249,
+        "endChar": 47
+      },
+      "revId": "071b34d5637d13facc11bf4cf993b859060c5aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83d65c97_d5ba570c",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 253,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-15T19:05:36Z",
+      "side": 1,
+      "message": "check unnecessary as the for is already checking this.",
+      "range": {
+        "startLine": 253,
+        "startChar": 24,
+        "endLine": 253,
+        "endChar": 45
+      },
+      "revId": "071b34d5637d13facc11bf4cf993b859060c5aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2efd80ee_31d3a7f6",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 254,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-15T19:05:36Z",
+      "side": 1,
+      "message": "methods.reserve(allow-\u003ecount)",
+      "range": {
+        "startLine": 254,
+        "startChar": 33,
+        "endLine": 254,
+        "endChar": 45
+      },
+      "revId": "071b34d5637d13facc11bf4cf993b859060c5aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e010504_7683cdc1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1683,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-15T19:05:36Z",
+      "side": 1,
+      "message": "std::find(beg(), end(), method);",
+      "range": {
+        "startLine": 1681,
+        "startChar": 13,
+        "endLine": 1683,
+        "endChar": 76
+      },
+      "revId": "071b34d5637d13facc11bf4cf993b859060c5aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d7f22c4_3b97ab3a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1693,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-15T19:05:36Z",
+      "side": 1,
+      "message": "fmt(\"[call:{}] Peer\u0027s allowed methods: {}\", getCallId(), peerAllowedMethods_);",
+      "range": {
+        "startLine": 1689,
+        "startChar": 14,
+        "endLine": 1693,
+        "endChar": 5
+      },
+      "revId": "071b34d5637d13facc11bf4cf993b859060c5aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6bf5796b_e3c4a671",
