@@ -148,6 +148,24 @@
       "message": "technically it\"s not an error if the peer chose not provide ICE attributes, it just means it\u0027s disabled/unsupported",
       "revId": "071b34d5637d13facc11bf4cf993b859060c5aff",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc038a4c_46a5e66a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3291,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-15T19:15:20Z",
+      "side": 1,
+      "message": "indeed",
+      "parentUuid": "6bf5796b_e3c4a671",
+      "revId": "071b34d5637d13facc11bf4cf993b859060c5aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
