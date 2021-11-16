@@ -102,7 +102,7 @@ VideoDeviceMonitor::getDefaultDevice() const
 {
     std::lock_guard<std::mutex> l(lock_);
     const auto it = findDeviceById(defaultDevice_);
-    if (it == std::end(devices_))
+    if (it == std::end(devices_) || it->getDeviceId() == DEVICE_DESKTOP)
         return {};
     return it->getDeviceId();
 }
@@ -112,7 +112,7 @@ VideoDeviceMonitor::getMRLForDefaultDevice() const
 {
     std::lock_guard<std::mutex> l(lock_);
     const auto it = findDeviceById(defaultDevice_);
-    if (it == std::end(devices_))
+    if (it == std::end(devices_) || it->getDeviceId() == DEVICE_DESKTOP)
         return {};
     static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
     return DRing::Media::VideoProtocolPrefix::CAMERA + sep + it->getDeviceId();
