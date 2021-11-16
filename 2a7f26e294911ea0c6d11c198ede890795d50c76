@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57c97b98_69bc14ae",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1035,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-16T19:31:50Z",
+      "side": 1,
+      "message": "a bit ugly, but not a problem. also a test would be good to avoid regression and updated doc in docs.jami.net (https://git.jami.net/savoirfairelinux/jami-project/-/wikis/technical/6.1.%20Conference%20Protocol)",
+      "range": {
+        "startLine": 1026,
+        "startChar": 17,
+        "endLine": 1035,
+        "endChar": 14
+      },
+      "revId": "2a7f26e294911ea0c6d11c198ede890795d50c76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ddf6a078_2d72f2cc",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1061,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-16T19:31:50Z",
+      "side": 1,
+      "message": "a bit ugly with the removeMembers, but not important",
+      "range": {
+        "startLine": 1061,
+        "startChar": 12,
+        "endLine": 1061,
+        "endChar": 22
+      },
+      "revId": "2a7f26e294911ea0c6d11c198ede890795d50c76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
