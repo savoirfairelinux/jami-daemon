@@ -99,7 +99,9 @@ public:
 #endif
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-        { onSuccessfulSetup_ = cb; }
+    {
+        onSuccessfulSetup_ = cb;
+    }
 
 private:
     NON_COPYABLE(VideoInput);
@@ -123,7 +125,7 @@ private:
 
     // true if decOpts_ is ready to use, false if using promise/future
     bool initCamera(const std::string& device);
-    bool initX11(std::string display);
+    bool initX11(const std::string& display);
     bool initAVFoundation(const std::string& display);
     bool initFile(std::string path);
     bool initGdiGrab(const std::string& params);
