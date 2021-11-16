@@ -26,6 +26,30 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "ec68cddf_fa1e30a7",
+        "filename": "src/manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1020,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-16T15:46:35Z",
+      "side": 1,
+      "message": "ok",
+      "parentUuid": "c184fa7a_23c75ab1",
+      "range": {
+        "startLine": 1020,
+        "startChar": 5,
+        "endLine": 1020,
+        "endChar": 34
+      },
+      "revId": "c5ac6916efd8288b9607e03554dc8013cea64a04",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "6df8a727_9258ddf4",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 8
