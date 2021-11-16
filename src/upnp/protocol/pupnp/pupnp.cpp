@@ -26,6 +26,9 @@
 #include <opendht/thread_pool.h>
 #include <opendht/http.h>
 
+#include <string_view>
+#include <charconv>
+
 namespace jami {
 namespace upnp {
 
@@ -48,45 +51,42 @@ constexpr static unsigned int SEARCH_TIMEOUT {60};
 constexpr static auto PUPNP_SEARCH_RETRY_UNIT {std::chrono::seconds(10)};
 
 // Helper functions for xml parsing.
-static std::string
+static std::string_view
 getElementText(IXML_Node* node)
 {
-    std::string ret;
     if (node) {
         IXML_Node* textNode = ixmlNode_getFirstChild(node);
         if (textNode) {
             const char* value = ixmlNode_getNodeValue(textNode);
             if (value)
-                ret = std::string(value);
+                return std::string_view(value);
         }
     }
-    return ret;
+    return {};
 }
 
-static std::string
+static std::string_view
 getFirstDocItem(IXML_Document* doc, const char* item)
 {
-    std::string ret;
     std::unique_ptr<IXML_NodeList, decltype(ixmlNodeList_free)&>
         nodeList(ixmlDocument_getElementsByTagName(doc, item), ixmlNodeList_free);
     if (nodeList) {
         // If there are several nodes which match the tag, we only want the first one.
-        ret = getElementText(ixmlNodeList_item(nodeList.get(), 0));
+        return getElementText(ixmlNodeList_item(nodeList.get(), 0));
     }
-    return ret;
+    return {};
 }
 
-static std::string
+static std::string_view
 getFirstElementItem(IXML_Element* element, const char* item)
 {
-    std::string ret;
     std::unique_ptr<IXML_NodeList, decltype(ixmlNodeList_free)&>
         nodeList(ixmlElement_getElementsByTagName(element, item), ixmlNodeList_free);
     if (nodeList) {
         // If there are several nodes which match the tag, we only want the first one.
-        ret = getElementText(ixmlNodeList_item(nodeList.get(), 0));
+        return getElementText(ixmlNodeList_item(nodeList.get(), 0));
     }
-    return ret;
+    return {};
 }
 
 static bool
@@ -95,12 +95,14 @@ errorOnResponse(IXML_Document* doc)
     if (not doc)
         return true;
 
-    std::string errorCode = getFirstDocItem(doc, "errorCode");
+    auto errorCode = getFirstDocItem(doc, "errorCode");
     if (not errorCode.empty()) {
-        std::string errorDescription = getFirstDocItem(doc, "errorDescription");
-        JAMI_WARN("PUPnP: Response contains error: %s : %s",
-                  errorCode.c_str(),
-                  errorDescription.c_str());
+        auto errorDescription = getFirstDocItem(doc, "errorDescription");
+        JAMI_WARN("PUPnP: Response contains error: %.*s : %.*s",
+                  (int) errorCode.size(),
+                  errorCode.data(),
+                  (int) errorDescription.size(),
+                  errorDescription.data());
         return true;
     }
     return false;
@@ -476,13 +478,13 @@ PUPnP::validateIgd(const std::string& location, IXML_Document* doc_container_ptr
     XMLDocument document(doc_container_ptr, ixmlDocument_free);
     auto descDoc = document.get();
     // Check device type.
-    std::string deviceType = getFirstDocItem(descDoc, "deviceType");
+    auto deviceType = getFirstDocItem(descDoc, "deviceType");
     if (deviceType.empty()) {
         // No device type.
         return false;
     }
 
-    if (deviceType.compare(UPNP_IGD_DEVICE) != 0) {
+    if (deviceType == UPNP_IGD_DEVICE) {
         // Device type not IGD.
         return false;
     }
@@ -1083,7 +1085,7 @@ PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
         return nullptr;
 
     // Check the UDN to see if its already in our device list.
-    std::string UDN = getFirstDocItem(doc, "UDN");
+    auto UDN = getFirstDocItem(doc, "UDN");
     if (UDN.empty()) {
         JAMI_WARN("PUPnP: could not find UDN in description document of device");
         return nullptr;
@@ -1097,16 +1099,16 @@ PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
         }
     }
 
-    JAMI_DBG("PUPnP: Found new device [%s]", UDN.c_str());
+    JAMI_DBG("PUPnP: Found new device [%*s]", (int) UDN.size(), UDN.data());
 
     std::unique_ptr<UPnPIGD> new_igd;
     int upnp_err;
 
     // Get friendly name.
-    std::string friendlyName = getFirstDocItem(doc, "friendlyName");
+    auto friendlyName = getFirstDocItem(doc, "friendlyName");
 
     // Get base URL.
-    std::string baseURL = getFirstDocItem(doc, "URLBase");
+    std::string baseURL(getFirstDocItem(doc, "URLBase"));
     if (baseURL.empty())
         baseURL = locationUrl;
 
@@ -1119,11 +1121,10 @@ PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
     // Go through the "serviceType" nodes until we find the the correct service type.
     for (unsigned long node_idx = 0; node_idx < list_length; node_idx++) {
         IXML_Node* serviceType_node = ixmlNodeList_item(serviceList.get(), node_idx);
-        std::string serviceType = getElementText(serviceType_node);
+        auto serviceType = getElementText(serviceType_node);
 
         // Only check serviceType of WANIPConnection or WANPPPConnection.
-        if (serviceType != std::string(UPNP_WANIP_SERVICE)
-            && serviceType != std::string(UPNP_WANPPP_SERVICE)) {
+        if (serviceType != UPNP_WANIP_SERVICE && serviceType != UPNP_WANPPP_SERVICE) {
             // IGD is not WANIP or WANPPP service. Going to next node.
             continue;
         }
@@ -1143,14 +1144,14 @@ PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
 
         // Get serviceId.
         IXML_Element* service_element = (IXML_Element*) service_node;
-        std::string serviceId = getFirstElementItem(service_element, "serviceId");
+        auto serviceId = getFirstElementItem(service_element, "serviceId");
         if (serviceId.empty()) {
             // IGD "serviceId" is empty. Going to next node.
             continue;
         }
 
         // Get the relative controlURL and turn it into absolute address using the URLBase.
-        std::string controlURL = getFirstElementItem(service_element, "controlURL");
+        std::string controlURL(getFirstElementItem(service_element, "controlURL"));
         if (controlURL.empty()) {
             // IGD control URL is empty. Going to next node.
             continue;
@@ -1167,7 +1168,7 @@ PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
         std::free(absolute_control_url);
 
         // Get the relative eventSubURL and turn it into absolute address using the URLBase.
-        std::string eventSubURL = getFirstElementItem(service_element, "eventSubURL");
+        std::string eventSubURL(getFirstElementItem(service_element, "eventSubURL"));
         if (eventSubURL.empty()) {
             JAMI_WARN("PUPnP: IGD event sub URL is empty. Going to next node");
             continue;
@@ -1183,11 +1184,11 @@ PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
 
         std::free(absolute_event_sub_url);
 
-        new_igd.reset(new UPnPIGD(std::move(UDN),
+        new_igd.reset(new UPnPIGD(std::string(UDN),
                                   std::move(baseURL),
-                                  std::move(friendlyName),
-                                  std::move(serviceType),
-                                  std::move(serviceId),
+                                  std::string(friendlyName),
+                                  std::string(serviceType),
+                                  std::string(serviceId),
                                   std::move(locationUrl),
                                   std::move(controlURL),
                                   std::move(eventSubURL)));
@@ -1246,11 +1247,8 @@ PUPnP::actionIsIgdConnected(const UPnPIGD& igd)
     }
 
     // Parse response.
-    std::string status = getFirstDocItem(response.get(), "NewConnectionStatus");
-    if (status.compare("Connected") != 0)
-        return false;
-
-    return true;
+    auto status = getFirstDocItem(response.get(), "NewConnectionStatus");
+    return status == "Connected"sv;
 }
 
 IpAddr
@@ -1357,37 +1355,39 @@ PUPnP::getMappingsListByDescr(const std::shared_ptr<IGD>& igd, const std::string
         }
 
         // Check error code.
-        std::string errorCode = getFirstDocItem(response.get(), "errorCode");
+        auto errorCode = getFirstDocItem(response.get(), "errorCode");
         if (not errorCode.empty()) {
-            if (std::stoi(errorCode) == ARRAY_IDX_INVALID
-                or std::stoi(errorCode) == CONFLICT_IN_MAPPING) {
+            int error = 0;
+            std::from_chars(errorCode.data(), errorCode.data() + errorCode.size(), error);
+            if (error == ARRAY_IDX_INVALID or error == CONFLICT_IN_MAPPING) {
                 // No more port mapping entries in the response.
-                JAMI_DBG("PUPnP: No more mappings (found a total of %i mappings", entry_idx);
+                JAMI_DBG("PUPnP: No more mappings (found a total of %i mappings)", entry_idx);
                 break;
             } else {
-                std::string errorDescription = getFirstDocItem(response.get(), "errorDescription");
-                JAMI_ERR("PUPnP: GetGenericPortMappingEntry returned with error: %s: %s",
-                         errorCode.c_str(),
-                         errorDescription.c_str());
+                auto errorDescription = getFirstDocItem(response.get(), "errorDescription");
+                JAMI_ERR("PUPnP: GetGenericPortMappingEntry returned with error: %d: %.*s",
+                         error,
+                         (int) errorDescription.size(),
+                         errorDescription.data());
                 break;
             }
         }
 
         // Parse the response.
-        std::string desc_actual = getFirstDocItem(response.get(), "NewPortMappingDescription");
-        std::string client_ip = getFirstDocItem(response.get(), "NewInternalClient");
+        auto desc_actual = getFirstDocItem(response.get(), "NewPortMappingDescription");
+        auto client_ip = getFirstDocItem(response.get(), "NewInternalClient");
 
         if (client_ip != getHostAddress().toString()) {
             // Silently ignore un-matching addresses.
             continue;
         }
 
-        if (desc_actual.find(description) == std::string::npos)
+        if (desc_actual.find(description) == std::string_view::npos)
             continue;
 
-        const std::string& port_internal = getFirstDocItem(response.get(), "NewInternalPort");
-        const std::string& port_external = getFirstDocItem(response.get(), "NewExternalPort");
-        std::string transport = getFirstDocItem(response.get(), "NewProtocol");
+        auto port_internal = getFirstDocItem(response.get(), "NewInternalPort");
+        auto port_external = getFirstDocItem(response.get(), "NewExternalPort");
+        std::string transport(getFirstDocItem(response.get(), "NewProtocol"));
 
         if (port_internal.empty() || port_external.empty() || transport.empty()) {
             JAMI_ERR("PUPnP: GetGenericPortMappingEntry returned an invalid entry at index %i",
@@ -1397,9 +1397,15 @@ PUPnP::getMappingsListByDescr(const std::shared_ptr<IGD>& igd, const std::string
 
         std::transform(transport.begin(), transport.end(), transport.begin(), ::toupper);
         PortType type = transport.find("TCP") != std::string::npos ? PortType::TCP : PortType::UDP;
-        uint16_t ePort = static_cast<uint16_t>(std::stoi(port_external));
-        uint16_t iPort = static_cast<uint16_t>(std::stoi(port_internal));
-
+        uint16_t ePort, iPort;
+        if (std::from_chars(port_external.data(), port_external.data() + port_external.size(), ePort)
+                .ec
+            != std::errc())
+            continue;
+        if (std::from_chars(port_internal.data(), port_internal.data() + port_internal.size(), iPort)
+                .ec
+            != std::errc())
+            continue;
         Mapping map(type, ePort, iPort);
         map.setIgd(igd);
 
@@ -1521,19 +1527,16 @@ PUPnP::actionAddPortMapping(const Mapping& mapping)
     }
 
     // Check if an error has occurred.
-    std::string errorCode = getFirstDocItem(response.get(), "errorCode");
+    auto errorCode = getFirstDocItem(response.get(), "errorCode");
     if (not errorCode.empty()) {
         success = false;
         // Try to get the error description.
-        std::string errorDescription;
-        if (response) {
-            errorDescription = getFirstDocItem(response.get(), "errorDescription");
-        }
-
-        JAMI_WARN("PUPnP: %s returned with error: %s %s",
+        auto errorDescription = getFirstDocItem(response.get(), "errorDescription");
+        JAMI_WARN("PUPnP: %s returned with error: %.*s %*s",
                   ACTION_ADD_PORT_MAPPING,
-                  errorCode.c_str(),
-                  errorDescription.c_str());
+                  (int) errorCode.size(), errorCode.data(),
+                  (int) errorDescription.size(),
+                  errorDescription.data());
     }
     return success;
 }
@@ -1609,13 +1612,14 @@ PUPnP::actionDeletePortMapping(const Mapping& mapping)
     }
 
     // Check if there is an error code.
-    std::string errorCode = getFirstDocItem(response.get(), "errorCode");
+    auto errorCode = getFirstDocItem(response.get(), "errorCode");
     if (not errorCode.empty()) {
-        std::string errorDescription = getFirstDocItem(response.get(), "errorDescription");
-        JAMI_WARN("PUPnP: %s returned with error: %s: %s",
+        auto errorDescription = getFirstDocItem(response.get(), "errorDescription");
+        JAMI_WARN("PUPnP: %s returned with error: %.*s: %*s",
                   ACTION_DELETE_PORT_MAPPING,
-                  errorCode.c_str(),
-                  errorDescription.c_str());
+                  (int) errorCode.size(), errorCode.data(),
+                  (int) errorDescription.size(),
+                  errorDescription.data());
         success = false;
     }
 
