@@ -83,6 +83,7 @@ VideoReceiveThread::setup()
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
     videoDecoder_->setResolutionChangedCallback([this](int width, int height) {
+        JAMI_INFO() << "decode frame resolution changed";
         dstWidth_ = width;
         dstHeight_ = height;
         sink_->setFrameSize(dstWidth_, dstHeight_);
@@ -172,7 +173,9 @@ VideoReceiveThread::decodeFrame()
     if (!configureVideoOutput()) {
         return;
     }
+    JAMI_INFO() << &videoDecoder_;
     auto status = videoDecoder_->decode();
+    JAMI_INFO() << "VideoReceiveThread::decodeFrame() ret: " << int(status);
     if (status == MediaDemuxer::Status::EndOfFile || status == MediaDemuxer::Status::ReadError) {
         loop_.stop();
     }
