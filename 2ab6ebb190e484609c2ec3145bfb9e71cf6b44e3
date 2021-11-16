@@ -16,6 +16,40 @@
       "message": "daemon-tests is completely broken",
       "revId": "2ab6ebb190e484609c2ec3145bfb9e71cf6b44e3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5a706685_d00c3a5a",
+        "filename": "src/manager.cpp",
+        "patchSetId": 36
+      },
+      "lineNbr": 1006,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-11-16T18:25:10Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter #3 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "2ab6ebb190e484609c2ec3145bfb9e71cf6b44e3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd572f08_d3303822",
+        "filename": "src/manager.cpp",
+        "patchSetId": 36
+      },
+      "lineNbr": 1030,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-11-16T18:25:10Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027conference\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "2ab6ebb190e484609c2ec3145bfb9e71cf6b44e3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
