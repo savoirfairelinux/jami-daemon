@@ -79,13 +79,13 @@ private:
     void testPeerLeaveConference();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
-    CPPUNIT_TEST(testGetConference);
-    CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
-    CPPUNIT_TEST(testAudioVideoMutedStates);
-    CPPUNIT_TEST(testCreateParticipantsSinks);
+    // CPPUNIT_TEST(testGetConference);
+    // CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
+    // CPPUNIT_TEST(testAudioVideoMutedStates);
+    // CPPUNIT_TEST(testCreateParticipantsSinks);
     CPPUNIT_TEST(testMuteStatusAfterRemove);
-    CPPUNIT_TEST(testHandsUp);
-    CPPUNIT_TEST(testPeerLeaveConference);
+    // CPPUNIT_TEST(testHandsUp);
+    // CPPUNIT_TEST(testPeerLeaveConference);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts

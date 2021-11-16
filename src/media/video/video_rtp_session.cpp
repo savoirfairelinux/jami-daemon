@@ -397,10 +397,12 @@ VideoRtpSession::exitConference()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (!conference_)
+    if (!conference_) {
+        JAMI_ERR() << "@@@@@@!!!!!";
         return;
+    }
 
-    JAMI_DBG("[call:%s] exitConference (conf: %s)",
+    JAMI_DBG("[call:%s] @@@ exitConference (conf: %s)",
              callID_.c_str(),
              conference_->getConfID().c_str());
 
