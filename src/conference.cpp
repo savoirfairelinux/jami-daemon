@@ -142,6 +142,7 @@ Conference::Conference(bool enableVideo)
 
 Conference::~Conference()
 {
+    JAMI_ERR() << "@@@ DESTROYING";
 #ifdef ENABLE_VIDEO
     foreachCall([&](auto call) {
         call->exitConference();
@@ -166,11 +167,18 @@ Conference::~Conference()
         if (call->isPeerRecording())
             call->peerRecording(true);
     });
-    for (auto it = confSinksMap_.begin(); it != confSinksMap_.end();) {
-        if (videoMixer_)
-            videoMixer_->detach(it->second.get());
-        it->second->stop();
-        it = confSinksMap_.erase(it);
+    {
+        std::lock_guard<std::mutex> lk(sinksMtx_);
+        for (auto it = confSinksMap_.begin(); it != confSinksMap_.end();) {
+            JAMI_ERR() << "@@@ IN SINK";
+
+            if (videoMixer_) {
+                JAMI_ERR() << "@@@ DETACH";
+                videoMixer_->detach(it->second.get());
+            }
+            it->second->stop();
+            it = confSinksMap_.erase(it);
+        }
     }
 #endif // ENABLE_VIDEO
 #ifdef ENABLE_PLUGIN
