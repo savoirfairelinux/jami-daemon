@@ -1270,13 +1270,8 @@ Manager::hangupConference(const std::string& id)
     JAMI_DBG("Hangup conference %s", id.c_str());
     if (auto conf = getConferenceFromID(id)) {
         ParticipantSet participants(conf->getParticipantList());
-        for (const auto& callId : participants) {
-            if (auto call = getCallFromCallID(callId)) {
-                call->resetConfInfo();
-                call->exitConference();
-            }
+        for (const auto& callId : participants)
             hangupCall(callId);
-        }
         pimpl_->unsetCurrentCall();
         return true;
     }
