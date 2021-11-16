@@ -528,9 +528,6 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
             handleEvents(HANDLE_EVENT_DURATION);
         }
     });
-
-    // Init to invalid addresses
-    iceDefaultRemoteAddr_.reserve(compCount_);
 }
 
 bool
@@ -1088,8 +1085,9 @@ const IpAddr
 IceTransport::Impl::getDefaultRemoteAddress(unsigned compId) const
 {
     ASSERT_COMP_ID(compId, compCount_);
-
-    return iceDefaultRemoteAddr_[compId - 1];
+    if (compId < iceDefaultRemoteAddr_.size())
+        return iceDefaultRemoteAddr_[compId - 1];
+    return {};
 }
 
 void
@@ -1379,9 +1377,9 @@ IceTransport::getRemoteAddress(unsigned comp_id) const
     // Note that the default remote addresses are the addresses
     // set in the 'c=' and 'a=rtcp' lines of the received SDP.
     // See pj_ice_strans_sendto2() for more details.
-
-    if (pimpl_->getDefaultRemoteAddress(comp_id)) {
-        return pimpl_->getDefaultRemoteAddress(comp_id);
+    auto defaultAddr = pimpl_->getDefaultRemoteAddress(comp_id);
+    if (defaultAddr) {
+        return defaultAddr;
     }
 
     return pimpl_->getRemoteAddress(comp_id);
