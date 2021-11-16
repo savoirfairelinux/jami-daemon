@@ -267,7 +267,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 
-    for (auto it = stateChangedListeners_.begin(); it != stateChangedListeners_.end(); ) {
+    for (auto it = stateChangedListeners_.begin(); it != stateChangedListeners_.end();) {
         if ((*it)(callState_, connectionState_, code))
             ++it;
         else

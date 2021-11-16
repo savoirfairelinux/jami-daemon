@@ -1271,10 +1271,10 @@ Manager::hangupConference(const std::string& id)
     if (auto conf = getConferenceFromID(id)) {
         ParticipantSet participants(conf->getParticipantList());
         for (const auto& callId : participants) {
-            if (auto call = getCallFromCallID(callId)) {
+            /*if (auto call = getCallFromCallID(callId)) {
                 call->resetConfInfo();
                 call->exitConference();
-            }
+            }*/
             hangupCall(callId);
         }
         pimpl_->unsetCurrentCall();
