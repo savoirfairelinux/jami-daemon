@@ -16,6 +16,24 @@
       "message": "No changes for package.json? (else it\u0027s ok for me), same for libressl",
       "revId": "0b56079b72e1649a8624a577cd90c3a96db24309",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "540f8fa4_2b18cf62",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-16T17:33:40Z",
+      "side": 1,
+      "message": "Windows has its own OpenSSL build",
+      "parentUuid": "5ffce49f_3fcb7a16",
+      "revId": "0b56079b72e1649a8624a577cd90c3a96db24309",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
