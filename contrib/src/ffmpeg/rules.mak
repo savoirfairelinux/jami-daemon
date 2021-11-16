@@ -3,10 +3,6 @@ FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).t
 
 PKGS+=ffmpeg
 
-ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavformat >= 57.82.100 libavdevice >= 57.8.101 libavfilter >= 6.105.100 libswscale >= 4.7.103 libswresample >= 2.9.100"),)
-PKGS_FOUND += ffmpeg
-endif
-
 DEPS_ffmpeg = iconv zlib vpx opus speex x264
 
 FFMPEGCONF = \
@@ -348,6 +344,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/rtp_ext_abs_send_time.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusdec-enable-FEC.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-enable-FEC.patch
+	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 endif

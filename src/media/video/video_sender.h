@@ -48,7 +48,8 @@ public:
                 const MediaDescription& args,
                 SocketPair& socketPair,
                 const uint16_t seqVal,
-                uint16_t mtu);
+                uint16_t mtu,
+                bool isScreenScharing);
 
     ~VideoSender();
 
