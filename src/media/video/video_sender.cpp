@@ -47,7 +47,8 @@ VideoSender::VideoSender(const std::string& dest,
                          const MediaDescription& args,
                          SocketPair& socketPair,
                          const uint16_t seqVal,
-                         uint16_t mtu)
+                         uint16_t mtu,
+                         bool isScreenScharing = false)
     : muxContext_(socketPair.createIOContext(mtu))
     , videoEncoder_(new MediaEncoder)
 {
@@ -58,10 +59,12 @@ VideoSender::VideoSender(const std::string& dest,
     videoEncoder_->addStream(args.codec->systemCodecInfo);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_->getContext());
-
+#ifdef RING_ACCEL
+    if (isScreenScharing)
+        videoEncoder_->enableAccel(false);
+#endif
     // Send local video codec in SmartInfo
     Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getVideoCodec());
-
     // Send the resolution in smartInfo
     Smartools::getInstance().setResolution("local", opts.width, opts.height);
 }
@@ -74,6 +77,18 @@ VideoSender::~VideoSender()
 void
 VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
 {
+    auto width = ((input_frame->width() >> 3) << 3);
+    auto height = ((input_frame->height() >> 3) << 3);
+    if (videoEncoder_->getWidth() != width || videoEncoder_->getHeight() != height) {
+        videoEncoder_->resetStreams(width, height);
+        forceKeyFrame();
+        // Send local video codec in SmartInfo
+        Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getVideoCodec());
+        // Send the resolution in smartInfo
+        Smartools::getInstance().setResolution("local", width, height);
+        return;
+    }
+
     int angle = input_frame->getOrientation();
     if (rotation_ != angle) {
         rotation_ = angle;

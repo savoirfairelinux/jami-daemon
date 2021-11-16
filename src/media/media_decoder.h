@@ -85,7 +85,14 @@ public:
     MediaDemuxer();
     ~MediaDemuxer();
 
-    enum class Status { Success, EndOfFile, ReadBufferOverflow, ReadError, FallBack };
+    enum class Status {
+        Success,
+        EndOfFile,
+        ReadBufferOverflow,
+        ReadError,
+        FallBack,
+        RestartRequired
+    };
 
     enum class CurrentState { Demuxing, Finished };
     using StreamCallback = std::function<DecodeStatus(AVPacket&)>;
@@ -145,6 +152,8 @@ private:
     void pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
                        bool isAudio,
                        std::mutex& mutex);
+    int baseWidth_ {};
+    int baseHeight_ {};
 };
 
 class MediaDecoder
@@ -190,7 +199,10 @@ public:
 
     MediaStream getStream(std::string name = "") const;
 
-    void setResolutionChangedCallback(std::function<void(int, int)> cb) { resolutionChangedCallback_ = std::move(cb); }
+    void setResolutionChangedCallback(std::function<void(int, int)> cb)
+    {
+        resolutionChangedCallback_ = std::move(cb);
+    }
 
     void setFEC(bool enable) { fecEnabled_ = enable; }
 
