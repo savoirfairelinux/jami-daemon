@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ccf3c5f_57c3d33f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 845,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-16T20:46:01Z",
+      "side": 1,
+      "message": "moved here (was in sipvoiplink) to create a SDP answer with the media attributes as set by the client.\nWith this change the client should be able to control the media attributes of the answer (mute a specific media for instance). Not fully implemented though.",
+      "revId": "3e1b775a9e27a2ce284088be0e5a735b24939bd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
