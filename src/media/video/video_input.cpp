@@ -286,6 +286,10 @@ VideoInput::createDecoder()
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
+    if (decOpts_.format == "x11grab") {
+        decOpts_.width = 0;
+        decOpts_.height = 0;
+    }
     while (!ready && !isStopped_) {
         // Retry to open the video till the input is opened
         auto ret = decoder->openInput(decOpts_);
@@ -395,18 +399,34 @@ VideoInput::initX11(std::string display)
 {
     size_t space = display.find(' ');
 
+    DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
+    p.window_id = "0x02e0002b";
+    p.input = display.erase(space);
+    p.is_area = 0;
+    auto dec = std::make_unique<MediaDecoder>();
+    if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
+        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
+    }
+    JAMI_INFO() << dec->getStream().width;
+    JAMI_INFO() << dec->getStream().height;
+    JAMI_INFO() << "\n\n";
+    auto width = dec->getStream().width;
+    auto height = dec->getStream().height;
+
     clearOptions();
-    decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
+    decOpts_ = p;
+    decOpts_.width = width;   // round2pow(width, 3);
+    decOpts_.height = height; // round2pow(height, 3);
 
     if (space != std::string::npos) {
-        std::istringstream iss(display.substr(space + 1));
-        char sep;
-        unsigned w, h;
-        iss >> w >> sep >> h;
+        // std::istringstream iss(display.substr(space + 1));
+        // char sep;
+        // unsigned w, h;
+        // iss >> w >> sep >> h;
         // round to 8 pixel block
-        decOpts_.width = round2pow(w, 3);
-        decOpts_.height = round2pow(h, 3);
-        decOpts_.input = display.erase(space);
+        // decOpts_.width = round2pow(w, 3);
+        // decOpts_.height = round2pow(h, 3);
+        // decOpts_.input = display.erase(space);
     } else {
         decOpts_.input = display;
         // decOpts_.video_size = "vga";
@@ -414,6 +434,7 @@ VideoInput::initX11(std::string display)
         decOpts_.height = default_grab_height;
     }
 
+    JAMI_INFO() << "RETURNING\n\n";
     return true;
 }
 
