@@ -1,0 +1,252 @@
+diff --git a/libavdevice/xcbgrab.c b/libavdevice/xcbgrab.c
+index 8e3292e577..39580a52f3 100644
+--- a/libavdevice/xcbgrab.c
++++ b/libavdevice/xcbgrab.c
+@@ -29,11 +29,6 @@
+ #include <xcb/xfixes.h>
+ #endif
+ 
+-#if CONFIG_LIBXCB_SHM
+-#include <sys/shm.h>
+-#include <xcb/shm.h>
+-#endif
+-
+ #if CONFIG_LIBXCB_SHAPE
+ #include <xcb/shape.h>
+ #endif
+@@ -53,9 +48,6 @@ typedef struct XCBGrabContext {
+     xcb_connection_t *conn;
+     xcb_screen_t *screen;
+     xcb_window_t window;
+-#if CONFIG_LIBXCB_SHM
+-    AVBufferPool *shm_pool;
+-#endif
+     int64_t time_frame;
+     AVRational time_base;
+     int64_t frame_duration;
+@@ -72,10 +64,9 @@ typedef struct XCBGrabContext {
+     int region_border;
+     int centered;
+     int select_region;
++    int is_area;
+ 
+     const char *framerate;
+-
+-    int has_shm;
+ } XCBGrabContext;
+ 
+ #define FOLLOW_CENTER -1
+@@ -97,6 +88,7 @@ static const AVOption options[] = {
+     { "show_region", "Show the grabbing region.", OFFSET(show_region), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 1, D },
+     { "region_border", "Set the region border thickness.", OFFSET(region_border), AV_OPT_TYPE_INT, { .i64 = 3 }, 1, 128, D },
+     { "select_region", "Select the grabbing region graphically using the pointer.", OFFSET(select_region), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, D },
++    { "is_area", "Define if we are grabing a region of the display/window.", OFFSET(is_area), AV_OPT_TYPE_INT, { .i64 = 1 }, 0, 1, D },
+     { NULL },
+ };
+ 
+@@ -216,99 +208,6 @@ static int64_t wait_frame(AVFormatContext *s, AVPacket *pkt)
+     return curtime;
+ }
+ 
+-#if CONFIG_LIBXCB_SHM
+-static int check_shm(xcb_connection_t *conn)
+-{
+-    xcb_shm_query_version_cookie_t cookie = xcb_shm_query_version(conn);
+-    xcb_shm_query_version_reply_t *reply;
+-
+-    reply = xcb_shm_query_version_reply(conn, cookie, NULL);
+-    if (reply) {
+-        free(reply);
+-        return 1;
+-    }
+-
+-    return 0;
+-}
+-
+-static void free_shm_buffer(void *opaque, uint8_t *data)
+-{
+-    shmdt(data);
+-}
+-
+-static AVBufferRef *allocate_shm_buffer(void *opaque, buffer_size_t size)
+-{
+-    xcb_connection_t *conn = opaque;
+-    xcb_shm_seg_t segment;
+-    AVBufferRef *ref;
+-    uint8_t *data;
+-    int id;
+-
+-    id = shmget(IPC_PRIVATE, size, IPC_CREAT | 0777);
+-    if (id == -1)
+-        return NULL;
+-
+-    segment = xcb_generate_id(conn);
+-    xcb_shm_attach(conn, segment, id, 0);
+-    data = shmat(id, NULL, 0);
+-    shmctl(id, IPC_RMID, 0);
+-    if ((intptr_t)data == -1 || !data)
+-        return NULL;
+-
+-    ref = av_buffer_create(data, size, free_shm_buffer, (void *)(ptrdiff_t)segment, 0);
+-    if (!ref)
+-        shmdt(data);
+-
+-    return ref;
+-}
+-
+-static int xcbgrab_frame_shm(AVFormatContext *s, AVPacket *pkt)
+-{
+-    XCBGrabContext *c = s->priv_data;
+-    xcb_shm_get_image_cookie_t iq;
+-    xcb_shm_get_image_reply_t *img;
+-    xcb_drawable_t drawable = c->window_id;
+-    xcb_generic_error_t *e = NULL;
+-    AVBufferRef *buf;
+-    xcb_shm_seg_t segment;
+-
+-    buf = av_buffer_pool_get(c->shm_pool);
+-    if (!buf) {
+-        av_log(s, AV_LOG_ERROR, "Could not get shared memory buffer.\n");
+-        return AVERROR(ENOMEM);
+-    }
+-    segment = (xcb_shm_seg_t)av_buffer_pool_buffer_get_opaque(buf);
+-
+-    iq = xcb_shm_get_image(c->conn, drawable,
+-                           c->x, c->y, c->width, c->height, ~0,
+-                           XCB_IMAGE_FORMAT_Z_PIXMAP, segment, 0);
+-    img = xcb_shm_get_image_reply(c->conn, iq, &e);
+-
+-    xcb_flush(c->conn);
+-
+-    if (e) {
+-        av_log(s, AV_LOG_ERROR,
+-               "Cannot get the image data "
+-               "event_error: response_type:%u error_code:%u "
+-               "sequence:%u resource_id:%u minor_code:%u major_code:%u.\n",
+-               e->response_type, e->error_code,
+-               e->sequence, e->resource_id, e->minor_code, e->major_code);
+-
+-        free(e);
+-        av_buffer_unref(&buf);
+-        return AVERROR(EACCES);
+-    }
+-
+-    free(img);
+-
+-    pkt->buf = buf;
+-    pkt->data = buf->data;
+-    pkt->size = c->frame_size;
+-
+-    return 0;
+-}
+-#endif /* CONFIG_LIBXCB_SHM */
+-
+ #if CONFIG_LIBXCB_XFIXES
+ static int check_xfixes(xcb_connection_t *conn)
+ {
+@@ -462,14 +361,7 @@ static int xcbgrab_read_packet(AVFormatContext *s, AVPacket *pkt)
+     if (c->show_region)
+         xcbgrab_update_region(s, win_x, win_y);
+ 
+-#if CONFIG_LIBXCB_SHM
+-    if (c->has_shm && xcbgrab_frame_shm(s, pkt) < 0) {
+-        av_log(s, AV_LOG_WARNING, "Continuing without shared memory.\n");
+-        c->has_shm = 0;
+-    }
+-#endif
+-    if (!c->has_shm)
+-        ret = xcbgrab_frame(s, pkt);
++    ret = xcbgrab_frame(s, pkt);
+     pkt->dts = pkt->pts = pts;
+     pkt->duration = c->frame_duration;
+ 
+@@ -488,10 +380,6 @@ static av_cold int xcbgrab_read_close(AVFormatContext *s)
+ {
+     XCBGrabContext *ctx = s->priv_data;
+ 
+-#if CONFIG_LIBXCB_SHM
+-    av_buffer_pool_uninit(&ctx->shm_pool);
+-#endif
+-
+     xcb_disconnect(ctx->conn);
+ 
+     return 0;
+@@ -572,7 +460,15 @@ static int pixfmt_from_pixmap_format(AVFormatContext *s, int depth,
+ static int create_stream(AVFormatContext *s)
+ {
+     XCBGrabContext *c = s->priv_data;
+-    AVStream *st      = avformat_new_stream(s, NULL);
++
++    // If we try to open another stream to x11grab, there is no reason
++    // to keep more than one stream in the context.
++    AVStream *st;
++    if (!s->nb_streams) {
++        st = avformat_new_stream(s, NULL);
++    } else {
++        st = s->streams[0];
++    }
+     xcb_get_geometry_cookie_t gc;
+     xcb_get_geometry_reply_t *geo;
+     int64_t frame_size_bits;
+@@ -594,10 +490,25 @@ static int create_stream(AVFormatContext *s)
+         return AVERROR_EXTERNAL;
+     }
+ 
++    av_log(s, AV_LOG_ERROR, "Capture is_area %d\n", c->is_area);
++    // Width and Height are not 0 only when we set a window area to share
++    // This if may be valid only in  the first call to create_stream
+     if (!c->width || !c->height) {
++        av_log(s, AV_LOG_ERROR, "Capture area!\n");
++        c->is_area = 0;
+         c->width = geo->width;
+         c->height = geo->height;
+     }
++    // If not a predefined area, then we should follow geometry changes
++    // This can be valid only on the second call onwards
++    if (!c->is_area && (c->width != geo->width || c->height != geo->height)) {
++        c->width = geo->width;
++        c->height = geo->height;
++    }
++
++    av_log(s, AV_LOG_ERROR, "Capture area %dx%d at position %d.%d\n",
++               c->width, c->height,
++               c->x, c->y);
+ 
+     if (c->x + c->width > geo->width ||
+         c->y + c->height > geo->height) {
+@@ -628,13 +539,6 @@ static int create_stream(AVFormatContext *s)
+     }
+     c->frame_size = frame_size_bits / 8;
+ 
+-#if CONFIG_LIBXCB_SHM
+-    c->shm_pool = av_buffer_pool_init2(c->frame_size + AV_INPUT_BUFFER_PADDING_SIZE,
+-                                           c->conn, allocate_shm_buffer, NULL);
+-    if (!c->shm_pool)
+-        return AVERROR(ENOMEM);
+-#endif
+-
+     st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+     st->codecpar->codec_id   = AV_CODEC_ID_RAWVIDEO;
+     st->codecpar->width      = c->width;
+@@ -829,6 +733,7 @@ static av_cold int xcbgrab_read_header(AVFormatContext *s)
+         sscanf(s->url, "+%d,%d", &c->x, &c->y);
+     }
+ 
++    xcbgrab_read_close(s);
+     c->conn = xcb_connect(display_name[0] ? display_name : NULL, &screen_num);
+     av_freep(&display_name);
+ 
+@@ -876,10 +781,6 @@ static av_cold int xcbgrab_read_header(AVFormatContext *s)
+         return ret;
+     }
+ 
+-#if CONFIG_LIBXCB_SHM
+-    c->has_shm = check_shm(c->conn);
+-#endif
+-
+ #if CONFIG_LIBXCB_XFIXES
+     if (c->draw_mouse) {
+         if (!(c->draw_mouse = check_xfixes(c->conn))) {
+-- 
+2.30.2
+

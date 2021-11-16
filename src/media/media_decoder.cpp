@@ -117,6 +117,10 @@ MediaDemuxer::openInput(const DeviceParams& params)
     if (!params.pixel_format.empty()) {
         av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
     }
+    if (!params.window_id.empty()) {
+        av_dict_set(&options_, "window_id", params.window_id.c_str(), 0);
+    }
+    av_dict_set(&options_, "is_area", std::to_string(params.is_area).c_str(), 0);
 
 #if defined(__APPLE__) && TARGET_OS_MAC
     std::string input = params.name;
@@ -321,18 +325,35 @@ MediaDemuxer::decode()
                                                                                     av_packet_free(
                                                                                         &p);
                                                                             });
+    if (inputParams_.format == "x11grab") {
+        inputCtx_->iformat->read_header(inputCtx_);
+        JAMI_INFO() << inputCtx_->nb_streams;
+        JAMI_INFO() << inputParams_.height;
+        JAMI_INFO() << inputCtx_->streams[0]->codecpar->height;
+        JAMI_INFO() << inputParams_.width;
+        JAMI_INFO() << inputCtx_->streams[0]->codecpar->width;
+        JAMI_INFO() << "\n\n";
+        if (inputParams_.height < ((inputCtx_->streams[0]->codecpar->height >> 3) << 3)
+            || inputParams_.width < ((inputCtx_->streams[0]->codecpar->width >> 3) << 3)) {
+            inputParams_.height = ((inputCtx_->streams[0]->codecpar->height >> 3) << 3);
+            inputParams_.width = ((inputCtx_->streams[0]->codecpar->width >> 3) << 3);
+            return Status::RestartRequired;
+        }
+    }
 
     int ret = av_read_frame(inputCtx_, packet.get());
     if (ret == AVERROR(EAGAIN)) {
         /*no data available. Calculate time until next frame.
-         We do not use the emulated frame mechanism from the decoder because it will affect all platforms.
-         With the current implementation, the demuxer will be waiting just in case when av_read_frame
-         returns EAGAIN. For some platforms, av_read_frame is blocking and it will never happen.
+         We do not use the emulated frame mechanism from the decoder because it will affect all
+         platforms. With the current implementation, the demuxer will be waiting just in case when
+         av_read_frame returns EAGAIN. For some platforms, av_read_frame is blocking and it will
+         never happen.
          */
         if (inputParams_.framerate.numerator() == 0)
             return Status::Success;
-        rational<double> frameTime = 1e6/inputParams_.framerate;
-        int64_t timeToSleep = lastReadPacketTime_ - av_gettime_relative() + frameTime.real<int64_t>();
+        rational<double> frameTime = 1e6 / inputParams_.framerate;
+        int64_t timeToSleep = lastReadPacketTime_ - av_gettime_relative()
+                              + frameTime.real<int64_t>();
         if (timeToSleep <= 0) {
             return Status::Success;
         }
@@ -340,6 +361,8 @@ MediaDemuxer::decode()
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
         return Status::EndOfFile;
+    } else if (ret == AVERROR(EACCES)) {
+        return Status::RestartRequired;
     } else if (ret < 0) {
         JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
         return Status::ReadError;
@@ -572,7 +595,11 @@ MediaDecoder::decode(AVPacket& packet)
             return DecodeStatus::FallBack;
         } else
 #endif
+        {
+            avcodec_flush_buffers(decoderCtx_);
+            setupStream();
             return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
+        }
     }
 
     auto f = (inputDecoder_->type == AVMEDIA_TYPE_VIDEO)
@@ -583,10 +610,10 @@ MediaDecoder::decode(AVPacket& packet)
     if (resolutionChangedCallback_) {
         if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
             JAMI_DBG("Resolution changed from %dx%d to %dx%d",
-                width_,
-                height_,
-                decoderCtx_->width,
-                decoderCtx_->height);
+                     width_,
+                     height_,
+                     decoderCtx_->width,
+                     decoderCtx_->height);
             width_ = decoderCtx_->width;
             height_ = decoderCtx_->height;
             resolutionChangedCallback_(width_, height_);
@@ -613,7 +640,8 @@ MediaDecoder::decode(AVPacket& packet)
         lastTimestamp_ = frame->pts;
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto startTime = avStream_->start_time == AV_NOPTS_VALUE ? 0 : avStream_->start_time;
-            rational<double> frame_time = rational<double>(getTimeBase()) * (packetTimestamp - startTime);
+            rational<double> frame_time = rational<double>(getTimeBase())
+                                          * (packetTimestamp - startTime);
             auto target_relative = static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto target_absolute = startTime_ + target_relative;
             if (target_relative < seekTime_) {
@@ -645,7 +673,13 @@ MediaDecoder::setSeekTime(int64_t time)
 MediaDemuxer::Status
 MediaDecoder::decode()
 {
-    return demuxer_->decode();
+    auto ret = demuxer_->decode();
+    if (ret == MediaDemuxer::Status::RestartRequired) {
+        avcodec_flush_buffers(decoderCtx_);
+        setupStream();
+        ret = MediaDemuxer::Status::EndOfFile;
+    }
+    return ret;
 }
 
 #ifdef ENABLE_VIDEO

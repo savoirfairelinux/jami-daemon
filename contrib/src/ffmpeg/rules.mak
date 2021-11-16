@@ -348,6 +348,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/rtp_ext_abs_send_time.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusdec-enable-FEC.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-enable-FEC.patch
+	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 endif
