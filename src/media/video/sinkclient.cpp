@@ -190,6 +190,7 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
     const auto areaSize = sizeof(SHMHeader) + 2 * frameSize + 15;
     JAMI_DBG("[ShmHolder:%s] New size: f=%zu, a=%zu", openedName_.c_str(), frameSize, areaSize);
 
+    JAMI_ERR() << "@@@?";
     unMapShmArea();
 
     if (::ftruncate(fd_, areaSize) < 0) {
@@ -212,6 +213,7 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
         return false;
     }
 
+    JAMI_ERR() << "@@@?";
     areaSize_ = areaSize;
 
     if (frameSize) {
@@ -228,6 +230,7 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
         area_->readOffset = area_->writeOffset + frameSize;
     }
 
+    JAMI_ERR() << "@@@?";
     return true;
 }
 
