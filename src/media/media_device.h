@@ -51,6 +51,8 @@ struct DeviceParams
     int offset_x {};
     int offset_y {};
     int orientation {};
+    std::string window_id {};
+    int is_area {};
 };
 
 } // namespace jami

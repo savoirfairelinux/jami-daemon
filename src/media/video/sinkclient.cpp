@@ -350,6 +350,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     }
 #endif
 
+    std::lock_guard<std::mutex> lock(mtx_);
     if (avTarget_.push) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
@@ -363,8 +364,10 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         if (outFrame->height() != height_ || outFrame->width() != width_) {
             setFrameSize(0, 0);
             setFrameSize(outFrame->width(), outFrame->height());
+            return;
         }
         avTarget_.push(std::move(outFrame));
+        return;
     }
 
     bool doTransfer = (target_.pull != nullptr);
@@ -420,11 +423,11 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         if (frame->height() != height_ || frame->width() != width_) {
             setFrameSize(0, 0);
             setFrameSize(frame->width(), frame->height());
+            return;
         }
 #if HAVE_SHM
         shm_->renderFrame(*frame);
 #endif
-        std::lock_guard<std::mutex> lock(mtx_);
         if (target_.pull) {
             int width = frame->width();
             int height = frame->height();

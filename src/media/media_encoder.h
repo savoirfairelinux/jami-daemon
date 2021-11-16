@@ -77,6 +77,7 @@ public:
     void setOptions(const MediaDescription& args);
     int addStream(const SystemCodecInfo& codec);
     void setIOContext(AVIOContext* ioctx) { ioCtx_ = ioctx; }
+    void resetStreams(int width, int height);
 
     bool send(AVPacket& packet, int streamIdx = -1);
 

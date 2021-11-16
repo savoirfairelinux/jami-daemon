@@ -204,8 +204,7 @@ void
 VideoInput::cleanup()
 {
     deleteDecoder(); // do it first to let a chance to last frame to be displayed
-    detach(sink_.get());
-    sink_->stop();
+    stopSink();
     JAMI_DBG("VideoInput closed");
 }
 
@@ -286,6 +285,10 @@ VideoInput::createDecoder()
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
+    if (decOpts_.format == "x11grab" && !decOpts_.is_area) {
+        decOpts_.width = 0;
+        decOpts_.height = 0;
+    }
     while (!ready && !isStopped_) {
         // Retry to open the video till the input is opened
         auto ret = decoder->openInput(decOpts_);
@@ -317,10 +320,14 @@ VideoInput::createDecoder()
         return;
     }
 
-    decoder->decode(); // Populate AVCodecContext fields
+    auto ret = decoder->decode(); // Populate AVCodecContext fields
+    if (ret == MediaDemuxer::Status::ReadError) {
+        JAMI_INFO() << "Decoder error";
+        return;
+    }
 
-    decOpts_.width = decoder->getWidth();
-    decOpts_.height = decoder->getHeight();
+    decOpts_.width = ((decoder->getWidth() >> 3) << 3);
+    decOpts_.height = ((decoder->getHeight() >> 3) << 3);
     decOpts_.framerate = decoder->getFps();
     AVPixelFormat fmt = decoder->getPixelFormat();
     if (fmt != AV_PIX_FMT_NONE) {
@@ -391,28 +398,47 @@ round2pow(unsigned i, unsigned n)
 }
 
 bool
-VideoInput::initX11(std::string display)
+VideoInput::initX11(const std::string& display)
 {
+    // Patterns
+    // full screen sharing : :1+0,0 2560x1440 - SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440
+    // area sharing : :1+882,211 1532x779 - SCREEN 1, POSITION 882x211, RESOLUTION 1532x779
+    // window sharing : :+1,0 0x0 window-id:0x0340021e - POSITION 0X0
     size_t space = display.find(' ');
+    std::string windowIdStr = "window-id:";
+    size_t winIdPos = display.find(windowIdStr);
+
+    DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
+    if (winIdPos != std::string::npos) {
+        p.window_id = display.substr(winIdPos + windowIdStr.size()); // "0x0340021e";
+        p.is_area = 0;
+    }
+    if (space != std::string::npos) {
+        p.input = display.substr(1, space);
+        if (p.window_id.empty()) {
+            p.input = display.substr(0, space);
+            JAMI_INFO() << "p.window_id.empty()";
+            auto splits = jami::split_string_to_unsigned(display.substr(space + 1), 'x');
+            // round to 8 pixel block
+            p.width = round2pow(splits[0], 3);
+            p.height = round2pow(splits[1], 3);
+            p.is_area = 1;
+        }
+    } else {
+        p.input = display;
+        p.width = default_grab_width;
+        p.height = default_grab_height;
+        p.is_area = 1;
+    }
+
+    auto dec = std::make_unique<MediaDecoder>();
+    if (dec->openInput(p) < 0 || dec->setupVideo() < 0)
+        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
 
     clearOptions();
-    decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
-
-    if (space != std::string::npos) {
-        std::istringstream iss(display.substr(space + 1));
-        char sep;
-        unsigned w, h;
-        iss >> w >> sep >> h;
-        // round to 8 pixel block
-        decOpts_.width = round2pow(w, 3);
-        decOpts_.height = round2pow(h, 3);
-        decOpts_.input = display.erase(space);
-    } else {
-        decOpts_.input = display;
-        // decOpts_.video_size = "vga";
-        decOpts_.width = default_grab_width;
-        decOpts_.height = default_grab_height;
-    }
+    decOpts_ = p;
+    decOpts_.width = round2pow(dec->getStream().width, 3);
+    decOpts_.height = round2pow(dec->getStream().height, 3);
 
     return true;
 }
