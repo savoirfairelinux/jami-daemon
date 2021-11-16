@@ -41,7 +41,6 @@ class Controller;
 class IceTransport;
 
 using IceTransportCompleteCb = std::function<void(bool)>;
-using IceRecvInfo = std::function<void(void)>;
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
 using onShutdownCb = std::function<void(void)>;
