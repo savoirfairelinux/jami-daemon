@@ -158,7 +158,7 @@ VideoRtpSession::startSender()
             sender_.reset();
             socketPair_->stopSendOp(false);
             MediaStream ms
-                = !videoMixer_
+                = !conference_
                       ? MediaStream("video sender",
                                     AV_PIX_FMT_YUV420P,
                                     1 / static_cast<rational<int>>(localVideoParams_.framerate),
@@ -166,7 +166,7 @@ VideoRtpSession::startSender()
                                     localVideoParams_.height,
                                     send_.bitrate,
                                     static_cast<rational<int>>(localVideoParams_.framerate))
-                      : videoMixer_->getStream("Video Sender");
+                      : conference_->getVideoMixer()->getStream("Video Sender");
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_));
             if (changeOrientationCallback_)

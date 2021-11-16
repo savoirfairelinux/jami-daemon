@@ -135,6 +135,8 @@ public:
      */
     const std::string& getConfId() const { return confID_; }
 
+    void setConfId(const std::string& id) { confID_ = id; }
+
     std::weak_ptr<Account> getAccount() const { return account_; }
     std::string getAccountId() const;
 

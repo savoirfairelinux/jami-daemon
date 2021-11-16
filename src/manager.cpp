@@ -563,6 +563,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
             if (account->isRendezVous())
                 return;
 
+            call->setConfId("");
             if (current_call_id != conf.getConfID())
                 base_.onHoldCall(call->getCallId());
             else
@@ -692,6 +693,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
     base_.getRingBufferPool().unBindAll(call_id);
 
     conf.addParticipant(call_id);
+    call.setConfId(conf_id);
 
     if (state == "HOLD") {
         conf.bindParticipant(call_id);
@@ -1040,6 +1042,7 @@ Manager::outgoingCall(const std::string& account_id,
     stopTone();
 
     pimpl_->switchCall(call);
+    call->setConfId(conf_id);
 
     return call_id;
 }
@@ -1075,6 +1078,7 @@ Manager::outgoingCall(const std::string& account_id,
     stopTone();
 
     pimpl_->switchCall(call);
+    call->setConfId(conf_id);
 
     return call_id;
 }
@@ -1794,6 +1798,7 @@ Manager::removeParticipant(const std::string& call_id)
     }
 
     conf->removeParticipant(call_id);
+    call->setConfId("");
 
     removeAudio(*call);
 
@@ -1834,6 +1839,7 @@ Manager::joinConference(const std::string& conf_id1, const std::string& conf_id2
         }
 
         conf->removeParticipant(p);
+        call->setConfId("");
         removeAudio(*call);
     }
     // Remove conf1
