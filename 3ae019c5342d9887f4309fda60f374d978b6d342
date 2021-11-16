@@ -16,6 +16,24 @@
       "message": "What about when the remote address is invalid?  Should we check on callers site for valid IpAddr object?",
       "revId": "3ae019c5342d9887f4309fda60f374d978b6d342",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6fc84b1e_2c070a40",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1384,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-16T15:41:00Z",
+      "side": 1,
+      "message": "AKIK, we already do.",
+      "parentUuid": "9b97df1a_79cbe22e",
+      "revId": "3ae019c5342d9887f4309fda60f374d978b6d342",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
