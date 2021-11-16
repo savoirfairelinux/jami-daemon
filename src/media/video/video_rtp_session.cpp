@@ -149,6 +149,7 @@ VideoRtpSession::startSender()
 
         send_.linkableHW = conference_ == nullptr;
         send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
+        bool isScreenScharing = localVideoParams_.format == "x11grab";
 
         if (socketPair_)
             initSeqVal_ = socketPair_->lastSeqValOut();
@@ -166,8 +167,13 @@ VideoRtpSession::startSender()
                                     send_.bitrate,
                                     static_cast<rational<int>>(localVideoParams_.framerate))
                       : videoMixer_->getStream("Video Sender");
-            sender_.reset(
-                new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_));
+            sender_.reset(new VideoSender(getRemoteRtpUri(),
+                                          ms,
+                                          send_,
+                                          *socketPair_,
+                                          initSeqVal_ + 1,
+                                          mtu_,
+                                          isScreenScharing));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
