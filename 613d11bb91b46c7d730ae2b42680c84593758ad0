@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea493e1c_c0ace3a7",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1084,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-16T15:21:53Z",
+      "side": 1,
+      "message": "agree",
+      "parentUuid": "f8702e00_5b05de90",
+      "range": {
+        "startLine": 1084,
+        "startChar": 2,
+        "endLine": 1084,
+        "endChar": 12
+      },
+      "revId": "613d11bb91b46c7d730ae2b42680c84593758ad0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ede2b4d1_7f2b529e",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-11-16T15:00:17Z",
       "side": 1,
       "message": "if (auto defaultAddr \u003d pimpl_-\u003egetDefaultRemoteAddress(comp_id)) works too",
+      "range": {
+        "startLine": 1381,
+        "startChar": 4,
+        "endLine": 1381,
+        "endChar": 22
+      },
+      "revId": "613d11bb91b46c7d730ae2b42680c84593758ad0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aad8d7fc_b6329c82",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1381,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-16T15:21:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ede2b4d1_7f2b529e",
       "range": {
         "startLine": 1381,
         "startChar": 4,
