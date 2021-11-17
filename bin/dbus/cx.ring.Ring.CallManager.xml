@@ -801,7 +801,7 @@
             <arg type="s" name="accountId" />
             <arg type="s" name="callId" />
             <arg type="s" name="from" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="MapStringString"/>
             <arg type="a{ss}" name="messages" />
         </signal>
 
