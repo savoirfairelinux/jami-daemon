@@ -1387,7 +1387,9 @@ SIPAccount::initTlsConfiguration()
 
     JAMI_DBG("Using %zu ciphers", ciphers_.size());
     tlsSetting_.ciphers_num = ciphers_.size();
-    tlsSetting_.ciphers = &ciphers_.front();
+    if (tlsSetting_.ciphers_num > 0) {
+        tlsSetting_.ciphers = &ciphers_.front();
+    }
 
     tlsSetting_.verify_server = tlsVerifyServer_;
     tlsSetting_.verify_client = tlsVerifyClient_;
