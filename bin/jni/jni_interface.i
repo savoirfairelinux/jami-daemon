@@ -313,7 +313,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<VideoSignal::SetBitrate>(bind(&VideoCallback::setBitrate, videoM, _1, _2)),
         exportable_callback<VideoSignal::RequestKeyFrame>(bind(&VideoCallback::requestKeyFrame, videoM)),
         exportable_callback<VideoSignal::StartCapture>(bind(&VideoCallback::startCapture, videoM, _1)),
-        exportable_callback<VideoSignal::StopCapture>(bind(&VideoCallback::stopCapture, videoM)),
+        exportable_callback<VideoSignal::StopCapture>(bind(&VideoCallback::stopCapture, videoM, _1)),
         exportable_callback<VideoSignal::DecodingStarted>(bind(&VideoCallback::decodingStarted, videoM, _1, _2, _3, _4, _5)),
         exportable_callback<VideoSignal::DecodingStopped>(bind(&VideoCallback::decodingStopped, videoM, _1, _2, _3)),
     };
