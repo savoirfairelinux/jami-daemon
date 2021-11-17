@@ -34,6 +34,24 @@
       "parentUuid": "ae715013_f50b6a0e",
       "revId": "4d53900d5301692588f6049ba5fad76559faf8c7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a048a15_1102c097",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-17T22:26:00Z",
+      "side": 1,
+      "message": "In fact it can be several things, without the log it\u0027s unclear. For example it can be a failure while reading the ringtone file. Moreover, it\u0027s a Jami account, so probably not a 183 as we do not send this code.\n\nOut of curiosity, do you know any provider send this code? It allow us to easily test",
+      "parentUuid": "c78729a7_6c166b4e",
+      "revId": "4d53900d5301692588f6049ba5fad76559faf8c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
