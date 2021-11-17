@@ -49,6 +49,30 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "64c2c732_27314718",
+        "filename": "src/im/instant_messaging.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T22:12:03Z",
+      "side": 1,
+      "message": "I did not touch this, it\u0027s clang-format. out of scope of this patch.",
+      "parentUuid": "cb55c312_eb2a8db0",
+      "range": {
+        "startLine": 187,
+        "startChar": 31,
+        "endLine": 188,
+        "endChar": 30
+      },
+      "revId": "b501ae78df47da22969fffbdde6ada1819c08d8b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "c7911102_41ef1249",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 7
@@ -60,6 +84,30 @@
       "writtenOn": "2021-11-17T21:31:25Z",
       "side": 1,
       "message": "if(true) return true;\nreturn false;\n\ncan be reduced.",
+      "range": {
+        "startLine": 1686,
+        "startChar": 9,
+        "endLine": 1691,
+        "endChar": 11
+      },
+      "revId": "b501ae78df47da22969fffbdde6ada1819c08d8b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d16a534a_c543c71e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1691,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T22:12:03Z",
+      "side": 1,
+      "message": "I needed this version to log. Since logging is gone, it could factorized.",
+      "parentUuid": "c7911102_41ef1249",
       "range": {
         "startLine": 1686,
         "startChar": 9,
