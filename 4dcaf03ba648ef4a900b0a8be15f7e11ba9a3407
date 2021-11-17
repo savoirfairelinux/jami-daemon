@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1d25fb62_2c50c648",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T21:56:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c4220135_9b27b7c9",
+      "revId": "4dcaf03ba648ef4a900b0a8be15f7e11ba9a3407",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d966d98f_23d4187e",
@@ -72,6 +90,30 @@
       "writtenOn": "2021-11-17T19:44:08Z",
       "side": 1,
       "message": "Done",
+      "parentUuid": "d966d98f_23d4187e",
+      "range": {
+        "startLine": 1470,
+        "startChar": 0,
+        "endLine": 1470,
+        "endChar": 56
+      },
+      "revId": "4dcaf03ba648ef4a900b0a8be15f7e11ba9a3407",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c77509f0_0af66e49",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1470,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T21:56:26Z",
+      "side": 1,
+      "message": "this beyond this patch. All SIP methods names were used as string literals ... I",
       "parentUuid": "d966d98f_23d4187e",
       "range": {
         "startLine": 1470,
@@ -183,6 +225,48 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c13598ec_d11eff97",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1674,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T21:56:26Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "446d0831_5abcb2e6",
+      "revId": "4dcaf03ba648ef4a900b0a8be15f7e11ba9a3407",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5ade7765_ca672a56",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1674,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T21:56:26Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "cf539367_cf609fce",
+      "range": {
+        "startLine": 1674,
+        "startChar": 26,
+        "endLine": 1674,
+        "endChar": 33
+      },
+      "revId": "4dcaf03ba648ef4a900b0a8be15f7e11ba9a3407",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "40590cd3_2f8eed2a",
@@ -219,6 +303,30 @@
       "writtenOn": "2021-11-17T19:44:08Z",
       "side": 1,
       "message": "Done",
+      "parentUuid": "40590cd3_2f8eed2a",
+      "range": {
+        "startLine": 1678,
+        "startChar": 26,
+        "endLine": 1678,
+        "endChar": 44
+      },
+      "revId": "4dcaf03ba648ef4a900b0a8be15f7e11ba9a3407",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d486669_d0d3ae77",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1678,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T21:56:26Z",
+      "side": 1,
+      "message": "how much time is expected to save by using string_view ...",
       "parentUuid": "40590cd3_2f8eed2a",
       "range": {
         "startLine": 1678,
@@ -277,6 +385,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "aeba31bc_758b0c2c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1688,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T21:56:26Z",
+      "side": 1,
+      "message": "changed.\nit\u0027s up to the caller the log or not",
+      "parentUuid": "f54094c0_0c53a461",
+      "range": {
+        "startLine": 1688,
+        "startChar": 42,
+        "endLine": 1688,
+        "endChar": 64
+      },
+      "revId": "4dcaf03ba648ef4a900b0a8be15f7e11ba9a3407",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5e02ad5f_ff417a1b",
@@ -311,6 +443,30 @@
         "id": 6
       },
       "writtenOn": "2021-11-17T19:44:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5e02ad5f_ff417a1b",
+      "range": {
+        "startLine": 187,
+        "startChar": 7,
+        "endLine": 187,
+        "endChar": 33
+      },
+      "revId": "4dcaf03ba648ef4a900b0a8be15f7e11ba9a3407",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5346a560_9cde3ff1",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-17T21:56:26Z",
       "side": 1,
       "message": "Done",
       "parentUuid": "5e02ad5f_ff417a1b",
