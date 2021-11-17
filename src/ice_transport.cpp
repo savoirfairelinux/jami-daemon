@@ -373,7 +373,7 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
     compCount_ = streamsCount_ * compCountPerStream_;
     compIO_ = std::vector<ComponentIO>(compCount_);
     peerChannels_ = std::vector<PeerChannel>(compCount_);
-    iceDefaultRemoteAddr_.reserve(compCount_);
+    iceDefaultRemoteAddr_.resize(compCount_);
     initiatorSession_ = options.master;
     accountLocalAddr_ = std::move(options.accountLocalAddr);
     accountPublicAddr_ = std::move(options.accountPublicAddr);
@@ -1087,9 +1087,7 @@ IpAddr
 IceTransport::Impl::getDefaultRemoteAddress(unsigned compId) const
 {
     ASSERT_COMP_ID(compId, compCount_);
-    if (compId < iceDefaultRemoteAddr_.size())
-        return iceDefaultRemoteAddr_[compId - 1];
-    return {};
+    return iceDefaultRemoteAddr_[compId - 1];
 }
 
 void
