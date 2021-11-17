@@ -83,7 +83,7 @@ VideoInput::~VideoInput()
 {
     isStopped_ = true;
     if (videoManagedByClient()) {
-        emitSignal<DRing::VideoSignal::StopCapture>();
+        emitSignal<DRing::VideoSignal::StopCapture>(decOpts_.input);
         capturing_ = false;
         return;
     }
@@ -111,7 +111,7 @@ VideoInput::switchDevice()
             return;
         }
 
-        emitSignal<DRing::VideoSignal::StopCapture>();
+        //emitSignal<DRing::VideoSignal::StopCapture>();
         emitSignal<DRing::VideoSignal::StartCapture>(decOpts_.input);
         capturing_ = true;
     }

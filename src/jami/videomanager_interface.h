@@ -298,7 +298,7 @@ struct DRING_PUBLIC VideoSignal
     struct DRING_PUBLIC StopCapture
     {
         constexpr static const char* name = "StopCapture";
-        using cb_type = void(void);
+        using cb_type = void(const std::string& /*device*/);
     };
     struct DRING_PUBLIC DeviceAdded
     {
