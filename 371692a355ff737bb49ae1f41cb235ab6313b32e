@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae91e534_30a85f93",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1076,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-17T22:42:16Z",
+      "side": 1,
+      "message": "Wrong direction, we should clarify the protocol. I\u0027ll update the docs, btw, actually this allow anybody to raise the hand for others... which is bad",
+      "range": {
+        "startLine": 1038,
+        "startChar": 4,
+        "endLine": 1076,
+        "endChar": 5
+      },
+      "revId": "371692a355ff737bb49ae1f41cb235ab6313b32e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
