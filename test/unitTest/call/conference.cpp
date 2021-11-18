@@ -42,6 +42,7 @@ struct CallData
 {
     std::string callId {};
     std::string state {};
+    std::string hostState {};
     std::atomic_bool moderatorMuted {false};
     std::atomic_bool raisedHand {false};
 
@@ -49,6 +50,7 @@ struct CallData
     {
         callId = "";
         state = "";
+        hostState = "";
         moderatorMuted = false;
         raisedHand = false;
     }
@@ -96,6 +98,8 @@ private:
     std::string carlaId;
     std::string daviId;
     std::string confId {};
+    bool confChanged {false};
+
     CallData bobCall {};
     CallData carlaCall {};
     CallData daviCall {};
@@ -124,6 +128,7 @@ ConferenceTest::setUp()
     carlaCall.reset();
     daviCall.reset();
     confId = {};
+    confChanged = false;
 }
 
 void
@@ -161,8 +166,16 @@ ConferenceTest::registerSignalHandlers()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [=](const std::string&, const std::string& callId, const std::string& state, signed) {
-            if (bobCall.callId == callId)
+        [=](const std::string& accountId, const std::string& callId, const std::string& state, signed) {
+            if (accountId == aliceId) {
+                auto details = DRing::getCallDetails(aliceId, callId);
+                if (details["PEER_NUMBER"].find(bobUri) != std::string::npos)
+                    bobCall.hostState = state;
+                else if (details["PEER_NUMBER"].find(carlaUri) != std::string::npos)
+                    carlaCall.hostState = state;
+                else if (details["PEER_NUMBER"].find(daviUri) != std::string::npos)
+                    daviCall.hostState = state;
+            } else if (bobCall.callId == callId)
                 bobCall.state = state;
             else if (carlaCall.callId == callId)
                 carlaCall.state = state;
@@ -179,6 +192,12 @@ ConferenceTest::registerSignalHandlers()
         [=](const std::string&, const std::string& conferenceId) {
             if (confId == conferenceId)
                 confId = "";
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceChanged>(
+        [=](const std::string&, const std::string& conferenceId, const std::string&) {
+            if (confId == conferenceId)
+                confChanged = true;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::OnConferenceInfosUpdated>(
@@ -217,7 +236,7 @@ ConferenceTest::startConference()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.hostState == "CURRENT"; }));
 
     JAMI_INFO("Start call between Alice and Carla");
     auto call2 = aliceAccount->newOutgoingCall(carlaUri);
@@ -225,11 +244,13 @@ ConferenceTest::startConference()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return carlaCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return carlaCall.hostState == "CURRENT"; }));
 
     JAMI_INFO("Start conference");
+    confChanged = false;
     Manager::instance().joinParticipant(aliceId, call1->getCallId(), aliceId, call2->getCallId());
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return !confId.empty(); }));
+    // ConfChanged is the signal emitted when the 2 calls will be added to the conference
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return !confId.empty() && confChanged; }));
 }
 
 void
@@ -302,7 +323,7 @@ ConferenceTest::testAudioVideoMutedStates()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.hostState == "CURRENT"; }));
 
     call1->muteMedia(DRing::Media::MediaAttributeValue::AUDIO, true);
     call1->muteMedia(DRing::Media::MediaAttributeValue::VIDEO, true);
@@ -313,7 +334,7 @@ ConferenceTest::testAudioVideoMutedStates()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return carlaCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return carlaCall.hostState == "CURRENT"; }));
 
     call2->muteMedia(DRing::Media::MediaAttributeValue::AUDIO, true);
     call2->muteMedia(DRing::Media::MediaAttributeValue::VIDEO, true);
@@ -385,7 +406,7 @@ ConferenceTest::testMuteStatusAfterRemove()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     Manager::instance().addParticipant(aliceId, call1->getCallId(), aliceId, confId);
 
     DRing::muteParticipant(aliceId, confId, daviUri, true);
@@ -402,7 +423,7 @@ ConferenceTest::testMuteStatusAfterRemove()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     Manager::instance().addParticipant(aliceId, call2->getCallId(), aliceId, confId);
 
     CPPUNIT_ASSERT(
@@ -444,7 +465,7 @@ ConferenceTest::testHandsUp()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     Manager::instance().addParticipant(aliceId, call1->getCallId(), aliceId, confId);
 
     DRing::raiseParticipantHand(aliceId, confId, daviUri, true);
@@ -461,7 +482,7 @@ ConferenceTest::testHandsUp()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     Manager::instance().addParticipant(aliceId, call2->getCallId(), aliceId, confId);
 
     CPPUNIT_ASSERT(
@@ -521,7 +542,7 @@ ConferenceTest::testJoinCallFromOtherAccount()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     CPPUNIT_ASSERT(Manager::instance().addParticipant(daviId, daviCall.callId, aliceId, confId));
     hangupConference();
 
