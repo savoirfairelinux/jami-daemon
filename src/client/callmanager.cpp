@@ -200,7 +200,7 @@ createConfFromParticipantList(const std::string& accountId,
 void
 setConferenceLayout(const std::string& accountId, const std::string& confId, uint32_t layout)
 {
-    if (const auto account = jami::Manager::instance().getAccount(accountId))
+    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->setLayout(layout);
         } else if (auto call = account->getCall(confId)) {
@@ -208,6 +208,7 @@ setConferenceLayout(const std::string& accountId, const std::string& confId, uin
             root["layout"] = layout;
             call->sendConfOrder(root);
         }
+    }
 }
 
 void
@@ -215,7 +216,7 @@ setActiveParticipant(const std::string& accountId,
                      const std::string& confId,
                      const std::string& participant)
 {
-    if (const auto account = jami::Manager::instance().getAccount(accountId))
+    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->setActiveParticipant(participant);
         } else if (auto call = account->getCall(confId)) {
@@ -223,6 +224,7 @@ setActiveParticipant(const std::string& accountId,
             root["activeParticipant"] = participant;
             call->sendConfOrder(root);
         }
+    }
 }
 
 bool
