@@ -2525,19 +2525,29 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
         return;
     }
 
-    // If the offered media differ from the current local media, the
-    // request is reported to the client to be processed. Otherwise,
-    // it will be processed using the current local media.
-
-    if (checkMediaChangeRequest(remoteMediaList)) {
-        // Report the media change request.
-        emitSignal<DRing::CallSignal::MediaChangeRequested>(getAccountId(),
-                                                            getCallId(),
-                                                            remoteMediaList);
-    } else {
-        auto localMediaList = MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList());
-        answerMediaChangeRequest(localMediaList);
+    // If the offered media does not differ from the current local media, the
+    // request is answered using the current local media.
+    if (not checkMediaChangeRequest(remoteMediaList)) {
+        answerMediaChangeRequest(
+            MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
+        return;
     }
+
+    if (account->isAutoAnswerEnabled()) {
+        // NOTE:
+        // Since the auto-answer is enabled in the account, media change requests
+        // are automatically accepted too. This also means that if the original
+        //  call was an audio-only call, and the remote added the video, the local
+        // camera will be enabled, unless the video is disabled in the account
+        // settings.
+        answerMediaChangeRequest(remoteMediaList);
+        return;
+    }
+
+    // Report the media change request.
+    emitSignal<DRing::CallSignal::MediaChangeRequested>(getAccountId(),
+                                                        getCallId(),
+                                                        remoteMediaList);
 }
 
 pj_status_t
