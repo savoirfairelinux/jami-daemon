@@ -2093,8 +2093,10 @@ JamiAccount::doRegister_()
 
                 auto uri = Uri(name);
                 auto itHandler = channelHandlers_.find(uri.scheme());
-                if (itHandler != channelHandlers_.end() && itHandler->second)
-                    return itHandler->second->onRequest(cert, name);
+                if (itHandler != channelHandlers_.end() && itHandler->second) {
+                    auto res = itHandler->second->onRequest(cert, name);
+                    return res;
+                }
                 // TODO replace
                 auto isFile = name.substr(0, 7) == FILE_URI;
                 auto isVCard = name.substr(0, 8) == VCARD_URI;
@@ -2152,58 +2154,64 @@ JamiAccount::doRegister_()
                     }
 
                 } else if (name.find("git://") == 0) {
-                    auto sep = name.find_last_of('/');
-                    auto conversationId = name.substr(sep + 1);
-                    auto remoteDevice = name.substr(6, sep - 6);
 
                     if (channel->isInitiator()) {
                         // Check if wanted remote it's our side (git://remoteDevice/conversationId)
                         return;
                     }
 
-                    // Check if pull from banned device
-                    if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
-                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the "
-                                  "device is "
-                                  "unauthorized (%s) ",
-                                  getAccountID().c_str(),
-                                  conversationId.c_str(),
-                                  remoteDevice.c_str());
-                        channel->shutdown();
-                        return;
-                    }
+                    dht::ThreadPool::io().run([w=weak(), name, channel=std::move(channel), deviceId] {
+                        auto acc = w.lock();
+                        if (!acc)
+                            return;
+                        auto sep = name.find_last_of('/');
+                        auto conversationId = name.substr(sep + 1);
+                        auto remoteDevice = name.substr(6, sep - 6);
+                        auto accountId = acc->getAccountID();
 
-                    auto sock = gitSocket(deviceId, conversationId);
-                    if (sock != std::nullopt && sock->lock() == channel) {
-                        // The onConnectionReady is already used as client (for retrieving messages)
-                        // So it's not the server socket
-                        return;
-                    }
-                    auto accountId = this->accountID_;
-                    JAMI_WARN("[Account %s] Git server requested for conversation %s, device %s, "
-                              "channel %u",
-                              accountId.c_str(),
-                              conversationId.c_str(),
-                              deviceId.to_c_str(),
-                              channel->channel());
-                    auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
-                    gs->setOnFetched([w = weak(), conversationId, deviceId](const std::string&) {
-                        if (auto shared = w.lock())
-                            shared->convModule()->setFetched(conversationId, deviceId.toString());
-                    });
-                    const dht::Value::Id serverId = ValueIdDist()(rand);
-                    {
-                        std::lock_guard<std::mutex> lk(gitServersMtx_);
-                        gitServers_[serverId] = std::move(gs);
-                    }
-                    channel->onShutdown([w = weak(), serverId]() {
-                        // Run on main thread to avoid to be in mxSock's eventLoop
-                        runOnMainThread([serverId, w]() {
-                            auto shared = w.lock();
-                            if (!shared)
-                                return;
-                            std::lock_guard<std::mutex> lk(shared->gitServersMtx_);
-                            shared->gitServers_.erase(serverId);
+                        // Check if pull from banned device
+                        if (acc->convModule()->isBannedDevice(conversationId, remoteDevice)) {
+                            JAMI_WARN("[Account %s] Git server requested for conversation %s, but the "
+                                    "device is "
+                                    "unauthorized (%s) ",
+                                    accountId.c_str(),
+                                    conversationId.c_str(),
+                                    remoteDevice.c_str());
+                            channel->shutdown();
+                            return;
+                        }
+
+                        auto sock = acc->gitSocket(deviceId, conversationId);
+                        if (sock != std::nullopt && sock->lock() == channel) {
+                            // The onConnectionReady is already used as client (for retrieving messages)
+                            // So it's not the server socket
+                            return;
+                        }
+                        JAMI_WARN("[Account %s] Git server requested for conversation %s, device %s, "
+                                "channel %u",
+                                accountId.c_str(),
+                                conversationId.c_str(),
+                                deviceId.to_c_str(),
+                                channel->channel());
+                        auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
+                        gs->setOnFetched([w = acc->weak(), conversationId, deviceId](const std::string&) {
+                            if (auto shared = w.lock())
+                                shared->convModule()->setFetched(conversationId, deviceId.toString());
+                        });
+                        const dht::Value::Id serverId = ValueIdDist()(acc->rand);
+                        {
+                            std::lock_guard<std::mutex> lk(acc->gitServersMtx_);
+                            acc->gitServers_[serverId] = std::move(gs);
+                        }
+                        channel->onShutdown([w = acc->weak(), serverId]() {
+                            // Run on main thread to avoid to be in mxSock's eventLoop
+                            runOnMainThread([serverId, w]() {
+                                auto shared = w.lock();
+                                if (!shared)
+                                    return;
+                                std::lock_guard<std::mutex> lk(shared->gitServersMtx_);
+                                shared->gitServers_.erase(serverId);
+                            });
                         });
                     });
                 } else {
@@ -4082,7 +4090,10 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 
     sendProfile(deviceId.toString());
 
-    convModule()->syncConversations(peerId, deviceId.toString());
+    dht::ThreadPool::io().run([w = weak(), peerId, deviceId = deviceId.toString()]() {
+        if (auto acc = w.lock())
+            acc->convModule()->syncConversations(peerId, deviceId);
+    });
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);

@@ -580,13 +580,14 @@ ConversationModule::Impl::removeRepository(const std::string& conversationId, bo
 
         if (!sync)
             return;
-        std::lock_guard<std::mutex> lkCi(convInfosMtx_);
+        std::unique_lock<std::mutex> lkCi(convInfosMtx_);
         auto convIt = convInfos_.find(conversationId);
-        if (convIt != convInfos_.end()) {
-            convIt->second.erased = std::time(nullptr);
-            needsSyncingCb_();
-        }
+        if (convIt == convInfos_.end())
+            return;
+        convIt->second.erased = std::time(nullptr);
         saveConvInfos();
+        lkCi.unlock();
+        needsSyncingCb_();
     }
 }
 
@@ -676,6 +677,7 @@ void
 ConversationModule::saveConvRequestsToPath(
     const std::string& path, const std::map<std::string, ConversationRequest>& conversationsRequests)
 {
+    std::lock_guard<std::mutex> lock(fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
     std::ofstream file(path + DIR_SEPARATOR_STR + "convRequests",
                        std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversationsRequests);
@@ -691,6 +693,7 @@ ConversationModule::saveConvInfos(const std::string& accountId, const ConvInfoMa
 void
 ConversationModule::saveConvInfosToPath(const std::string& path, const ConvInfoMap& conversations)
 {
+    std::lock_guard<std::mutex> lock(fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convInfo"));
     std::ofstream file(path + DIR_SEPARATOR_STR + "convInfo", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversations);
 }
@@ -1556,10 +1559,10 @@ ConversationModule::removeConversation(const std::string& conversationId)
     if (isSyncing)
         itConv->second.erased = std::time(nullptr);
     // Sync now, because it can take some time to really removes the datas
-    if (hasMembers)
-        pimpl_->needsSyncingCb_();
     pimpl_->saveConvInfos();
     lockCi.unlock();
+    if (hasMembers)
+        pimpl_->needsSyncingCb_();
     emitSignal<DRing::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, conversationId);
     if (isSyncing)
         return true;
@@ -1652,6 +1655,7 @@ ConversationModule::convInfosFromPath(const std::string& path)
     std::map<std::string, ConvInfo> convInfos;
     try {
         // read file
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convInfo"));
         auto file = fileutils::loadFile("convInfo", path);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
@@ -1675,6 +1679,7 @@ ConversationModule::convRequestsFromPath(const std::string& path)
     std::map<std::string, ConversationRequest> convRequests;
     try {
         // read file
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
         auto file = fileutils::loadFile("convRequests", path);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
