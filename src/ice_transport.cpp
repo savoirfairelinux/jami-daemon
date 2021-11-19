@@ -322,41 +322,45 @@ IceTransport::Impl::~Impl()
         thread_.join();
     }
 
-    pj_ice_strans* strans = nullptr;
+    if (icest_) {
 
-    std::swap(strans, icest_);
+        pj_ice_strans* strans = nullptr;
 
-    assert(strans);
+        std::swap(strans, icest_);
 
-    // must be done before ioqueue/timer destruction
-    JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
+        // must be done before ioqueue/timer destruction
+        JAMI_INFO("[ice:%p] Destroying ice_strans %p",
+                  pj_ice_strans_get_user_data(strans), strans);
 
-    pj_ice_strans_stop_ice(strans);
-    pj_ice_strans_destroy(strans);
+        pj_ice_strans_stop_ice(strans);
+        pj_ice_strans_destroy(strans);
 
-    // NOTE: This last timer heap and IO queue polling is necessary to close
-    // TURN socket.
-    // Because when destroying the TURN session pjproject creates a pj_timer
-    // to postpone the TURN destruction. This timer is only called if we poll
-    // the event queue.
+        // NOTE: This last timer heap and IO queue polling is necessary to close
+        // TURN socket.
+        // Because when destroying the TURN session pjproject creates a pj_timer
+        // to postpone the TURN destruction. This timer is only called if we poll
+        // the event queue.
 
-    int ret = flushTimerHeapAndIoQueue();
+        int ret = flushTimerHeapAndIoQueue();
 
-    if (ret < 0) {
-        JAMI_ERR("[ice:%p] IO queue polling failed", this);
-    } else if (ret > 0) {
-        JAMI_ERR("[ice:%p] Unexpected left timer in timer heap. Please report the bug", this);
+        if (ret < 0) {
+            JAMI_ERR("[ice:%p] IO queue polling failed", this);
+        } else if (ret > 0) {
+            JAMI_ERR("[ice:%p] Unexpected left timer in timer heap. "
+                     "Please report the bug",
+                     this);
+        }
+
+        if (checkEventQueue(1) > 0) {
+            JAMI_WARN("[ice:%p] Unexpected left events in IO queue", this);
+        }
+
+        if (config_.stun_cfg.ioqueue)
+            pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
+
+        if (config_.stun_cfg.timer_heap)
+            pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
     }
-
-    if (checkEventQueue(1) > 0) {
-        JAMI_WARN("[ice:%p] Unexpected left events in IO queue", this);
-    }
-
-    if (config_.stun_cfg.ioqueue)
-        pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
-
-    if (config_.stun_cfg.timer_heap)
-        pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
 
     JAMI_DBG("[ice:%p] done destroying", this);
 }
