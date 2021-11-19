@@ -1000,7 +1000,6 @@ ConversationRequestTest::testRemoveContactRemoveSyncing()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return contactAdded; }));
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
-    contactAdded = false;
     bobAccount->removeContact(aliceUri, false);
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 0);

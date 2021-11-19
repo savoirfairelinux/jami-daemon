@@ -82,7 +82,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                                 const std::string& peerId,
                                 const DeviceId& device)
 {
-    std::unique_lock<std::mutex> lk(pimpl_->syncConnectionsMtx_);
+    std::lock_guard<std::mutex> lk(pimpl_->syncConnectionsMtx_);
     pimpl_->syncConnections_[device].emplace_back(socket);
 
     socket->onShutdown([w = pimpl_->weak(), peerId, device, socket]() {
