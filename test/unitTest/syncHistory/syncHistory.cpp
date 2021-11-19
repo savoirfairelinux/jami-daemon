@@ -604,7 +604,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -717,7 +716,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
