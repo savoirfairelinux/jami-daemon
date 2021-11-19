@@ -480,7 +480,7 @@ protected:
      */
     const std::string accountID_;
 
-    mutable std::mutex configurationMutex_ {};
+    mutable std::recursive_mutex configurationMutex_ {};
 
     /**
      * Account login information: username
