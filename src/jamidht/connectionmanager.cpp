@@ -730,7 +730,7 @@ ConnectionManager::Impl::onTlsNegotiationDone(bool ok,
         }
         addNewMultiplexedSocket(deviceId, vid);
         // Finally, open the channel and launch pending callbacks
-        if (info->socket_ && !isDhtRequest) {
+        if (info->socket_) {
             // Note: do not remove pending there it's done in sendChannelRequest
             for (const auto& pending : getPendingCallbacks(deviceId)) {
                 JAMI_DBG("Send request on TLS socket for channel %s to %s",
@@ -956,13 +956,14 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
                 if (sthis->connReadyCb_)
                     sthis->connReadyCb_(deviceId, socket->name(), socket);
         });
-    info->socket_->setOnRequest(
-        [w = weak()](const std::shared_ptr<dht::crypto::Certificate>& peer, const uint16_t&, const std::string& name) {
-            if (auto sthis = w.lock())
-                if (sthis->channelReqCb_)
-                    return sthis->channelReqCb_(peer, name);
-            return false;
-        });
+    info->socket_->setOnRequest([w = weak()](const std::shared_ptr<dht::crypto::Certificate>& peer,
+                                             const uint16_t&,
+                                             const std::string& name) {
+        if (auto sthis = w.lock())
+            if (sthis->channelReqCb_)
+                return sthis->channelReqCb_(peer, name);
+        return false;
+    });
     info->socket_->onShutdown([w = weak(), deviceId, vid]() {
         // Cancel current outgoing connections
         dht::ThreadPool::io().run([w, deviceId, vid] {
