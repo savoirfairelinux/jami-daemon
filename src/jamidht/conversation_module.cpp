@@ -1010,12 +1010,21 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId, con
                 return false;
             });
         });
-    ConvInfo info;
-    info.id = conversationId;
-    info.created = std::time(nullptr);
-    info.members.emplace_back(pimpl_->username_);
-    info.members.emplace_back(uri);
-    addConvInfo(info);
+
+    // Update infos if necessary
+    std::lock_guard<std::mutex> lkCI(pimpl_->convInfosMtx_);
+    auto itConv = pimpl_->convInfos_.find(conversationId);
+    // Check if it's not already added. It will be the case if acceptTrustRequest is used
+    // because contact details already contains the conversation's infos
+    if (itConv == pimpl_->convInfos_.end()) {
+        ConvInfo info;
+        info.id = conversationId;
+        info.created = std::time(nullptr);
+        info.members.emplace_back(pimpl_->username_);
+        info.members.emplace_back(uri);
+        pimpl_->convInfos_[conversationId] = std::move(info);
+        pimpl_->saveConvInfos();
+    }
 }
 
 // Message send/load
@@ -1530,6 +1539,7 @@ ConversationModule::removeContact(const std::string& uri, bool)
         if (!updated.empty() || !toRm.empty())
             pimpl_->saveConvInfos();
     }
+
     // Note, if we ban the device, we don't send the leave cause the other peer will just
     // never got the notifications, so just erase the datas
     for (const auto& id : toRm)

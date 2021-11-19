@@ -2331,7 +2331,16 @@ JamiAccount::convModule()
                     // Here, we also accepts the trust request linked
                     // Because, if convId is for a multi swarm, to sync,
                     // we also need for contactUri to be a contact.
-                    acceptTrustRequest(contactUri, true);
+                    auto accept = false;
+                    {
+                        std::lock_guard<std::mutex> lock(configurationMutex_);
+                        if (auto info = accountManager_->getInfo()) {
+                            auto req = info->contacts->getTrustRequest(dht::InfoHash(contactUri));
+                            accept = !req.empty();
+                        }
+                    }
+                    if (accept)
+                        acceptTrustRequest(contactUri, true);
                 } else {
                     updateConvForContact(contactUri, convId, "");
                 }
@@ -3016,6 +3025,8 @@ JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversatio
         }
 
         lock.unlock();
+        // Note: update convInfos there because getConversations() should return the conversation
+        // after this method
         auto details = getContactDetails(from);
         auto it = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
         if (it != details.end() && !it->second.empty()) {
