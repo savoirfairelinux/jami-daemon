@@ -52,6 +52,24 @@
       "parentUuid": "c78729a7_6c166b4e",
       "revId": "4d53900d5301692588f6049ba5fad76559faf8c7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "da93de1e_af2a1f64",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 935
+      },
+      "writtenOn": "2021-11-19T11:45:03Z",
+      "side": 1,
+      "message": "I do not have a public exemple. My own provider (teksavvy, but they themselves use metaswitch network apparently) does not send it, I only receive 100 Trying from them.\n\nBut if you have access to an asterisk server https://wiki.asterisk.org/wiki/display/AST/Asterisk+13+Application_Dial with m or r(tone) option should do it. And https://www.voip-info.org/asterisk-cmd-progress/ give some other use cases.",
+      "parentUuid": "4a048a15_1102c097",
+      "revId": "4d53900d5301692588f6049ba5fad76559faf8c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
