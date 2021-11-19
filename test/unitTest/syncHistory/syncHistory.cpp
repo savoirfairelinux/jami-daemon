@@ -244,8 +244,10 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     messageReceived = false;
     DRing::sendMessage(aliceId, convId, std::string("Message 1"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
+    messageReceived = false;
     DRing::sendMessage(aliceId, convId, std::string("Message 2"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
+    messageReceived = false;
     DRing::sendMessage(aliceId, convId, std::string("Message 3"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
 
@@ -604,7 +606,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -717,7 +718,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();

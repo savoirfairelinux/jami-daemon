@@ -676,6 +676,8 @@ void
 ConversationModule::saveConvRequestsToPath(
     const std::string& path, const std::map<std::string, ConversationRequest>& conversationsRequests)
 {
+    std::lock_guard<std::mutex> lock(
+        fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
     std::ofstream file(path + DIR_SEPARATOR_STR + "convRequests",
                        std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversationsRequests);
@@ -1652,6 +1654,8 @@ ConversationModule::convInfosFromPath(const std::string& path)
     std::map<std::string, ConvInfo> convInfos;
     try {
         // read file
+        std::lock_guard<std::mutex> lock(
+            fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convInfo"));
         auto file = fileutils::loadFile("convInfo", path);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
@@ -1675,6 +1679,8 @@ ConversationModule::convRequestsFromPath(const std::string& path)
     std::map<std::string, ConversationRequest> convRequests;
     try {
         // read file
+        std::lock_guard<std::mutex> lock(
+            fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
         auto file = fileutils::loadFile("convRequests", path);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());

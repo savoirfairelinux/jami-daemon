@@ -145,7 +145,6 @@ Conference::~Conference()
 {
 #ifdef ENABLE_VIDEO
     foreachCall([&](auto call) {
-        JAMI_ERR() << "@@@";
         call->exitConference();
         // Reset distant callInfo
         call->resetConfInfo();

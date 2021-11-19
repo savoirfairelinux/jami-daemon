@@ -2331,8 +2331,10 @@ ConversationTest::testReplayConversation()
     convId = "";
     aliceAccount->addContact(bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !convId.empty(); }));
+    messageReceived = false;
     DRing::sendMessage(aliceId, convId, "foo"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageReceived; }));
+    messageReceived = false;
     DRing::sendMessage(aliceId, convId, "bar"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageReceived; }));
     convId = "";
