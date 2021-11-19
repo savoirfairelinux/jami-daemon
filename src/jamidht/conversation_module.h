@@ -30,10 +30,12 @@
 
 namespace jami {
 
+using ConvInfoMap = std::map<std::string, ConvInfo, std::less<>>;
+
 struct SyncMsg
 {
     jami::DeviceSync ds;
-    std::map<std::string, jami::ConvInfo> c;
+    ConvInfoMap c;
     std::map<std::string, jami::ConversationRequest> cr;
     MSGPACK_DEFINE(ds, c, cr)
 };
@@ -331,9 +333,9 @@ public:
 
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId,
-                              const std::map<std::string, ConvInfo>& conversations);
+                              const ConvInfoMap& conversations);
     static void saveConvInfosToPath(const std::string& path,
-                                    const std::map<std::string, ConvInfo>& conversations);
+                                    const ConvInfoMap& conversations);
     static void saveConvRequests(
         const std::string& accountId,
         const std::map<std::string, ConversationRequest>& conversationsRequests);
@@ -341,8 +343,8 @@ public:
         const std::string& path,
         const std::map<std::string, ConversationRequest>& conversationsRequests);
 
-    static std::map<std::string, ConvInfo> convInfos(const std::string& accountId);
-    static std::map<std::string, ConvInfo> convInfosFromPath(const std::string& path);
+    static ConvInfoMap convInfos(const std::string& accountId);
+    static ConvInfoMap convInfosFromPath(const std::string& path);
     static std::map<std::string, ConversationRequest> convRequests(const std::string& accountId);
     static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::string& path);
     void addConvInfo(const ConvInfo& info);
