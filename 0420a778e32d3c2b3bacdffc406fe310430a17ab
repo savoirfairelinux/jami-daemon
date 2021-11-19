@@ -33,6 +33,24 @@
       "message": "Do we know why icest_ can be null ?",
       "revId": "0420a778e32d3c2b3bacdffc406fe310430a17ab",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d40d043_4d5e99d9",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 325,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-19T16:38:26Z",
+      "side": 1,
+      "message": "Technically there can be at least two reasons I see:\nThe IceTransport is destroyed without calling initIceInstance first, resulting in a nullptr icest_\nThe pool_create failed, causing the ice to be uninitialized and ice_st to be nullptr. This can be the case when spamming like Olivier do.",
+      "parentUuid": "c59e3715_545276a9",
+      "revId": "0420a778e32d3c2b3bacdffc406fe310430a17ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
