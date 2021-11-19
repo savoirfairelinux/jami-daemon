@@ -87,6 +87,29 @@
       "parentUuid": "30dd1382_cb7173c1",
       "revId": "0420a778e32d3c2b3bacdffc406fe310430a17ab",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e193cf6_a484d2fc",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 329,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-19T19:47:58Z",
+      "side": 1,
+      "message": "test strans after the swap",
+      "range": {
+        "startLine": 329,
+        "startChar": 7,
+        "endLine": 329,
+        "endChar": 34
+      },
+      "revId": "0420a778e32d3c2b3bacdffc406fe310430a17ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
