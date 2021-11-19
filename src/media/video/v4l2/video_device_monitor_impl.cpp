@@ -39,6 +39,7 @@
 
 extern "C" {
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 }
@@ -212,28 +213,43 @@ VideoDeviceMonitorImpl::run()
     }
 
     const int udev_fd = udev_monitor_get_fd(udev_mon_);
-    while (probing_) {
-        timeval timeout = {0 /* sec */, 500000 /* usec */};
-        fd_set set;
-        FD_ZERO(&set);
-        FD_SET(udev_fd, &set);
 
-        int ret = select(udev_fd + 1, &set, NULL, NULL, &timeout);
-        switch (ret) {
-        case 0:
-            break;
-        case 1: {
+    while (probing_) {
+
+        const int timeout_ms = 500;
+
+        struct pollfd fds = {
+            .fd      = udev_fd,
+            .events  = POLLIN,
+            .revents = 0
+        };
+
+        int ret = poll(&fds, 1, timeout_ms);
+
+        if (ret < 0) {
+            JAMI_ERR("udev monitoring thread: select failed (%m)");
+            probing_ = false;
+            return;
+        }
+
+        for (int i=0; i<ret; ++i) {
+
             udev_device* dev = udev_monitor_receive_device(udev_mon_);
+
             if (is_v4l2(dev)) {
+
                 const char* path = udev_device_get_devnode(dev);
+
                 if (path && std::string(path).find("/dev") != 0) {
                     // udev_device_get_devnode will fail
                     break;
                 }
+
                 try {
                     auto unique_name = getDeviceString(dev);
 
                     const char* action = udev_device_get_action(dev);
+
                     if (!strcmp(action, "add")) {
                         JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
                         if (monitor_->addDevice(unique_name, {{{"devPath", path}}}))
@@ -256,19 +272,6 @@ VideoDeviceMonitorImpl::run()
             }
             udev_device_unref(dev);
             break;
-        }
-
-        case -1:
-            if (errno == EAGAIN)
-                continue;
-            JAMI_ERR("udev monitoring thread: select failed (%m)");
-            probing_ = false;
-            return;
-
-        default:
-            JAMI_ERR("select() returned %d (%m)", ret);
-            probing_ = false;
-            return;
         }
     }
 }
