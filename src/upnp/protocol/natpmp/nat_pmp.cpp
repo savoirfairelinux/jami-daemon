@@ -21,6 +21,15 @@
 
 #include "nat_pmp.h"
 
+extern "C" {
+#ifdef _WIN32
+#include <winsock2.h>
+#define poll WSAPoll
+#else
+#include <poll.h>
+#endif
+}
+
 #if HAVE_LIBNATPMP
 
 namespace jami {
@@ -374,15 +383,34 @@ NatPmp::readResponse(natpmp_t& handle, natpmpresp_t& response)
             break;
         }
 
-        fd_set fds;
         struct timeval timeout;
-        FD_ZERO(&fds);
-        FD_SET(handle.s, &fds);
+
         getnatpmprequesttimeout(&handle, &timeout);
+
+        int timeout_ms = (timeout.tv_sec * 1000 +
+                          timeout.tv_usec / 1000);
+
+        struct pollfd fds;
+
+#ifdef _WIN32
+        fds.fd = static_cast<SOCKET>(handle.s);
+#else
+        fds.fd = handle.s;
+#endif
+        fds.events = POLLRDNORM;
+        fds.revents = 0;
+
+        err = poll(&fds, 1, timeout_ms);
+
         // Wait for data.
-        if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) == -1) {
+        if (err < 0) {
             err = NATPMP_ERR_SOCKETERROR;
             break;
+        }
+
+        // Timeout
+        if (err == 0) {
+            continue;
         }
 
         // Read the data.
