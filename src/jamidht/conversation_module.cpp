@@ -34,8 +34,6 @@
 
 namespace jami {
 
-using ConvInfoMap = std::map<std::string, ConvInfo>;
-
 struct PendingConversationFetch
 {
     bool ready {false};
@@ -138,7 +136,7 @@ public:
 
     // Conversations
     mutable std::mutex conversationsMtx_ {};
-    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
+    std::map<std::string, std::shared_ptr<Conversation>, std::less<>> conversations_;
     std::mutex pendingConversationsFetchMtx_ {};
     std::map<std::string, PendingConversationFetch> pendingConversationsFetch_;
 
@@ -189,7 +187,7 @@ public:
 
     // The following informations are stored on the disk
     mutable std::mutex convInfosMtx_; // Note, should be locked after conversationsMtx_ if needed
-    std::map<std::string, ConvInfo> convInfos_;
+    ConvInfoMap convInfos_;
     // The following methods modify what is stored on the disk
     /**
      * @note convInfosMtx_ should be locked
@@ -1641,17 +1639,17 @@ ConversationModule::initReplay(const std::string& oldConvId, const std::string& 
     }
 }
 
-std::map<std::string, ConvInfo>
+ConvInfoMap
 ConversationModule::convInfos(const std::string& accountId)
 {
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
     return convInfosFromPath(path);
 }
 
-std::map<std::string, ConvInfo>
+ConvInfoMap
 ConversationModule::convInfosFromPath(const std::string& path)
 {
-    std::map<std::string, ConvInfo> convInfos;
+    ConvInfoMap convInfos;
     try {
         // read file
         std::lock_guard<std::mutex> lock(

@@ -38,6 +38,7 @@ constexpr auto WANT_CMD = "want"sv;
 constexpr auto HAVE_CMD = "have"sv;
 constexpr auto SERVER_CAPABILITIES
     = " HEAD\0side-band side-band-64k shallow no-progress include-tag"sv;
+constexpr auto VERSION_PKT = "000eversion 1\0"sv;
 
 namespace jami {
 
@@ -80,7 +81,7 @@ public:
     void ACKCommon();
     bool ACKFirst();
     void sendPackData();
-    std::map<std::string, std::string> getParameters(const std::string& pkt_line);
+    std::map<std::string, std::string> getParameters(std::string_view pkt_line);
 
     std::string repositoryId_ {};
     std::string repository_ {};
@@ -432,7 +433,7 @@ GitServer::Impl::sendPackData()
 }
 
 std::map<std::string, std::string>
-GitServer::Impl::getParameters(const std::string& pkt_line)
+GitServer::Impl::getParameters(std::string_view pkt_line)
 {
     std::map<std::string, std::string> parameters;
     std::string key, value;
@@ -443,7 +444,7 @@ GitServer::Impl::getParameters(const std::string& pkt_line)
         if (letter == '\0') {
             // parameters such as host or version are after the first \0
             if (nullChar != 0 && !key.empty()) {
-                parameters[key] = value;
+                parameters[std::move(key)] = std::move(value);
             }
             nullChar += 1;
             isKey = true;
