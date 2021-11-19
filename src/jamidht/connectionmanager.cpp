@@ -956,20 +956,23 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
                 if (sthis->connReadyCb_)
                     sthis->connReadyCb_(deviceId, socket->name(), socket);
         });
-    info->socket_->setOnRequest(
-        [w = weak()](const std::shared_ptr<dht::crypto::Certificate>& peer, const uint16_t&, const std::string& name) {
-            if (auto sthis = w.lock())
-                if (sthis->channelReqCb_)
-                    return sthis->channelReqCb_(peer, name);
-            return false;
-        });
+    info->socket_->setOnRequest([w = weak()](const std::shared_ptr<dht::crypto::Certificate>& peer,
+                                             const uint16_t&,
+                                             const std::string& name) {
+        if (auto sthis = w.lock())
+            if (sthis->channelReqCb_)
+                return sthis->channelReqCb_(peer, name);
+        return false;
+    });
     info->socket_->onShutdown([w = weak(), deviceId, vid]() {
         // Cancel current outgoing connections
+        JAMI_ERR() << "@@@ ConnectionManager::Impl::addNewMultiplexedSocket SHUT";
         dht::ThreadPool::io().run([w, deviceId, vid] {
             auto sthis = w.lock();
             if (!sthis)
                 return;
 
+            JAMI_ERR() << "@@@ ConnectionManager::Impl::addNewMultiplexedSocket SHUT2";
             std::set<CallbackId> ids;
             if (auto info = sthis->getInfo(deviceId, vid)) {
                 std::lock_guard<std::mutex> lk(info->mutex_);
@@ -980,12 +983,15 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
                 if (info->ice_)
                     info->ice_->cancelOperations();
             }
+            JAMI_ERR() << "@@@ ConnectionManager::Impl::addNewMultiplexedSocket SHUT3";
             for (const auto& cbId : ids)
                 for (const auto& pending : sthis->extractPendingCallbacks(cbId.first, cbId.second))
                     pending.cb(nullptr, deviceId);
+            JAMI_ERR() << "@@@ ConnectionManager::Impl::addNewMultiplexedSocket SHUT4";
 
             std::lock_guard<std::mutex> lk(sthis->infosMtx_);
             sthis->infos_.erase({deviceId, vid});
+            JAMI_ERR() << "@@@ ConnectionManager::Impl::addNewMultiplexedSocket SHUT5";
         });
     });
 }

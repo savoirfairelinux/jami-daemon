@@ -2093,8 +2093,12 @@ JamiAccount::doRegister_()
 
                 auto uri = Uri(name);
                 auto itHandler = channelHandlers_.find(uri.scheme());
-                if (itHandler != channelHandlers_.end() && itHandler->second)
-                    return itHandler->second->onRequest(cert, name);
+                if (itHandler != channelHandlers_.end() && itHandler->second) {
+                    JAMI_ERR() << getAccountID() << "@@@ ON REQ " << name;
+                    auto res = itHandler->second->onRequest(cert, name);
+                    JAMI_ERR() << getAccountID() << "@@@ ON REQ END " << name << " @@@ " << res;
+                    return res;
+                }
                 // TODO replace
                 auto isFile = name.substr(0, 7) == FILE_URI;
                 auto isVCard = name.substr(0, 8) == VCARD_URI;
@@ -2121,7 +2125,9 @@ JamiAccount::doRegister_()
                 auto isFile = name.substr(0, 7) == FILE_URI;
                 auto isVCard = name.substr(0, 8) == VCARD_URI;
                 if (name == "sip") {
+                    JAMI_ERR() << getAccountID() << " @@@ cacheSIP";
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
+                    JAMI_ERR() << getAccountID() << " @@@ cacheSIP END";
                 } else if (isFile or isVCard) {
                     auto tid = isFile ? name.substr(7) : name.substr(8);
                     std::unique_lock<std::mutex> lk(transfersMtx_);
@@ -2129,6 +2135,7 @@ JamiAccount::doRegister_()
                     // Note, outgoing file transfers are ignored.
                     if (it == incomingFileTransfers_.end())
                         return;
+                    JAMI_ERR() << getAccountID() << " @@@ FILE";
                     incomingFileTransfers_.erase(it);
                     lk.unlock();
                     InternalCompletionCb cb;
@@ -2150,17 +2157,21 @@ JamiAccount::doRegister_()
                     } catch (...) {
                         JAMI_ERR() << "Invalid tid: " << tid;
                     }
+                    JAMI_ERR() << getAccountID() << " @@@ FILE END";
 
                 } else if (name.find("git://") == 0) {
                     auto sep = name.find_last_of('/');
                     auto conversationId = name.substr(sep + 1);
                     auto remoteDevice = name.substr(6, sep - 6);
 
+                    JAMI_ERR() << getAccountID() << " @@@ GIT ???!" << name << " -- "
+                               << remoteDevice;
                     if (channel->isInitiator()) {
                         // Check if wanted remote it's our side (git://remoteDevice/conversationId)
                         return;
                     }
 
+                    JAMI_ERR() << getAccountID() << " @@@ GIT";
                     // Check if pull from banned device
                     if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
                         JAMI_WARN("[Account %s] Git server requested for conversation %s, but the "
@@ -2177,6 +2188,7 @@ JamiAccount::doRegister_()
                     if (sock != std::nullopt && sock->lock() == channel) {
                         // The onConnectionReady is already used as client (for retrieving messages)
                         // So it's not the server socket
+                        JAMI_ERR() << getAccountID() << " @@@ GIT END";
                         return;
                     }
                     auto accountId = this->accountID_;
@@ -2206,12 +2218,15 @@ JamiAccount::doRegister_()
                             shared->gitServers_.erase(serverId);
                         });
                     });
+                    JAMI_ERR() << getAccountID() << " @@@ GIT END";
                 } else {
                     // TODO move git://
+                    JAMI_ERR() << getAccountID() << " @@@ GOT" << name;
                     auto uri = Uri(name);
                     auto itHandler = channelHandlers_.find(uri.scheme());
                     if (itHandler != channelHandlers_.end() && itHandler->second)
                         itHandler->second->onReady(cert, name, std::move(channel));
+                    JAMI_ERR() << getAccountID() << " @@@ GOT END";
                 }
             }
         });
@@ -2309,21 +2324,26 @@ JamiAccount::convModule()
                         cb({});
                         return;
                     }
-                    shared->connectionManager_
-                        ->connectDevice(DeviceId(deviceId),
-                                        "git://" + deviceId + "/" + convId,
-                                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId&) {
-                                            if (socket) {
-                                                socket->onShutdown(
-                                                    [shared, deviceId = socket->deviceId(), convId] {
-                                                        shared->removeGitSocket(deviceId, convId);
-                                                    });
-                                                if (!cb(socket))
-                                                    socket->shutdown();
-                                            } else
-                                                cb({});
-                                        });
+                    JAMI_ERR() << "@@@ CONNECT GIT " << shared->getAccountID() << " " << deviceId
+                               << "/" << convId;
+                    shared->connectionManager_->connectDevice(
+                        DeviceId(deviceId),
+                        "git://" + deviceId + "/" + convId,
+                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
+                                             const DeviceId&) {
+                            if (socket) {
+                                socket->onShutdown([shared, deviceId = socket->deviceId(), convId] {
+                                    shared->removeGitSocket(deviceId, convId);
+                                });
+                                JAMI_ERR() << "@@@ GO GIT!" << shared->getAccountID();
+                                if (!cb(socket))
+                                    socket->shutdown();
+                                JAMI_ERR() << "@@@ GO GIT!" << shared->getAccountID();
+                            } else {
+                                JAMI_ERR() << "@@@ NONE!";
+                                cb({});
+                            }
+                        });
                 });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {

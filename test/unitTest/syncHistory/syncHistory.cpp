@@ -72,18 +72,18 @@ private:
     void testProfileReceivedMultiDevice();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
-    CPPUNIT_TEST(testCreateConversationThenSync);
-    CPPUNIT_TEST(testCreateConversationWithOnlineDevice);
-    CPPUNIT_TEST(testCreateConversationWithMessagesThenAddDevice);
+    // CPPUNIT_TEST(testCreateConversationThenSync);
+    // CPPUNIT_TEST(testCreateConversationWithOnlineDevice);
+    // CPPUNIT_TEST(testCreateConversationWithMessagesThenAddDevice);
     CPPUNIT_TEST(testCreateMultipleConversationThenAddDevice);
-    CPPUNIT_TEST(testReceivesInviteThenAddDevice);
-    CPPUNIT_TEST(testRemoveConversationOnAllDevices);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
+    // CPPUNIT_TEST(testReceivesInviteThenAddDevice);
+    // CPPUNIT_TEST(testRemoveConversationOnAllDevices);
+    // CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
+    // CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
+    // CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
     CPPUNIT_TEST(testSyncOneToOne);
-    CPPUNIT_TEST(testConversationRequestRemoved);
-    CPPUNIT_TEST(testProfileReceivedMultiDevice);
+    // CPPUNIT_TEST(testConversationRequestRemoved);
+    // CPPUNIT_TEST(testProfileReceivedMultiDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -326,6 +326,7 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
 
+    JAMI_ERR() << "@@@ ALICE 2 " << alice2Id;
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -596,7 +597,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 {
-
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -707,7 +707,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
 {
-
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -801,7 +800,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
 void
 SyncHistoryTest::testSyncOneToOne()
 {
-
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     // Start conversation
@@ -848,6 +846,7 @@ SyncHistoryTest::testSyncOneToOne()
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
 
     alice2Id = Manager::instance().addAccount(details);
+    JAMI_ERR() << "@@@@@ " << aliceId << " " << alice2Id;
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
         return alice2Ready && conversationReady;
     }));

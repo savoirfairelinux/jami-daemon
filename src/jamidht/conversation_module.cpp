@@ -677,7 +677,8 @@ void
 ConversationModule::saveConvRequestsToPath(
     const std::string& path, const std::map<std::string, ConversationRequest>& conversationsRequests)
 {
-    std::lock_guard<std::mutex> lock(fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
+    std::lock_guard<std::mutex> lock(
+        fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
     std::ofstream file(path + DIR_SEPARATOR_STR + "convRequests",
                        std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversationsRequests);
@@ -1473,8 +1474,17 @@ ConversationModule::isBannedDevice(const std::string& convId, const std::string&
 {
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     auto conversation = pimpl_->conversations_.find(convId);
-    return conversation == pimpl_->conversations_.end() || !conversation->second
-           || conversation->second->isBanned(deviceId);
+    if (conversation == pimpl_->conversations_.end()) {
+        JAMI_ERR() << "@@@ RET true";
+        return true;
+    } else if (!conversation->second) {
+        JAMI_ERR() << "@@@ RET true";
+        return true;
+    } else if (conversation->second->isBanned(deviceId)) {
+        JAMI_ERR() << "@@@ RET true";
+        return true;
+    }
+    return false;
 }
 
 void
@@ -1665,7 +1675,8 @@ ConversationModule::convInfosFromPath(const std::string& path)
     std::map<std::string, ConvInfo> convInfos;
     try {
         // read file
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convInfo"));
+        std::lock_guard<std::mutex> lock(
+            fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convInfo"));
         auto file = fileutils::loadFile("convInfo", path);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
@@ -1689,7 +1700,8 @@ ConversationModule::convRequestsFromPath(const std::string& path)
     std::map<std::string, ConversationRequest> convRequests;
     try {
         // read file
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
+        std::lock_guard<std::mutex> lock(
+            fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
         auto file = fileutils::loadFile("convRequests", path);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());

@@ -368,6 +368,7 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
     val.channel = channel;
     val.name = name;
     val.state = accept ? ChannelRequestState::ACCEPT : ChannelRequestState::DECLINE;
+    JAMI_ERR() << "@@@ ANSWER" << accept;
     msgpack::sbuffer buffer(512);
     msgpack::pack(buffer, val);
     std::error_code ec;
@@ -409,12 +410,15 @@ MultiplexedSocket::Impl::handleControlPacket(std::vector<uint8_t>&& pkt)
                 if (req.state == ChannelRequestState::ACCEPT) {
                     pimpl.onAccept(req.name, req.channel);
                 } else if (req.state == ChannelRequestState::DECLINE) {
+                    JAMI_ERR() << "@@@ DECLINE!";
                     std::lock_guard<std::mutex> lkSockets(pimpl.socketsMutex);
+                    JAMI_ERR() << "@@@ DECLINE!2";
                     auto channel = pimpl.sockets.find(req.channel);
                     if (channel != pimpl.sockets.end()) {
                         channel->second->stop();
                         pimpl.sockets.erase(channel);
                     }
+                    JAMI_ERR() << "@@@ DECLINE! END";
                 } else if (pimpl.onRequest_) {
                     pimpl.onRequest(req.name, req.channel);
                 }
