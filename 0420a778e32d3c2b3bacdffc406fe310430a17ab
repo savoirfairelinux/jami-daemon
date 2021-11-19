@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cacd985f_4453ba50",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-19T16:32:10Z",
+      "side": 1,
+      "message": "I put -1 just to make sure we understand why this condition happens before merging, and we are not hiding a bigger problem.\n",
+      "revId": "0420a778e32d3c2b3bacdffc406fe310430a17ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c59e3715_545276a9",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 325,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-19T16:32:10Z",
+      "side": 1,
+      "message": "Do we know why icest_ can be null ?",
+      "revId": "0420a778e32d3c2b3bacdffc406fe310430a17ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
