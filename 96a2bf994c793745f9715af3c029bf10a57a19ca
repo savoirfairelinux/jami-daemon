@@ -22,6 +22,30 @@
       },
       "revId": "96a2bf994c793745f9715af3c029bf10a57a19ca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5dbbd0e8_c6ab2639",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-19T01:08:38Z",
+      "side": 1,
+      "message": "as agreed, the host must be attached to allow control of the local capture devices",
+      "parentUuid": "ccbaca65_08064f4c",
+      "range": {
+        "startLine": 445,
+        "startChar": 4,
+        "endLine": 449,
+        "endChar": 5
+      },
+      "revId": "96a2bf994c793745f9715af3c029bf10a57a19ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
