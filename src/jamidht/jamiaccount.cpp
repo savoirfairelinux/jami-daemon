@@ -1123,10 +1123,10 @@ JamiAccount::loadAccount(const std::string& archive_password,
             });
         },
         [this](const std::string& conversationId) {
-            dht::ThreadPool::computation().run([w = weak(), conversationId] {
-                if (auto acc = w.lock())
-                    acc->convModule()->acceptConversationRequest(conversationId);
-            });
+            // Note: Do not retrigger on another thread. This as to be done
+            // at the same time of acceptTrustRequest a synced state between TrustRequest
+            // and convRequests.
+            convModule()->acceptConversationRequest(conversationId);
         },
         [this](const std::string& uri, const std::string& convFromReq) {
             // Remove cached payload if there is one
@@ -2327,14 +2327,32 @@ JamiAccount::convModule()
                 });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
-                if (accept) {
-                    // Here, we also accepts the trust request linked
-                    // Because, if convId is for a multi swarm, to sync,
-                    // we also need for contactUri to be a contact.
-                    acceptTrustRequest(contactUri, true);
-                } else {
-                    updateConvForContact(contactUri, convId, "");
-                }
+                runOnMainThread([w = weak(),
+                                 convId = std::move(convId),
+                                 contactUri = std::move(contactUri),
+                                 accept] {
+                    auto acc = w.lock();
+                    if (!acc)
+                        return;
+                    if (accept) {
+                        // Here, we also accepts the trust request linked
+                        // Because, if convId is for a multi swarm, to sync,
+                        // we also need for contactUri to be a contact.
+                        auto accept = false;
+                        {
+                            std::lock_guard<std::mutex> lock(acc->configurationMutex_);
+                            if (auto info = acc->accountManager_->getInfo()) {
+                                auto req = info->contacts->getTrustRequest(
+                                    dht::InfoHash(contactUri));
+                                accept = !req.empty();
+                            }
+                        }
+                        if (accept)
+                            acc->acceptTrustRequest(contactUri, true);
+                    } else {
+                        acc->updateConvForContact(contactUri, convId, "");
+                    }
+                });
             });
     }
     return convModule_.get();
@@ -3013,18 +3031,6 @@ JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversatio
             // Note: unused for swarm
             // Typically the case where the trust request doesn't exists, only incoming DHT messages
             return accountManager_->addContact(from, true);
-        }
-
-        lock.unlock();
-        auto details = getContactDetails(from);
-        auto it = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
-        if (it != details.end() && !it->second.empty()) {
-            ConvInfo info;
-            info.id = it->second;
-            info.created = std::time(nullptr);
-            info.members.emplace_back(getUsername());
-            info.members.emplace_back(from);
-            convModule()->addConvInfo(info);
         }
         return true;
     }
