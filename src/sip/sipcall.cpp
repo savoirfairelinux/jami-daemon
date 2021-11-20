@@ -1468,7 +1468,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
                 // method to prevent unexpected behavior when interoperating with
                 // some SIP implementations.
                 if (not isSipMethodAllowedByPeer(sip_utils::SIP_METHODS::MESSAGE)) {
-                    JAMI_WARN() << fmt::format("[call:{}] Peer does not allow \"{}\" method]",
+                    JAMI_WARN() << fmt::format("[call:{}] Peer does not allow \"{}\" method",
                                                getCallId(),
                                                sip_utils::SIP_METHODS::MESSAGE);
 

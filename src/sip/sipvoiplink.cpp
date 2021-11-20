@@ -920,7 +920,10 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     }
     if (rdata != nullptr) {
         call->setPeerUaVersion(sip_utils::getPeerUserAgent(rdata));
-        call->setPeerAllowMethods(sip_utils::getPeerAllowMethods(rdata));
+        auto methods = sip_utils::getPeerAllowMethods(rdata);
+        if (not methods.empty()) {
+            call->setPeerAllowMethods(std::move(methods));
+        }
     }
 
     switch (inv->state) {
