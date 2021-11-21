@@ -1,39 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright 2020 Savoir-faire Linux -->
+<!-- Copyright 2020-2021 Savoir-faire Linux -->
 <component>
  <id>net.jami.daemon</id>
  <metadata_license>CC-BY-SA-3.0</metadata_license>
  <project_license>GPL-3.0+</project_license>
  <name>Jami daemon</name>
- <summary>Jami is a software for secure communications with distributed architecture</summary>
+ <name xml:lang="hu">Jami-rendszerfolyamat</name>
+ <summary>Privacy-oriented voice, video, chat, and conference platform</summary>
+ <summary xml:lang="hu">Adatvédelem-orientált hang-, video-, csevegés- és konferenciaplatform</summary>
 
  <description>
   <p>
-   Jami is a free and open source software, which allows to make encrypted audio or video calls and to send files and messages around the world. Jami is an official GNU package, that uses fully distributed architecture and independent from any centralized service. Additional support for SIP communications is provided.
+   An end-to-end encrypted secure and distributed voice, video, and chat communication platform that requires no central server and leaves the power of privacy and freedom in the hands of users.
   </p>
   <p>
-   Features:
-   <ul>
-   <li>Audio and video calls, instant messaging, file transfers</li>
+   Jami supports the following key features:
+  </p>
+  <ul>
+   <li>One-to-one conversations</li>
+   <li>File sharing</li>
+   <li>Audio and video calls and conferences</li>
+   <li>Screen sharing in video calls and conferences</li>
+   <li>Recording and sending audio and video messages</li>
+   <li>Functioning as a SIP phone software</li>
    <li>Distributed architecture — p2p connections, DHT for a peer discovery</li>
    <li>Multi-device support</li>
-   <li>Available on Windows, MacOS, iOS, GNU/Linux, Android and Android TV</li>
-   </ul>
+  </ul>
+  <p>
+   Client applications for GNU/Linux, Windows, macOS, iOS, Android, and Android TV are available, making Jami an interoperable and cross-platform communication framework.
   </p>
+
+  <p xml:lang="hu">
+   Végpontokig titkosított biztonságos és elosztott hang-, videó- és csevegés-kommunikációs platform, amely nem igényel központi kiszolgálót, és a felhasználók kezében hagyja a magánélet és a szabadság hatalmát.
+  </p>
+  <p xml:lang="hu">
+   A Jami a következő főbb funkciókat támogatja:
+  </p>
+  <ul>
+   <li xml:lang="hu">Személyes beszélgetések</li>
+   <li xml:lang="hu">Fájlmegosztás</li>
+   <li xml:lang="hu">Hang- és videohívások és konferenciák</li>
+   <li xml:lang="hu">Képernyőmegosztás videohívásokban és konferenciákon</li>
+   <li xml:lang="hu">Hang és videó üzenetek rögzítése és küldése</li>
+   <li xml:lang="hu">SIP-telefonszoftverként működik</li>
+   <li xml:lang="hu">Elosztott architektúra – p2p kapcsolatok, DHT a peer felfedezéshez</li>
+   <li xml:lang="hu">Több eszköz támogatása</li>
+  </ul>
+  <p xml:lang="hu">
+   Elérhetők a GNU/Linux, Windows, macOS, iOS, Android és Android TV ügyfélalkalmazásai, így a Jami interoperábilis és többplatformos kommunikációs keretrendszerré válik.
+  </p>
+
  </description>
 
  <url type="homepage">https://jami.net/</url>
  <url type="bugtracker">https://git.jami.net/savoirfairelinux/ring-daemon/issues/</url>
+ <url type="faq">https://jami.net/help/</url>
+ <url type="help">https://git.jami.net/savoirfairelinux/jami-project/-/wikis/home</url>
+ <url type="donation">https://www.paypal.com/donate/?hosted_button_id=MGUDJLQZ4TP5W</url>
+ <url type="translate">https://www.transifex.com/savoirfairelinux/jami</url>
 
  <provides>
 @PROVIDES_CONTENT@
 ​ </provides>
 
+ <!-- https://specifications.freedesktop.org/menu-spec/latest/apa.html -->
+ <!-- https://specifications.freedesktop.org/menu-spec/latest/apas02.html -->
  <categories>
-  <category>Network</category>
-  <category>P2P</category>
-  <category>InstantMessaging</category>
+  <category>Chat</category>
+  <category>Communication</category>
   <category>FileTransfer</category>
+  <category>InstantMessaging</category>
+  <category>Network</category>
+  <category>p2p</category>
+  <category>Productivity</category>
  </categories>
 
  <content_rating type="oars-1.1">
