@@ -22,6 +22,30 @@
       },
       "revId": "caad9b34c9395bc4fea3a1e3eb56707745510a76",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "21461b5e_89cd83de",
+        "filename": "net.jami.daemon.metainfo.xml.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2021-11-22T19:22:06Z",
+      "side": 0,
+      "message": "Can\u0027t see `Multi-device support` anymore?",
+      "parentUuid": "31671b85_ef19a994",
+      "range": {
+        "startLine": 19,
+        "startChar": 6,
+        "endLine": 19,
+        "endChar": 32
+      },
+      "revId": "caad9b34c9395bc4fea3a1e3eb56707745510a76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
