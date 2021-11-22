@@ -570,9 +570,9 @@ pausePlayer(const std::string& id, bool pause)
 }
 
 bool
-closePlayer(const std::string& id)
+closeMediaPlayer(const std::string& id)
 {
-    return jami::closePlayer(id);
+    return jami::closeMediaPlayer(id);
 }
 
 bool
@@ -758,7 +758,7 @@ pausePlayer(const std::string& id, bool pause)
 }
 
 bool
-closePlayer(const std::string& id)
+closeMediaPlayer(const std::string& id)
 {
     return Manager::instance().getVideoManager().mediaPlayers.erase(id) > 0;
 }

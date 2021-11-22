@@ -57,7 +57,8 @@ public:
     std::map<std::string, std::weak_ptr<video::VideoInput>, std::less<>> videoInputs;
     std::mutex audioMutex;
     bool hasRunningPlayers();
-    std::shared_ptr<video::VideoInput> getVideoInput(std::string_view id) const {
+    std::shared_ptr<video::VideoInput> getVideoInput(std::string_view id) const
+    {
         auto input = videoInputs.find(id);
         return input == videoInputs.end() ? nullptr : input->second.lock();
     }
@@ -65,11 +66,12 @@ public:
 
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
-std::shared_ptr<video::VideoInput> getVideoInput(const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
+std::shared_ptr<video::VideoInput> getVideoInput(
+    const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
 std::string createMediaPlayer(const std::string& path);
 std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
 bool pausePlayer(const std::string& id, bool pause);
-bool closePlayer(const std::string& id);
+bool closeMediaPlayer(const std::string& id);
 bool mutePlayerAudio(const std::string& id, bool mute);
 bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
