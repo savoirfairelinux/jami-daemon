@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a666cc9c_daec4e2b",
+        "filename": "net.jami.daemon.metainfo.xml.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-22T14:37:05Z",
+      "side": 1,
+      "message": "can be grouped",
+      "range": {
+        "startLine": 21,
+        "startChar": 24,
+        "endLine": 23,
+        "endChar": 39
+      },
+      "revId": "1543bbfb6813b54bfd6226361ab4449cad101cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "00eea1eb_e7353867",
+        "filename": "net.jami.daemon.metainfo.xml.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-22T14:37:05Z",
+      "side": 1,
+      "message": "can be grouped.",
+      "range": {
+        "startLine": 25,
+        "startChar": 21,
+        "endLine": 26,
+        "endChar": 48
+      },
+      "revId": "1543bbfb6813b54bfd6226361ab4449cad101cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
