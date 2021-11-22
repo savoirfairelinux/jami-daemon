@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ae5757d_59900f6b",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 931,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-22T19:58:18Z",
+      "side": 1,
+      "message": "PJSIP_SC_PROGRESS should be checked imho",
+      "range": {
+        "startLine": 929,
+        "startChar": 34,
+        "endLine": 931,
+        "endChar": 34
+      },
+      "revId": "4539a01900dedaad34a4b4ddf2a35e6abb611511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b61c90fe_234e7624",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 931,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-22T19:58:18Z",
+      "side": 1,
+      "message": "Note:\n\nFor linphone, they have a dedicated settings \"Ring during incoming early media\", which is disabled by default.\n\nI think it should be at least a setting (I think enabled by default, cause I don\u0027t see why it should be disabled",
+      "range": {
+        "startLine": 931,
+        "startChar": 26,
+        "endLine": 931,
+        "endChar": 28
+      },
+      "revId": "4539a01900dedaad34a4b4ddf2a35e6abb611511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
