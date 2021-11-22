@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1d2058ff_525e48b6",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-22T19:46:37Z",
+      "side": 1,
+      "message": "To enable cursor drawing,ffmpeg must enable xcb fixes.\nBuild machine must have libxcb-xfixes0-dev installed to enable cursor drawing in screensharing.",
+      "range": {
+        "startLine": 6,
+        "startChar": 1,
+        "endLine": 6,
+        "endChar": 24
+      },
+      "revId": "e73510b71f0a52dd9aa544e55b71fe52ae341afb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
