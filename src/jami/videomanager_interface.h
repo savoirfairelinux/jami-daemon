@@ -26,7 +26,7 @@
 extern "C" {
 struct AVFrame;
 struct AVPacket;
-void av_frame_free(AVFrame **frame);
+void av_frame_free(AVFrame** frame);
 }
 
 #include "def.h"
@@ -154,7 +154,6 @@ private:
     void setGeometry(int format, int width, int height) noexcept;
 };
 
-
 /* FrameBuffer is a generic video frame container */
 struct DRING_PUBLIC FrameBuffer
 {
@@ -165,7 +164,9 @@ struct DRING_PUBLIC FrameBuffer
     int height {0};          // frame height
     std::vector<uint8_t> storage;
     // If set, new frame will be written to this buffer instead
-    std::unique_ptr<AVFrame, void (*)(AVFrame*)> avframe {nullptr, [](AVFrame* frame) { av_frame_free(&frame); }};
+    std::unique_ptr<AVFrame, void (*)(AVFrame*)> avframe {nullptr, [](AVFrame* frame) {
+                                                              av_frame_free(&frame);
+                                                          }};
 };
 
 struct DRING_PUBLIC SinkTarget
@@ -199,7 +200,7 @@ DRING_PUBLIC std::string openVideoInput(const std::string& path);
 DRING_PUBLIC bool closeVideoInput(const std::string& id);
 
 DRING_PUBLIC std::string createMediaPlayer(const std::string& path);
-DRING_PUBLIC std::string closeMediaPlayer(const std::string& id);
+DRING_PUBLIC bool closeMediaPlayer(const std::string& id);
 DRING_PUBLIC bool pausePlayer(const std::string& id, bool pause);
 DRING_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
 DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
@@ -209,13 +210,13 @@ DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget
 DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
-DRING_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
+DRING_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId,
+                                                 const std::string& filepath);
 DRING_PUBLIC void stopLocalRecorder(const std::string& filepath);
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 DRING_PUBLIC void addVideoDevice(
-    const std::string& node,
-    const std::vector<std::map<std::string, std::string>>& devInfo = {});
+    const std::string& node, const std::vector<std::map<std::string, std::string>>& devInfo = {});
 DRING_PUBLIC void removeVideoDevice(const std::string& node);
 DRING_PUBLIC VideoFrame* getNewFrame(std::string_view id);
 DRING_PUBLIC void publishFrame(std::string_view id);
