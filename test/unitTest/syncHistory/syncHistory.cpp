@@ -1060,9 +1060,14 @@ END:VCARD";
     alice2Id = Manager::instance().addAccount(details);
     std::remove(aliceArchive.c_str());
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
+    JAMI_ERR() << "@@@ " << aliceId << " " << alice2Id << " " << bobId;
+    JAMI_ERR() << "@@@ BOB DEST " << bobDest;
+
+    auto res = cv.wait_for(lk, std::chrono::seconds(60), [&] {
         return aliceProfileReceived && bobProfileReceived;
-    }));
+    });
+    JAMI_ERR() << "@@@ " << aliceProfileReceived << " " << bobProfileReceived;
+    CPPUNIT_ASSERT(res);
     DRing::unregisterSignalHandlers();
 }
 
