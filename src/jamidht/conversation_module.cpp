@@ -693,6 +693,7 @@ ConversationModule::saveConvInfos(const std::string& accountId, const ConvInfoMa
 void
 ConversationModule::saveConvInfosToPath(const std::string& path, const ConvInfoMap& conversations)
 {
+    std::lock_guard<std::mutex> lock(fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convInfo"));
     std::ofstream file(path + DIR_SEPARATOR_STR + "convInfo", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversations);
 }
