@@ -39,6 +39,7 @@ class MediaRecorder;
 namespace jami {
 namespace video {
 
+class VideoInput;
 class VideoMixer;
 class VideoSender;
 class VideoReceiveThread;
@@ -100,7 +101,7 @@ public:
 
     bool hasConference() { return conference_; }
 
-    std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() { return videoLocal_; }
+    std::shared_ptr<VideoInput>& getVideoLocal() { return videoLocal_; }
 
     std::shared_ptr<VideoMixer>& getVideoMixer() { return videoMixer_; }
 
@@ -129,7 +130,7 @@ private:
         = std::make_shared<VideoFrameActiveWriter>();
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
-    std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
+    std::shared_ptr<VideoInput> videoLocal_;
     uint16_t initSeqVal_ = 0;
 
     std::function<void(void)> requestKeyFrameCallback_;

@@ -82,12 +82,6 @@ VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
     }
 
     if (auto packet = input_frame->packet()) {
-#if __ANDROID__
-        if (forceKeyFrame_) {
-            emitSignal<DRing::VideoSignal::RequestKeyFrame>();
-            --forceKeyFrame_;
-        }
-#endif
         videoEncoder_->send(*packet);
     } else {
         bool is_keyframe = forceKeyFrame_ > 0

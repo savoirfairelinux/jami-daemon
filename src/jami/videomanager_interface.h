@@ -283,12 +283,12 @@ struct DRING_PUBLIC VideoSignal
     struct DRING_PUBLIC RequestKeyFrame
     {
         constexpr static const char* name = "RequestKeyFrame";
-        using cb_type = void();
+        using cb_type = void(const std::string& /*device*/);
     };
     struct DRING_PUBLIC SetBitrate
     {
         constexpr static const char* name = "SetBitrate";
-        using cb_type = void(const std::string& device, const int bitrate);
+        using cb_type = void(const std::string& /*device*/, const int bitrate);
     };
 #endif
     struct DRING_PUBLIC StartCapture

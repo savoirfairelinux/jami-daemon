@@ -311,7 +311,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<VideoSignal::GetCameraInfo>(bind(&VideoCallback::getCameraInfo, videoM, _1, _2, _3, _4)),
         exportable_callback<VideoSignal::SetParameters>(bind(&VideoCallback::setParameters, videoM, _1, _2, _3, _4, _5)),
         exportable_callback<VideoSignal::SetBitrate>(bind(&VideoCallback::setBitrate, videoM, _1, _2)),
-        exportable_callback<VideoSignal::RequestKeyFrame>(bind(&VideoCallback::requestKeyFrame, videoM)),
+        exportable_callback<VideoSignal::RequestKeyFrame>(bind(&VideoCallback::requestKeyFrame, videoM, _1)),
         exportable_callback<VideoSignal::StartCapture>(bind(&VideoCallback::startCapture, videoM, _1)),
         exportable_callback<VideoSignal::StopCapture>(bind(&VideoCallback::stopCapture, videoM, _1)),
         exportable_callback<VideoSignal::DecodingStarted>(bind(&VideoCallback::decodingStarted, videoM, _1, _2, _3, _4, _5)),

@@ -306,8 +306,13 @@ void
 VideoRtpSession::forceKeyFrame()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+#if __ANDROID__
+    if (videoLocal_)
+        emitSignal<DRing::VideoSignal::RequestKeyFrame>(videoLocal_->getName());
+#else
     if (sender_)
         sender_->forceKeyFrame();
+#endif
 }
 
 void
