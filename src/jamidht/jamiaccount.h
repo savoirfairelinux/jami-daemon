@@ -908,6 +908,7 @@ private:
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>> channelHandlers_ {};
 
     std::unique_ptr<ConversationModule> convModule_;
+    std::mutex moduleMtx_;
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
