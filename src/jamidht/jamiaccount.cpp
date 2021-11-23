@@ -2077,7 +2077,6 @@ JamiAccount::doRegister_()
                 // TODO replace
                 auto isFile = name.substr(0, 7) == FILE_URI;
                 auto isVCard = name.substr(0, 8) == VCARD_URI;
-                auto isDataTransfer = name.substr(0, 16) == DATA_TRANSFER_URI;
 
                 if (name == "sip") {
                     return true;
@@ -2253,6 +2252,7 @@ JamiAccount::convModule()
         JAMI_ERR() << "Calling convModule() with an uninitialized account.";
         return nullptr;
     }
+    std::lock_guard<std::mutex> lk(moduleMtx_);
     if (!convModule_) {
         convModule_ = std::make_unique<ConversationModule>(
             weak(),
@@ -2324,6 +2324,7 @@ JamiAccount::syncModule()
         JAMI_ERR() << "Calling syncModule() with an uninitialized account.";
         return nullptr;
     }
+    std::lock_guard<std::mutex> lk(moduleMtx_);
     if (!syncModule_)
         syncModule_ = std::make_unique<SyncModule>(weak());
     return syncModule_.get();

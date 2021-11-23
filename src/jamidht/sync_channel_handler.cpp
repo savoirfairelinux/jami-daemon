@@ -51,7 +51,8 @@ SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, Connec
 }
 
 bool
-SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& /* name */)
+SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                              const std::string& /* name */)
 {
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
@@ -65,9 +66,12 @@ SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cer
                             std::shared_ptr<ChannelSocket> channel)
 {
     auto acc = account_.lock();
-    if (!cert || !cert->issuer || !acc || !acc->syncModule())
+    if (!cert || !cert->issuer || !acc)
         return;
-    acc->syncModule()->cacheSyncConnection(std::move(channel), cert->issuer->getId().toString(), cert->getLongId());
+    if (auto sm = acc->syncModule())
+        sm->cacheSyncConnection(std::move(channel),
+                                cert->issuer->getId().toString(),
+                                cert->getLongId());
 }
 
 } // namespace jami
