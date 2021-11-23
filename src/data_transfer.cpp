@@ -755,8 +755,11 @@ OutgoingFile::~OutgoingFile()
 void
 OutgoingFile::process()
 {
-    if (!channel_ or !stream_ or !stream_.is_open())
+    JAMI_ERR() << "@@@ OF PROCESS!";
+    if (!channel_ or !stream_ or !stream_.is_open()) {
+        JAMI_ERR() << "@@@ RETURN!";
         return;
+    }
     auto correct = false;
     stream_.seekg(start_, std::ios::beg);
     try {
@@ -764,10 +767,12 @@ OutgoingFile::process()
         std::error_code ec;
         auto pos = start_;
         while (!stream_.eof()) {
+            JAMI_ERR() << "@@@ READ PROCESS!";
             stream_.read(buffer.data(),
                          end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
             auto gcount = stream_.gcount();
             pos += gcount;
+            JAMI_ERR() << "@@@ WRITE";
             channel_->write(reinterpret_cast<const uint8_t*>(buffer.data()), gcount, ec);
             if (ec)
                 break;
