@@ -45,8 +45,10 @@ TransferChannelHandler::connect(const DeviceId& deviceId,
 {}
 
 bool
-TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
+TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                                  const std::string& name)
 {
+    JAMI_ERR() << "@@@ " << name;
     auto acc = account_.lock();
     if (!acc || !cert || !cert->issuer)
         return false;
@@ -55,11 +57,17 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     auto sep = idstr.find('/');
     auto lastSep = idstr.find_last_of('/');
     auto conversationId = idstr.substr(0, sep);
-    auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
+    auto isProfile = idstr.substr(sep + 1, lastSep - sep - 1) == "profile";
     auto fileId = idstr.substr(lastSep + 1);
-    if (fileHost == acc->currentDeviceId())
+    // Check if another device
+    if (cert->getLongId().toString() == acc->currentDeviceId())
         return false;
 
+    // If a profile is sent, check if it's from another device
+    if (isProfile)
+        return uri == acc->getUsername();
+
+    JAMI_ERR() << "@@@ " << name;
     sep = fileId.find_last_of('?');
     if (sep != std::string::npos) {
         fileId = fileId.substr(0, sep);
@@ -68,17 +76,18 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     // Check if peer is member of the conversation
     if (fileId == "profile.vcf") {
         auto members = acc->convModule()->getConversationMembers(conversationId);
+        JAMI_ERR() << "@@@ " << name;
         return std::find_if(members.begin(), members.end(), [&](auto m) { return m["uri"] == uri; })
                != members.end();
-    } else if (fileHost == "profile") {
-        // If a profile is sent, check if it's from another device
-        return uri == acc->getUsername();
     }
 
-    return acc->convModule()->onFileChannelRequest(conversationId,
-                                                   uri,
-                                                   fileId,
-                                                   acc->sha3SumVerify());
+    JAMI_ERR() << "@@@ " << name;
+    auto res = acc->convModule()->onFileChannelRequest(conversationId,
+                                                       uri,
+                                                       fileId,
+                                                       acc->sha3SumVerify());
+    JAMI_ERR() << "@@@ " << name;
+    return res;
 }
 
 void
@@ -106,6 +115,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     if (channel->isInitiator())
         return;
 
+    JAMI_ERR() << "@@@ " << name << " vs " << channel->name() << " - " << acc->getAccountID();
     auto sep = fileId.find_last_of('?');
     std::string arguments;
     if (sep != std::string::npos) {
@@ -115,11 +125,16 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
 
     if (fileId == "profile.vcf") {
         std::string path = fileutils::sha3File(idPath_ + DIR_SEPARATOR_STR + "profile.vcf");
+        JAMI_ERR() << "@@@ " << name << channel->name() << " - " << acc->getAccountID();
         acc->dataTransfer()->transferFile(channel, fileId, "", path);
+        JAMI_ERR() << "@@@ " << name << channel->name() << " - " << acc->getAccountID();
         return;
     } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
         auto path = acc->dataTransfer()->profilePath(fileId.substr(0, fileId.size() - 4));
+        JAMI_ERR() << "@@@ " << name << " " << path;
+        JAMI_ERR() << "@@@ " << name << " " << fileutils::isFile(path);
         acc->dataTransfer()->transferFile(channel, fileId, "", path);
+        JAMI_ERR() << "@@@ " << name << channel->name() << " - " << acc->getAccountID();
         return;
     }
     auto dt = acc->dataTransfer(conversationId);
@@ -142,7 +157,9 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         }
     }
 
+    JAMI_ERR() << "@@@ " << name;
     dt->transferFile(channel, fileId, interactionId, path, start, end);
+    JAMI_ERR() << "@@@ " << name;
 }
 
 } // namespace jami
