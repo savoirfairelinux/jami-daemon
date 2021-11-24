@@ -46,6 +46,30 @@
       },
       "revId": "e73510b71f0a52dd9aa544e55b71fe52ae341afb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7603f843_6ab3c2ee",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-24T14:29:05Z",
+      "side": 1,
+      "message": "https://review.jami.net/c/jami-project/+/19838",
+      "parentUuid": "d5e447ef_7bbb7100",
+      "range": {
+        "startLine": 6,
+        "startChar": 1,
+        "endLine": 6,
+        "endChar": 24
+      },
+      "revId": "e73510b71f0a52dd9aa544e55b71fe52ae341afb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
