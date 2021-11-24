@@ -258,10 +258,21 @@ MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
 {
     std::lock_guard<std::mutex> lkSockets(socketsMutex);
     auto& socket = sockets[channel];
-    if (!socket)
-        socket = makeSocket(name, channel);
+    if (!socket) {
+        JAMI_ERR() << "Receiving an answer for a non existing channel. This is a bug.";
+        return;
+    }
+
     onChannelReady_(deviceId, socket);
     socket->ready();
+    // Due to the callbacks that can take some time, onAccept can arrive after
+    // receiving all the data. In this case, the socket should be removed here
+    // as handle by onChannelReady_
+    if (socket->isRemovable()) {
+        socket->stop();
+        sockets.erase(channel);
+    } else
+        socket->answered();
 }
 
 void
@@ -432,8 +443,12 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, std::vector<uint8
     auto sockIt = sockets.find(channel);
     if (channel > 0 && sockIt->second) {
         if (pkt.size() == 0) {
-            sockIt->second->stop();
-            sockets.erase(sockIt);
+            if (sockIt->second->isAnswered()) {
+                sockIt->second->stop();
+                sockets.erase(sockIt);
+            } else
+                sockIt->second->removable(); // This means that onAccept didn't happen yet, will be
+                                             // removed later.
         } else {
             sockIt->second->onRecv(std::move(pkt));
         }
@@ -517,7 +532,8 @@ MultiplexedSocket::addChannel(const std::string& name)
         if (c == CONTROL_CHANNEL || c == PROTOCOL_CHANNEL
             || pimpl_->sockets.find(c) != pimpl_->sockets.end())
             continue;
-        return pimpl_->makeSocket(name, c, true);
+        auto channel = pimpl_->makeSocket(name, c, true);
+        return channel;
     }
     return {};
 }
@@ -732,6 +748,9 @@ public:
     std::weak_ptr<MultiplexedSocket> endpoint {};
     bool isInitiator_ {false};
 
+    bool isAnswered_ {false};
+    bool isRemovable_ {false};
+
     std::vector<uint8_t> buf {};
     std::mutex mutex {};
     std::condition_variable cv {};
@@ -838,6 +857,30 @@ ChannelSocket::underlyingSocket() const
     return {};
 }
 #endif
+
+void
+ChannelSocket::answered()
+{
+    pimpl_->isAnswered_ = true;
+}
+
+void
+ChannelSocket::removable()
+{
+    pimpl_->isRemovable_ = true;
+}
+
+bool
+ChannelSocket::isRemovable() const
+{
+    return pimpl_->isRemovable_;
+}
+
+bool
+ChannelSocket::isAnswered() const
+{
+    return pimpl_->isAnswered_;
+}
 
 void
 ChannelSocket::ready()
