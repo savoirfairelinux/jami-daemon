@@ -93,6 +93,30 @@
       },
       "revId": "4539a01900dedaad34a4b4ddf2a35e6abb611511",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bdc796a4_d643d0c5",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 931,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-24T01:21:22Z",
+      "side": 1,
+      "message": "Imho this patch is enough. For the preference, it should be a separate work and we can open a ticket for this.\n\nBut just for your info and to answer to your question. In Jami, accounts have their own config in a .yml file. Generally, when we add preferences, we add it in the account\u0027s config (cf setAccountDetails/getAccountDetails https://git.jami.net/savoirfairelinux/jami-daemon/-/blob/master/src/jamidht/jamiaccount.cpp#L1440), then clients can decide to show it in the UI or not.",
+      "parentUuid": "53d2f7fe_bafdeb4b",
+      "range": {
+        "startLine": 931,
+        "startChar": 26,
+        "endLine": 931,
+        "endChar": 28
+      },
+      "revId": "4539a01900dedaad34a4b4ddf2a35e6abb611511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
