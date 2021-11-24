@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a3f95b90_f8415f80",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-24T17:29:10Z",
+      "side": 1,
+      "message": "I am really not convinced that we should proceed with this patch without a clear and testable use case.\nWe should at least add support to send 183 and add a unit test to validate.",
+      "revId": "482539c12143759b94f4a605dc909a881d6f973b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
