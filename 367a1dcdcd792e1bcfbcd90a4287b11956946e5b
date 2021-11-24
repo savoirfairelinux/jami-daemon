@@ -39,6 +39,46 @@
       "message": "should not we check for EAGAIN?",
       "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "319eb206_42f6ea43",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 395,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-24T11:07:40Z",
+      "side": 1,
+      "message": "need to be tested on all platforms.\nCurrently, we do not have an explicit unit test for upnp/natpmp, so it has to be tested manually with router that support natpmp protocol.",
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "792c91ff_08e6abf3",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-24T11:07:40Z",
+      "side": 1,
+      "message": "can be done in the declaration of fds",
+      "range": {
+        "startLine": 400,
+        "startChar": 0,
+        "endLine": 401,
+        "endChar": 24
+      },
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
