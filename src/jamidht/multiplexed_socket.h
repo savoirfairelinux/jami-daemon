@@ -28,8 +28,10 @@ class ChannelSocket;
 class TlsSocketEndpoint;
 
 using DeviceId = dht::PkId;
-using OnConnectionRequestCb = std::function<
-    bool(const std::shared_ptr<dht::crypto::Certificate>& /* peer */, const uint16_t& /* id */, const std::string& /* name */)>;
+using OnConnectionRequestCb
+    = std::function<bool(const std::shared_ptr<dht::crypto::Certificate>& /* peer */,
+                         const uint16_t& /* id */,
+                         const std::string& /* name */)>;
 using OnConnectionReadyCb
     = std::function<void(const DeviceId& /* deviceId */, const std::shared_ptr<ChannelSocket>&)>;
 using ChannelReadyCb = std::function<void(void)>;
@@ -246,6 +248,14 @@ public:
 #ifdef DRING_TESTABLE
     std::shared_ptr<MultiplexedSocket> underlyingSocket() const;
 #endif
+
+    // Note: When a channel is accepted, it can receives data ASAP and when finished will be removed
+    // however, onAccept is it's own thread due to the callbacks. In this case, the channel must be
+    // deleted in the onAccept.
+    void answered();
+    bool isAnswered() const;
+    void removable();
+    bool isRemovable() const;
 
 private:
     class Impl;
