@@ -16,6 +16,98 @@
       "message": "Scenario:\n\n+ Share window\n+ Close the window\n\u003d\u003e Crash\n\n 3179475)]\n0x00007fffedb699e5 in raise () from /lib64/libc.so.6\n(gdb) bt\n#0  0x00007fffedb699e5 in raise () at /lib64/libc.so.6\n#1  0x00007fffedb528a4 in abort () at /lib64/libc.so.6\n#2  0x00007fffedbac007 in __libc_message () at /lib64/libc.so.6\n#3  0x00007fffedbb3cdc in  () at /lib64/libc.so.6\n#4  0x00007fffedbb5558 in _int_free () at /lib64/libc.so.6\n#5  0x00007fffebc15752 in xcb_disconnect () at /lib64/libxcb.so.1\n#6  0x00007fffec07a5d8 in xcbgrab_read_close (s\u003d\u003coptimized out\u003e) at libavdevice/xcbgrab.c:383\n#7  0x00007fffec8914e2 in avformat_close_input (ps\u003d0x7ffd8c0013b8) at libavformat/utils.c:4496\n#8  0x00007fffec23363f in jami::MediaDemuxer::~MediaDemuxer() (this\u003d0x7ffd8c0013b0, __in_chrg\u003d\u003coptimized out\u003e) at media/media_decoder.cpp:65\n#9  0x00007fffec23ee76 in std::_Sp_counted_ptr\u003cjami::MediaDemuxer*, (__gnu_cxx::_Lock_policy)2\u003e::_M_dispose() (this\u003d0x7ffaed9b11a0) at /usr/include/c++/10/bits/shared_ptr_base.h:380\n#10 0x00007fffec0cb69d in std::_Sp_counted_base\u003c(__gnu_cxx::_Lock_policy)2\u003e::_M_release() (this\u003d0x7ffaed9b11a0) at /usr/include/c++/10/bits/shared_ptr_base.h:158\n#11 0x00007fffec0c7421 in std::__shared_count\u003c(__gnu_cxx::_Lock_policy)2\u003e::~__shared_count() (this\u003d0x7ffd8c015948, __in_chrg\u003d\u003coptimized out\u003e) at /usr/include/c++/10/bits/shared_ptr_base.h:733\n#12 0x00007fffec238fbc in std::__shared_ptr\u003cjami::MediaDemuxer, (__gnu_cxx::_Lock_policy)2\u003e::~__shared_ptr() (this\u003d0x7ffd8c015940, __in_chrg\u003d\u003coptimized out\u003e) at /usr/include/c++/10/bits/shared_ptr_base.h:1183\n#13 0x00007fffec238ffe in std::shared_ptr\u003cjami::MediaDemuxer\u003e::~shared_ptr() (this\u003d0x7ffd8c015940, __in_chrg\u003d\u003coptimized out\u003e) at /usr/include/c++/10/bits/shared_ptr.h:121\n#14 0x00007fffec235546 in jami::MediaDecoder::~MediaDecoder() (this\u003d0x7ffd8c015940, __in_chrg\u003d\u003coptimized out\u003e) at media/media_decoder.cpp:426\n#15 0x00007fffec27b812 in std::default_delete\u003cjami::MediaDecoder\u003e::operator()(jami::MediaDecoder*) const (this\u003d0x24402a0, __ptr\u003d0x7ffd8c015940) at /usr/include/c++/10/bits/unique_ptr.h:85\n#16 0x00007fffec285af8 in std::__uniq_ptr_impl\u003cjami::MediaDecoder, std::default_delete\u003cjami::MediaDecoder\u003e \u003e::reset(jami::MediaDecoder*) (this\u003d0x24402a0, __p\u003d0x0) at /usr/include/c++/10/bits/unique_ptr.h:182\n#17 0x00007fffec284c95 in std::unique_ptr\u003cjami::MediaDecoder, std::default_delete\u003cjami::MediaDecoder\u003e \u003e::reset(jami::MediaDecoder*) (this\u003d0x24402a0, __p\u003d0x0) at /usr/include/c++/10/bits/unique_ptr.h:456\n#18 0x00007fffec2fb590 in jami::video::VideoInput::deleteDecoder() (this\u003d0x2440000) at ./media/video/video_input.cpp:362\n#19 0x00007fffec2fa9e3 in jami::video::VideoInput::cleanup() (this\u003d0x2440000) at ./media/video/video_input.cpp:206\n#20 0x00007fffec30000b in std::__invoke_impl\u003cvoid, void (jami::video::VideoInput::*\u0026)(), jami::video::VideoInput*\u0026\u003e(std::__invoke_memfun_deref, void (jami::video::VideoInput::*\u0026)(), jami::video::VideoInput*\u0026) (__f\u003d@0x7ffda82540e0: (void (jami::video::VideoInput::*)(jami::video::VideoInput * const)) 0x7fffec2fa9ca \u003cjami::video::VideoInput::cleanup()\u003e, __t\u003d@0x7ffda82540f0: 0x2440000) at /usr/include/c++/10/bits/invoke.h:73\n#21 0x00007fffec2ffef2 in std::__invoke\u003cvoid (jami::video::VideoInput::*\u0026)(), jami::video::VideoInput*\u0026\u003e(void (jami::video::VideoInput::*\u0026)(), jami::video::VideoInput*\u0026) (__fn\u003d@0x7ffda82540e0: (void (jami::video::VideoInput::*)(jami::video::VideoInput * const)) 0x7fffec2fa9ca \u003cjami::video::VideoInput::cleanup()\u003e) at /usr/include/c++/10/bits/invoke.h:95\n#22 0x00007fffec2ffe3e in std::_Bind\u003cvoid (jami::video::VideoInput::*(jami::video::VideoInput*))()\u003e::__call\u003cvoid, , 0ul\u003e(std::tuple\u003c\u003e\u0026\u0026, std::_Index_tuple\u003c0ul\u003e) (this\u003d0x7ffda82540e0, __args\u003d...) at /usr/include/c++/10/functional:416\n#23 0x00007fffec2ffd80 in std::_Bind\u003cvoid (jami::video::VideoInput::*(jami::video::VideoInput*))()\u003e::operator()\u003c, void\u003e() (this\u003d0x7ffda82540e0) at /usr/include/c++/10/functional:499\n#24 0x00007fffec2ffb84 in std::__invoke_impl\u003cvoid, std::_Bind\u003cvoid (jami::video::VideoInput::*(jami::video::VideoInput*))()\u003e\u0026\u003e(std::__invoke_other, std::_Bind\u003cvoid (jami::video::VideoInput::*(jami::video::VideoInput*))()\u003e\u0026) (__f\u003d...) at /usr/include/c++/10/bits/invoke.h:60\n#25 0x00007fffec2ff81c in std::__invoke_r\u003cvoid, std::_Bind\u003cvoid (jami::video::VideoInput::*(jami::video::VideoInput*))()\u003e\u0026\u003e(std::_Bind\u003cvoid (jami::video::VideoInput::*(jami::video::VideoInput*))()\u003e\u0026) (__fn\u003d...) at /usr/include/c++/10/bits/invoke.h:110\n#26 0x00007fffec2ff3dc in std::_Function_handler\u003cvoid (), std::_Bind\u003cvoid (jami::video::VideoInput::*(jami::video::VideoInput*))()\u003e \u003e::_M_invoke(std::_Any_data const\u0026) (__functor\u003d...) at /usr/include/c++/10/bits/std_function.h:291\n#27 0x00007fffec116894 in std::function\u003cvoid ()\u003e::operator()() const (this\u003d0x7ffee27f86c0) at /usr/include/c++/10/bits/std_function.h:622\n#28 0x00007fffec18a48a in jami::ThreadLoop::mainloop(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e) (this\u003d0x24402b8, tid\u003d..., setup\u003d..., process\u003d..., cleanup\u003d...) at threadloop.cpp:39\n#29 0x00007fffec18bccf in std::__invoke_impl\u003cvoid, void (jami::ThreadLoop::*)(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e), jami::ThreadLoop*, std::reference_wrapper\u003cstd::thread::id\u003e, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e \u003e(std::__invoke_memfun_deref, void (jami::ThreadLoop::*\u0026\u0026)(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e), jami::ThreadLoop*\u0026\u0026, std::reference_wrapper\u003cstd::thread::id\u003e\u0026\u0026, std::function\u003cbool ()\u003e\u0026\u0026, std::function\u003cvoid ()\u003e\u0026\u0026, std::function\u003cvoid ()\u003e\u0026\u0026) (__f\u003d@0x7ffda82592e8: (void (jami::ThreadLoop::*)(jami::ThreadLoop * const, std::thread::id \u0026, std::function\u003cbool()\u003e, std::function\u003cvoid()\u003e, std::function\u003cvoid()\u003e)) 0x7fffec18a41a \u003cjami::ThreadLoop::mainloop(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e)\u003e, __t\u003d@0x7ffda82592e0: 0x24402b8)\n    at /usr/include/c++/10/bits/invoke.h:73\n#30 0x00007fffec18baa6 in std::__invoke\u003cvoid (jami::ThreadLoop::*)(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e), jami::ThreadLoop*, std::reference_wrapper\u003cstd::thread::id\u003e, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e \u003e(void (jami::ThreadLoop::*\u0026\u0026)(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e), jami::ThreadLoop*\u0026\u0026, std::reference_wrapper\u003cstd::thread::id\u003e\u0026\u0026, std::function\u003cbool ()\u003e\u0026\u0026, std::function\u003cvoid ()\u003e\u0026\u0026, std::function\u003cvoid ()\u003e\u0026\u0026) (__fn\u003d@0x7ffda82592e8: (void (jami::ThreadLoop::*)(jami::ThreadLoop * const, std::thread::id \u0026, std::function\u003cbool()\u003e, std::function\u003cvoid()\u003e, std::function\u003cvoid()\u003e)) 0x7fffec18a41a \u003cjami::ThreadLoop::mainloop(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e)\u003e) at /usr/include/c++/10/bits/invoke.h:95\n#31 0x00007fffec18b925 in std::thread::_Invoker\u003cstd::tuple\u003cvoid (jami::ThreadLoop::*)(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e), jami::ThreadLoop*, std::reference_wrapper\u003cstd::thread::id\u003e, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e \u003e \u003e::_M_invoke\u003c0ul, 1ul, 2ul, 3ul, 4ul, 5ul\u003e(std::_Index_tuple\u003c0ul, 1ul, 2ul, 3ul, 4ul, 5ul\u003e) (this\u003d0x7ffda8259278) at /usr/include/c++/10/thread:264\n#32 0x00007fffec18b86e in std::thread::_Invoker\u003cstd::tuple\u003cvoid (jami::ThreadLoop::*)(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e), jami::ThreadLoop*, std::reference_wrapper\u003cstd::thread::id\u003e, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e \u003e \u003e::operator()() (this\u003d0x7ffda8259278) at /usr/include/c++/10/thread:271\n#33 0x00007fffec18b852 in std::thread::_State_impl\u003cstd::thread::_Invoker\u003cstd::tuple\u003cvoid (jami::ThreadLoop::*)(std::thread::id\u0026, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e), jami::ThreadLoop*, std::reference_wrapper\u003cstd::thread::id\u003e, std::function\u003cbool ()\u003e, std::function\u003cvoid ()\u003e, std::function\u003cvoid ()\u003e \u003e \u003e \u003e::_M_run() (this\u003d0x7ffda8259270) at /usr/include/c++/10/thread:215\n#34 0x00007fffedf30444 in execute_native_thread_routine () at /lib64/libstdc++.so.6\n#35 0x00007fffed9493f9 in start_thread () at /lib64/libpthread.so.0\n#36 0x00007fffedc2d4c3 in clone () at /lib64/libc.so.6\n",
       "revId": "107726f26e941b4789fa2eec1140093727532dbd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a14015b9_a8afdf77",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 8
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-24T20:38:38Z",
+      "side": 1,
+      "message": "note, a commit messatge should be added to clarify that this is a custom patch (for later rebase)",
+      "range": {
+        "startLine": 3,
+        "startChar": 18,
+        "endLine": 4,
+        "endChar": 27
+      },
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "495c325e_8fda7d22",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 8
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-24T20:38:38Z",
+      "side": 1,
+      "message": "why remove shm?",
+      "range": {
+        "startLine": 97,
+        "startChar": 12,
+        "endLine": 97,
+        "endChar": 29
+      },
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8c88abe_928a5831",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 342,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-24T20:38:38Z",
+      "side": 1,
+      "message": "lot of access to codecpar, maybe use a temp var",
+      "range": {
+        "startLine": 338,
+        "startChar": 9,
+        "endLine": 342,
+        "endChar": 64
+      },
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79ccb020_686c5947",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 603,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-24T20:38:38Z",
+      "side": 1,
+      "message": "un-necessary brackets",
+      "range": {
+        "startLine": 603,
+        "startChar": 7,
+        "endLine": 603,
+        "endChar": 9
+      },
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
