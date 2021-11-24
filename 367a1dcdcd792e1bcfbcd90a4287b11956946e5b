@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "345bd959_31372b66",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-24T11:00:38Z",
+      "side": 1,
+      "message": "1- where did the 500ms come from ?\n2- use a const variable instead of a litteral.",
+      "range": {
+        "startLine": 219,
+        "startChar": 31,
+        "endLine": 219,
+        "endChar": 34
+      },
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3f35d07_308ceb48",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-24T11:00:38Z",
+      "side": 1,
+      "message": "should not we check for EAGAIN?",
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

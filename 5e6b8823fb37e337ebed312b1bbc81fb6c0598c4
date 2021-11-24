@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2a3a99e_d7a87d9e",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 262,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-24T11:00:38Z",
+      "side": 0,
+      "message": "why this condition is not handled anymore? Now we are aborting the probing instead of retrying.",
+      "revId": "5e6b8823fb37e337ebed312b1bbc81fb6c0598c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
