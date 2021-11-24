@@ -45,6 +45,54 @@
       },
       "revId": "4539a01900dedaad34a4b4ddf2a35e6abb611511",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53d2f7fe_bafdeb4b",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 931,
+      "author": {
+        "id": 935
+      },
+      "writtenOn": "2021-11-24T01:11:35Z",
+      "side": 1,
+      "message": "I\u0027m not sure about that setting. Is it to ring instead of playing the early media like an override or is it to enable playback of the early media?\n\nPersonally I would make it a three option setting: During incoming early media: Playback early media/Ring/Keep silent\n\nIf it can be avoided I would like to. Is there a guide for adding settings? If I do this do I need to add the setting in all the clients?",
+      "parentUuid": "b61c90fe_234e7624",
+      "range": {
+        "startLine": 931,
+        "startChar": 26,
+        "endLine": 931,
+        "endChar": 28
+      },
+      "revId": "4539a01900dedaad34a4b4ddf2a35e6abb611511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b89a383_4769047a",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 931,
+      "author": {
+        "id": 935
+      },
+      "writtenOn": "2021-11-24T01:11:35Z",
+      "side": 1,
+      "message": "Sure! good point",
+      "parentUuid": "8ae5757d_59900f6b",
+      "range": {
+        "startLine": 929,
+        "startChar": 34,
+        "endLine": 931,
+        "endChar": 34
+      },
+      "revId": "4539a01900dedaad34a4b4ddf2a35e6abb611511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
