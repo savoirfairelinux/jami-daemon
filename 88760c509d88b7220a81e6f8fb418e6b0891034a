@@ -22,6 +22,30 @@
       },
       "revId": "88760c509d88b7220a81e6f8fb418e6b0891034a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d26b3d39_af023f07",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 696,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-25T19:02:21Z",
+      "side": 1,
+      "message": "archive account manager use the static version, as convInfo (and files like \"contacts\" too) is created from the account archive before any account initialization)\n\nConversationModule::saveConvInfosToPath(path_, a.conversations); in archive_account_manager.cpp",
+      "parentUuid": "f6ce5e19_66f637c2",
+      "range": {
+        "startLine": 696,
+        "startChar": 0,
+        "endLine": 696,
+        "endChar": 100
+      },
+      "revId": "88760c509d88b7220a81e6f8fb418e6b0891034a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
