@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6ce5e19_66f637c2",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 696,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-11-25T18:52:51Z",
+      "side": 1,
+      "message": "Why not, however this should not happen, because every call to this function should already be protected by convInfosMtx_",
+      "range": {
+        "startLine": 696,
+        "startChar": 0,
+        "endLine": 696,
+        "endChar": 100
+      },
+      "revId": "88760c509d88b7220a81e6f8fb418e6b0891034a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
