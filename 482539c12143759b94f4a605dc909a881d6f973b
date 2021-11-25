@@ -16,6 +16,23 @@
       "message": "I am really not convinced that we should proceed with this patch without a clear and testable use case.\nWe should at least add support to send 183 and add a unit test to validate.",
       "revId": "482539c12143759b94f4a605dc909a881d6f973b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "89533729_2bf96e0d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 935
+      },
+      "writtenOn": "2021-11-25T21:39:13Z",
+      "side": 1,
+      "message": "I don\u0027t have enough free time to make it better so I\u0027m gonna abandon this and just change my server config to use Ringing.",
+      "revId": "482539c12143759b94f4a605dc909a881d6f973b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
