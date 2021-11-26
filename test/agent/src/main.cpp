@@ -48,9 +48,19 @@ main_in_guile(void* args_raw)
     return nullptr;
 }
 
+#include <sys/resource.h>
+
 int
 main(int argc, char* argv[])
 {
+    struct rlimit rlim;
+
+    getrlimit(RLIMIT_NOFILE, &rlim);
+    rlim.rlim_cur = rlim.rlim_max;
+    setrlimit(RLIMIT_NOFILE, &rlim);
+
+    printf("RLIMIT_NOFILE: %lu\n", rlim.rlim_max);
+
     setenv("GUILE_LOAD_PATH", ".", 1);
 
     /* NOTE!  It's very important to initialize the daemon before entering Guile!!! */

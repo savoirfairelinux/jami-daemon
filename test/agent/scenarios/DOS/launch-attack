@@ -1,0 +1,2 @@
+#!/bin/sh
+parallel -l 30 ./run -- $(seq 100)

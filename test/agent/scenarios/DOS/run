@@ -1,0 +1,7 @@
+#!/bin/sh
+tmp=$(mktemp --directory)
+export XDG_CONFIG_HOME=$tmp
+export XDG_CACHE_HOME=$tmp
+export XDG_DATA_HOME=$tmp
+./agent.exe -s desc.scm
+rm -rf "$tmp"

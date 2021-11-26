@@ -1,0 +1,14 @@
+#!/bin/sh
+
+tmp=$(mktemp --directory)
+
+export XDG_CONFIG_HOME="$tmp"
+export XDG_CACHE_HOME="$tmp"
+export XDG_DATA_HOME="$tmp"
+export GUILE_AUTO_COMPILE=0
+export JAMI_LOG_FILE="out.log"
+
+./scenario.scm $@
+
+rm -rf "$tmp"
+
