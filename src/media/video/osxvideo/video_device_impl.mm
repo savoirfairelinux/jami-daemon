@@ -61,6 +61,16 @@ class VideoDeviceImpl {
         VideoSize current_size_;
         FrameRate rate_ {};
         std::map<VideoSize, std::vector<FrameRate>> available_rates_;
+        FrameRate desktopFrameRate_ = {30};
+        std::vector<FrameRate> desktopFrameRates_ = {FrameRate(5),
+                                                     FrameRate(10),
+                                                     FrameRate(15),
+                                                     FrameRate(20),
+                                                     FrameRate(25),
+                                                     FrameRate(30),
+                                                     FrameRate(60),
+                                                     FrameRate(120),
+                                                     FrameRate(144)};
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
@@ -69,6 +79,14 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
     , avDevice_([AVCaptureDevice deviceWithUniqueID:
         [NSString stringWithCString:uniqueID.c_str() encoding:[NSString defaultCStringEncoding]]])
 {
+
+    if (id == DEVICE_DESKTOP) {
+          name = DEVICE_DESKTOP;
+          VideoSize size {0, 0};
+          available_sizes_.emplace_back(size);
+          available_rates_[size] = desktopFrameRates_;
+          return;
+      }
     name = [[avDevice_ localizedName] UTF8String];
 
     available_sizes_.reserve(avDevice_.formats.count);
@@ -111,9 +129,13 @@ DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
-    params.name = [[avDevice_ localizedName] UTF8String];
     params.unique_id = id;
     params.input = id;
+    if (id == DEVICE_DESKTOP) {
+        params.framerate = desktopFrameRate_;
+        return params;
+    }
+    params.name = [[avDevice_ localizedName] UTF8String];
     params.framerate = rate_;
     params.format = "avfoundation";
     params.pixel_format = "nv12";
@@ -125,6 +147,11 @@ VideoDeviceImpl::getDeviceParams() const
 void
 VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
+    if (id == DEVICE_DESKTOP) {
+        name = DEVICE_DESKTOP;
+        desktopFrameRate_ = params.framerate;
+        return;
+    }
     rate_ = params.framerate;
     current_size_ = extractSize({params.width, params.height});
 }
