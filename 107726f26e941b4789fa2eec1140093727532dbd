@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "61460e71_0bb80b83",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-26T22:29:11Z",
+      "side": 1,
+      "message": "Crash due to double free of xcb_connection in ffmpeg. Patch was updated with the fix.",
+      "parentUuid": "f1c260de_063c2159",
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a14015b9_a8afdf77",
@@ -54,6 +72,30 @@
       "writtenOn": "2021-11-24T20:38:38Z",
       "side": 1,
       "message": "why remove shm?",
+      "range": {
+        "startLine": 97,
+        "startChar": 12,
+        "endLine": 97,
+        "endChar": 29
+      },
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74504322_49fd5748",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 8
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-26T22:29:11Z",
+      "side": 1,
+      "message": "Using x11grab with shm was causing memory issues due to reinit of the streams with different buffer size.",
+      "parentUuid": "495c325e_8fda7d22",
       "range": {
         "startLine": 97,
         "startChar": 12,
