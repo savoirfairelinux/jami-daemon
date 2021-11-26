@@ -59,6 +59,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2a38790_a7a3c945",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 8
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-26T23:01:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a14015b9_a8afdf77",
+      "range": {
+        "startLine": 3,
+        "startChar": 18,
+        "endLine": 4,
+        "endChar": 27
+      },
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "495c325e_8fda7d22",
@@ -129,6 +153,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "778f60b0_bf104f75",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 342,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-26T23:01:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c8c88abe_928a5831",
+      "range": {
+        "startLine": 338,
+        "startChar": 9,
+        "endLine": 342,
+        "endChar": 64
+      },
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "79ccb020_686c5947",
@@ -142,6 +190,30 @@
       "writtenOn": "2021-11-24T20:38:38Z",
       "side": 1,
       "message": "un-necessary brackets",
+      "range": {
+        "startLine": 603,
+        "startChar": 7,
+        "endLine": 603,
+        "endChar": 9
+      },
+      "revId": "107726f26e941b4789fa2eec1140093727532dbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "330a6ef2_bce980bf",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 603,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-26T23:01:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "79ccb020_686c5947",
       "range": {
         "startLine": 603,
         "startChar": 7,
