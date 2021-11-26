@@ -127,6 +127,7 @@ VideoDeviceMonitor::VideoDeviceMonitor() :
     monitorImpl_(new VideoDeviceMonitorImpl(this))
 {
     monitorImpl_->start();
+    addDevice(DEVICE_DESKTOP, {});
 }
 
 VideoDeviceMonitor::~VideoDeviceMonitor()
