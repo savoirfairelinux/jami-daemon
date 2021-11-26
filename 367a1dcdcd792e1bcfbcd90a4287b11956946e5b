@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "652a24de_f645b5cf",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-26T15:04:02Z",
+      "side": 1,
+      "message": "500000 us is 500 ms.\n\nIt\u0027s already a const variable?",
+      "parentUuid": "345bd959_31372b66",
+      "range": {
+        "startLine": 219,
+        "startChar": 31,
+        "endLine": 219,
+        "endChar": 34
+      },
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c3f35d07_308ceb48",
         "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
         "patchSetId": 6
@@ -37,6 +61,24 @@
       "writtenOn": "2021-11-24T11:00:38Z",
       "side": 1,
       "message": "should not we check for EAGAIN?",
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "458b771b_e28ae6ae",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-26T15:04:02Z",
+      "side": 1,
+      "message": "poll(2): On some other UNIX systems, poll() can fail with the error EAGAIN if the system fails to allocate kernel-internal resources, rather than ENOMEM as Linux does.  POSIX permits this behavior.  Portable programs may wish to check for EAGAIN and loop, just as with EINTR.\n\nI think it\u0027s better to cancel the loop than retry in that case.\n\nHowever, we have to check for EINTR, which I will add.",
+      "parentUuid": "c3f35d07_308ceb48",
       "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -60,6 +102,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5768bcb7_0060df8a",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 395,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-26T15:04:02Z",
+      "side": 1,
+      "message": "What has to be tested?  The logic has not changed, only the polling call.",
+      "parentUuid": "319eb206_42f6ea43",
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "792c91ff_08e6abf3",
         "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
         "patchSetId": 6
@@ -71,6 +131,30 @@
       "writtenOn": "2021-11-24T11:07:40Z",
       "side": 1,
       "message": "can be done in the declaration of fds",
+      "range": {
+        "startLine": 400,
+        "startChar": 0,
+        "endLine": 401,
+        "endChar": 24
+      },
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2362f629_e819be17",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-11-26T15:04:02Z",
+      "side": 1,
+      "message": "Like: fds \u003d { .events \u003d POLLRNORM, .revents \u003d 0 }?  That does not work on win32.",
+      "parentUuid": "792c91ff_08e6abf3",
       "range": {
         "startLine": 400,
         "startChar": 0,
