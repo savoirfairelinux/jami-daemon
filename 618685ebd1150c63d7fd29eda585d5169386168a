@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e5d9b9e_83318132",
+        "filename": "test/unitTest/media_negotiation/auto_answer.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1030,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-26T16:13:14Z",
+      "side": 1,
+      "message": "the test is designed to run for both Jami and SIP accounts, but currently the test does not pass when run for both account types.",
+      "revId": "618685ebd1150c63d7fd29eda585d5169386168a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2ca64ebf_a0c9abc9",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-11-26T16:13:14Z",
+      "side": 1,
+      "message": "prevents \u0027dangling-else\u0027 warning",
+      "revId": "d56f45e8e8da61478828848cfaecfa6841b0a2fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
