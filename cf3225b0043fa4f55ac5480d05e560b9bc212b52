@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1938d72b_8c4c8830",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T20:43:28Z",
+      "side": 1,
+      "message": "std::string acc \u003d accountId will just do a copy., no need for weird casting",
+      "range": {
+        "startLine": 239,
+        "startChar": 3,
+        "endLine": 239,
+        "endChar": 60
+      },
+      "revId": "cf3225b0043fa4f55ac5480d05e560b9bc212b52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "91eb8993_49e82e2e",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T20:43:28Z",
+      "side": 1,
+      "message": "Not sure what this is all about. Why checking all preferences and resetting accountId? (also std::find_if)",
+      "range": {
+        "startLine": 241,
+        "startChar": 24,
+        "endLine": 248,
+        "endChar": 13
+      },
+      "revId": "cf3225b0043fa4f55ac5480d05e560b9bc212b52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "322ea284_dba8bfd8",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T20:43:28Z",
+      "side": 1,
+      "message": "static_pointer_cast and \"auto* preferencesPtr \u003d static_pointer_cast...\u003e\n\nalso for clarity and evolution, std::map\u003cstd::string, std::map\u003cstd::string, std::string\u003e should be a typedef",
+      "revId": "cf3225b0043fa4f55ac5480d05e560b9bc212b52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbef03ae_f852e658",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T20:43:28Z",
+      "side": 1,
+      "message": "all accounts will store the preference in the same directory?\n\nWhy not accountId\u0027s datapath/plugin/preferences.json?\n\nbecause, when we will do removeAccount() those datas should be removed too",
+      "range": {
+        "startLine": 39,
+        "startChar": 74,
+        "endLine": 39,
+        "endChar": 98
+      },
+      "revId": "cf3225b0043fa4f55ac5480d05e560b9bc212b52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

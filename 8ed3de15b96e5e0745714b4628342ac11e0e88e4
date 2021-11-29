@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4cae5cbe_53fa8750",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T20:43:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "97a42cfe_efd38010",
+      "range": {
+        "startLine": 58,
+        "startChar": 73,
+        "endLine": 66,
+        "endChar": 86
+      },
+      "revId": "8ed3de15b96e5e0745714b4628342ac11e0e88e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e8e253cd_fcc72487",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-10-27T13:44:52Z",
       "side": 1,
       "message": "I guess this will change as now conf are per account (rebase on Adrien\u0027s patches)",
+      "range": {
+        "startLine": 777,
+        "startChar": 21,
+        "endLine": 783,
+        "endChar": 9
+      },
+      "revId": "8ed3de15b96e5e0745714b4628342ac11e0e88e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "538d2748_5db88e69",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 783,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T20:43:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e8e253cd_fcc72487",
       "range": {
         "startLine": 777,
         "startChar": 21,
