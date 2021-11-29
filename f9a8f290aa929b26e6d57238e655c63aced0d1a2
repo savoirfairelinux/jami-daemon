@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "09bcf4b9_9453e211",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T22:06:48Z",
+      "side": 1,
+      "message": "note for later, in this case it should be in another patch imho (or also explained in the commit message)",
+      "range": {
+        "startLine": 105,
+        "startChar": 33,
+        "endLine": 105,
+        "endChar": 61
+      },
+      "revId": "f9a8f290aa929b26e6d57238e655c63aced0d1a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
