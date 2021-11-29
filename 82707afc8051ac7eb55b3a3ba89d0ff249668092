@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "039ed613_182a7465",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 11
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-29T21:42:28Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "a4383cf4_fbbed172",
+      "range": {
+        "startLine": 6,
+        "startChar": 10,
+        "endLine": 8,
+        "endChar": 5
+      },
+      "revId": "82707afc8051ac7eb55b3a3ba89d0ff249668092",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9fdf7376_fc820f71",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-11-29T19:19:14Z",
       "side": 0,
       "message": "I guess it breaks smart tools if remvoed?",
+      "range": {
+        "startLine": 65,
+        "startChar": 0,
+        "endLine": 66,
+        "endChar": 70
+      },
+      "revId": "82707afc8051ac7eb55b3a3ba89d0ff249668092",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5ae41529_d38738fb",
+        "filename": "src/media/video/video_sender.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-29T21:42:28Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "9fdf7376_fc820f71",
       "range": {
         "startLine": 65,
         "startChar": 0,

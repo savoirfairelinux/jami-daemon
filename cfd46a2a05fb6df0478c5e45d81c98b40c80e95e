@@ -83,6 +83,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb3f7489_170bded0",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 11
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-29T21:42:28Z",
+      "side": 1,
+      "message": "If not set to null, it may happen that the pipeline will try to re-disconnect and will have a crash.",
+      "parentUuid": "06d4096b_c3278f1d",
+      "range": {
+        "startLine": 185,
+        "startChar": 8,
+        "endLine": 189,
+        "endChar": 6
+      },
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d77a256f_735cc368",
@@ -96,6 +120,30 @@
       "writtenOn": "2021-11-29T19:19:14Z",
       "side": 1,
       "message": "out of curiosity - why removing the 3 less significant digit?",
+      "range": {
+        "startLine": 344,
+        "startChar": 35,
+        "endLine": 344,
+        "endChar": 58
+      },
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2fab1b72_2d1d49ec",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-29T21:42:28Z",
+      "side": 1,
+      "message": "codecs constraints",
+      "parentUuid": "d77a256f_735cc368",
       "range": {
         "startLine": 344,
         "startChar": 35,
@@ -131,6 +179,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "caac1a20_13cbe23c",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-29T21:42:28Z",
+      "side": 1,
+      "message": "It is a finding. While testing without camera, the code was trying to open camera://desktop which is not valid.",
+      "parentUuid": "362e9410_9d70ec80",
+      "range": {
+        "startLine": 105,
+        "startChar": 31,
+        "endLine": 105,
+        "endChar": 71
+      },
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b59a750f_deefd3e3",
         "filename": "src/media/video/video_input.cpp",
         "patchSetId": 11
@@ -142,6 +214,30 @@
       "writtenOn": "2021-11-29T19:19:14Z",
       "side": 1,
       "message": "jami::split_string_to_unsigned(display.substr(space + 1), sep); and control size",
+      "range": {
+        "startLine": 422,
+        "startChar": 21,
+        "endLine": 424,
+        "endChar": 33
+      },
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c80677b_07656cf4",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 424,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-29T21:42:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b59a750f_deefd3e3",
       "range": {
         "startLine": 422,
         "startChar": 21,
