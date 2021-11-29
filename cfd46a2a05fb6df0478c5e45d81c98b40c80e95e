@@ -1,0 +1,113 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b107610_3ab7b798",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T19:19:14Z",
+      "side": 1,
+      "message": "Scenario:\n\nChange workspace several times, windows will disappears",
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06d4096b_c3278f1d",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 11
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T19:19:14Z",
+      "side": 1,
+      "message": "I guess it\u0027s bugguy here, because we can easily reach an error with maximum connections.\n\nalso ctx-\u003econn \u003d 0 is un-necessary",
+      "range": {
+        "startLine": 185,
+        "startChar": 8,
+        "endLine": 189,
+        "endChar": 6
+      },
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d77a256f_735cc368",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T19:19:14Z",
+      "side": 1,
+      "message": "out of curiosity - why removing the 3 less significant digit?",
+      "range": {
+        "startLine": 344,
+        "startChar": 35,
+        "endLine": 344,
+        "endChar": 58
+      },
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "362e9410_9d70ec80",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T19:19:14Z",
+      "side": 1,
+      "message": "seems unrelated to this patch? What\u0027S the issue here?",
+      "range": {
+        "startLine": 105,
+        "startChar": 31,
+        "endLine": 105,
+        "endChar": 71
+      },
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b59a750f_deefd3e3",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 424,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-11-29T19:19:14Z",
+      "side": 1,
+      "message": "jami::split_string_to_unsigned(display.substr(space + 1), sep); and control size",
+      "range": {
+        "startLine": 422,
+        "startChar": 21,
+        "endLine": 424,
+        "endChar": 33
+      },
+      "revId": "cfd46a2a05fb6df0478c5e45d81c98b40c80e95e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
