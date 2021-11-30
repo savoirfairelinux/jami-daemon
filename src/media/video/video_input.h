@@ -128,7 +128,7 @@ private:
     bool initX11(const std::string& display);
     bool initAVFoundation(const std::string& display);
     bool initFile(std::string path);
-    bool initGdiGrab(const std::string& params);
+    bool initGdiGrab(const std::string& display);
 
     bool isCapturing() const noexcept;
     void startLoop();

@@ -417,7 +417,6 @@ VideoInput::initX11(const std::string& display)
         p.input = display.substr(1, space);
         if (p.window_id.empty()) {
             p.input = display.substr(0, space);
-            JAMI_INFO() << "p.window_id.empty()";
             auto splits = jami::split_string_to_unsigned(display.substr(space + 1), 'x');
             // round to 8 pixel block
             p.width = round2pow(splits[0], 3);
@@ -469,31 +468,50 @@ VideoInput::initAVFoundation(const std::string& display)
     return true;
 }
 
+#pragma optimize("", off)
 bool
-VideoInput::initGdiGrab(const std::string& params)
+VideoInput::initGdiGrab(const std::string& display)
 {
-    size_t space = params.find(' ');
-    clearOptions();
-    decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
+    // Patterns
+    // full screen sharing : :1+0,0 2560x1440 - SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440
+    // area sharing : :1+882,211 1532x779 - SCREEN 1, POSITION 882x211, RESOLUTION 1532x779
+    // window sharing : :+1,0 0x0 window-id:TITLE - POSITION 0X0
+    size_t space = display.find(' ');
+    std::string windowIdStr = "window-id:";
+    size_t winIdPos = display.find(windowIdStr);
 
-    if (space != std::string::npos) {
-        std::istringstream iss(params.substr(space + 1));
-        char sep;
-        unsigned w, h;
-        iss >> w >> sep >> h;
-        decOpts_.width = round2pow(w, 3);
-        decOpts_.height = round2pow(h, 3);
-
-        size_t plus = params.find('+');
-        std::istringstream dss(params.substr(plus + 1, space - plus));
-        dss >> decOpts_.offset_x >> sep >> decOpts_.offset_y;
-    } else {
-        decOpts_.width = default_grab_width;
-        decOpts_.height = default_grab_height;
+    DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
+    if (winIdPos != std::string::npos) {
+        p.input = display.substr(winIdPos + windowIdStr.size()); // "TITLE";
+        p.name  = display.substr(winIdPos + windowIdStr.size()); // "TITLE";
     }
+    if (space != std::string::npos) {
+        if (p.input.empty()) {
+            auto splits = jami::split_string_to_unsigned(display.substr(space + 1), 'x');
+            // round to 8 pixel block
+            p.width = round2pow(splits[0], 3);
+            p.height = round2pow(splits[1], 3);
+            p.is_area = 1;
+        }
+    } else {
+        p.input = display;
+        p.width = default_grab_width;
+        p.height = default_grab_height;
+        p.is_area = 1;
+    }
+
+    auto dec = std::make_unique<MediaDecoder>();
+    if (dec->openInput(p) < 0 || dec->setupVideo() < 0)
+        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
+
+    clearOptions();
+    decOpts_ = p;
+    decOpts_.width = round2pow(dec->getStream().width, 3);
+    decOpts_.height = round2pow(dec->getStream().height, 3);
 
     return true;
 }
+#pragma optimize("", on)
 
 bool
 VideoInput::initFile(std::string path)
