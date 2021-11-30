@@ -438,10 +438,13 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
         return {};
 
     if (call->isIceEnabled()) {
-        call->createIceMediaTransport();
-        getIceOptions([=](auto&& opts) {
-            call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
-        });
+        if (auto iceMedia = call->createIceMediaTransport(false)) {
+            getIceOptions([call](auto&& opts) {
+                call->initIceMediaTransport(call->getIceMedia(),
+                                            true,
+                                            std::forward<IceTransportOptions>(opts));
+            });
+        }
     }
 
     newOutgoingCallHelper(call, toUrl);
@@ -740,8 +743,7 @@ JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
 {
     JAMI_DBG("Start SIP call [%s]", call.getCallId().c_str());
 
-    if (call.getIceMedia())
-        call.addLocalIceAttributes();
+    call.addLocalIceAttributes();
 
     std::string toUri(getToUri(call.getPeerNumber() + "@"
                                + target.toString(true))); // expecting a fully well formed sip uri

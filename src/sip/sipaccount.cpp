@@ -231,8 +231,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Med
     // Do not init ICE yet if the media list is empty. This may occur
     // if we are sending an invite with no SDP offer.
     if (call->isIceEnabled() and not mediaList.empty()) {
-        call->createIceMediaTransport();
-        call->initIceMediaTransport(true);
+        if (auto iceMedia = call->createIceMediaTransport(false)) {
+            call->initIceMediaTransport(iceMedia, true);
+        }
     }
 
     call->setPeerNumber(toUri);
@@ -357,8 +358,7 @@ bool
 SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 {
     // Add Ice headers to local SDP if ice transport exist
-    if (call->isIceEnabled())
-        call->addLocalIceAttributes();
+    call->addLocalIceAttributes();
 
     const std::string& toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
