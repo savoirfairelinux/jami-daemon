@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "92c6d619_b81e590d",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-30T15:37:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1938d72b_8c4c8830",
+      "range": {
+        "startLine": 239,
+        "startChar": 3,
+        "endLine": 239,
+        "endChar": 60
+      },
+      "revId": "cf3225b0043fa4f55ac5480d05e560b9bc212b52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "91eb8993_49e82e2e",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-11-29T20:43:28Z",
       "side": 1,
       "message": "Not sure what this is all about. Why checking all preferences and resetting accountId? (also std::find_if)",
+      "range": {
+        "startLine": 241,
+        "startChar": 24,
+        "endLine": 248,
+        "endChar": 13
+      },
+      "revId": "cf3225b0043fa4f55ac5480d05e560b9bc212b52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e6a2f51_8c1e3a72",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-30T15:37:36Z",
+      "side": 1,
+      "message": "Added comment in the code",
+      "parentUuid": "91eb8993_49e82e2e",
       "range": {
         "startLine": 241,
         "startChar": 24,
@@ -64,6 +112,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c5371414_1197dc99",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-30T15:37:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "322ea284_dba8bfd8",
+      "revId": "cf3225b0043fa4f55ac5480d05e560b9bc212b52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dbef03ae_f852e658",
@@ -77,6 +143,30 @@
       "writtenOn": "2021-11-29T20:43:28Z",
       "side": 1,
       "message": "all accounts will store the preference in the same directory?\n\nWhy not accountId\u0027s datapath/plugin/preferences.json?\n\nbecause, when we will do removeAccount() those datas should be removed too",
+      "range": {
+        "startLine": 39,
+        "startChar": 74,
+        "endLine": 39,
+        "endChar": 98
+      },
+      "revId": "cf3225b0043fa4f55ac5480d05e560b9bc212b52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9b3d9d13_2e7e8515",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-11-30T15:37:36Z",
+      "side": 1,
+      "message": "The file path returned here is the plugin preference list. In the function bellow is the path to the saved preferences which i changed.",
+      "parentUuid": "dbef03ae_f852e658",
       "range": {
         "startLine": 39,
         "startChar": 74,
