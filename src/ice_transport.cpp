@@ -323,14 +323,12 @@ IceTransport::Impl::~Impl()
     }
 
     if (icest_) {
-
         pj_ice_strans* strans = nullptr;
 
         std::swap(strans, icest_);
 
         // must be done before ioqueue/timer destruction
-        JAMI_INFO("[ice:%p] Destroying ice_strans %p",
-                  pj_ice_strans_get_user_data(strans), strans);
+        JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
 
         pj_ice_strans_stop_ice(strans);
         pj_ice_strans_destroy(strans);
