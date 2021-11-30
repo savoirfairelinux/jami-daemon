@@ -352,7 +352,7 @@ HOSTVARS := $(HOSTTOOLS) \
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download_git = $(error Trying to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else
-download_git = flock "$@.lock" sh -c "\
+download_git = $(FLOCK_PREFIX) sh -c "\
   rm -Rf '$(@:.tar.xz=)' && \
   $(GIT) clone $(2:%=--branch '%') '$(1)' '$(@:.tar.xz=)' && \
   (cd '$(@:.tar.xz=)' && $(GIT) checkout $(3:%= '%')) && \
