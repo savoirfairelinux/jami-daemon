@@ -238,19 +238,19 @@ public:
     std::shared_ptr<IceTransport> getIceMedia() const
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
-        return mediaTransport_;
+        return reinvIceMedia_ ? reinvIceMedia_ : iceMedia_;
     };
 
     /**
      * Set ICE instance. Must be called only for sub-calls
      */
-    void setIceMedia(std::shared_ptr<IceTransport> ice);
+    void setIceMedia(std::shared_ptr<IceTransport> ice, bool isReinvite = false);
 
     /**
      * Setup ICE locally to answer to an ICE offer. The ICE session has
      * the controlled role (slave)
      */
-    void setupIceResponse();
+    void setupIceResponse(bool isReinvite = false);
 
     void terminateSipSession(int status);
 
@@ -282,7 +282,7 @@ public:
 
     // Create a new ICE media session. If we already have an instance,
     // it will be destroyed first.
-    void createIceMediaTransport();
+    bool createIceMediaTransport(bool isReinvite);
 
     // Initialize the ICE session.
     // The initialization is performed asynchronously, i.e, the instance
@@ -450,8 +450,10 @@ private:
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
 
-    ///< Transport used for media streams
-    std::shared_ptr<IceTransport> mediaTransport_;
+    // ICE media transport
+    std::shared_ptr<IceTransport> iceMedia_;
+    // Re-invite (temporary) ICE media transport.
+    std::shared_ptr<IceTransport> reinvIceMedia_;
 
     std::string peerUri_ {};
 
