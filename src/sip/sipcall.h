@@ -233,24 +233,24 @@ public:
     std::shared_ptr<SIPAccountBase> getSIPAccount() const;
 
     bool remoteHasValidIceAttributes();
-    void addLocalIceAttributes();
+    void addLocalIceAttributes(const std::shared_ptr<IceTransport>& iceMedia);
 
     std::shared_ptr<IceTransport> getIceMedia() const
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
-        return mediaTransport_;
+        return reinvIceMedia_ ? reinvIceMedia_ : iceMedia_;
     };
 
     /**
      * Set ICE instance. Must be called only for sub-calls
      */
-    void setIceMedia(std::shared_ptr<IceTransport> ice);
+    void setIceMedia(std::shared_ptr<IceTransport> ice, bool isReinvite = false);
 
     /**
      * Setup ICE locally to answer to an ICE offer. The ICE session has
      * the controlled role (slave)
      */
-    void setupIceResponse();
+    void setupIceResponse(bool isReinvite = false);
 
     void terminateSipSession(int status);
 
@@ -282,12 +282,13 @@ public:
 
     // Create a new ICE media session. If we already have an instance,
     // it will be destroyed first.
-    void createIceMediaTransport();
+    static std::shared_ptr<IceTransport> createIceMediaTransport(const std::string& callId);
 
     // Initialize the ICE session.
     // The initialization is performed asynchronously, i.e, the instance
     // may not be ready to use when this method returns.
-    bool initIceMediaTransport(bool master,
+    bool initIceMediaTransport(const std::shared_ptr<IceTransport>& iceMedia,
+                               bool master,
                                std::optional<IceTransportOptions> options = std::nullopt);
 
     std::vector<std::string> getLocalIceCandidates(unsigned compId) const;
@@ -450,8 +451,10 @@ private:
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
 
-    ///< Transport used for media streams
-    std::shared_ptr<IceTransport> mediaTransport_;
+    // ICE media transport
+    std::shared_ptr<IceTransport> iceMedia_;
+    // Re-invite (temporary) ICE media transport.
+    std::shared_ptr<IceTransport> reinvIceMedia_;
 
     std::string peerUri_ {};
 
