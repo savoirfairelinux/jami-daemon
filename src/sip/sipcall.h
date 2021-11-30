@@ -114,8 +114,6 @@ public:
 private:
     void merge(Call& call) override; // not public - only called by Call
 
-    void resetTransport(std::shared_ptr<IceTransport>&& transport);
-
 public:
     void answer() override;
     void answer(const std::vector<DRing::MediaMap>& mediaList) override;
@@ -238,19 +236,20 @@ public:
     std::shared_ptr<IceTransport> getIceMedia() const
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
-        return mediaTransport_;
+        return reinvIceMedia_ ? reinvIceMedia_ : iceMedia_;
     };
 
-    /**
-     * Set ICE instance. Must be called only for sub-calls
-     */
-    void setIceMedia(std::shared_ptr<IceTransport> ice);
+    // Set ICE instance. Must be called only for sub-calls
+    void setIceMedia(std::shared_ptr<IceTransport> ice, bool isReinvite = false);
+
+    // Switch to re-invite ICE media if needed
+    void switchToIceReinviteIfNeeded();
 
     /**
      * Setup ICE locally to answer to an ICE offer. The ICE session has
      * the controlled role (slave)
      */
-    void setupIceResponse();
+    void setupIceResponse(bool isReinvite = false);
 
     void terminateSipSession(int status);
 
@@ -282,7 +281,7 @@ public:
 
     // Create a new ICE media session. If we already have an instance,
     // it will be destroyed first.
-    void createIceMediaTransport();
+    bool createIceMediaTransport(bool isReinvite);
 
     // Initialize the ICE session.
     // The initialization is performed asynchronously, i.e, the instance
@@ -310,6 +309,8 @@ private:
     void rtpSetupSuccess(MediaType type, bool isRemote);
 
     void setMute(bool state);
+
+    void resetTransport(std::shared_ptr<IceTransport>&& transport);
 
     /**
      * Send device orientation through SIP INFO
@@ -450,8 +451,10 @@ private:
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
 
-    ///< Transport used for media streams
-    std::shared_ptr<IceTransport> mediaTransport_;
+    // ICE media transport
+    std::shared_ptr<IceTransport> iceMedia_;
+    // Re-invite (temporary) ICE media transport.
+    std::shared_ptr<IceTransport> reinvIceMedia_;
 
     std::string peerUri_ {};
 
