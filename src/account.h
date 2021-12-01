@@ -23,9 +23,7 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "client/ring_signal.h"
 #include "configurationmanager_interface.h"
