@@ -17,9 +17,7 @@
  */
 #pragma once
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "jamidht/conversation.h"
 #include "contact_list.h"
