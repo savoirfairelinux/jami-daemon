@@ -23,9 +23,7 @@
 #include <map>
 #include <cstdlib>
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "manager.h"
 #include "logger.h"
