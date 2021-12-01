@@ -20,9 +20,7 @@
 
 #pragma once
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"

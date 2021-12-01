@@ -21,9 +21,7 @@
 
 #pragma once
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "upnp/protocol/upnp_protocol.h"
 #include "upnp/protocol/igd.h"

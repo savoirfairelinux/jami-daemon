@@ -22,12 +22,10 @@
 
 #pragma once
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "video_base.h"
-#include <videomanager_interface.h>
+#include "videomanager_interface.h"
 
 #include <string>
 #include <vector>
