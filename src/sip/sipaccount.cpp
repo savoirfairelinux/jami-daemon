@@ -22,9 +22,7 @@
 
 #include "sipaccount.h"
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "compiler_intrinsics.h"
 

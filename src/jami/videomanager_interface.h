@@ -22,9 +22,7 @@
 #define DENABLE_VIDEOMANAGERI_H
 
 #include "jami.h"
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif // HAVE_CONFIG_H
 
 extern "C" {
 struct AVFrame;
