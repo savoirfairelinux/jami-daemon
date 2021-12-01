@@ -162,8 +162,6 @@ configure_file(
     output: 'config.h',
     configuration: conf
 )
-add_project_arguments('-DHAVE_CONFIG_H', language: 'cpp')
-add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
 
 #################################################
 # Build targets
