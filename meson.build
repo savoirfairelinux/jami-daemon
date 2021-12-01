@@ -158,12 +158,7 @@ endif
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')
 conf.set10('HAVE_SHM', get_option('interfaces').contains('dbus'))
 
-configure_file(
-    output: 'config.h',
-    configuration: conf
-)
-add_project_arguments('-DHAVE_CONFIG_H', language: 'cpp')
-add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
+configure_file(output: 'config.h', configuration: conf)
 
 #################################################
 # Build targets

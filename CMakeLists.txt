@@ -187,7 +187,6 @@ if(MSVC)
            "_SCL_SECURE_NO_WARNINGS;"
            "_CRT_SECURE_NO_WARNINGS;"
            "NOMINMAX;"
-           "HAVE_CONFIG_H;"
            "WIN32_LEAN_AND_MEAN;"
            "WEBRTC_WIN;"
            "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
