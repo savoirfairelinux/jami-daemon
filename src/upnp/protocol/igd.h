@@ -22,9 +22,7 @@
 
 #include <mutex>
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "noncopyable.h"
 #include "ip_utils.h"
