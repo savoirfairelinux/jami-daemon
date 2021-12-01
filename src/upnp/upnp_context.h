@@ -22,9 +22,7 @@
 
 #pragma once
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "protocol/upnp_protocol.h"
 #if HAVE_LIBNATPMP

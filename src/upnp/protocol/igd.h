@@ -22,15 +22,13 @@
 
 #include <mutex>
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "string_utils.h"
 
-#include "upnp/protocol/mapping.h"
+#include "mapping.h"
 
 #ifdef _MSC_VER
 typedef uint16_t in_port_t;
