@@ -23,9 +23,7 @@
 
 #pragma once
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include "sipaccountbase.h"
 #include "siptransport.h"
