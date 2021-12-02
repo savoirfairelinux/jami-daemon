@@ -77,18 +77,6 @@ VideoSender::~VideoSender()
 void
 VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
 {
-    auto width = ((input_frame->width() >> 3) << 3);
-    auto height = ((input_frame->height() >> 3) << 3);
-    if (videoEncoder_->getWidth() != width || videoEncoder_->getHeight() != height) {
-        videoEncoder_->resetStreams(width, height);
-        forceKeyFrame();
-        // Send local video codec in SmartInfo
-        Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getVideoCodec());
-        // Send the resolution in smartInfo
-        Smartools::getInstance().setResolution("local", width, height);
-        return;
-    }
-
     int angle = input_frame->getOrientation();
     if (rotation_ != angle) {
         rotation_ = angle;
