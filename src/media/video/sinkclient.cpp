@@ -278,6 +278,9 @@ SinkClient::start() noexcept
 {
     if (not shm_) {
         try {
+            char* envvar = getenv("JAMI_USE_SHM");
+            if (envvar) // Do not use SHM if set
+                return true;
             shm_ = std::make_shared<ShmHolder>();
             JAMI_DBG("[Sink:%p] Shared memory [%s] created", this, openedName().c_str());
         } catch (const std::runtime_error& e) {
@@ -379,7 +382,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
+            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
@@ -426,7 +429,8 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             return;
         }
 #if HAVE_SHM
-        shm_->renderFrame(*frame);
+        if (shm_)
+            shm_->renderFrame(*frame);
 #endif
         if (target_.pull) {
             int width = frame->width();
