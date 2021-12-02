@@ -1,0 +1,15 @@
+{
+    "name": "freetype",
+    "version": "39ce3ac499d4cd7371031a062f410953c8ecce29",
+    "url": "https://gitlab.freedesktop.org/freetype/freetype/-/archive/__VERSION__/freetype-__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": ["builds/windows/vc2010/freetype.vcxproj"],
+    "with_env" : "10.0.16299.0",
+    "custom_scripts": {
+        "pre_build": ["copy %cd%\\\\..\\\\..\\\\src\\\\freetype\\\\freetype.vcxproj %cd%\\\\builds\\\\windows\\\\vc2010\\\\freetype.vcxproj /Y"],
+        "build": [],
+        "post_build": []
+    }
+}
