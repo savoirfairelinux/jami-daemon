@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0990dcf_9cd76f07",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-12-02T22:43:36Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027\u0026\u0026\u0027 within \u0027||\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-logical-op-parentheses",
+      "revId": "cdfc40c348f756e4d31e755bb566641dc58fdea2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
