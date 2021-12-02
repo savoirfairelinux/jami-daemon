@@ -16,6 +16,24 @@
       "message": "remove freetype files",
       "revId": "a808b12b2f3d2acde21fee87d6aae7063982806c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed1fa412_e276fbd0",
+        "filename": "contrib/src/freetype/autogen.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-02T22:39:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c833d539_8d396983",
+      "revId": "a808b12b2f3d2acde21fee87d6aae7063982806c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
