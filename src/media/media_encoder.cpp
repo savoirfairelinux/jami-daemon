@@ -213,6 +213,8 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         mediaType = AVMEDIA_TYPE_AUDIO;
 
     AVStream* stream;
+    if (!outputCtx_)
+        throw MediaEncoderException("Cannot allocate stream");
     // add video stream to outputformat context
     if (outputCtx_->nb_streams <= 0)
         stream = avformat_new_stream(outputCtx_, outputCodec_);
@@ -222,7 +224,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         stream->codecpar->height = videoOpts_.height;
     }
     if (!stream)
-        throw MediaEncoderException("Could not allocate stream");
+        throw MediaEncoderException("Cannot allocate stream");
 
     currentStreamIdx_ = stream->index;
 #ifdef RING_ACCEL
