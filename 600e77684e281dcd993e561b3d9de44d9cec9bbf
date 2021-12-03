@@ -16,6 +16,24 @@
       "message": "Would that break cmake ?",
       "revId": "600e77684e281dcd993e561b3d9de44d9cec9bbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1cb732ee_e7e3dfbf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2021-12-03T20:02:35Z",
+      "side": 1,
+      "message": "The config.h exists unconditionally in all build systems, so this patch should not break anything.",
+      "parentUuid": "133f377e_5b02f329",
+      "revId": "600e77684e281dcd993e561b3d9de44d9cec9bbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
