@@ -45,6 +45,7 @@ FFMPEGCONF += \
 	--enable-muxer=h264 \
 	--enable-muxer=hevc \
 	--enable-muxer=webm \
+	--enable-muxer=matroska \
 	--enable-muxer=ogg \
 	--enable-muxer=pcm_s16be \
 	--enable-muxer=pcm_s16le \
