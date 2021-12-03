@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3149c94f_30670ab1",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-03T15:40:10Z",
+      "side": 1,
+      "message": "Can not?",
+      "range": {
+        "startLine": 217,
+        "startChar": 37,
+        "endLine": 217,
+        "endChar": 43
+      },
+      "revId": "3324691f35ef19b890f263fbe41080ec4749a830",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
