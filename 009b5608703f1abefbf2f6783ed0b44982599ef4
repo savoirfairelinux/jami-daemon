@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f11163a8_bffdc288",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2021-12-03T19:45:29Z",
+      "side": 1,
+      "message": "This patch is not actual anymore, because test/meson.build should also be updated.",
+      "revId": "009b5608703f1abefbf2f6783ed0b44982599ef4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
