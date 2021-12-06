@@ -1296,6 +1296,7 @@ MediaEncoder::getScaledSWFrame(const VideoFrame& input)
 void
 MediaEncoder::resetStreams(int width, int height)
 {
+    JAMI_ERR() << "@@@ reset streams";
     // Only called by VideoSender!
     initialized_ = false;
     videoOpts_.width = width;

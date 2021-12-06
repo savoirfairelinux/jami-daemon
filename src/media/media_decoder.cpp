@@ -367,6 +367,7 @@ MediaDemuxer::decode()
     } else if (ret == AVERROR_EOF) {
         return Status::EndOfFile;
     } else if (ret == AVERROR(EACCES)) {
+        JAMI_ERR() << "@@@ RESTART REQUIRED";
         return Status::RestartRequired;
     } else if (ret < 0) {
         JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
@@ -601,6 +602,7 @@ MediaDecoder::decode(AVPacket& packet)
         }
 #endif
         avcodec_flush_buffers(decoderCtx_);
+        JAMI_ERR() << "@@@ setupStream";
         setupStream();
         return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
     }
@@ -679,6 +681,7 @@ MediaDecoder::decode()
     auto ret = demuxer_->decode();
     if (ret == MediaDemuxer::Status::RestartRequired) {
         avcodec_flush_buffers(decoderCtx_);
+        JAMI_ERR() << "@@@ setupStream2";
         setupStream();
         ret = MediaDemuxer::Status::EndOfFile;
     }
