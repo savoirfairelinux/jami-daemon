@@ -495,7 +495,8 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
     }
     if (streamIdx < 0)
         streamIdx = currentStreamIdx_;
-    if (streamIdx >= 0 and static_cast<size_t>(streamIdx) < encoders_.size()) {
+    if (streamIdx >= 0 and static_cast<size_t>(streamIdx) < encoders_.size()
+        and static_cast<size_t>(streamIdx) < outputCtx_->nb_streams) {
         auto encoderCtx = encoders_[streamIdx];
         pkt.stream_index = streamIdx;
         if (pkt.pts != AV_NOPTS_VALUE)
