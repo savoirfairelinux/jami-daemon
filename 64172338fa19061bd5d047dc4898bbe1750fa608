@@ -22,6 +22,30 @@
       },
       "revId": "64172338fa19061bd5d047dc4898bbe1750fa608",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6fd7d9df_164a277f",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-07T16:01:26Z",
+      "side": 1,
+      "message": "* There was no lock at all in SinkClient before recently. The general assumption is that the SinkClient is fed Frames by a single daemon thread (typically the decoder thread).\n* The lock was added to protect the target (ie. the target_ variable), to allow the daemon to push a frame and the client to register/unregister a target at the same time.\n* However, setFrameSize(0, 0) -\u003e DecodingStopped causes the Android client to unregister a target synchronously, which is wanted, but causes a deadlock.\n* setFrameSize doesn\u0027t use target_ at all, so it can be called without the mutex locked. Unlike target_, width and height can\u0027t be accessed by the client.",
+      "parentUuid": "a96014dc_4a0d4beb",
+      "range": {
+        "startLine": 428,
+        "startChar": 13,
+        "endLine": 428,
+        "endChar": 31
+      },
+      "revId": "64172338fa19061bd5d047dc4898bbe1750fa608",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
