@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "764519da_affca3c3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2476,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-07T15:48:17Z",
+      "side": 1,
+      "message": "technically, transportMtx_ should be always locked when reinvIceMedia_ or iceMedia_ are used.",
+      "range": {
+        "startLine": 2476,
+        "startChar": 4,
+        "endLine": 2476,
+        "endChar": 39
+      },
+      "revId": "10410f2a5639968cbe9ab16385455c8da26f8c29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c7a34ea_5b7c5bfa",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3229,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-07T15:48:17Z",
+      "side": 1,
+      "message": "Keep the new shared_ptr locally to avoid race conditions:\n\n    auto iceMedia \u003d createIceMediaTransport();\n    bool success \u003d initIceMediaTransport(iceMedia, false, opt);\n    // Maybe an old reinvIceMedia_ needs to be destroyed, also transportMtx_ needs to be locked, so using setIceMedia for both ICEs\n    setIceMedia(iceMedia, isReinvite);\n    if (not success) {\n        ...\n    }\n    addLocalIceAttributes(iceMedia);",
+      "range": {
+        "startLine": 3222,
+        "startChar": 0,
+        "endLine": 3229,
+        "endChar": 5
+      },
+      "revId": "10410f2a5639968cbe9ab16385455c8da26f8c29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

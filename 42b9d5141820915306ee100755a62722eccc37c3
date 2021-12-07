@@ -1,6 +1,52 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed727075_5955f703",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 854,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-07T15:48:17Z",
+      "side": 1,
+      "message": "Could re-use the ice instance, to make sure it stays the same, and to avoid unneeded shared_ptr copies:\n\n    auto iceMedia \u003d createIceMediaTransport();\n    if (initIceMediaTransport(iceMedia, true, std::move(opts))) {\n        setIceMedia(iceMedia);\n        addLocalIceAttributes(iceMedia);\n    }",
+      "range": {
+        "startLine": 852,
+        "startChar": 0,
+        "endLine": 854,
+        "endChar": 61
+      },
+      "revId": "42b9d5141820915306ee100755a62722eccc37c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e77a56d_4fa8fe40",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1483,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-07T15:48:17Z",
+      "side": 1,
+      "message": "also reset reinvIceMedia_",
+      "range": {
+        "startLine": 1483,
+        "startChar": 8,
+        "endLine": 1483,
+        "endChar": 45
+      },
+      "revId": "42b9d5141820915306ee100755a62722eccc37c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "8efbd2e7_58020d5a",
