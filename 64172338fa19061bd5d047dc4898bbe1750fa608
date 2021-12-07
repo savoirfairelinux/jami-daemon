@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a96014dc_4a0d4beb",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-07T15:36:07Z",
+      "side": 1,
+      "message": "can you detail the lock? Or the issue in the commit message?\n\nBecause setFrameSize() doesn\u0027t use mtx_ and I think width_ and height_ should be protected.\n\nI guess the client is relocking into DRing::VideoSignal::DecodingStarted\u0027s callback? Maybe this should be moved into a unlocked session.\n\nAlso, in SinkClient::setFrameSize, started_ is set after the signal. Is this really wanted? cause the flag can be in a weird state if used in a callback",
+      "range": {
+        "startLine": 428,
+        "startChar": 13,
+        "endLine": 428,
+        "endChar": 31
+      },
+      "revId": "64172338fa19061bd5d047dc4898bbe1750fa608",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
