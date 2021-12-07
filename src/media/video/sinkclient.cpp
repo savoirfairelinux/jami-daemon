@@ -353,7 +353,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     }
 #endif
 
-    std::lock_guard<std::mutex> lock(mtx_);
+    std::unique_lock<std::mutex> lock(mtx_);
     if (avTarget_.push) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
@@ -424,6 +424,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         }
 
         if (frame->height() != height_ || frame->width() != width_) {
+            lock.unlock();
             setFrameSize(0, 0);
             setFrameSize(frame->width(), frame->height());
             return;
