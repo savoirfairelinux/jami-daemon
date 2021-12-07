@@ -467,6 +467,25 @@ private:
     std::mutex avStreamsMtx_ {};
     std::map<std::string, std::shared_ptr<MediaStreamSubject>> confAVStreams;
 #endif // ENABLE_PLUGIN
+
+    void handleActions(const std::string& uri,
+                       const std::string& deviceId,
+                       const Json::Value& value);
+    void handleAccountActions(const std::string& uri,
+                              const std::string& deviceId,
+                              const std::string& targetUri,
+                              const Json::Value& value);
+    void handleDeviceActions(const std::string& uri,
+                             const std::string& deviceId,
+                             const std::string& targetUri,
+                             const std::string& targetDevice,
+                             const Json::Value& value);
+    void handleMediaAction(const std::string& uri,
+                           const std::string& deviceId,
+                           const std::string& targetUri,
+                           const std::string& targetDevice,
+                           const std::string& targetMedia,
+                           const Json::Value& value);
 };
 
 } // namespace jami

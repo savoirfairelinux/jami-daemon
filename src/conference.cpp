@@ -1034,19 +1034,12 @@ Conference::onConfOrder(const std::string& callId,
                         const std::string& confOrder,
                         const std::string& deviceId)
 {
-    auto remoteDevice = deviceId;
-    auto cert = tls::CertificateStore::instance().getCertificate(remoteDevice);
+    auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
     if (!cert || !cert->issuer)
         return;
     auto remoteUser = cert->issuer->getId().toString();
 
-    if (!isModerator(remoteUser)) {
-        JAMI_WARN("Received conference order from a non master (%.*s)",
-                  (int) remoteUser.size(),
-                  remoteUser.data());
-        return;
-    }
-
+    // Parse JSON
     std::string err;
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
@@ -1057,20 +1050,149 @@ Conference::onConfOrder(const std::string& callId,
                   remoteUser.data());
         return;
     }
-    if (isVideoEnabled() and root.isMember("layout")) {
-        setLayout(root["layout"].asUInt());
+
+    if (root.isMember("activeParticipant") || root.isMember("muteParticipant")
+        || root.isMember("muteState") || root.isMember("hangupParticipant")
+        || root.isMember("handRaised")) {
+        // Legacy, to remove
+        if (root.isMember("handRaised") && remoteUser == root["handRaised"].asString()) {
+            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
+        }
+        if (!isModerator(remoteUser)) {
+            JAMI_WARN("Received conference order from a non master (%.*s)",
+                      (int) remoteUser.size(),
+                      remoteUser.data());
+            return;
+        }
+
+        if (root.isMember("layout")) {
+            setLayout(root["layout"].asUInt());
+        }
+        if (root.isMember("activeParticipant")) {
+            setActiveParticipant(root["activeParticipant"].asString());
+        }
+        if (root.isMember("muteParticipant") and root.isMember("muteState")) {
+            muteParticipant(root["muteParticipant"].asString(),
+                            root["muteState"].asString() == "true");
+        }
+        if (root.isMember("hangupParticipant")) {
+            hangupParticipant(root["hangupParticipant"].asString());
+        }
     }
-    if (root.isMember("activeParticipant")) {
-        setActiveParticipant(root["activeParticipant"].asString());
+
+    handleActions(remoteUser, deviceId, root);
+}
+
+void
+Conference::handleActions(const std::string& uri,
+                          const std::string& deviceId,
+                          const Json::Value& value)
+{
+    for (const auto& member : value.getMemberNames()) {
+        if (member == "layout") {
+            // Handle layout
+            if (!isModerator(uri)) {
+                JAMI_WARN("Received conference order from a non master (%.*s)",
+                          (int) uri.size(),
+                          uri.data());
+                return;
+            }
+            // check if moderator
+            setLayout(value["layout"].asUInt());
+        } else {
+            handleAccountActions(uri, deviceId, member, value[member]);
+        }
     }
-    if (root.isMember("muteParticipant") and root.isMember("muteState")) {
-        muteParticipant(root["muteParticipant"].asString(), root["muteState"].asString() == "true");
+}
+
+void
+Conference::handleAccountActions(const std::string& uri,
+                                 const std::string& deviceId,
+                                 const std::string& targetUri,
+                                 const Json::Value& value)
+{
+    for (const auto& member : value.getMemberNames()) {
+        if (member == "moderator") {
+            if (!isModerator(uri)) {
+                JAMI_WARN("Received conference order from a non master (%.*s)",
+                          (int) uri.size(),
+                          uri.data());
+                return;
+            }
+            setModerator(targetUri, value["moderator"].asString() == "true");
+        } else if (member == "devices") {
+            for (const auto& device : value[member].getMemberNames()) {
+                handleDeviceActions(uri, deviceId, targetUri, device, value[member][device]);
+            }
+        }
     }
-    if (root.isMember("hangupParticipant")) {
-        hangupParticipant(root["hangupParticipant"].asString());
+}
+
+void
+Conference::handleDeviceActions(const std::string& uri,
+                                const std::string& deviceId,
+                                const std::string& targetUri,
+                                const std::string& targetDevice,
+                                const Json::Value& value)
+{
+    for (const auto& member : value.getMemberNames()) {
+        if (member == "hangup") {
+            if (!isModerator(uri)) {
+                JAMI_WARN("Received conference order from a non master (%.*s)",
+                          (int) uri.size(),
+                          uri.data());
+                return;
+            }
+            hangupParticipant(targetDevice);
+        } else if (member == "raisehand") {
+            if (uri != targetUri && deviceId != targetDevice) {
+                JAMI_WARN("Received raise hand from wrong account (%.*s)",
+                          (int) uri.size(),
+                          uri.data());
+                return;
+            }
+            setHandRaised(targetDevice, value[member].asString() == "true");
+        } else if (member == "medias") {
+            for (const auto& media : value[member].getMemberNames()) {
+                handleMediaAction(uri,
+                                  deviceId,
+                                  targetUri,
+                                  targetDevice,
+                                  media,
+                                  value[member][media]);
+            }
+        }
     }
-    if (root.isMember("handRaised")) {
-        setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
+}
+
+void
+Conference::handleMediaAction(const std::string& uri,
+                              const std::string& deviceId,
+                              const std::string& targetUri,
+                              const std::string& targetDevice,
+                              const std::string& targetMedia,
+                              const Json::Value& value)
+{
+    for (const auto& member : value.getMemberNames()) {
+        if (member == "muteVideo") {
+            JAMI_WARN("Not implemented yet");
+        } else if (member == "muteAudio") {
+            if (!isModerator(uri)) {
+                JAMI_WARN("Received conference order from a non master (%.*s)",
+                          (int) uri.size(),
+                          uri.data());
+                return;
+            }
+            muteParticipant(targetMedia, value[member].asString() == "true");
+        } else if (member == "active") {
+            if (!isModerator(uri)) {
+                JAMI_WARN("Received conference order from a non master (%.*s)",
+                          (int) uri.size(),
+                          uri.data());
+                return;
+            }
+            setActiveParticipant(targetMedia);
+        }
     }
 }
 
