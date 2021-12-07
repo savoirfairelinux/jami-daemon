@@ -377,13 +377,6 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input,
                      bool is_keyframe,
                      int64_t frame_number)
 {
-    auto width = (input->width() >> 3) << 3;
-    auto height = (input->height() >> 3) << 3;
-    if (initialized_ && (getWidth() != width || getHeight() != height)) {
-        resetStreams(width, height);
-        is_keyframe = true;
-    }
-
     if (!initialized_) {
         initStream(videoCodec_, input->pointer()->hw_frames_ctx);
         startIO();
@@ -498,6 +491,10 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
     if (streamIdx >= 0 and static_cast<size_t>(streamIdx) < encoders_.size()) {
         auto encoderCtx = encoders_[streamIdx];
         pkt.stream_index = streamIdx;
+        if (!outputCtx_
+            || !outputCtx_->streams[streamIdx]
+            || !encoderCtx)
+            return false;
         if (pkt.pts != AV_NOPTS_VALUE)
             pkt.pts = av_rescale_q(pkt.pts,
                                    encoderCtx->time_base,
