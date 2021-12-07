@@ -85,6 +85,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f9ae105e_e6ae3a4b",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-07T15:01:44Z",
+      "side": 1,
+      "message": "quote: \"I think it\u0027s better to cancel the loop than retry in that case.\"\n\nI am not comfortable with this change unless we can prove with extensive testing on all supported platforms that this will not introduce any regression.",
+      "parentUuid": "458b771b_e28ae6ae",
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "319eb206_42f6ea43",
         "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
         "patchSetId": 6
@@ -114,6 +132,24 @@
       "side": 1,
       "message": "What has to be tested?  The logic has not changed, only the polling call.",
       "parentUuid": "319eb206_42f6ea43",
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43f95366_537e0fa6",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 395,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-07T15:01:44Z",
+      "side": 1,
+      "message": "still, needs testing ...",
+      "parentUuid": "5768bcb7_0060df8a",
       "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },

@@ -34,6 +34,24 @@
       "parentUuid": "d2a3a99e_d7a87d9e",
       "revId": "5e6b8823fb37e337ebed312b1bbc81fb6c0598c4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8f533e87_9334f90d",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 262,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-07T15:01:44Z",
+      "side": 0,
+      "message": "replied above.",
+      "parentUuid": "eb72ce8d_d075b065",
+      "revId": "5e6b8823fb37e337ebed312b1bbc81fb6c0598c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

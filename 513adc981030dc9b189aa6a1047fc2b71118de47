@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "260e10f6_7e903447",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-07T15:01:44Z",
+      "side": 1,
+      "message": "missing \u0027(\u0027. \nBTW, %m is not portable",
+      "range": {
+        "startLine": 233,
+        "startChar": 61,
+        "endLine": 233,
+        "endChar": 62
+      },
+      "revId": "513adc981030dc9b189aa6a1047fc2b71118de47",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
