@@ -1030,44 +1030,47 @@ Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 }
 
 void
-Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
+Conference::onConfOrder(const std::string& callId,
+                        const std::string& confOrder,
+                        const std::string& deviceId)
 {
-    // Check if the peer is a master
-    if (auto call = Manager::instance().getCallFromCallID(callId)) {
-        auto peerID = string_remove_suffix(call->getPeerNumber(), '@');
-        if (!isModerator(peerID)) {
-            JAMI_WARN("Received conference order from a non master (%.*s)",
-                      (int) peerID.size(),
-                      peerID.data());
-            return;
-        }
+    auto remoteDevice = deviceId;
+    auto cert = tls::CertificateStore::instance().getCertificate(remoteDevice);
+    if (!cert || !cert->issuer)
+        return;
+    auto remoteUser = cert->issuer->getId().toString();
 
-        std::string err;
-        Json::Value root;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Couldn't parse conference order from %.*s",
-                      (int) peerID.size(),
-                      peerID.data());
-            return;
-        }
-        if (isVideoEnabled() and root.isMember("layout")) {
-            setLayout(root["layout"].asUInt());
-        }
-        if (root.isMember("activeParticipant")) {
-            setActiveParticipant(root["activeParticipant"].asString());
-        }
-        if (root.isMember("muteParticipant") and root.isMember("muteState")) {
-            muteParticipant(root["muteParticipant"].asString(),
-                            root["muteState"].asString() == "true");
-        }
-        if (root.isMember("hangupParticipant")) {
-            hangupParticipant(root["hangupParticipant"].asString());
-        }
-        if (root.isMember("handRaised")) {
-            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
-        }
+    if (!isModerator(remoteUser)) {
+        JAMI_WARN("Received conference order from a non master (%.*s)",
+                  (int) remoteUser.size(),
+                  remoteUser.data());
+        return;
+    }
+
+    std::string err;
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
+        JAMI_WARN("Couldn't parse conference order from %.*s",
+                  (int) remoteUser.size(),
+                  remoteUser.data());
+        return;
+    }
+    if (isVideoEnabled() and root.isMember("layout")) {
+        setLayout(root["layout"].asUInt());
+    }
+    if (root.isMember("activeParticipant")) {
+        setActiveParticipant(root["activeParticipant"].asString());
+    }
+    if (root.isMember("muteParticipant") and root.isMember("muteState")) {
+        muteParticipant(root["muteParticipant"].asString(), root["muteState"].asString() == "true");
+    }
+    if (root.isMember("hangupParticipant")) {
+        hangupParticipant(root["hangupParticipant"].asString());
+    }
+    if (root.isMember("handRaised")) {
+        setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
     }
 }
 

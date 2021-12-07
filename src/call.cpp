@@ -389,7 +389,7 @@ Call::getDetails() const
 }
 
 void
-Call::onTextMessage(std::map<std::string, std::string>&& messages)
+Call::onTextMessage(std::map<std::string, std::string>&& messages, const std::string& deviceId)
 {
     auto it = messages.find("application/confInfo+json");
     if (it != messages.end()) {
@@ -400,7 +400,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
     it = messages.find("application/confOrder+json");
     if (it != messages.end()) {
         if (auto conf = conf_.lock())
-            conf->onConfOrder(getCallId(), it->second);
+            conf->onConfOrder(getCallId(), it->second, deviceId);
         return;
     }
 

@@ -398,7 +398,7 @@ public:
                                  const std::string& from)
         = 0;
 
-    void onTextMessage(std::map<std::string, std::string>&& messages);
+    void onTextMessage(std::map<std::string, std::string>&& messages, const std::string& deviceId);
 
     virtual std::shared_ptr<AccountCodecInfo> getAudioCodec() const { return {}; }
     virtual std::shared_ptr<AccountCodecInfo> getVideoCodec() const { return {}; }

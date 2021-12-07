@@ -328,7 +328,9 @@ public:
     void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
     void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
 
-    void onConfOrder(const std::string& callId, const std::string& order);
+    void onConfOrder(const std::string& callId,
+                     const std::string& order,
+                     const std::string& deviceId);
 
     bool isVideoEnabled() const;
 

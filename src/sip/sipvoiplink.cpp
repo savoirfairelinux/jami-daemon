@@ -1364,10 +1364,15 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     else if (methodName == sip_utils::SIP_METHODS::OPTIONS)
         handleIncomingOptions(rdata);
     else if (methodName == sip_utils::SIP_METHODS::MESSAGE) {
-        if (msg->body)
-            runOnMainThread([call, m = im::parseSipMessage(msg)]() mutable {
-                call->onTextMessage(std::move(m));
+        auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(
+            rdata->tp_info.transport);
+        if (msg->body && transport) {
+            runOnMainThread([call,
+                             m = im::parseSipMessage(msg),
+                             deviceId = std::string(transport->deviceId())]() mutable {
+                call->onTextMessage(std::move(m), deviceId);
             });
+        }
     }
 }
 
