@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "06f4834e_b041a676",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 854,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-07T16:57:09Z",
+      "side": 1,
+      "message": "indeed, we could.",
+      "parentUuid": "ed727075_5955f703",
+      "range": {
+        "startLine": 852,
+        "startChar": 0,
+        "endLine": 854,
+        "endChar": 61
+      },
+      "revId": "42b9d5141820915306ee100755a62722eccc37c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5e77a56d_4fa8fe40",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-12-07T15:48:17Z",
       "side": 1,
       "message": "also reset reinvIceMedia_",
+      "range": {
+        "startLine": 1483,
+        "startChar": 8,
+        "endLine": 1483,
+        "endChar": 45
+      },
+      "revId": "42b9d5141820915306ee100755a62722eccc37c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "168bf35a_0c859f30",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1483,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-07T16:57:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5e77a56d_4fa8fe40",
       "range": {
         "startLine": 1483,
         "startChar": 8,
