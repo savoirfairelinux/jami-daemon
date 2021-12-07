@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "47c53bd0_94dad61d",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 499,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-07T22:09:56Z",
+      "side": 1,
+      "message": "nb_stream is an \u0027unsigned int\u0027 while size_t is a long unsigned int. Not a big deal, but some picky compilers (e.g. clang) may complain",
+      "range": {
+        "startLine": 499,
+        "startChar": 24,
+        "endLine": 499,
+        "endChar": 30
+      },
+      "revId": "129ef0d3d0febf438e7226a5bd74c75546993cc9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
