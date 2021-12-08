@@ -27,6 +27,7 @@
 #include "audio/audiolayer.h"
 #include "jamidht/jamiaccount.h"
 #include "string_utils.h"
+#include "sip/siptransport.h"
 
 #ifdef ENABLE_VIDEO
 #include "call.h"
@@ -96,12 +97,16 @@ Conference::Conference(const std::shared_ptr<Account>& account)
             auto shared = w.lock();
             if (!shared)
                 return;
+            auto acc = std::dynamic_pointer_cast<JamiAccount>(shared->account_.lock());
+            if (!acc)
+                return;
             ConfInfo newInfo;
             auto hostAdded = false;
             // Handle participants showing their video
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
             for (const auto& info : infos) {
                 std::string uri {};
+                std::string deviceId {};
                 auto it = shared->videoToCall_.find(info.source);
                 if (it == shared->videoToCall_.end())
                     it = shared->videoToCall_.emplace_hint(it, info.source, std::string());
@@ -113,9 +118,11 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                     // a master of a conference and there is only one remote
                     // In the future, we should retrieve confInfo from the call
                     // To merge layouts informations
-                    if (auto call = getCall(it->second)) {
+                    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(it->second))) {
                         uri = call->getPeerNumber();
                         isLocalMuted = call->isPeerMuted();
+                        if (auto* transport = call->getTransport())
+                            deviceId = transport->deviceId();
                     }
                 }
                 auto active = false;
@@ -126,13 +133,14 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                 if (uri.empty()) {
                     hostAdded = true;
                     peerId = "host"sv;
+                    deviceId = acc->currentDeviceId();
                     isLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
                 }
                 auto isHandRaised = shared->isHandRaised(peerId);
                 auto isModeratorMuted = shared->isMuted(peerId);
                 auto sinkId = shared->getConfId() + peerId;
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
-                                                      {},
+                                                      deviceId,
                                                       std::move(sinkId),
                                                       active,
                                                       info.x,
@@ -1035,12 +1043,6 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
     // Check if the peer is a master
     if (auto call = Manager::instance().getCallFromCallID(callId)) {
         auto peerID = string_remove_suffix(call->getPeerNumber(), '@');
-        if (!isModerator(peerID)) {
-            JAMI_WARN("Received conference order from a non master (%.*s)",
-                      (int) peerID.size(),
-                      peerID.data());
-            return;
-        }
 
         std::string err;
         Json::Value root;
@@ -1048,6 +1050,24 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
             JAMI_WARN("Couldn't parse conference order from %.*s",
+                      (int) peerID.size(),
+                      peerID.data());
+            return;
+        }
+
+        if (root.isMember("handRaised")) {
+            auto state = root["handState"].asString() == "true";
+            if (peerID == root["handRaised"].asString()) {
+                // In this case, the user want to change their state
+                setHandRaised(root["handRaised"].asString(), state);
+            } else if (!state && isModerator(peerID)) {
+                // In this case a moderator can lower the hand
+                setHandRaised(root["handRaised"].asString(), state);
+            }
+        }
+
+        if (!isModerator(peerID)) {
+            JAMI_WARN("Received conference order from a non master (%.*s)",
                       (int) peerID.size(),
                       peerID.data());
             return;
@@ -1064,9 +1084,6 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         }
         if (root.isMember("hangupParticipant")) {
             hangupParticipant(root["hangupParticipant"].asString());
-        }
-        if (root.isMember("handRaised")) {
-            setHandRaised(root["handRaised"].asString(), root["handState"].asString() == "true");
         }
     }
 }
