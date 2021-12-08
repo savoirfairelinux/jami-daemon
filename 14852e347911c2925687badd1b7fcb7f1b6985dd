@@ -1,0 +1,274 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b9bb57af_9173aa56",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "Ok for me I guess it\u0027s the last pass. ",
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b22f4f83_03f3532a",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 13
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "Because this is breaking API changes, this should be updated",
+      "range": {
+        "startLine": 34,
+        "startChar": 30,
+        "endLine": 34,
+        "endChar": 39
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b79645c9_8be45ef4",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "auto is ook or use the typedef",
+      "range": {
+        "startLine": 246,
+        "startChar": 8,
+        "endLine": 246,
+        "endChar": 55
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82f706d0_39b137e3",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "static_pointer_cast",
+      "range": {
+        "startLine": 349,
+        "startChar": 31,
+        "endLine": 349,
+        "endChar": 42
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "545c47a6_2f2433aa",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "why? Should be commented (or use someString.size() to avoid any error).\n\nBtw a regex match can be better (at least for clarity)",
+      "range": {
+        "startLine": 359,
+        "startChar": 62,
+        "endLine": 359,
+        "endChar": 65
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3015591e_3f51b52e",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 307,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 307,
+        "startChar": 30,
+        "endLine": 307,
+        "endChar": 34
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3fd03161_49e83cb4",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 308,
+        "startChar": 8,
+        "endLine": 308,
+        "endChar": 55
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56c9a74a_7f87d59d",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "not necessary, ifstream is destroyed and will automatically close the file",
+      "range": {
+        "startLine": 317,
+        "startChar": 11,
+        "endLine": 317,
+        "endChar": 25
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a39f3a9d_ba0c7dbf",
+        "filename": "src/plugin/preferenceservicesmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "Note, std::transform can do that",
+      "range": {
+        "startLine": 48,
+        "startChar": 5,
+        "endLine": 50,
+        "endChar": 5
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "778a806c_074759a6",
+        "filename": "src/plugin/preferenceservicesmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "can return false here, status will stay false anyway",
+      "range": {
+        "startLine": 77,
+        "startChar": 31,
+        "endLine": 77,
+        "endChar": 32
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "68c6db8a_b4fe6d72",
+        "filename": "src/plugin/preferenceservicesmanager.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "const",
+      "range": {
+        "startLine": 62,
+        "startChar": 34,
+        "endLine": 62,
+        "endChar": 43
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a445422_89d4fc19",
+        "filename": "src/plugin/preferenceservicesmanager.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T16:25:07Z",
+      "side": 1,
+      "message": "const",
+      "range": {
+        "startLine": 69,
+        "startChar": 39,
+        "endLine": 69,
+        "endChar": 56
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
