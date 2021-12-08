@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a25dcb94_f1dfa82e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 2538,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-08T21:40:12Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "abcafbf9_82d190f7",
+      "range": {
+        "startLine": 2538,
+        "startChar": 18,
+        "endLine": 2538,
+        "endChar": 21
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "34932163_813d2770",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-12-08T19:34:36Z",
       "side": 0,
       "message": "Something jsut for the ticket. Is it possible to describe in #645 what scenarios with auto answer were broken and the way to test it",
+      "range": {
+        "startLine": 2539,
+        "startChar": 21,
+        "endLine": 2539,
+        "endChar": 24
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5d2d2a20_7798fbf9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 2539,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-08T21:40:12Z",
+      "side": 0,
+      "message": "I just noticed that the ticket is not really appropriate for this change, so I created a new one.",
+      "parentUuid": "34932163_813d2770",
       "range": {
         "startLine": 2539,
         "startChar": 21,
