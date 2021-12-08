@@ -46,6 +46,30 @@
       },
       "revId": "abc9db78064530bb832187fcb4b7caf8561dd26b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eaa4af32_4fabf37c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1052,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T22:12:29Z",
+      "side": 1,
+      "message": "So, I created this: https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/673 and will fix it later",
+      "parentUuid": "166e8bce_8fd0790a",
+      "range": {
+        "startLine": 1048,
+        "startChar": 0,
+        "endLine": 1052,
+        "endChar": 55
+      },
+      "revId": "abc9db78064530bb832187fcb4b7caf8561dd26b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
