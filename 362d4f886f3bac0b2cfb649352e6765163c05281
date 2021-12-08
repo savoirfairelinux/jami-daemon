@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f49ac08b_97479dc0",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 12
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T19:34:36Z",
+      "side": 1,
+      "message": "wrong commit format",
+      "range": {
+        "startLine": 7,
+        "startChar": 6,
+        "endLine": 7,
+        "endChar": 27
+      },
+      "revId": "362d4f886f3bac0b2cfb649352e6765163c05281",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b7e4f42_ad1e2acd",
+        "filename": "test/unitTest/media_negotiation/auto_answer.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T19:34:36Z",
+      "side": 1,
+      "message": "why not wait_for_removal_of? removeAccount and AccountsChanged must stay the same",
+      "range": {
+        "startLine": 206,
+        "startChar": 25,
+        "endLine": 228,
+        "endChar": 33
+      },
+      "revId": "362d4f886f3bac0b2cfb649352e6765163c05281",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d878015b_20b54e26",
+        "filename": "test/unitTest/media_negotiation/auto_answer.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 263,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T19:34:36Z",
+      "side": 1,
+      "message": "Not that the best way would be to modify the yml or create one with correct details, this would avoid this setAccountDetails",
+      "range": {
+        "startLine": 263,
+        "startChar": 1,
+        "endLine": 263,
+        "endChar": 48
+      },
+      "revId": "362d4f886f3bac0b2cfb649352e6765163c05281",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abcafbf9_82d190f7",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 2538,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T19:34:36Z",
+      "side": 0,
+      "message": "this is not precised in the commit msg.",
+      "range": {
+        "startLine": 2538,
+        "startChar": 18,
+        "endLine": 2538,
+        "endChar": 21
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34932163_813d2770",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 2539,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-08T19:34:36Z",
+      "side": 0,
+      "message": "Something jsut for the ticket. Is it possible to describe in #645 what scenarios with auto answer were broken and the way to test it",
+      "range": {
+        "startLine": 2539,
+        "startChar": 21,
+        "endLine": 2539,
+        "endChar": 24
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
