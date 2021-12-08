@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5dfdc29_ee79650b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1052,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-08T21:24:57Z",
+      "side": 1,
+      "message": "what about transport-\u003egetTlsInfos().peerCert",
+      "range": {
+        "startLine": 1048,
+        "startChar": 0,
+        "endLine": 1052,
+        "endChar": 55
+      },
+      "revId": "abc9db78064530bb832187fcb4b7caf8561dd26b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
