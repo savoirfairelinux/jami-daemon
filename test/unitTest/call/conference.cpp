@@ -42,6 +42,7 @@ struct CallData
 {
     std::string callId {};
     std::string state {};
+    std::string device {};
     std::string hostState {};
     std::atomic_bool moderatorMuted {false};
     std::atomic_bool raisedHand {false};
@@ -50,6 +51,7 @@ struct CallData
     {
         callId = "";
         state = "";
+        device = "";
         hostState = "";
         moderatorMuted = false;
         raisedHand = false;
@@ -80,6 +82,7 @@ private:
     void testHandsUp();
     void testPeerLeaveConference();
     void testJoinCallFromOtherAccount();
+    void testDevices();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -90,6 +93,7 @@ private:
     CPPUNIT_TEST(testHandsUp);
     CPPUNIT_TEST(testPeerLeaveConference);
     CPPUNIT_TEST(testJoinCallFromOtherAccount);
+    CPPUNIT_TEST(testDevices);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -210,12 +214,15 @@ ConferenceTest::registerSignalHandlers()
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
                     bobCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     bobCall.raisedHand = infos.at("handRaised") == "true";
+                    bobCall.device = infos.at("device");
                 } else if (infos.at("uri").find(carlaUri) != std::string::npos) {
                     carlaCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     carlaCall.raisedHand = infos.at("handRaised") == "true";
+                    carlaCall.device = infos.at("device");
                 } else if (infos.at("uri").find(daviUri) != std::string::npos) {
                     daviCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     daviCall.raisedHand = infos.at("handRaised") == "true";
+                    daviCall.device = infos.at("device");
                 }
             }
             cv.notify_one();
@@ -452,17 +459,19 @@ ConferenceTest::testHandsUp()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
     auto daviUri = daviAccount->getUsername();
 
     startConference();
 
     JAMI_INFO("Play with raise hand");
-    DRing::raiseParticipantHand(aliceId, confId, bobUri, true);
+    DRing::raiseParticipantHand(bobId, bobCall.callId, bobUri, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return bobCall.raisedHand.load(); }));
 
-    DRing::raiseParticipantHand(aliceId, confId, bobUri, false);
+    DRing::raiseParticipantHand(bobId, bobCall.callId, bobUri, false);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.raisedHand.load(); }));
 
@@ -475,9 +484,31 @@ ConferenceTest::testHandsUp()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
 
-    DRing::raiseParticipantHand(aliceId, confId, daviUri, true);
+    // Remove davi from moderators
+    DRing::setModerator(aliceId, confId, daviUri, false);
+
+    // Test to raise hand
+    DRing::raiseParticipantHand(daviId, daviCall.callId, daviUri, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return daviCall.raisedHand.load(); }));
+
+    // Test to raise hand for another one (should fail)
+    DRing::raiseParticipantHand(bobId, bobCall.callId, carlaUri, true);
+    CPPUNIT_ASSERT(
+        !cv.wait_for(lk, std::chrono::seconds(5), [&] { return carlaCall.raisedHand.load(); }));
+
+    // However, a moderator should be able to lower the hand (but not a non moderator)
+    DRing::raiseParticipantHand(carlaId, carlaCall.callId, carlaUri, true);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return carlaCall.raisedHand.load(); }));
+
+    DRing::raiseParticipantHand(daviId, carlaCall.callId, carlaUri, false);
+    CPPUNIT_ASSERT(
+        !cv.wait_for(lk, std::chrono::seconds(5), [&] { return !carlaCall.raisedHand.load(); }));
+
+    DRing::raiseParticipantHand(bobId, bobCall.callId, carlaUri, false);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return !carlaCall.raisedHand.load(); }));
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
@@ -551,6 +582,27 @@ ConferenceTest::testJoinCallFromOtherAccount()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     CPPUNIT_ASSERT(Manager::instance().addParticipant(daviId, daviCall.callId, aliceId, confId));
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testDevices()
+{
+    registerSignalHandlers();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto bobDevice = std::string(bobAccount->currentDeviceId());
+    auto carlaDevice = std::string(carlaAccount->currentDeviceId());
+
+    startConference();
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&] {
+        return bobCall.device == bobDevice && carlaDevice == carlaCall.device;
+    }));
+
     hangupConference();
 
     DRing::unregisterSignalHandlers();
