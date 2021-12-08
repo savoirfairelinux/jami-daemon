@@ -9,10 +9,9 @@ PKGS += dbus-cpp
 endif
 endif
 
-# Package forced as bugged on GCC7
-#ifeq ($(call need_pkg,"dbus-c++-1 >= 0.9.0"),)
-#PKGS_FOUND += dbus-cpp
-#endif
+ifeq ($(call need_pkg,"dbus-c++-1 >= 0.9.0"),)
+PKGS_FOUND += dbus-cpp
+endif
 
 $(TARBALLS)/libdbus-c++-${DBUS_CPP_VERSION}.tar.gz:
 	$(call download,$(DBUS_CPP_URL))
