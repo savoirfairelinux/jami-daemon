@@ -3,7 +3,9 @@ if ENABLE_PLUGIN
 noinst_LTLIBRARIES += libplugin.la
 
 noinst_HEADERS += \
+	./plugin/preferenceservicesmanager.h \
 	./plugin/callservicesmanager.h \
+	./plugin/preferencehandler.h \
 	./plugin/chathandler.h \
 	./plugin/chatservicesmanager.h \
 	./plugin/jamiplugin.h \
@@ -22,7 +24,8 @@ libplugin_la_SOURCES = \
 	./plugin/pluginpreferencesutils.cpp \
 	./plugin/pluginsutils.cpp \
 	./plugin/chatservicesmanager.cpp \
-	./plugin/callservicesmanager.cpp
+	./plugin/callservicesmanager.cpp \
+	./plugin/preferenceservicesmanager.cpp
 
 libring_la_LIBADD += libplugin.la
 

@@ -61,7 +61,8 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
         // toggle is true if we should automatically activate the MediaHandler.
         bool toggle = PluginPreferencesUtils::getAlwaysPreference(
             callMediaHandler->id().substr(0, found),
-            callMediaHandler->getCallMediaHandlerDetails().at("name"));
+            callMediaHandler->getCallMediaHandlerDetails().at("name"),
+            data.source);
         // toggle may be overwritten if the MediaHandler was previously activated/deactivated
         // for the given call.
         for (const auto& toggledMediaHandlerPair : mediaHandlerToggled_[data.id]) {

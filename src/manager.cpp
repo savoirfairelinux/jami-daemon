@@ -2792,13 +2792,6 @@ Manager::loadAccountMap(const YAML::Node& node)
 #endif
 #ifdef ENABLE_PLUGIN
         pluginPreferences.unserialize(node);
-
-        if (pluginPreferences.getPluginsEnabled()) {
-            std::vector<std::string> loadedPlugins = pluginPreferences.getLoadedPlugins();
-            for (const std::string& plugin : loadedPlugins) {
-                jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
-            }
-        }
 #endif
     } catch (const YAML::Exception& e) {
         JAMI_ERR("%s: Preferences node unserialize error: ", e.what());
@@ -2851,6 +2844,15 @@ Manager::loadAccountMap(const YAML::Node& node)
         });
     }
     cv.wait(l, [&remaining] { return remaining == 0; });
+
+#ifdef ENABLE_PLUGIN
+    if (pluginPreferences.getPluginsEnabled()) {
+        std::vector<std::string> loadedPlugins = pluginPreferences.getLoadedPlugins();
+        for (const std::string& plugin : loadedPlugins) {
+            jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
+        }
+    }
+#endif
 
     return errorCount;
 }
