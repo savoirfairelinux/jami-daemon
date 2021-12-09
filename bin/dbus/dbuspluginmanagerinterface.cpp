@@ -44,29 +44,33 @@ DBusPluginManagerInterface::getPluginDetails(const std::string& path)
 }
 
 std::vector<std::map<std::string, std::string>>
-DBusPluginManagerInterface::getPluginPreferences(const std::string& path)
+DBusPluginManagerInterface::getPluginPreferences(const std::string& path,
+                                                 const std::string& accountId)
 {
-    return DRing::getPluginPreferences(path);
+    return DRing::getPluginPreferences(path, accountId);
 }
 
 bool
 DBusPluginManagerInterface::setPluginPreference(const std::string& path,
+                                                const std::string& accountId,
                                                 const std::string& key,
                                                 const std::string& value)
 {
-    return DRing::setPluginPreference(path, key, value);
+    return DRing::setPluginPreference(path, accountId, key, value);
 }
 
 std::map<std::string, std::string>
-DBusPluginManagerInterface::getPluginPreferencesValues(const std::string& path)
+DBusPluginManagerInterface::getPluginPreferencesValues(const std::string& path,
+                                                       const std::string& accountId)
 {
-    return DRing::getPluginPreferencesValues(path);
+    return DRing::getPluginPreferencesValues(path, accountId);
 }
 
 bool
-DBusPluginManagerInterface::resetPluginPreferencesValues(const std::string& path)
+DBusPluginManagerInterface::resetPluginPreferencesValues(const std::string& path,
+                                                         const std::string& accountId)
 {
-    return DRing::resetPluginPreferencesValues(path);
+    return DRing::resetPluginPreferencesValues(path, accountId);
 }
 
 auto
