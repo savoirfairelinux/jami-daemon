@@ -16,6 +16,24 @@
       "message": "if we two stream with the same codec_type (while recording for instance) we may resent the wrong stream.\nAnd does not seem to scale well with multi-stream.\nI think we need a more robust solution.",
       "revId": "87c914aa5520003a54e31f9102292833851db1fb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e3850e8_8286f254",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-09T22:45:55Z",
+      "side": 1,
+      "message": "it may work in the current context because the recorder and rtp sender uses different codec_type",
+      "parentUuid": "3c679034_75a7b31b",
+      "revId": "87c914aa5520003a54e31f9102292833851db1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
