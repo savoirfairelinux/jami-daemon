@@ -1057,7 +1057,6 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 
         if (root.isMember("handRaised")) {
             auto state = root["handState"].asString() == "true";
-            JAMI_ERR() << "@@@ " << peerID << " vs " << root["handRaised"].asString();
             if (peerID == root["handRaised"].asString()) {
                 // In this case, the user want to change their state
                 setHandRaised(root["handRaised"].asString(), state);
