@@ -125,6 +125,30 @@ subscribe_buddy_binding(SCM accountID_str, SCM peer_uri_str, SCM flag_bool)
     return SCM_UNDEFINED;
 }
 
+static SCM
+add_contact_binding(SCM accountID_str, SCM uri_str)
+{
+    LOG_BINDING();
+
+    DRing::addContact(from_guile(accountID_str),
+                      from_guile(uri_str));
+
+    return SCM_UNDEFINED;
+}
+
+static SCM
+remove_contact_binding(SCM accountID_str, SCM uri_str, SCM ban_optional_bool)
+{
+    LOG_BINDING();
+
+    DRing::removeContact(from_guile(accountID_str),
+                         from_guile(uri_str),
+                         from_guile(ban_optional_bool));
+
+    return SCM_UNDEFINED;
+}
+
+
 static void
 install_account_primitives(void *)
 {
@@ -133,6 +157,8 @@ install_account_primitives(void *)
     define_primitive("send-register", 2, 0, 0, (void*) send_register_binding);
     define_primitive("account->archive", 2, 1, 0, (void*) export_to_file_binding);
     define_primitive("add", 1, 1, 0, (void*) add_account_binding);
+    define_primitive("add-contact", 2, 0, 0, (void*) add_contact_binding);
+    define_primitive("remove-contact", 2, 1, 0, (void*) remove_contact_binding);
     define_primitive("accept-trust-request", 2, 0, 0, (void*) accept_trust_request_binding);
     define_primitive("send-trust-request", 2, 1, 0, (void*) send_trust_request_binding);
     define_primitive("get-contacts", 1, 0, 0, (void*) get_contacts_binding);
