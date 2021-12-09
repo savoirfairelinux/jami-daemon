@@ -1,6 +1,6 @@
 #!/bin/sh
 
-tmp=$(mktemp --directory)
+tmp=$(mktemp --tmpdir --directory "jami-peer-monitor.XXXXXXXXXX")
 
 export XDG_CONFIG_HOME="$tmp"
 export XDG_CACHE_HOME="$tmp"

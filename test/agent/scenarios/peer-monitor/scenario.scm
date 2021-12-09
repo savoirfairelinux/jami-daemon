@@ -7,11 +7,13 @@
  (ice-9 atomic)
  (ice-9 format)
  ((srfi srfi-19) #:prefix srfi-19:)
- ((agent) #:prefix agent:)
+ (agent)
  ((jami account) #:prefix account:)
  ((jami call) #:prefix call:)
  ((jami signal) #:prefix jami:)
  ((jami logger) #:prefix jami:))
+
+(define agent #f)
 
 (define seconds-per-hour (* 60 60))
 (define seconds-per-day (* 24 second-per-hour))
@@ -65,8 +67,8 @@
 
                        (sigaction SIGALRM (lambda _ (setup-timer)))
 
-                       (let ((account (agent:account-id))
-                             (details (next-details!)))
+                       (let ([account (account-id agent)]
+                             [details (next-details!)])
                          (progress "SIGALRM - Changing account details: ~a" details)
                          (account:send-register account #f)
                          (account:set-details account details)
@@ -91,40 +93,41 @@
     (let ((mtx (make-mutex))
           (cnd (make-condition-variable))
           (this-call-id "")
-          (continue (make-atomic-box #t)))
-      (jami:on-signal 'state-changed
-                      (lambda (call-id state code)
-                        (if (atomic-box-ref continue)
-                            (with-mutex mtx
-                              (if (and (string= this-call-id call-id)
-                                       (string= state "CURRENT"))
-                                  (begin
-                                    (signal-condition-variable cnd)
-                                    #f)
-                                  #t))
-                            #f)))
+          (continue #t))
+
       (with-mutex mtx
-        (set! this-call-id (call:place-call (agent:account-id) peer))
-        (let ((ret (wait-condition-variable cnd mtx
-                                            (+ (current-time) timeout))))
+        (jami:on-signal 'state-changed
+                        (lambda (call-id state code)
+                          (with-mutex mtx
+                            (if continue
+                                (if (and (string= this-call-id call-id)
+                                         (string= state "CURRENT"))
+                                    (begin
+                                      (signal-condition-variable cnd)
+                                      #f)
+                                    #t)
+                                #f))))
+        (set! this-call-id (call:place-call/media (account-id agent) peer))
+        (let ([ret (wait-condition-variable cnd mtx
+                                            (+ (current-time) timeout))])
           (unless ret (atomic-box-set! continue #f))
           ret))))
 
-  (let ((account (agent:account-id))
-        (success 0)
-        (failure 0)
-        (reset (call/cc (lambda (k)
+  (let ([account (account-id agent)]
+        [success 0]
+        [failure 0]
+        [reset (call/cc (lambda (k)
                           (set! resume k)
-                          #f))))
+                          #f))])
 
     (when reset
-        (let ((total (+ success failure)))
-          (progress "'(summary (total-call . ~a) (success-rate . ~a) (failure-rate . ~a))"
-                     total
-                     (/ success total)
-                     (/ failure total))
-          (set! success 0)
-          (set! failure 0)))
+      (let ((total (+ success failure)))
+        (progress "'(summary (total-call . ~a) (success-rate . ~a) (failure-rate . ~a))"
+                  total
+                  (/ success total)
+                  (/ failure total))
+        (set! success 0)
+        (set! failure 0)))
 
     (while #t
       (let ((result  (call-peer 30)))
@@ -139,36 +142,44 @@
 
 (define (passive)
 
+  (jami:on-signal 'incoming-trust-request
+                  (lambda (account-id conversation-id peer-id payload received)
+                    (jami:info "accepting trust request: ~a ~a" account-id peer-id)
+                    (account:accept-trust-request account-id peer-id)))
+
   (jami:on-signal 'incoming-call
                   (lambda (account-id call-id peer)
                     (progress "Receiving call from ~a" peer)
-                    (call:accept call-id)
+                    (call:accept account-id call-id)
                     #t))
 
   (jami:on-signal 'incoming-call/media
                   (lambda (account-id call-id peer media-lst)
-                    (call:accept call-id media-lst)
+                    (call:accept account-id call-id media-lst)
                     #t))
 
-  (let ((continue (call/cc (lambda (k)
+  (let ([continue (call/cc (lambda (k)
                              (set! resume k)
-                             #t))))
-        (while continue
-            (pause))))
+                             #t))])
+    (while continue
+      (pause))))
 
 (define (main args)
 
-  (let ((behavior (cdr args)))
+  (let ([behavior (cdr args)])
     (set! resume
           (match behavior
-            (("passive" archive) (lambda _
-                                   (agent:ensure-account-from-archive
-                                    archive)
-                                   (passive)))
-            (("active" archive peer) (lambda _
-                                       (agent:ensure-account-from-archive
-                                        archive)
-                                       (active peer)))
+            (("passive")
+             (lambda _
+               (set! agent (make-agent
+                            "afafafafafafafaf"))
+               (passive)))
+            (("active" peer)
+             (lambda _
+               (set! agent (make-agent
+                            "afafafafafafafaf"))
+               (make-friend agent peer)
+               (active peer)))
             (_ (throw 'bad-argument args)))))
 
   (setup-timer))
