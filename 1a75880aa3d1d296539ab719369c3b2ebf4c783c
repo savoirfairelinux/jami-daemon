@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06a1ed32_d328b703",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T18:00:45Z",
+      "side": 1,
+      "message": "Use deviceId to identify sink",
+      "range": {
+        "startLine": 141,
+        "startChar": 30,
+        "endLine": 141,
+        "endChar": 59
+      },
+      "revId": "1a75880aa3d1d296539ab719369c3b2ebf4c783c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "152140f3_91d792f5",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1072,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T18:00:45Z",
+      "side": 1,
+      "message": "A moderator should be able to lower others hands, but not to raise.",
+      "range": {
+        "startLine": 1064,
+        "startChar": 8,
+        "endLine": 1072,
+        "endChar": 9
+      },
+      "revId": "1a75880aa3d1d296539ab719369c3b2ebf4c783c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
