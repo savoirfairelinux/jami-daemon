@@ -83,6 +83,8 @@ public:
             SCM ret = apply_to_guile(cb, args...);
             if (scm_is_true(ret)) {
                 to_keep.emplace_back(cb);
+            } else {
+                scm_gc_unprotect_object(cb);
             }
         }
 
@@ -138,6 +140,7 @@ on_signal_binding(SCM signal_sym, SCM handler_proc)
     mutex = static_cast<std::mutex*>(scm_to_pointer(scm_cdr(handler_pair)));
 
     std::unique_lock lck(*mutex);
+    scm_gc_protect_object(handler_proc);
     callbacks->push_back(handler_proc);
 
     return SCM_UNDEFINED;
