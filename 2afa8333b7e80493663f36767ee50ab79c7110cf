@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9e474df9_c2eac688",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-09T19:13:53Z",
+      "side": 1,
+      "message": "nb_streams is unsigned, it can be \u003c 0.\nI know it was there, but please fix in this patch.",
+      "range": {
+        "startLine": 219,
+        "startChar": 31,
+        "endLine": 219,
+        "endChar": 34
+      },
+      "revId": "2afa8333b7e80493663f36767ee50ab79c7110cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "950674de_4513458d",
         "filename": "src/media/media_encoder.cpp",
         "patchSetId": 1
