@@ -219,7 +219,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     if (outputCtx_->nb_streams <= 0)
         stream = avformat_new_stream(outputCtx_, outputCodec_);
     else {
-        stream = outputCtx_->streams[0];
+        stream = avformat_new_stream(outputCtx_, outputCodec_);
         stream->codecpar->width = videoOpts_.width;
         stream->codecpar->height = videoOpts_.height;
     }
