@@ -216,12 +216,23 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     if (!outputCtx_)
         throw MediaEncoderException("Cannot allocate stream");
     // add video stream to outputformat context
-    if (outputCtx_->nb_streams <= 0)
+    if (outputCtx_->nb_streams == 0)
         stream = avformat_new_stream(outputCtx_, outputCodec_);
     else {
-        stream = outputCtx_->streams[0];
-        stream->codecpar->width = videoOpts_.width;
-        stream->codecpar->height = videoOpts_.height;
+        auto streamFound = false;
+        for (int i = 0; i < outputCtx_->nb_streams; i++) {
+            auto s = outputCtx_->streams[i];
+            if (s->codecpar->codec_type == mediaType) {
+                stream = s;
+                stream->codecpar->width = videoOpts_.width;
+                stream->codecpar->height = videoOpts_.height;
+                streamFound = true;
+                break;
+            }
+        }
+        if (!streamFound) {
+            stream = avformat_new_stream(outputCtx_, outputCodec_);
+        }
     }
     if (!stream)
         throw MediaEncoderException("Cannot allocate stream");
