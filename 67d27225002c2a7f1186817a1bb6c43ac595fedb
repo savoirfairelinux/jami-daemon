@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e8cb968b_9db36df9",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 14
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-09T18:30:02Z",
+      "side": 1,
+      "message": "Ok for the patch, But the behaviour wanted is to confirm.\n\nTo summarize, do we really want that if the daemon is in auto answer, enabling the video when the remote is going from audio to video.\n\nFor me i see 2 pros:\n\n1. It was the behaviour pre-multistream, where going from audio only and upgrading to video\n2. Auto answer is mostly for debug/camera\n\nHowever one con:\nI\u0027m not a big fan of starting the video without user action. But I\u0027m not a fan of auto answer anyway\n\ncc @aberaud",
+      "range": {
+        "startLine": 7,
+        "startChar": 19,
+        "endLine": 7,
+        "endChar": 28
+      },
+      "revId": "67d27225002c2a7f1186817a1bb6c43ac595fedb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
