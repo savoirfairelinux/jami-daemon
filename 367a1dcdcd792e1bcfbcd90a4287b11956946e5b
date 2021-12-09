@@ -103,6 +103,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b961f4d3_212d682b",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-09T19:57:55Z",
+      "side": 1,
+      "message": "I don\u0027t think looping on failed allocations of the kernel is a good thing either.",
+      "parentUuid": "f9ae105e_e6ae3a4b",
+      "revId": "367a1dcdcd792e1bcfbcd90a4287b11956946e5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "319eb206_42f6ea43",
         "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
         "patchSetId": 6

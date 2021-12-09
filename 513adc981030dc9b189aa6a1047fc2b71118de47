@@ -22,6 +22,30 @@
       },
       "revId": "513adc981030dc9b189aa6a1047fc2b71118de47",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a705741_7b635a13",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-09T19:57:55Z",
+      "side": 1,
+      "message": "It was there before.  It\u0027s a Glibc extension IIRC, and this is video device for Linux.  It\u0027s also supported by uClibc and Musl.\n\nI think it\u0027s pretty portable across Linux distributions.",
+      "parentUuid": "260e10f6_7e903447",
+      "range": {
+        "startLine": 233,
+        "startChar": 61,
+        "endLine": 233,
+        "endChar": 62
+      },
+      "revId": "513adc981030dc9b189aa6a1047fc2b71118de47",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
