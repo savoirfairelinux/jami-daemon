@@ -45,6 +45,30 @@
       },
       "revId": "2afa8333b7e80493663f36767ee50ab79c7110cf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "58f59d69_52b38212",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 222,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-09T19:49:56Z",
+      "side": 1,
+      "message": "What about:\n\nif (outputCtx_-\u003enb_streams \u003d\u003d 0 || outputCtx_-\u003estreams[0]-\u003enb_frames \u003d\u003d 0)\n        stream \u003d avformat_new_stream(outputCtx_, outputCodec_);\n    else {\n        stream \u003d outputCtx_-\u003estreams[0];\n        stream-\u003ecodecpar-\u003ewidth \u003d videoOpts_.width;\n        stream-\u003ecodecpar-\u003eheight \u003d videoOpts_.height;\n    }\n\n?",
+      "parentUuid": "950674de_4513458d",
+      "range": {
+        "startLine": 219,
+        "startChar": 36,
+        "endLine": 222,
+        "endChar": 63
+      },
+      "revId": "2afa8333b7e80493663f36767ee50ab79c7110cf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
