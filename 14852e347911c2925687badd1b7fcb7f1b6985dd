@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5671bdea_598ac472",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 13
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b22f4f83_03f3532a",
+      "range": {
+        "startLine": 34,
+        "startChar": 30,
+        "endLine": 34,
+        "endChar": 39
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b79645c9_8be45ef4",
@@ -54,6 +78,30 @@
       "writtenOn": "2021-12-08T16:25:07Z",
       "side": 1,
       "message": "auto is ook or use the typedef",
+      "range": {
+        "startLine": 246,
+        "startChar": 8,
+        "endLine": 246,
+        "endChar": 55
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aac08eb5_788b5629",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b79645c9_8be45ef4",
       "range": {
         "startLine": 246,
         "startChar": 8,
@@ -89,6 +137,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "44c055a1_98acc53f",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "can we do that from void* ? I could not make it build",
+      "parentUuid": "82f706d0_39b137e3",
+      "range": {
+        "startLine": 349,
+        "startChar": 31,
+        "endLine": 349,
+        "endChar": 42
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "545c47a6_2f2433aa",
         "filename": "src/plugin/jamipluginmanager.cpp",
         "patchSetId": 13
@@ -100,6 +172,30 @@
       "writtenOn": "2021-12-08T16:25:07Z",
       "side": 1,
       "message": "why? Should be commented (or use someString.size() to avoid any error).\n\nBtw a regex match can be better (at least for clarity)",
+      "range": {
+        "startLine": 359,
+        "startChar": 62,
+        "endLine": 359,
+        "endChar": 65
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1fa8842e_e76a0e4a",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "545c47a6_2f2433aa",
       "range": {
         "startLine": 359,
         "startChar": 62,
@@ -133,6 +229,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "24eb8d88_8fcb5516",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 307,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3015591e_3f51b52e",
+      "range": {
+        "startLine": 307,
+        "startChar": 30,
+        "endLine": 307,
+        "endChar": 34
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3fd03161_49e83cb4",
@@ -156,6 +276,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7dc6c710_0fda2fd7",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3fd03161_49e83cb4",
+      "range": {
+        "startLine": 308,
+        "startChar": 8,
+        "endLine": 308,
+        "endChar": 55
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "56c9a74a_7f87d59d",
@@ -169,6 +313,30 @@
       "writtenOn": "2021-12-08T16:25:07Z",
       "side": 1,
       "message": "not necessary, ifstream is destroyed and will automatically close the file",
+      "range": {
+        "startLine": 317,
+        "startChar": 11,
+        "endLine": 317,
+        "endChar": 25
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6b5992c0_860ee4e6",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "56c9a74a_7f87d59d",
       "range": {
         "startLine": 317,
         "startChar": 11,
@@ -225,6 +393,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f830fc70_b24f88fe",
+        "filename": "src/plugin/preferenceservicesmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "778a806c_074759a6",
+      "range": {
+        "startLine": 77,
+        "startChar": 31,
+        "endLine": 77,
+        "endChar": 32
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "68c6db8a_b4fe6d72",
@@ -248,6 +440,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0994344b_e368d82c",
+        "filename": "src/plugin/preferenceservicesmanager.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "68c6db8a_b4fe6d72",
+      "range": {
+        "startLine": 62,
+        "startChar": 34,
+        "endLine": 62,
+        "endChar": 43
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1a445422_89d4fc19",
@@ -261,6 +477,30 @@
       "writtenOn": "2021-12-08T16:25:07Z",
       "side": 1,
       "message": "const",
+      "range": {
+        "startLine": 69,
+        "startChar": 39,
+        "endLine": 69,
+        "endChar": 56
+      },
+      "revId": "14852e347911c2925687badd1b7fcb7f1b6985dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9ad3be7c_25a0d633",
+        "filename": "src/plugin/preferenceservicesmanager.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-12-09T16:46:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1a445422_89d4fc19",
       "range": {
         "startLine": 69,
         "startChar": 39,
