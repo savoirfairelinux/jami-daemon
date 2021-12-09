@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d19d75d_c375d724",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-09T15:17:26Z",
+      "side": 1,
+      "message": "Not related to the patch.\n\nIs there a reason why we\u0027re working with const * here instead of enumeration?",
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d1ed8a7_a4a9e1f7",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 263,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-09T15:17:26Z",
+      "side": 1,
+      "message": "I would simply make a static square matrix here of size MediaDirection::UNKNOWN.",
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4001da75_ed9379a4",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-09T15:17:26Z",
+      "side": 1,
+      "message": "Why #if 0 ?",
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
