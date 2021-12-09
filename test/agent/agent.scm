@@ -18,57 +18,121 @@
 
 (define-module (agent)
   #:use-module (ice-9 threads)
+  #:use-module (ice-9 receive)
+  #:use-module (oop goops)
   #:use-module ((jami logger) #:prefix jami:)
   #:use-module ((jami account) #:prefix account:)
   #:use-module ((jami call)    #:prefix call:)
   #:use-module ((jami signal)  #:prefix jami:)
-  #:export (ensure-account
-            ensure-account-from-archive))
+  #:export (<agent>
+            call-friend
+            make-agent
+            make-friend
+            account-id
+            peer-id))
 
-(define-public account-id (make-parameter "afafafafafafafaf"))
-(define-public peer-id (make-parameter #f))
+(define %default-details
+  '(("Account.type"            . "RING")
+    ("Account.displayName"     . "AGENT")
+    ("Account.alias"           . "AGENT")
+    ("Account.archivePassword" . "")
+    ("Account.archivePIN"      . "")
+    ("Account.archivePath"     . "")))
 
-(define* (ensure-account% this-account-id account-details #:optional (wait-for-announcement? #t))
-  (if wait-for-announcement?
-      (let ((mtx (make-mutex))
-            (cnd (make-condition-variable)))
-        (jami:on-signal 'volatile-details-changed
-                        (lambda (accountID details)
-                          (cond
-                           ((and (string= accountID this-account-id)
-                                 (string= "true" (assoc-ref details "Account.deviceAnnounced")))
-                            (with-mutex mtx
-                              (signal-condition-variable cnd)
-                              #f))
-                           (else #t))))
-        (when (null? (account:get-details this-account-id))
-          (account:add account-details this-account-id))
+(define (make-account this-account-id account-details timeout)
 
-        (with-mutex mtx
-          (wait-condition-variable cnd mtx)))
+  (if (null? (account:get-details this-account-id))
+      (account:add account-details this-account-id)
+      (account:set-details this-account-id '(("Account.enable" . "true"))))
 
-      (when (null? (account:get-details this-account-id))
-        (account:add account-details this-account-id)))
+  (let ([mtx (make-recursive-mutex)]
+        [cnd (make-condition-variable)])
+    (with-mutex mtx
+      (jami:on-signal 'volatile-details-changed
+                      (lambda (account-id details)
+                        (with-mutex mtx
+                          (let ([done?
+                                 (and (string= account-id this-account-id)
+                                      (string= "true" (or (assoc-ref
+                                                           details
+                                                           "Account.deviceAnnounced")
+                                                          "false")))])
+                            (when done?
+                              (signal-condition-variable cnd))
+                            (not done?)))))
 
-  (let ((details (account:get-details this-account-id)))
-    (peer-id (assoc-ref details "Account.username"))))
+      (unless (wait-condition-variable cnd mtx
+                                       (+ (current-time) timeout))
+        (throw 'make-account-timeout this-account-id account-details))))
 
-(define* (ensure-account #:key (wait-for-announcement? #t))
-  (jami:info "Ensure account")
-  (ensure-account% (account-id) '(("Account.type"            . "RING")
-                                  ("Account.displayName"     . "AGENT")
-                                  ("Account.alias"           . "AGENT")
-                                  ("Account.archivePassword" . "")
-                                  ("Account.archivePIN"      . "")
-                                  ("Account.archivePath"     . ""))
-                   wait-for-announcement?))
+  (values this-account-id (assoc-ref (account:get-details this-account-id)
+                                     "Account.username")))
 
-(define* (ensure-account-from-archive path #:key (wait-for-announcement? #t))
-  (jami:info "Ensure account from archive ~a" path)
-  (ensure-account% (account-id) `(("Account.type"            . "RING")
-                                  ("Account.displayName"     . "AGENT")
-                                  ("Account.alias"           . "AGENT")
-                                  ("Account.archivePassword" . "")
-                                  ("Account.archivePIN"      . "")
-                                  ("Account.archivePath"     . ,path))
-                   wait-for-announcement?))
+(define-class <agent> ()
+  (account-id
+   #:getter account-id
+   #:init-keyword #:account)
+  (peer-id
+   #:getter peer-id
+   #:init-keyword #:peer)
+  (account-details
+   #:allocation #:virtual
+   #:slot-ref (lambda (this)
+                (account:get-details (account-id this)))
+   #:slot-set! (lambda (this details)
+                 (account:set-details (account-id this) details))))
+
+(define-method (display (self <agent>) port)
+  (format port "<agent: account=~a, peer-id=~a>"
+          (account-id self)
+          (peer-id self)))
+
+(define* (make-agent account-id #:key (details #nil) (timeout 60))
+  "Make an agent with ACCOUNT-ID and additional DETAILS.  If not announced on
+the DHT before TIMEOUT, throw 'make-account-timeout."
+
+  (jami:info "making agent: ~a" account-id)
+
+  (let ([full-details (append details %default-details)])
+    (receive (account-id peer-id)
+        (make-account account-id full-details timeout)
+      (make <agent>
+        #:account account-id
+        #:peer peer-id))))
+
+
+(define-method (call-friend (A <agent>) (peer <string>))
+  "Agent A calls  PEER.  Returns the call id."
+  (call:place-call/media (account-id A) peer))
+
+(define-method (call-friend (A <agent>) (B <agent>))
+  "Agent A calls agent B.  Returns the call id."
+  (call-friend A (peer-id B)))
+
+(define-method (make-friend (self <agent>) (peer-id <string>) (timeout <number>))
+
+  (jami:info "making friend between ~a ~a" self peer-id)
+
+  (let ([mtx (make-mutex)]
+        [cnd (make-condition-variable)]
+        [me (account-id self)]
+        [friend peer-id])
+    (with-mutex mtx
+      (jami:on-signal 'contact-added
+                      (lambda (id uri confirmed)
+                        (with-mutex mtx
+                          (if (and (string= id me)
+                                   (string= uri friend)
+                                   confirmed)
+                              (begin
+                                (signal-condition-variable cnd)
+                                #f)
+                              #t))))
+      (account:send-trust-request me friend)
+      (wait-condition-variable cnd mtx (+ (current-time) timeout)))))
+
+(define-method (make-friend (self <agent>) (peer-id <string>))
+  (make-friend self peer-id 30))
+
+(define-method (make-friend (A <agent>) (B <agent>) . args)
+  (apply make-friend (append (list A (peer-id B)) args)))

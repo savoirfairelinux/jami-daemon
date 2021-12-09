@@ -1,3 +1,6 @@
+#!/usr/bin/env -S ./agent.exe -s
+!#
+
 ;;; This is an example of an active agent.
 ;;;
 ;;; The active agent ensure that an account is created and then call its peer
@@ -6,7 +9,7 @@
 ;;; We import here Jami's primitives.
 (use-modules
  (ice-9 threads)
- ((agent) #:prefix agent:)
+ (agent)
  ((jami account) #:prefix account:)
  ((jami signal) #:prefix jami:)
  ((jami call) #:prefix call:)
@@ -45,28 +48,23 @@ hang up after MEDIA-FLOW seconds and #t is returned.
         (set! continue #f)
         success))))
 
-;;; This ensure you have an account created for the agent.
-(agent:ensure-account)
+(define peer "FIXME")
 
-;;; Change FIXME for the peer id you want to contact.  You can also change the
-;;; value of media-flow and grace-period.
-(let loop ([account (agent:account-id)]
-           [peer "FIXME"]
-           [media-flow 7]
+(define agent (make-agent "bfbfbfbfbfbfbfbf"))
+
+(make-friend agent peer)
+
+(let loop ([account (account-id agent)]
            [grace-period 30])
 
-  ;; Calling our PEER.
   (make-a-call account peer #:media-flow media-flow)
 
-  ;; Disabling our account for GRACE-PERIOD.
   (jami:info "Disabling account")
   (account:send-register account #f)
   (sleep grace-period)
 
-  ;; Renabling our account and wait GRACE-PERIOD.
   (jami:info "Enabling account")
   (account:send-register account #t)
   (sleep grace-period)
 
-  ;; Loop again.
-  (loop account peer media-flow))
+  (loop account grace-period media-flow))
