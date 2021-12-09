@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c2d882e_fb7e9898",
+        "filename": "test/agent/src/bindings/conversation.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-09T19:02:30Z",
+      "side": 1,
+      "message": "Note, i still don\u0027t know why lot of people writes accountID instead of accountId",
+      "range": {
+        "startLine": 30,
+        "startChar": 36,
+        "endLine": 30,
+        "endChar": 39
+      },
+      "revId": "5eedb17cadd3649eab4870328fb81a9af06108a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "efa99556_a06742de",
+        "filename": "test/agent/src/bindings/conversation.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-09T19:02:30Z",
+      "side": 1,
+      "message": "note, every API for swarm is async. So signals should be added as well to be usable (startConversation or acceptConversationRequest will corresponds to ConversationReady and sendMessage to MessageReceived",
+      "range": {
+        "startLine": 64,
+        "startChar": 27,
+        "endLine": 64,
+        "endChar": 37
+      },
+      "revId": "5eedb17cadd3649eab4870328fb81a9af06108a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
