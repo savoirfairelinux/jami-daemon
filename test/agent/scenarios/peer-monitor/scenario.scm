@@ -1,4 +1,4 @@
-#!/usr/bin/env -S ./agent.exe -e main -s
+#!/usr/bin/env -S ./agent.exe --debug -e main -s
 !#
 
 (use-modules
@@ -7,48 +7,55 @@
  (ice-9 atomic)
  (ice-9 format)
  ((srfi srfi-19) #:prefix srfi-19:)
- ((agent) #:prefix agent:)
+ (agent)
  ((jami account) #:prefix account:)
  ((jami call) #:prefix call:)
  ((jami signal) #:prefix jami:)
  ((jami logger) #:prefix jami:))
 
-(define seconds-per-hour (* 60 60))
-(define seconds-per-day (* 24 second-per-hour))
+(define* (current-date #:optional (tz 0))
+  (srfi-19:current-date tz))
 
-(define* (time-until-midnight #:optional (tz 0))
+(define seconds-per-hour (* 60 60))
+(define seconds-per-day (* 24 seconds-per-hour))
+
+(define* (time-until-midnight)
   "Returns the number of seconds before midnight at timezone offset TZ."
-  (let ((now (srfi-19:current-date 0)))
+  (let ((now (current-date)))
     (+ (* 3600 (- 23 (srfi-19:date-hour now)))
        (* 60 (- 59 (srfi-19:date-minute now)))
        (- 60 (srfi-19:date-second now)))))
 
 (define next-details!
-  "Returns the next details in the matrix of account's details."
-  (let* ((details-matrix
-          #((("Account.upnpEnabled" . "true")
-             ("TURN.enable"         . "true"))
+  (let* ([details-matrix #((("Account.upnpEnabled" . "true")
+                            ("TURN.enable"         . "true")
 
-            (("Account.upnpEnabled" . "true")
-             ("TURN.enable"         . "false"))
+                            ("Account.upnpEnabled" . "true")
+                            ("TURN.enable"         . "false")
 
-            (("Account.upnpEnabled" . "false")
-             ("TURN.enable"         . "true"))
+                            ("Account.upnpEnabled" . "false")
+                            ("TURN.enable"         . "true")
 
-            (("Account.upnpEnabled" . "false")
-             ("TURN.enable"         . "false"))))
-         (i 0)
-         (len (array-length details-matrix)))
+                            ("Account.upnpEnabled" . "false")
+                            ("TURN.enable"         . "false")))]
+         [i 0]
+         [len (array-length details-matrix)])
     (lambda ()
-      (let ((details (array-ref details-matrix i)))
+      "Returns the next details in the matrix of account's details."
+      (let ([details (array-ref details-matrix i)])
         (set! i (euclidean-remainder (1+ i) len))
         details))))
 
 (define (timestamp)
-  (srfi-19:date->string (srfi-19:current-date) "[~5]"))
+  (srfi-19:date->string (current-date) "[~5]"))
 
 (define-syntax-rule (progress fmt args ...)
   (jami:info "~a ~a" (timestamp) (format #f fmt args ...)))
+
+(define stats-output #t)
+
+(define-syntax-rule (stat fmt args ...)
+  (format stats-output fmt args ...))
 
 (define (setup-timer)
 
@@ -65,8 +72,8 @@
 
                        (sigaction SIGALRM (lambda _ (setup-timer)))
 
-                       (let ((account (agent:account-id))
-                             (details (next-details!)))
+                       (let ([account (account-id agent)]
+                             [details (next-details!)])
                          (progress "SIGALRM - Changing account details: ~a" details)
                          (account:send-register account #f)
                          (account:set-details account details)
@@ -83,53 +90,61 @@
   ;; Resume execution of continuation.
   (resume #t))
 
+(define agent #f)
 (define resume #f)
 
 (define (active peer)
 
   (define (call-peer timeout)
-    (let ((mtx (make-mutex))
+    (let ((mtx (make-recursive-mutex))
           (cnd (make-condition-variable))
+          (me (account-id agent))
           (this-call-id "")
-          (continue (make-atomic-box #t)))
-      (jami:on-signal 'state-changed
-                      (lambda (call-id state code)
-                        (if (atomic-box-ref continue)
-                            (with-mutex mtx
-                              (if (and (string= this-call-id call-id)
-                                       (string= state "CURRENT"))
-                                  (begin
-                                    (signal-condition-variable cnd)
-                                    #f)
-                                  #t))
-                            #f)))
-      (with-mutex mtx
-        (set! this-call-id (call:place-call (agent:account-id) peer))
-        (let ((ret (wait-condition-variable cnd mtx
-                                            (+ (current-time) timeout))))
-          (unless ret (atomic-box-set! continue #f))
-          ret))))
+          (continue #t))
 
-  (let ((account (agent:account-id))
-        (success 0)
-        (failure 0)
-        (reset (call/cc (lambda (k)
+      (with-mutex mtx
+        (jami:on-signal 'state-changed
+                        (lambda (account-id call-id state code)
+                          (with-mutex mtx
+                            (when (and continue
+                                       (string= account-id me)
+                                       (string= call-id this-call-id)
+                                       (string= "CURRENT" state))
+                              (signal-condition-variable cnd))
+                            continue)))
+
+        (set! this-call-id (call-friend agent peer))
+
+        (let ([success (wait-condition-variable cnd mtx
+                                                (+ (current-time) timeout))])
+          (when success
+            (call:hang-up me this-call-id))
+          (set! continue #f)
+          success))))
+
+  (let ([account (account-id agent)]
+        [success 0]
+        [failure 0]
+        [date (timestamp)]
+        [reset (call/cc (lambda (k)
                           (set! resume k)
-                          #f))))
+                          #f))])
 
     (when reset
-        (let ((total (+ success failure)))
-          (progress "'(summary (total-call . ~a) (success-rate . ~a) (failure-rate . ~a))"
-                     total
-                     (/ success total)
-                     (/ failure total))
-          (set! success 0)
-          (set! failure 0)))
+      (let ((total (+ success failure)))
+        (stat "'(summary (date . \"~a\") (total-call . ~a) (success-rate . ~a) (failure-rate . ~a))"
+              date
+              total
+              (/ success total)
+              (/ failure total))
+        (set! date (timestamp))
+        (set! success 0)
+        (set! failure 0)))
 
     (while #t
-      (let ((result  (call-peer 30)))
-        (progress "Call: ~a"  (if result "PASS" "FAIL"))
-        (if result
+      (let ([success? (call-peer 30)])
+        (progress "Call: ~a"  (if success? "PASS" "FAIL"))
+        (if success?
             (set! success (1+ success))
             (set! failure (1+ failure)))
         (account:send-register account #f)
@@ -139,36 +154,61 @@
 
 (define (passive)
 
-  (jami:on-signal 'incoming-call
-                  (lambda (account-id call-id peer)
-                    (progress "Receiving call from ~a" peer)
-                    (call:accept call-id)
-                    #t))
+  (let ([account (account-id agent)])
+    ;; Accept all incoming calls with media.
+    (jami:on-signal 'incoming-call/media
+                    (lambda (account-id call-id peer media-lst)
+                      (when (string= account-id account)
+                        (jami:info "Incoming [call:~a] with media ~a from peer ~a~%"
+                                   call-id media-lst peer)
+                        (call:accept account-id call-id media-lst))
+                      #t))
 
-  (jami:on-signal 'incoming-call/media
-                  (lambda (account-id call-id peer media-lst)
-                    (call:accept call-id media-lst)
-                    #t))
+    ;; Accept all incoming calls.
+    (jami:on-signal 'incoming-call
+                    (lambda (account-id call-id peer)
+                      (when (string= account-id account)
+                        (jami:info "Incoming [call:~a] from peer ~a~%" call-id peer)
+                        (call:accept account-id call-id))
+                      #t))
 
-  (let ((continue (call/cc (lambda (k)
+    ;; Accept all trust requests.
+    (jami:on-signal 'incoming-trust-request
+                    (lambda (account-id conversation-id peer-id payload received)
+                      (when (string= account-id account)
+                        (jami:info "accepting trust request: ~a ~a" account-id peer-id)
+                        (account:accept-trust-request account-id peer-id))
+                      #t)))
+
+  (let ([continue (call/cc (lambda (k)
                              (set! resume k)
-                             #t))))
-        (while continue
-            (pause))))
+                             #t))])
+    (while continue (pause))))
 
 (define (main args)
 
-  (let ((behavior (cdr args)))
+  (set! agent (make-agent
+               "afafafafafafafaf"))
+
+  (progress "I am ~a" agent)
+
+  ;; For debugging purpose, you can text the agent.
+  (jami:on-signal 'message-received
+                  (lambda (account-id conv-id commit)
+                    (progress "Message received: ~a ~a: ~a"
+                              account-id conv-id commit)
+                    #t))
+
+  (let ([behavior (cdr args)])
     (set! resume
           (match behavior
-            (("passive" archive) (lambda _
-                                   (agent:ensure-account-from-archive
-                                    archive)
-                                   (passive)))
-            (("active" archive peer) (lambda _
-                                       (agent:ensure-account-from-archive
-                                        archive)
-                                       (active peer)))
+            (("passive") (lambda _ (passive)))
+            (("active" peer)
+             (lambda _
+               (set! stats-output (open-output-file "stats.scm"))
+               (setvbuf stats-output 'none)
+               (make-friend agent peer)
+               (active peer)))
             (_ (throw 'bad-argument args)))))
 
   (setup-timer))
