@@ -155,7 +155,7 @@ private:
     // Data members
     std::shared_ptr<PMPIGD> igd_;
     natpmp_t natpmpHdl_;
-    ScheduledExecutor natpmpScheduler_ {};
+    ScheduledExecutor natpmpScheduler_ {"natpmp"};
     std::shared_ptr<Task> searchForIgdTimer_ {};
     unsigned int igdSearchCounter_ {0};
     UpnpMappingObserver* observer_ {nullptr};
