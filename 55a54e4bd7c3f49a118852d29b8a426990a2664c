@@ -18,6 +18,47 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "69007266_706733af",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-10T15:26:23Z",
+      "side": 1,
+      "message": "it\u0027s directly passed to pjmedia_sdp anyway",
+      "parentUuid": "4d19d75d_c375d724",
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "790eb194_329aef04",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 821,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-10T15:26:23Z",
+      "side": 1,
+      "message": "line 774 sdp_ is checked so can be nullptr, this will result in a segv here (and line 877)",
+      "range": {
+        "startLine": 821,
+        "startChar": 4,
+        "endLine": 821,
+        "endChar": 8
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9d1ed8a7_a4a9e1f7",
