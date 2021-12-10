@@ -362,7 +362,7 @@ struct Manager::ManagerPimpl
     std::thread ioContextRunner_;
 
     /** Main scheduler */
-    ScheduledExecutor scheduler_;
+    ScheduledExecutor scheduler_ {"manager"};
 
     std::atomic_bool autoAnswer_ {false};
 
