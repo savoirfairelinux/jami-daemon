@@ -47,6 +47,8 @@
 #include <string>
 #include <vector>
 
+#include "trace-tools.h"
+
 namespace asio {
 class io_context;
 }
@@ -790,11 +792,19 @@ public:
 
     std::shared_ptr<asio::io_context> ioContext() const;
 
-    void addTask(std::function<bool()>&& task);
+    void addTask(std::function<bool()>&& task,
+                 const char *filename=CURRENT_FILENAME(),
+                 uint32_t linum=CURRENT_LINE());
+
     std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
-                                       std::chrono::steady_clock::time_point when);
+                                       std::chrono::steady_clock::time_point when,
+                                       const char* filename=CURRENT_FILENAME(),
+                                       uint32_t linum=CURRENT_LINE());
+
     std::shared_ptr<Task> scheduleTaskIn(std::function<void()>&& task,
-                                         std::chrono::steady_clock::duration timeout);
+                                         std::chrono::steady_clock::duration timeout,
+                                         const char* filename=CURRENT_FILENAME(),
+                                         uint32_t linum=CURRENT_LINE());
 
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
@@ -889,9 +899,12 @@ private:
 // Helper to install a callback to be called once by the main event loop
 template<typename Callback>
 static void
-runOnMainThread(Callback&& cb)
+runOnMainThread(Callback&& cb,
+                const char *filename=CURRENT_FILENAME(),
+                uint32_t linum=CURRENT_LINE())
 {
-    Manager::instance().scheduler().run([cb = std::forward<Callback>(cb)]() mutable { cb(); });
+    Manager::instance().scheduler().run([cb = std::forward<Callback>(cb)]() mutable { cb(); },
+                                        filename, linum);
 }
 
 } // namespace jami
