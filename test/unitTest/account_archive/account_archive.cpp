@@ -64,18 +64,23 @@ public:
 
     std::string aliceId;
     std::string bobId;
+    std::string bob2Id;
 
 private:
     void testExportImportNoPassword();
     void testExportImportNoPasswordDoubleGunzip();
     void testExportImportPassword();
     void testExportImportPasswordDoubleGunzip();
+    void testExportDht();
+    void testExportDhtWrongPassword();
 
     CPPUNIT_TEST_SUITE(AccountArchiveTest);
     CPPUNIT_TEST(testExportImportNoPassword);
     CPPUNIT_TEST(testExportImportNoPasswordDoubleGunzip);
     CPPUNIT_TEST(testExportImportPassword);
     CPPUNIT_TEST(testExportImportPasswordDoubleGunzip);
+    CPPUNIT_TEST(testExportDht);
+    CPPUNIT_TEST(testExportDhtWrongPassword);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -92,7 +97,10 @@ AccountArchiveTest::setUp()
 void
 AccountArchiveTest::tearDown()
 {
-    wait_for_removal_of({aliceId, bobId});
+    if (!bob2Id.empty())
+        wait_for_removal_of({aliceId, bob2Id, bobId});
+    else
+        wait_for_removal_of({aliceId, bobId});
 }
 
 void
@@ -171,6 +179,55 @@ AccountArchiveTest::testExportImportPasswordDoubleGunzip()
     CPPUNIT_ASSERT(bob2Account->getUsername() == bobAccount->getUsername());
     std::remove("test.gz");
     wait_for_removal_of(accountId);
+}
+
+void
+AccountArchiveTest::testExportDht()
+{
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::string pin;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ExportOnRingEnded>(
+        [&](const std::string& accountId, int status, const std::string& p) {
+            if (accountId == bobId && status == 0)
+                pin = p;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    CPPUNIT_ASSERT(DRing::exportOnRing(bobId, "test"));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return !pin.empty(); }));
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::ARCHIVE_PIN] = pin;
+    details[ConfProperties::ARCHIVE_PASSWORD] = "test";
+
+    bob2Id = jami::Manager::instance().addAccount(details);
+    wait_for_announcement_of(bob2Id);
+    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+    CPPUNIT_ASSERT(bob2Account->getUsername() == bobAccount->getUsername());
+}
+
+void
+AccountArchiveTest::testExportDhtWrongPassword()
+{
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    int status;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ExportOnRingEnded>(
+        [&](const std::string& accountId, int s, const std::string&) {
+            if (accountId == bobId)
+                status = s;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    CPPUNIT_ASSERT(DRing::exportOnRing(bobId, "wrong"));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return status == 1; }));
 }
 
 } // namespace test
