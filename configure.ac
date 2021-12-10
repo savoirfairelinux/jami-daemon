@@ -52,6 +52,18 @@ AC_ARG_ENABLE([agent],
 AM_CONDITIONAL([ENABLE_AGENT], [test "x$enable_agent" = "xyes"])
 AM_COND_IF([ENABLE_AGENT], [AC_CONFIG_FILES([test/agent/Makefile])])
 
+AC_ARG_ENABLE([tracepoint], AS_HELP_STRING([--enable-tracepoint], [Enable tracepoints]))
+
+AS_IF([test "x$enable_tracepoint" = "xyes"],
+  [AC_DEFINE(ENABLE_TRACEPOINT, [], [Static tracepoints enabled])
+   AM_CONDITIONAL(ENABLE_TRACEPOINT, true)],
+  [AM_CONDITIONAL(ENABLE_TRACEPOINT, false)]);
+
+dnl lttng-ust
+AM_COND_IF([ENABLE_TRACEPOINT],
+ [PKG_CHECK_MODULES(LTTNG, [lttng-ust >= 2.13.0],, AC_MSG_ERROR([Missing lttng-ust]))
+  PKG_CHECK_MODULES(URCU,  [liburcu   >= 0.13.0],, AC_MSG_ERROR([Missing liburcu]))],)
+
 dnl Check for programs
 AC_PROG_CC
 AC_PROG_CXX
