@@ -236,7 +236,7 @@ private:
     std::weak_ptr<PUPnP> weak() { return std::static_pointer_cast<PUPnP>(shared_from_this()); }
 
     // Execution queue to run lib upnp actions
-    ScheduledExecutor pupnpScheduler_ {};
+    ScheduledExecutor pupnpScheduler_ {"pupnp"};
 
     // Initialization status.
     std::atomic_bool initialized_ {false};
