@@ -122,8 +122,8 @@ private:
     AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
     void forcePresetX2645(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
-    int initStream(const std::string& codecName, AVBufferRef* framesCtx);
-    int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx);
+    int initStream(const std::string& codecName, AVBufferRef* framesCtx = {});
+    int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx = {});
     void openIOContext();
     void startIO();
     AVCodecContext* getCurrentVideoAVCtx();
@@ -167,7 +167,7 @@ private:
     int scaledFrameBufferSize_ = 0;
 
 #ifdef RING_ACCEL
-    bool enableAccel_ = true;
+    bool enableAccel_ {false};
     std::unique_ptr<video::HardwareAccel> accel_;
 #endif
 

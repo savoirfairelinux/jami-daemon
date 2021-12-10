@@ -149,7 +149,11 @@ VideoRtpSession::startSender()
 
         send_.linkableHW = conference_ == nullptr;
         send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
-        bool isScreenScharing = localVideoParams_.format == "x11grab";
+        // NOTE:
+        // Current implementation does not handle resolution change
+        // (needed by window sharing feature) with HW codecs, so HW
+        // codecs will be disabled for now.
+        bool allowHwAccel = (localVideoParams_.format != "x11grab");
 
         if (socketPair_)
             initSeqVal_ = socketPair_->lastSeqValOut();
@@ -167,13 +171,8 @@ VideoRtpSession::startSender()
                                     send_.bitrate,
                                     static_cast<rational<int>>(localVideoParams_.framerate))
                       : videoMixer_->getStream("Video Sender");
-            sender_.reset(new VideoSender(getRemoteRtpUri(),
-                                          ms,
-                                          send_,
-                                          *socketPair_,
-                                          initSeqVal_ + 1,
-                                          mtu_,
-                                          isScreenScharing));
+            sender_.reset(new VideoSender(
+                getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
