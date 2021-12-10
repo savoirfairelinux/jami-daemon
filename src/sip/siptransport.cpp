@@ -25,6 +25,7 @@
 #include "ice_transport.h"
 #include "security/tls_session.h"
 
+#include "jamidht/abstract_sip_transport.h"
 #include "jamidht/channeled_transport.h"
 #include "jamidht/multiplexed_socket.h"
 
@@ -89,6 +90,13 @@ SipTransport::SipTransport(pjsip_transport* t, const std::shared_ptr<TlsListener
     tlsListener_ = l;
 }
 
+SipTransport::SipTransport(pjsip_transport* t,
+                           const std::shared_ptr<dht::crypto::Certificate>& peerCertficate)
+    : SipTransport(t)
+{
+    tlsInfos_.peerCert = peerCertficate;
+}
+
 SipTransport::~SipTransport()
 {
     JAMI_DBG("~SipTransport@%p {tr=%p {rc=%ld}}",
@@ -121,17 +129,19 @@ SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_s
         tlsInfos_.proto = (pj_ssl_sock_proto) tlsInfo->proto;
         tlsInfos_.cipher = tlsInfo->cipher;
         tlsInfos_.verifyStatus = (pj_ssl_cert_verify_flag_t) tlsInfo->verify_status;
-        const auto& peers = tlsInfo->remote_cert_info->raw_chain;
-        std::vector<std::pair<const uint8_t*, const uint8_t*>> bits;
-        bits.resize(peers.cnt);
-        std::transform(peers.cert_raw,
-                       peers.cert_raw + peers.cnt,
-                       std::begin(bits),
-                       [](const pj_str_t& crt) {
-                           return std::make_pair((uint8_t*) crt.ptr,
-                                                 (uint8_t*) (crt.ptr + crt.slen));
-                       });
-        tlsInfos_.peerCert = std::make_shared<dht::crypto::Certificate>(bits);
+        if (!tlsInfos_.peerCert) {
+            const auto& peers = tlsInfo->remote_cert_info->raw_chain;
+            std::vector<std::pair<const uint8_t*, const uint8_t*>> bits;
+            bits.resize(peers.cnt);
+            std::transform(peers.cert_raw,
+                           peers.cert_raw + peers.cnt,
+                           std::begin(bits),
+                           [](const pj_str_t& crt) {
+                               return std::make_pair((uint8_t*) crt.ptr,
+                                                     (uint8_t*) (crt.ptr + crt.slen));
+                           });
+            tlsInfos_.peerCert = std::make_shared<dht::crypto::Certificate>(bits);
+        }
     } else {
         tlsInfos_ = {};
     }
@@ -204,34 +214,28 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
     // and remove it from any mapping if destroy pending or done.
 
     std::shared_ptr<SipTransport> sipTransport;
+    std::lock_guard<std::mutex> lock(transportMapMutex_);
+    auto key = transports_.find(tp);
+    if (key == transports_.end())
+        return;
 
-    if (!isDestroying_) {
-        std::lock_guard<std::mutex> lock(transportMapMutex_);
-        auto key = transports_.find(tp);
-        if (key == transports_.end())
-            return;
+    sipTransport = key->second.lock();
 
-        sipTransport = key->second.lock();
-
-        bool destroyed = state == PJSIP_TP_STATE_DESTROY;
-
+    if (!isDestroying_ && state == PJSIP_TP_STATE_DESTROY) {
         // maps cleanup
-        if (destroyed) {
-            JAMI_DBG("unmap pjsip transport@%p {SipTransport@%p}", tp, sipTransport.get());
-            transports_.erase(key);
+        JAMI_DBG("unmap pjsip transport@%p {SipTransport@%p}", tp, sipTransport.get());
+        transports_.erase(key);
 
-            // If UDP
-            const auto type = tp->key.type;
-            if (type == PJSIP_TRANSPORT_UDP or type == PJSIP_TRANSPORT_UDP6) {
-                const auto updKey
-                    = std::find_if(udpTransports_.cbegin(),
-                                   udpTransports_.cend(),
-                                   [tp](const std::pair<IpAddr, pjsip_transport*>& pair) {
-                                       return pair.second == tp;
-                                   });
-                if (updKey != udpTransports_.cend())
-                    udpTransports_.erase(updKey);
-            }
+        // If UDP
+        const auto type = tp->key.type;
+        if (type == PJSIP_TRANSPORT_UDP or type == PJSIP_TRANSPORT_UDP6) {
+            const auto updKey = std::find_if(udpTransports_.cbegin(),
+                                             udpTransports_.cend(),
+                                             [tp](const std::pair<IpAddr, pjsip_transport*>& pair) {
+                                                 return pair.second == tp;
+                                             });
+            if (updKey != udpTransports_.cend())
+                udpTransports_.erase(updKey);
         }
     }
 
@@ -414,7 +418,7 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>&
                                                                 remote,
                                                                 std::move(cb));
     auto tr = sips_tr->getTransportBase();
-    auto sip_tr = std::make_shared<SipTransport>(tr);
+    auto sip_tr = std::make_shared<SipTransport>(tr, socket->peerCertificate());
     sip_tr->setDeviceId(socket->deviceId().toString());
     sip_tr->setAccount(account);
 

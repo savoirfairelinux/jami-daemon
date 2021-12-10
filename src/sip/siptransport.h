@@ -92,6 +92,10 @@ class SipTransport
 public:
     SipTransport(pjsip_transport*);
     SipTransport(pjsip_transport*, const std::shared_ptr<TlsListener>&);
+    // If the SipTransport is a channeled transport, we are already connected to the peer,
+    // So, we can directly set tlsInfos_.peerCert and avoid any copy
+    SipTransport(pjsip_transport* t,
+                 const std::shared_ptr<dht::crypto::Certificate>& peerCertficate);
 
     ~SipTransport();
 

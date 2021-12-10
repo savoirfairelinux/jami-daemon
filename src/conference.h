@@ -465,6 +465,8 @@ private:
     std::mutex avStreamsMtx_ {};
     std::map<std::string, std::shared_ptr<MediaStreamSubject>> confAVStreams;
 #endif // ENABLE_PLUGIN
+
+    std::string getRemoteId(const std::shared_ptr<jami::Call>& call) const;
 };
 
 } // namespace jami

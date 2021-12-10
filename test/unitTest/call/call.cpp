@@ -27,6 +27,8 @@
 #include "manager.h"
 #include "jamidht/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
+#include "sip/sipcall.h"
+#include "sip/siptransport.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
@@ -62,12 +64,14 @@ private:
     void testCachedCall();
     void testStopSearching();
     void testDeclineMultiDevice();
+    void testTlsInfosPeerCertificate();
 
     CPPUNIT_TEST_SUITE(CallTest);
     CPPUNIT_TEST(testCall);
     CPPUNIT_TEST(testCachedCall);
     CPPUNIT_TEST(testStopSearching);
     CPPUNIT_TEST(testDeclineMultiDevice);
+    CPPUNIT_TEST(testTlsInfosPeerCertificate);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -294,6 +298,65 @@ CallTest::testDeclineMultiDevice()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
         return callStopped.load() >= 3; /* >= because there is subcalls */
     }));
+}
+
+void
+CallTest::testTlsInfosPeerCertificate()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::atomic<int> callStopped {0};
+    std::string bobCallId;
+    std::string aliceCallState;
+    // Watch signals
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string& accountId,
+            const std::string& callId,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
+            if (accountId == bobId)
+                bobCallId = callId;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+        [&](const std::string& accountId, const std::string&, const std::string& state, signed) {
+            if (accountId == aliceId)
+                aliceCallState = state;
+            if (state == "OVER") {
+                callStopped += 1;
+                if (callStopped == 2)
+                    cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    JAMI_INFO("Start call between alice and Bob");
+    auto callId = DRing::placeCallWithMedia(aliceId, bobUri, {});
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !bobCallId.empty(); }));
+
+    Manager::instance().answerCall(bobId, bobCallId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&] { return aliceCallState == "CURRENT"; }));
+
+    auto call = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(callId));
+    auto* transport = call->getTransport();
+    CPPUNIT_ASSERT(transport);
+    auto cert = transport->getTlsInfos().peerCert;
+    CPPUNIT_ASSERT(cert && cert->issuer);
+    CPPUNIT_ASSERT(cert->issuer->getId().toString() == bobAccount->getUsername());
+
+    JAMI_INFO("Stop call between alice and Bob");
+    callStopped = 0;
+    Manager::instance().hangupCall(aliceId, callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
 }
 
 } // namespace test
