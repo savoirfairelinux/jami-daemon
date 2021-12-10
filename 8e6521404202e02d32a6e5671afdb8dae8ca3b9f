@@ -16,6 +16,23 @@
       "message": "crashing in window sharing",
       "revId": "8e6521404202e02d32a6e5671afdb8dae8ca3b9f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6920e79b_440fca7d",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 254,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-12-10T19:24:47Z",
+      "side": 1,
+      "message": "how we know it is right stream. If video stream created first it will be wrong",
+      "revId": "8e6521404202e02d32a6e5671afdb8dae8ca3b9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
