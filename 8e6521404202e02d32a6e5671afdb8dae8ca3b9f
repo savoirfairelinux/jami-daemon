@@ -33,6 +33,24 @@
       "message": "how we know it is right stream. If video stream created first it will be wrong",
       "revId": "8e6521404202e02d32a6e5671afdb8dae8ca3b9f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb05b553_cba8e675",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 254,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-10T21:26:31Z",
+      "side": 1,
+      "message": "you are right, there is something fishy here ...",
+      "parentUuid": "6920e79b_440fca7d",
+      "revId": "8e6521404202e02d32a6e5671afdb8dae8ca3b9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

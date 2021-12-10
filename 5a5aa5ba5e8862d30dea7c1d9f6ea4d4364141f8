@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e4c5022b_e493912e",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-10T21:26:31Z",
+      "side": 1,
+      "message": "not exactly, but just split the create and initialization of the coding sessions",
+      "parentUuid": "63a2f8a4_ecc85f08",
+      "range": {
+        "startLine": 189,
+        "startChar": 21,
+        "endLine": 189,
+        "endChar": 40
+      },
+      "revId": "5a5aa5ba5e8862d30dea7c1d9f6ea4d4364141f8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "99b8bfb1_0808a741",
         "filename": "src/media/media_encoder.cpp",
         "patchSetId": 2
@@ -37,6 +61,30 @@
       "writtenOn": "2021-12-10T19:44:08Z",
       "side": 1,
       "message": "seems inverted if you want a valid index",
+      "range": {
+        "startLine": 189,
+        "startChar": 18,
+        "endLine": 190,
+        "endChar": 18
+      },
+      "revId": "5a5aa5ba5e8862d30dea7c1d9f6ea4d4364141f8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "421c2144_89e00d8b",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-10T21:26:31Z",
+      "side": 1,
+      "message": "why? the valid index will be returned by initStream. Am I missing something?",
+      "parentUuid": "99b8bfb1_0808a741",
       "range": {
         "startLine": 189,
         "startChar": 18,
