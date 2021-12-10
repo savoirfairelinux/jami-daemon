@@ -32,13 +32,53 @@
 
 #include "noncopyable.h"
 
+#include "tracepoint.h"
+#include "trace-tools.h"
+
 namespace jami {
+
+extern std::atomic<uint64_t> task_cookie;
 
 /**
  * A runnable function
  */
-using Job = std::function<void()>;
-using RepeatedJob = std::function<bool()>;
+struct Job {
+    Job(std::function<void()>&& f, const char* file, uint32_t l)
+        : fn(std::move(f))
+        , filename(file)
+        , linum(l) { }
+
+    std::function<void()> fn;
+    const char* filename;
+    uint32_t linum;
+
+    inline operator bool() const {
+        return static_cast<bool>(fn);
+    }
+
+    void reset() {
+        fn = {};
+    }
+};
+
+struct RepeatedJob {
+    RepeatedJob(std::function<bool()>&& f, const char* file, uint32_t l)
+        : fn(std::move(f))
+        , filename(file)
+        , linum(l) { }
+
+    std::function<bool()> fn;
+    const char* filename;
+    uint32_t linum;
+
+    inline operator bool() {
+        return static_cast<bool>(fn);
+    }
+
+    void reset() {
+        fn = {};
+    }
+};
 
 /**
  * A Job that can be disposed
@@ -46,19 +86,33 @@ using RepeatedJob = std::function<bool()>;
 class Task
 {
 public:
-    Task(Job&& j)
-        : job_(std::move(j))
-    {}
-    void run()
+    Task(std::function<void()>&& fn, const char* filename, uint32_t linum)
+        : job_(std::move(fn), filename, linum)
+        , cookie_(task_cookie++) { }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+    void run(const char* executor_name)
     {
-        if (job_)
-            job_();
+        if (job_.fn) {
+            lttng_ust_tracepoint(jami, scheduled_executor_task_begin,
+                                 executor_name,
+                                 job_.filename, job_.linum,
+                                 cookie_);
+            job_.fn();
+            lttng_ust_tracepoint(jami, scheduled_executor_task_end,
+                                 cookie_);
+        }
     }
-    void cancel() { job_ = {}; }
+#pragma GCC pop
+
+    void cancel() { job_.reset(); }
     bool isCancelled() const { return !job_; }
 
-private:
     Job job_;
+
+private:
+    uint64_t cookie_;
 };
 
 /**
@@ -67,32 +121,57 @@ private:
 class RepeatedTask
 {
 public:
-    RepeatedTask(RepeatedJob&& j)
-        : job_(std::move(j))
-    {}
-    bool run()
+    RepeatedTask(std::function<bool()>&& fn, const char* filename,
+                 uint32_t linum)
+        : job_(std::move(fn), filename, linum)
+        , cookie_(task_cookie++) { }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+    bool run(const char* executor_name)
     {
+        bool cont;
         std::lock_guard<std::mutex> l(lock_);
-        if (cancel_.load() or (job_ and not job_())) {
-            cancel_.store(true);
-            job_ = {};
+
+        if (not cancel_.load() and job_.fn) {
+            lttng_ust_tracepoint(jami, scheduled_executor_task_begin,
+                                 executor_name,
+                                 job_.filename, job_.linum,
+                                 cookie_);
+            cont = job_.fn();
+            lttng_ust_tracepoint(jami, scheduled_executor_task_end,
+                                 cookie_);
+
+        } else {
+            cont = false;
         }
-        return (bool) job_;
+
+        if (not cont) {
+            job_.reset();
+        }
+
+        return static_cast<bool>(job_);
     }
+#pragma GCC pop
+
     void cancel() { cancel_.store(true); }
+
     void destroy()
     {
         cancel();
         std::lock_guard<std::mutex> l(lock_);
-        job_ = {};
+        job_.reset();
     }
+
     bool isCancelled() const { return cancel_.load(); }
+
+    RepeatedJob job_;
 
 private:
     NON_COPYABLE(RepeatedTask);
     mutable std::mutex lock_;
-    RepeatedJob job_;
     std::atomic_bool cancel_ {false};
+    uint64_t cookie_;
 };
 
 class ScheduledExecutor
@@ -102,28 +181,37 @@ public:
     using time_point = clock::time_point;
     using duration = clock::duration;
 
-    ScheduledExecutor();
+    ScheduledExecutor(const std::string& name_);
     ~ScheduledExecutor();
 
     /**
      * Schedule job to be run ASAP
      */
-    void run(Job&& job);
+    void run(std::function<void()>&& job,
+             const char* filename=CURRENT_FILENAME(),
+             uint32_t linum=CURRENT_LINE());
 
     /**
      * Schedule job to be run at time t
      */
-    std::shared_ptr<Task> schedule(Job&& job, time_point t);
+    std::shared_ptr<Task> schedule(std::function<void()>&& job, time_point t,
+                                   const char* filename=CURRENT_FILENAME(),
+                                   uint32_t linum=CURRENT_LINE());
 
     /**
      * Schedule job to be run after delay dt
      */
-    std::shared_ptr<Task> scheduleIn(Job&& job, duration dt);
+    std::shared_ptr<Task> scheduleIn(std::function<void()>&& job, duration dt,
+                                     const char* filename=CURRENT_FILENAME(),
+                                     uint32_t linum=CURRENT_LINE());
 
     /**
      * Schedule job to be run every dt, starting now.
      */
-    std::shared_ptr<RepeatedTask> scheduleAtFixedRate(RepeatedJob&& job, duration dt);
+    std::shared_ptr<RepeatedTask> scheduleAtFixedRate(std::function<bool()>&& job,
+                                                      duration dt,
+                                                      const char* filename=CURRENT_FILENAME(),
+                                                      uint32_t linum=CURRENT_LINE());
 
     /**
      * Stop the scheduler, can't be reversed
@@ -137,6 +225,7 @@ private:
     void schedule(std::shared_ptr<Task>, time_point t);
     void reschedule(std::shared_ptr<RepeatedTask>, time_point t, duration dt);
 
+    std::string name_;
     std::shared_ptr<std::atomic<bool>> running_;
     std::map<time_point, std::vector<Job>> jobs_ {};
     std::mutex jobLock_ {};
