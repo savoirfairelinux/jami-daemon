@@ -52,6 +52,14 @@ AC_ARG_ENABLE([agent],
 AM_CONDITIONAL([ENABLE_AGENT], [test "x$enable_agent" = "xyes"])
 AM_COND_IF([ENABLE_AGENT], [AC_CONFIG_FILES([test/agent/Makefile])])
 
+AC_ARG_ENABLE([tracepoints], AS_HELP_STRING([--enable-tracepoints], [Enable tracepoints]))
+
+AS_IF([test "x$enable_tracepoints" = "xyes"],
+  [AC_DEFINE(ENABLE_TRACEPOINTS, [], [Static tracepoints enabled])
+   AM_CONDITIONAL(ENABLE_TRACEPOINTS, true)],
+  [AM_CONDITIONAL(ENABLE_TRACEPOINTS, false)]);
+
+
 dnl Check for programs
 AC_PROG_CC
 AC_PROG_CXX
@@ -60,7 +68,6 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_LANG(C++)
 
 dnl
 dnl  Check the operating system
@@ -612,6 +619,12 @@ dnl check for shm
 AC_DEFINE_UNQUOTED([HAVE_SHM],
   `if test "x$with_dbus" == xyes; then echo 1; else echo 0; fi`,
   [Define if you have shared memory support])
+
+# Trace
+dnl ttng
+AM_COND_IF([ENABLE_TRACEPOINTS],
+ [PKG_CHECK_MODULES(LTTNG, [lttng-ust >= 2.13],,
+  AC_MSG_ERROR([Missing lttng-ust]))],)
 
 # DOXYGEN
 # required dependency(ies): doxygen
