@@ -161,3 +161,8 @@ if ENABLE_VIDEO
 nobase_include_HEADERS += \
 		./jami/videomanager_interface.h
 endif
+
+if ENABLE_TRACEPOINTS
+libring_la_SOURCES += jami/tracepoint.h jami/tracepoint-def.h jami/tracepoint.c
+libring_la_LIBADD  += $(LTTNG_LIBS)
+endif
