@@ -49,9 +49,9 @@ public:
                 SocketPair& socketPair,
                 const uint16_t seqVal,
                 uint16_t mtu,
-                bool isScreenScharing);
+                bool allowHwAccel = true);
 
-    ~VideoSender();
+    ~VideoSender() {};
 
     void forceKeyFrame();
 
