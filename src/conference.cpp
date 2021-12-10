@@ -686,9 +686,8 @@ Conference::addParticipant(const std::string& participant_id)
             }
 
             // Check for allModeratorEnabled preference
-            if (account->isAllModerators()) {
-                moderators_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
-            }
+            if (account->isAllModerators())
+                moderators_.emplace(getRemoteId(call));
         }
     }
 #ifdef ENABLE_VIDEO
@@ -857,7 +856,7 @@ Conference::removeParticipant(const std::string& participant_id)
             return;
     }
     if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(participant_id))) {
-        auto peerId = std::string(string_remove_suffix(call->getPeerNumber(), '@'));
+        const auto& peerId = getRemoteId(call);
         participantsMuted_.erase(call->getCallId());
         if (auto* transport = call->getTransport())
             handsRaised_.erase(std::string(transport->deviceId()));
@@ -1155,16 +1154,13 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 {
     // Check if the peer is a master
     if (auto call = getCall(callId)) {
-        auto peerId = string_remove_suffix(call->getPeerNumber(), '@');
-
+        const auto& peerId = getRemoteId(call);
         std::string err;
         Json::Value root;
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Couldn't parse conference order from %.*s",
-                      (int) peerId.size(),
-                      peerId.data());
+            JAMI_WARN("Couldn't parse conference order from %s", peerId.c_str());
             return;
         }
 
@@ -1237,7 +1233,7 @@ Conference::setModerator(const std::string& participant_id, const bool& state)
     for (const auto& p : getParticipantList()) {
         if (auto call = getCall(p)) {
             auto isPeerModerator = isModerator(participant_id);
-            if (participant_id == string_remove_suffix(call->getPeerNumber(), '@')) {
+            if (participant_id == getRemoteId(call)) {
                 if (state and not isPeerModerator) {
                     JAMI_DBG("Add %s as moderator", participant_id.c_str());
                     moderators_.emplace(participant_id);
@@ -1650,7 +1646,7 @@ Conference::getCallFromPeerID(std::string_view peerID)
 {
     for (const auto& p : getParticipantList()) {
         auto call = getCall(p);
-        if (call && string_remove_suffix(call->getPeerNumber(), '@') == peerID) {
+        if (call && getRemoteId(call) == peerID) {
             return call;
         }
     }
@@ -1669,6 +1665,16 @@ Conference::getCallWith(const std::string& accountUri, const std::string& device
             }
         }
     }
+    return {};
+}
+
+std::string
+Conference::getRemoteId(const std::shared_ptr<jami::Call>& call) const
+{
+    if (auto* transport = std::dynamic_pointer_cast<SIPCall>(call)->getTransport())
+        if (auto cert = transport->getTlsInfos().peerCert)
+            if (cert->issuer)
+                return cert->issuer->getId().toString();
     return {};
 }
 
