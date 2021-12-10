@@ -47,6 +47,15 @@
 #include <string>
 #include <vector>
 
+#ifdef ENABLE_TRACEPOINT
+/*
+ * NOTE!  source_location is a C++20 feature.  However, Jami does not compile
+ * with C++20.  But we can still use the experimental header to get the C++20
+ * stuffs.
+ */
+#include <experimental/source_location>
+#endif
+
 namespace asio {
 class io_context;
 }
@@ -790,11 +799,35 @@ public:
 
     std::shared_ptr<asio::io_context> ioContext() const;
 
-    void addTask(std::function<bool()>&& task);
+#ifdef ENABLE_TRACEPOINT
+    void addTask(std::function<bool()>&& task,
+                 const char *filename=std::experimental::source_location::current().file_name(),
+                 uint32_t linum=std::experimental::source_location::current().line());
+
     std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
-                                       std::chrono::steady_clock::time_point when);
+                                       std::chrono::steady_clock::time_point when,
+                                       const char *filename=std::experimental::source_location::current().file_name(),
+                                       uint32_t linum=std::experimental::source_location::current().line());
+
     std::shared_ptr<Task> scheduleTaskIn(std::function<void()>&& task,
-                                         std::chrono::steady_clock::duration timeout);
+                                         std::chrono::steady_clock::duration timeout,
+                                         const char *filename=std::experimental::source_location::current().file_name(),
+                                         uint32_t linum=std::experimental::source_location::current().line());
+#else
+    void addTask(std::function<bool()>&& task,
+                 const char *filename="",
+                 uint32_t linum=0);
+
+    std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
+                                       std::chrono::steady_clock::time_point when,
+                                       const char* filename="",
+                                       uint32_t linum=0);
+
+    std::shared_ptr<Task> scheduleTaskIn(std::function<void()>&& task,
+                                         std::chrono::steady_clock::duration timeout,
+                                         const char* filename="",
+                                         uint32_t linum=0);
+#endif
 
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
