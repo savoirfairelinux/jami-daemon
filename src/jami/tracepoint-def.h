@@ -13,13 +13,38 @@
 
 #include <lttng/tracepoint.h>
 
+
 /*
  * Use LTTNG_UST_TRACEPOINT_EVENT(), LTTNG_UST_TRACEPOINT_EVENT_CLASS(),
  * LTTNG_UST_TRACEPOINT_EVENT_INSTANCE(), and LTTNG_UST_TRACEPOINT_LOGLEVEL()
  * here.
  */
 
-#endif /* TRACEPOINT_H */
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    scheduled_executor_task_begin,
+    LTTNG_UST_TP_ARGS(
+        const char *, executor_name,
+        const char *, filename,
+        uint32_t,     linum,
+        uint64_t,     cookie
+    ),
+    LTTNG_UST_TP_FIELDS(
+        lttng_ust_field_string(executor, executor_name)
+        lttng_ust_field_string(source_filename, filename)
+        lttng_ust_field_integer(uint32_t, source_line, linum)
+        lttng_ust_field_integer(uint64_t, cookie, cookie)
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    scheduled_executor_task_end,
+    LTTNG_UST_TP_ARGS(uint64_t, cookie),
+    LTTNG_UST_TP_FIELDS(lttng_ust_field_integer(uint64_t, cookie, cookie))
+)
+
+#endif /* TRACEPOINT_DEF_H */
 
 #include <lttng/tracepoint-event.h>
 
