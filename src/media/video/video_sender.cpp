@@ -52,6 +52,9 @@ VideoSender::VideoSender(const std::string& dest,
     : muxContext_(socketPair.createIOContext(mtu))
     , videoEncoder_(new MediaEncoder)
 {
+#ifdef RING_ACCEL
+    videoEncoder_->enableAccel(not isScreenScharing);
+#endif
     keyFrameFreq_ = opts.frameRate.numerator() * KEY_FRAME_PERIOD;
     videoEncoder_->openOutput(dest, "rtp");
     videoEncoder_->setOptions(opts);
@@ -59,10 +62,6 @@ VideoSender::VideoSender(const std::string& dest,
     videoEncoder_->addStream(args.codec->systemCodecInfo);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_->getContext());
-#ifdef RING_ACCEL
-    if (isScreenScharing)
-        videoEncoder_->enableAccel(false);
-#endif
     // Send local video codec in SmartInfo
     Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getVideoCodec());
     // Send the resolution in smartInfo

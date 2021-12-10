@@ -116,6 +116,7 @@ public:
 
     unsigned getStreamCount() const;
     MediaStream getStream(const std::string& name, int streamIdx = -1) const;
+    int createCodingSession(const std::string& codecName);
 
 private:
     NON_COPYABLE(MediaEncoder);
