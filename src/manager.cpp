@@ -1657,21 +1657,25 @@ Manager::ioContext() const
 }
 
 void
-Manager::addTask(std::function<bool()>&& task)
+Manager::addTask(std::function<bool()>&& task, const char* filename, uint32_t linum)
 {
-    pimpl_->scheduler_.scheduleAtFixedRate(std::move(task), std::chrono::milliseconds(30));
+    pimpl_->scheduler_.scheduleAtFixedRate(std::move(task), std::chrono::milliseconds(30),
+                                           filename, linum);
 }
 
 std::shared_ptr<Task>
-Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::time_point when)
+Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::time_point when,
+                      const char* filename, uint32_t linum)
 {
-    return pimpl_->scheduler_.schedule(std::move(task), when);
+    return pimpl_->scheduler_.schedule(std::move(task), when, filename, linum);
 }
 
 std::shared_ptr<Task>
-Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout)
+Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout,
+                        const char* filename, uint32_t linum)
 {
-    return pimpl_->scheduler_.scheduleIn(std::move(task), timeout);
+    return pimpl_->scheduler_.scheduleIn(std::move(task), timeout,
+                                         filename, linum);
 }
 
 // Must be invoked periodically by a timer from the main event loop
