@@ -22,8 +22,11 @@
 
 namespace jami {
 
-ScheduledExecutor::ScheduledExecutor()
-    : running_(std::make_shared<std::atomic<bool>>(true))
+std::atomic<uint64_t> task_cookie = {0};
+
+ScheduledExecutor::ScheduledExecutor(const std::string& name)
+    : name_(name)
+    , running_(std::make_shared<std::atomic<bool>>(true))
     , thread_([this, is_running = running_] {
         // The thread needs its own reference of `running_` in case the
         // scheduler is destroyed within the thread because of a job
@@ -61,34 +64,40 @@ ScheduledExecutor::stop()
 }
 
 void
-ScheduledExecutor::run(Job&& job)
+ScheduledExecutor::run(std::function<void()>&& job,
+                       const char* filename, uint32_t linum)
 {
     {
         std::lock_guard<std::mutex> lock(jobLock_);
         auto now = clock::now();
-        jobs_[now].emplace_back(std::move(job));
+        jobs_[now].emplace_back(std::move(job), filename, linum);
     }
     cv_.notify_all();
 }
 
 std::shared_ptr<Task>
-ScheduledExecutor::schedule(Job&& job, time_point t)
+ScheduledExecutor::schedule(std::function<void()>&& job, time_point t,
+                            const char* filename, uint32_t linum)
 {
-    auto ret = std::make_shared<Task>(std::move(job));
+    auto ret = std::make_shared<Task>(std::move(job), filename, linum);
     schedule(ret, t);
     return ret;
 }
 
 std::shared_ptr<Task>
-ScheduledExecutor::scheduleIn(Job&& job, duration dt)
+ScheduledExecutor::scheduleIn(std::function<void()>&& job, duration dt,
+                              const char* filename, uint32_t linum)
 {
-    return schedule(std::move(job), clock::now() + dt);
+    return schedule(std::move(job), clock::now() + dt,
+                    filename, linum);
 }
 
 std::shared_ptr<RepeatedTask>
-ScheduledExecutor::scheduleAtFixedRate(RepeatedJob&& job, duration dt)
+ScheduledExecutor::scheduleAtFixedRate(std::function<bool()>&& job,
+                                       duration dt,
+                                       const char* filename, uint32_t linum)
 {
-    auto ret = std::make_shared<RepeatedTask>(std::move(job));
+    auto ret = std::make_shared<RepeatedTask>(std::move(job), filename, linum);
     reschedule(ret, clock::now(), dt);
     return ret;
 }
@@ -97,9 +106,9 @@ void
 ScheduledExecutor::reschedule(std::shared_ptr<RepeatedTask> task, time_point t, duration dt)
 {
     schedule(std::make_shared<Task>([this, task = std::move(task), t, dt]() mutable {
-                 if (task->run())
+             if (task->run(name_.c_str()))
                      reschedule(std::move(task), t + dt, dt);
-             }),
+    }, task->job_.filename, task->job_.linum),
              t);
 }
 
@@ -108,7 +117,8 @@ ScheduledExecutor::schedule(std::shared_ptr<Task> task, time_point t)
 {
     {
         std::lock_guard<std::mutex> lock(jobLock_);
-        jobs_[t].emplace_back([task = std::move(task)] { task->run(); });
+        jobs_[t].emplace_back([task = std::move(task), this] { task->run(name_.c_str()); },
+                              task->job_.filename, task->job_.linum);
     }
     cv_.notify_all();
 }
@@ -134,7 +144,7 @@ ScheduledExecutor::loop()
     }
     for (auto& job : jobs) {
         try {
-            job();
+            job.fn();
         } catch (const std::exception& e) {
             JAMI_ERR("Exception running job: %s", e.what());
         }
