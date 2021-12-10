@@ -22,6 +22,30 @@
       },
       "revId": "67d27225002c2a7f1186817a1bb6c43ac595fedb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d446fe4_14942b51",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 14
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-10T19:46:01Z",
+      "side": 1,
+      "message": "Your arguments are valid, bug I dont think this is the place to argue about the auto-answer. The purpose of this patch is only to adapt multi-stream in the context of auto-answer.\nIf we need a different behaviour, please open an explicit request, or modify the current one in gitlab.",
+      "parentUuid": "e8cb968b_9db36df9",
+      "range": {
+        "startLine": 7,
+        "startChar": 19,
+        "endLine": 7,
+        "endChar": 28
+      },
+      "revId": "67d27225002c2a7f1186817a1bb6c43ac595fedb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
