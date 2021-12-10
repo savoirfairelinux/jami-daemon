@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3cb3460_fdec0f5c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-10T20:50:06Z",
+      "side": 1,
+      "message": "this back and  forth is really ugly, setIceMedia should not be called if we ask the call to do a MediaTransport",
+      "range": {
+        "startLine": 441,
+        "startChar": 47,
+        "endLine": 442,
+        "endChar": 40
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af548573_2276e89f",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-10T20:50:06Z",
+      "side": 1,
+      "message": "same this is a really weird and unintuitive API",
+      "range": {
+        "startLine": 234,
+        "startChar": 10,
+        "endLine": 237,
+        "endChar": 9
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81d68849_a04d1423",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-10T20:50:06Z",
+      "side": 1,
+      "message": "just for renaming mediaTransport_ was more clear. ICE is a detail for XXXTransport",
+      "range": {
+        "startLine": 451,
+        "startChar": 34,
+        "endLine": 451,
+        "endChar": 43
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d1c1011b_5bed7e37",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 453,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-10T20:50:06Z",
+      "side": 1,
+      "message": "tmpMediaTransport_ 🎉",
+      "range": {
+        "startLine": 453,
+        "startChar": 34,
+        "endLine": 453,
+        "endChar": 48
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
