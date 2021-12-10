@@ -56,13 +56,12 @@ VideoSender::VideoSender(const std::string& dest,
     videoEncoder_->openOutput(dest, "rtp");
     videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
+#ifdef RING_ACCEL
+    videoEncoder_->enableAccel(not isScreenScharing);
+#endif
     videoEncoder_->addStream(args.codec->systemCodecInfo);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_->getContext());
-#ifdef RING_ACCEL
-    if (isScreenScharing)
-        videoEncoder_->enableAccel(false);
-#endif
     // Send local video codec in SmartInfo
     Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getVideoCodec());
     // Send the resolution in smartInfo

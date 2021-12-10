@@ -64,7 +64,9 @@ constexpr double LOGREG_PARAM_B_HEVC {-5.};
 
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
-{}
+{
+    JAMI_DBG("[%p] New instance created", this);
+}
 
 MediaEncoder::~MediaEncoder()
 {
@@ -86,6 +88,8 @@ MediaEncoder::~MediaEncoder()
         avformat_free_context(outputCtx_);
     }
     av_dict_free(&options_);
+
+    JAMI_DBG("[%p] Instance destroyed", this);
 }
 
 void
@@ -179,15 +183,23 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 {
     if (systemCodecInfo.mediaType == MEDIA_AUDIO) {
         audioCodec_ = systemCodecInfo.name;
-        return initStream(systemCodecInfo, nullptr);
     } else {
         videoCodec_ = systemCodecInfo.name;
-        // TODO only support 1 audio stream and 1 video stream per encoder
-        if (audioOpts_.isValid())
-            return 1; // stream will be added to AVFormatContext after audio stream
-        else
-            return 0; // only a video stream
     }
+
+    auto stream = avformat_new_stream(outputCtx_, outputCodec_);
+
+    if (stream == nullptr) {
+        JAMI_ERR("[%p] Failed to create coding instance for %s", this, systemCodecInfo.name.c_str());
+        return -1;
+    }
+
+    JAMI_DBG("[%p] Created new coding instance for %s @ index %d",
+             this,
+             systemCodecInfo.name.c_str(),
+             stream->index);
+
+    return initStream(systemCodecInfo);
 }
 
 int
@@ -203,7 +215,23 @@ MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
 int
 MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx)
 {
+    JAMI_DBG("[%p] Initializing stream: codec type %d, name %s, lib %s",
+             this,
+             systemCodecInfo.codecType,
+             systemCodecInfo.name.c_str(),
+             systemCodecInfo.libName.c_str());
+
     std::lock_guard<std::mutex> lk(encMutex_);
+
+    if (!outputCtx_)
+        throw MediaEncoderException("Cannot allocate stream");
+
+    // Must already have codec instance(s)
+    if (outputCtx_->nb_streams == 0) {
+        JAMI_ERR("[%p] Can not init, output context has no coding sessions!", this);
+        throw MediaEncoderException("Can not init, output context has no coding sessions!");
+    }
+
     AVCodecContext* encoderCtx = nullptr;
     AVMediaType mediaType;
 
@@ -212,19 +240,26 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     else if (systemCodecInfo.mediaType == MEDIA_AUDIO)
         mediaType = AVMEDIA_TYPE_AUDIO;
 
-    AVStream* stream;
-    if (!outputCtx_)
-        throw MediaEncoderException("Cannot allocate stream");
-    // add video stream to outputformat context
-    if (outputCtx_->nb_streams <= 0)
-        stream = avformat_new_stream(outputCtx_, outputCodec_);
-    else {
-        stream = outputCtx_->streams[0];
-        stream->codecpar->width = videoOpts_.width;
-        stream->codecpar->height = videoOpts_.height;
+    AVStream* stream {nullptr};
+
+    // Only supports one audio and one video streams at most per instance.
+    for (unsigned i = 0; i < outputCtx_->nb_streams; i++) {
+        stream = outputCtx_->streams[i];
+        if (stream->codecpar->codec_type == mediaType) {
+            if (mediaType == AVMEDIA_TYPE_VIDEO) {
+                stream->codecpar->width = videoOpts_.width;
+                stream->codecpar->height = videoOpts_.height;
+            }
+            break;
+        }
     }
-    if (!stream)
+
+    if (stream == nullptr) {
+        JAMI_ERR("[%p] Can not init, output context has no coding sessions for %s",
+                 this,
+                 systemCodecInfo.name.c_str());
         throw MediaEncoderException("Cannot allocate stream");
+    }
 
     currentStreamIdx_ = stream->index;
 #ifdef RING_ACCEL
@@ -490,7 +525,7 @@ bool
 MediaEncoder::send(AVPacket& pkt, int streamIdx)
 {
     if (!initialized_) {
-        streamIdx = initStream(videoCodec_, nullptr);
+        streamIdx = initStream(videoCodec_);
         startIO();
     }
     if (streamIdx < 0)
