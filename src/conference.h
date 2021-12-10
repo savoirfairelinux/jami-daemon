@@ -488,6 +488,7 @@ private:
 #endif // ENABLE_PLUGIN
 
     ConfProtocolParser parser_;
+    std::string getRemoteId(const std::shared_ptr<jami::Call>& call) const;
 };
 
 } // namespace jami
