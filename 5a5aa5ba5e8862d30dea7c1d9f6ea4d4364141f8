@@ -117,6 +117,30 @@
       },
       "revId": "5a5aa5ba5e8862d30dea7c1d9f6ea4d4364141f8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ecee0cc7_75af8a3c",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-11T19:03:54Z",
+      "side": 1,
+      "message": "I still dont get it.\nIf index \u003d 1, then (auto index \u003d 1 \u003c 0) will false (which means createCodingSession is successful) so \u0027return index;\u0027 will not be executed. \nThe execution continues with \u0027return initStream();\u0027\nwhat\u0027s wrong ? did you test it ?\n\nBut anyway, createCodingSession() is not really needed, we can move the code here.",
+      "parentUuid": "14b6b175_1c92a615",
+      "range": {
+        "startLine": 189,
+        "startChar": 18,
+        "endLine": 190,
+        "endChar": 18
+      },
+      "revId": "5a5aa5ba5e8862d30dea7c1d9f6ea4d4364141f8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

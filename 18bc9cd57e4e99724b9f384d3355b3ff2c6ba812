@@ -39,6 +39,30 @@
       },
       "revId": "18bc9cd57e4e99724b9f384d3355b3ff2c6ba812",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1f1912f_b48b68d7",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-11T19:03:54Z",
+      "side": 1,
+      "message": "not really. we need to break when the mediaType is found, but the width/height is only set for video.",
+      "parentUuid": "9d41501c_a60f5b50",
+      "range": {
+        "startLine": 255,
+        "startChar": 15,
+        "endLine": 256,
+        "endChar": 16
+      },
+      "revId": "18bc9cd57e4e99724b9f384d3355b3ff2c6ba812",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
