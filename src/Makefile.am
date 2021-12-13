@@ -131,7 +131,8 @@ libring_la_SOURCES = \
 		transport/peer_channel.h \
 		uri.h \
 		uri.cpp \
-		vcard.h
+		vcard.h \
+		trace-tools.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \
