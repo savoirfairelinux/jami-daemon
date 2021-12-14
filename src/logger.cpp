@@ -297,6 +297,17 @@ public:
 
     virtual void consume(jami::Logger::Msg& msg) override
     {
+        static bool no_color = (getenv("NO_COLOR")   ||
+                                getenv("NO_COLORS")  ||
+                                getenv("NO_COLOUR")  ||
+                                getenv("NO_COLOURS"));
+
+#if defined(_WIN32) && !defined(RING_UWP)
+        WORD saved_attributes;
+        HANDLE hConsole;
+#endif
+
+        if (not no_color) {
 #ifndef _WIN32
         const char* color_header = CYAN;
         const char* color_prefix = "";
@@ -305,9 +316,9 @@ public:
         WORD color_header = CYAN;
 #endif
 #if defined(_WIN32) && !defined(RING_UWP)
-        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-        WORD saved_attributes;
+
 #endif
 
         switch (msg.level_) {
@@ -335,6 +346,9 @@ public:
         SetConsoleTextAttribute(hConsole, saved_attributes);
         SetConsoleTextAttribute(hConsole, color_prefix);
 #endif
+        } else {
+            fputs(msg.header_.c_str(), stderr);
+        }
 
         fputs(msg.payload_.get(), stderr);
 
@@ -342,11 +356,13 @@ public:
             putc(ENDL, stderr);
         }
 
+        if (not no_color) {
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
 #elif !defined(RING_UWP)
         SetConsoleTextAttribute(hConsole, saved_attributes);
 #endif
+        }
     }
 };
 
