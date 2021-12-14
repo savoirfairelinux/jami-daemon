@@ -52,6 +52,24 @@
       "parentUuid": "1cb732ee_e7e3dfbf",
       "revId": "600e77684e281dcd993e561b3d9de44d9cec9bbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cd40a213_92c18856",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-12-14T15:02:01Z",
+      "side": 1,
+      "message": "CMake does not work for non-Windows platforms currently",
+      "parentUuid": "bdfa7261_cbf46df5",
+      "revId": "600e77684e281dcd993e561b3d9de44d9cec9bbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
