@@ -154,9 +154,11 @@ contextHeader(const char* const file, int line)
         const auto prev_fill = out.fill();
 
         out << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
-            << std::left << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
+            << std::left;
         out.fill(prev_fill);
     }
+
+    out << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
 
     // Context
     if (file) {
