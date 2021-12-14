@@ -50,6 +50,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2fa295c8_2589ace1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T16:33:00Z",
+      "side": 1,
+      "message": "this is the best I can do for now.",
+      "parentUuid": "fe6abaa3_a9657cf2",
+      "range": {
+        "startLine": 441,
+        "startChar": 47,
+        "endLine": 442,
+        "endChar": 40
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "af548573_2276e89f",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 7
