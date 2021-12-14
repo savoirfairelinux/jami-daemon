@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fe6abaa3_a9657cf2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 442,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T16:02:51Z",
+      "side": 1,
+      "message": "the idea is to re-use the code to handle both main and re-invite ICE session with minimal changes\nmay be there is a better way, but requires more refactoring.\nI will check",
+      "parentUuid": "c3cb3460_fdec0f5c",
+      "range": {
+        "startLine": 441,
+        "startChar": 47,
+        "endLine": 442,
+        "endChar": 40
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "af548573_2276e89f",
         "filename": "src/sip/sipaccount.cpp",
         "patchSetId": 7
@@ -37,6 +61,30 @@
       "writtenOn": "2021-12-10T20:50:06Z",
       "side": 1,
       "message": "same this is a really weird and unintuitive API",
+      "range": {
+        "startLine": 234,
+        "startChar": 10,
+        "endLine": 237,
+        "endChar": 9
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8393c0a2_734d8221",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T16:02:51Z",
+      "side": 1,
+      "message": "check answer in jamiaccount.cpp",
+      "parentUuid": "af548573_2276e89f",
       "range": {
         "startLine": 234,
         "startChar": 10,
@@ -60,6 +108,30 @@
       "writtenOn": "2021-12-10T20:50:06Z",
       "side": 1,
       "message": "just for renaming mediaTransport_ was more clear. ICE is a detail for XXXTransport",
+      "range": {
+        "startLine": 451,
+        "startChar": 34,
+        "endLine": 451,
+        "endChar": 43
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb949d2e_33e44427",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T16:02:51Z",
+      "side": 1,
+      "message": "did not get your comment",
+      "parentUuid": "81d68849_a04d1423",
       "range": {
         "startLine": 451,
         "startChar": 34,
