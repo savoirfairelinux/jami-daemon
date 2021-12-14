@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e7fec845_ed143a77",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 8
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f7c4f04c_bc107fdb",
+      "range": {
+        "startLine": 15,
+        "startChar": 25,
+        "endLine": 16,
+        "endChar": 27
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4d19d75d_c375d724",
@@ -82,6 +106,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f1202b9_9cb78263",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 790,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a8bd29a6_1212b450",
+      "range": {
+        "startLine": 788,
+        "startChar": 9,
+        "endLine": 790,
+        "endChar": 10
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "790eb194_329aef04",
@@ -95,6 +143,30 @@
       "writtenOn": "2021-12-10T15:26:23Z",
       "side": 1,
       "message": "line 774 sdp_ is checked so can be nullptr, this will result in a segv here (and line 877)",
+      "range": {
+        "startLine": 821,
+        "startChar": 4,
+        "endLine": 821,
+        "endChar": 8
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "81ef096b_4510fae3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 821,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "we must abort if sdp_ is null. Fixed in line 774",
+      "parentUuid": "790eb194_329aef04",
       "range": {
         "startLine": 821,
         "startChar": 4,
@@ -128,6 +200,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0056be55_52dccc9f",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 487,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ea16dd19_4c59cf87",
+      "range": {
+        "startLine": 487,
+        "startChar": 10,
+        "endLine": 487,
+        "endChar": 12
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9d1ed8a7_a4a9e1f7",
@@ -141,6 +237,24 @@
       "writtenOn": "2021-12-09T15:17:26Z",
       "side": 1,
       "message": "I would simply make a static square matrix here of size MediaDirection::UNKNOWN.",
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "219fe5c4_b6175968",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 263,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "Ack\nYeah, we could have I guess, but it\u0027s done and it\u0027s a test, we dont want to spend too much time on it.",
+      "parentUuid": "9d1ed8a7_a4a9e1f7",
       "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -162,6 +276,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "58e2963f_b11dcc95",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "I kept it for testing. I could remove it now I guess.",
+      "parentUuid": "4001da75_ed9379a4",
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bd22a5cc_edc4b401",
@@ -175,6 +307,30 @@
       "writtenOn": "2021-12-10T20:34:59Z",
       "side": 1,
       "message": "some trailing",
+      "range": {
+        "startLine": 280,
+        "startChar": 0,
+        "endLine": 280,
+        "endChar": 4
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "66fea354_b364c7a2",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 280,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bd22a5cc_edc4b401",
       "range": {
         "startLine": 280,
         "startChar": 0,
@@ -208,6 +364,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ebe7fdbd_8223ebdd",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "not really, I only care about muted_ value. The other attributes might be different.",
+      "parentUuid": "6926af31_8b02bf3b",
+      "range": {
+        "startLine": 294,
+        "startChar": 9,
+        "endLine": 297,
+        "endChar": 5
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5c91aae4_f1b4ccd5",
@@ -221,6 +401,30 @@
       "writtenOn": "2021-12-10T20:34:59Z",
       "side": 1,
       "message": "no need for so much {, in the worst case descrList can be reset to a new value",
+      "range": {
+        "startLine": 727,
+        "startChar": 6,
+        "endLine": 727,
+        "endChar": 9
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f22f8bb_2693a398",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 727,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T15:22:09Z",
+      "side": 1,
+      "message": "why not, if you wish ...",
+      "parentUuid": "5c91aae4_f1b4ccd5",
       "range": {
         "startLine": 727,
         "startChar": 6,
