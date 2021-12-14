@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "46bcebd1_35c2451c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2021-12-14T16:23:35Z",
+      "side": 1,
+      "message": "and also a quick note from me about doing a followup patch\nfor disabling colours by checking one or more of the following\nenv variables: NO_COLOR, NO_COLORS, NO_COLOUR, NO_COLOURS",
+      "revId": "800dbaba99a81e250a6a1cd17c22ceaace2c1bd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
