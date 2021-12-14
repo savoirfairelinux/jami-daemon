@@ -175,27 +175,6 @@ contextHeader(const char* const file, int line)
     return out.str();
 }
 
-static const char*
-check_error(int result, char* buffer)
-{
-    switch (result) {
-    case 0:
-        return buffer;
-
-    case ERANGE: /* should never happen */
-        return "unknown (too big to display)";
-
-    default:
-        return "unknown (invalid error number)";
-    }
-}
-
-static const char*
-check_error(char* result, char*)
-{
-    return result;
-}
-
 void
 strErr(void)
 {
@@ -203,7 +182,8 @@ strErr(void)
     JAMI_ERR("%m");
 #else
     char buf[1000];
-    JAMI_ERR("%s", check_error(strerror_r(errno, buf, sizeof(buf)), buf));
+    strerror_r(errno, buf, sizeof(buf));
+    JAMI_ERR("%s", buf);
 #endif
 }
 
