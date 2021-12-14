@@ -297,6 +297,22 @@ public:
 
     virtual void consume(jami::Logger::Msg& msg) override
     {
+        static bool no_color = (getenv("NO_COLOR")   ||
+                                getenv("NO_COLORS")  ||
+                                getenv("NO_COLOUR")  ||
+                                getenv("NO_COLOURS"));
+
+        if (no_color) {
+
+            fputs(msg.header_.c_str(), stderr);
+            fputs(msg.payload_.get(), stderr);
+
+            if (msg.linefeed_) {
+                putc(ENDL, stderr);
+            }
+            return;
+        }
+
 #ifndef _WIN32
         const char* color_header = CYAN;
         const char* color_prefix = "";
