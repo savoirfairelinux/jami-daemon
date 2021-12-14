@@ -1,0 +1,112 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b4fc28a_274267d3",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 769,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T14:20:47Z",
+      "side": 1,
+      "message": "I guess, it could be \nauto const\u0026 peeerId \u003d ...",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16535067_9ce8393b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1044,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T14:20:47Z",
+      "side": 1,
+      "message": "may be const\u0026",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6e14d0a_9312f8f5",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1051,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T14:20:47Z",
+      "side": 1,
+      "message": "it\u0027s a string, why not using c_str() ?",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b6a9c05_6dd95d68",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1532,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T14:20:47Z",
+      "side": 1,
+      "message": "already checked cert in previous line",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "987d91be_b5b61dcb",
+        "filename": "src/sip/siptransport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T14:20:47Z",
+      "side": 1,
+      "message": "may be not specific to this patch, but how come tlsInfos_ and other members are not protected against concurrency? Are we assuming all members are accessed from a single thread, or is it the responsibility of the caller \u003e",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c0aca729_27df6dcf",
+        "filename": "src/sip/siptransport.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-14T14:20:47Z",
+      "side": 1,
+      "message": "lower case",
+      "range": {
+        "startLine": 96,
+        "startChar": 7,
+        "endLine": 96,
+        "endChar": 8
+      },
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
