@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5590e0df_93003939",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-14T14:51:53Z",
+      "side": 1,
+      "message": "Ok for me, but two notes:\n\n1. Should be documented in https://git.jami.net/savoirfairelinux/jami-project/-/wikis/tutorials/Bug-report-guide or another page when merged\n2. strftime will loose informations (milliseconds)",
+      "revId": "6e0810b77f0d0c30828180e17badcee4163fa575",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
