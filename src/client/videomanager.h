@@ -56,6 +56,7 @@ public:
     std::map<std::string, std::weak_ptr<AudioInput>, std::less<>> audioInputs;
     std::map<std::string, std::weak_ptr<video::VideoInput>, std::less<>> videoInputs;
     std::mutex audioMutex;
+    std::mutex videoMutex;
     bool hasRunningPlayers();
     std::shared_ptr<video::VideoInput> getVideoInput(std::string_view id) const
     {

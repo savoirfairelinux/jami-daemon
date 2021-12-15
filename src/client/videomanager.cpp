@@ -699,6 +699,7 @@ std::shared_ptr<video::VideoInput>
 getVideoInput(const std::string& id, video::VideoInputMode inputMode)
 {
     auto& vmgr = Manager::instance().getVideoManager();
+    std::lock_guard<std::mutex> lk(vmgr.videoMutex);
     auto it = vmgr.videoInputs.find(id);
     if (it != vmgr.videoInputs.end()) {
         if (auto input = it->second.lock()) {
