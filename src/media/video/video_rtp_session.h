@@ -137,8 +137,6 @@ private:
 
     bool check_RCTP_Info_RR(RTCPInfo&);
     bool check_RCTP_Info_REMB(uint64_t*);
-    unsigned getLowerQuality();
-    unsigned getLowerBitrate();
     void adaptQualityAndBitrate();
     void storeVideoBitrateInfo();
     void setupVideoBitrateInfo();
@@ -153,17 +151,10 @@ private:
     static constexpr float NO_INFO_CALCULATED {-1.0};
     // bitrate and quality info struct
     VideoBitrateInfo videoBitrateInfo_;
-    // previous quality, bitrate, jitter and loss used if quality or bitrate need to be decreased
-    std::list<unsigned> histoQuality_ {};
-    std::list<unsigned> histoBitrate_ {};
-    std::list<unsigned> histoJitter_ {};
-    std::list<int> histoDelay_ {};
     std::list<std::pair<time_point, float>> histoLoss_;
-    // max size of quality and bitrate historic
 
     // 5 tries in a row
     static constexpr unsigned MAX_ADAPTATIVE_BITRATE_ITERATION {5};
-    bool hasReachMaxQuality_ {false};
     // packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
 
