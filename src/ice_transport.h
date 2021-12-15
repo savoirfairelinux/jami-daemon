@@ -140,7 +140,7 @@ public:
     bool isInitiator() const;
 
     /**
-     * Start tranport negotiation between local candidates and given remote
+     * Start transport negotiation between local candidates and given remote
      * to find the right candidate pair.
      * This function doesn't block, the callback on_negodone_cb will be called
      * with the negotiation result when operation is really done.
