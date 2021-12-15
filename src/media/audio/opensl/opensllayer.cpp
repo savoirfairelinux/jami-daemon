@@ -116,6 +116,8 @@ void
 OpenSLLayer::stopStream(AudioDeviceType stream)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    if (!engineObject_)
+        return; // bufs_ should be initialized
     JAMI_WARN("Stopping OpenSL audio layer for type %u", (unsigned) stream);
 
     if (stream == AudioDeviceType::PLAYBACK) {
@@ -124,13 +126,27 @@ OpenSLLayer::stopStream(AudioDeviceType stream)
             player_->stop();
             player_.reset();
         }
+        freePlayBufQueue_.clear();
+        for (int i = 0; i < BUF_COUNT; i++)
+            freePlayBufQueue_.push(&bufs_[i]);
+        playBufQueue_.clear();
     } else if (stream == AudioDeviceType::RINGTONE) {
         if (ringtone_) {
             ringtone_->stop();
             ringtone_.reset();
         }
+        // Flush buffer
+        freeRingBufQueue_.clear();
+        for (int i = BUF_COUNT; i < 2 * BUF_COUNT; i++)
+            freeRingBufQueue_.push(&bufs_[i]);
+        ringBufQueue_.clear();
     } else if (stream == AudioDeviceType::CAPTURE) {
         stopAudioCapture();
+        // Flush buffer
+        freeRecBufQueue_.clear();
+        for (int i = 2 * BUF_COUNT; i < 3 * BUF_COUNT; i++)
+            freeRecBufQueue_.push(&bufs_[i]);
+        recBufQueue_.clear();
     }
 
     if (not player_ and not ringtone_ and not recorder_)
@@ -168,7 +184,10 @@ OpenSLLayer::initAudioEngine()
     SLASSERT((*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_));
 
     size_t bufSize = hardwareBuffSize_ * hardwareFormat_.getBytesPerFrame();
-    JAMI_DBG("OpenSL init: using buffer of %u bytes to support %s with %zu samples per channel", bufSize, hardwareFormat_.toString().c_str(), hardwareBuffSize_);
+    JAMI_DBG("OpenSL init: using buffer of %zu bytes to support %s with %zu samples per channel",
+             bufSize,
+             hardwareFormat_.toString().c_str(),
+             hardwareBuffSize_);
     bufs_ = allocateSampleBufs(BUF_COUNT * 3, bufSize);
     for (int i = 0; i < BUF_COUNT; i++)
         freePlayBufQueue_.push(&bufs_[i]);
@@ -224,17 +243,17 @@ OpenSLLayer::dbgEngineGetBufCount()
     count_ringtone += freeRingBufQueue_.size();
     count_ringtone += ringBufQueue_.size();
 
-    JAMI_ERR("Buf Disrtibutions: PlayerDev=%d, PlayQ=%d, FreePlayQ=%d",
+    JAMI_ERR("Buf Disrtibutions: PlayerDev=%zu, PlayQ=%u, FreePlayQ=%u",
              player_->dbgGetDevBufCount(),
              playBufQueue_.size(),
              freePlayBufQueue_.size());
-    JAMI_ERR("Buf Disrtibutions: RingDev=%d, RingQ=%d, FreeRingQ=%d",
+    JAMI_ERR("Buf Disrtibutions: RingDev=%zu, RingQ=%u, FreeRingQ=%u",
              ringtone_->dbgGetDevBufCount(),
              ringBufQueue_.size(),
              freeRingBufQueue_.size());
 
     if (count_player != BUF_COUNT) {
-        JAMI_ERR("====Lost Bufs among the queue(supposed = %d, found = %d)",
+        JAMI_ERR("====Lost Bufs among the queue(supposed = %d, found = %u)",
                  BUF_COUNT,
                  count_player);
     }
@@ -260,8 +279,6 @@ OpenSLLayer::engineServicePlay()
                          dat->pointer()->nb_samples);
                 break;
             }
-            // JAMI_ERR("std::copy_n %p -> %p %zu", dat->pointer()->data[0], buf->buf_,
-            // dat->pointer()->nb_samples);
             std::copy_n((const AudioSample*) dat->pointer()->data[0],
                         dat->pointer()->nb_samples,
                         (AudioSample*) buf->buf_);
@@ -281,7 +298,6 @@ OpenSLLayer::engineServiceRing()
 {
     sample_buf* buf;
     while (ringtone_ and freeRingBufQueue_.front(&buf)) {
-        freeRingBufQueue_.pop();
         if (auto dat = getToRing(hardwareFormat_, hardwareBuffSize_)) {
             buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels
                          * sizeof(AudioSample);
@@ -301,11 +317,10 @@ OpenSLLayer::engineServiceRing()
                         (AudioSample*) buf->buf_);
             if (!ringBufQueue_.push(buf)) {
                 JAMI_WARN("playThread ringtone_ PLAY_KICKSTART_BUFFER_COUNT 1");
-                freeRingBufQueue_.push(buf);
                 break;
-            }
+            } else
+                freeRingBufQueue_.pop();
         } else {
-            freeRingBufQueue_.push(buf);
             break;
         }
     }
