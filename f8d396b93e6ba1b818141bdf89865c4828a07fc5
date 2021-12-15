@@ -69,6 +69,30 @@
       },
       "revId": "f8d396b93e6ba1b818141bdf89865c4828a07fc5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb065c36_20cd059b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-15T22:27:59Z",
+      "side": 1,
+      "message": "Wouldn\u0027t that require a if (!no_color) also for the END_COLOR?",
+      "parentUuid": "685a98d3_08d24bdd",
+      "range": {
+        "startLine": 307,
+        "startChar": 23,
+        "endLine": 312,
+        "endChar": 13
+      },
+      "revId": "f8d396b93e6ba1b818141bdf89865c4828a07fc5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
