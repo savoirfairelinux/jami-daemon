@@ -296,6 +296,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "75b380e1_a6353fec",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 487,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-15T21:20:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4eff4fba_f3bc1f8b",
+      "range": {
+        "startLine": 487,
+        "startChar": 10,
+        "endLine": 487,
+        "endChar": 12
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9d1ed8a7_a4a9e1f7",
@@ -427,6 +451,30 @@
       "side": 1,
       "message": "?",
       "parentUuid": "66fea354_b364c7a2",
+      "range": {
+        "startLine": 280,
+        "startChar": 0,
+        "endLine": 280,
+        "endChar": 4
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d287a24d_5b9eb782",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 280,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-15T21:20:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6634865e_662e7548",
       "range": {
         "startLine": 280,
         "startChar": 0,
