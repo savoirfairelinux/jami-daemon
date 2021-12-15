@@ -398,7 +398,7 @@ SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport,
                          const std::string& contactHdr)
 {
     if (transport != sipTransport_) {
-        JAMI_DBG("[call:%s] Setting tranport to [%p]", getCallId().c_str(), transport.get());
+        JAMI_DBG("[call:%s] Setting transport to [%p]", getCallId().c_str(), transport.get());
     }
 
     sipTransport_ = transport;

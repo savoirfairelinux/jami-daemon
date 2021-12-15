@@ -44,7 +44,7 @@ public:
         AbstractSIPTransport* self {nullptr};
     };
     static_assert(std::is_standard_layout<TransportData>::value,
-                  "TranportData requires standard-layout");
+                  "TransportData requires standard-layout");
 
     virtual ~AbstractSIPTransport() {};
 

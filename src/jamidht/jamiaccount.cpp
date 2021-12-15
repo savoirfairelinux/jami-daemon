@@ -287,7 +287,7 @@ dhtStatusStr(dht::NodeStatus status)
 /**
  * Local ICE Transport factory helper
  *
- * JamiAccount must use this helper than direct IceTranportFactory API
+ * JamiAccount must use this helper than direct IceTransportFactory API
  */
 template<class... Args>
 std::shared_ptr<IceTransport>
