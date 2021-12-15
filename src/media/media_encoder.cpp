@@ -422,9 +422,14 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input,
 {
     auto width = (input->width() >> 3) << 3;
     auto height = (input->height() >> 3) << 3;
-    if (initialized_ && (getWidth() != width || getHeight() != height)) {
-        resetStreams(width, height);
-        is_keyframe = true;
+    if (getWidth() != width || getHeight() != height) {
+        if (initialized_) {
+            resetStreams(width, height);
+            is_keyframe = true;
+        } else {
+            videoOpts_.width = width;
+            videoOpts_.height = height;
+        }
     }
 
     if (!initialized_) {
@@ -1340,13 +1345,12 @@ MediaEncoder::getScaledSWFrame(const VideoFrame& input)
 void
 MediaEncoder::resetStreams(int width, int height)
 {
-    // Only called by VideoSender!
-    initialized_ = false;
     videoOpts_.width = width;
     videoOpts_.height = height;
 
     try {
         flush();
+        initialized_ = false;
         if (outputCtx_) {
             for (auto encoderCtx : encoders_) {
                 if (encoderCtx) {
