@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6cd6d5ce_ac697e9d",
+        "filename": "src/logger.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2021-12-15T21:30:09Z",
+      "side": 1,
+      "message": "those are the ones i\u0027d suggested, and i don\u0027t see any problem with\nchecking all of them, so as to cover the different spellings and\nsingular vs. plural.  the overall logic is pretty trivial.\n\ni won\u0027t die on this hill though, if others *strongly* prefer to check\nonly for one of them.",
+      "parentUuid": "1235ce52_6217ab8e",
+      "range": {
+        "startLine": 301,
+        "startChar": 45,
+        "endLine": 303,
+        "endChar": 44
+      },
+      "revId": "f8d396b93e6ba1b818141bdf89865c4828a07fc5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "685a98d3_08d24bdd",
         "filename": "src/logger.cpp",
         "patchSetId": 1
