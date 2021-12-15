@@ -201,6 +201,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6cb6ffb5_8f772d88",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 821,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-15T21:20:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "49896026_98bc8938",
+      "range": {
+        "startLine": 821,
+        "startChar": 4,
+        "endLine": 821,
+        "endChar": 8
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ea16dd19_4c59cf87",
@@ -474,6 +498,30 @@
       "side": 1,
       "message": "That\u0027s why there is a predicate if wanted",
       "parentUuid": "ebe7fdbd_8223ebdd",
+      "range": {
+        "startLine": 294,
+        "startChar": 9,
+        "endLine": 297,
+        "endChar": 5
+      },
+      "revId": "55a54e4bd7c3f49a118852d29b8a426990a2664c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "41fc636a_c469fd0a",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-15T21:20:00Z",
+      "side": 1,
+      "message": "ok, if you insist.",
+      "parentUuid": "24e846a4_4dee774a",
       "range": {
         "startLine": 294,
         "startChar": 9,
