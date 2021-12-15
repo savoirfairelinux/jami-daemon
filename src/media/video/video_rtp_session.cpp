@@ -52,10 +52,6 @@ namespace video {
 
 using std::string;
 
-static constexpr unsigned MAX_SIZE_HISTO_QUALITY {30};
-static constexpr unsigned MAX_SIZE_HISTO_BITRATE {100};
-static constexpr unsigned MAX_SIZE_HISTO_JITTER {50};
-static constexpr unsigned MAX_SIZE_HISTO_DELAY {25};
 static constexpr unsigned MAX_REMB_DEC {1};
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
@@ -472,40 +468,6 @@ VideoRtpSession::check_RCTP_Info_REMB(uint64_t* br)
     return false;
 }
 
-unsigned
-VideoRtpSession::getLowerQuality()
-{
-    // if lower quality was stored we return it
-    unsigned quality = 0;
-    while (not histoQuality_.empty()) {
-        quality = histoQuality_.back();
-        histoQuality_.pop_back();
-        if (quality > videoBitrateInfo_.videoQualityCurrent)
-            return quality;
-    }
-
-    // if no appropriate quality found, calculate it with dichotomie
-    quality = (videoBitrateInfo_.videoQualityCurrent + videoBitrateInfo_.videoQualityMin) / 2;
-    return quality;
-}
-
-unsigned
-VideoRtpSession::getLowerBitrate()
-{
-    // if a lower bitrate was stored we return it
-    unsigned bitrate = 0;
-    while (not histoBitrate_.empty()) {
-        bitrate = histoBitrate_.back();
-        histoBitrate_.pop_back();
-        if (bitrate < videoBitrateInfo_.videoBitrateCurrent)
-            return bitrate;
-    }
-
-    // if no appropriate bitrate found, calculate it with dichotomie
-    bitrate = (videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMin) / 2;
-    return bitrate;
-}
-
 void
 VideoRtpSession::adaptQualityAndBitrate()
 {
@@ -656,15 +618,6 @@ VideoRtpSession::storeVideoBitrateInfo()
                                             {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY,
                                              std::to_string(videoBitrateInfo_.videoQualityMax)}});
     }
-
-    if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY)
-        histoQuality_.pop_front();
-
-    if (histoBitrate_.size() > MAX_SIZE_HISTO_BITRATE)
-        histoBitrate_.pop_front();
-
-    histoQuality_.push_back(videoBitrateInfo_.videoQualityCurrent);
-    histoBitrate_.push_back(videoBitrateInfo_.videoBitrateCurrent);
 }
 
 void
