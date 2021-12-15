@@ -30,10 +30,6 @@
 #include <limits>
 #include <vector>
 
-#ifndef CACHE_ALIGN
-#define CACHE_ALIGN 64
-#endif
-
 /*
  * ProducerConsumerQueue, borrowed from Ian NiLewis
  */
@@ -160,7 +156,7 @@ public:
         int writeptr = write_.load(std::memory_order_acquire);
         int readptr = read_.load(std::memory_order_relaxed);
 
-        return (uint32_t)(writeptr - readptr);
+        return (uint32_t) (writeptr - readptr);
     }
 
 private:

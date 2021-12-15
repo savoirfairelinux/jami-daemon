@@ -76,7 +76,7 @@ AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
     while (playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
         if ((*bq)->Enqueue(bq, buf->buf_, buf->size_) != SL_RESULT_SUCCESS) {
             devShadowQueue_.pop();
-            JAMI_ERR("enqueue failed %zu %zu %zu %zu",
+            JAMI_ERR("enqueue failed %zu %d %d %d",
                      buf->size_,
                      freeQueue_->size(),
                      playQueue_->size(),
@@ -279,7 +279,7 @@ AudioPlayer::playAudioBuffers(unsigned count)
 
         SLresult result = (*playBufferQueueItf_)->Enqueue(playBufferQueueItf_, buf->buf_, buf->size_);
         if (result != SL_RESULT_SUCCESS) {
-            JAMI_ERR("%s Error @( %p, %d ), result = %d",
+            JAMI_ERR("%s Error @( %p, %zu ), result = %d",
                      __FUNCTION__,
                      (void*) buf->buf_,
                      buf->size_,
