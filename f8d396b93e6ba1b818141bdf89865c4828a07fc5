@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1235ce52_6217ab8e",
+        "filename": "src/logger.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-15T21:05:07Z",
+      "side": 1,
+      "message": "why so many? NO_COLOR\u003d1 should be enough",
+      "range": {
+        "startLine": 301,
+        "startChar": 45,
+        "endLine": 303,
+        "endChar": 44
+      },
+      "revId": "f8d396b93e6ba1b818141bdf89865c4828a07fc5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "685a98d3_08d24bdd",
+        "filename": "src/logger.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-15T21:05:07Z",
+      "side": 1,
+      "message": "this works, but I\u0027d prefer to avoid multiple path and use code line ~355 and add the if (!no_color) around the colors part to avoid future complexity",
+      "range": {
+        "startLine": 307,
+        "startChar": 23,
+        "endLine": 312,
+        "endChar": 13
+      },
+      "revId": "f8d396b93e6ba1b818141bdf89865c4828a07fc5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
