@@ -189,6 +189,11 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
 {
+    JAMI_DBG("[%p] Creating instance using ICE sockets for comp %d and %d",
+             this,
+             rtp_sock_->getCompId(),
+             rtcp_sock_->getCompId());
+
     rtp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
         rtpDataBuff_.emplace_back(buf, buf + len);
@@ -214,7 +219,8 @@ SocketPair::waitForRTCP(std::chrono::seconds interval)
 {
     std::unique_lock<std::mutex> lock(rtcpInfo_mutex_);
     return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this] {
-        return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty();
+        return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty()
+               or not readBlockingMode_;
     });
 }
 
@@ -299,6 +305,15 @@ SocketPair::interrupt()
 }
 
 void
+SocketPair::setReadBlockingMode(bool block)
+{
+    JAMI_DBG("[%p] Read operations in blocking mode [%s]", this, block ? "YES" : "NO");
+    readBlockingMode_ = block;
+    cv_.notify_all();
+    cvRtcpPacketReadyToRead_.notify_all();
+}
+
+void
 SocketPair::stopSendOp(bool state)
 {
     noWrite_ = state;
@@ -316,6 +331,8 @@ SocketPair::closeSockets()
 void
 SocketPair::openSockets(const char* uri, int local_rtp_port)
 {
+    JAMI_DBG("Creating rtp socket for uri %s on port %d", uri, local_rtp_port);
+
     char hostname[256];
     char path[1024];
     int dst_rtp_port;
@@ -334,6 +351,7 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     if ((rtpHandle_ = udp_socket_create(rtpDestAddr_.getFamily(), local_rtp_port)) == -1
         or (rtcpHandle_ = udp_socket_create(rtcpDestAddr_.getFamily(), local_rtcp_port)) == -1) {
         closeSockets();
+        JAMI_ERR("Sockets creation failed");
         throw std::runtime_error("Sockets creation failed");
     }
 
@@ -399,7 +417,8 @@ SocketPair::waitForData()
     {
         std::unique_lock<std::mutex> lk(dataBuffMutex_);
         cv_.wait(lk, [this] {
-            return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty();
+            return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty()
+                   or not readBlockingMode_;
         });
     }
 
