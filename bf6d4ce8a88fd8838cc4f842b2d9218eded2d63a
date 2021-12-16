@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "085e0bd0_ae79d382",
+        "filename": "doc/trace/tracepoints.rst",
+        "patchSetId": 9
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-16T20:19:56Z",
+      "side": 1,
+      "message": "That\u0027s very recent for now, fedora still uses the 2.12. A contrib like libguile should be added.",
+      "range": {
+        "startLine": 36,
+        "startChar": 63,
+        "endLine": 36,
+        "endChar": 69
+      },
+      "revId": "bf6d4ce8a88fd8838cc4f842b2d9218eded2d63a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
