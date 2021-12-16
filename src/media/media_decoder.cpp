@@ -465,6 +465,8 @@ MediaDecoder::setup(AVMediaType type)
     if (stream < 0)
         return -1;
     avStream_ = demuxer_->getStream(stream);
+    if (avStream_ == nullptr)
+        return -1;
     demuxer_->setStreamCallback(stream, [this](AVPacket& packet) { return decode(packet); });
     return setupStream();
 }

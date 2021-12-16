@@ -132,7 +132,8 @@ private:
                                         const std::string& callId,
                                         const std::vector<DRing::MediaMap> mediaList,
                                         CallData& callData);
-    // For backward compatibility test cases
+    // For backward compatibility test cases.
+    // TODO. Do we still need this?
     static void onIncomingCall(const std::string& accountId,
                                const std::string& callId,
                                CallData& callData);
