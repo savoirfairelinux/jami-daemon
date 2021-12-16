@@ -1192,9 +1192,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                         rotation -= 360;
                     JAMI_WARN("Rotate video %d deg.", rotation);
 #ifdef ENABLE_VIDEO
-                    auto const& videoRtp = call.getVideoRtp();
-                    if (videoRtp)
-                        videoRtp->setRotation(rotation);
+                    call.setRotation(rotation);
 #endif
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing angle: %s", e.what());
