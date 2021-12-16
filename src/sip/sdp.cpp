@@ -950,9 +950,8 @@ Sdp::addIceAttributes(const IceTransport::Attribute&& ice_attrs)
 IceTransport::Attribute
 Sdp::getIceAttributes() const
 {
-    IceTransport::Attribute ice_attrs;
-    if (auto session = (activeRemoteSession_ ? activeRemoteSession_ : remoteSession_))
-        return getIceAttributes(session);
+    if (remoteSession_)
+        return getIceAttributes(remoteSession_);
     return {};
 }
 
@@ -975,6 +974,8 @@ Sdp::clearIce()
 {
     clearIce(localSession_);
     clearIce(remoteSession_);
+    setActiveRemoteSdpSession(nullptr);
+    setActiveLocalSdpSession(nullptr);
 }
 
 void
