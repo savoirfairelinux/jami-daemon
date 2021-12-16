@@ -153,6 +153,9 @@ MediaPlayer::process()
     case MediaDemuxer::Status::ReadBufferOverflow:
         readBufferOverflow_ = true;
         break;
+    case MediaDemuxer::Status::RestartRequired:
+    default:
+        break;
     }
 }
 
