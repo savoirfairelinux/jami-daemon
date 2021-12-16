@@ -167,7 +167,7 @@ public:
         std::mutex mutex;
         std::condition_variable cv;
         std::deque<Packet> queue;
-        IceRecvCb cb;
+        IceRecvCb recvCb;
     };
 
     // NOTE: Component IDs start from 1, while these three vectors
@@ -1104,8 +1104,8 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
         auto& io = compIO_[comp_id - 1];
         std::lock_guard<std::mutex> lk(io.mutex);
 
-        if (io.cb) {
-            io.cb((uint8_t*) pkt, size);
+        if (io.recvCb) {
+            io.recvCb((uint8_t*) pkt, size);
             return;
         }
     }
@@ -1654,12 +1654,12 @@ IceTransport::setOnRecv(unsigned compId, IceRecvCb cb)
 
     auto& io = pimpl_->compIO_[compId - 1];
     std::lock_guard<std::mutex> lk(io.mutex);
-    io.cb = std::move(cb);
+    io.recvCb = std::move(cb);
 
-    if (io.cb) {
+    if (io.recvCb) {
         // Flush existing queue using the callback
         for (const auto& packet : io.queue)
-            io.cb((uint8_t*) packet.data.data(), packet.data.size());
+            io.recvCb((uint8_t*) packet.data.data(), packet.data.size());
         io.queue.clear();
     }
 }
