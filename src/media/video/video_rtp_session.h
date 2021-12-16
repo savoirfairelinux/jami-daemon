@@ -186,6 +186,8 @@ private:
     std::unique_ptr<CongestionControl> cc;
 
     std::function<void(void)> cbKeyFrameRequest_;
+
+    std::atomic<int> rotation_ {0};
 };
 
 } // namespace video

@@ -176,6 +176,7 @@ SIPCall::createRtpSession(RtpStream& stream)
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
         stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_, getVideoSettings());
+        std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->setRotation(rotation_);
     }
 #endif
     else {
@@ -2796,10 +2797,22 @@ SIPCall::getReceiveVideoFrameActiveWriter()
     return {};
 }
 
+#ifdef ENABLE_VIDEO
+std::shared_ptr<video::VideoRtpSession>
+SIPCall::getVideoRtp() const
+{
+    for (auto const& stream : rtpStreams_) {
+        auto rtp = stream.rtpSession_;
+        if (rtp->getMediaType() == MediaType::MEDIA_VIDEO) {
+            return std::dynamic_pointer_cast<video::VideoRtpSession>(rtp);
+        }
+    }
+    return nullptr;
+}
+
 bool
 SIPCall::addDummyVideoRtpSession()
 {
-#ifdef ENABLE_VIDEO
     JAMI_DBG("[call:%s] Add dummy video stream", getCallId().c_str());
 
     MediaAttribute mediaAttr(MediaType::MEDIA_VIDEO,
@@ -2813,9 +2826,6 @@ SIPCall::addDummyVideoRtpSession()
     auto& stream = rtpStreams_.back();
     createRtpSession(stream);
     return stream.rtpSession_ != nullptr;
-#endif
-
-    return false;
 }
 
 void
@@ -2840,6 +2850,15 @@ SIPCall::removeDummyVideoRtpSessions()
         }
     }
 }
+
+void
+SIPCall::setRotation(int rotation)
+{
+    rotation_ = rotation;
+    if (auto videoRtp = getVideoRtp())
+        videoRtp->setRotation(rotation);
+}
+#endif
 
 void
 SIPCall::createSinks(const ConfInfo& infos)
@@ -2877,20 +2896,6 @@ SIPCall::getAudioRtp() const
 
     return nullptr;
 }
-
-#ifdef ENABLE_VIDEO
-std::shared_ptr<video::VideoRtpSession>
-SIPCall::getVideoRtp() const
-{
-    for (auto const& stream : rtpStreams_) {
-        auto rtp = stream.rtpSession_;
-        if (rtp->getMediaType() == MediaType::MEDIA_VIDEO) {
-            return std::dynamic_pointer_cast<video::VideoRtpSession>(rtp);
-        }
-    }
-    return nullptr;
-}
-#endif
 
 std::vector<std::shared_ptr<RtpSession>>
 SIPCall::getRtpSessionList() const

@@ -218,8 +218,8 @@ VideoRtpSession::startReceiver()
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
         receiveThread_->startLoop();
-        if (receiveThread_)
-            receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
+        receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
+        receiveThread_->setRotation(rotation_.load());
     } else {
         JAMI_DBG("Video receiving disabled");
         if (receiveThread_)
@@ -323,6 +323,7 @@ VideoRtpSession::forceKeyFrame()
 void
 VideoRtpSession::setRotation(int rotation)
 {
+    rotation_.store(rotation);
     if (receiveThread_)
         receiveThread_->setRotation(rotation);
 }
