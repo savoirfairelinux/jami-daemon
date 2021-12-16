@@ -51,10 +51,13 @@ public:
     MediaStream getInfo() const;
 
     void addIOContext(SocketPair& socketPair);
-    void startLoop();
+    void startReceiver();
+    void stopReceiver();
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-        { onSuccessfulSetup_ = cb; }
+    {
+        onSuccessfulSetup_ = cb;
+    }
 
 private:
     NON_COPYABLE(AudioReceiveThread);
@@ -63,9 +66,6 @@ private:
 
     static int interruptCb(void* ctx);
     static int readFunction(void* opaque, uint8_t* buf, int buf_size);
-
-    void openDecoder();
-    bool decodeFrame();
 
     /*-----------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. process()) only! */
