@@ -286,7 +286,7 @@ public:
 
     virtual bool isTlsEnabled() const override { return true; }
 
-    bool isSrtpEnabled() const override { return true; }
+    bool isSrtpEnabled() const override { return false; }
     KeyExchangeProtocol getSrtpKeyExchange() const { return KeyExchangeProtocol::SDES; }
 
     virtual bool getSrtpFallback() const override { return false; }

@@ -231,9 +231,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Med
     // Do not init ICE yet if the media list is empty. This may occur
     // if we are sending an invite with no SDP offer.
     if (call->isIceEnabled() and not mediaList.empty()) {
-        if (auto iceMedia = SIPCall::createIceMediaTransport(call->getCallId())) {
-            call->setIceMedia(iceMedia);
+        if (auto iceMedia = call->createIceMediaTransport()) {
             call->initIceMediaTransport(iceMedia, true);
+            call->setIceMedia(iceMedia);
         }
     }
 

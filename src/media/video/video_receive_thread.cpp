@@ -57,17 +57,29 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::decodeFrame, this),
             std::bind(&VideoReceiveThread::cleanup, this))
-{}
+{
+    JAMI_DBG("[%p] Instance created", this);
+}
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    loop_.join();
+    JAMI_DBG("[%p] Instance destroyed", this);
 }
 
 void
 VideoReceiveThread::startLoop()
 {
+    JAMI_DBG("[%p] Starting receiver's loop", this);
     loop_.start();
+}
+
+void
+VideoReceiveThread::stopLoop()
+{
+    JAMI_DBG("[%p] Stopping receiver's loop and waiting for the thread to exit ...", this);
+    loop_.stop();
+    loop_.join();
+    JAMI_DBG("[%p] Receiver's thread exited", this);
 }
 
 // We do this setup here instead of the constructor because we don't want the
@@ -75,6 +87,8 @@ VideoReceiveThread::startLoop()
 bool
 VideoReceiveThread::setup()
 {
+    JAMI_DBG("[%p] Setupping video receiver", this);
+
     videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         if (auto displayMatrix = displayMatrix_)
             av_frame_new_side_data_from_buf(frame->pointer(),
@@ -132,6 +146,8 @@ VideoReceiveThread::setup()
 void
 VideoReceiveThread::cleanup()
 {
+    JAMI_DBG("[%p] Stopping receiver", this);
+
     detach(sink_.get());
     sink_->stop();
 
@@ -169,12 +185,20 @@ VideoReceiveThread::addIOContext(SocketPair& socketPair)
 void
 VideoReceiveThread::decodeFrame()
 {
-    if (!configureVideoOutput()) {
+    if (not loop_.isRunning())
         return;
+
+    if (not isVideoConfigured_) {
+        if (!configureVideoOutput()) {
+            JAMI_ERR("[%p] Failed to configure video output", this);
+            return;
+        } else {
+            JAMI_DBG("[%p] Decoder configured, starting decoding", this);
+        }
     }
     auto status = videoDecoder_->decode();
     if (status == MediaDemuxer::Status::EndOfFile || status == MediaDemuxer::Status::ReadError) {
-        loop_.stop();
+        stopLoop();
     }
     if (status == MediaDemuxer::Status::FallBack) {
         if (keyFrameRequestCallback_)
@@ -185,15 +209,13 @@ VideoReceiveThread::decodeFrame()
 bool
 VideoReceiveThread::configureVideoOutput()
 {
-    if (isVideoConfigured_) {
-        return true;
-    }
-    if (!loop_.isRunning()) {
-        return false;
-    }
-    if (videoDecoder_->setupVideo()) {
+    assert(not isVideoConfigured_);
+
+    JAMI_DBG("[%p] Configuring video output", this);
+
+    if (videoDecoder_->setupVideo() < 0) {
         JAMI_ERR("decoder IO startup failed");
-        loop_.stop();
+        stopLoop();
         return false;
     }
 
@@ -205,7 +227,7 @@ VideoReceiveThread::configureVideoOutput()
 
     if (not sink_->start()) {
         JAMI_ERR("RX: sink startup failed");
-        loop_.stop();
+        stopLoop();
         return false;
     }
 
@@ -220,13 +242,15 @@ VideoReceiveThread::configureVideoOutput()
 
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_VIDEO, 1);
-    isVideoConfigured_ = true;
-    return true;
+
+    return isVideoConfigured_ = true;
 }
 
 void
 VideoReceiveThread::stopSink()
 {
+    JAMI_DBG("[%p] Stopping sink", this);
+
     if (!loop_.isRunning())
         return;
 
@@ -237,6 +261,8 @@ VideoReceiveThread::stopSink()
 void
 VideoReceiveThread::startSink()
 {
+    JAMI_DBG("[%p] Starting sink", this);
+
     if (!loop_.isRunning())
         return;
 
