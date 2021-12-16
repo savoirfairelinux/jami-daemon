@@ -772,6 +772,7 @@ Conference::createSinks(const ConfInfo& infos)
 void
 Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId)
 {
+    JAMI_DBG("[conf:%s] attaching video of call %s", id_.c_str(), callId.c_str());
     std::lock_guard<std::mutex> lk(videoToCallMtx_);
     videoToCall_.emplace(frame, callId);
     frame->attach(videoMixer_.get());
@@ -783,6 +784,7 @@ Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
     std::lock_guard<std::mutex> lk(videoToCallMtx_);
     auto it = videoToCall_.find(frame);
     if (it != videoToCall_.end()) {
+        JAMI_DBG("[conf:%s] detaching video of call %s", id_.c_str(), it->second.c_str());
         it->first->detach(videoMixer_.get());
         videoToCall_.erase(it);
     }
