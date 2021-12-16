@@ -605,9 +605,13 @@ MediaDecoder::decode(AVPacket& packet)
         return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
     }
 
+#ifdef ENABLE_VIDEO
     auto f = (inputDecoder_->type == AVMEDIA_TYPE_VIDEO)
                  ? std::static_pointer_cast<MediaFrame>(std::make_shared<VideoFrame>())
                  : std::static_pointer_cast<MediaFrame>(std::make_shared<AudioFrame>());
+#else
+    auto f = std::static_pointer_cast<MediaFrame>(std::make_shared<AudioFrame>());
+#endif
     auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (resolutionChangedCallback_) {

@@ -29,9 +29,9 @@
 #include "string_utils.h"
 #include "sip/siptransport.h"
 
+#include "client/videomanager.h"
 #ifdef ENABLE_VIDEO
 #include "call.h"
-#include "client/videomanager.h"
 #include "video/video_input.h"
 #include "video/video_mixer.h"
 #endif
@@ -338,8 +338,10 @@ Conference::setLocalHostMuteState(MediaType type, bool muted)
 {
     if (type == MediaType::MEDIA_AUDIO) {
         hostAudioSource_.muted_ = muted;
+#ifdef ENABLE_VIDEO
     } else if (type == MediaType::MEDIA_VIDEO) {
         hostVideoSource_.muted_ = muted;
+#endif
     } else {
         JAMI_ERR("Unsupported media type");
     }
@@ -358,7 +360,11 @@ Conference::isMediaSourceMuted(MediaType type) const
         return true;
     }
 
+#ifdef ENABLE_VIDEO
     auto const& mediaAttr = type == MediaType::MEDIA_AUDIO ? hostAudioSource_ : hostVideoSource_;
+#else
+    auto const& mediaAttr = hostAudioSource_;
+#endif
     if (mediaAttr.type_ == MediaType::MEDIA_NONE) {
         JAMI_WARN("The host source for %s is not set. The mute state is meaningless",
                   mediaAttr.mediaTypeToString(mediaAttr.type_));
@@ -480,9 +486,12 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
     }
 
     for (auto const& mediaAttr : mediaAttrList) {
+#ifdef ENABLE_VIDEO
         auto& mediaSource = mediaAttr.type_ == MediaType::MEDIA_AUDIO ? hostAudioSource_
                                                                       : hostVideoSource_;
-
+#else
+        auto& mediaSource = hostAudioSource_;
+#endif
         if (not mediaAttr.sourceUri_.empty() and mediaSource.sourceUri_ != mediaAttr.sourceUri_) {
             // For now, only video source URI can be changed by the client,
             // so it's an error if we get here and the type is not video.
@@ -525,6 +534,7 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
 {
     JAMI_DBG("Conf [%s] Answer to media change request", getConfId().c_str());
 
+#ifdef ENABLE_VIDEO
     // If the new media list has video, remove existing dummy
     // video sessions if any.
     if (MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
@@ -532,6 +542,7 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      MediaType::MEDIA_VIDEO)) {
         call->removeDummyVideoRtpSessions();
     }
+#endif
 
     // Check if we need to update the mixer.
     // We need to check before the media is changed.
@@ -631,6 +642,7 @@ Conference::addParticipant(const std::string& participant_id)
 void
 Conference::setActiveParticipant(const std::string& participant_id)
 {
+#ifdef ENABLE_VIDEO
     if (!videoMixer_)
         return;
     if (isHost(participant_id)) {
@@ -651,11 +663,13 @@ Conference::setActiveParticipant(const std::string& participant_id)
     }
     // Unset active participant by default
     videoMixer_->setActiveParticipant(nullptr);
+#endif
 }
 
 void
 Conference::setLayout(int layout)
 {
+#ifdef ENABLE_VIDEO
     switch (layout) {
     case 0:
         videoMixer_->setVideoLayout(video::Layout::GRID);
@@ -672,6 +686,7 @@ Conference::setLayout(int layout)
     default:
         break;
     }
+#endif
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -717,17 +732,19 @@ Conference::sendConferenceInfos()
     });
 
     auto confInfo = getConfInfoHostUri("", "");
+#ifdef ENABLE_VIDEO
     createSinks(confInfo);
+#endif
 
     // Inform client that layout has changed
     jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
                                                                   confInfo.toVectorMapStringString());
 }
 
+#ifdef ENABLE_VIDEO
 void
 Conference::createSinks(const ConfInfo& infos)
 {
-#ifdef ENABLE_VIDEO
     std::lock_guard<std::mutex> lk(sinksMtx_);
     if (!videoMixer_)
         return;
@@ -737,7 +754,6 @@ Conference::createSinks(const ConfInfo& infos)
                                           std::static_pointer_cast<video::VideoGenerator>(
                                               videoMixer_),
                                           confSinksMap_);
-#endif
 }
 
 void
@@ -758,6 +774,7 @@ Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
         videoToCall_.erase(it);
     }
 }
+#endif
 
 void
 Conference::removeParticipant(const std::string& participant_id)
@@ -997,12 +1014,14 @@ Conference::getVideoMixer()
 void
 Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
+#ifdef ENABLE_VIDEO
     // Video
     if (videoMixer_) {
         if (auto ob = rec->addStream(videoMixer_->getStream("v:mixer"))) {
             videoMixer_->attach(ob);
         }
     }
+#endif
 
     // Audio
     // Create ghost participant for ringbufferpool
@@ -1022,12 +1041,14 @@ Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 void
 Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
+#ifdef ENABLE_VIDEO
     // Video
     if (videoMixer_) {
         if (auto ob = rec->getStream("v:mixer")) {
             videoMixer_->detach(ob);
         }
     }
+#endif
 
     // Audio
     if (auto ob = rec->getStream("a:mixer"))
@@ -1424,6 +1445,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
     }
 }
 
+#ifdef ENABLE_VIDEO
 void
 Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI)
 {
@@ -1466,6 +1488,7 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
         remoteCell.h = remoteCell.h / zoomY;
     }
 }
+#endif
 
 void
 Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
@@ -1478,7 +1501,9 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
         return;
     }
 
+#ifdef ENABLE_VIDEO
     resizeRemoteParticipants(newInfo, peerURI);
+#endif
 
     bool updateNeeded = false;
     auto it = remoteHosts_.find(peerURI);
@@ -1494,12 +1519,14 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
         updateNeeded = true;
     }
     // Send confInfo only if needed to avoid loops
+#ifdef ENABLE_VIDEO
     if (updateNeeded and videoMixer_) {
         // Trigger the layout update in the mixer because the frame resolution may
         // change from participant to conference and cause a mismatch between
         // confInfo layout and rendering layout.
         videoMixer_->updateLayout();
     }
+#endif
 }
 
 std::string_view

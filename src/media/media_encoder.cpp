@@ -1065,6 +1065,7 @@ MediaEncoder::initOpus(AVCodecContext* encoderCtx)
 void
 MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
 {
+#ifdef RING_ACCEL
     if (not accel_)
         return;
     if (accel_->getName() == "nvenc"sv) {
@@ -1080,6 +1081,7 @@ MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "vcm", 1, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
     }
+#endif
 }
 
 AVCodecContext*
@@ -1254,6 +1256,7 @@ MediaEncoder::testH265Accel()
     return "";
 }
 
+#ifdef ENABLE_VIDEO
 int
 MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input,
                          std::shared_ptr<VideoFrame>& output)
@@ -1336,6 +1339,7 @@ MediaEncoder::getScaledSWFrame(const VideoFrame& input)
     scaler_.scale_with_aspect(input, *scaledFrame_);
     return scaledFrame_;
 }
+#endif
 
 void
 MediaEncoder::resetStreams(int width, int height)

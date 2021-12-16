@@ -23,7 +23,9 @@
 
 #include "audio/audio_input.h"
 #include "recordable.h"
+#ifdef ENABLE_VIDEO
 #include "video/video_input.h"
+#endif
 
 namespace jami {
 
@@ -64,7 +66,9 @@ private:
     std::string inputUri_;
 
     // media inputs
+#ifdef ENABLE_VIDEO
     std::shared_ptr<jami::video::VideoInput> videoInput_;
+#endif
     std::shared_ptr<jami::AudioInput> audioInput_;
 };
 

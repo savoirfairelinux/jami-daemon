@@ -71,10 +71,7 @@ using random_device = dht::crypto::random_device;
 #include "plugin/streamdata.h"
 #endif
 
-#ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
-#include "video/video_scaler.h"
-#endif
 
 #include "conference.h"
 #include "ice_transport.h"
@@ -84,9 +81,12 @@ using random_device = dht::crypto::random_device;
 #include "jami/account_const.h"
 
 #include "libav_utils.h"
+#ifdef ENABLE_VIDEO
+#include "video/video_scaler.h"
 #include "video/sinkclient.h"
 #include "video/video_base.h"
 #include "media/video/video_mixer.h"
+#endif
 #include "audio/tonecontrol.h"
 
 #include "data_transfer.h"
@@ -432,9 +432,7 @@ struct Manager::ManagerPimpl
     /* Sink ID mapping */
     std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
 
-#ifdef ENABLE_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
-#endif
 
     std::unique_ptr<SIPVoIPLink> sipLink_;
 #ifdef ENABLE_PLUGIN
@@ -3107,13 +3105,11 @@ Manager::getIceTransportFactory()
     return *pimpl_->ice_tf_;
 }
 
-#ifdef ENABLE_VIDEO
 VideoManager&
 Manager::getVideoManager() const
 {
     return *pimpl_->videoManager_;
 }
-#endif
 
 std::vector<DRing::Message>
 Manager::getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)

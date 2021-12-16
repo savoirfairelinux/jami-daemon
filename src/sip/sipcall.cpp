@@ -253,6 +253,7 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::createCallAVStreams()
 {
+#ifdef ENABLE_VIDEO
     if (hasVideo()) {
         auto videoRtp = getVideoRtp();
         if (not videoRtp)
@@ -262,6 +263,7 @@ SIPCall::createCallAVStreams()
             return;
         }
     }
+#endif
 
     auto baseId = getCallId();
     /**
@@ -2794,19 +2796,15 @@ SIPCall::exitConference()
 #endif
 }
 
+#ifdef ENABLE_VIDEO
 std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
 SIPCall::getReceiveVideoFrameActiveWriter()
 {
-#ifdef ENABLE_VIDEO
     auto videoRtp = getVideoRtp();
     if (videoRtp)
         return videoRtp->getReceiveVideoFrameActiveWriter();
-#endif
-
-    return {};
 }
 
-#ifdef ENABLE_VIDEO
 std::shared_ptr<video::VideoRtpSession>
 SIPCall::getVideoRtp() const
 {
@@ -2867,12 +2865,10 @@ SIPCall::setRotation(int rotation)
     if (auto videoRtp = getVideoRtp())
         videoRtp->setRotation(rotation);
 }
-#endif
 
 void
 SIPCall::createSinks(const ConfInfo& infos)
 {
-#ifdef ENABLE_VIDEO
     if (!hasVideo())
         return;
 
@@ -2888,8 +2884,8 @@ SIPCall::createSinks(const ConfInfo& infos)
                                           std::static_pointer_cast<video::VideoGenerator>(
                                               videoReceive),
                                           callSinksMap_);
-#endif
 }
+#endif
 
 std::shared_ptr<AudioRtpSession>
 SIPCall::getAudioRtp() const
@@ -3253,10 +3249,12 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
             mediaReady_.at("v:local") = true;
     }
 
+#ifdef ENABLE_VIDEO
     if (mediaReady_.at("a:local") and mediaReady_.at("a:remote") and mediaReady_.at("v:remote")) {
         if (Manager::instance().videoPreferences.getRecordPreview() or mediaReady_.at("v:local"))
             readyToRecord_ = true;
     }
+#endif
 
     if (pendingRecord_ && readyToRecord_)
         toggleRecording();

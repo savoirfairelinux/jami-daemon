@@ -29,9 +29,11 @@
 #include <string>
 
 #include "audio/audio_input.h"
+#ifdef ENABLE_VIDEO
 #include "video/video_device_monitor.h"
 #include "video/video_base.h"
 #include "video/video_input.h"
+#endif
 #include "media_player.h"
 
 namespace jami {
@@ -39,36 +41,39 @@ namespace jami {
 struct VideoManager
 {
 public:
-    void setDeviceOrientation(const std::string& deviceId, int angle);
-
     // Client-managed video inputs and players
-    std::map<std::string, std::shared_ptr<video::VideoInput>> clientVideoInputs;
     std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
     // Client-managed audio preview
     std::shared_ptr<AudioInput> audioPreview;
 
+#ifdef ENABLE_VIDEO
+    std::map<std::string, std::shared_ptr<video::VideoInput>> clientVideoInputs;
+    void setDeviceOrientation(const std::string& deviceId, int angle);
     // device monitor
     video::VideoDeviceMonitor videoDeviceMonitor;
-
-    /**
-     * Cache of the active Audio/Video input(s).
-     */
-    std::map<std::string, std::weak_ptr<AudioInput>, std::less<>> audioInputs;
-    std::map<std::string, std::weak_ptr<video::VideoInput>, std::less<>> videoInputs;
-    std::mutex audioMutex;
-    std::mutex videoMutex;
-    bool hasRunningPlayers();
     std::shared_ptr<video::VideoInput> getVideoInput(std::string_view id) const
     {
         auto input = videoInputs.find(id);
         return input == videoInputs.end() ? nullptr : input->second.lock();
     }
+    std::mutex videoMutex;
+    std::map<std::string, std::weak_ptr<video::VideoInput>, std::less<>> videoInputs;
+#endif
+
+    /**
+     * Cache of the active Audio/Video input(s).
+     */
+    std::map<std::string, std::weak_ptr<AudioInput>, std::less<>> audioInputs;
+    std::mutex audioMutex;
+    bool hasRunningPlayers();
 };
 
+#ifdef ENABLE_VIDEO
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
-std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
 std::shared_ptr<video::VideoInput> getVideoInput(
     const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
+#endif
+std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
 std::string createMediaPlayer(const std::string& path);
 std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
 bool pausePlayer(const std::string& id, bool pause);

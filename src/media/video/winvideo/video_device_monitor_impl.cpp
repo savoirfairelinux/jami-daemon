@@ -19,19 +19,20 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "../video_device_monitor.h"
+#include "logger.h"
+#include "noncopyable.h"
+#include "string_utils.h"
+
+#include <dshow.h>
+#include <dbt.h>
+#include <SetupAPI.h>
+
 #include <algorithm>
 #include <string>
 #include <thread>
 #include <vector>
 #include <cctype>
-
-#include "../video_device_monitor.h"
-#include "logger.h"
-#include "noncopyable.h"
-
-#include <dshow.h>
-#include <dbt.h>
-#include <SetupAPI.h>
 
 namespace jami {
 namespace video {
@@ -85,7 +86,7 @@ VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 }
 
 std::string
-getDeviceUniqueName(PDEV_BROADCAST_DEVICEINTERFACE pbdi)
+getDeviceUniqueName(PDEV_BROADCAST_DEVICEINTERFACE_A pbdi)
 {
     std::string unique_name = pbdi->dbcc_name;
 
@@ -156,7 +157,7 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
         switch (wParam) {
         case DBT_DEVICEREMOVECOMPLETE:
         case DBT_DEVICEARRIVAL: {
-            PDEV_BROADCAST_DEVICEINTERFACE pbdi = (PDEV_BROADCAST_DEVICEINTERFACE) lParam;
+            PDEV_BROADCAST_DEVICEINTERFACE_A pbdi = (PDEV_BROADCAST_DEVICEINTERFACE_A) lParam;
             auto unique_name = getDeviceUniqueName(pbdi);
             if (!unique_name.empty()) {
                 JAMI_DBG() << unique_name
