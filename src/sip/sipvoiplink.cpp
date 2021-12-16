@@ -1146,6 +1146,7 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
     if (remoteSDP != nullptr) {
         Sdp::printSession(remoteSDP, "Remote active session:", sdp.getSdpDirection());
     }
+
     call->onMediaNegotiationComplete();
 }
 
