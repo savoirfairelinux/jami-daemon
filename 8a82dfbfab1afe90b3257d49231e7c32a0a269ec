@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "197250cf_2680c4f0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2857,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-16T17:29:44Z",
+      "side": 1,
+      "message": "if createRtpSession is called before, the get will succeed and rotation be updated, if after the rotation_ is already set and will be passed at the creation",
+      "parentUuid": "f791ef9f_0ef2332d",
+      "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7b8b5281_b6c7167f",
         "filename": "src/sip/sipcall.h",
         "patchSetId": 1
@@ -37,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6911f0af_be43e3ac",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 473,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-16T17:29:44Z",
+      "side": 1,
+      "message": "configure.ac doesn\u0027t set ENABLE_VIDEO if video is disabled; same has plugin, it\u0027s not a boolean and managed by autotools and is defined or undefined",
+      "parentUuid": "7b8b5281_b6c7167f",
+      "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7ed6ae0b_19977d6c",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 1
@@ -48,6 +84,24 @@
       "writtenOn": "2021-12-16T16:55:50Z",
       "side": 1,
       "message": "that\u0027s another example of how badly our code is coupled: we are modifying an internal video media property in a signaling class.\nwe should at least move this method (or part of it) into sipcall",
+      "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53fd66bc_4e8b4fc5",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1195,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-16T17:29:44Z",
+      "side": 1,
+      "message": "the whole handleMediaControl(SIPCall\u0026 call, pjsip_msg_body* body) can be moved into SIPCall but it\u0027s unrelated.\n\nTests should be added too, but this would require to inject a video and check if frames follow the rotation and not sure to do that in a good way for now.",
+      "parentUuid": "7ed6ae0b_19977d6c",
       "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
