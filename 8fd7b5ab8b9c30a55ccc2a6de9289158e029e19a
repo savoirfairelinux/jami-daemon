@@ -22,6 +22,30 @@
       },
       "revId": "8fd7b5ab8b9c30a55ccc2a6de9289158e029e19a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f8adacb_b41ec3ea",
+        "filename": "src/trace-tools.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-16T20:53:04Z",
+      "side": 1,
+      "message": "I think I had problems with wrappers like `runOnMainThread`.  I\u0027ll have to check if __FILE__ and __LINE__ applies correctly.",
+      "parentUuid": "098b4591_cd446157",
+      "range": {
+        "startLine": 4,
+        "startChar": 2,
+        "endLine": 11,
+        "endChar": 39
+      },
+      "revId": "8fd7b5ab8b9c30a55ccc2a6de9289158e029e19a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
