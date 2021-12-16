@@ -46,8 +46,10 @@ MediaPlayer::MediaPlayer(const std::string& path)
     id_ = std::to_string(rand());
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setPaused(paused_);
+#ifdef ENABLE_VIDEO
     videoInput_ = jami::getVideoInput(id_, video::VideoInputMode::ManagedByDaemon);
     videoInput_->setPaused(paused_);
+#endif
 
     demuxer_ = std::make_shared<MediaDemuxer>();
     loop_.start();
@@ -86,6 +88,7 @@ MediaPlayer::configureMediaInputs()
     } catch (const std::exception& e) {
         JAMI_ERR("media player: %s open audio input failed: %s", path_.c_str(), e.what());
     }
+#ifdef ENABLE_VIDEO
     try {
         videoStream_ = demuxer_->selectStream(AVMEDIA_TYPE_VIDEO);
         if (hasVideo()) {
@@ -98,6 +101,7 @@ MediaPlayer::configureMediaInputs()
         videoInput_ = nullptr;
         JAMI_ERR("media player: %s open video input failed: %s", path_.c_str(), e.what());
     }
+#endif
 
     demuxer_->setNeedFrameCb([this]() -> void { readBufferOverflow_ = false; });
 
@@ -192,10 +196,12 @@ MediaPlayer::pause(bool pause)
         audioInput_->setPaused(paused_);
         audioInput_->updateStartTime(newTime);
     }
+#ifdef ENABLE_VIDEO
     if (hasVideo()) {
         videoInput_->setPaused(paused_);
         videoInput_->updateStartTime(newTime);
     }
+#endif
 }
 
 bool
@@ -218,10 +224,12 @@ MediaPlayer::seekToTime(int64_t time)
         audioInput_->setSeekTime(time);
         audioInput_->updateStartTime(startTime_);
     }
+#ifdef ENABLE_VIDEO
     if (hasVideo()) {
         videoInput_->setSeekTime(time);
         videoInput_->updateStartTime(startTime_);
     }
+#endif
     return true;
 }
 void
@@ -239,17 +247,21 @@ MediaPlayer::playFileFromBeginning()
     if (hasAudio()) {
         audioInput_->updateStartTime(startTime_);
     }
+#ifdef ENABLE_VIDEO
     if (hasVideo()) {
         videoInput_->updateStartTime(startTime_);
     }
+#endif
 }
 
 void
 MediaPlayer::flushMediaBuffers()
 {
+#ifdef ENABLE_VIDEO
     if (hasVideo()) {
         videoInput_->flushBuffers();
     }
+#endif
 
     if (hasAudio()) {
         audioInput_->flushBuffers();

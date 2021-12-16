@@ -325,14 +325,14 @@ public:
     void setActiveParticipant(const std::string& participant_id);
     void setLayout(int layout);
 
-    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
-    void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
-
     void onConfOrder(const std::string& callId, const std::string& order);
 
     bool isVideoEnabled() const;
 
 #ifdef ENABLE_VIDEO
+    void createSinks(const ConfInfo& infos);
+    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
+    void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
     std::shared_ptr<video::VideoMixer> getVideoMixer();
     std::string getVideoInput() const { return hostVideoSource_.sourceUri_; }
 #endif
@@ -344,7 +344,6 @@ public:
     }
 
     void updateConferenceInfo(ConfInfo confInfo);
-    void createSinks(const ConfInfo& infos);
     void setModerator(const std::string& uri, const bool& state);
     void setHandRaised(const std::string& uri, const bool& state);
     void muteParticipant(const std::string& uri, const bool& state);
@@ -422,7 +421,9 @@ private:
     bool localModAdded_ {false};
 
     std::map<std::string, ConfInfo> remoteHosts_;
+#ifdef ENABLE_VIDEO
     void resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI);
+#endif
     std::string_view findHostforRemoteParticipant(std::string_view uri);
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
 

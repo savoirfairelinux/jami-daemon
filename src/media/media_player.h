@@ -21,7 +21,9 @@
 #pragma once
 
 #include "audio/audio_input.h"
+#ifdef ENABLE_VIDEO
 #include "video/video_input.h"
+#endif
 #include "media_decoder.h"
 #include <atomic>
 
@@ -45,7 +47,9 @@ private:
     std::string id_;
 
     // media inputs
+#ifdef ENABLE_VIDEO
     std::shared_ptr<jami::video::VideoInput> videoInput_;
+#endif
     std::shared_ptr<jami::AudioInput> audioInput_;
     std::shared_ptr<MediaDemuxer> demuxer_;
     ThreadLoop loop_;

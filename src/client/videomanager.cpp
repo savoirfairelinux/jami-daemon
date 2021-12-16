@@ -31,7 +31,9 @@
 #include "logger.h"
 #include "manager.h"
 #include "system_codec_container.h"
+#ifdef ENABLE_VIDEO
 #include "video/sinkclient.h"
+#endif
 #include "client/ring_signal.h"
 #include "audio/ringbufferpool.h"
 #include "jami/media_const.h"
@@ -219,6 +221,8 @@ AudioFrame::calcRMS() const
     // divide by the number of multi-byte samples
     return sqrt(rms / (frame_->nb_samples * frame_->channels));
 }
+
+#ifdef ENABLE_VIDEO
 
 VideoFrame::~VideoFrame()
 {
@@ -448,20 +452,6 @@ applySettings(const std::string& deviceId, const std::map<std::string, std::stri
     jami::Manager::instance().saveConfig();
 }
 
-void
-startAudioDevice()
-{
-    auto newPreview = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID);
-    jami::Manager::instance().getVideoManager().audioPreview = newPreview;
-    newPreview->switchInput("");
-}
-
-void
-stopAudioDevice()
-{
-    jami::Manager::instance().getVideoManager().audioPreview.reset();
-}
-
 std::string
 openVideoInput(const std::string& path)
 {
@@ -479,6 +469,21 @@ bool
 closeVideoInput(const std::string& id)
 {
     return jami::Manager::instance().getVideoManager().clientVideoInputs.erase(id) > 0;
+}
+#endif
+
+void
+startAudioDevice()
+{
+    auto newPreview = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID);
+    jami::Manager::instance().getVideoManager().audioPreview = newPreview;
+    newPreview->switchInput("");
+}
+
+void
+stopAudioDevice()
+{
+    jami::Manager::instance().getVideoManager().audioPreview.reset();
 }
 
 std::string
@@ -523,24 +528,29 @@ stopLocalRecorder(const std::string& filepath)
 void
 registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 {
+#ifdef ENABLE_VIDEO
     if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
         sink->registerTarget(target);
     else
         JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
+#endif
 }
 
 void
 registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target)
 {
+#ifdef ENABLE_VIDEO
     if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
         sink->registerAVTarget(target);
     else
         JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
+#endif
 }
 
 std::map<std::string, std::string>
 getRenderer(const std::string& callId)
 {
+#ifdef ENABLE_VIDEO
     if (auto sink = jami::Manager::instance().getSinkClient(callId))
         return {
             {DRing::Media::Details::CALL_ID, callId},
@@ -549,6 +559,7 @@ getRenderer(const std::string& callId)
             {DRing::Media::Details::HEIGHT, std::to_string(sink->getHeight())},
         };
     else
+#endif
         return {
             {DRing::Media::Details::CALL_ID, callId},
             {DRing::Media::Details::SHM_PATH, ""},
@@ -663,11 +674,36 @@ removeVideoDevice(const std::string& node)
 
 namespace jami {
 
+#ifdef ENABLE_VIDEO
 video::VideoDeviceMonitor&
 getVideoDeviceMonitor()
 {
     return Manager::instance().getVideoManager().videoDeviceMonitor;
 }
+
+std::shared_ptr<video::VideoInput>
+getVideoInput(const std::string& id, video::VideoInputMode inputMode)
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    std::lock_guard<std::mutex> lk(vmgr.videoMutex);
+    auto it = vmgr.videoInputs.find(id);
+    if (it != vmgr.videoInputs.end()) {
+        if (auto input = it->second.lock()) {
+            return input;
+        }
+    }
+
+    auto input = std::make_shared<video::VideoInput>(inputMode, id);
+    vmgr.videoInputs[id] = input;
+    return input;
+}
+
+void
+VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
+{
+    videoDeviceMonitor.setDeviceOrientation(deviceId, angle);
+}
+#endif
 
 std::shared_ptr<AudioInput>
 getAudioInput(const std::string& id)
@@ -693,29 +729,6 @@ getAudioInput(const std::string& id)
     auto input = std::make_shared<AudioInput>(id);
     vmgr.audioInputs[id] = input;
     return input;
-}
-
-std::shared_ptr<video::VideoInput>
-getVideoInput(const std::string& id, video::VideoInputMode inputMode)
-{
-    auto& vmgr = Manager::instance().getVideoManager();
-    std::lock_guard<std::mutex> lk(vmgr.videoMutex);
-    auto it = vmgr.videoInputs.find(id);
-    if (it != vmgr.videoInputs.end()) {
-        if (auto input = it->second.lock()) {
-            return input;
-        }
-    }
-
-    auto input = std::make_shared<video::VideoInput>(inputMode, id);
-    vmgr.videoInputs[id] = input;
-    return input;
-}
-
-void
-VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
-{
-    videoDeviceMonitor.setDeviceOrientation(deviceId, angle);
 }
 
 bool

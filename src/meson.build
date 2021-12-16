@@ -6,6 +6,7 @@ libjami_includedirs = include_directories(
 )
 
 libjami_sources = files(
+    'client/videomanager.cpp',
     'client/callmanager.cpp',
     'client/configurationmanager.cpp',
     'client/conversation_interface.cpp',
@@ -232,7 +233,6 @@ endif
 
 if conf.get('ENABLE_VIDEO')
     libjami_sources += files(
-        'client/videomanager.cpp',
         'media/video/filter_transpose.cpp',
         'media/video/sinkclient.cpp',
         'media/video/video_base.cpp',
