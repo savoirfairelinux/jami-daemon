@@ -137,6 +137,7 @@ public:
     ~SocketPair();
 
     void interrupt();
+    void unblock();
 
     MediaIOHandle* createIOContext(const uint16_t mtu);
 
@@ -208,6 +209,8 @@ private:
     IpAddr rtpDestAddr_;
     IpAddr rtcpDestAddr_;
     std::atomic_bool interrupted_ {false};
+    std::atomic_bool unblockRtp_ {false};
+    std::atomic_bool unblockRtcp_ {false};
     std::atomic_bool noWrite_ {false};
     std::unique_ptr<SRTPProtoContext> srtpContext_;
     std::function<void(void)> packetLossCallback_;
