@@ -614,7 +614,7 @@ AutoAnswerMediaNegoTest::configureScenario()
         bobData_.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData_.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
         account->enableIceForMedia(true);
-        account->isAutoAnswerEnabled();
+        CPPUNIT_ASSERT(account->isAutoAnswerEnabled()();
 
         if (isSipAccount_) {
             auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);
