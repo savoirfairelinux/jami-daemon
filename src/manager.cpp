@@ -1272,6 +1272,8 @@ Manager::holdConference(const std::string& accountId, const std::string& confId)
 bool
 Manager::unHoldConference(const std::string& accountId, const std::string& confId)
 {
+    JAMI_DBG("[conf:%s] un-holding conference", confId.c_str());
+
     if (const auto account = getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             // Unhold conf only if it was in hold state otherwise...

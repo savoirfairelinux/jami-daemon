@@ -53,6 +53,18 @@ struct CallData
         std::string event_ {};
     };
 
+    CallData() = default;
+    CallData(CallData&& other) = delete;
+    CallData(const CallData& other)
+    {
+        accountId_ = std::move(other.accountId_);
+        listeningPort_ = other.listeningPort_;
+        userName_ = std::move(other.userName_);
+        alias_ = std::move(other.alias_);
+        callId_ = std::move(other.callId_);
+        signals_ = std::move(other.signals_);
+    };
+
     std::string accountId_ {};
     uint16_t listeningPort_ {0};
     std::string userName_ {};
@@ -113,63 +125,55 @@ private:
                                          CallData& callData);
 
     // Helpers
+    bool addTestAccount(const std::string& alias, uint16_t port);
     void audio_video_call(std::vector<MediaAttribute> offer,
                           std::vector<MediaAttribute> answer,
                           bool expectedToSucceed = true,
                           bool validateMedia = true);
-    static void configureTest(CallData& bob, CallData& alice, CallData& carla);
-    static std::string getUserAlias(const std::string& callId);
+    void configureTest();
+    std::string getAccountId(const std::string& callId);
+    std::string getUserAlias(const std::string& accountId);
+    CallData& getCallData(const std::string& account);
     // Wait for a signal from the callbacks. Some signals also report the event that
     // triggered the signal a like the StateChange signal.
     static bool waitForSignal(CallData& callData,
                               const std::string& signal,
                               const std::string& expectedEvent = {});
 
-private:
-    CallData aliceData_;
-    CallData bobData_;
-    CallData carlaData_;
+    std::map<std::string, CallData> callDataMap_;
+    std::set<std::string> testAccounts_;
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SipBasicCallTest, SipBasicCallTest::name());
 
+bool
+SipBasicCallTest::addTestAccount(const std::string& alias, uint16_t port)
+{
+    CallData callData;
+    callData.alias_ = alias;
+    callData.userName_ = alias;
+    callData.listeningPort_ = port;
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("SIP");
+    details[ConfProperties::TYPE] = "SIP";
+    details[ConfProperties::USERNAME] = alias;
+    details[ConfProperties::DISPLAYNAME] = alias;
+    details[ConfProperties::ALIAS] = alias;
+    details[ConfProperties::LOCAL_PORT] = std::to_string(port);
+    details[ConfProperties::UPNP_ENABLED] = "false";
+    callData.accountId_ = Manager::instance().addAccount(details);
+    testAccounts_.insert(callData.accountId_);
+    callDataMap_.emplace(alias, std::move(callData));
+    return (not callDataMap_[alias].accountId_.empty());
+}
+
 void
 SipBasicCallTest::setUp()
 {
-    aliceData_.listeningPort_ = 5080;
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("SIP");
-    details[ConfProperties::TYPE] = "SIP";
-    details[ConfProperties::USERNAME] = "ALICE";
-    details[ConfProperties::DISPLAYNAME] = "ALICE";
-    details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::LOCAL_PORT] = std::to_string(aliceData_.listeningPort_);
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    aliceData_.accountId_ = Manager::instance().addAccount(details);
-
-    bobData_.listeningPort_ = 5082;
-    details = DRing::getAccountTemplate("SIP");
-    details[ConfProperties::TYPE] = "SIP";
-    details[ConfProperties::USERNAME] = "BOB";
-    details[ConfProperties::DISPLAYNAME] = "BOB";
-    details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::LOCAL_PORT] = std::to_string(bobData_.listeningPort_);
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    bobData_.accountId_ = Manager::instance().addAccount(details);
-
-    carlaData_.listeningPort_ = 5084;
-    details = DRing::getAccountTemplate("SIP");
-    details[ConfProperties::TYPE] = "SIP";
-    details[ConfProperties::USERNAME] = "CARLA";
-    details[ConfProperties::DISPLAYNAME] = "CARLA";
-    details[ConfProperties::ALIAS] = "CARLA";
-    details[ConfProperties::LOCAL_PORT] = std::to_string(carlaData_.listeningPort_);
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    carlaData_.accountId_ = Manager::instance().addAccount(details);
-
     JAMI_INFO("Initialize accounts ...");
-    auto aliceAccount = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
-    auto bobAccount = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
-    auto carlaAccount = Manager::instance().getAccount<SIPAccount>(carlaData_.accountId_);
+
+    CPPUNIT_ASSERT(addTestAccount("ALICE", 5080));
+    CPPUNIT_ASSERT(addTestAccount("BOB", 5082));
+    CPPUNIT_ASSERT(addTestAccount("CARLA", 5084));
 }
 
 void
@@ -181,20 +185,32 @@ SipBasicCallTest::tearDown()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    auto currentAccSize = Manager::instance().getAccountList().size();
     std::atomic_bool accountsRemoved {false};
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
+            auto currAccounts = Manager::instance().getAccountList();
+            for (auto iter = testAccounts_.begin(); iter != testAccounts_.end();) {
+                auto item = std::find(currAccounts.begin(), currAccounts.end(), *iter);
+                if (item == currAccounts.end()) {
+                    JAMI_INFO("Removing account %s", (*iter).c_str());
+                    iter = testAccounts_.erase(iter);
+                } else {
+                    iter++;
+                }
+            }
+
+            if (testAccounts_.empty()) {
                 accountsRemoved = true;
+                JAMI_INFO("All accounts removed...");
                 cv.notify_one();
             }
         }));
+
     DRing::registerSignalHandlers(confHandlers);
 
-    Manager::instance().removeAccount(aliceData_.accountId_, true);
-    Manager::instance().removeAccount(bobData_.accountId_, true);
-    Manager::instance().removeAccount(carlaData_.accountId_, true);
+    Manager::instance().removeAccount(callDataMap_["ALICE"].accountId_, true);
+    Manager::instance().removeAccount(callDataMap_["BOB"].accountId_, true);
+    Manager::instance().removeAccount(callDataMap_["CARLA"].accountId_, true);
 
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
@@ -203,21 +219,42 @@ SipBasicCallTest::tearDown()
 }
 
 std::string
-SipBasicCallTest::getUserAlias(const std::string& callId)
+SipBasicCallTest::getAccountId(const std::string& callId)
 {
     auto call = Manager::instance().getCallFromCallID(callId);
 
     if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        JAMI_WARN("Call [%s] does not exist anymore!", callId.c_str());
         return {};
     }
 
     auto const& account = call->getAccount().lock();
-    if (not account) {
+
+    if (account) {
+        return account->getAccountID();
+    }
+
+    JAMI_WARN("Account owning the call [%s] does not exist anymore!", callId.c_str());
+    return {};
+}
+
+std::string
+SipBasicCallTest::getUserAlias(const std::string& accountId)
+{
+    if (accountId.empty()) {
+        JAMI_WARN("No account ID is empty");
         return {};
     }
 
-    return account->getAccountDetails()[ConfProperties::ALIAS];
+    auto ret = std::find_if(callDataMap_.begin(), callDataMap_.end(), [accountId](auto const& item) {
+        return item.second.accountId_ == accountId;
+    });
+
+    if (ret != callDataMap_.end())
+        return ret->first;
+
+    JAMI_WARN("No matching test account %s", accountId.c_str());
+    return {};
 }
 
 void
@@ -248,31 +285,18 @@ SipBasicCallTest::onIncomingCallWithMedia(const std::string& accountId,
 }
 
 void
-SipBasicCallTest::onCallStateChange(const std::string&,
+SipBasicCallTest::onCallStateChange(const std::string& accountId,
                                     const std::string& callId,
                                     const std::string& state,
                                     CallData& callData)
 {
-    auto call = Manager::instance().getCallFromCallID(callId);
-    if (not call) {
-        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
-        return;
-    }
-
-    auto account = call->getAccount().lock();
-    if (not account) {
-        JAMI_WARN("Account owning the call [%s] does not exist!", callId.c_str());
-        return;
-    }
-
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
               DRing::CallSignal::StateChange::name,
               callData.alias_.c_str(),
               callId.c_str(),
               state.c_str());
 
-    if (account->getAccountID() != callData.accountId_)
-        return;
+    CPPUNIT_ASSERT(accountId == callData.accountId_);
 
     {
         std::unique_lock<std::mutex> lock {callData.mtx_};
@@ -362,7 +386,7 @@ SipBasicCallTest::waitForSignal(CallData& callData,
         JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
 
         for (auto const& sig : callData.signals_) {
-            JAMI_INFO() << "Signal [" << sig.name_
+            JAMI_INFO() << "\tSignal [" << sig.name_
                         << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
         }
     }
@@ -371,33 +395,29 @@ SipBasicCallTest::waitForSignal(CallData& callData,
 }
 
 void
-SipBasicCallTest::configureTest(CallData& aliceData, CallData& bobData, CallData& carlaData)
+SipBasicCallTest::configureTest()
 {
     {
-        CPPUNIT_ASSERT(not aliceData.accountId_.empty());
-        auto const& account = Manager::instance().getAccount<SIPAccount>(aliceData.accountId_);
-        aliceData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
-        aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->setLocalPort(aliceData.listeningPort_);
+        CPPUNIT_ASSERT(not callDataMap_["ALICE"].accountId_.empty());
+        auto const& account = Manager::instance().getAccount<SIPAccount>(
+            callDataMap_["ALICE"].accountId_);
+        account->setLocalPort(callDataMap_["ALICE"].listeningPort_);
         account->enableIceForMedia(true);
     }
 
     {
-        CPPUNIT_ASSERT(not bobData.accountId_.empty());
-        auto const& account = Manager::instance().getAccount<SIPAccount>(bobData.accountId_);
-        bobData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
-        bobData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->setLocalPort(bobData.listeningPort_);
+        CPPUNIT_ASSERT(not callDataMap_["BOB"].accountId_.empty());
+        auto const& account = Manager::instance().getAccount<SIPAccount>(
+            callDataMap_["BOB"].accountId_);
+        account->setLocalPort(callDataMap_["BOB"].listeningPort_);
     }
-#if 1
+
     {
-        CPPUNIT_ASSERT(not carlaData.accountId_.empty());
-        auto const& account = Manager::instance().getAccount<SIPAccount>(carlaData.accountId_);
-        carlaData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
-        carlaData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->setLocalPort(carlaData.listeningPort_);
+        CPPUNIT_ASSERT(not callDataMap_["CARLA"].accountId_.empty());
+        auto const& account = Manager::instance().getAccount<SIPAccount>(
+            callDataMap_["CARLA"].accountId_);
+        account->setLocalPort(callDataMap_["CARLA"].listeningPort_);
     }
-#endif
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
 
@@ -407,14 +427,10 @@ SipBasicCallTest::configureTest(CallData& aliceData, CallData& bobData, CallData
             const std::string& callId,
             const std::string&,
             const std::vector<DRing::MediaMap> mediaList) {
-            auto user = getUserAlias(callId);
-            if (not user.empty())
-                onIncomingCallWithMedia(accountId,
-                                        callId,
-                                        mediaList,
-                                        user == aliceData.alias_
-                                            ? aliceData
-                                            : (user == bobData.alias_ ? bobData : carlaData));
+            auto alias = getUserAlias(accountId);
+            if (not alias.empty()) {
+                onIncomingCallWithMedia(accountId, callId, mediaList, callDataMap_[alias]);
+            }
         }));
 
     signalHandlers.insert(
@@ -422,27 +438,18 @@ SipBasicCallTest::configureTest(CallData& aliceData, CallData& bobData, CallData
                                                                        const std::string& callId,
                                                                        const std::string& state,
                                                                        signed) {
-            auto user = getUserAlias(callId);
-            if (not user.empty())
-                onCallStateChange(accountId,
-                                  callId,
-                                  state,
-                                  user == aliceData.alias_
-                                      ? aliceData
-                                      : (user == bobData.alias_ ? bobData : carlaData));
+            auto alias = getUserAlias(accountId);
+            if (not alias.empty())
+                onCallStateChange(accountId, callId, state, callDataMap_[alias]);
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
         [&](const std::string& callId,
             const std::string& event,
             const std::vector<std::map<std::string, std::string>>& /* mediaList */) {
-            auto user = getUserAlias(callId);
-            if (not user.empty())
-                onMediaNegotiationStatus(callId,
-                                         event,
-                                         user == aliceData.alias_
-                                             ? aliceData
-                                             : (user == bobData.alias_ ? bobData : carlaData));
+            auto alias = getUserAlias(getAccountId(callId));
+            if (not alias.empty())
+                onMediaNegotiationStatus(callId, event, callDataMap_[alias]);
         }));
 
     DRing::registerSignalHandlers(signalHandlers);
@@ -454,60 +461,63 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
                                    bool expectedToSucceed,
                                    bool validateMedia)
 {
-    configureTest(aliceData_, bobData_, carlaData_);
+    configureTest();
 
     JAMI_INFO("=== Start a call and validate ===");
 
-    std::string bobUri = bobData_.userName_
-                         + "@127.0.0.1:" + std::to_string(bobData_.listeningPort_);
+    std::string bobUri = callDataMap_["BOB"].userName_
+                         + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
-    aliceData_.callId_ = DRing::placeCallWithMedia(aliceData_.accountId_,
-                                                   bobUri,
-                                                   MediaAttribute::mediaAttributesToMediaMaps(
-                                                       offer));
+    callDataMap_["ALICE"].callId_
+        = DRing::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+                                    bobUri,
+                                    MediaAttribute::mediaAttributesToMediaMaps(offer));
 
-    CPPUNIT_ASSERT(not aliceData_.callId_.empty());
+    CPPUNIT_ASSERT(not callDataMap_["ALICE"].callId_.empty());
 
     JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
-              aliceData_.accountId_.c_str(),
-              bobData_.accountId_.c_str());
+              callDataMap_["ALICE"].accountId_.c_str(),
+              callDataMap_["BOB"].accountId_.c_str());
 
     // Give it some time to ring
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     // Wait for call to be processed.
-    CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::RINGING));
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(
+        waitForSignal(callDataMap_["BOB"], DRing::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
-    DRing::acceptWithMedia(bobData_.accountId_,
-                           bobData_.callId_,
+    DRing::acceptWithMedia(callDataMap_["BOB"].accountId_,
+                           callDataMap_["BOB"].callId_,
                            MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     if (expectedToSucceed) {
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(
-            waitForSignal(bobData_,
+            waitForSignal(callDataMap_["BOB"],
                           DRing::CallSignal::MediaNegotiationStatus::name,
                           DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
         // Wait for the StateChange signal.
-        CPPUNIT_ASSERT(
-            waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
+                                     DRing::CallSignal::StateChange::name,
+                                     StateEvent::CURRENT));
 
-        JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
+        JAMI_INFO("BOB answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(
-            waitForSignal(aliceData_,
+            waitForSignal(callDataMap_["ALICE"],
                           DRing::CallSignal::MediaNegotiationStatus::name,
                           DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
         // Validate Alice's media
         if (validateMedia) {
-            auto call = Manager::instance().getCallFromCallID(aliceData_.callId_);
+            auto call = Manager::instance().getCallFromCallID(callDataMap_["ALICE"].callId_);
             auto activeMediaList = call->getMediaAttributeList();
             CPPUNIT_ASSERT_EQUAL(offer.size(), activeMediaList.size());
             // Audio
@@ -523,7 +533,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
 
         // Validate Bob's media
         if (validateMedia) {
-            auto call = Manager::instance().getCallFromCallID(bobData_.callId_);
+            auto call = Manager::instance().getCallFromCallID(callDataMap_["BOB"].callId_);
             auto activeMediaList = call->getMediaAttributeList();
             CPPUNIT_ASSERT_EQUAL(answer.size(), activeMediaList.size());
             // Audio
@@ -542,19 +552,21 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
 
         // Bob hang-up.
         JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-        DRing::hangUp(bobData_.accountId_, bobData_.callId_);
+        DRing::hangUp(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
     } else {
         // The media negotiation for the call is expected to fail, so we
         // should receive the signal.
-        CPPUNIT_ASSERT(
-            waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::FAILURE));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
+                                     DRing::CallSignal::StateChange::name,
+                                     StateEvent::FAILURE));
     }
 
     // The hang-up signal will be emitted on caller's side (Alice) in both
     // success failure scenarios.
 
-    CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::HUNGUP));
 
     JAMI_INFO("Call terminated on both sides");
 }
@@ -567,8 +579,9 @@ SipBasicCallTest::audio_only_test()
 
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
-    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(
+        callDataMap_["ALICE"].accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(callDataMap_["BOB"].accountId_);
 
     std::vector<MediaAttribute> offer;
     std::vector<MediaAttribute> answer;
@@ -605,8 +618,9 @@ SipBasicCallTest::audio_video_test()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
-    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(
+        callDataMap_["ALICE"].accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(callDataMap_["BOB"].accountId_);
 
     std::vector<MediaAttribute> offer;
     std::vector<MediaAttribute> answer;
@@ -643,7 +657,7 @@ SipBasicCallTest::peer_answer_with_all_media_disabled()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(callDataMap_["BOB"].accountId_);
 
     std::vector<MediaAttribute> offer;
     std::vector<MediaAttribute> answer;
@@ -672,8 +686,9 @@ SipBasicCallTest::hold_resume_test()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
-    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(
+        callDataMap_["ALICE"].accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(callDataMap_["BOB"].accountId_);
 
     std::vector<MediaAttribute> offer;
     std::vector<MediaAttribute> answer;
@@ -683,69 +698,76 @@ SipBasicCallTest::hold_resume_test()
 
     audio.enabled_ = true;
     audio.label_ = "audio_0";
+    video.enabled_ = true;
+    video.label_ = "video_0";
 
     // Alice's media
     offer.emplace_back(audio);
+    offer.emplace_back(video);
 
     // Bob's media
     answer.emplace_back(audio);
+    answer.emplace_back(video);
 
     {
-        configureTest(aliceData_, bobData_, carlaData_);
+        configureTest();
 
         JAMI_INFO("=== Start a call and validate ===");
 
-        std::string bobUri = bobData_.userName_
-                             + "@127.0.0.1:" + std::to_string(bobData_.listeningPort_);
+        std::string bobUri = callDataMap_["BOB"].userName_
+                             + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
-        aliceData_.callId_ = DRing::placeCallWithMedia(aliceData_.accountId_,
-                                                       bobUri,
-                                                       MediaAttribute::mediaAttributesToMediaMaps(
-                                                           offer));
+        callDataMap_["ALICE"].callId_
+            = DRing::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+                                        bobUri,
+                                        MediaAttribute::mediaAttributesToMediaMaps(offer));
 
-        CPPUNIT_ASSERT(not aliceData_.callId_.empty());
+        CPPUNIT_ASSERT(not callDataMap_["ALICE"].callId_.empty());
 
         JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
-                  aliceData_.accountId_.c_str(),
-                  bobData_.accountId_.c_str());
+                  callDataMap_["ALICE"].accountId_.c_str(),
+                  callDataMap_["BOB"].accountId_.c_str());
 
         // Give it some time to ring
         std::this_thread::sleep_for(std::chrono::seconds(2));
 
         // Wait for call to be processed.
-        CPPUNIT_ASSERT(
-            waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
+                                     DRing::CallSignal::StateChange::name,
+                                     StateEvent::RINGING));
 
         // Wait for incoming call signal.
-        CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
+        CPPUNIT_ASSERT(
+            waitForSignal(callDataMap_["BOB"], DRing::CallSignal::IncomingCallWithMedia::name));
 
         // Answer the call.
-        DRing::acceptWithMedia(bobData_.accountId_,
-                               bobData_.callId_,
+        DRing::acceptWithMedia(callDataMap_["BOB"].accountId_,
+                               callDataMap_["BOB"].callId_,
                                MediaAttribute::mediaAttributesToMediaMaps(answer));
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(
-            waitForSignal(bobData_,
+            waitForSignal(callDataMap_["BOB"],
                           DRing::CallSignal::MediaNegotiationStatus::name,
                           DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
         // Wait for the StateChange signal.
-        CPPUNIT_ASSERT(
-            waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
+                                     DRing::CallSignal::StateChange::name,
+                                     StateEvent::CURRENT));
 
-        JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
+        JAMI_INFO("BOB answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(
-            waitForSignal(aliceData_,
+            waitForSignal(callDataMap_["ALICE"],
                           DRing::CallSignal::MediaNegotiationStatus::name,
                           DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
         // Validate Alice's side of media direction
         {
             auto call = std::static_pointer_cast<SIPCall>(
-                Manager::instance().getCallFromCallID(aliceData_.callId_));
+                Manager::instance().getCallFromCallID(callDataMap_["ALICE"].callId_));
             auto& sdp = call->getSDP();
             auto mediaStreams = sdp.getMediaSlots();
             for (auto const& media : mediaStreams) {
@@ -757,7 +779,7 @@ SipBasicCallTest::hold_resume_test()
         // Validate Bob's side of media direction
         {
             auto call = std::static_pointer_cast<SIPCall>(
-                Manager::instance().getCallFromCallID(bobData_.callId_));
+                Manager::instance().getCallFromCallID(callDataMap_["BOB"].callId_));
             auto& sdp = call->getSDP();
             auto mediaStreams = sdp.getMediaSlots();
             for (auto const& media : mediaStreams) {
@@ -771,19 +793,20 @@ SipBasicCallTest::hold_resume_test()
 
         // Hold/Resume the call
         JAMI_INFO("Hold Alice's call");
-        DRing::hold(aliceData_.accountId_, aliceData_.callId_);
+        DRing::hold(callDataMap_["ALICE"].accountId_, callDataMap_["ALICE"].callId_);
         // Wait for the StateChange signal.
-        CPPUNIT_ASSERT(
-            waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HOLD));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
+                                     DRing::CallSignal::StateChange::name,
+                                     StateEvent::HOLD));
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(
-            waitForSignal(aliceData_,
+            waitForSignal(callDataMap_["ALICE"],
                           DRing::CallSignal::MediaNegotiationStatus::name,
                           DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
         {
             // Validate hold state.
-            auto call = Manager::instance().getCallFromCallID(aliceData_.callId_);
+            auto call = Manager::instance().getCallFromCallID(callDataMap_["ALICE"].callId_);
             auto activeMediaList = call->getMediaAttributeList();
             for (const auto& mediaAttr : activeMediaList) {
                 CPPUNIT_ASSERT(mediaAttr.onHold_);
@@ -793,7 +816,7 @@ SipBasicCallTest::hold_resume_test()
         // Validate Alice's side of media direction
         {
             auto call = std::static_pointer_cast<SIPCall>(
-                Manager::instance().getCallFromCallID(aliceData_.callId_));
+                Manager::instance().getCallFromCallID(callDataMap_["ALICE"].callId_));
             auto& sdp = call->getSDP();
             auto mediaStreams = sdp.getMediaSlots();
             for (auto const& media : mediaStreams) {
@@ -805,7 +828,7 @@ SipBasicCallTest::hold_resume_test()
         // Validate Bob's side of media direction
         {
             auto call = std::static_pointer_cast<SIPCall>(
-                Manager::instance().getCallFromCallID(bobData_.callId_));
+                Manager::instance().getCallFromCallID(callDataMap_["BOB"].callId_));
             auto& sdp = call->getSDP();
             auto mediaStreams = sdp.getMediaSlots();
             for (auto const& media : mediaStreams) {
@@ -817,22 +840,23 @@ SipBasicCallTest::hold_resume_test()
         std::this_thread::sleep_for(std::chrono::seconds(2));
 
         JAMI_INFO("Resume Alice's call");
-        DRing::unhold(aliceData_.accountId_, aliceData_.callId_);
+        DRing::unhold(callDataMap_["ALICE"].accountId_, callDataMap_["ALICE"].callId_);
 
         // Wait for the StateChange signal.
-        CPPUNIT_ASSERT(
-            waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
+                                     DRing::CallSignal::StateChange::name,
+                                     StateEvent::CURRENT));
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(
-            waitForSignal(aliceData_,
+            waitForSignal(callDataMap_["ALICE"],
                           DRing::CallSignal::MediaNegotiationStatus::name,
                           DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
         std::this_thread::sleep_for(std::chrono::seconds(2));
 
         {
             // Validate hold state.
-            auto call = Manager::instance().getCallFromCallID(aliceData_.callId_);
+            auto call = Manager::instance().getCallFromCallID(callDataMap_["ALICE"].callId_);
             auto activeMediaList = call->getMediaAttributeList();
             for (const auto& mediaAttr : activeMediaList) {
                 CPPUNIT_ASSERT(not mediaAttr.onHold_);
@@ -841,13 +865,14 @@ SipBasicCallTest::hold_resume_test()
 
         // Bob hang-up.
         JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-        DRing::hangUp(bobData_.accountId_, bobData_.callId_);
+        DRing::hangUp(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
 
         // The hang-up signal will be emitted on caller's side (Alice) in both
         // success and failure scenarios.
 
-        CPPUNIT_ASSERT(
-            waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
+                                     DRing::CallSignal::StateChange::name,
+                                     StateEvent::HUNGUP));
 
         JAMI_INFO("Call terminated on both sides");
     }
@@ -890,9 +915,11 @@ SipBasicCallTest::blind_transfer_test()
 
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
-    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
-    auto const carlaAcc = Manager::instance().getAccount<SIPAccount>(carlaData_.accountId_);
+    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(
+        callDataMap_["ALICE"].accountId_);
+    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(callDataMap_["BOB"].accountId_);
+    auto const carlaAcc = Manager::instance().getAccount<SIPAccount>(
+        callDataMap_["CARLA"].accountId_);
 
     aliceAcc->enableIceForMedia(false);
     bobAcc->enableIceForMedia(false);
@@ -913,52 +940,55 @@ SipBasicCallTest::blind_transfer_test()
     // Bob's media
     answer.emplace_back(audio);
 
-    configureTest(aliceData_, bobData_, carlaData_);
+    configureTest();
 
     JAMI_INFO("=== Start a call and validate ===");
 
-    std::string bobUri = bobData_.userName_
-                         + "@127.0.0.1:" + std::to_string(bobData_.listeningPort_);
+    std::string bobUri = callDataMap_["BOB"].userName_
+                         + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
-    aliceData_.callId_ = DRing::placeCallWithMedia(aliceData_.accountId_,
-                                                   bobUri,
-                                                   MediaAttribute::mediaAttributesToMediaMaps(
-                                                       offer));
+    callDataMap_["ALICE"].callId_
+        = DRing::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+                                    bobUri,
+                                    MediaAttribute::mediaAttributesToMediaMaps(offer));
 
-    CPPUNIT_ASSERT(not aliceData_.callId_.empty());
+    CPPUNIT_ASSERT(not callDataMap_["ALICE"].callId_.empty());
 
     JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
-              aliceData_.accountId_.c_str(),
-              bobData_.accountId_.c_str());
+              callDataMap_["ALICE"].accountId_.c_str(),
+              callDataMap_["BOB"].accountId_.c_str());
 
     // Give it some time to ring
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     // Wait for call to be processed.
-    CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::RINGING));
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(
+        waitForSignal(callDataMap_["BOB"], DRing::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
-    DRing::acceptWithMedia(bobData_.accountId_,
-                           bobData_.callId_,
+    DRing::acceptWithMedia(callDataMap_["BOB"].accountId_,
+                           callDataMap_["BOB"].callId_,
                            MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData_,
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
                                  DRing::CallSignal::MediaNegotiationStatus::name,
                                  DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Wait for the StateChange signal.
-    CPPUNIT_ASSERT(
-        waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::CURRENT));
 
-    JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
+    JAMI_INFO("BOB answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
     // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT(waitForSignal(aliceData_,
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
                                  DRing::CallSignal::MediaNegotiationStatus::name,
                                  DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
@@ -967,52 +997,59 @@ SipBasicCallTest::blind_transfer_test()
 
     // Transfer the call to Carla
     std::string carlaUri = carlaAcc->getUsername()
-                           + "@127.0.0.1:" + std::to_string(carlaData_.listeningPort_);
+                           + "@127.0.0.1:" + std::to_string(callDataMap_["CARLA"].listeningPort_);
 
-    DRing::transfer(aliceData_.accountId_, aliceData_.callId_, carlaUri); // TODO. Check trim
+    DRing::transfer(callDataMap_["ALICE"].accountId_,
+                    callDataMap_["ALICE"].callId_,
+                    carlaUri); // TODO. Check trim
 
     // Expect Alice's call to end.
-    CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::HUNGUP));
 
     // Wait for the new call to be processed.
-    CPPUNIT_ASSERT(
-        waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::RINGING));
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(carlaData_, DRing::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(
+        waitForSignal(callDataMap_["CARLA"], DRing::CallSignal::IncomingCallWithMedia::name));
 
     // Let it ring
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     // Carla answers the call.
-    DRing::acceptWithMedia(carlaData_.accountId_,
-                           carlaData_.callId_,
+    DRing::acceptWithMedia(callDataMap_["CARLA"].accountId_,
+                           callDataMap_["CARLA"].callId_,
                            MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT(waitForSignal(carlaData_,
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"],
                                  DRing::CallSignal::MediaNegotiationStatus::name,
                                  DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Wait for the StateChange signal.
-    CPPUNIT_ASSERT(
-        waitForSignal(carlaData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::CURRENT));
 
-    JAMI_INFO("CARLA answered the call [%s]", bobData_.callId_.c_str());
+    JAMI_INFO("CARLA answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
     // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData_,
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
                                  DRing::CallSignal::MediaNegotiationStatus::name,
                                  DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
     // Wait for the StateChange signal.
-    CPPUNIT_ASSERT(
-        waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::CURRENT));
 
     // Validate Carla's side of media direction
     {
         auto call = std::static_pointer_cast<SIPCall>(
-            Manager::instance().getCallFromCallID(carlaData_.callId_));
+            Manager::instance().getCallFromCallID(callDataMap_["CARLA"].callId_));
         auto& sdp = call->getSDP();
         auto mediaStreams = sdp.getMediaSlots();
         for (auto const& media : mediaStreams) {
@@ -1023,7 +1060,7 @@ SipBasicCallTest::blind_transfer_test()
 
     // NOTE:
     // For now, we dont validate Bob's media because currently
-    // test does not update BOB's call ID (bobData_.callId_
+    // test does not update BOB's call ID (callDataMap_["BOB"].callId_
     // still point to the first call).
     // It seems there is no easy way to get the ID of the new call
     // made by Bob to Carla.
@@ -1033,11 +1070,12 @@ SipBasicCallTest::blind_transfer_test()
 
     // Bob hang-up.
     JAMI_INFO("Hang up CARLA's call and wait for CARLA to hang up");
-    DRing::hangUp(carlaData_.accountId_, carlaData_.callId_);
+    DRing::hangUp(callDataMap_["CARLA"].accountId_, callDataMap_["CARLA"].callId_);
 
     // Expect end call on Carla's side.
-    CPPUNIT_ASSERT(
-        waitForSignal(carlaData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"],
+                                 DRing::CallSignal::StateChange::name,
+                                 StateEvent::HUNGUP));
 
     JAMI_INFO("Calls normally ended on both sides");
 }

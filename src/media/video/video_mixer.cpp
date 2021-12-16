@@ -204,7 +204,9 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
     auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
     src->render_frame = std::make_shared<VideoFrame>();
     src->source = ob;
+    JAMI_DBG("Add new source [%p]", src.get());
     sources_.emplace_back(std::move(src));
+    JAMI_DBG("Total sources: %lu", sources_.size());
     updateLayout();
 }
 
@@ -221,7 +223,9 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
                 activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get()
                                                      : videoLocal_.get();
             }
+            JAMI_DBG("Remove source [%p]", x.get());
             sources_.remove(x);
+            JAMI_DBG("Total sources: %lu", sources_.size());
             updateLayout();
             break;
         }
