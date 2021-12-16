@@ -382,7 +382,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame_p))->format());
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
@@ -489,10 +489,11 @@ void
 SinkClient::setCrop(int x, int y, int w, int h)
 {
     JAMI_DBG("[Sink:%p] Change crop to [%dx%d at (%d, %d)]", this, w, h, x, y);
-    crop_.x = x;
-    crop_.y = y;
-    crop_.w = w;
-    crop_.h = h;
+    // +- 1 is to avoid overlapping areas that may cause double free
+    crop_.x = x + 1;
+    crop_.y = y + 1;
+    crop_.w = w - 1;
+    crop_.h = h - 1;
 }
 
 } // namespace video
