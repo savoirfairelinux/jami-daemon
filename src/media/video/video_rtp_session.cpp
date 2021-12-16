@@ -38,6 +38,7 @@
 #include "call.h"
 #include "conference.h"
 #include "congestion_control.h"
+#include <opendht/thread_pool.h>
 
 #include "account_const.h"
 
@@ -96,7 +97,7 @@ VideoRtpSession::startSender()
 {
     JAMI_DBG("Start video RTP sender: input [%s] - muted [%s]",
              conference_ ? "Video Mixer" : input_.c_str(),
-             muteState_ ? "YES" : "NO");
+             localMuteState_ ? "YES" : "NO");
 
     if (send_.enabled and not send_.onHold) {
         if (sender_) {
@@ -202,11 +203,34 @@ VideoRtpSession::restartSender()
 }
 
 void
+VideoRtpSession::stopSender()
+{
+    JAMI_DBG("Stop video RTP sender: input [%s] - muted [%s]",
+             conference_ ? "Video Mixer" : input_.c_str(),
+             localMuteState_ ? "YES" : "NO");
+
+    if (send_.enabled and not send_.onHold) {
+        if (sender_) {
+            if (videoLocal_)
+                videoLocal_->detach(sender_.get());
+            if (videoMixer_)
+                videoMixer_->detach(sender_.get());
+        }
+
+        // be sure to not send any packets before saving last RTP seq value
+        socketPair_->stopSendOp();
+        sender_.reset();
+    }
+}
+
+void
 VideoRtpSession::startReceiver()
 {
+    JAMI_DBG("[%p] Starting receiver", this);
+
     if (receive_.enabled and not receive_.onHold) {
         if (receiveThread_)
-            JAMI_WARN("Restarting video receiver");
+            JAMI_WARN("Already has a receiver, restarting");
         receiveThread_.reset(
             new VideoReceiveThread(callID_, !conference_, receive_.receiving_sdp, mtu_));
 
@@ -301,6 +325,55 @@ VideoRtpSession::stop()
     sender_.reset();
     socketPair_.reset();
     videoLocal_.reset();
+}
+
+void
+VideoRtpSession::stopReceiver()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    JAMI_DBG("[%p] Stopping receiver", this);
+
+    if (videoMixer_ and receiveThread_) {
+        receiveThread_->detach(videoMixer_.get());
+    }
+
+    // HACKY ?
+    dht::ThreadPool::io().run([recvThread = receiveThread_] { recvThread->stopLoop(); });
+
+    if (socketPair_)
+        socketPair_->unblock();
+
+    receiveThread_->stopSink();
+    receiveThread_.reset();
+}
+
+void
+VideoRtpSession::setMuted(bool mute, bool isLocal)
+{
+    if (isLocal) {
+        if (localMuteState_ == mute) {
+            JAMI_DBG("[call:%s] Local already %s", callID_.c_str(), mute ? "muted" : "un-muted");
+            return;
+        }
+        if ((localMuteState_ = mute)) {
+            stopSender();
+        } else {
+            restartSender();
+        }
+        return;
+    }
+
+    if (remoteMuteState_ == mute) {
+        JAMI_DBG("[call:%s] Remote already %s", callID_.c_str(), mute ? "muted" : "un-muted");
+        return;
+    }
+
+    if ((remoteMuteState_ = mute)) {
+        stopReceiver();
+    } else {
+        startReceiver();
+    }
 }
 
 void

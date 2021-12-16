@@ -112,6 +112,10 @@ private:
     void audio_and_video_then_caller_mute_video();
     void audio_only_then_caller_add_video();
     void audio_and_video_then_caller_mute_audio();
+<<<<<<< HEAD
+=======
+    void audio_and_video_answer_muted_audio_then_mute_audio();
+>>>>>>> SDP - set media direction according to mute state
     void audio_and_video_answer_muted_video_then_mute_video();
     void audio_and_video_then_change_video_source();
 
@@ -119,6 +123,10 @@ private:
     CPPUNIT_TEST(audio_and_video_then_caller_mute_video);
     CPPUNIT_TEST(audio_only_then_caller_add_video);
     CPPUNIT_TEST(audio_and_video_then_caller_mute_audio);
+<<<<<<< HEAD
+=======
+    CPPUNIT_TEST(audio_and_video_answer_muted_audio_then_mute_audio);
+>>>>>>> SDP - set media direction according to mute state
     CPPUNIT_TEST(audio_and_video_answer_muted_video_then_mute_video);
     CPPUNIT_TEST(audio_and_video_then_change_video_source);
     CPPUNIT_TEST_SUITE_END();
@@ -260,6 +268,7 @@ MediaDirection
 MediaNegotiationTest::inferNegotiatedDirection(MediaDirection local, MediaDirection remote)
 {
     uint8_t val = directionToBitset(local, true) & directionToBitset(remote, false);
+<<<<<<< HEAD
     return bitsetToDirection(val);
 }
 
@@ -276,6 +285,70 @@ MediaNegotiationTest::validateMuteState(std::vector<MediaAttribute> expected,
                       [](auto const& expAttr, auto const& actAttr) {
                           return expAttr.muted_ == actAttr.muted_;
                       });
+}
+
+bool
+MediaNegotiationTest::validateMediaDirection(std::vector<MediaDescription> descrList,
+                                             std::vector<MediaAttribute> localMediaList,
+                                             std::vector<MediaAttribute> remoteMediaList)
+{
+    CPPUNIT_ASSERT_EQUAL(descrList.size(), localMediaList.size());
+    CPPUNIT_ASSERT_EQUAL(descrList.size(), remoteMediaList.size());
+
+    for (size_t idx = 0; idx < descrList.size(); idx++) {
+        auto local = inferInitialDirection(localMediaList[idx]);
+        auto remote = inferInitialDirection(remoteMediaList[idx]);
+        auto negotiated = inferNegotiatedDirection(local, remote);
+
+        if (descrList[idx].direction_ != negotiated) {
+            JAMI_WARN("Media [%lu] direction mismatch: expected %i - found %i",
+                      idx,
+                      static_cast<int>(negotiated),
+                      static_cast<int>(descrList[idx].direction_));
+            return false;
+        }
+    }
+
+    return true;
+=======
+    auto dir = bitsetToDirection(val);
+    return dir;
+#if 0
+    if (local == MediaDirection::INACTIVE or remote == MediaDirection::INACTIVE)
+        return MediaDirection::INACTIVE;
+
+    if (local == MediaDirection::SENDONLY and remote == MediaDirection::SENDONLY)
+        return MediaDirection::INACTIVE;
+
+    if (local == MediaDirection::RECVONLY and remote == MediaDirection::RECVONLY)
+        return MediaDirection::INACTIVE;
+
+    if (local == MediaDirection::SENDRECV and remote == MediaDirection::RECVONLY)
+        return MediaDirection::SENDONLY;
+
+    if (local == MediaDirection::SENDRECV and remote == MediaDirection::SENDONLY)
+        return MediaDirection::RECVONLY;
+    
+    if (local == MediaDirection::RECVONLY and remote == MediaDirection::SENDRECV)
+        return MediaDirection::RECVONLY;
+    
+    return MediaDirection::SENDRECV;
+#endif
+>>>>>>> SDP - set media direction according to mute state
+}
+
+bool
+MediaNegotiationTest::validateMuteState(std::vector<MediaAttribute> expected,
+                                        std::vector<MediaAttribute> actual)
+{
+    CPPUNIT_ASSERT_EQUAL(expected.size(), actual.size());
+
+    for (size_t idx = 0; idx < expected.size(); idx++) {
+        if (expected[idx].muted_ != actual[idx].muted_)
+            return false;
+    }
+
+    return true;
 }
 
 bool
@@ -703,10 +776,19 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
         auto& sdp = aliceCall->getSDP();
 
         // Validate local media direction
+<<<<<<< HEAD
         auto descrList = sdp.getActiveMediaDescription(false);
         CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
         // For Alice, local is the offer and remote is the answer.
         CPPUNIT_ASSERT(validateMediaDirection(descrList, scenario.offer_, scenario.answer_));
+=======
+        {
+            auto descrList = sdp.getActiveMediaDescription(false);
+            CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
+            // For Alice, local is the offer and remote is the answer.
+            CPPUNIT_ASSERT(validateMediaDirection(descrList, scenario.offer_, scenario.answer_));
+        }
+>>>>>>> SDP - set media direction according to mute state
     }
 
     // Validate Bob's media
@@ -722,10 +804,19 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
         auto& sdp = bobCall->getSDP();
 
         // Validate local media direction
+<<<<<<< HEAD
         auto descrList = sdp.getActiveMediaDescription(false);
         CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
         // For Bob, local is the answer and remote is the offer.
         CPPUNIT_ASSERT(validateMediaDirection(descrList, scenario.answer_, scenario.offer_));
+=======
+        {
+            auto descrList = sdp.getActiveMediaDescription(false);
+            CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
+            // For Bob, local is the answer and remote is the offer.
+            CPPUNIT_ASSERT(validateMediaDirection(descrList, scenario.answer_, scenario.offer_));
+        }
+>>>>>>> SDP - set media direction according to mute state
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -770,6 +861,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
             auto& sdp = aliceCall->getSDP();
 
             // Validate local media direction
+<<<<<<< HEAD
             auto descrList = sdp.getActiveMediaDescription(false);
             CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
             CPPUNIT_ASSERT(
@@ -779,6 +871,23 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
             CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
             CPPUNIT_ASSERT(
                 validateMediaDirection(descrList, scenario.answerUpdate_, scenario.offerUpdate_));
+=======
+            {
+                auto descrList = sdp.getActiveMediaDescription(false);
+                CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
+                CPPUNIT_ASSERT(validateMediaDirection(descrList,
+                                                      scenario.offerUpdate_,
+                                                      scenario.answerUpdate_));
+            }
+            // Validate remote media direction
+            {
+                auto descrList = sdp.getActiveMediaDescription(true);
+                CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
+                CPPUNIT_ASSERT(validateMediaDirection(descrList,
+                                                      scenario.answerUpdate_,
+                                                      scenario.offerUpdate_));
+            }
+>>>>>>> SDP - set media direction according to mute state
         }
 
         // Validate Bob's media
@@ -936,6 +1045,54 @@ MediaNegotiationTest::audio_and_video_then_caller_mute_audio()
 }
 
 void
+<<<<<<< HEAD
+=======
+MediaNegotiationTest::audio_and_video_answer_muted_audio_then_mute_audio()
+{
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
+    configureScenario(aliceData_, bobData_);
+
+    MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
+    defaultAudio.label_ = "audio_0";
+    defaultAudio.enabled_ = true;
+
+    MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
+    defaultVideo.label_ = "video_0";
+    defaultVideo.enabled_ = true;
+
+    MediaAttribute audio(defaultAudio);
+    MediaAttribute video(defaultVideo);
+
+    TestScenario scenario;
+    // First offer/answer
+    scenario.offer_.emplace_back(audio);
+    scenario.offer_.emplace_back(video);
+    audio.muted_ = true;
+    scenario.answer_.emplace_back(audio);
+    scenario.answer_.emplace_back(video);
+
+    // Updated offer/answer
+    audio.muted_ = true;
+    scenario.offerUpdate_.emplace_back(audio);
+    scenario.offerUpdate_.emplace_back(video);
+
+    audio.muted_ = true;
+    scenario.answerUpdate_.emplace_back(audio);
+    scenario.answerUpdate_.emplace_back(video);
+
+    scenario.expectMediaChangeRequest_ = false;
+    scenario.expectMediaRenegotiation_ = true;
+
+    testWithScenario(aliceData_, bobData_, scenario);
+
+    DRing::unregisterSignalHandlers();
+
+    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+}
+
+void
+>>>>>>> SDP - set media direction according to mute state
 MediaNegotiationTest::audio_and_video_answer_muted_video_then_mute_video()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);

@@ -438,9 +438,9 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
         return {};
 
     if (call->isIceEnabled()) {
-        if (auto iceMedia = SIPCall::createIceMediaTransport(call->getCallId())) {
+        if (auto iceMedia = call->createIceMediaTransport()) {
             call->setIceMedia(iceMedia);
-            getIceOptions([call](auto&& opts) {
+            getIceOptions([call, iceMedia](auto&& opts) {
                 call->initIceMediaTransport(call->getIceMedia(),
                                             true,
                                             std::forward<IceTransportOptions>(opts));
