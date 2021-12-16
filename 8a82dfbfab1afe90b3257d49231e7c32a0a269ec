@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f791ef9f_0ef2332d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2857,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-16T16:55:50Z",
+      "side": 1,
+      "message": "this method is called from the transport thread, and createRtpSession from main thread, and both modifies rotation in videoRtp.\nI know that typically the chances are very small but still ...",
+      "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b8b5281_b6c7167f",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 473,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-16T16:55:50Z",
+      "side": 1,
+      "message": "#if not #ifdef, because in config.h when video is enabled:\n#define ENABLE_VIDEO 0\n\nunfortunately, we have done the same mistake all over the code base",
+      "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ed6ae0b_19977d6c",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1195,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-16T16:55:50Z",
+      "side": 1,
+      "message": "that\u0027s another example of how badly our code is coupled: we are modifying an internal video media property in a signaling class.\nwe should at least move this method (or part of it) into sipcall",
+      "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
