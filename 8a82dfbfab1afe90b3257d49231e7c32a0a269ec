@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f13a0dcf_79741499",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2857,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-16T21:53:13Z",
+      "side": 1,
+      "message": "You are using atomic now, so it should be fine.",
+      "parentUuid": "197250cf_2680c4f0",
+      "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7b8b5281_b6c7167f",
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "configure.ac doesn\u0027t set ENABLE_VIDEO if video is disabled; same has plugin, it\u0027s not a boolean and managed by autotools and is defined or undefined",
       "parentUuid": "7b8b5281_b6c7167f",
+      "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c1f1edc2_8bc92e47",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 473,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-16T21:53:13Z",
+      "side": 1,
+      "message": "right, nvm.",
+      "parentUuid": "6911f0af_be43e3ac",
       "revId": "8a82dfbfab1afe90b3257d49231e7c32a0a269ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
