@@ -296,6 +296,8 @@ public:
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
+    void transactionStateChanged(pjsip_inv_session* inv, pjsip_rx_data* rdata);
+
 private:
     void generateMediaPorts();
 
@@ -476,6 +478,12 @@ private:
 #ifdef ENABLE_VIDEO
     int rotation_ {0};
 #endif
+
+    bool transferCall(const std::string& refer_to);
+    void onRequestRefer(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg);
+    void onRequestInfo(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg);
+    void onRequestNotify(pjsip_msg* msg);
+    bool handleMediaControl(pjsip_msg_body* body);
 };
 
 // Helpers
