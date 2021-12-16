@@ -66,6 +66,27 @@ MediaDemuxer::~MediaDemuxer()
     av_dict_free(&options_);
 }
 
+const char*
+MediaDemuxer::getStatusStr(Status status)
+{
+    switch (status) {
+    case Status::Success:
+        return "Success";
+    case Status::EndOfFile:
+        return "End of file";
+    case Status::ReadBufferOverflow:
+        return "Read overflow";
+    case Status::ReadError:
+        return "Read error";
+    case Status::FallBack:
+        return "Fallback";
+    case Status::RestartRequired:
+        return "Restart required";
+    default:
+        return "Undefined";
+    }
+}
+
 int
 MediaDemuxer::openInput(const DeviceParams& params)
 {
@@ -369,7 +390,11 @@ MediaDemuxer::decode()
     } else if (ret == AVERROR(EACCES)) {
         return Status::RestartRequired;
     } else if (ret < 0) {
-        JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
+        auto media = inputCtx_->streams[0]->codecpar->codec_type;
+        const auto type = media == AVMediaType::AVMEDIA_TYPE_AUDIO
+                              ? "AUDIO"
+                              : (media == AVMediaType::AVMEDIA_TYPE_VIDEO ? "VIDEO" : "UNSUPPORTED");
+        JAMI_ERR("Couldn't read [%s] frame: %s\n", type, libav_utils::getError(ret).c_str());
         return Status::ReadError;
     }
 
@@ -465,6 +490,8 @@ MediaDecoder::setup(AVMediaType type)
     if (stream < 0)
         return -1;
     avStream_ = demuxer_->getStream(stream);
+    if (avStream_ == nullptr)
+        return -1;
     demuxer_->setStreamCallback(stream, [this](AVPacket& packet) { return decode(packet); });
     return setupStream();
 }
