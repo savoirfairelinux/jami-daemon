@@ -311,7 +311,9 @@ getConferenceDetails(const std::string& accountId, const std::string& confId)
         if (auto conf = account->getConference(confId))
             return {{"ID", confId},
                     {"STATE", conf->getStateStr()},
+#ifdef ENABLE_VIDEO
                     {"VIDEO_SOURCE", conf->getVideoInput()},
+#endif
                     {"RECORDING", conf->isRecording() ? jami::TRUE_STR : jami::FALSE_STR}};
     return {};
 }

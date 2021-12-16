@@ -280,6 +280,7 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
         }
     }
 #ifndef __ANDROID__
+#ifdef ENABLE_VIDEO
     if (applyRestart) {
         auto call = Manager::instance().callFactory.getCall<SIPCall>(callId);
         if (call && !call->isConferenceParticipant()) {
@@ -287,6 +288,7 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
                 videoRtp->restartSender();
         }
     }
+#endif
 #endif
 }
 } // namespace jami
