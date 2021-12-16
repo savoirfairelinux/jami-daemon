@@ -38,6 +38,7 @@
 #include "call.h"
 #include "conference.h"
 #include "congestion_control.h"
+#include <opendht/thread_pool.h>
 
 #include "account_const.h"
 
@@ -67,13 +68,13 @@ VideoRtpSession::VideoRtpSession(const string& callID, const DeviceParams& local
 {
     setupVideoBitrateInfo(); // reset bitrate
     cc = std::make_unique<CongestionControl>();
-    JAMI_DBG("[%p] Video RTP session created", this);
+    JAMI_DBG("[call:%s] Video RTP session [%p] created", callID_.c_str(), this);
 }
 
 VideoRtpSession::~VideoRtpSession()
 {
     stop();
-    JAMI_DBG("[%p] Video RTP session destroyed", this);
+    JAMI_DBG("[call:%s] Video RTP session [%p] destroyed", callID_.c_str(), this);
 }
 
 /// Setup internal VideoBitrateInfo structure from media descriptors.
@@ -94,9 +95,18 @@ VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 void
 VideoRtpSession::startSender()
 {
-    JAMI_DBG("Start video RTP sender: input [%s] - muted [%s]",
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    JAMI_DBG("[call:%s] Start video RTP sender: input [%s] - muted [%s]",
+             callID_.c_str(),
              conference_ ? "Video Mixer" : input_.c_str(),
-             muteState_ ? "YES" : "NO");
+             send_.onHold ? "YES" : "NO");
+
+    if (not socketPair_) {
+        // Ignore if the transport is not set yet
+        JAMI_WARN("[call:%s] Transport not set yet", callID_.c_str());
+        return;
+    }
 
     if (send_.enabled and not send_.onHold) {
         if (sender_) {
@@ -104,7 +114,7 @@ VideoRtpSession::startSender()
                 videoLocal_->detach(sender_.get());
             if (videoMixer_)
                 videoMixer_->detach(sender_.get());
-            JAMI_WARN("Restarting video sender");
+            JAMI_WARN("[call:%s] Restarting video sender", callID_.c_str());
         }
 
         if (not conference_) {
@@ -117,7 +127,7 @@ VideoRtpSession::startSender()
                         && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
                         localVideoParams_ = newParams.get();
                     } else {
-                        JAMI_ERR("No valid new video parameters.");
+                        JAMI_ERR("[call:%s] No valid new video parameters", callID_.c_str());
                         return;
                     }
                 } catch (const std::exception& e) {
@@ -191,8 +201,6 @@ VideoRtpSession::startSender()
 void
 VideoRtpSession::restartSender()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
     // ensure that start has been called before restart
     if (not socketPair_)
         return;
@@ -202,11 +210,37 @@ VideoRtpSession::restartSender()
 }
 
 void
+VideoRtpSession::stopSender()
+{
+    // Concurrency protection must be done by caller.
+
+    JAMI_DBG("[call:%s] Stop video RTP sender: input [%s] - muted [%s]",
+             callID_.c_str(),
+             conference_ ? "Video Mixer" : input_.c_str(),
+             send_.onHold ? "YES" : "NO");
+
+    if (sender_) {
+        if (videoLocal_)
+            videoLocal_->detach(sender_.get());
+        if (videoMixer_)
+            videoMixer_->detach(sender_.get());
+        sender_.reset();
+    }
+
+    if (socketPair_)
+        socketPair_->stopSendOp();
+}
+
+void
 VideoRtpSession::startReceiver()
 {
+    // Concurrency protection must be done by caller.
+
+    JAMI_DBG("[call:%s] Starting receiver", callID_.c_str());
+
     if (receive_.enabled and not receive_.onHold) {
         if (receiveThread_)
-            JAMI_WARN("Restarting video receiver");
+            JAMI_WARN("[call:%s] Already has a receiver, restarting", callID_.c_str());
         receiveThread_.reset(
             new VideoReceiveThread(callID_, !conference_, receive_.receiving_sdp, mtu_));
 
@@ -217,11 +251,38 @@ VideoRtpSession::startReceiver()
         receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
         receiveThread_->setRotation(rotation_.load());
     } else {
-        JAMI_DBG("Video receiving disabled");
-        if (receiveThread_)
+        JAMI_DBG("[call:%s] Video receiver disabled", callID_.c_str());
+        if (receiveThread_ and videoMixer_) {
             receiveThread_->detach(videoMixer_.get());
-        receiveThread_.reset();
+        }
     }
+    if (socketPair_)
+        socketPair_->setReadBlockingMode(true);
+}
+
+void
+VideoRtpSession::stopReceiver()
+{
+    // Concurrency protection must be done by caller.
+
+    JAMI_DBG("[call:%s] Stopping receiver", callID_.c_str());
+
+    if (not receiveThread_)
+        return;
+
+    if (videoMixer_) {
+        receiveThread_->detach(videoMixer_.get());
+    }
+
+    // We need to disable the read operation, otherwise the
+    // receiver thread will block since the peer stopped sending
+    // RTP packets.
+    if (socketPair_)
+        socketPair_->setReadBlockingMode(false);
+
+    receiveThread_->stopLoop();
+    receiveThread_->stopSink();
+    receiveThread_.reset();
 }
 
 void
@@ -262,7 +323,7 @@ VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
                                     send_.crypto.getSrtpKeyInfo().c_str());
         }
     } catch (const std::runtime_error& e) {
-        JAMI_ERR("Socket creation failed: %s", e.what());
+        JAMI_ERR("[call:%s] Socket creation failed: %s", callID_.c_str(), e.what());
         return;
     }
 
@@ -276,17 +337,12 @@ void
 VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (videoLocal_)
-        videoLocal_->detach(sender_.get());
-
-    if (videoMixer_) {
-        videoMixer_->detach(sender_.get());
-        if (receiveThread_)
-            receiveThread_->detach(videoMixer_.get());
-    }
 
     if (socketPair_)
         socketPair_->interrupt();
+
+    stopSender();
+    stopReceiver();
 
     rtcpCheckerThread_.join();
 
@@ -297,10 +353,41 @@ VideoRtpSession::stop()
     videoBitrateInfo_.videoBitrateCurrent = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
     storeVideoBitrateInfo();
 
-    receiveThread_.reset();
-    sender_.reset();
     socketPair_.reset();
     videoLocal_.reset();
+}
+
+void
+VideoRtpSession::setMuted(bool mute, Direction dir)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    // Sender
+    if (dir == Direction::SEND) {
+        if (send_.onHold == mute) {
+            JAMI_DBG("[call:%s] Local already %s", callID_.c_str(), mute ? "muted" : "un-muted");
+            return;
+        }
+
+        if ((send_.onHold = mute)) {
+            stopSender();
+        } else {
+            restartSender();
+        }
+        return;
+    }
+
+    // Receiver
+    if (receive_.onHold == mute) {
+        JAMI_DBG("[call:%s] Remote already %s", callID_.c_str(), mute ? "muted" : "un-muted");
+        return;
+    }
+
+    if ((receive_.onHold = mute)) {
+        stopReceiver();
+    } else {
+        startReceiver();
+    }
 }
 
 void
@@ -504,8 +591,6 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
     auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
     int newBitrate = oldBitrate;
 
-    // JAMI_DBG("[AutoAdapt] pond loss: %f%, last loss: %f%", pondLoss, rtcpi->packetLoss);
-
     // Fill histoLoss and histoJitter_ with samples
     if (restartTimer < DELAY_AFTER_RESTART + std::chrono::seconds(1)) {
         return;
@@ -682,8 +767,6 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
     for (auto it = histoLoss_.begin(); it != histoLoss_.end();) {
         auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(now - it->first);
 
-        // JAMI_WARN("now - it.first: %ld", std::chrono::duration_cast<std::chrono::milliseconds>(delay));
-
         // 1ms      -> 100%
         // 2000ms   -> 80%
         if (delay <= EXPIRY_TIME_RTCP) {
@@ -708,8 +791,6 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
 {
     float estimation = cc->kalmanFilter(gradient);
     float thresh = cc->get_thresh();
-
-    // JAMI_WARN("gradient:%d, estimation:%f, thresh:%f", gradient, estimation, thresh);
 
     cc->update_thresh(estimation, deltaT);
 
