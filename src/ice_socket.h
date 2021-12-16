@@ -52,6 +52,7 @@ public:
     void setOnRecv(IceRecvCb cb);
     uint16_t getTransportOverhead();
     void setDefaultRemoteAddress(const IpAddr& addr);
+    int getCompId() const { return compId_; };
 };
 
 /// ICE transport as a GenericSocket.
