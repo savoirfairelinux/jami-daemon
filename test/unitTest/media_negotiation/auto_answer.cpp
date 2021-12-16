@@ -614,7 +614,7 @@ AutoAnswerMediaNegoTest::configureScenario()
         bobData_.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData_.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
         account->enableIceForMedia(true);
-        account->isAutoAnswerEnabled();
+        CPPUNIT_ASSERT(account->isAutoAnswerEnabled()();
 
         if (isSipAccount_) {
             auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);
@@ -1021,8 +1021,10 @@ AutoAnswerMediaNegoTest::audio_and_video_then_change_video_source()
     JAMI_INFO("=== End test %s ===", __FUNCTION__);
 }
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestSip, "AutoAnswerMediaNegoTestSip");
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestJami, "AutoAnswerMediaNegoTestJami");
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestSip,
+                                      AutoAnswerMediaNegoTestSip::name());
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestJami,
+                                      AutoAnswerMediaNegoTestJami::name());
 
 } // namespace test
 } // namespace jami
