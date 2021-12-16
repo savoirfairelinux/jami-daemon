@@ -227,7 +227,7 @@ AudioRtpSession::stop()
 }
 
 void
-AudioRtpSession::setMuted(bool isMuted)
+AudioRtpSession::setMuted(bool isMuted, Direction)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     muteState_ = isMuted;
