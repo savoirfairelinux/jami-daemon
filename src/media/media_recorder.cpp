@@ -27,8 +27,10 @@
 #include "media_recorder.h"
 #include "system_codec_container.h"
 #include "video/filter_transpose.h"
+#ifdef ENABLE_VIDEO
 #ifdef RING_ACCEL
 #include "video/accel.h"
+#endif
 #endif
 
 #include <opendht/thread_pool.h>
@@ -72,11 +74,12 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
     void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/,
                 const std::shared_ptr<MediaFrame>& m) override
     {
+#ifdef ENABLE_VIDEO
         if (info.isVideo) {
             std::shared_ptr<VideoFrame> framePtr;
 #ifdef RING_ACCEL
             auto desc = av_pix_fmt_desc_get(
-                (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(m))->format());
+                (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(m))->format());
             if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
                 try {
                     framePtr = jami::video::HardwareAccel::transferToMainMemory(
@@ -107,8 +110,11 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
                 cb_(m);
             }
         } else {
+#endif
             cb_(m);
+#ifdef ENABLE_VIDEO
         }
+#endif
     }
 
 private:
@@ -186,9 +192,13 @@ MediaRecorder::startRecording()
                 try {
                     // encode frame
                     if (frame && frame->pointer()) {
+#ifdef ENABLE_VIDEO
                         bool isVideo = (frame->pointer()->width > 0 && frame->pointer()->height > 0);
                         rec->encoder_->encode(frame->pointer(),
                                               isVideo ? rec->videoIdx_ : rec->audioIdx_);
+#else
+                        rec->encoder_->encode(frame->pointer(), rec->audioIdx_);
+#endif // ENABLE_VIDEO
                     }
                 } catch (const MediaEncoderException& e) {
                     JAMI_ERR() << "Failed to record frame: " << e.what();
@@ -258,9 +268,10 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     std::unique_ptr<MediaFrame> clone;
     const auto& ms = streams_[name]->info;
+#ifdef ENABLE_VIDEO
     if (ms.isVideo) {
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame))->format());
+            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 clone = video::HardwareAccel::transferToMainMemory(
@@ -275,24 +286,31 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
             clone->copyFrom(*frame);
         }
     } else {
+#endif // ENABLE_VIDEO
         clone = std::make_unique<MediaFrame>();
         clone->copyFrom(*frame);
+#ifdef ENABLE_VIDEO
     }
+#endif // ENABLE_VIDEO
     clone->pointer()->pts = av_rescale_q_rnd(av_gettime() - startTimeStamp_,
                                              {1, AV_TIME_BASE},
                                              ms.timeBase,
                                              static_cast<AVRounding>(AV_ROUND_NEAR_INF
                                                                      | AV_ROUND_PASS_MINMAX));
     std::unique_ptr<MediaFrame> filteredFrame;
+#ifdef ENABLE_VIDEO
     if (ms.isVideo) {
         std::lock_guard<std::mutex> lk(mutexFilterVideo_);
         videoFilter_->feedInput(clone->pointer(), name);
         filteredFrame = videoFilter_->readOutput();
     } else {
+#endif // ENABLE_VIDEO
         std::lock_guard<std::mutex> lk(mutexFilterAudio_);
         audioFilter_->feedInput(clone->pointer(), name);
         filteredFrame = audioFilter_->readOutput();
+#ifdef ENABLE_VIDEO
     }
+#endif // ENABLE_VIDEO
 
     if (filteredFrame) {
         std::lock_guard<std::mutex> lk(mutexFrameBuff_);
@@ -322,6 +340,7 @@ MediaRecorder::initRecord()
 
     encoder_->setMetadata(title_, description_);
     encoder_->openOutput(getPath());
+#ifdef ENABLE_VIDEO
 #ifdef RING_ACCEL
     encoder_->enableAccel(false); // TODO recorder has problems with hardware encoding
 #endif
@@ -338,6 +357,7 @@ MediaRecorder::initRecord()
         encoder_->setOptions(videoStream);
         encoder_->setOptions(args);
     }
+#endif // ENABLE_VIDEO
 
     audioFilter_.reset();
     if (hasAudio_) {
@@ -359,6 +379,7 @@ MediaRecorder::initRecord()
         }
     }
 
+#ifdef ENABLE_VIDEO
     if (hasVideo_) {
         auto videoCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
             getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
@@ -368,6 +389,7 @@ MediaRecorder::initRecord()
             return -1;
         }
     }
+#endif // ENABLE_VIDEO
 
     encoder_->setIOContext(nullptr);
 
@@ -433,6 +455,7 @@ MediaRecorder::setupVideoOutput()
         break;
     }
 
+#ifdef ENABLE_VIDEO
     if (ret >= 0) {
         encoderStream = videoFilter_->getOutputParams();
         encoderStream.bitrate = Manager::instance().videoPreferences.getRecordQuality();
@@ -440,6 +463,7 @@ MediaRecorder::setupVideoOutput()
     } else {
         JAMI_ERR() << "Failed to initialize video filter";
     }
+#endif
 
     return encoderStream;
 }

@@ -5,10 +5,8 @@ noinst_HEADERS += \
 
 PRESENCE_SRC = ./client/presencemanager.cpp
 
-if ENABLE_VIDEO
 VIDEO_SRC = ./client/videomanager.cpp
 noinst_HEADERS += ./client/videomanager.h
-endif
 
 if ENABLE_PLUGIN
 PLUGIN_SRC = ./client/plugin_manager_interface.cpp
