@@ -233,6 +233,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Med
     if (call->isIceEnabled() and not mediaList.empty()) {
         if (auto iceMedia = call->createIceMediaTransport(false)) {
             call->initIceMediaTransport(iceMedia, true);
+            call->setIceMedia(iceMedia);
         }
     }
 
