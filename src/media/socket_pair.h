@@ -137,6 +137,7 @@ public:
     ~SocketPair();
 
     void interrupt();
+    void enableReadOp(bool enable);
 
     MediaIOHandle* createIOContext(const uint16_t mtu);
 
@@ -208,6 +209,9 @@ private:
     IpAddr rtpDestAddr_;
     IpAddr rtcpDestAddr_;
     std::atomic_bool interrupted_ {false};
+    // Read operations are blocking. This will allow unblocking the
+    // receiver thread if the peer stops/mutes the media (RTP)
+    std::atomic_bool readEnabled_ {false};
     std::atomic_bool noWrite_ {false};
     std::unique_ptr<SRTPProtoContext> srtpContext_;
     std::function<void(void)> packetLossCallback_;
