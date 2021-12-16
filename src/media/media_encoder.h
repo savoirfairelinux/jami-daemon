@@ -139,10 +139,12 @@ private:
     bool isDynBitrateSupported(AVCodecID codecid);
     bool isDynPacketLossSupported(AVCodecID codecid);
     void initAccel(AVCodecContext* encoderCtx, uint64_t br);
+#ifdef ENABLE_VIDEO
     int getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_ptr<VideoFrame>& output);
     std::shared_ptr<VideoFrame> getUnlinkedHWFrame(const VideoFrame& input);
     std::shared_ptr<VideoFrame> getHWFrameFromSWFrame(const VideoFrame& input);
     std::shared_ptr<VideoFrame> getScaledSWFrame(const VideoFrame& input);
+#endif
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext* outputCtx_ = nullptr;

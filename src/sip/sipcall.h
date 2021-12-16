@@ -34,6 +34,7 @@
 #include "sip_utils.h"
 #include "sip/sdp.h"
 
+#include "media/rtp_session.h"
 #ifdef ENABLE_VIDEO
 #include "media/video/video_receive_thread.h"
 #include "media/video/video_rtp_session.h"
@@ -144,11 +145,13 @@ public:
     std::map<std::string, std::string> getDetails() const override;
     void enterConference(std::shared_ptr<Conference> conference) override;
     void exitConference() override;
+#ifdef ENABLE_VIDEO
     std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> getReceiveVideoFrameActiveWriter()
         override;
     std::mutex sinksMtx_;
     void createSinks(const ConfInfo& infos) override;
     std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
+#endif
     bool hasVideo() const override;
     bool isCaptureDeviceMuted(const MediaType& mediaType) const override;
     bool isSrtpEnabled() const { return srtpEnabled_; }
