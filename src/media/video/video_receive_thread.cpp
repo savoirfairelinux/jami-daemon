@@ -57,17 +57,29 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::decodeFrame, this),
             std::bind(&VideoReceiveThread::cleanup, this))
-{}
+{
+    JAMI_DBG("[%p] Instance created", this);
+}
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    loop_.join();
+    JAMI_DBG("[%p] Instance destroyed", this);
 }
 
 void
 VideoReceiveThread::startLoop()
 {
+    JAMI_DBG("[%p] Starting receiver's loop", this);
     loop_.start();
+}
+
+void
+VideoReceiveThread::stopLoop()
+{
+    JAMI_DBG("[%p] Stopping receiver's loop and waiting for the thread to exit ...", this);
+    loop_.stop();
+    loop_.join();
+    JAMI_DBG("[%p] Receiver's thread exited", this);
 }
 
 // We do this setup here instead of the constructor because we don't want the
@@ -132,6 +144,8 @@ VideoReceiveThread::setup()
 void
 VideoReceiveThread::cleanup()
 {
+    JAMI_DBG("[%p] Stopping receiver", this);
+
     detach(sink_.get());
     sink_->stop();
 
@@ -169,12 +183,15 @@ VideoReceiveThread::addIOContext(SocketPair& socketPair)
 void
 VideoReceiveThread::decodeFrame()
 {
+    if (not loop_.isRunning())
+        return;
+
     if (!configureVideoOutput()) {
         return;
     }
     auto status = videoDecoder_->decode();
     if (status == MediaDemuxer::Status::EndOfFile || status == MediaDemuxer::Status::ReadError) {
-        loop_.stop();
+        stopLoop();
     }
     if (status == MediaDemuxer::Status::FallBack) {
         if (keyFrameRequestCallback_)
@@ -193,7 +210,7 @@ VideoReceiveThread::configureVideoOutput()
     }
     if (videoDecoder_->setupVideo()) {
         JAMI_ERR("decoder IO startup failed");
-        loop_.stop();
+        stopLoop();
         return false;
     }
 
@@ -205,7 +222,7 @@ VideoReceiveThread::configureVideoOutput()
 
     if (not sink_->start()) {
         JAMI_ERR("RX: sink startup failed");
-        loop_.stop();
+        stopLoop();
         return false;
     }
 
@@ -227,6 +244,8 @@ VideoReceiveThread::configureVideoOutput()
 void
 VideoReceiveThread::stopSink()
 {
+    JAMI_DBG("[%p] Stopping sink", this);
+
     if (!loop_.isRunning())
         return;
 
@@ -237,6 +256,8 @@ VideoReceiveThread::stopSink()
 void
 VideoReceiveThread::startSink()
 {
+    JAMI_DBG("[%p] Starting sink", this);
+
     if (!loop_.isRunning())
         return;
 
