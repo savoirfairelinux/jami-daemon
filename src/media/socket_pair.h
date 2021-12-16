@@ -137,6 +137,12 @@ public:
     ~SocketPair();
 
     void interrupt();
+    // Set the read blocking mode.
+    // By default, the read operation will block until data is
+    // available. This method allows to switch to unblocking mode
+    // to allow the receiver thread to exit if the peer mutes/stops
+    // the media/RTP stream (no more data to read).
+    void setReadBlockingMode(bool blocking);
 
     MediaIOHandle* createIOContext(const uint16_t mtu);
 
@@ -208,6 +214,9 @@ private:
     IpAddr rtpDestAddr_;
     IpAddr rtcpDestAddr_;
     std::atomic_bool interrupted_ {false};
+    // Read operations are blocking. This will allow unblocking the
+    // receiver thread if the peer stops/mutes the media (RTP)
+    std::atomic_bool readBlockingMode_ {false};
     std::atomic_bool noWrite_ {false};
     std::unique_ptr<SRTPProtoContext> srtpContext_;
     std::function<void(void)> packetLossCallback_;

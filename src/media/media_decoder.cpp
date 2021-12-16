@@ -66,6 +66,19 @@ MediaDemuxer::~MediaDemuxer()
     av_dict_free(&options_);
 }
 
+const char*
+MediaDemuxer::getStatusStr(Status status)
+{
+    switch (status) {
+    case Status::EndOfFile:
+        return "End of file";
+    case Status::ReadError:
+        return "Read error";
+    default:
+        return {};
+    }
+}
+
 int
 MediaDemuxer::openInput(const DeviceParams& params)
 {
@@ -465,6 +478,8 @@ MediaDecoder::setup(AVMediaType type)
     if (stream < 0)
         return -1;
     avStream_ = demuxer_->getStream(stream);
+    if (avStream_ == nullptr)
+        return -1;
     demuxer_->setStreamCallback(stream, [this](AVPacket& packet) { return decode(packet); });
     return setupStream();
 }
