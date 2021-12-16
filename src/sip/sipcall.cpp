@@ -669,6 +669,44 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
 }
 
 void
+SIPCall::transactionStateChanged(pjsip_inv_session* inv, pjsip_rx_data* rdata)
+{
+    const auto msg = rdata->msg_info.msg;
+    if (msg->type != PJSIP_REQUEST_MSG) {
+        JAMI_ERR("[INVITE:%p] SIP RX request without msg", inv);
+        return;
+    }
+
+    // Using method name to dispatch
+    auto methodName = sip_utils::as_view(msg->line.req.method.name);
+    JAMI_DBG("[INVITE:%p] RX SIP method %d (%.*s)",
+             inv,
+             msg->line.req.method.id,
+             (int) methodName.size(),
+             methodName.data());
+
+#ifdef DEBUG_SIP_REQUEST_MSG
+    char msgbuf[1000];
+    pjsip_msg_print(msg, msgbuf, sizeof msgbuf);
+    JAMI_DBG("%s", msgbuf);
+#endif // DEBUG_SIP_MESSAGE
+
+    if (methodName == sip_utils::SIP_METHODS::REFER)
+        onRequestRefer(inv, rdata, msg);
+    else if (methodName == sip_utils::SIP_METHODS::INFO)
+        onRequestInfo(inv, rdata, msg);
+    else if (methodName == sip_utils::SIP_METHODS::NOTIFY)
+        onRequestNotify(msg);
+    else if (methodName == sip_utils::SIP_METHODS::MESSAGE) {
+        if (msg->body)
+            runOnMainThread([w = weak(), m = im::parseSipMessage(msg)]() mutable {
+                if (auto call = w.lock())
+                    call->onTextMessage(std::move(m));
+            });
+    }
+}
+
+void
 SIPCall::terminateSipSession(int status)
 {
     JAMI_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
@@ -3303,6 +3341,158 @@ SIPCall::resetMediaReady()
 {
     for (auto& m : mediaReady_)
         m.second = false;
+}
+
+bool
+SIPCall::transferCall(const std::string& refer_to)
+{
+    const auto& callId = getCallId();
+    JAMI_WARN("[call:%s] Trying to transfer to %s", callId.c_str(), refer_to.c_str());
+    try {
+        Manager::instance().newOutgoingCall(refer_to,
+                                            getAccountId(),
+                                            MediaAttribute::mediaAttributesToMediaMaps(
+                                                getMediaAttributeList()));
+        hangup(0);
+    } catch (const std::exception& e) {
+        JAMI_ERR("[call:%s] SIP transfer failed: %s", callId.c_str(), e.what());
+        return false;
+    }
+    return true;
+}
+
+static void
+replyToRequest(pjsip_inv_session* inv, pjsip_rx_data* rdata, int status_code)
+{
+    const auto ret = pjsip_dlg_respond(inv->dlg, rdata, status_code, nullptr, nullptr, nullptr);
+    if (ret != PJ_SUCCESS)
+        JAMI_WARN("SIP: failed to reply %d to request", status_code);
+}
+
+void
+SIPCall::onRequestRefer(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg)
+{
+    static constexpr pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
+
+    if (auto refer_to = static_cast<pjsip_generic_string_hdr*>(
+            pjsip_msg_find_hdr_by_name(msg, &str_refer_to, nullptr))) {
+        // RFC 3515, 2.4.2: reply bad request if no or too many refer-to header.
+        if (static_cast<void*>(refer_to->next) == static_cast<void*>(&msg->hdr)
+            or !pjsip_msg_find_hdr_by_name(msg, &str_refer_to, refer_to->next)) {
+            replyToRequest(inv, rdata, PJSIP_SC_ACCEPTED);
+            transferCall(std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen));
+
+            // RFC 3515, 2.4.4: we MUST handle the processing using NOTIFY msgs
+            // But your current design doesn't permit that
+            return;
+        } else
+            JAMI_ERR("[call:%s] REFER: too many Refer-To headers", getCallId().c_str());
+    } else
+        JAMI_ERR("[call:%s] REFER: no Refer-To header", getCallId().c_str());
+
+    replyToRequest(inv, rdata, PJSIP_SC_BAD_REQUEST);
+}
+
+void
+SIPCall::onRequestInfo(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg)
+{
+    if (!msg->body or handleMediaControl(msg->body))
+        replyToRequest(inv, rdata, PJSIP_SC_OK);
+}
+
+void
+SIPCall::onRequestNotify(pjsip_msg* msg)
+{
+    if (!msg->body)
+        return;
+
+    const std::string bodyText {static_cast<char*>(msg->body->data), msg->body->len};
+    JAMI_DBG("[call:%s] NOTIFY body start - %p\n%s\n[call:%s] NOTIFY body end - %p",
+             getCallId().c_str(),
+             msg->body,
+             bodyText.c_str(),
+             getCallId().c_str(),
+             msg->body);
+
+    // TODO
+}
+
+bool
+SIPCall::handleMediaControl(pjsip_msg_body* body)
+{
+    /*
+     * Incoming INFO request for media control.
+     */
+    constexpr pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
+    constexpr pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
+
+    if (body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0
+        and pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
+        auto body_msg = std::string_view((char*) body->data, (size_t) body->len);
+
+        /* Apply and answer the INFO request */
+        static constexpr auto PICT_FAST_UPDATE = "picture_fast_update"sv;
+        static constexpr auto DEVICE_ORIENTATION = "device_orientation"sv;
+        static constexpr auto RECORDING_STATE = "recording_state"sv;
+        static constexpr auto MUTE_STATE = "mute_state"sv;
+
+        if (body_msg.find(PICT_FAST_UPDATE) != std::string_view::npos) {
+            sendKeyframe();
+            return true;
+        } else if (body_msg.find(DEVICE_ORIENTATION) != std::string_view::npos) {
+            static const std::regex ORIENTATION_REGEX("device_orientation=([-+]?[0-9]+)");
+
+            std::svmatch matched_pattern;
+            std::regex_search(body_msg, matched_pattern, ORIENTATION_REGEX);
+
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                try {
+                    int rotation = -std::stoi(matched_pattern[1]);
+                    while (rotation <= -180)
+                        rotation += 360;
+                    while (rotation > 180)
+                        rotation -= 360;
+                    JAMI_WARN("Rotate video %d deg.", rotation);
+#ifdef ENABLE_VIDEO
+                    setRotation(rotation);
+#endif
+                } catch (const std::exception& e) {
+                    JAMI_WARN("Error parsing angle: %s", e.what());
+                }
+                return true;
+            }
+        } else if (body_msg.find(RECORDING_STATE) != std::string_view::npos) {
+            static const std::regex REC_REGEX("recording_state=([0-1])");
+            std::svmatch matched_pattern;
+            std::regex_search(body_msg, matched_pattern, REC_REGEX);
+
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                try {
+                    bool state = std::stoi(matched_pattern[1]);
+                    peerRecording(state);
+                } catch (const std::exception& e) {
+                    JAMI_WARN("Error parsing state remote recording: %s", e.what());
+                }
+                return true;
+            }
+        } else if (body_msg.find(MUTE_STATE) != std::string_view::npos) {
+            static const std::regex REC_REGEX("mute_state=([0-1])");
+            std::svmatch matched_pattern;
+            std::regex_search(body_msg, matched_pattern, REC_REGEX);
+
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                try {
+                    bool state = std::stoi(matched_pattern[1]);
+                    peerMuted(state);
+                } catch (const std::exception& e) {
+                    JAMI_WARN("Error parsing state remote mute: %s", e.what());
+                }
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 } // namespace jami
