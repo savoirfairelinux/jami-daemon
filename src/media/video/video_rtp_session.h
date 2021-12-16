@@ -80,6 +80,7 @@ public:
     void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
     void restartSender() override;
     void stop() override;
+    void setMuted(bool mute, Direction dir = Direction::SEND) override;
 
     /**
      * Set video orientation
@@ -115,10 +116,12 @@ public:
     }
 
 private:
-    void setupConferenceVideoPipeline(Conference& conference);
+    void setupConferenceVideoPipeline(Conference& conference, Direction dir);
     void setupVideoPipeline();
     void startSender();
+    void stopSender();
     void startReceiver();
+    void stopReceiver();
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
