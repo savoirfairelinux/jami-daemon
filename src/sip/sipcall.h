@@ -89,6 +89,9 @@ public:
     {
         std::shared_ptr<RtpSession> rtpSession_ {};
         std::shared_ptr<MediaAttribute> mediaAttribute_ {};
+        std::shared_ptr<MediaAttribute> remoteMediaAttribute_;
+        std::unique_ptr<IceSocket> rtpSocket_;
+        std::unique_ptr<IceSocket> rtcpSocket_;
     };
 
     /**
@@ -232,7 +235,7 @@ public:
 
     std::shared_ptr<SIPAccountBase> getSIPAccount() const;
 
-    bool remoteHasValidIceAttributes();
+    bool remoteHasValidIceAttributes() const;
     void addLocalIceAttributes(const std::shared_ptr<IceTransport>& iceMedia);
 
     std::shared_ptr<IceTransport> getIceMedia() const
@@ -310,7 +313,7 @@ private:
 
     void rtpSetupSuccess(MediaType type, bool isRemote);
 
-    void setMute(bool state);
+    void sendMuteState(bool state);
 
     /**
      * Send device orientation through SIP INFO
@@ -355,9 +358,12 @@ private:
     void setCallMediaLocal();
     void startIceMedia();
     void onIceNegoSucceed();
-    void updateNegotiatedMedia();
+    void setupNegotiatedMedia();
     void startAllMedia();
     void stopAllMedia();
+    void startMedia(unsigned index);
+    void stopMedia(unsigned index);
+    void updateRemoteMedia();
 
     /**
      * Transfer method used for both type of transfer
@@ -375,8 +381,10 @@ private:
     void updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
     // Check if a SIP re-invite must be sent to negotiate the new media
     bool isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList);
-    void requestReinvite();
-    int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList);
+    // Check if a new ICE media session is needed when performing a re-invite
+    bool isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList);
+    void requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
+    int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce);
     int SIPSessionReinvite();
     // Add a media stream to the call.
     void addMediaStream(const MediaAttribute& mediaAttr);
@@ -410,8 +418,12 @@ private:
 
     // Peer's User-Agent.
     std::string peerUserAgent_ {};
-    // Flag to indicate the the peer's Daemon version support multi-stream.
+    // Flag to indicate if the peer's Daemon version supports multi-stream.
     bool peerSupportMultiStream_ {false};
+
+    // Flag to indicate if the peer's Daemon version supports re-invite
+    // without ICE renegotiation.
+    bool peerSupportReuseIceInReinv_ {false};
 
     // Peer's allowed methods.
     std::vector<std::string> peerAllowedMethods_;
@@ -447,6 +459,7 @@ private:
     /** Local video port, as seen by me. */
     unsigned int localVideoPort_ {0};
 
+    bool mediaRestartRequired_ {true};
     bool enableIce_ {true};
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
