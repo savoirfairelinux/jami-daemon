@@ -70,7 +70,7 @@ AudioRtpSession::startSender()
 {
     JAMI_DBG("Start audio RTP sender: input [%s] - muted [%s]",
              input_.c_str(),
-             muteState_ ? "YES" : "NO");
+             localMuteState_ ? "YES" : "NO");
 
     if (not send_.enabled or send_.onHold) {
         JAMI_WARN("Audio sending disabled");
@@ -91,7 +91,7 @@ AudioRtpSession::startSender()
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
     audioInput_ = jami::getAudioInput(callID_);
-    audioInput_->setMuted(muteState_);
+    audioInput_->setMuted(localMuteState_);
     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
     auto newParams = audioInput_->switchInput(input_);
     try {
@@ -227,10 +227,10 @@ AudioRtpSession::stop()
 }
 
 void
-AudioRtpSession::setMuted(bool isMuted)
+AudioRtpSession::setMuted(bool isMuted, bool)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    muteState_ = isMuted;
+    localMuteState_ = isMuted;
     if (audioInput_)
         audioInput_->setMuted(isMuted);
 }

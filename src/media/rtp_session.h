@@ -51,7 +51,7 @@ public:
     void setMediaSource(const std::string& resource) { input_ = resource; }
     const std::string& getInput() const { return input_; }
     MediaType getMediaType() const { return mediaType_; };
-    virtual void setMuted(bool mute) { muteState_ = mute; };
+    virtual void setMuted(bool mute, bool isLocal = true) = 0;
     virtual void updateMedia(const MediaDescription& send, const MediaDescription& receive)
     {
         send_ = send;
@@ -83,7 +83,8 @@ protected:
     MediaDescription send_;
     MediaDescription receive_;
     uint16_t mtu_;
-    bool muteState_ {false};
+    bool localMuteState_ {false};
+    bool remoteMuteState_ {false};
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
 

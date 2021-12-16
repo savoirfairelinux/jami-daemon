@@ -56,7 +56,7 @@ public:
     void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
     void restartSender() override;
     void stop() override;
-    void setMuted(bool isMuted) override;
+    void setMuted(bool isMuted, bool isLocal = true) override;
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
@@ -78,7 +78,6 @@ private:
     std::shared_ptr<AudioInput> audioInput_;
     std::shared_ptr<RingBuffer> ringbuffer_;
     uint16_t initSeqVal_ {0};
-    bool muteState_ = false;
     unsigned packetLoss_ {10};
     DeviceParams localAudioParams_;
 

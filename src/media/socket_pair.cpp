@@ -214,7 +214,8 @@ SocketPair::waitForRTCP(std::chrono::seconds interval)
 {
     std::unique_lock<std::mutex> lock(rtcpInfo_mutex_);
     return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this] {
-        return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty();
+        return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty()
+               or unblockRtp_.exchange(false);
     });
 }
 
@@ -295,6 +296,16 @@ SocketPair::interrupt()
     if (rtcp_sock_)
         rtcp_sock_->setOnRecv(nullptr);
     cv_.notify_all();
+    cvRtcpPacketReadyToRead_.notify_all();
+}
+
+void
+SocketPair::unblock()
+{
+    JAMI_DBG("[%p] Unblock read loop", this);
+    unblockRtp_ = true;
+    cv_.notify_all();
+    unblockRtcp_ = true;
     cvRtcpPacketReadyToRead_.notify_all();
 }
 
@@ -399,7 +410,8 @@ SocketPair::waitForData()
     {
         std::unique_lock<std::mutex> lk(dataBuffMutex_);
         cv_.wait(lk, [this] {
-            return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty();
+            return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty()
+                   or unblockRtcp_.exchange(false);
         });
     }
 
