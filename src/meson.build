@@ -6,13 +6,13 @@ libjami_includedirs = include_directories(
 )
 
 libjami_sources = files(
-    'client/videomanager.cpp',
     'client/callmanager.cpp',
     'client/configurationmanager.cpp',
     'client/conversation_interface.cpp',
     'client/datatransfer.cpp',
     'client/presencemanager.cpp',
     'client/ring_signal.cpp',
+    'client/videomanager.cpp',
     'config/yamlparser.cpp',
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
@@ -308,11 +308,17 @@ if conf.get('ENABLE_PLUGIN')
     libjami_dependencies += depdl
 endif
 
+# https://ffmpeg.org/platform.html#Advanced-linking-configuration
+libjami_linkargs = meson.get_compiler('cpp').get_supported_link_arguments(
+    '-Wl,-Bsymbolic'
+)
+
 libjami = library('jami',
     version: meson.project_version(),
     include_directories: libjami_includedirs,
     sources: libjami_sources,
     dependencies: libjami_dependencies,
+    link_args: libjami_linkargs,
     install: get_option('interfaces').contains('library')
 )
 
