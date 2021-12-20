@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5b1b1ba8_7e6c3199",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1675,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-12-20T20:31:50Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "6a4d2371ba839bd2f65a0be537eb9b8c81b8a33e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
