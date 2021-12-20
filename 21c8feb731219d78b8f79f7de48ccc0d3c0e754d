@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3ac35ee8_baec4bd6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2021-12-20T16:03:23Z",
+      "side": 1,
+      "message": "I think it can be merged. This option allows to inline some assembler optimizations used by ffmpeg (not checked in sources, but looks like that). There is a proposal to enable this option by default in Meson (https://github.com/mesonbuild/meson/issues/3338). The only drawback is that you can\u0027t override library\u0027s functions (with LD_PRELOAD, for example).",
+      "revId": "21c8feb731219d78b8f79f7de48ccc0d3c0e754d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
