@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aa424bdf_c216ec6c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-20T21:27:42Z",
+      "side": 1,
+      "message": "works fine for me, some few things need fixing",
+      "revId": "4d65b76d6d53e9c906d5bd091a271c26b83c5d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2d8b22f_07cd71bb",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 676,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-20T21:27:42Z",
+      "side": 1,
+      "message": "we usually log the callId here. inv can still be logged. e.g:\n\nJAMI_ERR(\"[call:%s] SIP RX request without msg for invite %p\", callId, inv);",
+      "revId": "4d65b76d6d53e9c906d5bd091a271c26b83c5d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b94c4d0_7e2d91ed",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 682,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-20T21:27:42Z",
+      "side": 1,
+      "message": "same",
+      "revId": "4d65b76d6d53e9c906d5bd091a271c26b83c5d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2933a83_5d71c6dd",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 691,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-20T21:27:42Z",
+      "side": 1,
+      "message": "same",
+      "revId": "4d65b76d6d53e9c906d5bd091a271c26b83c5d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8efddb43_904fae1f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3410,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-20T21:27:42Z",
+      "side": 1,
+      "message": "We should mention that we are not handling the notify (warning ?)",
+      "revId": "4d65b76d6d53e9c906d5bd091a271c26b83c5d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04cad8a4_75ab8e4c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3455,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-20T21:27:42Z",
+      "side": 1,
+      "message": "JAMI_DBG instead of _WARN\ncallId,",
+      "revId": "4d65b76d6d53e9c906d5bd091a271c26b83c5d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "344b9526_7485010f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3460,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-20T21:27:42Z",
+      "side": 1,
+      "message": "this a an error, so JAMI_ERR\ncallId",
+      "revId": "4d65b76d6d53e9c906d5bd091a271c26b83c5d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dcf9dd60_18b2209a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3488,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-20T21:27:42Z",
+      "side": 1,
+      "message": "JAMI_ERR\ncallId",
+      "revId": "4d65b76d6d53e9c906d5bd091a271c26b83c5d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
