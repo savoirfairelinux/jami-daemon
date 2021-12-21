@@ -94,6 +94,30 @@
       },
       "revId": "8fd7b5ab8b9c30a55ccc2a6de9289158e029e19a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb3f9b1d_6ec57e90",
+        "filename": "src/trace-tools.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-21T20:31:33Z",
+      "side": 1,
+      "message": "I\u0027ve replaced source_location with __builtin_LINE() and __builtin_FILE() of GCC, which are the same.",
+      "parentUuid": "2257d6ea_32221a22",
+      "range": {
+        "startLine": 4,
+        "startChar": 2,
+        "endLine": 11,
+        "endChar": 39
+      },
+      "revId": "8fd7b5ab8b9c30a55ccc2a6de9289158e029e19a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
