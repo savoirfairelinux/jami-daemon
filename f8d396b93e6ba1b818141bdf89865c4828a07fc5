@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "be38236b_09c05dee",
+        "filename": "src/logger.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-21T14:57:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6cd6d5ce_ac697e9d",
+      "range": {
+        "startLine": 301,
+        "startChar": 45,
+        "endLine": 303,
+        "endChar": 44
+      },
+      "revId": "f8d396b93e6ba1b818141bdf89865c4828a07fc5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "685a98d3_08d24bdd",
@@ -181,6 +205,30 @@
       "side": 1,
       "message": "If I understand correctly, you want to avoid duplicating the `fputs` of the message?  If this is the case, I can refactor this to be in a function instead.",
       "parentUuid": "0ce4a436_95145aa1",
+      "range": {
+        "startLine": 307,
+        "startChar": 23,
+        "endLine": 312,
+        "endChar": 13
+      },
+      "revId": "f8d396b93e6ba1b818141bdf89865c4828a07fc5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d27d3899_9750f2ba",
+        "filename": "src/logger.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-21T14:57:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ab07100b_2072d56b",
       "range": {
         "startLine": 307,
         "startChar": 23,
