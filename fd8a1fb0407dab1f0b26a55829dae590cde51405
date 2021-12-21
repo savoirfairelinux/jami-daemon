@@ -16,6 +16,24 @@
       "message": "do not commit",
       "revId": "fd8a1fb0407dab1f0b26a55829dae590cde51405",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "028614c9_b8469e5d",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-21T19:43:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c6c204fd_a584790b",
+      "revId": "fd8a1fb0407dab1f0b26a55829dae590cde51405",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
