@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70f017ad_84687bff",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 1
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-21T17:16:21Z",
+      "side": 1,
+      "message": "we need to give time to the media to flow, between the agents (e.g. 5 to 10s)\nI dont know if this right place to do it",
+      "revId": "ef2dfe9adb87e6f8fa15dc51acbdc6c5668ba266",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
