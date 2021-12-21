@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c3bea4cf_d2d8b33c",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-21T17:19:26Z",
+      "side": 1,
+      "message": "I think we need to add so comments, at least for main steps, to explain how the test works to help developers customize the scenario to their needs\nIt\u0027s not intuitive and the scheme language does not help ;)",
+      "revId": "ef2dfe9adb87e6f8fa15dc51acbdc6c5668ba266",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "70f017ad_84687bff",
         "filename": "test/agent/examples/active-agent.scm",
         "patchSetId": 1
