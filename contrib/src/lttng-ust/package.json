@@ -1,0 +1,19 @@
+{
+    "name": "lttng-ust",
+    "version": "2.13.0",
+    "url": "https://lttng.org/files/lttng-ust/lttng-ust-__VERSION__.tar.bz2",
+    "deps": [
+        "liburcu",
+        "numactl"
+    ],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [
+    ],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
