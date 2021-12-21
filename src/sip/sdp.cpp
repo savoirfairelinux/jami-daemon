@@ -324,6 +324,10 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(),
                                                                    value.c_str(),
                                                                    NULL);
+            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(
+                memPool_.get(),
+                fmt::format("fmtp:{} {}", payload, libav_utils::H264_PACKETIZATION_MODE_1).c_str(),
+                NULL);
         }
 #endif
     }
