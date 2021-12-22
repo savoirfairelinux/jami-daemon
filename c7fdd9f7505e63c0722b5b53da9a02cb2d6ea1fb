@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56449408_a3b1898a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 506,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-22T21:45:54Z",
+      "side": 1,
+      "message": "cf next comment",
+      "range": {
+        "startLine": 505,
+        "startChar": 21,
+        "endLine": 506,
+        "endChar": 21
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb066a9b_c4983f4e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 508,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-22T21:45:54Z",
+      "side": 1,
+      "message": "For all occurences of initIceMedia we always want to:\n\ncreate it, init it and then set it to ice or reinvite.\n\nI really think we can replace\n\n        auto iceMedia \u003d createIceMediaTransport(getCallId());\n        if (initIceMediaTransport(iceMedia, true)) {\n            addLocalIceAttributes(iceMedia);\n            setIceMedia(iceMedia, true);\n        } else {\n            resetTransport(std::move(iceMedia));\n            return !PJ_SUCCESS;\n        }\n\nBy\n        auto iceMedia \u003d createIceMediaTransport(getCallId(), isReinvite); // perform the set\n        if (initIceMediaTransport(true)) { // uses getIceMedia() as it already returns reinvitMedia_ if not nullptr\n            addLocalIceAttributes();\n        } else {\n            resetTransport(reinvitMedia_);\n            return !PJ_SUCCESS;\n        }\n\nCause I don\u0027t see any reason for the API to allow a call to init an ICE Session from outside the call.",
+      "range": {
+        "startLine": 507,
+        "startChar": 16,
+        "endLine": 508,
+        "endChar": 48
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "103f1ca8_51887c4c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1677,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-22T21:45:54Z",
+      "side": 1,
+      "message": "addLocalIceAttributes() should not be called with any ice session, it\u0027s only used to modify iceMedia_ or reinvIceMedia_.\n\nSo, it should keep the current sig SIPCall::addLocalIceAttributes() because \nauto mediaTransport \u003d getIceMedia();\nis already returning reinvIceMedia_ if not nullptr.\n\nThe only necessary change I see is to exchange line 504 and 505\n\n            addLocalIceAttributes(iceMedia);\n            setIceMedia(iceMedia, true);\n\n\u003d\u003e \n\n            setIceMedia(iceMedia, true);\n            addLocalIceAttributes(iceMedia);",
+      "range": {
+        "startLine": 1677,
+        "startChar": 12,
+        "endLine": 1677,
+        "endChar": 77
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6109149a_c94c0382",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 2485,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-22T21:45:54Z",
+      "side": 1,
+      "message": "Is there any case where we want to be able to set the main ice transport and keep the reinvIceMedia_\n\nelse we may want to move it into setIceMedia after setting the new invite, so transportMtx_ will still be locked while updating reinvIceMedia_",
+      "range": {
+        "startLine": 2485,
+        "startChar": 8,
+        "endLine": 2485,
+        "endChar": 31
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c74d78e_b7314eea",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3048,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-22T21:45:54Z",
+      "side": 1,
+      "message": "the message is a bit incorrect as in init, the ICE should already be created",
+      "range": {
+        "startLine": 3048,
+        "startChar": 38,
+        "endLine": 3048,
+        "endChar": 52
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f86e4919_02615e27",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3241,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-22T21:45:54Z",
+      "side": 1,
+      "message": "and there it can be reversed",
+      "range": {
+        "startLine": 3239,
+        "startChar": 25,
+        "endLine": 3241,
+        "endChar": 25
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
