@@ -1,6 +1,24 @@
 #!/usr/bin/env -S ./agent.exe --debug -e main -s
 !#
 
+;;; Commentary:
+;;;
+;;; This scenario is testing connectivity between two peers.  An active peer and
+;;; a passive peer.  The passive peer accepts all incoming trust request and
+;;; incoming calls.  The active peer will call the passive peer every minute,
+;;; disabling and re-enabling its account in between to force a new connection.
+;;;
+;;; Every peers in this scenario will synchronize at midnight UTC±00:00.  When
+;;; synchronizing, peers will have a grace period of one hour to change their
+;;; account' details.  After that, the scenario is resumed.
+;;;
+;;; The active peer also keep statistics about success rate and failure rate of
+;;; calls made during the day.  After synchronization, the active peer flush the
+;;; statistics of the day to the file `stats.scm`, which can be further analyze
+;;; using Guile.  The rates are then reset to zero for the next day.
+;;;
+;;; Code:
+
 (use-modules
  (ice-9 match)
  (ice-9 threads)
