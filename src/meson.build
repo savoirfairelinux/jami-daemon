@@ -322,7 +322,7 @@ libjami = library('jami',
     install: get_option('interfaces').contains('library')
 )
 
-libjami_dep = declare_dependency(
+depjami = declare_dependency(
     include_directories: 'jami',
     link_with: libjami,
     variables: {
