@@ -214,6 +214,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9ee308b_c8812dca",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-22T23:36:28Z",
+      "side": 1,
+      "message": "no it isn\u0027t. I rename it on purpose.\nthe media transport is abstracted by SocketPair class. The underlying transpot can be either an ICE socket, in this case handled by sipcall, or a regular UDP socket, in this case handled directly by SocketPair.\niceMedia_ can be null and we can still have a media transport.\nMay be for a cleaner code, we should create the media transport here using ICE or regular socket accordingly",
+      "parentUuid": "9f555aff_ca5b755f",
+      "range": {
+        "startLine": 451,
+        "startChar": 34,
+        "endLine": 451,
+        "endChar": 43
+      },
+      "revId": "c15fbf4d1a0bfab0af993f1f94915826479ea69e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "d1c1011b_5bed7e37",

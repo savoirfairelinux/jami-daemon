@@ -49,6 +49,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0c71515e_0e0c8f43",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 508,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-22T23:36:28Z",
+      "side": 1,
+      "message": "\"Cause I don\u0027t see any reason for the API to allow a call to init an ICE Session from outside the call\"\n\nbecause of the async operation on ICE in jamiaccount (see getIceOptions)\nmaybe there is a way to work around it and do the init in SIPCall ....",
+      "parentUuid": "eb066a9b_c4983f4e",
+      "range": {
+        "startLine": 507,
+        "startChar": 16,
+        "endLine": 508,
+        "endChar": 48
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "103f1ca8_51887c4c",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 13
@@ -60,6 +84,30 @@
       "writtenOn": "2021-12-22T21:45:54Z",
       "side": 1,
       "message": "addLocalIceAttributes() should not be called with any ice session, it\u0027s only used to modify iceMedia_ or reinvIceMedia_.\n\nSo, it should keep the current sig SIPCall::addLocalIceAttributes() because \nauto mediaTransport \u003d getIceMedia();\nis already returning reinvIceMedia_ if not nullptr.\n\nThe only necessary change I see is to exchange line 504 and 505\n\n            addLocalIceAttributes(iceMedia);\n            setIceMedia(iceMedia, true);\n\n\u003d\u003e \n\n            setIceMedia(iceMedia, true);\n            addLocalIceAttributes(iceMedia);",
+      "range": {
+        "startLine": 1677,
+        "startChar": 12,
+        "endLine": 1677,
+        "endChar": 77
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4fb75c60_9bf5bfe3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1677,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-22T23:36:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "103f1ca8_51887c4c",
       "range": {
         "startLine": 1677,
         "startChar": 12,
@@ -93,6 +141,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6967f526_70db58a3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 2485,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-22T23:36:28Z",
+      "side": 1,
+      "message": "no.",
+      "parentUuid": "6109149a_c94c0382",
+      "range": {
+        "startLine": 2485,
+        "startChar": 8,
+        "endLine": 2485,
+        "endChar": 31
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4c74d78e_b7314eea",
@@ -116,6 +188,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "aef454fa_de3d2d19",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3048,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-22T23:36:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4c74d78e_b7314eea",
+      "range": {
+        "startLine": 3048,
+        "startChar": 38,
+        "endLine": 3048,
+        "endChar": 52
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f86e4919_02615e27",
@@ -129,6 +225,30 @@
       "writtenOn": "2021-12-22T21:45:54Z",
       "side": 1,
       "message": "and there it can be reversed",
+      "range": {
+        "startLine": 3239,
+        "startChar": 25,
+        "endLine": 3241,
+        "endChar": 25
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5d9d2f7_32272c2d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3241,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-22T23:36:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f86e4919_02615e27",
       "range": {
         "startLine": 3239,
         "startChar": 25,
