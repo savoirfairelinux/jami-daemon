@@ -1,11 +1,14 @@
 #!/usr/bin/env -S ./agent.exe -s
 !#
 
+;;; Commentary:
+;;;
 ;;; This is an example of a passive agent.
 ;;;
 ;;; The passive agent ensure that an account is created and accept all trust
 ;;; requests and incoming calls.
-
+;;;
+;;; Code:
 
 (use-modules (agent)
              ((jami account) #:prefix account:)

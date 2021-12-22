@@ -1,10 +1,14 @@
 #!/usr/bin/env -S ./agent.exe -s
 !#
 
+;;; Commentary:
+;;;
 ;;; This is an example of an active agent.
 ;;;
 ;;; The active agent ensure that an account is created and then call its peer
 ;;; every minute.
+;;;
+;;; Code:
 
 ;;; We import here Jami's primitives.
 (use-modules
@@ -48,21 +52,30 @@ hang up after MEDIA-FLOW seconds and #t is returned.
         (set! continue #f)
         success))))
 
-(define peer "76456e495548bbd18f73989df68237fd84186fe1")
+;;; Change FIXME for the peer id you want to contact.
+(define peer "FIXME")
 
+;;; This will create your agent and wait for its announcement on the DHT (see
+;;; (agent)).
 (define agent (make-agent "bfbfbfbfbfbfbfbf"))
 
+;;; This will make you friend with the other peer.  You need to accept the trust
+;;; request within a certain amount of time (see (agent)).
 (make-friend agent peer)
 
+;;; You can change the value of MEDIA-FLOW and GRACE-PERIOD.
 (let loop ([account (account-id agent)]
-           [grace-period 30])
+           [grace-period 30]
+           [media-flow 7])
 
   (make-a-call account peer #:media-flow media-flow)
 
+  ;; Disabling our account for GRACE-PERIOD.
   (jami:info "Disabling account")
   (account:send-register account #f)
   (sleep grace-period)
 
+  ;; Renabling our account and wait GRACE-PERIOD.
   (jami:info "Enabling account")
   (account:send-register account #t)
   (sleep grace-period)
