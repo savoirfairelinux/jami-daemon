@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "24d4a8b4_bf911de2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 2508,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-12-22T16:53:26Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027remoteMediaList\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "48c3acf788bf3cece7a9fc1d20dbe3a2039a4568",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
