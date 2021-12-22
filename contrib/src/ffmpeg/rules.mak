@@ -1,4 +1,4 @@
-FFMPEG_HASH := n4.4
+FFMPEG_HASH := 8a18db3ec6af13c0a9889f1ef61d38cabc714813
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
@@ -17,13 +17,11 @@ FFMPEGCONF = \
 
 #disable everything
 FFMPEGCONF += \
-	--disable-everything \
 	--enable-zlib \
 	--enable-gpl \
 	--enable-swscale \
 	--enable-bsfs \
 	--disable-filters \
-	--disable-programs \
 	--disable-postproc
 
 FFMPEGCONF += \
@@ -227,6 +225,7 @@ FFMPEGCONF += \
 	--enable-hwaccel=h264_vdpau \
 	--enable-hwaccel=mpeg4_vdpau \
 	--enable-vaapi \
+	--enable-libpipewire \
 	--enable-hwaccel=h264_vaapi \
 	--enable-hwaccel=mpeg4_vaapi \
 	--enable-hwaccel=h263_vaapi \
@@ -351,7 +350,8 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/rtp_ext_abs_send_time.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusdec-enable-FEC.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-enable-FEC.patch
-	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
+	#TODO rebase $(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
+	$(APPLY) $(SRC)/ffmpeg/pipewire.patch
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 endif
@@ -365,4 +365,6 @@ endif
 		--prefix="$(PREFIX)" --enable-static --disable-shared \
                 --pkg-config-flags="--static"
 	cd $< && $(MAKE) install-libs install-headers
+	cd $< && $(MAKE) install # To test ffmpeg
+	# ./ffmpeg -f pipewiregrab -r 60 -i :0.0+0,0 ~/Downloads/pipewiregrab.mp4
 	touch $@
