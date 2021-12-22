@@ -330,7 +330,7 @@ MediaDemuxer::decode()
                                                                                     av_packet_free(
                                                                                         &p);
                                                                             });
-    if (inputParams_.format == "x11grab") {
+    if (inputParams_.format == "x11grab" || inputParams_.format == "pipewiregrab") {
         auto ret = inputCtx_->iformat->read_header(inputCtx_);
         if (ret == AVERROR_EXTERNAL) {
             JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
