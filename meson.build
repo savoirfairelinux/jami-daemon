@@ -2,7 +2,7 @@ project('jami-daemon', ['c', 'cpp'],
         version: '11.0.0',
         license: 'GPL3+',
         default_options: ['cpp_std=gnu++17', 'buildtype=debugoptimized'],
-        meson_version:'>= 0.54'
+        meson_version:'>= 0.56'
        )
 
 modpkgconfig = import('pkgconfig')
