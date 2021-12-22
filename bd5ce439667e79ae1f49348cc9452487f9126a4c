@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d92cd42a_c31cc3fc",
+        "filename": "src/logger.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 307,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-22T15:58:14Z",
+      "side": 1,
+      "message": "missing ;",
+      "range": {
+        "startLine": 307,
+        "startChar": 18,
+        "endLine": 307,
+        "endChar": 23
+      },
+      "revId": "bd5ce439667e79ae1f49348cc9452487f9126a4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
