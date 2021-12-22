@@ -17,3 +17,21 @@ agent_exe_SOURCES =                 \
 	src/bindings/signal.h
 
 agent_exe_LDADD = $(top_builddir)/src/libring.la
+
+MODULES =                                       \
+	agent.scm                               \
+	examples/active-agent.scm               \
+	examples/passive-agent.scm              \
+	jami/logger.scm                         \
+	scenarios/peer-monitor/scenario.scm
+
+GOBJECTS = $(MODULES:%=%.go)
+
+%.go: % | agent.exe
+	@echo "agent.exe compile $^"
+	@ASAN_OPTIONS=alloc_dealloc_mismatch=0:detect_leaks=0 \
+	./agent.exe compile $< $@
+
+compile: $(GOBJECTS)
+
+CLEANFILES = $(GOBJECTS)

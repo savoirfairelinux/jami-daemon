@@ -4,3 +4,4 @@ agent
 *.log
 .gdbinit
 *.gdb
+*.go
