@@ -116,6 +116,8 @@ cd build
 ninja
 ninja install
 
+Note: to build the tests add `-Dtests=true` ; or it can be enabled later with `meson --reconfigure -Dtests=true build`
+
 How to compile on OSX
 ---------------------
 
