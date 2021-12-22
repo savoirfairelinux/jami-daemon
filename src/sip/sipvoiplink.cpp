@@ -757,13 +757,13 @@ SIPVoIPLink::shutdown()
 
     sipTransportBroker->shutdown();
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
-    sipTransportBroker.reset();
 
     running_ = false;
     sipThread_.join();
     pjsip_endpt_destroy(endpt_);
     pool_.reset();
     pj_caching_pool_destroy(&cp_);
+    sipTransportBroker.reset();
 
     JAMI_DBG("SIPVoIPLink@%p is shutdown", this);
 }
