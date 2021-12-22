@@ -33,6 +33,11 @@ struct args {
     char** argv;
 };
 
+static bool streq(const char* A, const char* B)
+{
+    return 0 == strcmp(A, B);
+}
+
 void*
 main_in_guile(void* args_raw)
 {
@@ -48,18 +53,49 @@ main_in_guile(void* args_raw)
     return nullptr;
 }
 
+void*
+compile_in_guile(void* args_raw)
+{
+    struct args* args = static_cast<struct args*>(args_raw);
+    char buf[4096];
+
+    if (args->argc < 4) {
+        fprintf(stderr, "Usage: agent.exe compile FILE OUT\n");
+        exit(EXIT_FAILURE);
+    }
+
+    install_scheme_primitives();
+
+    snprintf(buf, sizeof(buf),
+             "(use-modules (system base compile)) (compile-file \"%s\" #:output-file \"%s\")",
+             args->argv[2], args->argv[3]);
+
+    scm_c_eval_string(buf);
+    scm_gc();
+
+    return nullptr;
+}
+
 int
 main(int argc, char* argv[])
 {
-    setenv("GUILE_LOAD_PATH", ".", 1);
-
-    /* NOTE!  It's very important to initialize the daemon before entering Guile!!! */
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
-
-    AGENT_ASSERT(DRing::start(""), "Failed to start daemon");
-
     struct args args = { argc, argv };
 
-    /* Entering guile context - This never returns */
-    scm_with_guile(main_in_guile, (void*)&args);
+    setenv("GUILE_LOAD_PATH", ".", 1);
+    setenv("GUILE_LOAD_COMPILED_PATH", ".", 1);
+
+    if (argc > 1 && streq(argv[1], "compile")) {
+        scm_with_guile(compile_in_guile, (void*)&args);
+    } else {
+
+        /* NOTE!  It's very important to initialize the daemon before entering Guile!!! */
+        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
+
+        AGENT_ASSERT(DRing::start(""), "Failed to start daemon");
+
+        /* Entering guile context - This never returns */
+        scm_with_guile(main_in_guile, (void*)&args);
+    }
+
+    exit(EXIT_SUCCESS);
 }
