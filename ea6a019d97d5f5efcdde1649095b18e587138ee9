@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd805896_a74fd048",
+        "filename": "src/logger.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-23T14:45:25Z",
+      "side": 0,
+      "message": "strerror_r can return an error handled by check_error (ERANGE or EINVAL), so the previous code seems good.",
+      "range": {
+        "startLine": 206,
+        "startChar": 31,
+        "endLine": 206,
+        "endChar": 41
+      },
+      "revId": "ea6a019d97d5f5efcdde1649095b18e587138ee9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
