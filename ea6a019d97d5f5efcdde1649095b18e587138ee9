@@ -22,6 +22,30 @@
       },
       "revId": "ea6a019d97d5f5efcdde1649095b18e587138ee9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ca8a35a_a45ef97e",
+        "filename": "src/logger.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-23T15:15:45Z",
+      "side": 0,
+      "message": "The first check_error is never called. The second is basically the identity function.",
+      "parentUuid": "bd805896_a74fd048",
+      "range": {
+        "startLine": 206,
+        "startChar": 31,
+        "endLine": 206,
+        "endChar": 41
+      },
+      "revId": "ea6a019d97d5f5efcdde1649095b18e587138ee9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
