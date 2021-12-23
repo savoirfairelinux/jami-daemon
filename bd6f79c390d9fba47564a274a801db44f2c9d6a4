@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "665d2be0_07300ad9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 18
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-23T17:05:56Z",
+      "side": 1,
+      "message": "Two nitpicks, but the rest seems good to me",
+      "revId": "bd6f79c390d9fba47564a274a801db44f2c9d6a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34f100ae_84a12ce1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2479,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-23T17:05:56Z",
+      "side": 1,
+      "message": "Note, here reinvIceMedia_ is not protected as elsewhere in the code",
+      "range": {
+        "startLine": 2479,
+        "startChar": 8,
+        "endLine": 2479,
+        "endChar": 22
+      },
+      "revId": "bd6f79c390d9fba47564a274a801db44f2c9d6a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd731d41_de6409b6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2481,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-23T17:05:56Z",
+      "side": 1,
+      "message": "no need to reset, the std::move(reinvIceMedia_) already set the value to nullptr",
+      "range": {
+        "startLine": 2481,
+        "startChar": 8,
+        "endLine": 2481,
+        "endChar": 31
+      },
+      "revId": "bd6f79c390d9fba47564a274a801db44f2c9d6a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
