@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb525e46_99a7c59a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 506,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-23T15:56:50Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "56449408_a3b1898a",
+      "range": {
+        "startLine": 505,
+        "startChar": 21,
+        "endLine": 506,
+        "endChar": 21
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eb066a9b_c4983f4e",
@@ -85,6 +109,30 @@
       "side": 1,
       "message": "Even in JamiAccount, it calls \"call-\u003einitIceMediaTransport(call-\u003egetIceMedia(),\"\n\nso initIceMediaTransport seems ok to use getIceMedia() inside the method instead re-passing it as an argument",
       "parentUuid": "0c71515e_0e0c8f43",
+      "range": {
+        "startLine": 507,
+        "startChar": 16,
+        "endLine": 508,
+        "endChar": 48
+      },
+      "revId": "c7fdd9f7505e63c0722b5b53da9a02cb2d6ea1fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a6b2f395_49e9b5a4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 508,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-23T15:56:50Z",
+      "side": 1,
+      "message": "ok\nis it ok now ?",
+      "parentUuid": "e68a89c3_072f9c74",
       "range": {
         "startLine": 507,
         "startChar": 16,
