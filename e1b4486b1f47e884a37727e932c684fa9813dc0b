@@ -22,6 +22,30 @@
       },
       "revId": "e1b4486b1f47e884a37727e932c684fa9813dc0b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1d3b981_27e29b78",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-23T15:20:01Z",
+      "side": 1,
+      "message": "GOOPS is Guile Object Oriented Programming System.\n\nI simply changed the helper offered by the module (agent) for a style using GOOPS.  It\u0027s easier to extend and break less the scenarios.  e.g., a scenario published on Gitlab should work two weeks later.  This is not the case right now, but I aim to offer a stable API for the agent using GOOPS.",
+      "parentUuid": "06834927_4736b2d6",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 16
+      },
+      "revId": "e1b4486b1f47e884a37727e932c684fa9813dc0b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
