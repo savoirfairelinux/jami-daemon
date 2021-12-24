@@ -118,7 +118,9 @@ private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();
     void startSender();
+    void stopSender();
     void startReceiver();
+    void stopReceiver();
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 

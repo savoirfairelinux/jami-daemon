@@ -66,6 +66,19 @@ MediaDemuxer::~MediaDemuxer()
     av_dict_free(&options_);
 }
 
+const char*
+MediaDemuxer::getStatusStr(Status status)
+{
+    switch (status) {
+    case Status::EndOfFile:
+        return "End of file";
+    case Status::ReadError:
+        return "Read error";
+    default:
+        return {};
+    }
+}
+
 int
 MediaDemuxer::openInput(const DeviceParams& params)
 {
@@ -393,6 +406,7 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int ind
     : demuxer_(demuxer)
     , avStream_(demuxer->getStream(index))
 {
+    JAMI_DBG("[%p] Creating instance", this);
     demuxer->setStreamCallback(index, [this](AVPacket& packet) { return decode(packet); });
     setupStream();
 }
@@ -404,6 +418,7 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer,
     , avStream_(demuxer->getStream(index))
     , callback_(std::move(observer))
 {
+    JAMI_DBG("[%p] Creating instance", this);
     demuxer->setStreamCallback(index, [this](AVPacket& packet) { return decode(packet); });
     setupStream();
 }
@@ -416,12 +431,16 @@ MediaDecoder::emitFrame(bool isAudio)
 
 MediaDecoder::MediaDecoder()
     : demuxer_(new MediaDemuxer)
-{}
+{
+    JAMI_DBG("[%p] Creating instance", this);
+}
 
 MediaDecoder::MediaDecoder(MediaObserver o)
     : demuxer_(new MediaDemuxer)
     , callback_(std::move(o))
-{}
+{
+    JAMI_DBG("[%p] Creating instance", this);
+}
 
 MediaDecoder::~MediaDecoder()
 {

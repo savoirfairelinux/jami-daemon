@@ -96,6 +96,8 @@ public:
         RestartRequired
     };
 
+    static const char* getStatusStr(Status status);
+
     enum class CurrentState { Demuxing, Finished };
     using StreamCallback = std::function<DecodeStatus(AVPacket&)>;
 
@@ -122,8 +124,10 @@ public:
 
     AVStream* getStream(unsigned stream)
     {
-        if (stream >= inputCtx_->nb_streams)
-            throw std::invalid_argument("Invalid stream index");
+        if (stream >= inputCtx_->nb_streams) {
+            JAMI_ERR("Stream index is out of range: %u", stream);
+            return {};
+        }
         return inputCtx_->streams[stream];
     }
 
@@ -134,6 +138,8 @@ public:
     bool seekFrame(int stream_index, int64_t timestamp);
     void setNeedFrameCb(std::function<void()> cb);
     void emitFrame(bool isAudio);
+    bool isAudio() const { return inputCtx_->audio_codec_id != AVCodecID::AV_CODEC_ID_NONE; };
+    bool isVideo() const { return inputCtx_->video_codec_id != AVCodecID::AV_CODEC_ID_NONE; };
 
 private:
     bool streamInfoFound_ {false};
