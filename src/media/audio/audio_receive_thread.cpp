@@ -99,7 +99,8 @@ AudioReceiveThread::setup()
 void
 AudioReceiveThread::process()
 {
-    audioDecoder_->decode();
+    if (loop_.isRunning())
+        audioDecoder_->decode();
 }
 
 void
@@ -140,9 +141,15 @@ AudioReceiveThread::getInfo() const
 }
 
 void
-AudioReceiveThread::startLoop()
+AudioReceiveThread::startReceiver()
 {
     loop_.start();
+}
+
+void
+AudioReceiveThread::stopReceiver()
+{
+    loop_.stop();
 }
 
 }; // namespace jami

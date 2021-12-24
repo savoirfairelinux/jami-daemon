@@ -382,7 +382,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame_p))->format());
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
@@ -464,14 +464,19 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 void
 SinkClient::setFrameSize(int width, int height)
 {
+    std::unique_lock<std::mutex> lock(mtx_);
+
     width_ = width;
     height_ = height;
-    if (width > 0 and height > 0) {
+    bool started = width > 0 and height > 0;
+
+    if (started) {
         JAMI_DBG("[Sink:%p] Started - size=%dx%d, mixer=%s",
                  this,
                  width,
                  height,
                  mixer_ ? "Yes" : "No");
+        mtx_.unlock();
         emitSignal<DRing::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
         started_ = true;
     } else if (started_) {
@@ -480,6 +485,7 @@ SinkClient::setFrameSize(int width, int height)
                  width,
                  height,
                  mixer_ ? "Yes" : "No");
+        mtx_.unlock();
         emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }

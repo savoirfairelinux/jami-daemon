@@ -54,8 +54,10 @@ class VideoReceiveThread : public VideoGenerator
 public:
     VideoReceiveThread(const std::string& id, bool useSink, const std::string& sdp, uint16_t mtu);
     ~VideoReceiveThread();
-    void startLoop();
 
+    void startLoop();
+    void stopLoop();
+    void decodeFrame();
     void addIOContext(SocketPair& socketPair);
     void setRequestKeyFrameCallback(std::function<void(void)> cb)
     {
@@ -94,19 +96,18 @@ private:
     int dstWidth_ {0};
     int dstHeight_ {0};
     const std::string id_;
+    bool useSink_;
     std::istringstream stream_;
     MediaIOHandle sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;
     std::shared_ptr<SinkClient> sink_;
     bool isVideoConfigured_ {false};
-    bool useSink_;
     uint16_t mtu_;
     int rotation_ {0};
 
     std::shared_ptr<AVBufferRef> displayMatrix_;
 
     void openDecoder();
-    void decodeFrame();
     static int interruptCb(void* ctx);
     static int readFunction(void* opaque, uint8_t* buf, int buf_size);
     bool configureVideoOutput();

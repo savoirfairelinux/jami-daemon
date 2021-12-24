@@ -163,7 +163,7 @@ AudioRtpSession::startReceiver()
                                                 mtu_));
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
-    receiveThread_->startLoop();
+    receiveThread_->startReceiver();
 }
 
 void
@@ -211,6 +211,16 @@ void
 AudioRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    JAMI_DBG("[%p] Stopping receiver", this);
+
+    if (not receiveThread_)
+        return;
+
+    if (socketPair_)
+        socketPair_->setReadBlockingMode(false);
+
+    receiveThread_->stopReceiver();
 
     if (audioInput_)
         audioInput_->detach(sender_.get());
