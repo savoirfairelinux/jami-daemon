@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "df5bd26b_f44b1346",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2479,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-24T14:11:09Z",
+      "side": 1,
+      "message": "it should be ok now",
+      "parentUuid": "34f100ae_84a12ce1",
+      "range": {
+        "startLine": 2479,
+        "startChar": 8,
+        "endLine": 2479,
+        "endChar": 22
+      },
+      "revId": "bd6f79c390d9fba47564a274a801db44f2c9d6a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dd731d41_de6409b6",
@@ -54,6 +78,30 @@
       "writtenOn": "2021-12-23T17:05:56Z",
       "side": 1,
       "message": "no need to reset, the std::move(reinvIceMedia_) already set the value to nullptr",
+      "range": {
+        "startLine": 2481,
+        "startChar": 8,
+        "endLine": 2481,
+        "endChar": 31
+      },
+      "revId": "bd6f79c390d9fba47564a274a801db44f2c9d6a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "63cacba7_acb0bce9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2481,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-12-24T14:11:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dd731d41_de6409b6",
       "range": {
         "startLine": 2481,
         "startChar": 8,
