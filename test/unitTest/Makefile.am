@@ -159,6 +159,8 @@ check_PROGRAMS += ut_hold_resume
 ut_hold_resume_SOURCES = media_negotiation/hold_resume.cpp common.cpp
 check_PROGRAMS += ut_auto_answer
 ut_auto_answer_SOURCES = media_negotiation/auto_answer.cpp common.cpp
+check_PROGRAMS += ut_video_change
+ut_video_change_SOURCES = media_negotiation/video_change.cpp common.cpp
 
 #
 # compability

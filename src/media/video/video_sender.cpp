@@ -73,6 +73,9 @@ void
 VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
 {
     int angle = input_frame->getOrientation();
+#if 0
+    JAMI_WARN("frame rotation %i", angle);
+#endif
     if (rotation_ != angle) {
         rotation_ = angle;
         if (changeOrientationCallback_)

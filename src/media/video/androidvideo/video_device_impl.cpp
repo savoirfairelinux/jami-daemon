@@ -133,11 +133,19 @@ VideoSize
 VideoDeviceImpl::getSize(const VideoSize& size) const
 {
     for (const auto& iter : sizes_) {
-        if (iter == size)
+        if (iter == size) {
+            JAMI_DBG("AndroidVideo: found exact size match %ix%i", size.first, size.second);
             return iter;
+        }
     }
+    auto const& defaultSize = sizes_.empty() ? VideoSize {0, 0} : sizes_.back();
+    JAMI_DBG("AndroidVideo: did not find exact size match: requested %ix%i - found %ix%i",
+             size.first,
+             size.second,
+             defaultSize.first,
+             defaultSize.second);
 
-    return sizes_.empty() ? VideoSize {0, 0} : sizes_.back();
+    return defaultSize;
 }
 
 FrameRate

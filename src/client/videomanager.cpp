@@ -687,14 +687,24 @@ getVideoInput(const std::string& id, video::VideoInputMode inputMode)
     auto& vmgr = Manager::instance().getVideoManager();
     std::lock_guard<std::mutex> lk(vmgr.videoMutex);
     auto it = vmgr.videoInputs.find(id);
+    if (it == vmgr.videoInputs.end()) {
+        auto mrl = "camera://" + id;
+        it = vmgr.videoInputs.find(mrl);
+    }
+
     if (it != vmgr.videoInputs.end()) {
         if (auto input = it->second.lock()) {
             return input;
+        } else {
+            JAMI_WARN("Found video input for [%s] but failed to lock", id.c_str());
         }
     }
 
     auto input = std::make_shared<video::VideoInput>(inputMode, id);
     vmgr.videoInputs[id] = input;
+    JAMI_DBG("Video input for [%s] mode [%i] not found, adding a new one",
+             id.c_str(),
+             (int) inputMode);
     return input;
 }
 

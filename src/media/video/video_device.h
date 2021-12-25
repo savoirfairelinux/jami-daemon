@@ -87,9 +87,10 @@ public:
                 std::string sz = fmt::format("{}x{}", size.first, size.second);
                 auto rates = getRateList(chan, size);
                 std::vector<std::string> rates_str {rates.size()};
-                std::transform(rates.begin(), rates.end(), rates_str.begin(), [](const FrameRate& r) {
-                    return jami::to_string(r.real());
-                });
+                std::transform(rates.begin(),
+                               rates.end(),
+                               rates_str.begin(),
+                               [](const FrameRate& r) { return jami::to_string(r.real()); });
                 cap[chan][sz] = std::move(rates_str);
             }
 
@@ -175,7 +176,11 @@ public:
         setDeviceParams(params);
     }
 
-    void setOrientation(int orientation) { orientation_ = orientation; }
+    void setOrientation(int orientation)
+    {
+        JAMI_DBG("[%p] Setting video rotation to %i", this, orientation);
+        orientation_ = orientation;
+    }
 
     /**
      * Returns the parameters needed for actual use of the device
@@ -197,10 +202,7 @@ private:
         return {0, 0};
     }
 
-    std::string sizeToString(unsigned w, unsigned h) const
-    {
-        return fmt::format("{}x{}", w, h);
-    }
+    std::string sizeToString(unsigned w, unsigned h) const { return fmt::format("{}x{}", w, h); }
 
     FrameRate rateFromString(const std::string& channel,
                              VideoSize size,

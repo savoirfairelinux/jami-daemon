@@ -62,7 +62,7 @@ struct TestScenario
     std::vector<MediaAttribute> offerUpdate_;
     std::vector<MediaAttribute> answerUpdate_;
     // Determine if we should expect the MediaNegotiationStatus signal.
-    bool expectMediaRenegotiation_ {false};
+    bool expectMediaNegotiation_ {false};
 };
 
 struct CallData
@@ -563,7 +563,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData,
     mediaCount = scenario.offerUpdate_.size();
     CPPUNIT_ASSERT_EQUAL(mediaCount, scenario.answerUpdate_.size());
 
-    if (scenario.expectMediaRenegotiation_) {
+    if (scenario.expectMediaNegotiation_) {
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT_EQUAL(
             true,
@@ -612,7 +612,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData,
     mediaCount = scenario.offerUpdate_.size();
     CPPUNIT_ASSERT_EQUAL(mediaCount, scenario.answerUpdate_.size());
 
-    if (scenario.expectMediaRenegotiation_) {
+    if (scenario.expectMediaNegotiation_) {
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT_EQUAL(
             true,
@@ -693,7 +693,7 @@ HoldResumeTest::audio_and_video_then_hold_resume()
 
     scenario.answerUpdate_.emplace_back(audio);
     scenario.answerUpdate_.emplace_back(video);
-    scenario.expectMediaRenegotiation_ = true;
+    scenario.expectMediaNegotiation_ = true;
 
     testWithScenario(aliceData_, bobData_, scenario);
 
@@ -723,7 +723,7 @@ HoldResumeTest::audio_only_then_hold_resume()
     // Updated offer/answer
     scenario.offerUpdate_.emplace_back(audio);
     scenario.answerUpdate_.emplace_back(audio);
-    scenario.expectMediaRenegotiation_ = true;
+    scenario.expectMediaNegotiation_ = true;
 
     testWithScenario(aliceData_, bobData_, scenario);
 
