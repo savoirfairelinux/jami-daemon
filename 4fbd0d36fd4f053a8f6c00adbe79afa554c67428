@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e17f3396_62f0a44b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-25T15:51:02Z",
+      "side": 1,
+      "message": "Sorry for the delay, will check\n\nIdeally, next week I\u0027d like to add a CI job building with meson, at least the daemon to avoid any regression in the build",
+      "revId": "4fbd0d36fd4f053a8f6c00adbe79afa554c67428",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
