@@ -28,6 +28,7 @@
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
 #include "media_codec.h"
+#include "media/media_filter.h"
 
 #include <map>
 #include <atomic>
@@ -86,6 +87,8 @@ public:
     void setFrameSize(const int width, const int height);
     void setupSink();
     void stopSink();
+
+    void setRotation(int angle);
 
 #if VIDEO_CLIENT_INPUT
     /*
@@ -147,10 +150,14 @@ private:
     void cleanup();
 
     bool captureFrame();
+    // Preprocess frame. Typically done before publishing the frame.
+    std::shared_ptr<VideoFrame> preProcessFrame(const std::shared_ptr<MediaFrame>& frame);
 
     int rotation_ {0};
+    bool updateFilter_ {false};
+    std::unique_ptr<MediaFilter> filter_;
     std::shared_ptr<AVBufferRef> displayMatrix_;
-    void setRotation(int angle);
+    // void setRotation(int angle);
     VideoInputMode inputMode_;
     inline bool videoManagedByClient() const
     {

@@ -54,6 +54,10 @@ public:
     std::shared_ptr<video::VideoInput> getVideoInput(std::string_view id) const
     {
         auto input = videoInputs.find(id);
+        if (input == videoInputs.end()) {
+            auto mrl = "camera://" + id;
+            input = videoInputs.find(mrl);
+        }
         return input == videoInputs.end() ? nullptr : input->second.lock();
     }
     std::mutex videoMutex;

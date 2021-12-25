@@ -106,6 +106,7 @@ public:
     std::shared_ptr<VideoMixer>& getVideoMixer() { return videoMixer_; }
 
     std::shared_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
+    std::unique_ptr<VideoSender>& getVideoSender() { return sender_; }
 
     std::shared_ptr<VideoFrameActiveWriter> getReceiveVideoFrameActiveWriter()
     {

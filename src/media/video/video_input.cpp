@@ -34,6 +34,7 @@
 #include "sinkclient.h"
 #include "logger.h"
 #include "media/media_buffer.h"
+#include "media/video/filter_transpose.h"
 
 #include <libavformat/avio.h>
 
@@ -54,6 +55,7 @@ namespace video {
 
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
+const constexpr char FILTER_INPUT_NAME[] = "in";
 
 VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
     : VideoGenerator::VideoGenerator()
@@ -61,6 +63,11 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
 {
+    JAMI_DBG("[%p] Creating instance - input mode [%i] - id [%s]",
+             this,
+             (int) inputMode,
+             id_.c_str());
+
     inputMode_ = inputMode;
     if (inputMode_ == VideoInputMode::Undefined) {
 #if (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
@@ -81,6 +88,8 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
 
 VideoInput::~VideoInput()
 {
+    JAMI_DBG("[%p] Destroying instance", this);
+
     isStopped_ = true;
     if (videoManagedByClient()) {
         emitSignal<DRing::VideoSignal::StopCapture>(decOpts_.input);
@@ -146,14 +155,22 @@ VideoInput::getPixelFormat() const
 void
 VideoInput::setRotation(int angle)
 {
+    if (angle == rotation_) {
+        JAMI_DBG("[%p] Rotation already set to %i", this, angle);
+        return;
+    }
+
+    JAMI_DBG("[%p] Setting rotation to %i", this, angle);
+
+    updateFilter_ = true;
+    rotation_ = angle;
+
     std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9),
                                                 [](AVBufferRef* buf) {
                                                     av_buffer_unref(&buf);
                                                 }};
-    if (displayMatrix) {
-        av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
-        displayMatrix_ = std::move(displayMatrix);
-    }
+    av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
+    displayMatrix_ = std::move(displayMatrix);
 }
 
 bool
@@ -166,8 +183,22 @@ VideoInput::setup()
 
     if (!sink_->start())
         JAMI_ERR("start sink failed");
-
     JAMI_DBG("VideoInput ready to capture");
+    JAMI_DBG() << getInfo();
+
+#if 0
+    Manager::instance().scheduler().scheduleAtFixedRate(
+        [w = weak_from_this()] { 
+            if (auto this_ = w.lock()) {
+                auto rotation = (this_->rotation_ + 90) % 360;
+                this_->setRotation(rotation);
+                return true;
+            }
+            JAMI_WARN("Failed to get shared ptr");
+            return false;
+        },
+        std::chrono::milliseconds(1500));
+#endif
 
     return true;
 }
@@ -226,6 +257,35 @@ VideoInput::captureFrame()
         return true;
     }
 }
+
+std::shared_ptr<VideoFrame>
+VideoInput::preProcessFrame(const std::shared_ptr<MediaFrame>& frame)
+{
+    auto videoFrame = std::static_pointer_cast<VideoFrame>(frame);
+
+    if (updateFilter_) {
+        filter_ = getTransposeFilter(rotation_,
+                                     FILTER_INPUT_NAME,
+                                     videoFrame->width(),
+                                     videoFrame->height(),
+                                     videoFrame->format(),
+                                     false);
+        updateFilter_ = false;
+        JAMI_DBG("[%p] Rotation filter updated to %i", this, rotation_);
+    }
+
+    if (filter_) {
+        // filter_->feedInput(videoFrame->pointer(), FILTER_INPUT_NAME);
+        // videoFrame = std::static_pointer_cast<VideoFrame>(
+        //     std::shared_ptr<MediaFrame>(filter_->readOutput()));
+        av_frame_new_side_data_from_buf(videoFrame->pointer(),
+                                        AV_FRAME_DATA_DISPLAYMATRIX,
+                                        av_buffer_ref(displayMatrix_.get()));
+    }
+
+    return videoFrame;
+}
+
 void
 VideoInput::flushBuffers()
 {
@@ -245,9 +305,10 @@ VideoInput::configureFilePlayback(const std::string&,
     auto decoder = std::make_unique<MediaDecoder>(demuxer,
                                                   index,
                                                   [this](std::shared_ptr<MediaFrame>&& frame) {
-                                                      publishFrame(
+                                                      auto videoFrame = preProcessFrame(
                                                           std::static_pointer_cast<VideoFrame>(
                                                               frame));
+                                                      publishFrame(videoFrame);
                                                   });
     decoder->setInterruptCallback(
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
@@ -275,7 +336,8 @@ VideoInput::createDecoder()
 
     auto decoder = std::make_unique<MediaDecoder>(
         [this](const std::shared_ptr<MediaFrame>& frame) mutable {
-            publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+            auto videoFrame = preProcessFrame(frame);
+            publishFrame(videoFrame);
         });
 
     if (emulateRate_)
@@ -638,6 +700,8 @@ VideoInput::setSink(const std::string& sinkId)
 void
 VideoInput::setFrameSize(const int width, const int height)
 {
+    JAMI_DBG("Setting frame size to %ix%i", width, height);
+
     /* Signal the client about readable sink */
     sink_->setFrameSize(width, height);
 }
@@ -659,6 +723,7 @@ void
 VideoInput::updateStartTime(int64_t startTime)
 {
     if (decoder_) {
+        JAMI_DBG("Start time reset to %li", startTime);
         decoder_->updateStartTime(startTime);
     }
 }

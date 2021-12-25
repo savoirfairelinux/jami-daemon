@@ -88,8 +88,12 @@ VideoDeviceMonitor::applySettings(const string& id, const VideoSettings& setting
     std::lock_guard<std::mutex> l(lock_);
     const auto iter = findDeviceById(id);
 
-    if (iter == devices_.end())
+    if (iter == devices_.end()) {
+        JAMI_ERR("Device [%s] not found", id.c_str());
         return;
+    }
+
+    JAMI_DBG("Applying setting for %s (uid: %s)", id.c_str(), settings.unique_id.c_str());
 
     iter->applySettings(settings);
     auto it = findPreferencesById(settings.unique_id);
@@ -124,9 +128,12 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& id)
     std::lock_guard<std::mutex> l(lock_);
     const auto itDev = findDeviceById(id);
     if (itDev != devices_.end()) {
-        if (defaultDevice_ == itDev->getDeviceId())
+        if (defaultDevice_ == itDev->getDeviceId()) {
+            JAMI_DBG("Failed to set default device to [%s]. Device not found", id.c_str());
             return false;
+        }
         defaultDevice_ = itDev->getDeviceId();
+        JAMI_DBG("Default device set to %s", defaultDevice_.c_str());
 
         // place it at the begining of the prefs
         auto itPref = findPreferencesById(itDev->getDeviceId());
@@ -139,6 +146,9 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& id)
         }
         return true;
     }
+
+    JAMI_WARN("Failed to set default device to %s: device not found ", id.c_str());
+
     return false;
 }
 
@@ -193,8 +203,10 @@ VideoDeviceMonitor::addDevice(const string& id,
 {
     try {
         std::lock_guard<std::mutex> l(lock_);
-        if (findDeviceById(id) != devices_.end())
+        if (findDeviceById(id) != devices_.end()) {
+            JAMI_WARN("Device [%s] already in the list", id.c_str());
             return false;
+        }
 
         // instantiate a new unique device
         VideoDevice dev {id, devInfo};
@@ -223,6 +235,7 @@ VideoDeviceMonitor::addDevice(const string& id,
         return false;
     }
     notify();
+    JAMI_DBG("Added device %s", id.c_str());
     return true;
 }
 
@@ -232,10 +245,15 @@ VideoDeviceMonitor::removeDevice(const string& id)
     {
         std::lock_guard<std::mutex> l(lock_);
         const auto it = findDeviceById(id);
-        if (it == devices_.end())
+        if (it == devices_.end()) {
+            JAMI_WARN("Can not remove device [%s]. Device not found", id.c_str());
             return;
+        }
 
         devices_.erase(it);
+
+        JAMI_DBG("Removed device [%s]", id.c_str());
+
         if (defaultDevice_.find(id) != std::string::npos) {
             defaultDevice_.clear();
             for (const auto& dev : devices_)

@@ -115,16 +115,22 @@ VideoDeviceImpl::selectFormat()
 VideoDeviceImpl::VideoDeviceImpl(const std::string& path)
     : name(path)
 {
+    JAMI_DBG("AndroidVideo: Video Device created [%s]", path.c_str());
+
     std::vector<unsigned> sizes;
     std::vector<unsigned> rates;
     formats_.reserve(16);
     sizes.reserve(16);
     rates.reserve(16);
     emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes, &rates);
-    for (size_t i = 0, n = sizes.size(); i < n; i += 2)
+    for (size_t i = 0, n = sizes.size(); i < n; i += 2) {
         sizes_.emplace_back(sizes[i], sizes[i + 1]);
-    for (const auto& r : rates)
+        JAMI_DBG("AndroidVideo: Added cam res [%ix%i]", sizes[i], sizes[i + 1]);
+    }
+    for (const auto& r : rates) {
+        JAMI_DBG("AndroidVideo: Added rate [%u]", r);
         rates_.emplace_back(r, 1000);
+    }
 
     selectFormat();
 }
@@ -133,11 +139,19 @@ VideoSize
 VideoDeviceImpl::getSize(const VideoSize& size) const
 {
     for (const auto& iter : sizes_) {
-        if (iter == size)
+        if (iter == size) {
+            JAMI_DBG("AndroidVideo: found exact size match %ix%i", size.first, size.second);
             return iter;
+        }
     }
+    auto const& defaultSize = sizes_.empty() ? VideoSize {0, 0} : sizes_.back();
+    JAMI_DBG("AndroidVideo: did not find exact size match: requested %ix%i - found %ix%i",
+             size.first,
+             size.second,
+             defaultSize.first,
+             defaultSize.second);
 
-    return sizes_.empty() ? VideoSize {0, 0} : sizes_.back();
+    return defaultSize;
 }
 
 FrameRate

@@ -29,6 +29,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "logger.h"
 
 extern "C" {
 #include <linux/videodev2.h>
@@ -613,6 +614,7 @@ VideoDevice::VideoDevice(const std::string& id,
                                                     devInfo.empty() ? id
                                                                     : devInfo.at(0).at("devPath"));
     name = deviceImpl_->name;
+    JAMI_DBG("[%p] Instance created", this);
 }
 
 DeviceParams
@@ -626,6 +628,7 @@ VideoDevice::getDeviceParams() const
 void
 VideoDevice::setDeviceParams(const DeviceParams& params)
 {
+    JAMI_DBG("[%p] Setting resolution to %ux%u", this, params.width, params.height);
     return deviceImpl_->setDeviceParams(params);
 }
 
@@ -647,7 +650,10 @@ VideoDevice::getRateList(const std::string& channel, VideoSize size) const
     return deviceImpl_->getRateList(channel, size);
 }
 
-VideoDevice::~VideoDevice() {}
+VideoDevice::~VideoDevice()
+{
+    JAMI_DBG("[%p] Instance destroyed", this);
+}
 
 } // namespace video
 } // namespace jami
