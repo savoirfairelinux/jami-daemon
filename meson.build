@@ -2,7 +2,7 @@ project('jami-daemon', ['c', 'cpp'],
         version: '11.0.0',
         license: 'GPL3+',
         default_options: ['cpp_std=gnu++17', 'buildtype=debugoptimized'],
-        meson_version:'>= 0.54'
+        meson_version:'>= 0.55'
        )
 
 modpkgconfig = import('pkgconfig')
@@ -30,7 +30,6 @@ deplibswscale = dependency('libswscale', version: '>= 3.1.101')
 deplibswresample = dependency('libswresample', version: '>= 1.2.101')
 deplibavutil = dependency('libavutil', version: '>= 55.75.100')
 depspeexdsp = dependency('speexdsp')
-depfmt = dependency('fmt', version: '>= 5.3')
 
 depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1', required: false)
 if not depyamlcpp.found()
@@ -44,9 +43,9 @@ if not depyamlcpp.found()
     ]).dependency('yaml-cpp')
 endif
 
-depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5',
-                        fallback: ['jsoncpp', 'jsoncpp_dep'], default_options: ['default_library=static'])
-depzlib = dependency('zlib', fallback: ['zlib', 'zlib_dep'], default_options: ['default_library=static'])
+depfmt = dependency('fmt', version: '>= 5.3', default_options: ['default_library=static'])
+depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5', default_options: ['default_library=static'])
+depzlib = dependency('zlib', default_options: ['default_library=static'])
 
 if get_option('interfaces').contains('dbus')
     depdbuscpp = dependency('dbus-c++-1')

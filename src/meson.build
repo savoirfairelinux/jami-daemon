@@ -144,8 +144,8 @@ libjami_dependencies = [
     deplibswresample,
     deplibavutil,
     depspeexdsp,
-    depfmt,
     depyamlcpp,
+    depfmt,
     depjsoncpp,
     depzlib
 ]
