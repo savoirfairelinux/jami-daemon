@@ -68,12 +68,17 @@ RUN add-apt-repository universe && \
         libsecp256k1-dev \
         libasio-dev \
         libexpat1 libexpat1-dev \
-        lcov gcovr
+        lcov gcovr \
+        ninja-build
 
 RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 50
 
 RUN ls -la /usr/include/c++/8/charconv
+
+RUN apt-get install -y python3 python3-pip python3-setuptools \
+                       python3-wheel
+RUN pip3 install meson
 
 # Tests framework
 RUN apt-get install -y -o Acquire::Retries=10 \
