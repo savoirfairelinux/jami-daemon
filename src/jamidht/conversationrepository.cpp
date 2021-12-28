@@ -122,6 +122,7 @@ public:
                                         const std::string& authorUri = "") const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
+    GitObject memberCertificate(const std::string& memberUri, const GitTree& tree) const;
     // NOTE! GitDiff needs to be deteleted before repo
     GitTree treeAtCommit(git_repository* repo, const std::string& commitId) const;
     std::string getCommitType(const std::string& commitMsg) const;
@@ -798,9 +799,7 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
             return false;
         }
         // file in members or admin
-        adminFile = std::string("admins") + "/" + votedUri + ".crt";
-        auto memberFile = std::string("members") + "/" + votedUri + ".crt";
-        if (!fileAtTree(adminFile, treeOld) && !fileAtTree(memberFile, treeOld)) {
+        if (!memberCertificate(votedUri, treeOld)) {
             JAMI_ERR("No member file found for vote: %s", votedUri.c_str());
             return false;
         }
@@ -1142,12 +1141,9 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (not cert || !cert->issuer)
-        return false;
-    auto userUri = cert->issuer->getId().toString();
-    auto parentCrt = tls::CertificateStore::instance().getCertificate(userUri);
+    auto pin = not cert or not cert->issuer;
     auto repo = repository();
-    if (not parentCrt or not repo)
+    if (not repo)
         return false;
 
     // Retrieve tree for commit
@@ -1156,35 +1152,75 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
         return false;
 
     // Check that /devices/userDevice.crt exists
-    std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
+    std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
     auto blob_device = fileAtTree(deviceFile, tree);
     if (!fileAtTree(deviceFile, tree)) {
         JAMI_ERR("%s announced but not found", deviceFile.c_str());
         return false;
     }
+    auto* blob = reinterpret_cast<git_blob*>(blob_device.get());
+    auto deviceCert = dht::crypto::Certificate(static_cast<const uint8_t*>(
+                                                   git_blob_rawcontent(blob)),
+                                               git_blob_rawsize(blob));
+    auto userUri = deviceCert.getIssuerUID();
+    if (userUri.empty()) {
+        if (pin) {
+            JAMI_ERR("%s got no issuer UID", deviceFile.c_str());
+            return false;
+        } else {
+            // HACK: JAMS device's certificate do not contains any issuer
+            // So, getIssuerUID() will be empty here, so there is no way
+            // to get the userURI from this certificate.
+            // Uses pinned certificate if one.
+            userUri = cert->issuer->getId().toString();
+        }
+    }
 
     // Check that /(members|admins)/userUri.crt exists
-    std::string membersFile = std::string("members") + "/" + userUri + ".crt";
-    std::string adminsFile = std::string("admins") + "/" + userUri + ".crt";
-    auto blob_parent = fileAtTree(membersFile, tree);
-    if (not blob_parent)
-        blob_parent = fileAtTree(adminsFile, tree);
+    auto blob_parent = memberCertificate(userUri, tree);
     if (not blob_parent) {
         JAMI_ERR("Certificate not found for %s", userUri.c_str());
         return false;
     }
 
-    // Check that certificate matches
-    auto* blob = reinterpret_cast<git_blob*>(blob_device.get());
-    auto deviceCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
-                                       git_blob_rawsize(blob));
+    // Check that certificates were still valid
     blob = reinterpret_cast<git_blob*>(blob_parent.get());
-    auto parentCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
-                                       git_blob_rawsize(blob));
-    auto deviceCertStr = cert->toString(false);
-    auto parentCertStr = parentCrt->toString(true);
+    auto parentCert = dht::crypto::Certificate(static_cast<const uint8_t*>(
+                                                   git_blob_rawcontent(blob)),
+                                               git_blob_rawsize(blob));
 
-    return deviceCert == deviceCertStr && parentCert.find(parentCertStr) == 0;
+    git_oid oid;
+    git_commit* commit_ptr = nullptr;
+    if (git_oid_fromstr(&oid, commitId.c_str()) < 0
+        || git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
+        JAMI_WARN("Failed to look up commit %s", commitId.c_str());
+        return false;
+    }
+    GitCommit commit = {commit_ptr, git_commit_free};
+
+    auto deviceExpiration = std::chrono::duration_cast<std::chrono::seconds>(
+                                deviceCert.getExpiration().time_since_epoch())
+                                .count();
+    auto parentExpiration = std::chrono::duration_cast<std::chrono::seconds>(
+                                parentCert.getExpiration().time_since_epoch())
+                                .count();
+    auto commitTime = git_commit_time(commit.get());
+
+    if (deviceExpiration < commitTime) {
+        JAMI_ERR("Certificate %s expired", deviceCert.getId().to_c_str());
+        return false;
+    }
+    if (parentExpiration < commitTime) {
+        JAMI_ERR("Certificate %s expired", parentCert.getId().to_c_str());
+        return false;
+    }
+
+    auto res = parentCert.getId().toString() == userUri;
+    if (res && pin) {
+        tls::CertificateStore::instance().pinCertificate(std::move(deviceCert));
+        tls::CertificateStore::instance().pinCertificate(std::move(parentCert));
+    }
+    return res;
 }
 
 bool
@@ -1666,6 +1702,16 @@ ConversationRepository::Impl::fileAtTree(const std::string& path, const GitTree&
         return GitObject {nullptr, git_object_free};
     }
     return GitObject {blob_ptr, git_object_free};
+}
+
+GitObject
+ConversationRepository::Impl::memberCertificate(const std::string& memberUri,
+                                                const GitTree& tree) const
+{
+    auto blob = fileAtTree(fmt::format("members/{}.crt", memberUri), tree);
+    if (not blob)
+        blob = fileAtTree(fmt::format("admins/{}.crt", memberUri), tree);
+    return blob;
 }
 
 GitTree
