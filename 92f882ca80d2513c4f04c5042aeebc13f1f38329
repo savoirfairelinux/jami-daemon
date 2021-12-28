@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d42926c_76570379",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-28T21:55:53Z",
+      "side": 1,
+      "message": "Fyi, I added a patch for the CI, to add a stage to test the build via meson and avoid any future regression and force devs to fix the meson.build file.\n\nAnd I added a small line in the README for users to know how to build the tests. If it\u0027s ok for you we can merge",
+      "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
