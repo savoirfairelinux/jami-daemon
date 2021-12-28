@@ -72,7 +72,12 @@ RUN add-apt-repository universe && \
         libsecp256k1-dev \
         libasio-dev \
         libexpat1 libexpat1-dev \
-        lcov gcovr
+        lcov gcovr \
+        ninja-build
+
+RUN apt-get install -y python3 python3-pip python3-setuptools \
+                       python3-wheel
+RUN pip3 install meson
 
 RUN ls -la /usr/include/c++/8/charconv
 
