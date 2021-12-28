@@ -28,29 +28,27 @@ hang up after MEDIA-FLOW seconds and #t is returned.
 
   (let ([mtx (make-recursive-mutex)]
         [cnd (make-condition-variable)]
-        [this-call-id ""]
-        [continue #t])
+        [this-call-id ""])
 
     (with-mutex mtx
-      (jami:on-signal 'state-changed
-                      (lambda (account-id call-id state code)
-                        (with-mutex mtx
-                          (when (and continue
-                                     (string= account-id from)
-                                     (string= call-id this-call-id)
-                                     (string= "CURRENT" state))
-                            (signal-condition-variable cnd))
-                          continue)))
+      (jami:with-signal-handler
+       'state-change (lambda (account-id call-id state code)
+                       (with-mutex mtx
+                         (when (and (string= account-id from)
+                                    (string= call-id this-call-id)
+                                    (string= "CURRENT" state))
+                           (signal-condition-variable cnd))))
 
-      (set! this-call-id (call:place-call/media from to))
+       (set! this-call-id (call:place-call/media from to))
 
-      (let ([success (wait-condition-variable cnd mtx
-                                              (+ (current-time) timeout))])
-        (when success
-          (sleep media-flow) ; Wait for media to flow between peers.
-          (call:hang-up from this-call-id))
-        (set! continue #f)
-        success))))
+       (let ([success
+              (wait-condition-variable
+               cnd mtx
+               (+ (current-time) timeout))])
+         (when success
+           (sleep media-flow) ; Wait for media to flow between peers.
+           (call:hang-up from this-call-id))
+         success)))))
 
 ;;; Change FIXME for the peer id you want to contact.
 (define peer "FIXME")

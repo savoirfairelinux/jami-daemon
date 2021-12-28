@@ -23,7 +23,9 @@ MODULES =                                       \
 	examples/active-agent.scm               \
 	examples/passive-agent.scm              \
 	jami/logger.scm                         \
-	scenarios/peer-monitor/scenario.scm
+	jami/signal.scm                         \
+	scenarios/peer-monitor/scenario.scm     \
+	scenarios/spam-call/scenario.scm
 
 GOBJECTS = $(MODULES:%=%.go)
 

@@ -40,7 +40,7 @@ install_scheme_primitives()
     load_module("jami call", install_call_primitives);
     load_module("jami conversation", install_conversation_primitives);
     load_module("jami logger bindings", install_logger_primitives);
-    load_module("jami signal", install_signal_primitives);
+    load_module("jami signal bindings", install_signal_primitives);
 }
 
 /*
