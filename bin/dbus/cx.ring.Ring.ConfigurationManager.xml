@@ -97,10 +97,9 @@
                 <tp:rationale>Account settings are written to the configuration file when ring properly quits.</tp:rationale>
                 <tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountDetailsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
             </tp:docstring>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="s" name="accountID" direction="in">
             </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
             </arg>
         </method>
@@ -267,7 +266,7 @@
            </tp:docstring>
            <arg type="s" name="accountID">
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
            <arg type="a{ss}" name="devices" tp:type="String_String_Map">
                <tp:docstring>
                    A map of device IDs with corresponding labels.
@@ -448,7 +447,7 @@
                    The query which is answered by this signal
                </tp:docstring>
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="VectorMapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="VectorMapStringString"/>
            <arg type="aa{ss}" name="result">
                <tp:docstring>
                    List of user results
@@ -579,7 +578,7 @@
            <arg type="s" name="accountID"/>
            <arg type="s" name="messageID"/>
            <arg type="s" name="from"/>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="MapStringString"/>
            <arg type="a{ss}" name="payloads"/>
        </signal>
 
@@ -1058,7 +1057,7 @@
                    The account ID
                </tp:docstring>
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
            <arg type="a{ss}" name="details" tp:type="String_String_Map">
                <tp:docstring>
                    New persistent account details
@@ -1087,7 +1086,7 @@
                    The account ID
                </tp:docstring>
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
            <arg type="a{ss}" name="details" tp:type="String_String_Map">
                <tp:docstring>
                    Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
