@@ -2416,6 +2416,7 @@ JamiAccount::setRegistrationState(RegistrationState state,
         } else if (state == RegistrationState::TRYING) {
             JAMI_WARN("[Account %s] connecting…", getAccountID().c_str());
         } else {
+            deviceAnnounced_ = false;
             JAMI_WARN("[Account %s] disconnected", getAccountID().c_str());
         }
     }
