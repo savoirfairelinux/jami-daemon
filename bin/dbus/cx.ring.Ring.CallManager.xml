@@ -988,7 +988,7 @@
                 <p>Signal sent adter a RTCP report has been received and computed.</p>
             </tp:docstring>
             <arg type="s" name="callId" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringInt"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringInt"/>
             <arg type="a{si}" name="report" direction="out" tp:type="String_Integer_Map">
               <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
                 <p>A map containing RTCP stats: </p>
@@ -1023,7 +1023,7 @@
         <signal name="onConferenceInfosUpdated" tp:name-for-bindings="onConferenceInfosUpdated">
             <tp:added version="9.5.0"/>
             <arg type="s" name="confId" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="infos" />
         </signal>
 
@@ -1049,7 +1049,7 @@
                 </ul>
               </tp:docstring>
             </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="VectorMapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="mediaList">
               <tp:docstring>
                 The updated attribute list of the negotiated media.
