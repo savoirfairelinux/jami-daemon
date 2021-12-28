@@ -106,6 +106,7 @@ private:
     void testSyncingWhileAccepting();
     void testCountInteractions();
     void testReplayConversation();
+    void testSyncWithoutPinnedCert();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -136,6 +137,7 @@ private:
     CPPUNIT_TEST(testSyncingWhileAccepting);
     CPPUNIT_TEST(testCountInteractions);
     CPPUNIT_TEST(testReplayConversation);
+    CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2344,6 +2346,118 @@ ConversationTest::testReplayConversation()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return bobMessages.size() == 2 && bobMessages[0] == "foo" && bobMessages[1] == "bar";
     }));
+}
+
+void
+ConversationTest::testSyncWithoutPinnedCert()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    // Bob creates a second device
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+    bob2Id = Manager::instance().addAccount(details);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::string convId = "";
+    auto bob2Announced = false, requestReceived = false, conversationReady = false, memberMessageGenerated = false, aliceMessageReceived = false, aliceStopped = false, bobStopped = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId) {
+                if (message["type"] == "member")
+                    memberMessageGenerated = true;
+                else if ( message["type"] == "text/plain")
+                    aliceMessageReceived = true;
+            }
+            cv.notify_one();
+        }));
+
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+                if (!bob2Account)
+                    return;
+                auto details = bob2Account->getVolatileAccountDetails();
+                auto announced = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (announced == "true")
+                    bob2Announced = true;
+                if (daemonStatus == "UNREGISTERED")
+                    bobStopped = true;
+                details = aliceAccount->getVolatileAccountDetails();
+                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "UNREGISTERED")
+                    aliceStopped = true;
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Disconnect bob2, to create a valid conv betwen Alice and Bob1
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bob2Announced; }));
+    Manager::instance().sendRegister(bob2Id, false);
+
+    // Alice adds bob
+    requestReceived = false;
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && memberMessageGenerated;
+    }));
+
+    // Bob send a message
+    DRing::sendMessage(bobId, convId, "hi"s, "");
+    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return aliceMessageReceived; });
+
+    // Alice off, bob2 On
+    conversationReady = false;
+    aliceStopped = false;
+    Manager::instance().sendRegister(aliceId, false);
+    cv.wait_for(lk, std::chrono::seconds(10), [&]() { return aliceStopped; });
+    bob2Announced = false;
+    Manager::instance().sendRegister(bob2Id, true);
+
+    // Sync + validate
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bob2Announced && conversationReady; }));
+
 }
 
 } // namespace test
