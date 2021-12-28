@@ -1141,13 +1141,11 @@ bool
 ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
+    auto pin = false;
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (not cert || !cert->issuer)
-        return false;
-    auto userUri = cert->issuer->getId().toString();
-    auto parentCrt = tls::CertificateStore::instance().getCertificate(userUri);
+    pin = not cert || !cert->issuer;
     auto repo = repository();
-    if (not parentCrt or not repo)
+    if (not repo)
         return false;
 
     // Retrieve tree for commit
@@ -1160,6 +1158,14 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     auto blob_device = fileAtTree(deviceFile, tree);
     if (!fileAtTree(deviceFile, tree)) {
         JAMI_ERR("%s announced but not found", deviceFile.c_str());
+        return false;
+    }
+    auto* blob = reinterpret_cast<git_blob*>(blob_device.get());
+    auto deviceCert = dht::crypto::Certificate(std::string(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob)));
+    auto userUri = deviceCert.getIssuerUID();
+    if (userUri.empty()) {
+        JAMI_ERR("%s got no issuer UID", deviceFile.c_str());
         return false;
     }
 
@@ -1175,16 +1181,25 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     }
 
     // Check that certificate matches
-    auto* blob = reinterpret_cast<git_blob*>(blob_device.get());
-    auto deviceCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
-                                       git_blob_rawsize(blob));
     blob = reinterpret_cast<git_blob*>(blob_parent.get());
-    auto parentCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
-                                       git_blob_rawsize(blob));
-    auto deviceCertStr = cert->toString(false);
-    auto parentCertStr = parentCrt->toString(true);
+    auto parentCert = dht::crypto::Certificate(std::string(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob)));
 
-    return deviceCert == deviceCertStr && parentCert.find(parentCertStr) == 0;
+    if (deviceCert.getExpiration() <= std::chrono::system_clock::now()) {
+        JAMI_ERR("Device certificate %s expired", deviceCert.getId().to_c_str());
+        return false;
+    }
+    if (parentCert.getExpiration() <= std::chrono::system_clock::now()){
+        JAMI_ERR("Certificate %s expired", parentCert.getId().to_c_str());
+        return false;
+    }
+
+    auto res = parentCert.getId().toString() == userUri;
+    if (res && pin) {
+        tls::CertificateStore::instance().pinCertificate(std::move(deviceCert));
+        tls::CertificateStore::instance().pinCertificate(std::move(parentCert));
+    }
+    return res;
 }
 
 bool
