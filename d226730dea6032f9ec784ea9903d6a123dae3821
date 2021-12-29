@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab6d5a7c_d5a8e4ae",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 5
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-29T20:53:09Z",
+      "side": 1,
+      "message": "just a personal note, but I always thought that \"FIXME\" here is a bit unclear, should be REPLACE_THIS or similar. Fixme seems something a commit will change",
+      "range": {
+        "startLine": 56,
+        "startChar": 14,
+        "endLine": 56,
+        "endChar": 19
+      },
+      "revId": "d226730dea6032f9ec784ea9903d6a123dae3821",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4675c705_4da5205b",
+        "filename": "test/agent/scenarios/peer-monitor/scenario.scm",
+        "patchSetId": 5
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-29T20:53:09Z",
+      "side": 1,
+      "message": "weird indent (2 spaces)",
+      "range": {
+        "startLine": 8,
+        "startChar": 19,
+        "endLine": 8,
+        "endChar": 21
+      },
+      "revId": "d226730dea6032f9ec784ea9903d6a123dae3821",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
