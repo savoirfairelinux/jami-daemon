@@ -16,6 +16,24 @@
       "message": "Fyi, I added a patch for the CI, to add a stage to test the build via meson and avoid any future regression and force devs to fix the meson.build file.\n\nAnd I added a small line in the README for users to know how to build the tests. If it\u0027s ok for you we can merge",
       "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d648a64a_43b0a0cd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2021-12-29T20:31:45Z",
+      "side": 1,
+      "message": "Surely it can be merged, but since a half of tests are failed, it is not very useful for regular users like me. I think the tests that should succeed without a special test enviroment should be grouped into a suite, so the call `meson test --suite local` can actually reveal regressions. What do you think? If you describe prerequisites and expected results for all tests, I will do it later.",
+      "parentUuid": "3d42926c_76570379",
+      "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
