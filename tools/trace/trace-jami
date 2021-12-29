@@ -1,0 +1,28 @@
+#!/bin/sh
+
+epilogue() {
+    lttng stop
+    lttng destroy
+    exit 0
+}
+
+trap epilogue SIGINT
+
+lttng create jami
+lttng enable-event --userspace 'jami:*'
+lttng add-context --userspace --type=vtid
+
+for arg in "$@"; do
+    case "$arg" in
+        "--") break ;;
+        *) lttng add-context --userspace --type="$1" ;;
+    esac
+    shift
+done
+shift
+
+lttng start
+
+$@
+
+epilogue
