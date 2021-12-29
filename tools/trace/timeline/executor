@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+
+import argparse
+from datetime import datetime
+
+import bt2
+
+class Thread:
+
+    def __init__(self):
+        self.tasks     = {}
+        self.executors = {}
+
+class Task:
+
+    def __init__(self, beg, end):
+        self.source = "{}:{}".format(beg.event["source_filename"], beg.event["source_line"])
+        self.sched  = datetime.utcfromtimestamp(beg.default_clock_snapshot.ns_from_origin // 1E9).strftime("%X")
+        self.elapse = (end.default_clock_snapshot.ns_from_origin -
+                       beg.default_clock_snapshot.ns_from_origin) / 1E3
+
+def print_timeline(name, tasks):
+    print(f"\tExecutor: {name}")
+    print("\t\t{:<12s}{:<15}source".format("scheduled", "duration (µs)"))
+    for task in tasks:
+        print("\t\t{:<12s}{:<15.2f}{}".format(task.sched, task.elapse, task.source))
+    print("")
+
+def main(args):
+
+    filter_tid = args.tid
+    threads   = {}
+    prefix      = "jami:scheduled_executor_"
+
+    for msg in bt2.TraceCollectionMessageIterator(args.path[0]):
+
+        if type(msg) is bt2._EventMessageConst:
+
+            name = msg.event.name
+
+            if filter_tid > 0 and msg.event["vtid"] != filter_tid:
+                continue
+
+            tid = msg.event["vtid"]
+
+            if tid not in threads:
+                threads[tid] = Thread()
+
+            thread = threads[tid]
+
+            tasks = thread.tasks
+
+            if not name.startswith(prefix):
+                continue
+
+            name = name[len(prefix):]
+
+            if name == "task_begin":
+                tasks[msg.event["cookie"]] = msg
+
+            elif name == "task_end":
+
+                executors = thread.executors
+
+                begin    = tasks[msg.event["cookie"]]
+                end      = msg
+                task     = Task(begin, end)
+                executor = begin.event["executor"]
+
+                if executor not in executors:
+                    executors[executor] = [task]
+                else:
+                    executors[executor].append(task)
+
+    for tid, thread in threads.items():
+        if thread.executors:
+            print(f"Thread: {tid}")
+            for executor, tasks in thread.executors.items():
+                print_timeline(executor, tasks)
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description="Show scheduled executors timeline.")
+
+    parser.add_argument("path", metavar="TRACE", type=str, nargs=1)
+    parser.add_argument("tid", metavar="TID", type=int, nargs='?', default=-1)
+
+    args = parser.parse_args()
+
+    main(args)
