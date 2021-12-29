@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "38ea9e3c_19fb0057",
+        "filename": "test/agent/src/main.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-29T21:23:46Z",
+      "side": 1,
+      "message": "True, but command line arguments are guaranteed to be null terminated.",
+      "parentUuid": "aa18fdab_fb6370ce",
+      "range": {
+        "startLine": 38,
+        "startChar": 16,
+        "endLine": 38,
+        "endChar": 22
+      },
+      "revId": "8fe7d4ac40604532fe4019a2bde1ab2b83020dab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "63f9bc77_b0695800",
         "filename": "test/agent/src/main.cpp",
         "patchSetId": 6
@@ -37,6 +61,30 @@
       "writtenOn": "2021-12-29T21:13:35Z",
       "side": 1,
       "message": "C style, but not really important. also it should uses %.*s for char* moreover if the user can do the input",
+      "range": {
+        "startLine": 63,
+        "startChar": 8,
+        "endLine": 63,
+        "endChar": 15
+      },
+      "revId": "8fe7d4ac40604532fe4019a2bde1ab2b83020dab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "14be7e51_e8e6a96f",
+        "filename": "test/agent/src/main.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-29T21:23:46Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "63f9bc77_b0695800",
       "range": {
         "startLine": 63,
         "startChar": 8,
