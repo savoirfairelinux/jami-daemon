@@ -44,6 +44,67 @@ LTTNG_UST_TRACEPOINT_EVENT(
     LTTNG_UST_TP_FIELDS(lttng_ust_field_integer(uint64_t, cookie, cookie))
 )
 
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    ice_transport_context,
+    LTTNG_UST_TP_ARGS(
+            uint64_t, context
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, ice_context, context)
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    ice_transport_send,
+    LTTNG_UST_TP_ARGS(
+            uint64_t, cookie,
+            uint64_t, context,
+            unsigned, component,
+            size_t, len,
+            const char*, remote_addr
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, packet_uid, cookie)
+            lttng_ust_field_integer(uint64_t, ice_context, context)
+            lttng_ust_field_integer(unsigned, component, component)
+            lttng_ust_field_integer(size_t, packet_length, len)
+            lttng_ust_field_string(remote_addr, remote_addr)
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    ice_transport_send_status,
+    LTTNG_UST_TP_ARGS(
+            uint64_t, cookie,
+            int, status
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, packet_uid, cookie)
+            lttng_ust_field_integer(int, pj_status, status)
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    ice_transport_recv,
+    LTTNG_UST_TP_ARGS(
+            uint64_t, context,
+            unsigned, component,
+            size_t, len,
+            const char*, remote_addr
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, ice_context, context)
+            lttng_ust_field_integer(unsigned, component, component)
+            lttng_ust_field_integer(size_t, packet_length, len)
+            lttng_ust_field_string(remote_addr, remote_addr)
+    )
+)
+
+
 #endif /* TRACEPOINT_DEF_H */
 
 #include <lttng/tracepoint-event.h>
