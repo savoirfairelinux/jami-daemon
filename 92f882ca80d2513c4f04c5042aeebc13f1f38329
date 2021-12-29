@@ -34,6 +34,24 @@
       "parentUuid": "3d42926c_76570379",
       "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6bb51868_ad5c6fbf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-29T20:36:00Z",
+      "side": 1,
+      "message": "In fact there seems to be a problem with meson + tests. It builds, but indeed a lot are failing. With autotools (the CI uses it) there is no issue. I\u0027ll try to check (I\u0027ll be on another project during at least 3 months with limited time on Jami)",
+      "parentUuid": "d648a64a_43b0a0cd",
+      "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
