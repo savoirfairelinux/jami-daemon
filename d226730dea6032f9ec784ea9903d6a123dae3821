@@ -45,6 +45,30 @@
       },
       "revId": "d226730dea6032f9ec784ea9903d6a123dae3821",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c1ec169d_41942b8a",
+        "filename": "test/agent/scenarios/peer-monitor/scenario.scm",
+        "patchSetId": 5
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-12-29T21:26:41Z",
+      "side": 1,
+      "message": "I always write sentence with two spaces at the begin.  It\u0027s a boomer thing I\u0027ve learned I guess.",
+      "parentUuid": "4675c705_4da5205b",
+      "range": {
+        "startLine": 8,
+        "startChar": 19,
+        "endLine": 8,
+        "endChar": 21
+      },
+      "revId": "d226730dea6032f9ec784ea9903d6a123dae3821",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
