@@ -26,6 +26,7 @@
 #include "upnp/upnp_control.h"
 #include "transport/peer_channel.h"
 #include "jami/callmanager_interface.h"
+#include "tracepoint.h"
 
 #include <pjlib.h>
 
@@ -1097,6 +1098,13 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 {
     ASSERT_COMP_ID(comp_id, compCount_);
 
+    if (lttng_ust_tracepoint_enabled(jami, ice_transport_recv)) {
+        lttng_ust_do_tracepoint(jami, ice_transport_recv,
+                                reinterpret_cast<uint64_t>(this),
+                                comp_id, size,
+                                getRemoteAddress(comp_id).toString().c_str());
+    }
+
     if (size == 0)
         return;
 
@@ -1133,6 +1141,9 @@ void
 IceTransport::initIceInstance(const IceTransportOptions& options)
 {
     pimpl_->initIceInstance(options);
+
+    lttng_ust_tracepoint(jami, ice_transport_context,
+                         reinterpret_cast<uint64_t>(this));
 }
 
 bool
@@ -1693,12 +1704,26 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
     if (isTCPEnabled())
         dlk.lock();
 
+#ifdef ENABLE_TRACEPOINTS
+    static std::atomic<uint64_t> cookie_generator = {0};
+
+    uint64_t cookie = cookie_generator++;
+#endif
+
+
+    lttng_ust_tracepoint(jami, ice_transport_send,
+                         cookie, reinterpret_cast<uint64_t>(this),
+                         compId, len, remote.toString().c_str());
+
     auto status = pj_ice_strans_sendto2(pimpl_->icest_,
                                         compId,
                                         buf,
                                         len,
                                         remote.pjPtr(),
                                         remote.getLength());
+
+    lttng_ust_tracepoint(jami, ice_transport_send_status,
+                         cookie, status);
 
     if (status == PJ_EPENDING && isTCPEnabled()) {
         // NOTE; because we are in TCP, the sent size will count the header (2
