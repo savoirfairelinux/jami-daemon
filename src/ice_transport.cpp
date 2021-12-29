@@ -26,6 +26,7 @@
 #include "upnp/upnp_control.h"
 #include "transport/peer_channel.h"
 #include "jami/callmanager_interface.h"
+#include "tracepoint.h"
 
 #include <pjlib.h>
 
@@ -1097,6 +1098,13 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 {
     ASSERT_COMP_ID(comp_id, compCount_);
 
+    jami_tracepoint_if_enabled(ice_transport_recv,
+                               reinterpret_cast<uint64_t>(this),
+                               comp_id, size,
+                               // TODO - Replace "" with the following line
+                               // when problems with iceMutex_ are resolved.
+                               // getRemoteAddress(comp_id).toString().c_str()
+                               "");
     if (size == 0)
         return;
 
@@ -1133,6 +1141,9 @@ void
 IceTransport::initIceInstance(const IceTransportOptions& options)
 {
     pimpl_->initIceInstance(options);
+
+    jami_tracepoint(ice_transport_context,
+                    reinterpret_cast<uint64_t>(this));
 }
 
 bool
@@ -1693,12 +1704,18 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
     if (isTCPEnabled())
         dlk.lock();
 
+    jami_tracepoint(ice_transport_send,
+                    reinterpret_cast<uint64_t>(this),
+                    compId, len, remote.toString().c_str());
+
     auto status = pj_ice_strans_sendto2(pimpl_->icest_,
                                         compId,
                                         buf,
                                         len,
                                         remote.pjPtr(),
                                         remote.getLength());
+
+    jami_tracepoint(ice_transport_send_status, status);
 
     if (status == PJ_EPENDING && isTCPEnabled()) {
         // NOTE; because we are in TCP, the sent size will count the header (2
