@@ -714,18 +714,6 @@ DBusConfigurationManager::getAllIpInterfaceByName() -> decltype(DRing::getAllIpI
     return DRing::getAllIpInterfaceByName();
 }
 
-auto
-DBusConfigurationManager::getShortcuts() -> decltype(DRing::getShortcuts())
-{
-    return DRing::getShortcuts();
-}
-
-void
-DBusConfigurationManager::setShortcuts(const std::map<std::string, std::string>& shortcutsMap)
-{
-    DRing::setShortcuts(shortcutsMap);
-}
-
 void
 DBusConfigurationManager::setVolume(const std::string& device, const double& value)
 {
