@@ -122,6 +122,24 @@
       "parentUuid": "9e576c20_dc9e1806",
       "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fca82577_f3e23972",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2021-12-30T18:16:35Z",
+      "side": 1,
+      "message": "OK, I see. Meson can pass arguments and environment variables to tests, and set the working directory before execution. The source directory can be obtained with `meson.project_source_root()`. So the most simple solution looks like this:\n\ntest(..., workdir: meson.project_source_root() / \u0027test\u0027/ \u0027unitTest\u0027)\n\nWill fix it in January already. Happy New Year and holidays!",
+      "parentUuid": "a2d48606_cede485b",
+      "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
