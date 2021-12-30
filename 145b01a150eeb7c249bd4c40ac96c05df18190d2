@@ -70,6 +70,30 @@
       },
       "revId": "145b01a150eeb7c249bd4c40ac96c05df18190d2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "51ea6b77_b345bdd6",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1184,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-30T17:21:38Z",
+      "side": 1,
+      "message": "We agree. So I\u0027m not sure on the way to take this. I don\u0027t like to let the HACK there, but even if solved, this will not solve the issue for current certificates.",
+      "parentUuid": "a86b48c3_3a16cdc0",
+      "range": {
+        "startLine": 1184,
+        "startChar": 38,
+        "endLine": 1184,
+        "endChar": 70
+      },
+      "revId": "145b01a150eeb7c249bd4c40ac96c05df18190d2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
