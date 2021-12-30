@@ -274,45 +274,6 @@ private:
     constexpr static const char* const CONFIG_LABEL = "audio";
 };
 
-class ShortcutPreferences : public Serializable
-{
-public:
-    ShortcutPreferences();
-    void serialize(YAML::Emitter& out) const override;
-    void unserialize(const YAML::Node& in) override;
-
-    void setShortcuts(std::map<std::string, std::string> shortcuts);
-    std::map<std::string, std::string> getShortcuts() const;
-
-    std::string getHangup() const { return hangup_; }
-
-    void setHangup(const std::string& hangup) { hangup_ = hangup; }
-
-    std::string getPickup() const { return pickup_; }
-
-    void setPickup(const std::string& pickup) { pickup_ = pickup; }
-
-    std::string getPopup() const { return popup_; }
-
-    void setPopup(const std::string& popup) { popup_ = popup; }
-
-    std::string getToggleHold() const { return toggleHold_; }
-
-    void setToggleHold(const std::string& hold) { toggleHold_ = hold; }
-
-    std::string getTogglePickupHangup() const { return togglePickupHangup_; }
-
-    void setTogglePickupHangup(const std::string& toggle) { togglePickupHangup_ = toggle; }
-
-private:
-    std::string hangup_;
-    std::string pickup_;
-    std::string popup_;
-    std::string toggleHold_;
-    std::string togglePickupHangup_;
-    constexpr static const char* const CONFIG_LABEL = "shortcuts";
-};
-
 #ifdef ENABLE_VIDEO
 class VideoPreferences : public Serializable
 {
