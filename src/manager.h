@@ -94,11 +94,6 @@ public:
      */
     AudioPreference audioPreference;
 
-    /**
-     * Shortcut preferences
-     */
-    ShortcutPreferences shortcutPreferences;
-
 #ifdef ENABLE_PLUGIN
     /**
      * Plugin preferences

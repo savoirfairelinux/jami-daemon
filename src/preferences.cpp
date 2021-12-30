@@ -123,14 +123,6 @@ static constexpr const char* AGC_KEY {"automaticGainControl"};
 static constexpr const char* CAPTURE_MUTED_KEY {"captureMuted"};
 static constexpr const char* PLAYBACK_MUTED_KEY {"playbackMuted"};
 
-// shortcut preferences
-constexpr const char* const ShortcutPreferences::CONFIG_LABEL;
-static constexpr const char* HANGUP_SHORT_KEY {"hangUp"};
-static constexpr const char* PICKUP_SHORT_KEY {"pickUp"};
-static constexpr const char* POPUP_SHORT_KEY {"popupWindow"};
-static constexpr const char* TOGGLE_HOLD_SHORT_KEY {"toggleHold"};
-static constexpr const char* TOGGLE_PICKUP_HANGUP_SHORT_KEY {"togglePickupHangup"};
-
 #ifdef ENABLE_VIDEO
 // video preferences
 constexpr const char* const VideoPreferences::CONFIG_LABEL;
@@ -511,62 +503,6 @@ AudioPreference::unserialize(const YAML::Node& in)
     parseValue(node, VOLUMEMIC_KEY, volumemic_);
     parseValue(node, VOLUMESPKR_KEY, volumespkr_);
     parseValue(node, ECHO_CANCELLER, echoCanceller_);
-}
-
-ShortcutPreferences::ShortcutPreferences()
-    : hangup_()
-    , pickup_()
-    , popup_()
-    , toggleHold_()
-    , togglePickupHangup_()
-{}
-
-std::map<std::string, std::string>
-ShortcutPreferences::getShortcuts() const
-{
-    std::map<std::string, std::string> shortcutsMap;
-
-    shortcutsMap[HANGUP_SHORT_KEY] = hangup_;
-    shortcutsMap[PICKUP_SHORT_KEY] = pickup_;
-    shortcutsMap[POPUP_SHORT_KEY] = popup_;
-    shortcutsMap[TOGGLE_HOLD_SHORT_KEY] = toggleHold_;
-    shortcutsMap[TOGGLE_PICKUP_HANGUP_SHORT_KEY] = togglePickupHangup_;
-
-    return shortcutsMap;
-}
-
-void
-ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
-{
-    hangup_ = map[HANGUP_SHORT_KEY];
-    pickup_ = map[PICKUP_SHORT_KEY];
-    popup_ = map[POPUP_SHORT_KEY];
-    toggleHold_ = map[TOGGLE_HOLD_SHORT_KEY];
-    togglePickupHangup_ = map[TOGGLE_PICKUP_HANGUP_SHORT_KEY];
-}
-
-void
-ShortcutPreferences::serialize(YAML::Emitter& out) const
-{
-    out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << HANGUP_SHORT_KEY << YAML::Value << hangup_;
-    out << YAML::Key << PICKUP_SHORT_KEY << YAML::Value << pickup_;
-    out << YAML::Key << POPUP_SHORT_KEY << YAML::Value << popup_;
-    out << YAML::Key << TOGGLE_HOLD_SHORT_KEY << YAML::Value << toggleHold_;
-    out << YAML::Key << TOGGLE_PICKUP_HANGUP_SHORT_KEY << YAML::Value << togglePickupHangup_;
-    out << YAML::EndMap;
-}
-
-void
-ShortcutPreferences::unserialize(const YAML::Node& in)
-{
-    const auto& node = in[CONFIG_LABEL];
-
-    parseValue(node, HANGUP_SHORT_KEY, hangup_);
-    parseValue(node, PICKUP_SHORT_KEY, pickup_);
-    parseValue(node, POPUP_SHORT_KEY, popup_);
-    parseValue(node, TOGGLE_HOLD_SHORT_KEY, toggleHold_);
-    parseValue(node, TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup_);
 }
 
 #ifdef ENABLE_VIDEO

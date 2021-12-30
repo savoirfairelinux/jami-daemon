@@ -720,7 +720,6 @@ Manager::Manager()
     , preferences()
     , voipPreferences()
     , audioPreference()
-    , shortcutPreferences()
 #ifdef ENABLE_PLUGIN
     , pluginPreferences()
 #endif
@@ -1727,7 +1726,6 @@ Manager::saveConfig()
 #ifdef ENABLE_PLUGIN
         pluginPreferences.serialize(out);
 #endif
-        shortcutPreferences.serialize(out);
 
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(pimpl_->path_));
         std::ofstream fout = fileutils::ofstream(pimpl_->path_);
@@ -2781,7 +2779,6 @@ Manager::loadAccountMap(const YAML::Node& node)
         preferences.unserialize(node);
         voipPreferences.unserialize(node);
         audioPreference.unserialize(node);
-        shortcutPreferences.unserialize(node);
 #ifdef ENABLE_VIDEO
         videoPreferences.unserialize(node);
 #endif
