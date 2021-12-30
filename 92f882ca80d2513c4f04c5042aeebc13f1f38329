@@ -87,6 +87,23 @@
       "message": "Just for me, nothing to change, will check why the tests are failing with meson",
       "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9e576c20_dc9e1806",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2021-12-30T12:10:10Z",
+      "side": 1,
+      "message": "I started tests after cleaning (rm -rf ~/.local/share/jami; rm -rf ~/.config/jami*), and there is no more timeouts. The tests just require dring-sample.yml and jami-sample.yml (all except conversation* tests, which need an ready-to-use account, I suppose).\n\n 1/37 account_archive               FAIL            0.61s   killed by signal 6 SIGABRT\n\u003c...\u003e\n  terminate called after throwing an instance of \u0027CppUnit::Exception\u0027\n  what():  assertion failed\n- Expression: DRing::start(\"dring-sample.yml\")\n\n10/37 connection_manager            FAIL            0.54s   killed by signal 6 SIGABRT\n\u003c...\u003e\n  terminate called after throwing an instance of \u0027CppUnit::Exception\u0027\n  what():  assertion failed\n- Expression: DRing::start(\"jami-sample.yml\")",
+      "revId": "92f882ca80d2513c4f04c5042aeebc13f1f38329",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
