@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a529b6a_3121c9c7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1184,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-30T13:59:23Z",
+      "side": 1,
+      "message": "Should be compared to the commit date instead of the current date?\nWhat matters is that the device is valid when the commit is committed, since we still want to be able to sync when an old commit is checked (maybe at this point the device cert is expired but was not at the time of the commit).\n\nAlso just a question: do we ever check that the certificate is valid (signature matches with parent chain etc)?",
+      "range": {
+        "startLine": 1184,
+        "startChar": 38,
+        "endLine": 1184,
+        "endChar": 70
+      },
+      "revId": "145b01a150eeb7c249bd4c40ac96c05df18190d2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
