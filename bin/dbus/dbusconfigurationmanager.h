@@ -176,8 +176,6 @@ public:
     std::string getAddrFromInterfaceName(const std::string& interface);
     std::vector<std::string> getAllIpInterface();
     std::vector<std::string> getAllIpInterfaceByName();
-    std::map<std::string, std::string> getShortcuts();
-    void setShortcuts(const std::map<std::string, std::string>& shortcutsMap);
     void setVolume(const std::string& device, const double& value);
     double getVolume(const std::string& device);
     std::map<std::string, std::string> validateCertificate(const std::string& accountId,

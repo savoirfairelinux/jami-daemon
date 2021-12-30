@@ -180,9 +180,6 @@ DRING_PUBLIC std::string getAddrFromInterfaceName(const std::string& iface);
 DRING_PUBLIC std::vector<std::string> getAllIpInterface();
 DRING_PUBLIC std::vector<std::string> getAllIpInterfaceByName();
 
-DRING_PUBLIC std::map<std::string, std::string> getShortcuts();
-DRING_PUBLIC void setShortcuts(const std::map<std::string, std::string>& shortcutsMap);
-
 DRING_PUBLIC void setVolume(const std::string& device, double value);
 DRING_PUBLIC double getVolume(const std::string& device);
 

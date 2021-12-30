@@ -907,19 +907,6 @@ getAllIpInterfaceByName()
     return jami::ip_utils::getAllIpInterfaceByName();
 }
 
-std::map<std::string, std::string>
-getShortcuts()
-{
-    return jami::Manager::instance().shortcutPreferences.getShortcuts();
-}
-
-void
-setShortcuts(const std::map<std::string, std::string>& shortcutsMap)
-{
-    jami::Manager::instance().shortcutPreferences.setShortcuts(shortcutsMap);
-    jami::Manager::instance().saveConfig();
-}
-
 std::vector<std::map<std::string, std::string>>
 getCredentials(const std::string& accountID)
 {
