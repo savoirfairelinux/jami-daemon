@@ -22,6 +22,30 @@
       },
       "revId": "145b01a150eeb7c249bd4c40ac96c05df18190d2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ead8a1a_e0300668",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1184,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-12-30T16:08:30Z",
+      "side": 1,
+      "message": "It\u0027s indeed a good point indeed, I changed for the timestamp.\n\nFor certificate check, the previous version was checking the similarity of the pinned certificate and the commit,s one (and pinned certificate is validated). But here I saw a big issue (see my HACK: comment)\n\nI rechecked, but if we only take the deviceCert part, for JAMS account we can\u0027t know the issuer (getIssuerUID() returns nothing ; cert-\u003eissuer will be nullptr as it only got the deviceCert). I think this is bad and a deviceCert should get an issuer? Else how can we go up in the chain?",
+      "parentUuid": "8a529b6a_3121c9c7",
+      "range": {
+        "startLine": 1184,
+        "startChar": 38,
+        "endLine": 1184,
+        "endChar": 70
+      },
+      "revId": "145b01a150eeb7c249bd4c40ac96c05df18190d2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
