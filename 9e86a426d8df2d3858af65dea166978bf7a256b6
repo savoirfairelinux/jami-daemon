@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a9fcb0e5_02ef1a91",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1203,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-30T20:01:14Z",
+      "side": 1,
+      "message": "deviceCert.getExpiration()",
+      "range": {
+        "startLine": 1201,
+        "startChar": 28,
+        "endLine": 1203,
+        "endChar": 41
+      },
+      "revId": "9e86a426d8df2d3858af65dea166978bf7a256b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5e418e1_562ed813",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1207,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-12-30T20:01:14Z",
+      "side": 1,
+      "message": "use https://en.cppreference.com/w/cpp/chrono/system_clock/from_time_t to compare time_point instances",
+      "range": {
+        "startLine": 1207,
+        "startChar": 22,
+        "endLine": 1207,
+        "endChar": 52
+      },
+      "revId": "9e86a426d8df2d3858af65dea166978bf7a256b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
