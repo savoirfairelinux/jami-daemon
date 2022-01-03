@@ -21,6 +21,16 @@ test('account_archive', ut_account_archive,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
+ut_migration = executable('ut_migration',
+    sources: files('unitTest/account_archive/migration.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('migration', ut_migration,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
+
 
 ut_account_factory = executable('ut_account_factory',
     sources: files('unitTest/account_factory/testAccount_factory.cpp'),
