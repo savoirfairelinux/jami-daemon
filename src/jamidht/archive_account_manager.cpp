@@ -158,6 +158,60 @@ ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::
     return updated;
 }
 
+bool
+ArchiveAccountManager::setValidity(const std::string& password,
+                                   dht::crypto::Identity& device,
+                                   const dht::InfoHash& id,
+                                   int64_t validity)
+{
+    auto archive = readArchive(password);
+    // We need the CA key to resign certificates
+    if (not archive.id.first or not *archive.id.first or not archive.id.second or not archive.ca_key
+        or not *archive.ca_key)
+        return false;
+
+    auto updated = false;
+
+    if (id)
+        JAMI_WARN("Updating validity for certificate with id: %s", id.to_c_str());
+    else
+        JAMI_WARN("Updating validity for certificates");
+
+    auto& cert = archive.id.second;
+    auto ca = cert->issuer;
+    if (not ca)
+        return false;
+
+    // using Certificate = dht::crypto::Certificate;
+    //  Update CA if possible and relevant
+    if (not id or ca->getId() == id) {
+        ca->setValidity(*archive.ca_key, validity);
+        updated = true;
+        JAMI_DBG("CA CRT re-generated");
+    }
+
+    // Update certificate
+    if (updated or not id or cert->getId() == id) {
+        cert->setValidity(dht::crypto::Identity {archive.ca_key, ca}, validity);
+        device.second->issuer = cert;
+        updated = true;
+        JAMI_DBG("Jami CRT re-generated");
+    }
+
+    if (updated) {
+        auto path = fileutils::getFullPath(path_, archivePath_);
+        archive.save(path, password);
+    }
+
+    if (updated or not id or device.second->getId() == id) {
+        // update device certificate
+        device.second->setValidity(archive.id, validity);
+        updated = true;
+    }
+
+    return updated;
+}
+
 void
 ArchiveAccountManager::createAccount(AuthContext& ctx)
 {
@@ -582,10 +636,13 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
         } else
             archive.config[it.first] = it.second;
     }
-    archive.contacts = info_->contacts->getContacts();
-    // Note we do not know accountID_ here, use path
-    archive.conversations = ConversationModule::convInfosFromPath(path_);
-    archive.conversationsRequests = ConversationModule::convRequestsFromPath(path_);
+    if (info_) {
+        // If migrating from same archive, info_ will be null
+        archive.contacts = info_->contacts->getContacts();
+        // Note we do not know accountID_ here, use path
+        archive.conversations = ConversationModule::convInfosFromPath(path_);
+        archive.conversationsRequests = ConversationModule::convRequestsFromPath(path_);
+    }
 }
 
 void
