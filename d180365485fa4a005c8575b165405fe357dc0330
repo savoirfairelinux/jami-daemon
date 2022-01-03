@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d9578b7_32726ade",
+        "filename": "contrib/src/opendht/debug.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-03T21:24:46Z",
+      "side": 1,
+      "message": "This is a temporary patch in review there: https://github.com/savoirfairelinux/opendht/pull/573 that\u0027s why it\u0027s a WIP, the rest is ok to review",
+      "range": {
+        "startLine": 14,
+        "startChar": 15,
+        "endLine": 16,
+        "endChar": 110
+      },
+      "revId": "d180365485fa4a005c8575b165405fe357dc0330",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
