@@ -1022,6 +1022,20 @@ JamiAccount::exportArchive(const std::string& destinationPath, const std::string
 }
 
 bool
+JamiAccount::setValidity(const std::string& pwd, const dht::InfoHash& id, int64_t validity)
+{
+    if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
+        if (manager->setValidity(pwd, id_, id, validity)) {
+            saveIdentity(id_, idPath_, "ring_device");
+            receipt_.clear();
+            receiptSignature_.clear();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
 JamiAccount::revokeDevice(const std::string& password, const std::string& device)
 {
     if (not accountManager_)
@@ -1155,6 +1169,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
         auto id = accountManager_->loadIdentity(tlsCertificateFile_,
                                                 tlsPrivateKeyFile_,
                                                 tlsPassword_);
+
         if (auto info = accountManager_->useIdentity(id,
                                                      receipt_,
                                                      receiptSignature_,
@@ -1191,6 +1206,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 }
                 auto archivePath = fileutils::getFullPath(idPath_, archivePath_);
                 bool hasArchive = fileutils::isFile(archivePath);
+
                 if (not archive_path.empty()) {
                     // Importing external archive
                     acreds->scheme = "file";

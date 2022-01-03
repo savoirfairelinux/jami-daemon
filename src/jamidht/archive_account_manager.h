@@ -71,6 +71,14 @@ public:
                       RegistrationCallback cb) override;
 #endif
 
+    /**
+     * Change the validity of a certificate. If hash is empty, update all certificates
+     */
+    bool setValidity(const std::string& password,
+                     dht::crypto::Identity& device,
+                     const dht::InfoHash& id,
+                     int64_t validity);
+
 private:
     struct DhtLoadContext;
     struct AuthContext
