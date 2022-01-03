@@ -21,6 +21,12 @@ check_PROGRAMS += ut_account_archive
 ut_account_archive_SOURCES = account_archive/account_archive.cpp common.cpp
 
 #
+# migration
+#
+check_PROGRAMS += ut_migration
+ut_migration_SOURCES = account_archive/migration.cpp common.cpp
+
+#
 # certstore
 #
 check_PROGRAMS += ut_certstore
