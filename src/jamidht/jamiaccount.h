@@ -586,6 +586,11 @@ public:
 
     bool sha3SumVerify() const { return !noSha3sumVerification_; }
 
+    bool setValidity(const std::string& pwd, const dht::InfoHash& id, int64_t validity);
+    void loadAccount(const std::string& archive_password = {},
+                     const std::string& archive_pin = {},
+                     const std::string& archive_path = {});
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -654,26 +659,10 @@ private:
     void forEachPendingCall(const DeviceId& deviceId,
                             const std::function<void(const std::shared_ptr<SIPCall>&)>& cb);
 
-    void loadAccount(const std::string& archive_password = {},
-                     const std::string& archive_pin = {},
-                     const std::string& archive_path = {});
     void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
     void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
     void loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password);
 
-    bool hasCertificate() const;
-    bool hasPrivateKey() const;
-
-    std::string makeReceipt(const dht::crypto::Identity& id);
-    void createRingDevice(const dht::crypto::Identity& id);
-    void initRingDevice(const AccountArchive& a);
-    void migrateAccount(const std::string& pwd, dht::crypto::Identity& device);
-    static bool updateCertificates(AccountArchive& archive, dht::crypto::Identity& device);
-
-    void createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate);
-    void updateArchive(AccountArchive& content) const;
-    void saveArchive(AccountArchive& content, const std::string& pwd);
-    AccountArchive readArchive(const std::string& pwd) const;
     std::vector<std::string> loadBootstrap() const;
 
     static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id,
