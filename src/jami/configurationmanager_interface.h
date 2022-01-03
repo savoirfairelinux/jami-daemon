@@ -60,7 +60,8 @@ DRING_PUBLIC void setAccountDetails(const std::string& accountID,
                                     const std::map<std::string, std::string>& details);
 DRING_PUBLIC void setAccountActive(const std::string& accountID, bool active);
 DRING_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
-DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details, const std::string& accountID={});
+DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details,
+                                    const std::string& accountID = {});
 DRING_PUBLIC void monitor(bool continuous);
 DRING_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
 DRING_PUBLIC bool exportToFile(const std::string& accountID,
@@ -87,7 +88,6 @@ DRING_PUBLIC bool registerName(const std::string& account,
 DRING_PUBLIC bool searchUser(const std::string& account, const std::string& query);
 
 DRING_PUBLIC void removeAccount(const std::string& accountID);
-DRING_PUBLIC void setAccountEnabled(const std::string& accountID, bool enable);
 DRING_PUBLIC std::vector<std::string> getAccountList();
 DRING_PUBLIC void sendRegister(const std::string& accountID, bool enable);
 DRING_PUBLIC void registerAllAccounts(void);
