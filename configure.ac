@@ -566,7 +566,7 @@ fi
 AM_CONDITIONAL([HAVE_WEBRTC_AP], test "x$with_webrtc_ap" = "xyes")
 
 dnl check for openDHT
-PKG_CHECK_MODULES([OPENDHT], [opendht >= 2.2.0],,
+PKG_CHECK_MODULES([OPENDHT], [opendht >= 2.3.2],,
   AC_MSG_FAILURE([Missing OpenDHT]))
 
 PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],,
