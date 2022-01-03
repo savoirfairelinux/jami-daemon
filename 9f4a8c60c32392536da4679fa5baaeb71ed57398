@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4938ee15_72609be4",
+        "filename": "src/media/libav_utils.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-03T22:24:27Z",
+      "side": 1,
+      "message": "The only thing I don,t like is that packetization mdoe is hardcoded there, I guess this should come from ffmpeg\u0027s config, should be parsed and set to 1 or 0 depending of the situation.\n\nELse I agree with the patch",
+      "range": {
+        "startLine": 41,
+        "startChar": 47,
+        "endLine": 41,
+        "endChar": 67
+      },
+      "revId": "9f4a8c60c32392536da4679fa5baaeb71ed57398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
