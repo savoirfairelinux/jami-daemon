@@ -113,6 +113,12 @@ DBusVideoManager::setDeviceOrientation(const std::string& deviceId, const int& a
     DRing::setDeviceOrientation(deviceId, angle);
 }
 
+void
+DBusVideoManager::startShmTransfer(const std::string& sinkId, const bool& value)
+{
+    DRing::startShmTransfer(sinkId, value);
+}
+
 std::map<std::string, std::string>
 DBusVideoManager::getRenderer(const std::string& callId)
 {

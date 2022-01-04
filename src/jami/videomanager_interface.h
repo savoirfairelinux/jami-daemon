@@ -211,6 +211,9 @@ int64_t getPlayerPosition(const std::string& id);
 
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
 DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
+#if HAVE_SHM
+DRING_PUBLIC void startShmTransfer(const std::string& sinkId, bool value);
+#endif
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
 DRING_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId,
