@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2022 Savoir-faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
@@ -72,7 +72,7 @@ public:
     std::shared_future<DeviceParams> getParams() const {
         return futureDecOpts_;
     }
-    
+
     MediaStream getInfo() const;
 
     void setSink(const std::string& sinkId);

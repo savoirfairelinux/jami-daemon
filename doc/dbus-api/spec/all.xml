@@ -5,7 +5,7 @@
 <tp:title>Jami D-Bus Interface Specification</tp:title>
 <tp:version>2.3.0</tp:version>
 
-<tp:copyright>Copyright © 2005-2021 Savoir-faire Linux Inc</tp:copyright>
+<tp:copyright>Copyright ©2005-2022 Savoir-faire Linux Inc</tp:copyright>
 
 <tp:license xmlns="http://www.w3.org/1999/xhtml">
 <p>This program is free software; you can redistribute it and/or modify

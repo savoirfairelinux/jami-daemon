@@ -10,7 +10,7 @@ dnl DAEMONCFLAGS/DAEMONCXXFLAGS variables below.
 : ${CFLAGS=""}
 : ${CXXFLAGS=""}
 
-AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2021]])
+AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2022]])
 AC_REVISION([$Revision$])
 
 dnl Where to find configure files
