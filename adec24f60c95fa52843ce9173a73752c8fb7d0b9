@@ -70,6 +70,23 @@
       "parentUuid": "f065be8e_0cebd7de",
       "revId": "adec24f60c95fa52843ce9173a73752c8fb7d0b9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cdb2aeb_2754b52d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-01-04T19:38:06Z",
+      "side": 1,
+      "message": "OK, it is clear from the backtrace that CppUnit for some reason creates two different instances of AccountArchiveTest, which both initialize the daemon. Bug in CppUnit? I use 1.15.1.",
+      "revId": "adec24f60c95fa52843ce9173a73752c8fb7d0b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
