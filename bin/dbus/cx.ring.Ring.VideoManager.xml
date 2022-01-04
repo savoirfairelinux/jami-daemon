@@ -150,6 +150,16 @@
             </arg>
         </method>
 
+        <method name="startShmTransfer" tp:name-for-bindings="startShmTransfer">
+            <tp:docstring>Ask the sink client to do the transfer for a renderer</tp:docstring>
+            <arg type="s" name="sinkId" direction="in">
+                <tp:docstring>Sink id</tp:docstring>
+            </arg>
+            <arg type="b" name="value" direction="in">
+                <tp:docstring>true to start transfer ; false to stop</tp:docstring>
+            </arg>
+        </method>
+
         <signal name="deviceEvent" tp:name-for-bindings="deviceEvent">
            <tp:docstring>Signal triggered by changes in the detected v4l2 devices, e.g. a camera being unplugged.</tp:docstring>
         </signal>
