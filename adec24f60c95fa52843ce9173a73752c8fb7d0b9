@@ -52,6 +52,24 @@
       "parentUuid": "c19166e0_603894a3",
       "revId": "adec24f60c95fa52843ce9173a73752c8fb7d0b9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "abe4fd24_8315b43f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-01-04T19:04:38Z",
+      "side": 1,
+      "message": "Sorry, I mean the `DRing::start()` is called twice and raises the exception, but it is not very different.",
+      "parentUuid": "f065be8e_0cebd7de",
+      "revId": "adec24f60c95fa52843ce9173a73752c8fb7d0b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
