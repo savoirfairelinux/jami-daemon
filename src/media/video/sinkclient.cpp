@@ -375,7 +375,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 
     bool doTransfer = (target_.pull != nullptr);
 #if HAVE_SHM
-    doTransfer |= (shm_ != nullptr);
+    doTransfer |= (shm_ && doShmTransfer_);
 #endif
 
     if (doTransfer) {
@@ -430,7 +430,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             return;
         }
 #if HAVE_SHM
-        if (shm_)
+        if (shm_ && doShmTransfer_)
             shm_->renderFrame(*frame);
 #endif
         if (target_.pull) {
