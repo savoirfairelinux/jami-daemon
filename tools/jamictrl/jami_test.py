@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-#  Copyright (C) 2004-2021 Savoir-faire Linux Inc. Inc
+#  Copyright (C)2004-2022 Savoir-faire Linux Inc. Inc
 #
 # Author: Mohamed Fenjiro <mohamed.fenjiro@savoirfairelinux.com>
 #
