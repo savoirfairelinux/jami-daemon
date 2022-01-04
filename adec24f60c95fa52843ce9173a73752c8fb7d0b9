@@ -87,6 +87,24 @@
       "message": "OK, it is clear from the backtrace that CppUnit for some reason creates two different instances of AccountArchiveTest, which both initialize the daemon. Bug in CppUnit? I use 1.15.1.",
       "revId": "adec24f60c95fa52843ce9173a73752c8fb7d0b9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "06b5ff42_15db9f65",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-04T22:10:30Z",
+      "side": 1,
+      "message": "Ok, so in build, I ran `ninja test`, except account_factory, other seems fine.\n\n[0/1] Running all tests.\n 1/37 account_archive                       OK             170.35s\n 2 Ctrl^C\n 3/37 audio_frame_resizer                   OK               0.02s\n 4/37 auto_answer                           OK             122.31s\n 5/37 base64                                OK               0.01s\n...\n\nHowever, the timeout seems too low, due to a lot of things, our tests are slow (the time to do calls, put vlaues on the DHT, generate keys, wait for events, etc) and generally takes a few minutes. I guess 30min should be a reasonable timeout, as if a test is longer, it will be split.\n\nNow, for https://pastebin.com/UQX7ZvDe, it\u0027s weird, I don\u0027t have this problem. But DRing::start is only called once (by the constructor), so no clue :/\n\nFor the patch, for me it\u0027s ok if we replace timeout: 60 by \"timeout: 1800\"",
+      "parentUuid": "abe4fd24_8315b43f",
+      "revId": "adec24f60c95fa52843ce9173a73752c8fb7d0b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
