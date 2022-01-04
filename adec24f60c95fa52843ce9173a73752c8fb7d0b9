@@ -34,6 +34,24 @@
       "parentUuid": "1ffd6ae5_c8d85f8d",
       "revId": "adec24f60c95fa52843ce9173a73752c8fb7d0b9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f065be8e_0cebd7de",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-01-04T18:19:35Z",
+      "side": 1,
+      "message": "\u003e in build/ if i do test/ut_account_archive I got the same errors, it\u0027s not loading the files\n\nIf you run tests manually, you should set the working directory first:\n$ cd ~/ring-daemon/test/unitTest\n$ ~/ring-daemon/build/test/ut_account_archive\n\nHave you done this?\n\n\u003e Never saw this failed expression, but do you have any other daemon running?\n\nIf I run `LD_LIBRARY_PATH\u003d~/ring-daemon/build/src/:$LD_LIBRARY_PATH ~/ring-daemon/build/bin/dbus/jamid`, the daemon works fine (with the Qt client). The daemon from repos also works fine. So the problem with tests only.\n\nAs I found out, the problem is that DRing::init() is called twice at startup, and the second call raises the exception. Can you explain this?\n\nhttps://pastebin.com/UQX7ZvDe",
+      "parentUuid": "c19166e0_603894a3",
+      "revId": "adec24f60c95fa52843ce9173a73752c8fb7d0b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
