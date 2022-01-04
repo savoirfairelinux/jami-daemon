@@ -536,6 +536,19 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 #endif
 }
 
+#if HAVE_SHM
+void
+startShmSink(const std::string& sinkId, bool value)
+{
+#ifdef ENABLE_VIDEO
+    if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
+        sink->enableShm(value);
+    else
+        JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
+#endif
+}
+#endif
+
 void
 registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target)
 {

@@ -82,6 +82,10 @@ public:
     }
     void registerAVTarget(const DRing::AVSinkTarget& target) noexcept { avTarget_ = target; }
 
+#if HAVE_SHM
+    void enableShm(bool value) { doShmTransfer_.store(value); }
+#endif
+
 private:
     const std::string id_;
     // True if the instance is used by a mixer.
@@ -110,6 +114,7 @@ private:
 #if HAVE_SHM
     // using shared_ptr and not unique_ptr as ShmHolder is forwared only
     std::shared_ptr<ShmHolder> shm_;
+    std::atomic_bool doShmTransfer_ {false};
 #endif // HAVE_SHM
 };
 
