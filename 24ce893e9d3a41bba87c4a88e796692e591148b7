@@ -16,6 +16,24 @@
       "message": "there should be a space between the (c) and the copyright year(s)",
       "revId": "24ce893e9d3a41bba87c4a88e796692e591148b7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3370e51_d07f4c58",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-05T21:22:15Z",
+      "side": 1,
+      "message": "true",
+      "parentUuid": "316b10a0_26d75b3e",
+      "revId": "24ce893e9d3a41bba87c4a88e796692e591148b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
