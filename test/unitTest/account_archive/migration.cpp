@@ -22,6 +22,7 @@
 
 #include <condition_variable>
 #include <string>
+#include <filesystem>
 #include <fstream>
 #include <streambuf>
 #include <fmt/format.h>
@@ -62,9 +63,11 @@ public:
 
 private:
     void testLoadExpiredAccount();
+    void testMigrationAfterRevokation();
 
     CPPUNIT_TEST_SUITE(MigrationTest);
     CPPUNIT_TEST(testLoadExpiredAccount);
+    CPPUNIT_TEST(testMigrationAfterRevokation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -73,7 +76,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MigrationTest, MigrationTest::name());
 void
 MigrationTest::setUp()
 {
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-password.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
 }
@@ -81,6 +84,9 @@ MigrationTest::setUp()
 void
 MigrationTest::tearDown()
 {
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+
     if (!bob2Id.empty())
         wait_for_removal_of({aliceId, bob2Id, bobId});
     else
@@ -91,6 +97,8 @@ void
 MigrationTest::testLoadExpiredAccount()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto aliceDevice = std::string(aliceAccount->currentDeviceId());
 
     // Get alice's expiration
     auto archivePath = fmt::format("{}/{}/archive.gz",
@@ -143,6 +151,76 @@ MigrationTest::testLoadExpiredAccount()
     accountExpiration = archive.id.second->getExpiration();
     CPPUNIT_ASSERT(newDeviceExpiration < deviceExpiration
                    && newAccountExpiration < accountExpiration);
+    CPPUNIT_ASSERT(aliceUri == aliceAccount->getUsername());
+    CPPUNIT_ASSERT(aliceDevice == aliceAccount->currentDeviceId());
+}
+
+void
+MigrationTest::testMigrationAfterRevokation()
+{
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    // Generate bob2
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
+    // Add second device for Bob
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+
+    auto deviceRevoked = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::DeviceRevocationEnded>(
+            [&](const std::string& accountId, const std::string&, int status) {
+                if (accountId == bobId && status == 0)
+                    deviceRevoked = true;
+                cv.notify_one();
+            }));
+    auto bobMigrated = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::MigrationEnded>(
+        [&](const std::string& accountId, const std::string& state) {
+            if (accountId == bob2Id && state == "SUCCESS") {
+                bobMigrated = true;
+            }
+            cv.notify_one();
+        }));
+    auto knownChanged = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::KnownDevicesChanged>(
+        [&](const std::string& accountId, auto devices) {
+            if (accountId == bobId && devices.size() == 2)
+                knownChanged = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    bob2Id = Manager::instance().addAccount(details);
+    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return knownChanged; }));
+
+    // Revoke bob2
+    auto bob2Device = std::string(bob2Account->currentDeviceId());
+    bobAccount->revokeDevice("", bob2Device);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return deviceRevoked; }));
+
+    // Check migration is triggered and expiration updated
+    bob2Account->forceReloadAccount();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 15s, [&]() { return bobMigrated; }));
+    // Because the device was revoked, a new ID must be generated there
+    CPPUNIT_ASSERT(bob2Device != bob2Account->currentDeviceId());
 }
 
 } // namespace test
