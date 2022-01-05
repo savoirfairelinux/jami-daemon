@@ -73,6 +73,7 @@ private:
     void testExportImportPasswordDoubleGunzip();
     void testExportDht();
     void testExportDhtWrongPassword();
+    void testChangePassword();
 
     CPPUNIT_TEST_SUITE(AccountArchiveTest);
     CPPUNIT_TEST(testExportImportNoPassword);
@@ -81,6 +82,7 @@ private:
     CPPUNIT_TEST(testExportImportPasswordDoubleGunzip);
     CPPUNIT_TEST(testExportDht);
     CPPUNIT_TEST(testExportDhtWrongPassword);
+    CPPUNIT_TEST(testChangePassword);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -228,6 +230,19 @@ AccountArchiveTest::testExportDhtWrongPassword()
     DRing::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(DRing::exportOnRing(bobId, "wrong"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return status == 1; }));
+}
+
+void
+AccountArchiveTest::testChangePassword()
+{
+    // Test wrong password, should fail
+    CPPUNIT_ASSERT(!DRing::changeAccountPassword(aliceId, "wrong", "new"));
+    // Test correct password, should succeed
+    CPPUNIT_ASSERT(DRing::changeAccountPassword(aliceId, "", "new"));
+    // Now it should fail
+    CPPUNIT_ASSERT(!DRing::changeAccountPassword(aliceId, "", "new"));
+    // Remove password again (should succeed)
+    CPPUNIT_ASSERT(DRing::changeAccountPassword(aliceId, "new", ""));
 }
 
 } // namespace test
