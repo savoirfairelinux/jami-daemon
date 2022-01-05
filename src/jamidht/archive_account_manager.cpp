@@ -361,13 +361,17 @@ ArchiveAccountManager::migrateAccount(AuthContext& ctx)
     updateArchive(archive);
 
     if (updateCertificates(archive, ctx.credentials->updateIdentity)) {
-        onArchiveLoaded(ctx, std::move(archive));
+        // because updateCertificates already regenerate a device, we do not need to
+        // regenerate one in onArchiveLoaded
+        onArchiveLoaded(ctx, std::move(archive), ctx.credentials->updateIdentity);
     } else
         ctx.onFailure(AuthError::UNKNOWN, "");
 }
 
 void
-ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
+ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
+                                       AccountArchive&& a,
+                                       const dht::crypto::Identity& useIdentity)
 {
     auto ethAccount = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
     fileutils::check_dir(path_.c_str(), 0700);
@@ -378,25 +382,38 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     if (not a.id.second->isCA()) {
         JAMI_ERR("[Auth] trying to sign a certificate with a non-CA.");
     }
-    JAMI_WARN("[Auth] creating new device certificate");
 
-    auto request = ctx.request.get();
-    if (not request->verify()) {
-        JAMI_ERR("[Auth] Invalid certificate request.");
-        ctx.onFailure(AuthError::INVALID_ARGUMENTS, "");
-        return;
+    std::shared_ptr<dht::crypto::Certificate> deviceCertificate;
+    // If ctx.key is the same private key used in ctx.credentials->updateIdentity
+    // we don't need to regenerate a new device as already handled by migrateAccount
+    if (useIdentity.second) {
+        deviceCertificate = useIdentity.second;
+        JAMI_WARN("[Auth] Using previously generated certificate %s",
+                  deviceCertificate->getLongId().toString().c_str());
+    } else {
+        JAMI_WARN("[Auth] creating new device certificate");
+        auto request = ctx.request.get();
+        if (not request->verify()) {
+            JAMI_ERR("[Auth] Invalid certificate request.");
+            ctx.onFailure(AuthError::INVALID_ARGUMENTS, "");
+            return;
+        }
+        deviceCertificate = std::make_shared<dht::crypto::Certificate>(
+            dht::crypto::Certificate::generate(*request, a.id));
+        JAMI_WARN("[Auth] created new device: %s",
+                  deviceCertificate->getLongId().toString().c_str());
     }
 
-    auto deviceCertificate = std::make_shared<dht::crypto::Certificate>(
-        dht::crypto::Certificate::generate(*request, a.id));
     auto receipt = makeReceipt(a.id, *deviceCertificate, ethAccount);
     auto receiptSignature = a.id.first->sign({receipt.first.begin(), receipt.first.end()});
 
     auto info = std::make_unique<AccountInfo>();
-    info->identity.first = ctx.key.get();
+    auto pk = useIdentity.first ? useIdentity.first : ctx.key.get();
+    auto sharedPk = pk->getSharedPublicKey();
+    info->identity.first = pk;
     info->identity.second = deviceCertificate;
     info->accountId = a.id.second->getId().toString();
-    info->devicePk = info->identity.first->getSharedPublicKey();
+    info->devicePk = sharedPk;
     info->deviceId = info->devicePk->getLongId().toString();
     if (ctx.deviceName.empty())
         ctx.deviceName = info->deviceId.substr(8);
@@ -410,7 +427,6 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     ConversationModule::saveConvRequestsToPath(path_, a.conversationsRequests);
     info_ = std::move(info);
 
-    JAMI_WARN("[Auth] created new device: %s", info_->deviceId.c_str());
     ctx.onSuccess(*info_,
                   std::move(a.config),
                   std::move(receipt.first),
