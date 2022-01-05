@@ -110,7 +110,8 @@ private:
 
     void loadFromFile(AuthContext& ctx);
     void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
-    void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a);
+    void onArchiveLoaded(AuthContext& ctx,
+                         AccountArchive&& a);
 
     OnExportConfig onExportConfig_;
     std::string archivePath_;
