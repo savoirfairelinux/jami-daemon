@@ -1243,17 +1243,16 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 fDeviceKey,
                 ip_utils::getDeviceName(),
                 std::move(creds),
-                [this, fDeviceKey, migrating](const AccountInfo& info,
-                                              const std::map<std::string, std::string>& config,
-                                              std::string&& receipt,
-                                              std::vector<uint8_t>&& receipt_signature) {
+                [this, migrating](const AccountInfo& info,
+                                  const std::map<std::string, std::string>& config,
+                                  std::string&& receipt,
+                                  std::vector<uint8_t>&& receipt_signature) {
                     JAMI_WARN("[Account %s] Auth success !", getAccountID().c_str());
 
                     fileutils::check_dir(idPath_.c_str(), 0700);
 
                     // save the chain including CA
                     auto id = info.identity;
-                    id.first = std::move(fDeviceKey.get());
                     std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(id,
                                                                                      idPath_,
                                                                                      "ring_device");
