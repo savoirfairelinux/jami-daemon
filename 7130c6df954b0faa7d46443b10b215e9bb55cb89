@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2662074a_209f041b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-01-05T09:50:20Z",
+      "side": 1,
+      "message": "If it works for you, I agree to merge. But since the same tests failed on two Arch Linux computers, the problem can raise in the future.\n\nWhat cppunit version are you using?",
+      "revId": "7130c6df954b0faa7d46443b10b215e9bb55cb89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
