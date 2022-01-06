@@ -1063,6 +1063,18 @@ JamiAccount::unlinkConversations(const std::set<std::string>& removed)
 }
 
 bool
+JamiAccount::isValidAccountDevice(const dht::crypto::Certificate& cert) const
+{
+    if (accountManager_) {
+        if (auto info = accountManager_->getInfo()) {
+            if (info->contacts)
+                return info->contacts->isValidAccountDevice(cert).isValid();
+        }
+    }
+    return false;
+}
+
+bool
 JamiAccount::revokeDevice(const std::string& password, const std::string& device)
 {
     if (not accountManager_)
