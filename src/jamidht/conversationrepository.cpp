@@ -77,9 +77,9 @@ public:
     std::string createMergeCommit(git_index* index, const std::string& wanted_ref);
 
     bool validCommits(const std::vector<ConversationCommit>& commits) const;
-    bool checkOnlyDeviceCertificate(const std::string& userDevice,
-                                    const std::string& commitId,
-                                    const std::string& parentId) const;
+    bool checkValidUserDiff(const std::string& userDevice,
+                            const std::string& commitId,
+                            const std::string& parentId) const;
     bool checkVote(const std::string& userDevice,
                    const std::string& commitId,
                    const std::string& parentId) const;
@@ -105,6 +105,8 @@ public:
 
     bool add(const std::string& path);
     void addUserDevice();
+    // Verify that the device in the repository is still valid
+    bool validateDevice();
     std::string commit(const std::string& msg);
     ConversationMode mode() const;
 
@@ -167,6 +169,40 @@ public:
 
     // Permissions
     MemberRole updateProfilePermLvl_ {MemberRole::ADMIN};
+
+    /**
+     * Retrieve the user related to a device
+     * @note deviceToUri_ is used to cache result and avoid to
+     * always load the certificate
+     */
+    std::string uriFromDevice(const std::string& deviceId) const
+    {
+        std::lock_guard<std::mutex> lk(deviceToUriMtx_);
+        auto it = deviceToUri_.find(deviceId);
+        if (it != deviceToUri_.end())
+            return it->second;
+
+        auto repo = repository();
+        if (!repo)
+            return {};
+
+        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+        if (!cert || !cert->issuer) {
+            // Not pinned, so load certificate from repo
+            std::string deviceFile = git_repository_workdir(repo.get())
+                                     + fmt::format("devices/{}.crt", deviceId);
+            cert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(deviceFile));
+            if (!cert)
+                return {};
+        }
+        auto issuerUid = cert->issuer ? cert->issuer->getId().toString() : cert->getIssuerUID();
+        if (issuerUid.empty())
+            return {};
+        deviceToUri_.insert({deviceId, issuerUid});
+        return issuerUid;
+    }
+    mutable std::mutex deviceToUriMtx_;
+    mutable std::map<std::string, std::string> deviceToUri_;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -663,37 +699,59 @@ ConversationRepository::Impl::add(const std::string& path)
 }
 
 bool
-ConversationRepository::Impl::checkOnlyDeviceCertificate(const std::string& userDevice,
-                                                         const std::string& commitId,
-                                                         const std::string& parentId) const
+ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
+                                                 const std::string& commitId,
+                                                 const std::string& parentId) const
 {
-    // Here, we check that a file device is modified or not.
-    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
-    if (changedFiles.size() == 0)
-        return true;
-    else if (changedFiles.size() > 1)
-        return false;
-    // If modified, it's the first commit of a device, we check
-    // that the file wasn't there previously
-    // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
-    std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
-    if (changedFiles[0] != deviceFile) {
-        return false;
-    }
-
     // Retrieve tree for recent commit
     auto repo = repository();
     if (!repo)
         return false;
     auto treeNew = treeAtCommit(repo.get(), commitId);
-    auto treeOld = treeAtCommit(repo.get(), parentId);
-    if (not treeNew or not treeOld)
+    if (not treeNew)
         return false;
+    std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
     if (!fileAtTree(deviceFile, treeNew)) {
         JAMI_ERR("%s announced but not found", deviceFile.c_str());
         return false;
     }
-    return !fileAtTree(deviceFile, treeOld);
+
+    // Here, we check that a file device is modified or not.
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    if (changedFiles.size() == 0)
+        return true;
+
+    // If a certificate is modified (in the changedFiles), it MUST be a certificate from the user
+    // Retrieve userUri
+    auto userUri = uriFromDevice(userDevice);
+    if (userUri.empty())
+        return false;
+
+    std::string adminsFile = fmt::format("admins/{}.crt", userUri);
+    std::string membersFile = fmt::format("members/{}.crt", userUri);
+    for (const auto& changedFile : changedFiles) {
+        if (changedFile == adminsFile || changedFile == membersFile) {
+            // In this case, we should verify it's not added (normal commit, not a member change)
+            // but only updated
+            auto treeOld = treeAtCommit(repo.get(), parentId);
+            if (not treeNew or not treeOld)
+                return false;
+
+            if (!fileAtTree(changedFile, treeOld)) {
+                JAMI_ERR("Invalid file modified: %s", changedFile.c_str());
+                return false;
+            }
+        } else if (changedFile == deviceFile) {
+            // In this case, device is added or modified (certificate expiration)
+            continue;
+        } else {
+            // Invalid file detected
+            JAMI_ERR("Invalid add file detected: %s %u", changedFile.c_str(), (int) *mode_);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool
@@ -745,12 +803,9 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
         }
     }
 
-    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert || !cert->issuer)
-        return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = uriFromDevice(userDevice);
     // Check that voter is admin
-    auto adminFile = std::string("admins") + "/" + userUri + ".crt";
+    auto adminFile = fmt::format("admins/{}.crt", userUri);
 
     if (!fileAtTree(adminFile, treeOld)) {
         JAMI_ERR("Vote from non admin: %s", userUri.c_str());
@@ -829,11 +884,10 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
                                             const std::string& commitId,
                                             const std::string& parentId) const
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    auto userUri = uriFromDevice(userDevice);
     auto repo = repository();
-    if (not cert or not cert->issuer or not repo)
+    if (userUri.empty() or not repo)
         return false;
-    auto userUri = cert->issuer->getId().toString();
 
     std::string repoPath = git_repository_workdir(repo.get());
     if (mode() == ConversationMode::ONE_TO_ONE) {
@@ -915,24 +969,22 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
                                               const std::string& commitId,
                                               const std::string& parentId) const
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert || !cert->issuer)
+    auto userUri = uriFromDevice(userDevice);
+    if (userUri.empty())
         return false;
-    auto userUri = cert->issuer->getId().toString();
     // Check no other files changed
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     std::size_t wantedChanged = 3;
     if (changedFiles.size() != wantedChanged)
         return false;
 
-    auto invitedFile = std::string("invited") + "/" + uriMember;
-    auto membersFile = std::string("members") + "/" + uriMember + ".crt";
-    auto deviceFile = std::string("devices") + "/" + userDevice + ".crt";
+    auto invitedFile = fmt::format("invited/{}", uriMember);
+    auto membersFile = fmt::format("members/{}.crt", uriMember);
+    auto deviceFile = fmt::format("devices/{}.crt", userDevice);
 
     // Retrieve tree for commits
     auto repo = repository();
-    if (!repo)
-        return false;
+    assert(repo);
     auto treeNew = treeAtCommit(repo.get(), commitId);
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeNew or not treeOld)
@@ -977,10 +1029,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
                                                const std::string& commitId,
                                                const std::string& parentId) const
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert || !cert->issuer)
-        return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = uriFromDevice(userDevice);
     auto removeSelf = userUri == uriMember;
 
     // Retrieve tree for recent commit
@@ -1043,10 +1092,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
             JAMI_ERR("device not found added (%s)", deviceFile.c_str());
             return false;
         }
-        cert = tls::CertificateStore::instance().getCertificate(deviceUri);
-        if (!cert || !cert->issuer)
-            return false;
-        if (uriMember != cert->issuer->getId().toString()
+        if (uriMember != uriFromDevice(deviceUri)
             and uriMember != deviceUri /* If device is removed */) {
             JAMI_ERR("device removed but not for removed user (%s)", deviceFile.c_str());
             return false;
@@ -1058,7 +1104,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
     }
 
     // If not for self check that user device is admin
-    adminFile = std::string("admins") + "/" + userUri + ".crt";
+    adminFile = fmt::format("admins/{}.crt", userUri);
     if (!fileAtTree(adminFile, treeOld)) {
         JAMI_ERR("admin file (%s) not found", adminFile.c_str());
         return false;
@@ -1094,10 +1140,7 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
                                                       const std::string& commitId,
                                                       const std::string& parentId) const
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert || !cert->issuer)
-        return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = uriFromDevice(userDevice);
     auto valid = false;
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
@@ -1224,12 +1267,7 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     auto account = account_.lock();
     if (!account)
         return false;
-    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert || !cert->issuer) {
-        JAMI_ERR("Cannot find certificate for %s", userDevice.c_str());
-        return false;
-    }
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = uriFromDevice(userDevice);
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
     // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
 
@@ -1280,9 +1318,77 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     return hasDevice && hasAdmin;
 }
 
+bool
+ConversationRepository::Impl::validateDevice()
+{
+    auto repo = repository();
+    auto account = account_.lock();
+    if (!account || !repo) {
+        JAMI_WARN("Invalid repository detected");
+        return false;
+    }
+    auto path = fmt::format("devices/{}.crt", account->currentDeviceId());
+    std::string devicePath = git_repository_workdir(repo.get()) + path;
+    if (!fileutils::isFile(devicePath)) {
+        JAMI_WARN("Couldn't find file %s", devicePath.c_str());
+        return false;
+    }
+
+    auto deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
+
+    if (!account->isValidAccountDevice(deviceCert)) {
+        JAMI_WARN("Device's certificate is not valid anymore. Trying to replace certificate with "
+                  "current one.");
+        // Replace certificate with current cert
+        auto cert = account->identity().second;
+        if (!account->isValidAccountDevice(*cert)) {
+            JAMI_ERR("Current device's certificate is invalid. A migration is needed");
+            return false;
+        }
+        auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+        if (!file.is_open()) {
+            JAMI_ERR("Could not write data to %s", devicePath.c_str());
+            return false;
+        }
+        file << cert->toString(false);
+        file.close();
+        if (!add(path)) {
+            JAMI_WARN("Couldn't add file %s", devicePath.c_str());
+            return false;
+        }
+
+        auto parentCert = cert->issuer;
+        auto adminPath = fmt::format("admins/{}.crt", account->getUsername());
+        auto memberPath = fmt::format("members/{}.crt", account->getUsername());
+        std::string fullpath = git_repository_workdir(repo.get());
+        if (fileutils::isFile(git_repository_workdir(repo.get()) + adminPath))
+            path = adminPath;
+        else if (fileutils::isFile(git_repository_workdir(repo.get()) + memberPath))
+            path = memberPath;
+        fullpath += path;
+        if (fileutils::isFile(fullpath)) {
+            auto file = fileutils::ofstream(fullpath, std::ios::trunc | std::ios::binary);
+            if (!file.is_open()) {
+                JAMI_ERR("Could not write data to %s", path.c_str());
+                return false;
+            }
+            file << parentCert->toString(true);
+            file.close();
+            if (!add(path)) {
+                JAMI_WARN("Couldn't add file %s", path.c_str());
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 std::string
 ConversationRepository::Impl::commit(const std::string& msg)
 {
+    if (!validateDevice())
+        return {};
     auto account = account_.lock();
     if (!account)
         return {};
@@ -2168,7 +2274,7 @@ ConversationRepository::Impl::validCommits(
                 // Note: accept all mimetype here, as we can have new mimetypes
                 // Just avoid to add weird files
                 // Check that no weird file is added outside device cert nor removed
-                if (!checkOnlyDeviceCertificate(userDevice, commit.id, commit.parents[0])) {
+                if (!checkValidUserDiff(userDevice, commit.id, commit.parents[0])) {
                     JAMI_WARN("Malformed %s commit %s. Please check you use the latest "
                               "version of Jami, or that your contact is not doing unwanted stuff.",
                               type.c_str(),
