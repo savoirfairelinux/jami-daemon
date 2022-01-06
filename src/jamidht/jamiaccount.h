@@ -599,6 +599,8 @@ public:
      */
     void forceReloadAccount();
 
+    bool isValidAccountDevice(const dht::crypto::Certificate& cert) const;
+
 private:
     NON_COPYABLE(JamiAccount);
 
