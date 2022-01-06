@@ -64,10 +64,12 @@ public:
 private:
     void testLoadExpiredAccount();
     void testMigrationAfterRevokation();
+    void testExpiredDeviceInSwarm();
 
     CPPUNIT_TEST_SUITE(MigrationTest);
     CPPUNIT_TEST(testLoadExpiredAccount);
     CPPUNIT_TEST(testMigrationAfterRevokation);
+    CPPUNIT_TEST(testExpiredDeviceInSwarm);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -221,6 +223,142 @@ MigrationTest::testMigrationAfterRevokation()
     CPPUNIT_ASSERT(cv.wait_for(lk, 15s, [&]() { return bobMigrated; }));
     // Because the device was revoked, a new ID must be generated there
     CPPUNIT_ASSERT(bob2Device != bob2Account->currentDeviceId());
+}
+
+void
+MigrationTest::testExpiredDeviceInSwarm()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDevice = std::string(aliceAccount->currentDeviceId());
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    bool requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    auto aliceMigrated = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::MigrationEnded>(
+        [&](const std::string& accountId, const std::string& state) {
+            if (accountId == aliceId && state == "SUCCESS") {
+                aliceMigrated = true;
+            }
+            cv.notify_one();
+        }));
+    bool aliceStopped = false, aliceAnnounced = false, aliceRegistered = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "UNREGISTERED")
+                    aliceStopped = true;
+                else if (daemonStatus == "REGISTERED")
+                    aliceRegistered = true;
+                auto announced = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                if (announced == "true")
+                    aliceAnnounced = true;
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(aliceAccount->setValidity("", {}, 90));
+    auto now = std::chrono::system_clock::now();
+    aliceRegistered = false;
+    aliceAccount->forceReloadAccount();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceRegistered; }));
+    CPPUNIT_ASSERT(aliceAccount->currentDeviceId() == aliceDevice);
+
+    aliceStopped = false;
+    Manager::instance().sendRegister(aliceId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 15s, [&]() { return aliceStopped; }));
+    aliceAnnounced = false;
+    Manager::instance().sendRegister(aliceId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return aliceAnnounced; }));
+
+    CPPUNIT_ASSERT(aliceAccount->currentDeviceId() == aliceDevice);
+
+    // Create conversation
+    auto convId = DRing::startConversation(aliceId);
+
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return requestReceived; }));
+
+    messageAliceReceived = 0;
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return conversationReady; }));
+
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    // Wait that alice sees Bob
+    cv.wait_for(lk, 20s, [&]() { return messageAliceReceived == 1; });
+
+    messageBobReceived = 0;
+    DRing::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return messageBobReceived == 1; }));
+
+    // Wait for certificate to expire
+    std::this_thread::sleep_until(now + 100s);
+    // Check migration is triggered and expiration updated
+    aliceAnnounced = false;
+    aliceAccount->forceReloadAccount();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceAnnounced; }));
+    CPPUNIT_ASSERT(aliceAccount->currentDeviceId() == aliceDevice);
+
+    // check that certificate in conversation is expired
+    auto devicePath = fmt::format("{}/devices/{}.crt", repoPath, aliceAccount->currentDeviceId());
+    CPPUNIT_ASSERT(fileutils::isFile(devicePath));
+    auto cert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
+    now = std::chrono::system_clock::now();
+    CPPUNIT_ASSERT(cert.getExpiration() < now);
+
+    // Resend a new message
+    messageBobReceived = 0;
+    DRing::sendMessage(aliceId, convId, "hi again"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return messageBobReceived == 1; }));
+    messageAliceReceived = 0;
+    DRing::sendMessage(bobId, convId, "hi!"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return messageAliceReceived == 1; }));
+
+    // check that certificate in conversation is updated
+    CPPUNIT_ASSERT(fileutils::isFile(devicePath));
+    cert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
+    now = std::chrono::system_clock::now();
+    CPPUNIT_ASSERT(cert.getExpiration() > now);
+
+    // Check same device as begining
+    CPPUNIT_ASSERT(aliceAccount->currentDeviceId() == aliceDevice);
 }
 
 } // namespace test
