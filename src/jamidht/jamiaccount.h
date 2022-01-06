@@ -604,6 +604,8 @@ public:
      */
     void unlinkConversations(const std::set<std::string>& removedConv);
 
+    bool isValidAccountDevice(const dht::crypto::Certificate& cert) const;
+
 private:
     NON_COPYABLE(JamiAccount);
 
