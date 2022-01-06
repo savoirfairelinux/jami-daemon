@@ -1067,7 +1067,8 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account)
     }
 
     // /devices
-    std::string devicePath = devicesPath + DIR_SEPARATOR_STR + cert->getId().toString() + ".crt";
+    std::string devicePath = devicesPath + DIR_SEPARATOR_STR + cert->getLongId().toString()
+                             + ".crt";
     file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", devicePath.c_str());
@@ -2375,7 +2376,9 @@ ConversationTest::testSyncWithoutPinnedCert()
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::string convId = "";
-    auto bob2Announced = false, requestReceived = false, conversationReady = false, memberMessageGenerated = false, aliceMessageReceived = false, aliceStopped = false, bobStopped = false;
+    auto bob2Announced = false, requestReceived = false, conversationReady = false,
+         memberMessageGenerated = false, aliceMessageReceived = false, aliceStopped = false,
+         bobStopped = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
@@ -2402,7 +2405,7 @@ ConversationTest::testSyncWithoutPinnedCert()
             if (accountId == aliceId && conversationId == convId) {
                 if (message["type"] == "member")
                     memberMessageGenerated = true;
-                else if ( message["type"] == "text/plain")
+                else if (message["type"] == "text/plain")
                     aliceMessageReceived = true;
             }
             cv.notify_one();
@@ -2456,8 +2459,9 @@ ConversationTest::testSyncWithoutPinnedCert()
     Manager::instance().sendRegister(bob2Id, true);
 
     // Sync + validate
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bob2Announced && conversationReady; }));
-
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return bob2Announced && conversationReady;
+    }));
 }
 
 } // namespace test
