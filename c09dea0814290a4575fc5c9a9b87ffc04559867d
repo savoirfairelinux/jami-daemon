@@ -1,0 +1,159 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "34ff3a42_392999a7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 38
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-07T02:45:48Z",
+      "side": 1,
+      "message": "Also the current test output: https://jenkins.jami.net/blue/organizations/jenkins/daemon-tests/detail/daemon-tests/611/pipeline (some fails)",
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "545251a1_923a859e",
+        "filename": "src/media/audio/audio_receive_thread.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-07T02:45:48Z",
+      "side": 1,
+      "message": "should be always true as it the body of the running loop, else it will be in the cleanup phase",
+      "range": {
+        "startLine": 102,
+        "startChar": 6,
+        "endLine": 102,
+        "endChar": 17
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc190f58_2360ac19",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 420,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-07T02:45:48Z",
+      "side": 1,
+      "message": "callId is better than the pointer. The client identify calls per id, for debugging from client the callID is important to see in the logs",
+      "range": {
+        "startLine": 420,
+        "startChar": 22,
+        "endLine": 420,
+        "endChar": 27
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63bd9797_2aefcb6f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2188,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-07T02:45:48Z",
+      "side": 1,
+      "message": "why only video?",
+      "range": {
+        "startLine": 2188,
+        "startChar": 24,
+        "endLine": 2188,
+        "endChar": 56
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2c032ea_80e05b10",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2193,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-07T02:45:48Z",
+      "side": 1,
+      "message": "ideally avoid double access",
+      "range": {
+        "startLine": 2193,
+        "startChar": 12,
+        "endLine": 2193,
+        "endChar": 29
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "80997385_f153f1b3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2370,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-07T02:45:48Z",
+      "side": 1,
+      "message": "not related to the patch, but generally a find method should not return a positive number if not found. -1 is more common",
+      "range": {
+        "startLine": 2370,
+        "startChar": 12,
+        "endLine": 2370,
+        "endChar": 30
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2db1cdb_9ceb1c6b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2575,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-07T02:45:48Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 2575,
+        "startChar": 14,
+        "endLine": 2575,
+        "endChar": 28
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
