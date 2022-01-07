@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6b058e9_2ac2f87b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-07T18:57:13Z",
+      "side": 1,
+      "message": "still some (eg bin/main.cpp)\nEasy way to test: ./build.py --install --qt --no-libwrap",
+      "revId": "a487fac6ccfafd6238e4b3a1771d2b84087c41d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
