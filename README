@@ -70,9 +70,10 @@ make
 2) Then the jamid application
 
 cd ../../
+DEPS_PREFIX_PATH=`pwd`/contrib/`cc -dumpmachine`
+export PATH=${DEPS_PREFIX_PATH}/bin:$PATH
 mkdir build
-export PATH=$PATH:`pwd`/contrib/`cc -dumpmachine`/bin
-meson -Dpkg_config_path=`pwd`/contrib/`cc -dumpmachine`/lib/pkgconfig -Ddefault_library=static -Dinterfaces=dbus build
+meson build -Dpkg_config_path=${DEPS_PREFIX_PATH}/lib/pkgconfig -Dcmake_prefix_path=${DEPS_PREFIX_PATH} -Dinterfaces=library,dbus
 cd build
 ninja
 ninja install

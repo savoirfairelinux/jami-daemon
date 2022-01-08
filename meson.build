@@ -30,6 +30,7 @@ deplibswscale = dependency('libswscale', version: '>= 3.1.101')
 deplibswresample = dependency('libswresample', version: '>= 1.2.101')
 deplibavutil = dependency('libavutil', version: '>= 55.75.100')
 depspeexdsp = dependency('speexdsp')
+deprestinio = dependency('restinio')
 depfmt = dependency('fmt', version: '>= 5.3')
 
 depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1', required: false)
