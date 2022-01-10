@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d7f0509_b1492e74",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 38
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-10T15:00:21Z",
+      "side": 1,
+      "message": "I am aware that some test fail, already working on them\nthanks.",
+      "parentUuid": "34ff3a42_392999a7",
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "545251a1_923a859e",
@@ -31,6 +49,30 @@
       "writtenOn": "2022-01-07T02:45:48Z",
       "side": 1,
       "message": "should be always true as it the body of the running loop, else it will be in the cleanup phase",
+      "range": {
+        "startLine": 102,
+        "startChar": 6,
+        "endLine": 102,
+        "endChar": 17
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b766170_b8d2827e",
+        "filename": "src/media/audio/audio_receive_thread.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-10T15:00:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "545251a1_923a859e",
       "range": {
         "startLine": 102,
         "startChar": 6,
@@ -64,6 +106,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3cf895a1_28e542ec",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 420,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-10T15:00:21Z",
+      "side": 1,
+      "message": "since a call may many video rtp sessions, is better to use the instance pointer distinguish between them.\nThe call Id is logged in the constructor to make the association.",
+      "parentUuid": "bc190f58_2360ac19",
+      "range": {
+        "startLine": 420,
+        "startChar": 22,
+        "endLine": 420,
+        "endChar": 27
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "63bd9797_2aefcb6f",
@@ -77,6 +143,30 @@
       "writtenOn": "2022-01-07T02:45:48Z",
       "side": 1,
       "message": "why only video?",
+      "range": {
+        "startLine": 2188,
+        "startChar": 24,
+        "endLine": 2188,
+        "endChar": 56
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6542ef8c_ec1d3236",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2188,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-10T15:00:21Z",
+      "side": 1,
+      "message": "In the current design/behavior, audio mute/un-mute is done by muting the input (the mic). The rtp session is still active. So to limit the changes and side-effects I prefer to keep the current behavior and  limit the scope of this patch to video only.\nCan be done in the future if requested.",
+      "parentUuid": "63bd9797_2aefcb6f",
       "range": {
         "startLine": 2188,
         "startChar": 24,
@@ -110,6 +200,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2737b95c_b39b89c9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2193,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-10T15:00:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a2c032ea_80e05b10",
+      "range": {
+        "startLine": 2193,
+        "startChar": 12,
+        "endLine": 2193,
+        "endChar": 29
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "80997385_f153f1b3",
@@ -133,6 +247,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "85909c8d_788ae407",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2370,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-10T15:00:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "80997385_f153f1b3",
+      "range": {
+        "startLine": 2370,
+        "startChar": 12,
+        "endLine": 2370,
+        "endChar": 30
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f2db1cdb_9ceb1c6b",
@@ -146,6 +284,30 @@
       "writtenOn": "2022-01-07T02:45:48Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 2575,
+        "startChar": 14,
+        "endLine": 2575,
+        "endChar": 28
+      },
+      "revId": "c09dea0814290a4575fc5c9a9b87ffc04559867d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a2a7431b_321556c1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2575,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-10T15:00:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f2db1cdb_9ceb1c6b",
       "range": {
         "startLine": 2575,
         "startChar": 14,
