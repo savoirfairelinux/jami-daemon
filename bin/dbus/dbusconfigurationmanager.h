@@ -290,6 +290,15 @@ public:
                                const std::string& toId,
                                const std::string& fromId,
                                const std::string& authorUri);
+    uint32_t searchConversation(const std::string& accountId,
+                                const std::string& conversationId,
+                                const std::string& author,
+                                const std::string& lastId,
+                                const std::string& regexSearch,
+                                const std::string& type,
+                                const int64_t& after,
+                                const int64_t& before,
+                                const uint32_t& maxResult);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
