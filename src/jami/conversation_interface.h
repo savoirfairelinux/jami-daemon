@@ -74,12 +74,28 @@ DRING_PUBLIC uint32_t countInteractions(const std::string& accountId,
                                         const std::string& toId,
                                         const std::string& fromId,
                                         const std::string& authorUri);
+DRING_PUBLIC uint32_t search(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& author,
+                             const std::string& lastId,
+                             const std::string& regexSearch,
+                             const int32_t& after,
+                             const int32_t& before,
+                             const uint32_t& maxResult);
 
 struct DRING_PUBLIC ConversationSignal
 {
     struct DRING_PUBLIC ConversationLoaded
     {
         constexpr static const char* name = "ConversationLoaded";
+        using cb_type = void(uint32_t /* id */,
+                             const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             std::vector<std::map<std::string, std::string>> /*messages*/);
+    };
+    struct DRING_PUBLIC MessagesFound
+    {
+        constexpr static const char* name = "MessagesFound";
         using cb_type = void(uint32_t /* id */,
                              const std::string& /*accountId*/,
                              const std::string& /* conversationId */,

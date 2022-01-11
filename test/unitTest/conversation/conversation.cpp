@@ -107,6 +107,7 @@ private:
     void testReplayConversation();
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
+    void testSearchInConv();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -144,6 +145,7 @@ private:
     CPPUNIT_TEST(testReplayConversation);
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
+    CPPUNIT_TEST(testSearchInConv);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2680,6 +2682,96 @@ ConversationTest::testImportMalformedContacts()
     auto contacts = DRing::getContacts(bob2Id);
     CPPUNIT_ASSERT(contacts.size() == 1);
     CPPUNIT_ASSERT(contacts[0][DRing::Account::TrustRequest::CONVERSATIONID] == "");
+}
+
+void
+ConversationTest::testSearchInConv()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
+         messageReceived = false;
+    std::vector<std::string> bobMessages;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId) {
+                if (message["type"] == "member")
+                    memberMessageGenerated = true;
+            } else if (accountId == bobId) {
+                messageReceived = true;
+            }
+            cv.notify_one();
+        }));
+    std::vector<std::map<std::string, std::string>> messages;
+    bool finished = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessagesFound>(
+        [&](uint32_t,
+            const std::string&,
+            const std::string& conversationId,
+            std::vector<std::map<std::string, std::string>> msg) {
+            if (conversationId == convId)
+                messages = msg;
+            finished = conversationId.empty();
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    requestReceived = false;
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
+
+    // Add some messages
+    messageReceived = false;
+    DRing::sendMessage(aliceId, convId, "message 1"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived; }));
+    messageReceived = false;
+    DRing::sendMessage(aliceId, convId, "message 2"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived; }));
+    messageReceived = false;
+    DRing::sendMessage(aliceId, convId, "message 3"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived; }));
+
+    DRing::search(aliceId, convId, "", "", "message", 0, 0, 0);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 3 && finished; }));
+    messages.clear();
+    finished = false;
+    DRing::search(aliceId, convId, "", "", "message 2", 0, 0, 0);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 1 && finished; }));
+    messages.clear();
+    finished = false;
+    DRing::search(aliceId, convId, "", "", "foo", 0, 0, 0);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 0 && finished; }));
 }
 
 } // namespace test
