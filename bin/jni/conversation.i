@@ -26,6 +26,7 @@ class ConversationCallback {
 public:
     virtual ~ConversationCallback(){}
     virtual void conversationLoaded(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/){}
+    virtual void messagesFound(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/){}
     virtual void messageReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*message*/){}
     virtual void conversationRequestReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/){}
     virtual void conversationRequestDeclined(const std::string& /*accountId*/, const std::string& /* conversationId */){}
@@ -59,12 +60,21 @@ namespace DRing {
   void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& parent);
   uint32_t loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
   uint32_t countInteractions(const std::string& accountId, const std::string& conversationId, const std::string& toId, const std::string& fromId, const std::string& authorUri);
+  uint32_t search(const std::string& accountId,
+           const std::string& conversationId,
+           const std::string& author,
+           const std::string& lastId,
+           const std::string& regexSearch,
+           const int32_t& after,
+           const int32_t& before,
+           const uint32_t& maxResult);
 }
 
 class ConversationCallback {
 public:
     virtual ~ConversationCallback(){}
     virtual void conversationLoaded(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/){}
+    virtual void messagesFound(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/){}
     virtual void messageReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*message*/){}
     virtual void conversationRequestReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/){}
     virtual void conversationRequestDeclined(const std::string& /*accountId*/, const std::string& /* conversationId */){}

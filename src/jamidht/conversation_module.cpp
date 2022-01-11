@@ -1404,6 +1404,17 @@ ConversationModule::countInteractions(const std::string& convId,
 }
 
 void
+ConversationModule::search(uint32_t req, const std::string& convId, const Filter& filter) const
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (const auto& [cid, conversation]: pimpl_->conversations_) {
+        if (!conversation || (!convId.empty() && convId != cid))
+            continue;
+        conversation->search(req, filter);
+    }
+}
+
+void
 ConversationModule::updateConversationInfos(const std::string& conversationId,
                                             const std::map<std::string, std::string>& infos,
                                             bool sync)
