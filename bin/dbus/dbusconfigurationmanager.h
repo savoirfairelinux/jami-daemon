@@ -286,6 +286,14 @@ public:
                                const std::string& toId,
                                const std::string& fromId,
                                const std::string& authorUri);
+    uint32_t search(const std::string& accountId,
+                    const std::string& conversationId,
+                    const std::string& author,
+                    const std::string& lastId,
+                    const std::string& regexSearch,
+                    const int32_t& after,
+                    const int32_t& before,
+                    const uint32_t& maxResult);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__

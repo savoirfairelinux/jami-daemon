@@ -544,8 +544,8 @@ DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
                                                   const std::string& privateKey,
                                                   const std::string& privateKeyPass,
                                                   const std::string& caList)
-    -> decltype(
-        DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
+    -> decltype(DRing::validateCertificatePath(
+        accountId, certificate, privateKey, privateKeyPass, caList))
 {
     return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
 }
@@ -928,6 +928,26 @@ DBusConfigurationManager::countInteractions(const std::string& accountId,
                                             const std::string& authorUri)
 {
     return DRing::countInteractions(accountId, conversationId, toId, fromId, authorUri);
+}
+
+uint32_t
+DBusConfigurationManager::search(const std::string& accountId,
+                                 const std::string& conversationId,
+                                 const std::string& author,
+                                 const std::string& lastId,
+                                 const std::string& regexSearch,
+                                 const int32_t& after,
+                                 const int32_t& before,
+                                 const uint32_t& maxResult)
+{
+    return DRing::search(accountId,
+                         conversationId,
+                         author,
+                         lastId,
+                         regexSearch,
+                         after,
+                         before,
+                         maxResult);
 }
 
 bool

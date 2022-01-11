@@ -1932,6 +1932,8 @@ JamiAccount::doRegister_()
             dht_->join();
         }
 
+        convModule()->resetPending();
+
 #if HAVE_RINGNS
         // Look for registered name on the blockchain
         accountManager_->lookupAddress(
@@ -2339,8 +2341,10 @@ JamiAccount::convModule()
             [this](const auto& convId, const auto& deviceId, auto&& cb) {
                 runOnMainThread([w = weak(), convId, deviceId, cb = std::move(cb)] {
                     auto shared = w.lock();
-                    if (!shared)
+                    if (!shared) {
+                        JAMI_ERR("@@@@@!!!!!!!!!!! WILL BE BAD");
                         return;
+                    }
                     auto gs = shared->gitSocket(DeviceId(deviceId), convId);
                     if (gs != std::nullopt) {
                         if (auto socket = gs->lock()) {

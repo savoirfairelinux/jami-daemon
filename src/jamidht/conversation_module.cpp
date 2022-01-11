@@ -386,6 +386,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                       conversationId.c_str());
             return;
         }
+        JAMI_ERR("@@@ NEED SOCKET: %s/%s", conversationId.c_str(), deviceId.c_str());
         onNeedSocket_(conversationId,
                       deviceId,
                       [this,
@@ -401,7 +402,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                               stopFetch(conversationId, deviceId);
                               return false;
                           }
+                          JAMI_ERR("@@@ ADD GIT SOCKET: %s/%s - %s", conversationId.c_str(), deviceId.c_str(), commitId.c_str());
                           acc->addGitSocket(channel->deviceId(), conversationId, channel);
+                          JAMI_ERR("@@@ LAUNCH SYNC: %s/%s - %s", conversationId.c_str(), deviceId.c_str(), commitId.c_str());
                           conversation->second->sync(
                               peer,
                               deviceId,
@@ -410,6 +413,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                peer = std::move(peer),
                                deviceId = std::move(deviceId),
                                commitId = std::move(commitId)](bool ok) {
+                                    JAMI_ERR("@@@ FINISHED SYNC: %s/%s - %s", conversationId.c_str(), deviceId.c_str(), commitId.c_str());
                                   if (!ok) {
                                       JAMI_WARN("[Account %s] Could not fetch new commit from "
                                                 "%s for %s, other "
@@ -816,6 +820,15 @@ ConversationModule::loadConversations()
         pimpl_->saveConvInfos();
 
     JAMI_INFO("[Account %s] Conversations loaded!", pimpl_->accountId_.c_str());
+}
+
+void
+ConversationModule::resetPending()
+{
+    if (!pimpl_->pendingConversationsFetch_.empty()) {
+        JAMI_ERR("@@@This is a bug, seems to still fetch to some device on initializing");
+        pimpl_->pendingConversationsFetch_.clear();
+    }
 }
 
 std::vector<std::string>
@@ -1457,6 +1470,26 @@ ConversationModule::countInteractions(const std::string& convId,
         return conversation->second->countInteractions(toId, fromId, authorUri);
     }
     return 0;
+}
+
+void
+ConversationModule::search(uint32_t req, const std::string& convId, const Filter& filter) const
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto finishedFlag = std::make_shared<std::atomic_int>(pimpl_->conversations_.size());
+    for (const auto& [cid, conversation] : pimpl_->conversations_) {
+        if (!conversation || (!convId.empty() && convId != cid)) {
+            if ((*finishedFlag)-- == 1) {
+                emitSignal<DRing::ConversationSignal::MessagesFound>(
+                    req,
+                    pimpl_->accountId_,
+                    std::string {},
+                    std::vector<std::map<std::string, std::string>> {});
+            }
+            continue;
+        }
+        conversation->search(req, filter, finishedFlag);
+    }
 }
 
 void
