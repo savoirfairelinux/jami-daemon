@@ -59,6 +59,8 @@ public:
      */
     void loadConversations();
 
+    void resetPending();
+
     /**
      * Return all conversation's id (including syncing ones)
      */
@@ -282,6 +284,15 @@ public:
                                const std::string& toId,
                                const std::string& fromId,
                                const std::string& authorUri) const;
+
+    /**
+     * Search in conversations via a filter
+     * @param req       Id of the request
+     * @param convId    Leave empty to search in all conversation, else add the conversation's id
+     * @param filter    Parameters for the search
+     * @note triggers messagesFound
+     */
+    void search(uint32_t req, const std::string& convId, const Filter& filter) const;
 
     // Conversation's infos management
     /**
