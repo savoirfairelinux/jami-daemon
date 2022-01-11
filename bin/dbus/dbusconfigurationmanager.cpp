@@ -939,6 +939,28 @@ DBusConfigurationManager::countInteractions(const std::string& accountId,
     return DRing::countInteractions(accountId, conversationId, toId, fromId, authorUri);
 }
 
+uint32_t
+DBusConfigurationManager::searchConversation(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const std::string& author,
+                                             const std::string& lastId,
+                                             const std::string& regexSearch,
+                                             const std::string& type,
+                                             const int64_t& after,
+                                             const int64_t& before,
+                                             const uint32_t& maxResult)
+{
+    return DRing::searchConversation(accountId,
+                                     conversationId,
+                                     author,
+                                     lastId,
+                                     regexSearch,
+                                     type,
+                                     after,
+                                     before,
+                                     maxResult);
+}
+
 bool
 DBusConfigurationManager::isAudioMeterActive(const std::string& id)
 {

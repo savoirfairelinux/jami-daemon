@@ -299,6 +299,8 @@ DBusClient::initLibrary(int flags)
     const std::map<std::string, SharedCallback> convEvHandlers = {
         exportable_callback<ConversationSignal::ConversationLoaded>(
             bind(&DBusConfigurationManager::conversationLoaded, confM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::MessagesFound>(
+            bind(&DBusConfigurationManager::messagesFound, confM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::MessageReceived>(
             bind(&DBusConfigurationManager::messageReceived, confM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationProfileUpdated>(

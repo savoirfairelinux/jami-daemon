@@ -53,6 +53,17 @@ constexpr auto EUNAUTHORIZED = 4;
 class JamiAccount;
 class ChannelSocket;
 
+struct Filter
+{
+    std::string author;
+    std::string lastId;
+    std::string regexSearch;
+    std::string type;
+    int64_t after {0};
+    int64_t before {0};
+    uint32_t maxResult {0};
+};
+
 struct GitAuthor
 {
     std::string name {};
@@ -204,6 +215,13 @@ public:
                                         const std::string& authorUri = "") const;
     std::optional<ConversationCommit> getCommit(const std::string& commitId,
                                                 bool logIfNotFound = true) const;
+
+    /**
+     * Search in the conversation via a filter
+     * @param filter    Parameters for the search
+     * @return matching commits
+     */
+    std::vector<std::map<std::string, std::string>> search(const Filter& filter) const;
 
     /**
      * Get parent via topological + date sort in branch main of a commit
@@ -366,6 +384,13 @@ public:
      * @return account's URI
      */
     std::string uriFromDevice(const std::string& deviceId) const;
+    /**
+     * Convert ConversationCommit to MapStringString for the client
+     */
+    std::vector<std::map<std::string, std::string>> convCommitToMap(
+        const std::vector<ConversationCommit>& commits) const;
+    std::optional<std::map<std::string, std::string>> convCommitToMap(
+        const ConversationCommit& commit) const;
 
     /**
      * Get current HEAD hash

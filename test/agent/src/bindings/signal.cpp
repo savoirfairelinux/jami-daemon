@@ -209,20 +209,19 @@ install_signal_primitives(void*)
     add_handler<DRing::CallSignal::RecordPlaybackFilepath, const std::string&, const std::string&>(
         handlers, "record-playback-filepath");
 
-    add_handler<DRing::CallSignal::ConferenceCreated,
-                const std::string&, const std::string&>(handlers,
-                                                        "conference-created");
+    add_handler<DRing::CallSignal::ConferenceCreated, const std::string&, const std::string&>(
+        handlers, "conference-created");
 
     add_handler<DRing::CallSignal::ConferenceChanged,
-                const std::string&, const std::string&, const std::string&>(
-                    handlers, "conference-changed");
+                const std::string&,
+                const std::string&,
+                const std::string&>(handlers, "conference-changed");
 
     add_handler<DRing::CallSignal::UpdatePlaybackScale, const std::string&, unsigned, unsigned>(
         handlers, "update-playback-scale");
 
-    add_handler<DRing::CallSignal::ConferenceRemoved,
-                const std::string&, const std::string&>(handlers,
-                                                        "conference-removed");
+    add_handler<DRing::CallSignal::ConferenceRemoved, const std::string&, const std::string&>(
+        handlers, "conference-removed");
 
     add_handler<DRing::CallSignal::RecordingStateChanged, const std::string&, int>(
         handlers, "recording-state-changed");
@@ -499,6 +498,12 @@ install_signal_primitives(void*)
                 const std::string&,
                 const std::string&,
                 std::vector<std::map<std::string, std::string>>>(handlers, "conversation-loaded");
+
+    add_handler<DRing::ConversationSignal::MessagesFound,
+                uint32_t,
+                const std::string&,
+                const std::string&,
+                std::vector<std::map<std::string, std::string>>>(handlers, "messages-found");
 
     add_handler<DRing::ConversationSignal::MessageReceived,
                 const std::string&,

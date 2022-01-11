@@ -27,6 +27,7 @@
 #include <json/json.h>
 #include <msgpack.hpp>
 
+#include "jamidht/conversationrepository.h"
 #include "jami/datatransfer_interface.h"
 #include "conversationrepository.h"
 
@@ -370,6 +371,17 @@ public:
     uint32_t countInteractions(const std::string& toId,
                                const std::string& fromId = "",
                                const std::string& authorUri = "") const;
+
+    /**
+     * Search in the conversation via a filter
+     * @param req       Id of the request
+     * @param filter    Parameters for the search
+     * @param flag      To check when search is finished
+     * @note triggers messagesFound
+     */
+    void search(uint32_t req,
+                const Filter& filter,
+                const std::shared_ptr<std::atomic_int>& flag) const;
 
 private:
     std::shared_ptr<Conversation> shared()

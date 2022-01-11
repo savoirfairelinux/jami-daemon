@@ -185,4 +185,30 @@ countInteractions(const std::string& accountId,
     return 0;
 }
 
+uint32_t
+searchConversation(const std::string& accountId,
+                   const std::string& conversationId,
+                   const std::string& author,
+                   const std::string& lastId,
+                   const std::string& regexSearch,
+                   const std::string& type,
+                   const int64_t& after,
+                   const int64_t& before,
+                   const uint32_t& maxResult)
+{
+    uint32_t res = 0;
+    jami::Filter filter {author, lastId, regexSearch, type, after, before, maxResult};
+    for (const auto& accId : jami::Manager::instance().getAccountList()) {
+        if (!accountId.empty() && accId != accountId)
+            continue;
+        if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accId)) {
+            res = std::uniform_int_distribution<uint32_t>()(acc->rand);
+            if (auto convModule = acc->convModule()) {
+                convModule->search(res, conversationId, filter);
+            }
+        }
+    }
+    return res;
+}
+
 } // namespace DRing

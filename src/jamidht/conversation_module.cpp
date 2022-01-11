@@ -1621,6 +1621,26 @@ ConversationModule::countInteractions(const std::string& convId,
 }
 
 void
+ConversationModule::search(uint32_t req, const std::string& convId, const Filter& filter) const
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto finishedFlag = std::make_shared<std::atomic_int>(pimpl_->conversations_.size());
+    for (const auto& [cid, conversation] : pimpl_->conversations_) {
+        if (!conversation || (!convId.empty() && convId != cid)) {
+            if ((*finishedFlag)-- == 1) {
+                emitSignal<DRing::ConversationSignal::MessagesFound>(
+                    req,
+                    pimpl_->accountId_,
+                    std::string {},
+                    std::vector<std::map<std::string, std::string>> {});
+            }
+            continue;
+        }
+        conversation->search(req, filter, finishedFlag);
+    }
+}
+
+void
 ConversationModule::updateConversationInfos(const std::string& conversationId,
                                             const std::map<std::string, std::string>& infos,
                                             bool sync)

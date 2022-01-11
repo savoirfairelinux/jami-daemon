@@ -193,7 +193,7 @@ public:
                 convcommits.emplace_back(*commit);
             }
         }
-        announce(convCommitToMap(convcommits));
+        announce(repository_->convCommitToMap(convcommits));
     }
 
     void announce(const std::vector<std::map<std::string, std::string>>& commits) const
@@ -347,10 +347,6 @@ public:
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
-    std::vector<std::map<std::string, std::string>> convCommitToMap(
-        const std::vector<ConversationCommit>& commits) const;
-    std::optional<std::map<std::string, std::string>> convCommitToMap(
-        const ConversationCommit& commit) const;
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
@@ -397,81 +393,6 @@ Conversation::Impl::repoPath() const
            + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository_->id();
 }
 
-std::optional<std::map<std::string, std::string>>
-Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
-{
-    if (!repository_)
-        return std::nullopt;
-    auto authorDevice = commit.author.email;
-    auto authorId = repository_->uriFromDevice(authorDevice);
-    if (authorId == "")
-        return std::nullopt;
-
-    std::string parents;
-    auto parentsSize = commit.parents.size();
-    for (std::size_t i = 0; i < parentsSize; ++i) {
-        parents += commit.parents[i];
-        if (i != parentsSize - 1)
-            parents += ",";
-    }
-    std::string type;
-    if (parentsSize > 1)
-        type = "merge";
-    std::string body {};
-    std::map<std::string, std::string> message;
-    if (type.empty()) {
-        std::string err;
-        Json::Value cm;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (reader->parse(commit.commit_msg.data(),
-                          commit.commit_msg.data() + commit.commit_msg.size(),
-                          &cm,
-                          &err)) {
-            for (auto const& id : cm.getMemberNames()) {
-                if (id == "type") {
-                    type = cm[id].asString();
-                    continue;
-                }
-                message.insert({id, cm[id].asString()});
-            }
-        } else {
-            JAMI_WARN("%s", err.c_str());
-        }
-    }
-    if (type == "application/data-transfer+json") {
-        // Avoid the client to do the concatenation
-        message["fileId"] = commit.id + "_" + message["tid"];
-        auto extension = fileutils::getFileExtension(message["displayName"]);
-        if (!extension.empty())
-            message["fileId"] += "." + extension;
-    }
-    message[ConversationMapKeys::ID] = commit.id;
-    message["parents"] = parents;
-    message["linearizedParent"] = commit.linearized_parent;
-    message["author"] = authorId;
-    if (type.empty())
-        return std::nullopt;
-    message["type"] = type;
-    message["timestamp"] = std::to_string(commit.timestamp);
-
-    return message;
-}
-
-std::vector<std::map<std::string, std::string>>
-Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commits) const
-{
-    std::vector<std::map<std::string, std::string>> result = {};
-    result.reserve(commits.size());
-    for (const auto& commit : commits) {
-        auto message = convCommitToMap(commit);
-        if (message == std::nullopt)
-            break;
-        result.emplace_back(*message);
-    }
-    return result;
-}
-
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::loadMessages(const std::string& fromMessage,
                                  const std::string& toMessage,
@@ -484,7 +405,7 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
         convCommits = repository_->logN(fromMessage, n);
     else
         convCommits = repository_->log(fromMessage, toMessage);
-    return convCommitToMap(convCommits);
+    return repository_->convCommitToMap(convCommits);
 }
 
 Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
@@ -848,7 +769,7 @@ Conversation::getCommit(const std::string& commitId) const
     auto commit = pimpl_->repository_->getCommit(commitId);
     if (commit == std::nullopt)
         return std::nullopt;
-    return pimpl_->convCommitToMap(*commit);
+    return pimpl_->repository_->convCommitToMap(*commit);
 }
 
 void
@@ -917,7 +838,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     }
 
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
-    auto result = convCommitToMap(newCommits);
+    auto result = repository_->convCommitToMap(newCommits);
     for (const auto& commit : result) {
         auto it = commit.find("type");
         if (it != commit.end() && it->second == "member") {
@@ -1347,6 +1268,36 @@ Conversation::countInteractions(const std::string& toId,
 {
     // Log but without content to avoid costly convertions.
     return pimpl_->repository_->log(fromId, toId, false, true, authorUri).size();
+}
+
+void
+Conversation::search(uint32_t req,
+                     const Filter& filter,
+                     const std::shared_ptr<std::atomic_int>& flag) const
+{
+    // Because logging a conversation can take quite some time,
+    // do it asynchronously
+    dht::ThreadPool::io().run([w = weak(), req, filter, flag] {
+        if (auto sthis = w.lock()) {
+            auto acc = sthis->pimpl_->account_.lock();
+            if (!acc)
+                return;
+            auto commits = sthis->pimpl_->repository_->search(filter);
+            if (commits.size() > 0)
+                emitSignal<DRing::ConversationSignal::MessagesFound>(req,
+                                                                     acc->getAccountID(),
+                                                                     sthis->id(),
+                                                                     std::move(commits));
+            // If we're the latest thread, inform client that the search is finished
+            if ((*flag)-- == 1 /* decrement return the old value */) {
+                emitSignal<DRing::ConversationSignal::MessagesFound>(
+                    req,
+                    acc->getAccountID(),
+                    std::string {},
+                    std::vector<std::map<std::string, std::string>> {});
+            }
+        }
+    });
 }
 
 } // namespace jami

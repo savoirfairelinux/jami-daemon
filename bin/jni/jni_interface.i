@@ -320,6 +320,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
 
     const std::map<std::string, SharedCallback> conversationHandlers = {
         exportable_callback<ConversationSignal::ConversationLoaded>(bind(&ConversationCallback::conversationLoaded, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::MessagesFound>(bind(&ConversationCallback::messagesFound, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::MessageReceived>(bind(&ConversationCallback::messageReceived, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationProfileUpdated>(bind(&ConversationCallback::conversationProfileUpdated, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationRequestReceived>(bind(&ConversationCallback::conversationRequestReceived, convM, _1, _2, _3)),

@@ -54,6 +54,13 @@ as_view(const GitObject& blob)
     return as_view(reinterpret_cast<git_blob*>(blob.get()));
 }
 
+enum class CallbackResult { Skip, Break, Ok };
+
+using PreConditionCb
+    = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
+using PostConditionCb
+    = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
+
 class ConversationRepository::Impl
 {
 public:
@@ -133,12 +140,18 @@ public:
     std::string diffStats(const GitDiff& diff) const;
 
     std::vector<ConversationCommit> behind(const std::string& from) const;
+    void forEachCommit(PreConditionCb&& preCondition,
+                       std::function<void(ConversationCommit&&)>&& emplaceCb,
+                       PostConditionCb&& postCondition,
+                       const std::string& from = "",
+                       bool logIfNotFound = true) const;
     std::vector<ConversationCommit> log(const std::string& from,
                                         const std::string& to,
                                         unsigned n,
                                         bool logIfNotFound = false,
                                         bool fastLog = false,
                                         const std::string& authorUri = "") const;
+    std::vector<std::map<std::string, std::string>> search(const Filter& filter) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
     GitObject memberCertificate(std::string_view memberUri, const GitTree& tree) const;
@@ -182,6 +195,9 @@ public:
     }
 
     void initMembers();
+
+    std::optional<std::map<std::string, std::string>> convCommitToMap(
+        const ConversationCommit& commit) const;
 
     // Permissions
     MemberRole updateProfilePermLvl_ {MemberRole::ADMIN};
@@ -1867,22 +1883,20 @@ ConversationRepository::Impl::behind(const std::string& from) const
     return log(from, to, 0);
 }
 
-std::vector<ConversationCommit>
-ConversationRepository::Impl::log(const std::string& from,
-                                  const std::string& to,
-                                  unsigned n,
-                                  bool logIfNotFound,
-                                  bool fastLog,
-                                  const std::string& authorUri) const
+void
+ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
+                                            std::function<void(ConversationCommit&&)>&& emplaceCb,
+                                            PostConditionCb&& postCondition,
+                                            const std::string& from,
+                                            bool logIfNotFound) const
 {
-    std::vector<ConversationCommit> commits {};
     git_oid oid, oidFrom, oidMerge;
 
     // Note: Start from head to get all merge possibilities and correct linearized parent.
     auto repo = repository();
     if (!repo or git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
-        return commits;
+        return;
     }
 
     if (from != "" && git_oid_fromstr(&oidFrom, from.c_str()) == 0) {
@@ -1901,50 +1915,25 @@ ConversationRepository::Impl::log(const std::string& from,
         // there). only log if the fail is unwanted.
         if (logIfNotFound)
             JAMI_DBG("Couldn't init revwalker for conversation %s", id_.c_str());
-        return commits;
+        return;
     }
 
     GitRevWalker walker {walker_ptr, git_revwalk_free};
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
 
-    auto startLogging = from == "";
     for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
         git_commit* commit_ptr = nullptr;
         std::string id = git_oid_tostr_s(&oid);
-        if (!commits.empty()) {
-            // Set linearized parent
-            commits.rbegin()->linearized_parent = id;
-        }
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
             JAMI_WARN("Failed to look up commit %s", id.c_str());
             break;
         }
         GitCommit commit {commit_ptr, git_commit_free};
-        if ((n != 0 && commits.size() == n) || (id == to))
-            break;
-
-        if (!startLogging && from != "" && from == id)
-            startLogging = true;
-        if (!startLogging)
-            continue;
 
         const git_signature* sig = git_commit_author(commit.get());
         GitAuthor author;
         author.name = sig->name;
         author.email = sig->email;
-
-        if (fastLog) {
-            if (authorUri != "") {
-                auto cert = tls::CertificateStore::instance().getCertificate(author.email);
-                if (cert && cert->issuer) {
-                    if (authorUri == cert->issuer->getId().toString())
-                        break;
-                }
-            }
-            // Used to only count commit
-            commits.emplace(commits.end(), ConversationCommit {});
-            continue;
-        }
 
         std::vector<std::string> parents;
         auto parentsCount = git_commit_parentcount(commit.get());
@@ -1957,25 +1946,145 @@ ConversationRepository::Impl::log(const std::string& from,
             }
         }
 
-        auto cc = commits.emplace(commits.end(), ConversationCommit {});
-        cc->id = std::move(id);
-        cc->commit_msg = git_commit_message(commit.get());
-        cc->author = std::move(author);
-        cc->parents = std::move(parents);
+        auto result = preCondition(id, author, commit);
+        if (result == CallbackResult::Skip)
+            continue;
+        else if (result == CallbackResult::Break)
+            break;
+
+        ConversationCommit cc;
+        cc.id = id;
+        cc.commit_msg = git_commit_message(commit.get());
+        cc.author = std::move(author);
+        cc.parents = std::move(parents);
         git_buf signature = {}, signed_data = {};
         if (git_commit_extract_signature(&signature, &signed_data, repo.get(), &oid, "signature")
             < 0) {
             JAMI_WARN("Could not extract signature for commit %s", id.c_str());
         } else {
-            cc->signature = base64::decode(
+            cc.signature = base64::decode(
                 std::string(signature.ptr, signature.ptr + signature.size));
-            cc->signed_content = std::vector<uint8_t>(signed_data.ptr,
-                                                      signed_data.ptr + signed_data.size);
+            cc.signed_content = std::vector<uint8_t>(signed_data.ptr,
+                                                     signed_data.ptr + signed_data.size);
         }
         git_buf_dispose(&signature);
         git_buf_dispose(&signed_data);
-        cc->timestamp = git_commit_time(commit.get());
+        cc.timestamp = git_commit_time(commit.get());
+
+        auto post = postCondition(id, author, cc);
+        emplaceCb(std::move(cc));
+
+        if (post)
+            break;
     }
+}
+
+std::vector<ConversationCommit>
+ConversationRepository::Impl::log(const std::string& from,
+                                  const std::string& to,
+                                  unsigned n,
+                                  bool logIfNotFound,
+                                  bool fastLog,
+                                  const std::string& authorUri) const
+{
+    std::vector<ConversationCommit> commits {};
+    auto startLogging = from == "";
+    forEachCommit(
+        [&](const auto& id, const auto& author, const auto&) {
+            if (!commits.empty()) {
+                // Set linearized parent
+                commits.rbegin()->linearized_parent = id;
+            }
+
+            if ((n != 0 && commits.size() == n) || (id == to))
+                return CallbackResult::Break; // Stop logging
+
+            if (!startLogging && from != "" && from == id)
+                startLogging = true;
+            if (!startLogging)
+                return CallbackResult::Skip; // Start logging after this one
+
+            if (fastLog) {
+                if (authorUri != "") {
+                    if (authorUri == uriFromDevice(author.email)) {
+                        return CallbackResult::Break; // Found author, stop
+                    }
+                }
+                // Used to only count commit
+                commits.emplace(commits.end(), ConversationCommit {});
+                return CallbackResult::Skip;
+            }
+
+            return CallbackResult::Ok; // Continue
+        },
+        [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
+        [](auto, auto, auto) { return false; },
+        from,
+        logIfNotFound);
+    return commits;
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::Impl::search(const Filter& filter) const
+{
+    std::vector<std::map<std::string, std::string>> commits {};
+    forEachCommit(
+        [&](const auto& id, const auto& author, auto& commit) {
+            if (!commits.empty()) {
+                // Set linearized parent
+                commits.rbegin()->at("linearizedParent") = id;
+            }
+
+            if (!filter.author.empty() && filter.author != uriFromDevice(author.email)) {
+                // Filter author
+                return CallbackResult::Skip;
+            }
+            auto commitTime = git_commit_time(commit.get());
+            if (filter.before && filter.before < commitTime) {
+                // Only get commits before this date
+                return CallbackResult::Skip;
+            }
+            if (filter.after && filter.after > commitTime) {
+                // Only get commits before this date
+                if (git_commit_parentcount(commit.get()) <= 1)
+                    return CallbackResult::Break;
+                else
+                    return CallbackResult::Skip; // Because we are sorting it with
+                                                 // GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME
+            }
+
+            return CallbackResult::Ok; // Continue
+        },
+        [&](auto&& cc) {
+            auto content = convCommitToMap(cc);
+            auto contentType = content ? content->at("type") : "";
+            auto isSearchable = contentType == "text/plain"
+                                || contentType == "application/data-transfer+json";
+            if (filter.type.empty() && !isSearchable) {
+                // Not searchable, at least for now
+                return;
+            } else if (contentType == filter.type) {
+                if (isSearchable) {
+                    // If it's a text match the body, else the display name
+                    auto body = contentType == "text/plain" ? content->at("body")
+                                                            : content->at("displayName");
+                    std::smatch body_match;
+                    if (std::regex_search(body, body_match, std::regex(filter.regexSearch))) {
+                        commits.emplace(commits.end(), std::move(*content));
+                    }
+                } else {
+                    // Matching type, just add it to the results
+                    commits.emplace(commits.end(), std::move(*content));
+                }
+            }
+        },
+        [&](auto id, auto, auto) {
+            if (filter.maxResult != 0 && commits.size() == filter.maxResult)
+                return true;
+            if (id == filter.lastId)
+                return true;
+            return false;
+        });
     return commits;
 }
 
@@ -2180,6 +2289,63 @@ ConversationRepository::Impl::initMembers()
             }
         }
     }
+}
+
+std::optional<std::map<std::string, std::string>>
+ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) const
+{
+    auto authorId = uriFromDevice(commit.author.email);
+    if (authorId.empty())
+        return std::nullopt;
+    std::string parents;
+    auto parentsSize = commit.parents.size();
+    for (std::size_t i = 0; i < parentsSize; ++i) {
+        parents += commit.parents[i];
+        if (i != parentsSize - 1)
+            parents += ",";
+    }
+    std::string type {};
+    if (parentsSize > 1)
+        type = "merge";
+    std::string body {};
+    std::map<std::string, std::string> message;
+    if (type.empty()) {
+        std::string err;
+        Json::Value cm;
+        Json::CharReaderBuilder rbuilder;
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        if (reader->parse(commit.commit_msg.data(),
+                          commit.commit_msg.data() + commit.commit_msg.size(),
+                          &cm,
+                          &err)) {
+            for (auto const& id : cm.getMemberNames()) {
+                if (id == "type") {
+                    type = cm[id].asString();
+                    continue;
+                }
+                message.insert({id, cm[id].asString()});
+            }
+        } else {
+            JAMI_WARN("%s", err.c_str());
+        }
+    }
+    if (type.empty()) {
+        return std::nullopt;
+    } else if (type == "application/data-transfer+json") {
+        // Avoid the client to do the concatenation
+        message["fileId"] = commit.id + "_" + message["tid"];
+        auto extension = fileutils::getFileExtension(message["displayName"]);
+        if (!extension.empty())
+            message["fileId"] += "." + extension;
+    }
+    message["id"] = commit.id;
+    message["parents"] = parents;
+    message["linearizedParent"] = commit.linearized_parent;
+    message["author"] = authorId;
+    message["type"] = type;
+    message["timestamp"] = std::to_string(commit.timestamp);
+
+    return message;
 }
 
 std::string
@@ -2793,6 +2959,12 @@ ConversationRepository::log(const std::string& from,
                             const std::string& authorUri) const
 {
     return pimpl_->log(from, to, 0, logIfNotFound, fastLog, authorUri);
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::search(const Filter& filter) const
+{
+    return pimpl_->search(filter);
 }
 
 std::optional<ConversationCommit>
@@ -3592,6 +3764,26 @@ ConversationRepository::getHead() const
             return commit_str;
     }
     return {};
+}
+
+std::optional<std::map<std::string, std::string>>
+ConversationRepository::convCommitToMap(const ConversationCommit& commit) const
+{
+    return pimpl_->convCommitToMap(commit);
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::convCommitToMap(const std::vector<ConversationCommit>& commits) const
+{
+    std::vector<std::map<std::string, std::string>> result = {};
+    result.reserve(commits.size());
+    for (const auto& commit : commits) {
+        auto message = pimpl_->convCommitToMap(commit);
+        if (message == std::nullopt)
+            continue;
+        result.emplace_back(*message);
+    }
+    return result;
 }
 
 } // namespace jami

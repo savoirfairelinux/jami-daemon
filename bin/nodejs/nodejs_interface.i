@@ -146,6 +146,7 @@ void init(const SWIGV8_VALUE& funcMap){
 
     const std::map<std::string, SharedCallback> conversationHandlers = {
         exportable_callback<ConversationSignal::ConversationLoaded>(bind(&conversationLoaded, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::MessagesFound>(bind(&messagesFound, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::MessageReceived>(bind(&messageReceived, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationProfileUpdated>(bind(&conversationProfileUpdated, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationRequestReceived>(bind(&conversationRequestReceived, _1, _2, _3)),
