@@ -53,6 +53,15 @@ constexpr auto EUNAUTHORIZED = 4;
 class JamiAccount;
 class ChannelSocket;
 
+struct Filter {
+    std::string author;
+    std::string lastId;
+    std::string regexSearch;
+    int64_t after {0};
+    int64_t before {0};
+    uint32_t maxResult {0};
+};
+
 struct GitAuthor
 {
     std::string name {};
@@ -206,6 +215,13 @@ public:
                                                 bool logIfNotFound = true) const;
 
     /**
+     * Search in the conversation via a filter
+     * @param filter    Parameters for the search
+     * @return matching commits
+     */
+    std::vector<std::map<std::string, std::string>> search(const Filter& filter) const;
+
+    /**
      * Get parent via topological + date sort in branch main of a commit
      * @param commitId      id to choice
      */
@@ -320,6 +336,14 @@ public:
     std::map<std::string, std::string> infos() const;
     static std::map<std::string, std::string> infosFromVCard(
         const std::map<std::string, std::string>& details);
+
+    /**
+     * Convert ConversationCommit to MapStringString for the client
+     */
+    std::vector<std::map<std::string, std::string>> convCommitToMap(
+        const std::vector<ConversationCommit>& commits) const;
+    std::optional<std::map<std::string, std::string>> convCommitToMap(
+        const ConversationCommit& commit) const;
 
 private:
     ConversationRepository() = delete;
