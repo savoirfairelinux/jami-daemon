@@ -407,11 +407,11 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             auto convIt = convInfos_.find(conversationId);
             clone = convIt != convInfos_.end();
         }
+        lk.unlock();
         if (clone) {
             cloneConversation(deviceId, peer, conversationId);
             return;
         }
-        lk.unlock();
         JAMI_WARN("[Account %s] Could not find conversation %s, ask for an invite",
                   accountId_.c_str(),
                   conversationId.c_str());
