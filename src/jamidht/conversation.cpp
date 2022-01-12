@@ -47,6 +47,7 @@ ConvInfo::ConvInfo(const Json::Value& json)
     for (const auto& v : json["members"]) {
         members.emplace_back(v["uri"].asString());
     }
+    lastDisplayed = json["lastDisplayed"].asString();
 }
 
 Json::Value
@@ -66,6 +67,7 @@ ConvInfo::toJson() const
         member["uri"] = m;
         json["members"].append(member);
     }
+    json["lastDisplayed"] = lastDisplayed;
     return json;
 }
 
@@ -244,6 +246,25 @@ public:
                 emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
                                                                        convId,
                                                                        c);
+                // check if we should update lastDisplayed
+                std::lock_guard<std::mutex> lk(lastDisplayedMtx_);
+                auto cached = lastDisplayed_.find("cached");
+                auto updateCached = false;
+                if (cached != lastDisplayed_.end()) {
+                    // If we found the commit we wait
+                    if (cached->second == c.at("id")) {
+                        updateCached = true;
+                        lastDisplayed_.erase(cached);
+                    }
+                } else if (c.at("author") == shared->getUsername())
+                    updateCached = true;
+
+                if (updateCached) {
+                    lastDisplayed_[shared->getUsername()] = c.at("id");
+                    if (lastDisplayedUpdatedCb_)
+                        lastDisplayedUpdatedCb_(convId, c.at("id"));
+                    saveLastDisplayed();
+                }
             }
 
             if (announceMember) {
@@ -274,7 +295,7 @@ public:
         msgpack::pack(file, fetchedDevices_);
     }
 
-    void loadLastDisplayed()
+    void loadLastDisplayed() const
     {
         try {
             // read file
@@ -288,7 +309,7 @@ public:
         }
     }
 
-    void saveLastDisplayed()
+    void saveLastDisplayed() const
     {
         std::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, lastDisplayed_);
@@ -313,9 +334,11 @@ public:
     std::string fetchedPath_ {};
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
+    // Manage last message displayed
     std::string lastDisplayedPath_ {};
-    std::mutex lastDisplayedMtx_ {};
-    std::map<std::string, std::string> lastDisplayed_ {};
+    mutable std::mutex lastDisplayedMtx_ {};
+    mutable std::map<std::string, std::string> lastDisplayed_ {};
+    std::function<void(const std::string&, const std::string&)> lastDisplayedUpdatedCb_ {};
 };
 
 bool
@@ -1125,9 +1148,66 @@ Conversation::hasFetched(const std::string& deviceId)
 void
 Conversation::setMessageDisplayed(const std::string& uri, const std::string& interactionId)
 {
+    if (auto acc = pimpl_->account_.lock()) {
+        if (uri == acc->getUsername() && pimpl_->lastDisplayedUpdatedCb_)
+            pimpl_->lastDisplayedUpdatedCb_(pimpl_->repository_->id(), interactionId);
+        std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
+        pimpl_->lastDisplayed_[uri] = interactionId;
+        pimpl_->saveLastDisplayed();
+    }
+}
+
+void
+Conversation::updateLastDisplayed(const std::string& lastDisplayed)
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc or !pimpl_->repository_)
+        return;
+
+    // Here, there can be several different scenarios
+    // 1. lastDisplayed is the current last displayed interaction. Nothing to do.
     std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
-    pimpl_->lastDisplayed_[uri] = interactionId;
-    pimpl_->saveLastDisplayed();
+    auto& currentLastDisplayed = pimpl_->lastDisplayed_[acc->getUsername()];
+    if (lastDisplayed == currentLastDisplayed)
+        return;
+
+    auto updateLastDisplayed = [&]() {
+        currentLastDisplayed = lastDisplayed;
+        pimpl_->saveLastDisplayed();
+        if (pimpl_->lastDisplayedUpdatedCb_)
+            pimpl_->lastDisplayedUpdatedCb_(pimpl_->repository_->id(), lastDisplayed);
+    };
+
+    auto hasCommit = pimpl_->repository_->getCommit(lastDisplayed, false) != std::nullopt;
+
+    // 2. lastDisplayed can be a future commit, not fetched yet
+    // In this case, we can cache it here, and check future announces to update it
+    if (!hasCommit) {
+        pimpl_->lastDisplayed_["cached"] = lastDisplayed;
+        pimpl_->saveLastDisplayed();
+        return;
+    }
+
+    // 3. There is no lastDisplayed yet
+    if (currentLastDisplayed.empty()) {
+        updateLastDisplayed();
+        return;
+    }
+
+    // 4. lastDisplayed is present in the repository. In this can, if it's a more recent
+    // commit than the current one, update it, else drop it.
+    auto commitsSinceLast = pimpl_->repository_->log("", lastDisplayed, false, true).size();
+    auto commitsSincePreviousLast = pimpl_->repository_->log("", currentLastDisplayed, false, true)
+                                        .size();
+    if (commitsSincePreviousLast > commitsSinceLast)
+        updateLastDisplayed();
+}
+
+void
+Conversation::onLastDisplayedUpdated(
+    std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb)
+{
+    pimpl_->lastDisplayedUpdatedCb_ = std::move(lastDisplayedUpdatedCb);
 }
 
 uint32_t

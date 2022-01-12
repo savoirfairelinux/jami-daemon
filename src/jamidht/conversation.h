@@ -69,13 +69,14 @@ struct ConvInfo
     time_t removed {0};
     time_t erased {0};
     std::vector<std::string> members;
+    std::string lastDisplayed {};
 
     ConvInfo() = default;
     ConvInfo(const Json::Value& json);
 
     Json::Value toJson() const;
 
-    MSGPACK_DEFINE_MAP(id, created, removed, erased, members)
+    MSGPACK_DEFINE_MAP(id, created, removed, erased, members, lastDisplayed)
 };
 
 class JamiAccount;
@@ -119,7 +120,7 @@ public:
      * {
      *  "uri":"xxx",
      *  "role":"member/admin/invited",
-     *  "lastRead":"id"
+     *  "lastDisplayed":"id"
      *  ...
      * }
      */
@@ -331,6 +332,19 @@ public:
      * @param interactionId     Last interaction displayed
      */
     void setMessageDisplayed(const std::string& uri, const std::string& interactionId);
+
+    /**
+     * Compute, with multi device support the last message displayed of a conversation
+     * @param lastDisplayed      Latest displayed interaction
+     */
+    void updateLastDisplayed(const std::string& lastDisplayed);
+
+    /**
+     * Add a callback to update uppers layers
+     * @param lastDisplayedUpdatedCb    Triggered when last displayed for account is updated
+     */
+    void onLastDisplayedUpdated(
+        std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb);
 
     /**
      * Retrieve how many interactions there is from HEAD to interactionId
