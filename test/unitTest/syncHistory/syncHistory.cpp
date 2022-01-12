@@ -20,6 +20,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <chrono>
 #include <condition_variable>
 #include <filesystem>
 
@@ -34,6 +35,7 @@
 #include "common.h"
 
 using namespace DRing::Account;
+using namespace std::literals::chrono_literals;
 
 namespace jami {
 namespace test {
@@ -70,6 +72,8 @@ private:
     void testSyncOneToOne();
     void testConversationRequestRemoved();
     void testProfileReceivedMultiDevice();
+    void testLastInteractionAfterClone();
+    void testLastInteractionAfterSomeMessages();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
     CPPUNIT_TEST(testCreateConversationThenSync);
@@ -84,6 +88,8 @@ private:
     CPPUNIT_TEST(testSyncOneToOne);
     CPPUNIT_TEST(testConversationRequestRemoved);
     CPPUNIT_TEST(testProfileReceivedMultiDevice);
+    CPPUNIT_TEST(testLastInteractionAfterClone);
+    CPPUNIT_TEST(testLastInteractionAfterSomeMessages);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -153,9 +159,7 @@ SyncHistoryTest::testCreateConversationThenSync()
             }));
     DRing::registerSignalHandlers(confHandlers);
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return alice2Ready && conversationReady;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready && conversationReady; }));
     DRing::unregisterSignalHandlers();
 }
 
@@ -203,9 +207,7 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
             }));
     DRing::registerSignalHandlers(confHandlers);
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return alice2Ready && conversationReady;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return alice2Ready && conversationReady; }));
     DRing::unregisterSignalHandlers();
 }
 
@@ -241,13 +243,13 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     // Start conversation
     messageReceived = false;
     DRing::sendMessage(aliceId, convId, std::string("Message 1"), "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
     messageReceived = false;
     DRing::sendMessage(aliceId, convId, std::string("Message 2"), "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
     messageReceived = false;
     DRing::sendMessage(aliceId, convId, std::string("Message 3"), "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
 
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
@@ -263,7 +265,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     alice2Id = Manager::instance().addAccount(details);
 
     // Check if conversation is ready
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() { return conversationReady; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady; }));
     std::vector<std::map<std::string, std::string>> messages;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationLoaded>(
         [&](uint32_t,
@@ -277,7 +279,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
         }));
     DRing::registerSignalHandlers(confHandlers);
     DRing::loadConversationMessages(alice2Id, convId, "", 0);
-    cv.wait_for(lk, std::chrono::seconds(30));
+    cv.wait_for(lk, 30s);
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
 
@@ -297,17 +299,17 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     DRing::sendMessage(aliceId, convId, std::string("Message 1"), "");
     DRing::sendMessage(aliceId, convId, std::string("Message 2"), "");
     DRing::sendMessage(aliceId, convId, std::string("Message 3"), "");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(1s);
     auto convId2 = DRing::startConversation(aliceId);
     DRing::sendMessage(aliceId, convId2, std::string("Message 1"), "");
     DRing::sendMessage(aliceId, convId2, std::string("Message 2"), "");
     DRing::sendMessage(aliceId, convId2, std::string("Message 3"), "");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(1s);
     auto convId3 = DRing::startConversation(aliceId);
     DRing::sendMessage(aliceId, convId3, std::string("Message 1"), "");
     DRing::sendMessage(aliceId, convId3, std::string("Message 2"), "");
     DRing::sendMessage(aliceId, convId3, std::string("Message 3"), "");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(1s);
     auto convId4 = DRing::startConversation(aliceId);
     DRing::sendMessage(aliceId, convId4, std::string("Message 1"), "");
     DRing::sendMessage(aliceId, convId4, std::string("Message 2"), "");
@@ -342,8 +344,7 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     confHandlers.clear();
 
     // Check if conversation is ready
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(60), [&]() { return conversationReady == 4; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady == 4; }));
     DRing::unregisterSignalHandlers();
 }
 
@@ -391,8 +392,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
 
     memberEvent = false;
     DRing::addConversationMember(bobId, convId, uri);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(30), [&] { return memberEvent && requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return memberEvent && requestReceived; }));
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
 
@@ -420,7 +420,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestReceived; }));
     DRing::unregisterSignalHandlers();
 }
 
@@ -477,11 +477,9 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     DRing::registerSignalHandlers(confHandlers);
 
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return alice2Ready && conversationReady;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return alice2Ready && conversationReady; }));
     DRing::removeConversation(aliceId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return conversationRemoved; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationRemoved; }));
 
     DRing::unregisterSignalHandlers();
 }
@@ -489,7 +487,6 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
 void
 SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -553,17 +550,17 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     DRing::registerSignalHandlers(confHandlers);
 
     DRing::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     DRing::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // Wait that alice sees Bob
-    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 1; });
+    cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 1; });
 
     // disable account (same as removed)
     Manager::instance().sendRegister(aliceId, false);
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(5s);
 
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
@@ -576,18 +573,18 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     requestReceived = false;
     conversationReady = false;
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return alice2Ready; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready; }));
 
     // This will trigger a conversation request. Cause alice2 can't know first conversation
     DRing::sendMessage(bobId, convId, std::string("hi"), "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestReceived; }));
 
     DRing::acceptConversationRequest(alice2Id, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return conversationReady; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationReady; }));
 
     messageBobReceived = 0;
     DRing::sendMessage(alice2Id, convId, std::string("hi"), "");
-    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; });
+    cv.wait_for(lk, 30s, [&]() { return messageBobReceived == 1; });
     DRing::unregisterSignalHandlers();
 }
 
@@ -661,16 +658,16 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     DRing::registerSignalHandlers(confHandlers);
 
     DRing::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     DRing::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // We need to track presence to know when to sync
     bobAccount->trackBuddyPresence(aliceUri, true);
 
     // Wait that alice sees Bob
-    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberAddGenerated; });
+    cv.wait_for(lk, 30s, [&]() { return memberAddGenerated; });
 
     // Backup alice after startConversation with member
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
@@ -678,7 +675,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 
     // disable account (same as removed)
     Manager::instance().sendRegister(aliceId, false);
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(5s);
 
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
@@ -692,12 +689,12 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     conversationReady = false;
     alice2Id = Manager::instance().addAccount(details);
     // Should retrieve conversation, no need for action as the convInfos is in the archive
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return alice2Ready; }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return conversationReady; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationReady; }));
 
     messageBobReceived = 0;
     DRing::sendMessage(alice2Id, convId, std::string("hi"), "");
-    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; });
+    cv.wait_for(lk, 30s, [&]() { return messageBobReceived == 1; });
     DRing::unregisterSignalHandlers();
 }
 
@@ -764,7 +761,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     DRing::registerSignalHandlers(confHandlers);
 
     DRing::addConversationMember(bobId, convId, aliceUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     // Backup alice after startConversation with member
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
@@ -772,7 +769,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
 
     // disable account (same as removed)
     Manager::instance().sendRegister(aliceId, false);
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(5s);
 
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
@@ -784,13 +781,12 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     conversationReady = false;
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return alice2Ready; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready; }));
 
     // Should get the same request as before.
     DRing::acceptConversationRequest(alice2Id, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
-        return conversationReady && messageBobReceived == 1;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && messageBobReceived == 1; }));
     DRing::unregisterSignalHandlers();
 }
 
@@ -828,7 +824,7 @@ SyncHistoryTest::testSyncOneToOne()
     DRing::registerSignalHandlers(confHandlers);
 
     aliceAccount->addContact(bobAccount->getUsername());
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !convId.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !convId.empty(); }));
 
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
@@ -843,9 +839,7 @@ SyncHistoryTest::testSyncOneToOne()
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
 
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return alice2Ready && conversationReady;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready && conversationReady; }));
     DRing::unregisterSignalHandlers();
 }
 
@@ -883,7 +877,7 @@ SyncHistoryTest::testConversationRequestRemoved()
     DRing::registerSignalHandlers(confHandlers);
 
     DRing::addConversationMember(bobId, convId, uri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestReceived; }));
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
 
@@ -923,13 +917,11 @@ SyncHistoryTest::testConversationRequestRemoved()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestReceived; }));
     // Now decline trust request, this should trigger ConversationRequestDeclined both sides for Alice
     DRing::declineConversationRequest(aliceId, convId);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return requestDeclined && requestDeclined2;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestDeclined && requestDeclined2; }));
 
     DRing::unregisterSignalHandlers();
 }
@@ -1018,10 +1010,10 @@ END:VCARD";
     DRing::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return conversationReady && bobProfileReceived && aliceProfileReceived;
     }));
     CPPUNIT_ASSERT(fileutils::isFile(bobDest));
@@ -1038,10 +1030,242 @@ END:VCARD";
     bobProfileReceived = false, aliceProfileReceived = false;
     alice2Id = Manager::instance().addAccount(details);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return aliceProfileReceived && bobProfileReceived;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return aliceProfileReceived && bobProfileReceived; }));
     DRing::unregisterSignalHandlers();
+}
+
+void
+SyncHistoryTest::testLastInteractionAfterClone()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    std::string convId;
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageReceived = false;
+    std::string msgId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& /* accountId */,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> message) {
+            messageReceived = true;
+            msgId = message["id"];
+            cv.notify_one();
+        }));
+    auto conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId || accountId == alice2Id) {
+                convId = conversationId;
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    auto requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& /*conversationId*/,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
+    auto messageDisplayed = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                const std::string& /* username */,
+                const std::string& /* msgId */,
+                int status) {
+                if (status == 3)
+                    messageDisplayed = true;
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+    confHandlers.clear();
+
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+
+    // Start conversation
+    messageReceived = false;
+    DRing::sendMessage(bobId, convId, std::string("Message 1"), "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
+    messageReceived = false;
+    DRing::sendMessage(bobId, convId, std::string("Message 2"), "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
+    messageReceived = false;
+    DRing::sendMessage(bobId, convId, std::string("Message 3"), "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
+
+    messageDisplayed = false;
+    DRing::setMessageDisplayed(aliceId, "swarm:" + convId, msgId, 3);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageDisplayed; }));
+
+    // Now create alice2
+    conversationReady = false;
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    aliceAccount->exportArchive(aliceArchive);
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "ALICE2";
+    details[ConfProperties::ALIAS] = "ALICE2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+    alice2Id = Manager::instance().addAccount(details);
+
+    // Check if conversation is ready
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady; }));
+    // Check that last displayed is synched
+    auto membersInfos = DRing::getConversationMembers(alice2Id, convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri
+                                           && infos["lastDisplayed"] == msgId;
+                                })
+                   != membersInfos.end());
+}
+
+void
+SyncHistoryTest::testLastInteractionAfterSomeMessages()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    std::string convId;
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageReceived = false;
+    std::string msgId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& /* accountId */,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> message) {
+            messageReceived = true;
+            msgId = message["id"];
+            cv.notify_one();
+        }));
+    auto conversationReady = false, conversationAlice2Ready = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId) {
+                convId = conversationId;
+                conversationReady = true;
+            } else if (accountId == alice2Id) {
+                conversationAlice2Ready = true;
+            }
+            cv.notify_one();
+        }));
+    auto requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& /*conversationId*/,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
+    auto messageDisplayed = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                const std::string& /* username */,
+                const std::string& /* msgId */,
+                int status) {
+                if (status == 3)
+                    messageDisplayed = true;
+                cv.notify_one();
+            }));
+    auto alice2Ready = false, alice2Stopped = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                if (alice2Id != accountId) {
+                    return;
+                }
+                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                              == "true";
+                auto daemonStatus = details.at(DRing::Account::ConfProperties::Registration::STATUS);
+                if (daemonStatus == "UNREGISTERED")
+                    alice2Stopped = true;
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+    confHandlers.clear();
+
+    // Creates alice2
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    aliceAccount->exportArchive(aliceArchive);
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "ALICE2";
+    details[ConfProperties::ALIAS] = "ALICE2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+    alice2Id = Manager::instance().addAccount(details);
+
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && conversationAlice2Ready; }));
+
+    // Disable alice 2
+    Manager::instance().sendRegister(aliceId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return alice2Stopped; }));
+
+    // Start conversation
+    messageReceived = false;
+    DRing::sendMessage(bobId, convId, std::string("Message 1"), "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
+    messageReceived = false;
+    DRing::sendMessage(bobId, convId, std::string("Message 2"), "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
+    messageReceived = false;
+    DRing::sendMessage(bobId, convId, std::string("Message 3"), "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
+
+    messageDisplayed = false;
+    auto displayedId = msgId;
+    DRing::setMessageDisplayed(aliceId, "swarm:" + convId, displayedId, 3);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageDisplayed; }));
+
+    // Now restart alice2
+    messageDisplayed = false;
+    Manager::instance().sendRegister(aliceId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return messageDisplayed; }));
+    auto membersInfos = DRing::getConversationMembers(alice2Id, convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri
+                                           && infos["lastDisplayed"] == displayedId;
+                                })
+                   != membersInfos.end());
 }
 
 } // namespace test
