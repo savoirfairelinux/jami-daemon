@@ -31,6 +31,21 @@
 
 namespace jami {
 
+namespace ConversationMapKeys {
+static constexpr const char* ID = "id";
+static constexpr const char* CREATED = "created";
+static constexpr const char* REMOVED = "removed";
+static constexpr const char* ERASED = "erased";
+static constexpr const char* MEMBERS = "members";
+static constexpr const char* LAST_DISPLAYED = "lastDisplayed";
+static constexpr const char* CACHED = "cached";
+static constexpr const char* RECEIVED = "received";
+static constexpr const char* DECLINED = "declined";
+static constexpr const char* FROM = "from";
+static constexpr const char* CONVERSATIONID = "conversationId";
+static constexpr const char* METADATAS = "metadatas";
+}
+
 /**
  * A ConversationRequest is a request which corresponds to a trust request, but for conversations
  * It's signed by the sender and contains the members list, the conversationId, and the metadatas
@@ -69,13 +84,14 @@ struct ConvInfo
     time_t removed {0};
     time_t erased {0};
     std::vector<std::string> members;
+    std::string lastDisplayed {};
 
     ConvInfo() = default;
     ConvInfo(const Json::Value& json);
 
     Json::Value toJson() const;
 
-    MSGPACK_DEFINE_MAP(id, created, removed, erased, members)
+    MSGPACK_DEFINE_MAP(id, created, removed, erased, members, lastDisplayed)
 };
 
 class JamiAccount;
@@ -102,6 +118,14 @@ public:
                  const std::string& conversationId);
     ~Conversation();
 
+    /**
+     * Add a callback to update upper layers
+     * @note to call after the construction (and before ConversationReady)
+     * @param lastDisplayedUpdatedCb    Triggered when last displayed for account is updated
+     */
+    void onLastDisplayedUpdated(
+        std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb);
+
     std::string id() const;
 
     // Member management
@@ -119,7 +143,7 @@ public:
      * {
      *  "uri":"xxx",
      *  "role":"member/admin/invited",
-     *  "lastRead":"id"
+     *  "lastDisplayed":"id"
      *  ...
      * }
      */
@@ -331,6 +355,12 @@ public:
      * @param interactionId     Last interaction displayed
      */
     void setMessageDisplayed(const std::string& uri, const std::string& interactionId);
+
+    /**
+     * Compute, with multi device support the last message displayed of a conversation
+     * @param lastDisplayed      Latest displayed interaction
+     */
+    void updateLastDisplayed(const std::string& lastDisplayed);
 
     /**
      * Retrieve how many interactions there is from HEAD to interactionId

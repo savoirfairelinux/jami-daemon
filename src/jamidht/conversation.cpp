@@ -40,43 +40,45 @@ namespace jami {
 
 ConvInfo::ConvInfo(const Json::Value& json)
 {
-    id = json["id"].asString();
-    created = json["created"].asLargestUInt();
-    removed = json["removed"].asLargestUInt();
-    erased = json["erased"].asLargestUInt();
-    for (const auto& v : json["members"]) {
+    id = json[ConversationMapKeys::ID].asString();
+    created = json[ConversationMapKeys::CREATED].asLargestUInt();
+    removed = json[ConversationMapKeys::REMOVED].asLargestUInt();
+    erased = json[ConversationMapKeys::ERASED].asLargestUInt();
+    for (const auto& v : json[ConversationMapKeys::MEMBERS]) {
         members.emplace_back(v["uri"].asString());
     }
+    lastDisplayed = json[ConversationMapKeys::LAST_DISPLAYED].asString();
 }
 
 Json::Value
 ConvInfo::toJson() const
 {
     Json::Value json;
-    json["id"] = id;
-    json["created"] = Json::Int64(created);
+    json[ConversationMapKeys::ID] = id;
+    json[ConversationMapKeys::CREATED] = Json::Int64(created);
     if (removed) {
-        json["removed"] = Json::Int64(removed);
+        json[ConversationMapKeys::REMOVED] = Json::Int64(removed);
     }
     if (erased) {
-        json["erased"] = Json::Int64(erased);
+        json[ConversationMapKeys::ERASED] = Json::Int64(erased);
     }
     for (const auto& m : members) {
         Json::Value member;
         member["uri"] = m;
-        json["members"].append(member);
+        json[ConversationMapKeys::MEMBERS].append(member);
     }
+    json[ConversationMapKeys::LAST_DISPLAYED] = lastDisplayed;
     return json;
 }
 
 // ConversationRequest
 ConversationRequest::ConversationRequest(const Json::Value& json)
 {
-    received = json["received"].asLargestUInt();
-    declined = json["declined"].asLargestUInt();
-    from = json["from"].asString();
-    conversationId = json["conversationId"].asString();
-    auto& md = json["metadatas"];
+    received = json[ConversationMapKeys::RECEIVED].asLargestUInt();
+    declined = json[ConversationMapKeys::DECLINED].asLargestUInt();
+    from = json[ConversationMapKeys::FROM].asString();
+    conversationId = json[ConversationMapKeys::CONVERSATIONID].asString();
+    auto& md = json[ConversationMapKeys::METADATAS];
     for (const auto& member : md.getMemberNames()) {
         metadatas.emplace(member, md[member].asString());
     }
@@ -86,13 +88,13 @@ Json::Value
 ConversationRequest::toJson() const
 {
     Json::Value json;
-    json["conversationId"] = conversationId;
-    json["from"] = from;
-    json["received"] = static_cast<uint32_t>(received);
+    json[ConversationMapKeys::CONVERSATIONID] = conversationId;
+    json[ConversationMapKeys::FROM] = from;
+    json[ConversationMapKeys::RECEIVED] = static_cast<uint32_t>(received);
     if (declined)
-        json["declined"] = static_cast<uint32_t>(declined);
+        json[ConversationMapKeys::DECLINED] = static_cast<uint32_t>(declined);
     for (const auto& [key, value] : metadatas) {
-        json["metadatas"][key] = value;
+        json[ConversationMapKeys::METADATAS][key] = value;
     }
     return json;
 }
@@ -101,11 +103,11 @@ std::map<std::string, std::string>
 ConversationRequest::toMap() const
 {
     auto result = metadatas;
-    result["id"] = conversationId;
-    result["from"] = from;
+    result[ConversationMapKeys::ID] = conversationId;
+    result[ConversationMapKeys::FROM] = from;
     if (declined)
-        result["declined"] = std::to_string(declined);
-    result["received"] = std::to_string(received);
+        result[ConversationMapKeys::DECLINED] = std::to_string(declined);
+    result[ConversationMapKeys::RECEIVED] = std::to_string(received);
     return result;
 }
 
@@ -161,7 +163,7 @@ public:
                                     + shared->getAccountID() + DIR_SEPARATOR_STR
                                     + "conversation_data" + DIR_SEPARATOR_STR + repository_->id();
             fetchedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "fetched";
-            lastDisplayedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "lastDisplayed";
+            lastDisplayedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + ConversationMapKeys::LAST_DISPLAYED;
             loadFetched();
             loadLastDisplayed();
         }
@@ -202,7 +204,7 @@ public:
         }
         auto convId = repository_->id();
         auto ok = !commits.empty();
-        auto lastId = ok ? commits.rbegin()->at("id") : "";
+        auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
         if (ok) {
             bool announceMember = false;
             for (const auto& c : commits) {
@@ -244,6 +246,27 @@ public:
                 emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
                                                                        convId,
                                                                        c);
+                // check if we should update lastDisplayed
+                std::unique_lock<std::mutex> lk(lastDisplayedMtx_);
+                auto cached = lastDisplayed_.find(ConversationMapKeys::CACHED);
+                auto updateCached = false;
+                if (cached != lastDisplayed_.end()) {
+                    // If we found the commit we wait
+                    if (cached->second == c.at(ConversationMapKeys::ID)) {
+                        updateCached = true;
+                        lastDisplayed_.erase(cached);
+                    }
+                } else if (c.at("author") == shared->getUsername()) {
+                    updateCached = true;
+                }
+
+                if (updateCached) {
+                    lastDisplayed_[shared->getUsername()] = c.at(ConversationMapKeys::ID);
+                    saveLastDisplayed();
+                    lk.unlock();
+                    if (lastDisplayedUpdatedCb_)
+                        lastDisplayedUpdatedCb_(convId, c.at(ConversationMapKeys::ID));
+                }
             }
 
             if (announceMember) {
@@ -274,7 +297,7 @@ public:
         msgpack::pack(file, fetchedDevices_);
     }
 
-    void loadLastDisplayed()
+    void loadLastDisplayed() const
     {
         try {
             // read file
@@ -288,7 +311,7 @@ public:
         }
     }
 
-    void saveLastDisplayed()
+    void saveLastDisplayed() const
     {
         std::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, lastDisplayed_);
@@ -313,9 +336,11 @@ public:
     std::string fetchedPath_ {};
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
+    // Manage last message displayed
     std::string lastDisplayedPath_ {};
-    std::mutex lastDisplayedMtx_ {};
-    std::map<std::string, std::string> lastDisplayed_ {};
+    mutable std::mutex lastDisplayedMtx_ {}; // for lastDisplayed_
+    mutable std::map<std::string, std::string> lastDisplayed_ {};
+    std::function<void(const std::string&, const std::string&)> lastDisplayedUpdatedCb_ {};
 };
 
 bool
@@ -404,7 +429,7 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
         if (!extension.empty())
             message["fileId"] += "." + extension;
     }
-    message["id"] = commit.id;
+    message[ConversationMapKeys::ID] = commit.id;
     message["parents"] = parents;
     message["linearizedParent"] = commit.linearized_parent;
     message["author"] = authorId;
@@ -574,7 +599,7 @@ Conversation::getMembers(bool includeInvited, bool includeLeft) const
         if (itDisplayed != pimpl_->lastDisplayed_.end()) {
             lastDisplayed = itDisplayed->second;
         }
-        mm["lastDisplayed"] = std::move(lastDisplayed);
+        mm[ConversationMapKeys::LAST_DISPLAYED] = std::move(lastDisplayed);
         result.emplace_back(std::move(mm));
     }
     return result;
@@ -751,7 +776,7 @@ Conversation::lastCommitId() const
     auto messages = pimpl_->loadMessages("", "", 1);
     if (messages.empty())
         return {};
-    return messages.front().at("id");
+    return messages.front().at(ConversationMapKeys::ID);
 }
 
 bool
@@ -914,9 +939,9 @@ Conversation::generateInvitation() const
     std::map<std::string, std::string> invite;
     Json::Value root;
     for (const auto& [k, v] : infos()) {
-        root["metadatas"][k] = v;
+        root[ConversationMapKeys::METADATAS][k] = v;
     }
-    root["conversationId"] = id();
+    root[ConversationMapKeys::CONVERSATIONID] = id();
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
@@ -1125,9 +1150,67 @@ Conversation::hasFetched(const std::string& deviceId)
 void
 Conversation::setMessageDisplayed(const std::string& uri, const std::string& interactionId)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
-    pimpl_->lastDisplayed_[uri] = interactionId;
-    pimpl_->saveLastDisplayed();
+    if (auto acc = pimpl_->account_.lock()) {
+        if (uri == acc->getUsername() && pimpl_->lastDisplayedUpdatedCb_)
+            pimpl_->lastDisplayedUpdatedCb_(pimpl_->repository_->id(), interactionId);
+        std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
+        pimpl_->lastDisplayed_[uri] = interactionId;
+        pimpl_->saveLastDisplayed();
+    }
+}
+
+void
+Conversation::updateLastDisplayed(const std::string& lastDisplayed)
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc or !pimpl_->repository_)
+        return;
+
+    // Here, there can be several different scenarios
+    // 1. lastDisplayed is the current last displayed interaction. Nothing to do.
+    std::unique_lock<std::mutex> lk(pimpl_->lastDisplayedMtx_);
+    auto& currentLastDisplayed = pimpl_->lastDisplayed_[acc->getUsername()];
+    if (lastDisplayed == currentLastDisplayed)
+        return;
+
+    auto updateLastDisplayed = [&]() {
+        currentLastDisplayed = lastDisplayed;
+        pimpl_->saveLastDisplayed();
+        lk.unlock();
+        if (pimpl_->lastDisplayedUpdatedCb_)
+            pimpl_->lastDisplayedUpdatedCb_(pimpl_->repository_->id(), lastDisplayed);
+    };
+
+    auto hasCommit = pimpl_->repository_->getCommit(lastDisplayed, false) != std::nullopt;
+
+    // 2. lastDisplayed can be a future commit, not fetched yet
+    // In this case, we can cache it here, and check future announces to update it
+    if (!hasCommit) {
+        pimpl_->lastDisplayed_[ConversationMapKeys::CACHED] = lastDisplayed;
+        pimpl_->saveLastDisplayed();
+        return;
+    }
+
+    // 3. There is no lastDisplayed yet
+    if (currentLastDisplayed.empty()) {
+        updateLastDisplayed();
+        return;
+    }
+
+    // 4. lastDisplayed is present in the repository. In this can, if it's a more recent
+    // commit than the current one, update it, else drop it.
+    auto commitsSinceLast = pimpl_->repository_->log("", lastDisplayed, false, true).size();
+    auto commitsSincePreviousLast = pimpl_->repository_->log("", currentLastDisplayed, false, true)
+                                        .size();
+    if (commitsSincePreviousLast > commitsSinceLast)
+        updateLastDisplayed();
+}
+
+void
+Conversation::onLastDisplayedUpdated(
+    std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb)
+{
+    pimpl_->lastDisplayedUpdatedCb_ = std::move(lastDisplayedUpdatedCb);
 }
 
 uint32_t

@@ -58,10 +58,12 @@ public:
      * Clone a conversation (initial) from device
      * @param deviceId
      * @param convId
+     * @param lastDisplayed      Last message displayed by account
      */
     void cloneConversation(const std::string& deviceId,
                            const std::string& peer,
-                           const std::string& convId);
+                           const std::string& convId,
+                           const std::string& lastDisplayed = "");
 
     /**
      * Pull remote device
@@ -120,6 +122,27 @@ public:
         std::lock_guard<std::mutex> lk(convInfosMtx_);
         convInfos_[info.id] = info;
         saveConvInfos();
+    }
+
+    /**
+     * Updates last displayed for sync infos and client
+     */
+    void onLastDisplayedUpdated(const std::string& convId, const std::string& lastId)
+    {
+        // must not lock as used in callback from a conversation,
+        // so convInfos_ cannot change for convId
+        auto itConv = convInfos_.find(convId);
+        if (itConv != convInfos_.end())
+            itConv->second.lastDisplayed = lastId;
+        saveConvInfos();
+
+        // Updates info for client
+        emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+            accountId_,
+            convId,
+            username_,
+            lastId,
+            static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
     }
 
     std::weak_ptr<JamiAccount> account_;
@@ -256,7 +279,8 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
 void
 ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                                             const std::string& peerUri,
-                                            const std::string& convId)
+                                            const std::string& convId,
+                                            const std::string& lastDisplayed)
 {
     JAMI_DBG("[Account %s] Clone conversation on device %s", accountId_.c_str(), deviceId.c_str());
 
@@ -268,6 +292,13 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         // at the same time.
         if (!startFetch(convId, deviceId)) {
             JAMI_WARN("[Account %s] Already fetching %s", accountId_.c_str(), convId.c_str());
+            std::lock_guard<std::mutex> lk(convInfosMtx_);
+            auto ci = convInfos_.find(convId);
+            if (ci != convInfos_.end() && ci->second.lastDisplayed.empty()) {
+                // If fetchNewCommits called before sync
+                ci->second.lastDisplayed = lastDisplayed;
+                saveConvInfos();
+            }
             return;
         }
         onNeedSocket_(convId, deviceId, [=](const auto& channel) {
@@ -297,6 +328,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         info.id = convId;
         info.created = std::time(nullptr);
         info.members.emplace_back(username_);
+        info.lastDisplayed = lastDisplayed;
         if (peerUri != username_)
             info.members.emplace_back(peerUri);
 
@@ -304,6 +336,10 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         convInfos_[info.id] = std::move(info);
         saveConvInfos();
     } else {
+        std::unique_lock<std::mutex> lk(conversationsMtx_);
+        auto conversation = conversations_.find(convId);
+        if (conversation != conversations_.end() && conversation->second)
+            conversation->second->updateLastDisplayed(lastDisplayed);
         JAMI_INFO("[Account %s] Already have conversation %s", accountId_.c_str(), convId.c_str());
     }
 }
@@ -450,6 +486,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     };
     try {
         auto conversation = std::make_shared<Conversation>(account_, deviceId, conversationId);
+        conversation->onLastDisplayedUpdated(
+            std::move([&](auto convId, auto lastId) { onLastDisplayedUpdated(convId, lastId); }));
         if (!conversation->isMember(username_, true)) {
             JAMI_ERR("Conversation cloned but doesn't seems to be a valid member");
             conversation->erase();
@@ -464,6 +502,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             auto itConv = convInfos_.find(conversationId);
             if (itConv != convInfos_.end() && itConv->second.removed)
                 removeRepo = true;
+            if (itConv != convInfos_.end() && !itConv->second.lastDisplayed.empty()) {
+                conversation->updateLastDisplayed(itConv->second.lastDisplayed);
+            }
             conversations_.emplace(conversationId, conversation);
         }
         if (removeRepo) {
@@ -726,6 +767,8 @@ ConversationModule::loadConversations()
     for (const auto& repository : conversationsRepositories) {
         try {
             auto conv = std::make_shared<Conversation>(pimpl_->account_, repository);
+            conv->onLastDisplayedUpdated(std::move(
+                [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); }));
             auto convInfo = pimpl_->convInfos_.find(repository);
             if (convInfo == pimpl_->convInfos_.end()) {
                 JAMI_ERR() << "Missing conv info for " << repository << ". This is a bug!";
@@ -733,6 +776,7 @@ ConversationModule::loadConversations()
                 info.id = repository;
                 info.created = std::time(nullptr);
                 info.members = conv->memberUris();
+                info.lastDisplayed = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
                 addConvInfo(info);
             }
             pimpl_->conversations_.emplace(repository, std::move(conv));
@@ -942,6 +986,8 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     std::shared_ptr<Conversation> conversation;
     try {
         conversation = std::make_shared<Conversation>(pimpl_->account_, mode, otherMember);
+        conversation->onLastDisplayedUpdated(std::move(
+            [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); }));
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] Error while generating a conversation %s",
                  pimpl_->accountId_.c_str(),
@@ -1175,7 +1221,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             auto itConv = pimpl_->convInfos_.find(convId);
             if (itConv != pimpl_->convInfos_.end() && itConv->second.removed)
                 continue;
-            pimpl_->cloneConversation(deviceId, peerId, convId);
+            pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
         } else {
             {
                 std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
