@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b74f8fa7_d6eb966b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 49
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-12T23:23:24Z",
+      "side": 1,
+      "message": "1- still needs fixing switch camera, at least on Android\n2- seems to have issue with auto-answer in conference",
+      "revId": "7e2a017e09ae780edba990eab432ebc72d7cabde",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
