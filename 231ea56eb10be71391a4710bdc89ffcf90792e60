@@ -39,6 +39,30 @@
       },
       "revId": "231ea56eb10be71391a4710bdc89ffcf90792e60",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8e39f2d_7c661fdc",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 410,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-13T21:31:00Z",
+      "side": 1,
+      "message": "although I agree with this comment, but I think it\u0027s beyond the scope of this patch.\nWe have clear deadlock and this patch should fix it.",
+      "parentUuid": "ff8fea13_74a9a453",
+      "range": {
+        "startLine": 410,
+        "startChar": 8,
+        "endLine": 410,
+        "endChar": 20
+      },
+      "revId": "231ea56eb10be71391a4710bdc89ffcf90792e60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
