@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "86b7294a_e3c3c97f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "Indeed, I started to move it to ConversationMapKeys and avoid this",
+      "parentUuid": "c0b75dce_088209a9",
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "001c4642_033becad",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-01-14T15:01:04Z",
       "side": 1,
       "message": "we should use curly bracket, especially if the previous block has them",
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8279512b_95503bbd",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 260,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "001c4642_033becad",
       "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b0accf42_7d55bdc0",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "true I changed it in some places",
+      "parentUuid": "e1e32fe9_b9c9bf4c",
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bde8dfd1_5b8d7d0f",
@@ -65,6 +119,30 @@
       "writtenOn": "2022-01-14T15:01:04Z",
       "side": 1,
       "message": "you should specify which data members this mutex will protect, to ease the review.\nFor instance, is not clear if it must protect lastDisplayedUpdatedCb_ variable. The answer seems no, but better be explicit.",
+      "range": {
+        "startLine": 339,
+        "startChar": 23,
+        "endLine": 339,
+        "endChar": 40
+      },
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "119e839b_1f686e5f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 339,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "it\u0027s only for lastDisplayed_ indeed",
+      "parentUuid": "bde8dfd1_5b8d7d0f",
       "range": {
         "startLine": 339,
         "startChar": 23,
@@ -100,6 +178,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "da71af79_5e1e7bc1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 340,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "for the upper layer, announce is a const method that must not modify the commits/conversation. lastDisplayed_ is a separated state. I don\u0027t want to change the semantic of announce() const. and doing it externally would be a perf drop as re-iterating through the messages.",
+      "parentUuid": "7d4ccc20_2f2725a5",
+      "range": {
+        "startLine": 340,
+        "startChar": 4,
+        "endLine": 340,
+        "endChar": 11
+      },
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b07372cc_3fd87d80",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 1
@@ -111,6 +213,24 @@
       "writtenOn": "2022-01-14T15:01:04Z",
       "side": 1,
       "message": "I dont know if this cb is set and called from the same thread. A trace could help.",
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a313cbc4_0acd7fef",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1210,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "I added a note and moved in the .h, but this is called right after the construction of the object, and before updating conversations. So there is no message loaded/to announce at this point.",
+      "parentUuid": "b07372cc_3fd87d80",
       "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -138,6 +258,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "064e7ca7_5e27f5de",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "17f73e7b_1ceb1a98",
+      "range": {
+        "startLine": 343,
+        "startChar": 37,
+        "endLine": 343,
+        "endChar": 38
+      },
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5c1acd99_49a7d43d",
@@ -155,6 +299,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f4eaec40_34c3cb0f",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "indeed must not",
+      "parentUuid": "5c1acd99_49a7d43d",
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "da61cc06_0f264229",
@@ -168,6 +330,24 @@
       "writtenOn": "2022-01-14T15:01:04Z",
       "side": 1,
       "message": "saveConvInfos() may end calling emitSignal. I wonder if it\u0027s a potential deadlock issue because of the user callbacks (handlers)?",
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4da8f570_3b109692",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:54:48Z",
+      "side": 1,
+      "message": "saveConvInfos only write convInfos_ in a file, there is no signal emitted there.",
+      "parentUuid": "da61cc06_0f264229",
       "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
