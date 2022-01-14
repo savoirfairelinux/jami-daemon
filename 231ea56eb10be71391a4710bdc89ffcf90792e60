@@ -63,6 +63,30 @@
       },
       "revId": "231ea56eb10be71391a4710bdc89ffcf90792e60",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f43bb721_6909edf6",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 410,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T15:02:31Z",
+      "side": 1,
+      "message": "fetchNewCommits is here to handle commit notifications from the DHT. This part is if there is no conversation, there is a few thing to verify if we need to clone.\n\nwill redo a pass to avoid some locking if possible",
+      "parentUuid": "c8e39f2d_7c661fdc",
+      "range": {
+        "startLine": 410,
+        "startChar": 8,
+        "endLine": 410,
+        "endChar": 20
+      },
+      "revId": "231ea56eb10be71391a4710bdc89ffcf90792e60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
