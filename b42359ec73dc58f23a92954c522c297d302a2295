@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9e6cff6_db67ff29",
+        "filename": "configure.ac",
+        "patchSetId": 11
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T17:58:23Z",
+      "side": 1,
+      "message": "No API update, as it\u0027s used for feature detection, increase .patch per 1 seems ok for me!",
+      "parentUuid": "330ea819_ecf2c222",
+      "revId": "b42359ec73dc58f23a92954c522c297d302a2295",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "b3cbedfe_0484ddaa",

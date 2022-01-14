@@ -1,0 +1,113 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d35038d8_e108f600",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 54
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T17:58:23Z",
+      "side": 1,
+      "message": "should be after the description",
+      "range": {
+        "startLine": 9,
+        "startChar": 4,
+        "endLine": 9,
+        "endChar": 12
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5062054e_1522de11",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 54
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T17:58:23Z",
+      "side": 1,
+      "message": "Overall the patch is good, the only thing I don\u0027t really like is the socketpair, the rest is just small details from my tests I don\u0027t see anything broken neither",
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "afa28dd2_f158846e",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T17:58:23Z",
+      "side": 1,
+      "message": "I\u0027m not a big fan on having this method. Looks like a kind of hack to stop the socketPair_ in the stop() but it\u0027s already calling socketPair_-\u003einterrupt() that should stop this and seems outside the scope of startReceiver.",
+      "range": {
+        "startLine": 149,
+        "startChar": 1,
+        "endLine": 151,
+        "endChar": 19
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c56e2574_1c078609",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T17:58:23Z",
+      "side": 1,
+      "message": "is it a normal case? may need a warning()",
+      "range": {
+        "startLine": 493,
+        "startChar": 16,
+        "endLine": 494,
+        "endChar": 15
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5cf92f8_61270b83",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 698,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-14T17:58:23Z",
+      "side": 1,
+      "message": "fmt::format(\"127.0.0.1:{}\", callDataMap_[\"BOB\"].listeningPort_);",
+      "range": {
+        "startLine": 697,
+        "startChar": 46,
+        "endLine": 698,
+        "endChar": 47
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
