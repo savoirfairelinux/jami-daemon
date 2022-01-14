@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6cd3e5f2_09790185",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1029,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-14T20:07:23Z",
+      "side": 1,
+      "message": "we really need to avoid using string literals as they are prone to errors",
+      "range": {
+        "startLine": 1029,
+        "startChar": 40,
+        "endLine": 1029,
+        "endChar": 51
+      },
+      "revId": "364c763771752c861efee5d00903c67d716a66bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "611d5f27_2a947780",
+        "filename": "test/unitTest/Makefile.am",
+        "patchSetId": 7
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-14T20:07:23Z",
+      "side": 1,
+      "message": "if meson build is fully functional (at least on linux since the tests only run on this platform), should not we deprecate this file?",
+      "revId": "364c763771752c861efee5d00903c67d716a66bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "82b32e87_4cfd22ac",
+        "filename": "test/unitTest/account_archive/migration.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-14T20:07:23Z",
+      "side": 1,
+      "message": "2022",
+      "range": {
+        "startLine": 2,
+        "startChar": 18,
+        "endLine": 2,
+        "endChar": 22
+      },
+      "revId": "364c763771752c861efee5d00903c67d716a66bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4705082c_bf47a571",
+        "filename": "test/unitTest/account_archive/migration.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-14T20:07:23Z",
+      "side": 1,
+      "message": "is it necessary to sleep here?\nThe wait in line 138 should block until the MigrationEnded signal is received",
+      "range": {
+        "startLine": 119,
+        "startChar": 4,
+        "endLine": 119,
+        "endChar": 37
+      },
+      "revId": "364c763771752c861efee5d00903c67d716a66bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
