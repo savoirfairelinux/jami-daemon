@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc5a8e5d_250e2ceb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1167,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-14T19:27:09Z",
+      "side": 1,
+      "message": "the pin semantic is somehow inverted, and more meaningfull would be more helpful for someone not familiar with the code:\nauto hasPinnedCert \u003d cert and cert-\u003eissuer;\n...\nif (not hasPinnedCert) ...",
+      "revId": "3072157799ecbb25199b64b004d105ff3c92a79c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b462d5e5_a2edf868",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1175,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-14T19:27:09Z",
+      "side": 1,
+      "message": "We should log a big warning here to force fix the certificates",
+      "revId": "3072157799ecbb25199b64b004d105ff3c92a79c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
