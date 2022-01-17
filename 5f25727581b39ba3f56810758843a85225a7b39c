@@ -202,6 +202,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3b49584d_5eec0478",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 340,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T15:44:50Z",
+      "side": 1,
+      "message": "by modifying lastDisplayed_, you already changed the semantic of announce(...) methods.\nI understand the constraint, but still not convinced this is the proper way to do it. I have the impression that we hit a design flaw, and just trying to work around it.",
+      "parentUuid": "da71af79_5e1e7bc1",
+      "range": {
+        "startLine": 340,
+        "startChar": 4,
+        "endLine": 340,
+        "endChar": 11
+      },
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b07372cc_3fd87d80",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 1
