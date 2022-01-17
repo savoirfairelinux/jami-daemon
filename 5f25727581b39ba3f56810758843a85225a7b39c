@@ -350,6 +350,24 @@
       "parentUuid": "da61cc06_0f264229",
       "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "feee0565_17979b20",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T15:27:49Z",
+      "side": 1,
+      "message": "not what I see. saveConvInfos() uses get_data_dir(const char* pkg), which uses emitSignal at least on Android.",
+      "parentUuid": "4da8f570_3b109692",
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
