@@ -203,6 +203,66 @@ public:
     }
     mutable std::mutex deviceToUriMtx_;
     mutable std::map<std::string, std::string> deviceToUri_;
+
+    /**
+     * Verify that a certificate modification is correct
+     * @param certPath      Where the certificate is saved (relative path)
+     * @param userUri       Account we want for this certificate
+     * @param oldCert       Previous certificate. getId() should return the same id as the new
+     * certificate.
+     * @note There is a few exception because JAMS certificates are buggy right now
+     */
+    bool verifyCertificate(const std::string& certContent,
+                           const std::string& userUri,
+                           const std::string& oldCert = "") const
+    {
+        auto cert = dht::crypto::Certificate(certContent);
+        auto isDeviceCertificate = cert.getId().toString() != userUri;
+        auto issuerUid = cert.getIssuerUID();
+        if (isDeviceCertificate && issuerUid.empty()) {
+            // Err for Jams certificates
+            JAMI_ERR("Empty issuer for %s", cert.getId().to_c_str());
+        }
+        if (!oldCert.empty()) {
+            // Check a device remplacement
+            auto deviceCert = dht::crypto::Certificate(oldCert);
+            if (isDeviceCertificate) {
+                if (issuerUid != deviceCert.getIssuerUID()) {
+                    // NOTE: Here, because JAMS certificate were buggy, there is
+                    // just one valid possibility: passing from an empty issuer to
+                    // the valid issuer.
+                    if (issuerUid != userUri) {
+                        JAMI_ERR("Device certificate with a bad issuer %s", cert.getId().to_c_str());
+                        return false;
+                    }
+                }
+            } else if (cert.getId().toString() != userUri) {
+                JAMI_ERR("Certificate with a bad Id %s", cert.getId().to_c_str());
+                return false;
+            }
+            if (cert.getId() != deviceCert.getId()) {
+                JAMI_ERR("Certificate with a bad Id %s", cert.getId().to_c_str());
+                return false;
+            }
+            return true;
+        }
+
+        // If it's a deviceCertificate, get if issuer (WARN for jams)
+        if (isDeviceCertificate) {
+            // Check that issuer is the one we want.
+            // NOTE: Still one case due to buggy certificate from JAMS
+            // here we can verify.
+            if (issuerUid != userUri && !issuerUid.empty()) {
+                JAMI_ERR("Device certificate with a bad issuer %s", cert.getId().to_c_str());
+                return false;
+            }
+        } else if (cert.getId().toString() != userUri) {
+            JAMI_ERR("Certificate with a bad Id %s", cert.getId().to_c_str());
+            return false;
+        }
+
+        return true;
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -729,20 +789,46 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
 
     std::string adminsFile = fmt::format("admins/{}.crt", userUri);
     std::string membersFile = fmt::format("members/{}.crt", userUri);
+    auto treeOld = treeAtCommit(repo.get(), parentId);
+    if (not treeNew or not treeOld)
+        return false;
     for (const auto& changedFile : changedFiles) {
         if (changedFile == adminsFile || changedFile == membersFile) {
             // In this case, we should verify it's not added (normal commit, not a member change)
             // but only updated
-            auto treeOld = treeAtCommit(repo.get(), parentId);
-            if (not treeNew or not treeOld)
-                return false;
-
-            if (!fileAtTree(changedFile, treeOld)) {
+            auto oldFile = fileAtTree(changedFile, treeOld);
+            if (!oldFile) {
                 JAMI_ERR("Invalid file modified: %s", changedFile.c_str());
+                return false;
+            }
+            auto* blob = reinterpret_cast<git_blob*>(oldFile.get());
+            auto oldCert = std::string(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob));
+            auto newFile = fileAtTree(changedFile, treeNew);
+            blob = reinterpret_cast<git_blob*>(newFile.get());
+            auto newCert = std::string(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob));
+            if (!verifyCertificate(newCert, userUri, oldCert)) {
+                JAMI_ERR("Invalid certificate %s", changedFile.c_str());
                 return false;
             }
         } else if (changedFile == deviceFile) {
             // In this case, device is added or modified (certificate expiration)
+            auto oldFile = fileAtTree(changedFile, treeOld);
+            std::string oldCert;
+            if (oldFile) {
+                auto* blob = reinterpret_cast<git_blob*>(oldFile.get());
+                auto oldCert = std::string(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                           git_blob_rawsize(blob));
+            }
+            auto newFile = fileAtTree(changedFile, treeNew);
+            auto* blob = reinterpret_cast<git_blob*>(newFile.get());
+            auto newCert = std::string(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob));
+            if (!verifyCertificate(newCert, userUri, oldCert)) {
+                JAMI_ERR("Invalid certificate %s", changedFile.c_str());
+                return false;
+            }
         } else {
             // Invalid file detected
             JAMI_ERR("Invalid add file detected: %s %u", changedFile.c_str(), (int) *mode_);
@@ -1263,7 +1349,8 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
                                                  const std::string& commitMsg) const
 {
     auto account = account_.lock();
-    if (!account)
+    auto repo = repository();
+    if (not account or not repo)
         return false;
     auto userUri = uriFromDevice(userDevice);
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
@@ -1294,6 +1381,22 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
     std::string crlFile = fmt::format("CRLs/{}", userUri);
     std::string invitedFile = fmt::format("invited/{}", invited);
+
+    git_oid oid;
+    git_commit* commit = nullptr;
+    if (git_oid_fromstr(&oid, commitId.c_str()) < 0
+        || git_commit_lookup(&commit, repo.get(), &oid) < 0) {
+        JAMI_WARN("Failed to look up commit %s", commitId.c_str());
+        return false;
+    }
+    GitCommit gc = {commit, git_commit_free};
+    git_tree* tNew = nullptr;
+    if (git_commit_tree(&tNew, gc.get()) < 0) {
+        JAMI_ERR("Could not look up initial tree");
+        return false;
+    }
+    GitTree treeNew = {tNew, git_tree_free};
+
     // Check that admin cert is added
     // Check that device cert is added
     // Check CRLs added
@@ -1302,8 +1405,24 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     for (const auto& changedFile : changedFiles) {
         if (changedFile == adminsFile) {
             hasAdmin = true;
+            auto newFile = fileAtTree(changedFile, treeNew);
+            auto* blob = reinterpret_cast<git_blob*>(newFile.get());
+            auto newCert = std::string(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob));
+            if (!verifyCertificate(newCert, userUri)) {
+                JAMI_ERR("Invalid certificate found %s", changedFile.c_str());
+                return false;
+            }
         } else if (changedFile == deviceFile) {
             hasDevice = true;
+            auto newFile = fileAtTree(changedFile, treeNew);
+            auto* blob = reinterpret_cast<git_blob*>(newFile.get());
+            auto newCert = std::string(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob));
+            if (!verifyCertificate(newCert, userUri)) {
+                JAMI_ERR("Invalid certificate found %s", changedFile.c_str());
+                return false;
+            }
         } else if (changedFile == crlFile || changedFile == invitedFile) {
             // Nothing to do
         } else {
@@ -2844,7 +2963,7 @@ ConversationRepository::leave()
 
     // Devices
     for (const auto& d : account->getKnownDevices()) {
-        std::string deviceFile = repoPath + "devices" + "/" + d.first + ".crt";
+        std::string deviceFile = fmt::format("{}/devices/{}.crt", repoPath, d.first);
         if (fileutils::isFile(deviceFile)) {
             fileutils::removeAll(deviceFile, true);
         }
