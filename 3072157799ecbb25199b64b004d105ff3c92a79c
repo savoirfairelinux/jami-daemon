@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "031ae673_ea209402",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1167,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T18:55:24Z",
+      "side": 1,
+      "message": "not inverted. if (pin) it will call pin. But anyway renamed if you think it\u0027s more clear.",
+      "parentUuid": "cc5a8e5d_250e2ceb",
+      "revId": "3072157799ecbb25199b64b004d105ff3c92a79c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b35b0804_6693a615",
@@ -41,6 +59,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "12b54f02_4cb0123e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1171,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T18:55:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b35b0804_6693a615",
+      "range": {
+        "startLine": 1171,
+        "startChar": 47,
+        "endLine": 1171,
+        "endChar": 62
+      },
+      "revId": "3072157799ecbb25199b64b004d105ff3c92a79c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b462d5e5_a2edf868",
@@ -54,6 +96,24 @@
       "writtenOn": "2022-01-14T19:27:09Z",
       "side": 1,
       "message": "We should log a big warning here to force fix the certificates",
+      "revId": "3072157799ecbb25199b64b004d105ff3c92a79c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d1bbf3c_c20c956a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1175,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T18:55:24Z",
+      "side": 1,
+      "message": "Not really. As JAMS developer do not read the logs from Jami. I just send them a ticket and they should fix it. I also move the error log to logs both branch as it\u0027s still a valid error.",
+      "parentUuid": "b462d5e5_a2edf868",
       "revId": "3072157799ecbb25199b64b004d105ff3c92a79c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
