@@ -26,6 +26,30 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "3e7b7bff_c2802a39",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 54
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T14:47:57Z",
+      "side": 1,
+      "message": "right. done",
+      "parentUuid": "d35038d8_e108f600",
+      "range": {
+        "startLine": 9,
+        "startChar": 4,
+        "endLine": 9,
+        "endChar": 12
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "5062054e_1522de11",
         "filename": "/PATCHSET_LEVEL",
         "patchSetId": 54
@@ -64,6 +88,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "15557dd2_f0df54d3",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T14:47:57Z",
+      "side": 1,
+      "message": "yes I agree, it\u0027s a hack.\nSocketPair does not offer independent stop/start for send and receive. This limitation was not anticipated, so the fix is only to workaround this limitation for now.\nKnowing that now we need to control the send/receive independently, we may plan a redesign activity for it.\n\nSocketPair::interrupt() does not help in my case because:\n- it will interrupt both send and receive (I need to stop the receive only)\n- will return an error (in my case, it\u0027s not an erroneous state)",
+      "parentUuid": "afa28dd2_f158846e",
+      "range": {
+        "startLine": 149,
+        "startChar": 1,
+        "endLine": 151,
+        "endChar": 19
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c56e2574_1c078609",
@@ -87,6 +135,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2e356c1f_672ded74",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T14:47:57Z",
+      "side": 1,
+      "message": "dont know, but better fail than crash\nok for the trace",
+      "parentUuid": "c56e2574_1c078609",
+      "range": {
+        "startLine": 493,
+        "startChar": 16,
+        "endLine": 494,
+        "endChar": 15
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f5cf92f8_61270b83",
@@ -100,6 +172,30 @@
       "writtenOn": "2022-01-14T17:58:23Z",
       "side": 1,
       "message": "fmt::format(\"127.0.0.1:{}\", callDataMap_[\"BOB\"].listeningPort_);",
+      "range": {
+        "startLine": 697,
+        "startChar": 46,
+        "endLine": 698,
+        "endChar": 47
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5989ae2e_276c92e2",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 698,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T14:47:57Z",
+      "side": 1,
+      "message": "if you wish :)",
+      "parentUuid": "f5cf92f8_61270b83",
       "range": {
         "startLine": 697,
         "startChar": 46,
