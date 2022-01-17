@@ -226,6 +226,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ba93dfae_ba4766e1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 340,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T19:15:35Z",
+      "side": 1,
+      "message": "I mean it\u0027s definitely a mutable semantically speaking. It does not affect the externally visible state of the class as the repository is the same. The commits remains unchanged and doesn\u0027t affect the git storage. lastDisplayed is a metadata.\n\nMoving announce() to a non const method is, imho, a non sense.\n\nI don\u0027t see any other design possible, cause plugging into MessageReceived is the only place where we are loading the commits. Loading in another would drop perf.\n\nIf you have any possible design, I can check.",
+      "parentUuid": "3b49584d_5eec0478",
+      "range": {
+        "startLine": 340,
+        "startChar": 4,
+        "endLine": 340,
+        "endChar": 11
+      },
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b07372cc_3fd87d80",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 1
@@ -390,6 +414,24 @@
       "side": 1,
       "message": "not what I see. saveConvInfos() uses get_data_dir(const char* pkg), which uses emitSignal at least on Android.",
       "parentUuid": "4da8f570_3b109692",
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c547af7_43b8153e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T19:15:35Z",
+      "side": 1,
+      "message": "get_data_dir() as only one task, returning the path (from the app container or from the system). Having any lock in this callback is a critical design failure from the client. So even in the worst case it would be a bug to fix in the client.",
+      "parentUuid": "feee0565_17979b20",
       "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
