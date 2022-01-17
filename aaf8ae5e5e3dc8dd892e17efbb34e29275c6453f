@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6254bc9f_aaf3efc9",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 388,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T18:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "746b0679_9646f817",
+      "range": {
+        "startLine": 388,
+        "startChar": 10,
+        "endLine": 388,
+        "endChar": 23
+      },
+      "revId": "aaf8ae5e5e3dc8dd892e17efbb34e29275c6453f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1043d69e_5d29f6ab",
@@ -41,6 +65,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4aaad4f7_d799753e",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 394,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T18:52:10Z",
+      "side": 1,
+      "message": "archive_account_manager is used to do the auth from an archive ; server_account_manager from a server. it\u0027s already a dedicated class.",
+      "parentUuid": "1043d69e_5d29f6ab",
+      "revId": "aaf8ae5e5e3dc8dd892e17efbb34e29275c6453f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1d867f28_a1d0269f",
@@ -54,6 +96,30 @@
       "writtenOn": "2022-01-14T19:47:00Z",
       "side": 1,
       "message": "why warning. Debug/Info should be enough",
+      "range": {
+        "startLine": 1250,
+        "startChar": 25,
+        "endLine": 1250,
+        "endChar": 29
+      },
+      "revId": "aaf8ae5e5e3dc8dd892e17efbb34e29275c6453f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "28d3e954_debd8612",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1250,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T18:52:10Z",
+      "side": 1,
+      "message": "not related, but changed to an info and fixed the typo.",
+      "parentUuid": "1d867f28_a1d0269f",
       "range": {
         "startLine": 1250,
         "startChar": 25,
