@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7a46c51_be684efd",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T16:50:57Z",
+      "side": 1,
+      "message": "this call will lock CertificateStore::lock_ mutex, . I quickly checked, and it does not seem to be problematic with the current implementation. Since this does depend on on deviceToUri_, it could be safer if done before locking. Well, it would a useless operation if repo \u003d\u003d nullprt, but safer.",
+      "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "433db78b_086c080b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 724,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T16:50:57Z",
+      "side": 1,
+      "message": "did not get this comment",
+      "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e7e2e253_d64dd886",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 888,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T16:50:57Z",
+      "side": 1,
+      "message": "a trace would help here",
+      "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9a000af6_f0f94ee8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 986,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T16:50:57Z",
+      "side": 1,
+      "message": "should not we do this check earlier as in checkValidAdd()",
+      "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d85ed328_16f33c7d",
+        "filename": "test/unitTest/account_archive/migration.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 295,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T16:50:57Z",
+      "side": 1,
+      "message": "Dont we have a callback to wait for instead of sleeping ?",
+      "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
