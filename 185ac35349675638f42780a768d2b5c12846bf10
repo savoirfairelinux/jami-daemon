@@ -112,6 +112,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5743fda_0b9f55ec",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-17T19:37:15Z",
+      "side": 1,
+      "message": "I don\u0027t really have a better design right now and don\u0027t really know this part of the code. So I let the others check what they think about this.",
+      "parentUuid": "15557dd2_f0df54d3",
+      "range": {
+        "startLine": 149,
+        "startChar": 1,
+        "endLine": 151,
+        "endChar": 19
+      },
+      "revId": "185ac35349675638f42780a768d2b5c12846bf10",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c56e2574_1c078609",
