@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "32af1110_dc798dd8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T20:44:16Z",
+      "side": 1,
+      "message": "the callbacks are exactly the problem because most of the time we dont have control over them. And even we do now, they can be modified later for any reason.\nMay be I am overthinking the subject ...",
+      "parentUuid": "73a6ecac_2e81fbd4",
+      "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "433db78b_086c080b",
@@ -67,6 +85,24 @@
       "side": 1,
       "message": "re-changed, is it better?",
       "parentUuid": "433db78b_086c080b",
+      "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "57af37ed_db697897",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 724,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-17T20:44:16Z",
+      "side": 1,
+      "message": "yep",
+      "parentUuid": "7688cb9d_07fe2f30",
       "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
