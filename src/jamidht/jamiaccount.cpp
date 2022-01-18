@@ -2380,9 +2380,7 @@ void
 JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
-
-    if (registrationState_ == RegistrationState::INITIALIZING
-        || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
+    if (registrationState_ >= RegistrationState::ERROR_GENERIC) {
         lock.unlock();
         if (released_cb)
             released_cb(false);

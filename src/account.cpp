@@ -448,8 +448,6 @@ Account::mapStateNumberToString(RegistrationState state)
         CASE_STATE(ERROR_NETWORK);
         CASE_STATE(ERROR_HOST);
         CASE_STATE(ERROR_SERVICE_UNAVAILABLE);
-        CASE_STATE(ERROR_EXIST_STUN);
-        CASE_STATE(ERROR_NOT_ACCEPTABLE);
         CASE_STATE(ERROR_NEED_MIGRATION);
         CASE_STATE(INITIALIZING);
     default:
