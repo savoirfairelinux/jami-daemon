@@ -1,0 +1,136 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e06105ce_9170ccc3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-19T20:55:48Z",
+      "side": 1,
+      "message": "-2 for the asserts on remote-provided values, otherwise ok",
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac8c2577_38c06cb3",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-19T20:55:48Z",
+      "side": 1,
+      "message": "might reserve remoteMediaList.size()",
+      "range": {
+        "startLine": 558,
+        "startChar": 33,
+        "endLine": 558,
+        "endChar": 45
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "871930bd_b8afdfab",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 563,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-19T20:55:48Z",
+      "side": 1,
+      "message": "remoteMediaList comes from the remote, so we must handle possible values without crashing, even in debug mode.\n\nIn general, avoid \u0027assert\u0027 and handle various possible conditions (even uncommon ones) without crashing.\n\nOnly logically impossible conditions might be checked with assert, and should ideally be enforced at compile-time if possible instead.",
+      "range": {
+        "startLine": 563,
+        "startChar": 4,
+        "endLine": 563,
+        "endChar": 39
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d488b0d3_825ec8ba",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2542,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-19T20:55:48Z",
+      "side": 1,
+      "message": "might reserve remoteMediaList.size()",
+      "range": {
+        "startLine": 2542,
+        "startChar": 37,
+        "endLine": 2542,
+        "endChar": 49
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a41caf3a_6c6e0e00",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2543,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-19T20:55:48Z",
+      "side": 1,
+      "message": "might iterate on rtpStreams_ directly to avoid copy",
+      "range": {
+        "startLine": 2543,
+        "startChar": 33,
+        "endLine": 2543,
+        "endChar": 56
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "62749b7f_2e790d28",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2547,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-19T20:55:48Z",
+      "side": 1,
+      "message": "same as above: don\u0027t use assert on user or remote-provided values.",
+      "range": {
+        "startLine": 2547,
+        "startChar": 8,
+        "endLine": 2547,
+        "endChar": 43
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
