@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2c270da4_d6174c7d",
+        "filename": "src/conference.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-19T22:32:29Z",
+      "side": 1,
+      "message": "this expression would create empty values (instead of reserving). reserve(remoteMediaList.size()) should be used instead",
+      "range": {
+        "startLine": 558,
+        "startChar": 45,
+        "endLine": 558,
+        "endChar": 70
+      },
+      "revId": "72f3f0bcaa56fdec7df73cfd2f47e3623a7a5383",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d39d459_8525eb1f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2542,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-19T22:32:29Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 2542,
+        "startChar": 50,
+        "endLine": 2542,
+        "endChar": 72
+      },
+      "revId": "72f3f0bcaa56fdec7df73cfd2f47e3623a7a5383",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
