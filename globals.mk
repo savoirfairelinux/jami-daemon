@@ -2,9 +2,6 @@
 
 src=$(abs_top_srcdir)
 
-ASTYLERC="$(top_srcdir)/../astylerc"
-indent="/usr/bin/astyle"
-
 RING_DIRTY_REPO ?= $(shell git diff-index --quiet HEAD 2>/dev/null || echo dirty)
 RING_REVISION ?= $(shell git log -1 --format="%h" --abbrev=10 2>/dev/null)
 
@@ -23,9 +20,3 @@ AM_CPPFLAGS += \
 	-DRING_DIRTY_REPO=\"$(RING_DIRTY_REPO)\" \
 	-DPJSIP_MAX_PKT_LEN=8000 \
 	-DPJ_AUTOCONF=1
-
-indent:
-	@echo "Indenting code:"
-	if [ -f $(ASTYLERC) ] ; then \
-                find $(top_srcdir)/src/ -name \*.cpp -o -name \*.h | xargs $(indent) --options=$(ASTYLERC) ; \
-	fi
