@@ -97,12 +97,11 @@ const char* const Account::LOCAL_MODERATORS_ENABLED_KEY = "localModeratorsEnable
 const char* const Account::ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 const char* const Account::PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
 
-#ifdef __ANDROID__
-constexpr const char* const DEFAULT_RINGTONE_PATH
-    = "/data/data/cx.ring/files/ringtones/default.opus";
-#else
-constexpr const char* const DEFAULT_RINGTONE_PATH = JAMI_DATADIR "/ringtones/default.opus";
-#endif
+// For portability, do not specify the absolute file name of the ring
+// tone.  Instead, specify its base name to be looked in
+// JAMI_DATADIR/ringtones/, where JAMI_DATADIR is a preprocessor macro denoting
+// the data directory prefix that must be set at build time.
+constexpr const char* const DEFAULT_RINGTONE_PATH = "default.opus";
 
 Account::Account(const std::string& accountID)
     : rand(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
