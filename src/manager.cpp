@@ -2091,7 +2091,7 @@ Manager::playRingtone(const std::string& accountID)
     if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // check inside global share directory
         static const char* const RINGDIR = "ringtones";
-        ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR
+        ringchoice = std::string(DATADIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR
                      + ringchoice;
     }
 #endif
