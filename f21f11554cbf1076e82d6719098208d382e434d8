@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9aa06c0c_67b3ad92",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2022-01-19T16:49:59Z",
+      "side": 1,
+      "message": "Maxim, can you fix your author/commiter email for this change and the others in this stack?\n\nalso, i\u0027m not sure what the issue with the msvc build is; the jenkins log isn\u0027t particularly illuminating",
+      "revId": "f21f11554cbf1076e82d6719098208d382e434d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
