@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f369ba5f_7fc36ed0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2022-01-19T05:52:34Z",
+      "side": 1,
+      "message": "Does this relate to https://git.jami.net/savoirfairelinux/jami-client-gnome/-/issues/1284 ?\n\nThe current behavior, i.e. not mirrored, is not weird but useful when using a document camera. Please see comment at https://git.jami.net/savoirfairelinux/jami-client-gnome/-/issues/1284#note_33215\n\nThank you",
+      "revId": "2198c153719c8f103bee434c1c451cb1bd97cdc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
