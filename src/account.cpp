@@ -101,7 +101,7 @@ const char* const Account::PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
 constexpr const char* const DEFAULT_RINGTONE_PATH
     = "/data/data/cx.ring/files/ringtones/default.opus";
 #else
-constexpr const char* const DEFAULT_RINGTONE_PATH = PROGSHAREDIR "/ringtones/default.opus";
+constexpr const char* const DEFAULT_RINGTONE_PATH = JAMI_DATADIR "/ringtones/default.opus";
 #endif
 
 Account::Account(const std::string& accountID)

@@ -201,7 +201,7 @@ STACK_DIRECTION = 0 => direction of growth unknown */
 #define VERSION "10.0.2"
 
 // UWP compatibility
-#define PROGSHAREDIR ""
+#define JAMI_DATADIR ""
 
 /* Define to limit the scope of <windows.h>. */
 /* #undef WIN32_LEAN_AND_MEAN */
