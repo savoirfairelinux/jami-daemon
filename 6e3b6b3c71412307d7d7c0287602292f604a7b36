@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2cf6c447_f738a68a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-19T22:04:11Z",
+      "side": 1,
+      "message": "why not",
+      "parentUuid": "ac8c2577_38c06cb3",
+      "range": {
+        "startLine": 558,
+        "startChar": 33,
+        "endLine": 558,
+        "endChar": 45
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "871930bd_b8afdfab",
@@ -54,6 +78,30 @@
       "writtenOn": "2022-01-19T20:55:48Z",
       "side": 1,
       "message": "remoteMediaList comes from the remote, so we must handle possible values without crashing, even in debug mode.\n\nIn general, avoid \u0027assert\u0027 and handle various possible conditions (even uncommon ones) without crashing.\n\nOnly logically impossible conditions might be checked with assert, and should ideally be enforced at compile-time if possible instead.",
+      "range": {
+        "startLine": 563,
+        "startChar": 4,
+        "endLine": 563,
+        "endChar": 39
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9400a1dd_96aebd60",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 563,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-19T22:04:11Z",
+      "side": 1,
+      "message": "remote media is already checked in SIPCall::onReceiveReinvite()\nThis is exactly a \"logically impossible condition\"",
+      "parentUuid": "871930bd_b8afdfab",
       "range": {
         "startLine": 563,
         "startChar": 4,
@@ -87,6 +135,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3ba6317e_fae53587",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2542,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-19T22:04:11Z",
+      "side": 1,
+      "message": "if you wish",
+      "parentUuid": "d488b0d3_825ec8ba",
+      "range": {
+        "startLine": 2542,
+        "startChar": 37,
+        "endLine": 2542,
+        "endChar": 49
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a41caf3a_6c6e0e00",
@@ -110,6 +182,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "273549a0_5b9b97fb",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2543,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-19T22:04:11Z",
+      "side": 1,
+      "message": "ok, why not",
+      "parentUuid": "a41caf3a_6c6e0e00",
+      "range": {
+        "startLine": 2543,
+        "startChar": 33,
+        "endLine": 2543,
+        "endChar": 56
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "62749b7f_2e790d28",
@@ -123,6 +219,30 @@
       "writtenOn": "2022-01-19T20:55:48Z",
       "side": 1,
       "message": "same as above: don\u0027t use assert on user or remote-provided values.",
+      "range": {
+        "startLine": 2547,
+        "startChar": 8,
+        "endLine": 2547,
+        "endChar": 43
+      },
+      "revId": "6e3b6b3c71412307d7d7c0287602292f604a7b36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dba061da_534783f6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2547,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-19T22:04:11Z",
+      "side": 1,
+      "message": "same reply",
+      "parentUuid": "62749b7f_2e790d28",
       "range": {
         "startLine": 2547,
         "startChar": 8,
