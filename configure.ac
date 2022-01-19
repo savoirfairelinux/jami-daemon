@@ -33,9 +33,9 @@ AC_ARG_ENABLE([debug],
     [Build in debug mode, adds stricter warnings, disables optimization]))
 
 AS_IF([test "x$enable_debug" = "xyes"],
-  [DAEMONCFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor \
+  [DAEMONCFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-deprecated-declarations \
 -Wno-unknown-pragmas -Wformat=2 -O0"
-   DAEMONCXXFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor \
+   DAEMONCXXFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-deprecated-declarations \
 -Wno-unknown-pragmas -Wformat=2 -O0"],
   [DAEMONCFLAGS+=" -DNDEBUG=1 -O3"
    DAEMONCXXFLAGS+=" -DNDEBUG=1 -O3"])
