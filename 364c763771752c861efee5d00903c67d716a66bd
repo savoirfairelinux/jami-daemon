@@ -41,6 +41,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c49151f7_99bf3e5b",
+        "filename": "test/unitTest/Makefile.am",
+        "patchSetId": 7
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-19T21:57:30Z",
+      "side": 1,
+      "message": "it can be done in another patch, but yeah we can force users to use meson (this also needs to check all pipeline on jenkins using cmake to do the tests and recheck the doc)",
+      "parentUuid": "611d5f27_2a947780",
+      "revId": "364c763771752c861efee5d00903c67d716a66bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "82b32e87_4cfd22ac",
@@ -77,6 +95,30 @@
       "writtenOn": "2022-01-14T20:07:23Z",
       "side": 1,
       "message": "is it necessary to sleep here?\nThe wait in line 138 should block until the MigrationEnded signal is received",
+      "range": {
+        "startLine": 119,
+        "startChar": 4,
+        "endLine": 119,
+        "endChar": 37
+      },
+      "revId": "364c763771752c861efee5d00903c67d716a66bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0c37995_593ef969",
+        "filename": "test/unitTest/account_archive/migration.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-19T21:57:30Z",
+      "side": 1,
+      "message": "It is, the loadAccount must be done after the expiration to trigger any potential migration",
+      "parentUuid": "4705082c_bf47a571",
       "range": {
         "startLine": 119,
         "startChar": 4,
