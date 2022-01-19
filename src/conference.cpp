@@ -549,12 +549,25 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     auto updateMixer = call->checkMediaChangeRequest(remoteMediaList);
 
     // NOTE:
-    // Since this is a conference, accept any media change request.
+    // Since this is a conference, newly added media will be also
+    // accepted.
     // This also means that if original call was an audio-only call,
     // the local camera will be enabled, unless the video is disabled
     // in the account settings.
 
-    call->answerMediaChangeRequest(remoteMediaList);
+    std::vector<DRing::MediaMap> newMediaList;
+    newMediaList.reserve(remoteMediaList.size());
+    for (auto const& media : call->getMediaAttributeList()) {
+        newMediaList.emplace_back(MediaAttribute::toMediaMap(media));
+    }
+
+    if (remoteMediaList.size() > newMediaList.size()) {
+        for (auto idx = newMediaList.size(); idx < remoteMediaList.size(); idx++) {
+            newMediaList.emplace_back(remoteMediaList[idx]);
+        }
+    }
+
+    call->answerMediaChangeRequest(newMediaList);
     call->enterConference(shared_from_this());
 
     if (updateMixer and getState() == Conference::State::ACTIVE_ATTACHED) {
