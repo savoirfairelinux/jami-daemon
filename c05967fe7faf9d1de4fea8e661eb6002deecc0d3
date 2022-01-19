@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61897475_bba728ed",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2383,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-19T14:12:00Z",
+      "side": 1,
+      "message": "UNREGISTERED and TRYING states shouldn\u0027t be considered too.\nOr, shouldn\u0027t we allow un-register only if in REGISTERED state ?",
+      "revId": "c05967fe7faf9d1de4fea8e661eb6002deecc0d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
