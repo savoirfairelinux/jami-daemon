@@ -2497,15 +2497,15 @@ SIPCall::checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedia
 
     JAMI_DBG("[call:%s] Received a media change request", getCallId().c_str());
 
-    auto remoteMediaAtrrList = MediaAttribute::buildMediaAttributesList(remoteMediaList,
+    auto remoteMediaAttrList = MediaAttribute::buildMediaAttributesList(remoteMediaList,
                                                                         isSrtpEnabled());
-    if (remoteMediaAtrrList.size() != rtpStreams_.size())
+    if (remoteMediaAttrList.size() != rtpStreams_.size())
         return true;
 
     for (size_t i = 0; i < rtpStreams_.size(); i++) {
-        if (remoteMediaAtrrList[i].type_ != rtpStreams_[i].mediaAttribute_->type_)
+        if (remoteMediaAttrList[i].type_ != rtpStreams_[i].mediaAttribute_->type_)
             return true;
-        if (remoteMediaAtrrList[i].enabled_ != rtpStreams_[i].mediaAttribute_->enabled_)
+        if (remoteMediaAttrList[i].enabled_ != rtpStreams_[i].mediaAttribute_->enabled_)
             return true;
     }
 
@@ -2533,12 +2533,24 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
 
     if (account->isAutoAnswerEnabled()) {
         // NOTE:
-        // Since the auto-answer is enabled in the account, media change requests
-        // are automatically accepted too. This also means that if the original
-        // call was an audio-only call, and the remote added the video, the local
-        // camera will be enabled, unless the video is disabled in the account
-        // settings.
-        answerMediaChangeRequest(remoteMediaList);
+
+        // Since the auto-answer is enabled in the account, newly
+        // added media are accepted too.
+        // This also means that if original call was an audio-only call,
+        // the local camera will be enabled, unless the video is disabled
+        // in the account settings.
+        std::vector<DRing::MediaMap> newMediaList(remoteMediaList.size());
+        for (auto const& stream : rtpStreams_) {
+            newMediaList.emplace_back(MediaAttribute::toMediaMap(*stream.mediaAttribute_));
+        }
+
+        assert(remoteMediaList.size() > 0);
+        if (remoteMediaList.size() > newMediaList.size()) {
+            for (auto idx = newMediaList.size(); idx < remoteMediaList.size(); idx++) {
+                newMediaList.emplace_back(remoteMediaList[idx]);
+            }
+        }
+        answerMediaChangeRequest(newMediaList);
         return;
     }
 
