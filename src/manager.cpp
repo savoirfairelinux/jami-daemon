@@ -2090,13 +2090,13 @@ Manager::playRingtone(const std::string& accountID)
         return;
     }
 
-    std::string ringchoice = account->getRingtonePath();
-    if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
+    std::string ringtone = account->getRingtonePath();
+    if (ringtone.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // A base file name was provided (such as the default); try to
         // resolve it from Jami's data installation prefix.
         static const char* const RINGDIR = "ringtones";
-        ringchoice = std::string(JAMI_DATADIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR
-                     + ringchoice;
+        ringtone = std::string(JAMI_DATADIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR
+                   + ringtone;
     }
 
     {
@@ -2112,7 +2112,7 @@ Manager::playRingtone(const std::string& accountID)
         pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
     }
 
-    if (not pimpl_->toneCtrl_.setAudioFile(ringchoice))
+    if (not pimpl_->toneCtrl_.setAudioFile(ringtone))
         ringback();
 }
 
