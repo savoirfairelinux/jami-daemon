@@ -124,6 +124,10 @@ using random_device = dht::crypto::random_device;
 #include <list>
 #include <random>
 
+#ifndef JAMI_DATADIR
+#error "Define the JAMI_DATADIR macro as the data installation prefix of the package"
+#endif
+
 namespace jami {
 
 /** To store uniquely a list of Call ids */
@@ -2087,14 +2091,13 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
-#if !defined(_WIN32)
     if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
-        // check inside global share directory
+        // A base file name was provided (such as the default); try to
+        // resolve it from Jami's data installation prefix.
         static const char* const RINGDIR = "ringtones";
         ringchoice = std::string(JAMI_DATADIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR
                      + ringchoice;
     }
-#endif
 
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
