@@ -16,6 +16,24 @@
       "message": "Maxim, can you fix your author/commiter email for this change and the others in this stack?\n\nalso, i\u0027m not sure what the issue with the msvc build is; the jenkins log isn\u0027t particularly illuminating",
       "revId": "f21f11554cbf1076e82d6719098208d382e434d8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9dbbba6d_9feeb86e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-01-19T17:14:48Z",
+      "side": 1,
+      "message": "not sure about the msvc error too; I had looked at it; I thought it looked unrelated and shared a link to Andreas.",
+      "parentUuid": "9aa06c0c_67b3ad92",
+      "revId": "f21f11554cbf1076e82d6719098208d382e434d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
