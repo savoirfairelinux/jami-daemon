@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb27f766_4a6f90fa",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-20T19:25:09Z",
+      "side": 1,
+      "message": "We support ubuntu 20.04 until 2024 (2LTS). lttng-ust depends on liburcu 0.12 ; But ubuntu 20.04 only supports 0.11.1 - so it should also be added in contribs",
+      "revId": "c6bf5aa1b968d6d071a618b48dbd5bebbe92f2b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
