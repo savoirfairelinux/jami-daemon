@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0f88848_56e069b8",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 628,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-20T19:26:18Z",
+      "side": 1,
+      "message": "\u003e\u003d 2.13, else it will fail (fail on ubuntu 20.04 with 2.11)",
+      "range": {
+        "startLine": 628,
+        "startChar": 29,
+        "endLine": 628,
+        "endChar": 51
+      },
+      "revId": "36a74e7ecd690c9c35e7961e8154f5de6330048f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
