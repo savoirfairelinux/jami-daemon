@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "11682615_47bf166a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2022-01-21T13:07:01Z",
+      "side": 1,
+      "message": "if not yet already, can you please also send a corresponding patch for client-android?\notherwise i think it lgtm",
+      "revId": "0a1ba64635af483d0dd055d671dafc398fbf53c6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
