@@ -22,6 +22,30 @@
       },
       "revId": "36a74e7ecd690c9c35e7961e8154f5de6330048f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6ec477cc_15d7d270",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 628,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-21T14:11:23Z",
+      "side": 1,
+      "message": "This work is supposed to be on hold for now until we sort things out regarding the priorities.",
+      "parentUuid": "f0f88848_56e069b8",
+      "range": {
+        "startLine": 628,
+        "startChar": 29,
+        "endLine": 628,
+        "endChar": 51
+      },
+      "revId": "36a74e7ecd690c9c35e7961e8154f5de6330048f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
