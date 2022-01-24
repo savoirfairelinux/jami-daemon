@@ -171,6 +171,7 @@ private:
     };
 
     // unknown certificates with known status
+    mutable std::recursive_mutex mutex_;
     std::map<std::string, Status> unknownCertStatus_;
     std::map<std::string, std::pair<std::shared_ptr<crypto::Certificate>, Status>> certStatus_;
     dht::crypto::TrustList allowed_;

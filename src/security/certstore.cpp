@@ -531,6 +531,7 @@ TrustStore::setCertificateStatus(std::shared_ptr<crypto::Certificate> cert,
 {
     if (cert)
         CertificateStore::instance().pinCertificate(cert, local);
+    std::lock_guard<std::recursive_mutex> lk(mutex_);
     updateKnownCerts();
     bool dirty {false};
     if (status == PermissionStatus::UNDEFINED) {
@@ -573,6 +574,7 @@ TrustStore::setCertificateStatus(std::shared_ptr<crypto::Certificate> cert,
 TrustStore::PermissionStatus
 TrustStore::getCertificateStatus(const std::string& cert_id) const
 {
+    std::lock_guard<std::recursive_mutex> lk(mutex_);
     auto s = certStatus_.find(cert_id);
     if (s == std::end(certStatus_)) {
         auto us = unknownCertStatus_.find(cert_id);
@@ -586,6 +588,7 @@ TrustStore::getCertificateStatus(const std::string& cert_id) const
 std::vector<std::string>
 TrustStore::getCertificatesByStatus(TrustStore::PermissionStatus status) const
 {
+    std::lock_guard<std::recursive_mutex> lk(mutex_);
     std::vector<std::string> ret;
     for (const auto& i : certStatus_)
         if (i.second.second.allowed == (status == TrustStore::PermissionStatus::ALLOWED))
@@ -600,9 +603,10 @@ bool
 TrustStore::isAllowed(const crypto::Certificate& crt, bool allowPublic)
 {
     // Match by certificate pinning
+    std::lock_guard<std::recursive_mutex> lk(mutex_);
     bool allowed {allowPublic};
     for (auto c = &crt; c; c = c->issuer.get()) {
-        auto status = getCertificateStatus(c->getId().toString());
+        auto status = getCertificateStatus(c->getId().toString()); // lock mutex_
         if (status == PermissionStatus::ALLOWED)
             allowed = true;
         else if (status == PermissionStatus::BANNED)
