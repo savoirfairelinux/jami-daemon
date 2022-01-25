@@ -340,6 +340,104 @@ void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
+    if (target_.bufferType == DRing::VideoBufferType::AV_FRAME) {
+        return updateNew(frame_p);
+    }
+    updateLegacy(frame_p);
+}
+
+void
+SinkClient::updateNew(const std::shared_ptr<jami::MediaFrame>& frame_p)
+{
+    std::unique_lock<std::mutex> lock(mtx_);
+
+    assert(target_.pushFrame);
+    assert(target_.bufferType == DRing::VideoBufferType::AV_FRAME);
+
+    std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
+
+    frame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
+
+    int angle = frame->getOrientation();
+
+    if (angle != rotation_) {
+        filter_ = getTransposeFilter(angle,
+                                     FILTER_INPUT_NAME,
+                                     frame->width(),
+                                     frame->height(),
+                                     frame->format(),
+                                     false);
+        rotation_ = angle;
+    }
+
+    if (filter_) {
+        filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
+        frame = std::static_pointer_cast<VideoFrame>(
+            std::shared_ptr<MediaFrame>(filter_->readOutput()));
+    }
+
+    if (crop_.w || crop_.h) {
+        frame->pointer()->crop_top = crop_.y;
+        frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
+        frame->pointer()->crop_left = crop_.x;
+        frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
+        av_frame_apply_cropping(frame->pointer(), jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
+    }
+
+    if (frame->height() != height_ || frame->width() != width_) {
+        JAMI_WARN("Frame res changed from %ix%i to %ix%i",
+                  width_,
+                  height_,
+                  frame->width(),
+                  frame->height());
+        lock.unlock();
+        setFrameSize(0, 0);
+        setFrameSize(frame->width(), frame->height());
+        return;
+    }
+
+    {
+        int width = frame->width();
+        int height = frame->height();
+        auto format = getPixelFormat();
+        const auto bytes = videoFrameSize(format, width, height);
+        if (bytes == 0) {
+            // Log something
+            return;
+        }
+
+        assert(width > 0);
+        assert(height > 0);
+
+        auto videoBuffer = DRing::createAVVideoFrameBufferInstance(bytes);
+        if (not videoBuffer) {
+            // Log
+            return;
+        }
+
+        videoBuffer->allocateMemory(format,
+                                    width,
+                                    height,
+                                    jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
+
+        if (auto avframe = videoBuffer->avframe()) {
+            scaler_->scale(*frame, avframe);
+        } else if (auto bufferPtr = videoBuffer->ptr()) {
+            // TODO. Delete me. Kept only for debug/transition.
+            VideoFrame dst;
+            dst.setFromMemory(bufferPtr, format, width, height);
+            scaler_->scale(*frame, dst);
+        } else {
+            assert(false);
+        }
+
+        target_.pushFrame(std::move(videoBuffer));
+    }
+}
+
+void
+SinkClient::updateLegacy(const std::shared_ptr<MediaFrame>& frame_p)
+{
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
@@ -354,26 +452,8 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
 
     std::unique_lock<std::mutex> lock(mtx_);
-    if (avTarget_.push) {
-        auto outFrame = std::make_unique<VideoFrame>();
-        outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
-        if (crop_.w || crop_.h) {
-            outFrame->pointer()->crop_top = crop_.y;
-            outFrame->pointer()->crop_bottom = (size_t) outFrame->height() - crop_.y - crop_.h;
-            outFrame->pointer()->crop_left = crop_.x;
-            outFrame->pointer()->crop_right = (size_t) outFrame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(outFrame->pointer(), AV_FRAME_CROP_UNALIGNED);
-        }
-        if (outFrame->height() != height_ || outFrame->width() != width_) {
-            setFrameSize(0, 0);
-            setFrameSize(outFrame->width(), outFrame->height());
-            return;
-        }
-        avTarget_.push(std::move(outFrame));
-        return;
-    }
 
-    bool doTransfer = (target_.pull != nullptr);
+    bool doTransfer = (target_.pullFrame != nullptr);
 #if HAVE_SHM
     doTransfer |= (shm_ != nullptr);
 #endif
@@ -382,7 +462,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame_p))->format());
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
@@ -420,10 +500,15 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
             frame->pointer()->crop_left = crop_.x;
             frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+            av_frame_apply_cropping(frame->pointer(), jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
         }
 
         if (frame->height() != height_ || frame->width() != width_) {
+            JAMI_WARN("Frame res changed from %ix%i to %ix%i",
+                      width_,
+                      height_,
+                      frame->width(),
+                      frame->height());
             lock.unlock();
             setFrameSize(0, 0);
             setFrameSize(frame->width(), frame->height());
@@ -433,7 +518,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         if (shm_)
             shm_->renderFrame(*frame);
 #endif
-        if (target_.pull) {
+        if (target_.pullFrame) {
             int width = frame->width();
             int height = frame->height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
@@ -443,18 +528,19 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
             const auto bytes = videoFrameSize(format, width, height);
             if (bytes > 0) {
-                if (auto buffer_ptr = target_.pull(bytes)) {
-                    if (buffer_ptr->avframe) {
-                        scaler_->scale(*frame, buffer_ptr->avframe.get());
+                if (auto buffer_ptr = target_.pullFrame(bytes)) {
+                    if (buffer_ptr->avframe()) {
+                        scaler_->scale(*frame, buffer_ptr->avframe());
                     } else {
-                        buffer_ptr->format = format;
-                        buffer_ptr->width = width;
-                        buffer_ptr->height = height;
+                        buffer_ptr->allocateMemory(format,
+                                                   width,
+                                                   height,
+                                                   jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
                         VideoFrame dst;
-                        dst.setFromMemory(buffer_ptr->ptr, format, width, height);
+                        dst.setFromMemory(buffer_ptr->ptr(), format, width, height);
                         scaler_->scale(*frame, dst);
                     }
-                    target_.push(std::move(buffer_ptr));
+                    target_.pushFrame(std::move(buffer_ptr));
                 }
             }
         }
@@ -493,6 +579,16 @@ SinkClient::setCrop(int x, int y, int w, int h)
     crop_.y = y;
     crop_.w = w;
     crop_.h = h;
+}
+
+int
+SinkClient::getPixelFormat() const
+{
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
+    return AV_PIX_FMT_RGBA;
+#else
+    return AV_PIX_FMT_BGRA;
+#endif
 }
 
 } // namespace video

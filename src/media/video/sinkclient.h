@@ -28,6 +28,7 @@
 
 #include "video_base.h"
 #include <videomanager_interface.h>
+#include <video_frame_buffer.h>
 
 #include <string>
 #include <vector>
@@ -53,7 +54,7 @@ class SinkClient : public VideoFramePassiveReader
 public:
     SinkClient(const std::string& id = "", bool mixer = false);
 
-    const std::string& getId() const noexcept {return id_;}
+    const std::string& getId() const noexcept { return id_; }
 
     std::string openedName() const noexcept;
 
@@ -63,7 +64,7 @@ public:
 
     AVPixelFormat getPreferredFormat() const noexcept
     {
-        return (AVPixelFormat) avTarget_.preferredFormat;
+        return (AVPixelFormat) target_.preferredFormat;
     }
 
     // as VideoFramePassiveReader
@@ -76,31 +77,38 @@ public:
     void setFrameSize(int width, int height);
     void setCrop(int x, int y, int w, int h);
 
-    void registerTarget(const DRing::SinkTarget& target) noexcept {
+    void registerTarget(const DRing::SinkTarget& target) noexcept
+    {
         std::lock_guard<std::mutex> lock(mtx_);
         target_ = target;
     }
-    void registerAVTarget(const DRing::AVSinkTarget& target) noexcept { avTarget_ = target; }
+
+    int getPixelFormat() const;
 
 private:
+    void setRotation(int rotation);
+
+    void updateNew(const std::shared_ptr<jami::MediaFrame>&);
+    void updateLegacy(const std::shared_ptr<jami::MediaFrame>&);
+
     const std::string id_;
     // True if the instance is used by a mixer.
     const bool mixer_ {false};
     int width_ {0};
     int height_ {0};
 
-    struct Rect { int x {0}, y {0}, w {0}, h {0}; };
+    struct Rect
+    {
+        int x {0}, y {0}, w {0}, h {0};
+    };
     Rect crop_ {};
 
     bool started_ {false}; // used to arbitrate client's stop signal.
     int rotation_ {0};
     DRing::SinkTarget target_;
-    DRing::AVSinkTarget avTarget_;
     std::unique_ptr<VideoScaler> scaler_;
     std::unique_ptr<MediaFilter> filter_;
     std::mutex mtx_;
-
-    void setRotation(int rotation);
 
 #ifdef DEBUG_FPS
     unsigned frameCount_;

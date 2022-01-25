@@ -34,6 +34,7 @@ void av_frame_free(AVFrame** frame);
 
 #include "def.h"
 
+#include <assert.h>
 #include <memory>
 #include <vector>
 #include <map>
@@ -43,7 +44,7 @@ void av_frame_free(AVFrame** frame);
 #include <cstdint>
 #include <cstdlib>
 
-#if __APPLE__
+#ifdef __APPLE__
 #import "TargetConditionals.h"
 #endif
 
@@ -157,33 +158,44 @@ private:
     void setGeometry(int format, int width, int height) noexcept;
 };
 
+enum class DRING_PUBLIC VideoBufferType { DEFAULT, AV_FRAME };
+
 /* FrameBuffer is a generic video frame container */
-struct DRING_PUBLIC FrameBuffer
+class DRING_PUBLIC VideoFrameBufferIf
 {
-    uint8_t* ptr {nullptr};  // data as a plain raw pointer
-    std::size_t ptrSize {0}; // size in byte of ptr array
-    int format {0};          // as listed by AVPixelFormat (avutils/pixfmt.h)
-    int width {0};           // frame width
-    int height {0};          // frame height
-    std::vector<uint8_t> storage;
-    // If set, new frame will be written to this buffer instead
-    std::unique_ptr<AVFrame, void (*)(AVFrame*)> avframe {nullptr, [](AVFrame* frame) {
-                                                              av_frame_free(&frame);
-                                                          }};
+public:
+    VideoFrameBufferIf() = default;
+    VideoFrameBufferIf(const VideoFrameBufferIf&) = delete;
+    VideoFrameBufferIf(const VideoFrameBufferIf&&) = delete;
+
+    virtual ~VideoFrameBufferIf() {};
+
+    virtual void allocateMemory(int format, int width, int height, int align) = 0;
+    virtual std::size_t size() const = 0;
+    virtual int width() const = 0;
+    virtual int height() const = 0;
+    virtual int planes() const = 0;
+    virtual int stride(int plane) const = 0;
+    virtual uint8_t* ptr(int plane = 0) = 0;
+    // Carefull. Just temporary.
+    virtual AVFrame* avframe() = 0;
+    // Format as listed by AVPixelFormat (avutils/pixfmt.h)
+    virtual int format() const = 0;
 };
 
 struct DRING_PUBLIC SinkTarget
 {
-    using FrameBufferPtr = std::unique_ptr<FrameBuffer>;
-    std::function<FrameBufferPtr(std::size_t bytes)> pull;
-    std::function<void(FrameBufferPtr)> push;
-};
-
-struct DRING_PUBLIC AVSinkTarget
-{
-    std::function<void(std::unique_ptr<VideoFrame>)> push;
+    using VideoFrameBufferIfPtr = std::unique_ptr<VideoFrameBufferIf>;
+    std::function<VideoFrameBufferIfPtr(std::size_t bytes)> pullFrame;
+    std::function<void(VideoFrameBufferIfPtr)> pushFrame;
+    VideoBufferType bufferType {VideoBufferType::DEFAULT};
     int /* AVPixelFormat */ preferredFormat {-1 /* AV_PIX_FMT_NONE */};
 };
+
+DRING_PUBLIC SinkTarget::VideoFrameBufferIfPtr createVideoFrameBufferInstance(
+    size_t size, uint8_t* buf = nullptr);
+
+DRING_PUBLIC SinkTarget::VideoFrameBufferIfPtr createAVVideoFrameBufferInstance(size_t size);
 
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
@@ -210,7 +222,6 @@ DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
-DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
 DRING_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId,
@@ -265,7 +276,7 @@ struct DRING_PUBLIC VideoSignal
                              const std::string& /*shm_path*/,
                              bool /*is_mixer*/);
     };
-#if __ANDROID__
+#ifdef __ANDROID__
     struct DRING_PUBLIC SetParameters
     {
         constexpr static const char* name = "SetParameters";

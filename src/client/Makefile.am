@@ -18,6 +18,7 @@ libclient_la_SOURCES = \
 	./client/configurationmanager.cpp \
 	./client/datatransfer.cpp \
 	./client/conversation_interface.cpp \
+    ./client/video_frame_buffer.cpp \
 	$(PLUGIN_SRC) \
 	$(PRESENCE_SRC) \
 	$(VIDEO_SRC)
