@@ -37,9 +37,8 @@
 #include "client/ring_signal.h"
 #include "audio/ringbufferpool.h"
 #include "jami/media_const.h"
-#include "libav_utils.h"
 #include "call_const.h"
-#include "system_codec_container.h"
+#include "media_buffer.h"
 
 #include <functional>
 #include <memory>
@@ -141,7 +140,7 @@ AudioFrame::reserve(size_t nb_samples)
         auto d = pointer();
         d->nb_samples = nb_samples;
         int err;
-        if ((err = av_frame_get_buffer(d, 0)) < 0) {
+        if ((err = av_frame_get_buffer(d, jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN)) < 0) {
             throw std::bad_alloc();
         }
     }
@@ -252,7 +251,7 @@ VideoFrame::size() const noexcept
     return av_image_get_buffer_size((AVPixelFormat) frame_->format,
                                     frame_->width,
                                     frame_->height,
-                                    1);
+                                    jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
 }
 
 int
@@ -279,6 +278,14 @@ VideoFrame::setGeometry(int format, int width, int height) noexcept
     frame_->format = format;
     frame_->width = width;
     frame_->height = height;
+
+    // Determine and set the strides
+    auto size = jami::videoFrameSize(format, width, height);
+    auto stride = size / height;
+    const int planeCount = av_pix_fmt_count_planes((AVPixelFormat) format);
+    for (int plane = 0; plane < planeCount; plane++) {
+        frame_->linesize[plane] = stride;
+    }
 }
 
 void
@@ -294,7 +301,7 @@ VideoFrame::reserve(int format, int width, int height)
     }
 
     setGeometry(format, width, height);
-    if (av_frame_get_buffer(libav_frame, 32))
+    if (av_frame_get_buffer(libav_frame, jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN))
         throw std::bad_alloc();
     allocated_ = true;
     releaseBufferCb_ = {};
@@ -313,7 +320,7 @@ VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height) noexc
                          (AVPixelFormat) frame_->format,
                          width,
                          height,
-                         1);
+                         jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
 }
 
 void

@@ -54,11 +54,12 @@ namespace debug {
 class Timer
 {
 public:
-    Timer(std::string_view name) : name_(name), start_(Clock::now()) {}
+    Timer(std::string_view name)
+        : name_(name)
+        , start_(Clock::now())
+    {}
 
-    ~Timer() {
-        print("end"sv);
-    }
+    ~Timer() { print("end"sv); }
 
     template<class Period = std::ratio<1>>
     uint64_t getDuration() const
@@ -67,8 +68,10 @@ public:
         return diff.count();
     }
 
-    void print(std::string_view action) const {
-        JAMI_DBG() << name_ << ": " << action << " after " << dht::print_duration(Clock::now() - start_);
+    void print(std::string_view action) const
+    {
+        JAMI_DBG() << name_ << ": " << action << " after "
+                   << dht::print_duration(Clock::now() - start_);
     }
 
 private:
@@ -239,7 +242,10 @@ public:
         if (format_ != f->format || width_ != f->width || height_ != f->height)
             return;
 
-        int size = av_image_get_buffer_size(format_, width_, height_, 1);
+        int size = av_image_get_buffer_size(format_,
+                                            width_,
+                                            height_,
+                                            libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
         buffer = reinterpret_cast<uint8_t*>(av_malloc(size));
         if (!buffer) {
             return;
@@ -251,7 +257,7 @@ public:
                                            format_,
                                            width_,
                                            height_,
-                                           1))
+                                           libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN))
             < 0) {
             av_freep(&buffer);
             return;
