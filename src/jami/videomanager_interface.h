@@ -34,6 +34,7 @@ void av_frame_free(AVFrame** frame);
 
 #include "def.h"
 
+#include <assert.h>
 #include <memory>
 #include <vector>
 #include <map>
@@ -43,7 +44,7 @@ void av_frame_free(AVFrame** frame);
 #include <cstdint>
 #include <cstdlib>
 
-#if __APPLE__
+#ifdef __APPLE__
 #import "TargetConditionals.h"
 #endif
 
@@ -158,25 +159,62 @@ private:
 };
 
 /* FrameBuffer is a generic video frame container */
-struct DRING_PUBLIC FrameBuffer
+class DRING_PUBLIC FrameBuffer
 {
-    uint8_t* ptr {nullptr};  // data as a plain raw pointer
-    std::size_t ptrSize {0}; // size in byte of ptr array
-    int format {0};          // as listed by AVPixelFormat (avutils/pixfmt.h)
-    int width {0};           // frame width
-    int height {0};          // frame height
-    std::vector<uint8_t> storage;
-    // If set, new frame will be written to this buffer instead
-    std::unique_ptr<AVFrame, void (*)(AVFrame*)> avframe {nullptr, [](AVFrame* frame) {
-                                                              av_frame_free(&frame);
-                                                          }};
+public:
+    FrameBuffer() = delete;
+    FrameBuffer(const FrameBuffer&) = delete;
+    FrameBuffer(const FrameBuffer&&) = delete;
+
+    FrameBuffer(std::size_t size)
+        : owner_(true)
+        , bufferSize_(size)
+    {
+        assert(bufferSize_ != 0);
+        videoBuffer_ = reinterpret_cast<uint8_t*>(std::malloc(size));
+        assert(videoBuffer_ != nullptr);
+    };
+
+    FrameBuffer(uint8_t* buf, size_t size)
+        : owner_(false)
+        , videoBuffer_(buf)
+        , bufferSize_(size)
+    {
+        // Must provide a valid buffer.
+        assert(videoBuffer_ != nullptr);
+        assert(bufferSize_ != 0);
+    };
+
+    virtual ~FrameBuffer()
+    {
+        if (owner_) {
+            assert(videoBuffer_ != nullptr);
+            assert(bufferSize_ != 0);
+            std::free(videoBuffer_);
+        }
+    }
+
+    uint8_t* ptr() { return videoBuffer_; };
+    std::size_t size() const { return bufferSize_; };
+
+    // Format as listed by AVPixelFormat (avutils/pixfmt.h)
+    int format_ {0};
+    int width_ {0};
+    int height_ {0};
+    // True if the instance own the inner buffer.
+    bool owner_ {false};
+    uint8_t* videoBuffer_ {nullptr};
+    std::size_t bufferSize_ {0};
+    std::unique_ptr<AVFrame, void (*)(AVFrame*)> avframe_ {nullptr, [](AVFrame* frame) {
+                                                               av_frame_free(&frame);
+                                                           }};
 };
 
 struct DRING_PUBLIC SinkTarget
 {
     using FrameBufferPtr = std::unique_ptr<FrameBuffer>;
-    std::function<FrameBufferPtr(std::size_t bytes)> pull;
-    std::function<void(FrameBufferPtr)> push;
+    std::function<FrameBufferPtr(std::size_t bytes)> pullFrame;
+    std::function<void(FrameBufferPtr)> pushFrame;
 };
 
 struct DRING_PUBLIC AVSinkTarget
@@ -265,7 +303,7 @@ struct DRING_PUBLIC VideoSignal
                              const std::string& /*shm_path*/,
                              bool /*is_mixer*/);
     };
-#if __ANDROID__
+#ifdef __ANDROID__
     struct DRING_PUBLIC SetParameters
     {
         constexpr static const char* name = "SetParameters";

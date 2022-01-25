@@ -362,7 +362,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             outFrame->pointer()->crop_bottom = (size_t) outFrame->height() - crop_.y - crop_.h;
             outFrame->pointer()->crop_left = crop_.x;
             outFrame->pointer()->crop_right = (size_t) outFrame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(outFrame->pointer(), AV_FRAME_CROP_UNALIGNED);
+            av_frame_apply_cropping(outFrame->pointer(), jami::libav_utils::VIDEO_BUFFER_ALIGN);
         }
         if (outFrame->height() != height_ || outFrame->width() != width_) {
             setFrameSize(0, 0);
@@ -373,7 +373,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         return;
     }
 
-    bool doTransfer = (target_.pull != nullptr);
+    bool doTransfer = (target_.pullFrame != nullptr);
 #if HAVE_SHM
     doTransfer |= (shm_ != nullptr);
 #endif
@@ -382,7 +382,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame_p))->format());
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
@@ -420,10 +420,15 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
             frame->pointer()->crop_left = crop_.x;
             frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+            av_frame_apply_cropping(frame->pointer(), jami::libav_utils::VIDEO_BUFFER_ALIGN);
         }
 
         if (frame->height() != height_ || frame->width() != width_) {
+            JAMI_WARN("Frame res changed from %ix%i to %ix%i",
+                      width_,
+                      height_,
+                      frame->width(),
+                      frame->height());
             lock.unlock();
             setFrameSize(0, 0);
             setFrameSize(frame->width(), frame->height());
@@ -433,7 +438,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         if (shm_)
             shm_->renderFrame(*frame);
 #endif
-        if (target_.pull) {
+        if (target_.pullFrame) {
             int width = frame->width();
             int height = frame->height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
@@ -443,18 +448,19 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
             const auto bytes = videoFrameSize(format, width, height);
             if (bytes > 0) {
-                if (auto buffer_ptr = target_.pull(bytes)) {
-                    if (buffer_ptr->avframe) {
-                        scaler_->scale(*frame, buffer_ptr->avframe.get());
+                if (auto buffer_ptr = target_.pullFrame(bytes)) {
+                    if (buffer_ptr->avframe_) {
+                        scaler_->scale(*frame, buffer_ptr->avframe_.get());
                     } else {
-                        buffer_ptr->format = format;
-                        buffer_ptr->width = width;
-                        buffer_ptr->height = height;
+                        buffer_ptr->format_ = format;
+                        buffer_ptr->width_ = width;
+                        buffer_ptr->height_ = height;
+                        auto stride = bytes / height;
                         VideoFrame dst;
-                        dst.setFromMemory(buffer_ptr->ptr, format, width, height);
+                        dst.setFromMemory(buffer_ptr->ptr(), format, width, height);
                         scaler_->scale(*frame, dst);
                     }
-                    target_.push(std::move(buffer_ptr));
+                    target_.pushFrame(std::move(buffer_ptr));
                 }
             }
         }
