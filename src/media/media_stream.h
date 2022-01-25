@@ -38,6 +38,7 @@ struct MediaStream
     int64_t firstTimestamp {0};
     int width {0};
     int height {0};
+    int linesize[4] {0, 0, 0, 0};
     int bitrate {0};
     rational<int> frameRate;
     int sampleRate {0};
@@ -142,6 +143,9 @@ struct MediaStream
         if (isVideo) {
             width = f->width;
             height = f->height;
+            for (int i = 0; i < 4; i++) {
+                linesize[i] = f->linesize[i];
+            }
         } else {
             sampleRate = f->sample_rate;
             nbChannels = f->channels;
