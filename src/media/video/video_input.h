@@ -37,7 +37,7 @@
 #include <condition_variable>
 #include <array>
 
-#if __APPLE__
+#ifdef __APPLE__
 #import "TargetConditionals.h"
 #endif
 
@@ -66,12 +66,8 @@ public:
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
 
-    const DeviceParams& getConfig() const {
-        return decOpts_;
-    }
-    std::shared_future<DeviceParams> getParams() const {
-        return futureDecOpts_;
-    }
+    const DeviceParams& getConfig() const { return decOpts_; }
+    std::shared_future<DeviceParams> getParams() const { return futureDecOpts_; }
 
     MediaStream getInfo() const;
 

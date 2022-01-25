@@ -26,29 +26,29 @@
 #include <regex>
 
 #if defined(__APPLE__)
-    #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        #define ABI "iphone"
-    #else
-        #define ABI "x86_64-apple-Darwin"
-    #endif
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#define ABI "iphone"
+#else
+#define ABI "x86_64-apple-Darwin"
+#endif
 #elif defined(__arm__)
-    #if defined(__ARM_ARCH_7A__)
-        #define ABI "armeabi-v7a"
-    #else
-        #define ABI "armeabi"
-    #endif
+#if defined(__ARM_ARCH_7A__)
+#define ABI "armeabi-v7a"
+#else
+#define ABI "armeabi"
+#endif
 #elif defined(__i386__)
-    #if __ANDROID__
-        #define ABI "x86"
-    #else
-        #define ABI "x86-linux-gnu"
-    #endif
+#ifdef __ANDROID__
+#define ABI "x86"
+#else
+#define ABI "x86-linux-gnu"
+#endif
 #elif defined(__x86_64__)
-    #if __ANDROID__
-        #define ABI "x86_64"
-    #else
-        #define ABI "x86_64-linux-gnu"
-    #endif
+#ifdef __ANDROID__
+#define ABI "x86_64"
+#else
+#define ABI "x86_64-linux-gnu"
+#endif
 #elif defined(__aarch64__)
 #define ABI "arm64-v8a"
 #elif defined(WIN32)
