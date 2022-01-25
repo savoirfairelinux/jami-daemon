@@ -248,6 +248,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7f5643fc_361b1274",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 340,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-25T19:07:02Z",
+      "side": 1,
+      "message": "I dont have a better solution for now unfortunately.",
+      "parentUuid": "ba93dfae_ba4766e1",
+      "range": {
+        "startLine": 340,
+        "startChar": 4,
+        "endLine": 340,
+        "endChar": 11
+      },
+      "revId": "5f25727581b39ba3f56810758843a85225a7b39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b07372cc_3fd87d80",
