@@ -37,7 +37,10 @@ namespace jami {
 int
 videoFrameSize(int format, int width, int height)
 {
-    return av_image_get_buffer_size((AVPixelFormat) format, width, height, 1);
+    return av_image_get_buffer_size((AVPixelFormat) format,
+                                    width,
+                                    height,
+                                    libav_utils::VIDEO_BUFFER_ALIGN);
 }
 
 #endif // ENABLE_VIDEO
