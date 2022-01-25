@@ -24,6 +24,49 @@
 namespace jami {
 namespace video {
 
+#if 0
+std::unique_ptr<MediaFilter>
+getTransposeFilter(
+    int rotation, std::string inputName, int width, int height, int format, bool rescale)
+{
+    JAMI_WARN("Rotation set to %d", rotation);
+    if (rotation == 0) {
+        return {};
+    }
+
+    std::stringstream ss;
+    ss << "[" << inputName << "] ";
+
+    switch (rotation) {
+    case 90:
+    case -270:
+        ss << "transpose=2";
+        break;
+    case 180:
+    case -180:
+        ss << "transpose=1, transpose=1";
+        break;
+    case 270:
+    case -90:
+        ss << "transpose=1";
+        break;
+    default:
+        return {};
+    }
+
+    constexpr auto one = rational<int>(1);
+    std::vector<MediaStream> msv;
+    msv.emplace_back(inputName, format, one, width, height, 0, one);
+
+    std::unique_ptr<MediaFilter> filter(new MediaFilter);
+    auto ret = filter->initialize(ss.str(), msv);
+    if (ret < 0) {
+        JAMI_ERR() << "filter init fail";
+        return {};
+    }
+    return filter;
+}
+#else
 std::unique_ptr<MediaFilter>
 getTransposeFilter(
     int rotation, std::string inputName, int width, int height, int format, bool rescale)
@@ -81,6 +124,7 @@ getTransposeFilter(
     }
     return filter;
 }
+#endif
 
 } // namespace video
 } // namespace jami
