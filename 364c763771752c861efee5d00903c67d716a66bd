@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6f296297_acd0eeb6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1029,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-26T19:27:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6cd3e5f2_09790185",
+      "range": {
+        "startLine": 1029,
+        "startChar": 40,
+        "endLine": 1029,
+        "endChar": 51
+      },
+      "revId": "364c763771752c861efee5d00903c67d716a66bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "611d5f27_2a947780",
@@ -72,6 +96,30 @@
       "writtenOn": "2022-01-14T20:07:23Z",
       "side": 1,
       "message": "2022",
+      "range": {
+        "startLine": 2,
+        "startChar": 18,
+        "endLine": 2,
+        "endChar": 22
+      },
+      "revId": "364c763771752c861efee5d00903c67d716a66bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b79b5d4e_c940cd48",
+        "filename": "test/unitTest/account_archive/migration.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-26T19:27:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "82b32e87_4cfd22ac",
       "range": {
         "startLine": 2,
         "startChar": 18,
