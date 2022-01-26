@@ -192,6 +192,24 @@
       "message": "Dont we have a callback to wait for instead of sleeping ?",
       "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "05a04271_fa2b3d02",
+        "filename": "test/unitTest/account_archive/migration.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 295,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-26T20:01:47Z",
+      "side": 1,
+      "message": "woops, indeed registered",
+      "parentUuid": "d85ed328_16f33c7d",
+      "revId": "0c80de009fa24d9a0e8ca2dd310e55d92c3c4a6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
