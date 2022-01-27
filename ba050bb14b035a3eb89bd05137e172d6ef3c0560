@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "12ccd68d_d317ef15",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-27T18:00:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fb747c15_24cc85ff",
+      "range": {
+        "startLine": 211,
+        "startChar": 50,
+        "endLine": 211,
+        "endChar": 70
+      },
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6b4625f8_be8e11a6",
@@ -64,6 +88,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f1f0a1c6_448fd798",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-27T18:00:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6b4625f8_be8e11a6",
+      "range": {
+        "startLine": 212,
+        "startChar": 68,
+        "endLine": 212,
+        "endChar": 74
+      },
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "adcb2ae2_834be479",
@@ -77,6 +125,30 @@
       "writtenOn": "2022-01-27T14:27:52Z",
       "side": 1,
       "message": "replacement",
+      "range": {
+        "startLine": 223,
+        "startChar": 30,
+        "endLine": 223,
+        "endChar": 41
+      },
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "96217706_d5440fd8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-27T18:00:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "adcb2ae2_834be479",
       "range": {
         "startLine": 223,
         "startChar": 30,
