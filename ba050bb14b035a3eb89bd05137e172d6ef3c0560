@@ -1,0 +1,107 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac507832_af62350d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-27T14:27:52Z",
+      "side": 1,
+      "message": "Nothing critical, just need some answers\n",
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb747c15_24cc85ff",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-27T14:27:52Z",
+      "side": 1,
+      "message": "you mean the issuer ID of both old and new must be the same ?\nIf so, can you update the comment.",
+      "range": {
+        "startLine": 211,
+        "startChar": 50,
+        "endLine": 211,
+        "endChar": 70
+      },
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b4625f8_be8e11a6",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-27T14:27:52Z",
+      "side": 1,
+      "message": "buggy",
+      "range": {
+        "startLine": 212,
+        "startChar": 68,
+        "endLine": 212,
+        "endChar": 74
+      },
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "adcb2ae2_834be479",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-27T14:27:52Z",
+      "side": 1,
+      "message": "replacement",
+      "range": {
+        "startLine": 223,
+        "startChar": 30,
+        "endLine": 223,
+        "endChar": 41
+      },
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07d951ae_c8c6a488",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-01-27T14:27:52Z",
+      "side": 1,
+      "message": "I have a general comment about how the Jams case is being handled here.\nShouldn\u0027t be better to have a separate handlers/methods/helpers for certificates that do not follow the expected format. The handlers can even be optional and registered only for accounts type that requires them, or enabled through a configuration flag.\nIn this case, we will have a clean default certificate validator, and then it can be modified/override by the handlers if needed.",
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
