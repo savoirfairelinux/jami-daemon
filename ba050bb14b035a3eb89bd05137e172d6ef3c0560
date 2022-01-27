@@ -102,6 +102,24 @@
       "message": "I have a general comment about how the Jams case is being handled here.\nShouldn\u0027t be better to have a separate handlers/methods/helpers for certificates that do not follow the expected format. The handlers can even be optional and registered only for accounts type that requires them, or enabled through a configuration flag.\nIn this case, we will have a clean default certificate validator, and then it can be modified/override by the handlers if needed.",
       "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "396d0005_3a804650",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-01-27T14:37:35Z",
+      "side": 1,
+      "message": "this doesn\u0027t depend on the account, the certificate are from anyone in the conversation. JAMS account can talk with non JAMS account.",
+      "parentUuid": "07d951ae_c8c6a488",
+      "revId": "ba050bb14b035a3eb89bd05137e172d6ef3c0560",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
