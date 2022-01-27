@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6344def6_758acf39",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-27T17:28:31Z",
+      "side": 1,
+      "message": "generally ok, but unneeded changes to the public API.",
+      "revId": "07bd40723614d6517e0c270cb34438b14fa5ac2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "373b4c0e_7068927e",
+        "filename": "src/jami/videomanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-27T17:28:31Z",
+      "side": 1,
+      "message": "This change forces to use a buffer linked to the FrameBuffer which would lead to additional copies.\nUse avframe instead, to allow the client to provide their own AVFrame (see comment bellow).",
+      "range": {
+        "startLine": 162,
+        "startChar": 0,
+        "endLine": 197,
+        "endChar": 35
+      },
+      "revId": "07bd40723614d6517e0c270cb34438b14fa5ac2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b50933aa_6a905797",
+        "filename": "src/jami/videomanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-27T17:28:31Z",
+      "side": 1,
+      "message": "There are already two ways to render frames to the client in a modern way, compatible with alignement/linesize requirements : \n\n* The new \"avframe\" field in FrameBuffer allows clients using the \"SinkTarget\" API to provide their own AVFrame where the daemon will write to. This is the avframe field just above. For instance, this is currently used by the Android client to make the daemon write the frame directly in the Surface buffer with the proper linesize.\n\n* The new \"AVSinkTarget\" API allows the daemon to push AVFrames directly to the client with 0-copy of the video data. Ultimately, most clients should move to this new API because it allows direct rendering from GPU-decoded frames. macOS and iOS clients already use this new API, and the Qt client already has WIP to use it.",
+      "range": {
+        "startLine": 162,
+        "startChar": 0,
+        "endLine": 202,
+        "endChar": 2
+      },
+      "revId": "07bd40723614d6517e0c270cb34438b14fa5ac2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7e6ca026_aa25646b",
+        "filename": "src/jami/videomanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-27T17:28:31Z",
+      "side": 1,
+      "message": "This is part of the public API. Is there a good reason to change theses names ?",
+      "range": {
+        "startLine": 207,
+        "startChar": 53,
+        "endLine": 207,
+        "endChar": 62
+      },
+      "revId": "07bd40723614d6517e0c270cb34438b14fa5ac2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
