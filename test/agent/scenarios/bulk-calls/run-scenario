@@ -1,0 +1,30 @@
+#!/bin/sh
+
+tmp_alice=$(mktemp --tmpdir --directory "jami-bulk-calls.XXXXXXXXXX")
+tmp_bob=$(mktemp --tmpdir --directory "jami-bulk-calls.XXXXXXXXXX")
+
+export GUILE_AUTO_COMPILE=0
+export SIPLOGLEVEL=5
+
+touch bob.log
+
+export XDG_CONFIG_HOME="$tmp_bob"
+export XDG_CACHE_HOME="$tmp_bob"
+export XDG_DATA_HOME="$tmp_bob"
+
+export JAMI_LOG_FILE="bob.log"
+./scenario.scm "bob" > bob-guile.txt 2>&1 &
+
+bob_pid=$!
+
+bob_id=$(tail -f "bob.log" | grep -m 1 "Bob is ready @" | cut -d '@' -f 2)
+
+export XDG_CONFIG_HOME="$tmp_alice"
+export XDG_CACHE_HOME="$tmp_alice"
+export XDG_DATA_HOME="$tmp_alice"
+export JAMI_LOG_FILE="alice.log"
+./scenario.scm "alice" "$bob_id" > alice-guile.txt 2>&1
+
+wait $bob_pid
+
+exit $?
