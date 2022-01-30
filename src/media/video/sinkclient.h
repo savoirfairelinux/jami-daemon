@@ -64,7 +64,7 @@ public:
 
     AVPixelFormat getPreferredFormat() const noexcept
     {
-        return (AVPixelFormat) avTarget_.preferredFormat;
+        return (AVPixelFormat) target_.preferredFormat;
     }
 
     // as VideoFramePassiveReader
@@ -82,7 +82,7 @@ public:
         std::lock_guard<std::mutex> lock(mtx_);
         target_ = target;
     }
-    void registerAVTarget(const DRing::AVSinkTarget& target) noexcept { avTarget_ = target; }
+
     int getPixelFormat() const;
 
 private:
@@ -106,7 +106,6 @@ private:
     bool started_ {false}; // used to arbitrate client's stop signal.
     int rotation_ {0};
     DRing::SinkTarget target_;
-    DRing::AVSinkTarget avTarget_;
     std::unique_ptr<VideoScaler> scaler_;
     std::unique_ptr<MediaFilter> filter_;
     std::mutex mtx_;

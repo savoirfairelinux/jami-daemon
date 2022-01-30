@@ -18,16 +18,16 @@
 #include "videomanager_interface.h"
 
 namespace DRing {
-class DRING_PUBLIC GenericVideoFrameBuffer : public VideoFrameBufferIf
+class DRING_PUBLIC GenericVideoBuffer : public VideoBufferIf
 {
 public:
-    GenericVideoFrameBuffer() = delete;
-    GenericVideoFrameBuffer(const GenericVideoFrameBuffer&) = delete;
-    GenericVideoFrameBuffer(const GenericVideoFrameBuffer&&) = delete;
+    GenericVideoBuffer() = delete;
+    GenericVideoBuffer(const GenericVideoBuffer&) = delete;
+    GenericVideoBuffer(const GenericVideoBuffer&&) = delete;
 
-    GenericVideoFrameBuffer(std::size_t size);
-    GenericVideoFrameBuffer(uint8_t* buf, size_t size);
-    ~GenericVideoFrameBuffer();
+    GenericVideoBuffer(std::size_t size);
+    GenericVideoBuffer(uint8_t* buf, size_t size);
+    ~GenericVideoBuffer();
 
     void allocateMemory(int format, int width, int height, int align) override;
     std::size_t size() const override;
@@ -56,16 +56,16 @@ private:
 } // namespace DRing
 
 namespace DRing {
-class DRING_PUBLIC AVVideoFrameBuffer : public VideoFrameBufferIf
+class DRING_PUBLIC AVVideoBuffer : public VideoBufferIf
 {
 public:
-    AVVideoFrameBuffer() = delete;
-    AVVideoFrameBuffer(const AVVideoFrameBuffer&) = delete;
-    AVVideoFrameBuffer(const AVVideoFrameBuffer&&) = delete;
+    AVVideoBuffer() = delete;
+    AVVideoBuffer(const AVVideoBuffer&) = delete;
+    AVVideoBuffer(const AVVideoBuffer&&) = delete;
 
-    AVVideoFrameBuffer(std::size_t size);
-    AVVideoFrameBuffer(uint8_t* buf, size_t size);
-    ~AVVideoFrameBuffer();
+    AVVideoBuffer(std::size_t size);
+    AVVideoBuffer(uint8_t* buf, size_t size);
+    ~AVVideoBuffer();
 
     void allocateMemory(int format, int width, int height, int align) override;
     std::size_t size() const override;

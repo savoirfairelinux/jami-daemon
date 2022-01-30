@@ -161,14 +161,14 @@ private:
 enum class DRING_PUBLIC VideoBufferType { DEFAULT, AV_FRAME };
 
 /* FrameBuffer is a generic video frame container */
-class DRING_PUBLIC VideoFrameBufferIf
+class DRING_PUBLIC VideoBufferIf
 {
 public:
-    VideoFrameBufferIf() = default;
-    VideoFrameBufferIf(const VideoFrameBufferIf&) = delete;
-    VideoFrameBufferIf(const VideoFrameBufferIf&&) = delete;
+    VideoBufferIf() = default;
+    VideoBufferIf(const VideoBufferIf&) = delete;
+    VideoBufferIf(const VideoBufferIf&&) = delete;
 
-    virtual ~VideoFrameBufferIf() {};
+    virtual ~VideoBufferIf() {};
 
     virtual void allocateMemory(int format, int width, int height, int align) = 0;
     virtual std::size_t size() const = 0;
@@ -185,17 +185,17 @@ public:
 
 struct DRING_PUBLIC SinkTarget
 {
-    using VideoFrameBufferIfPtr = std::unique_ptr<VideoFrameBufferIf>;
-    std::function<VideoFrameBufferIfPtr(std::size_t bytes)> pullFrame;
-    std::function<void(VideoFrameBufferIfPtr)> pushFrame;
+    using VideoBufferIfPtr = std::unique_ptr<VideoBufferIf>;
+    std::function<VideoBufferIfPtr(std::size_t bytes)> pullFrame;
+    std::function<void(VideoBufferIfPtr)> pushFrame;
     VideoBufferType bufferType {VideoBufferType::DEFAULT};
-};
-
-struct DRING_PUBLIC AVSinkTarget
-{
-    std::function<void(std::unique_ptr<VideoFrame>)> push;
     int /* AVPixelFormat */ preferredFormat {-1 /* AV_PIX_FMT_NONE */};
 };
+
+DRING_PUBLIC SinkTarget::VideoBufferIfPtr createVideoBufferInstance(size_t size,
+                                                                    uint8_t* buf = nullptr);
+
+DRING_PUBLIC SinkTarget::VideoBufferIfPtr createAVVideoBufferInstance(size_t size);
 
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
@@ -222,7 +222,6 @@ DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
-DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
 DRING_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId,

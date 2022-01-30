@@ -23,14 +23,14 @@ extern "C" {
 
 namespace DRing {
 
-GenericVideoFrameBuffer::GenericVideoFrameBuffer(std::size_t size)
+GenericVideoBuffer::GenericVideoBuffer(std::size_t size)
     : owner_(true)
     , bufferSize_(size)
 {
     assert(bufferSize_ != 0);
 }
 
-GenericVideoFrameBuffer::GenericVideoFrameBuffer(uint8_t* buf, size_t size)
+GenericVideoBuffer::GenericVideoBuffer(uint8_t* buf, size_t size)
     : owner_(false)
     , videoBuffer_(buf)
     , bufferSize_(size)
@@ -40,7 +40,7 @@ GenericVideoFrameBuffer::GenericVideoFrameBuffer(uint8_t* buf, size_t size)
     assert(bufferSize_ != 0);
 }
 
-GenericVideoFrameBuffer::~GenericVideoFrameBuffer()
+GenericVideoBuffer::~GenericVideoBuffer()
 {
     if (owner_) {
         assert(bufferSize_ != 0);
@@ -51,7 +51,7 @@ GenericVideoFrameBuffer::~GenericVideoFrameBuffer()
 }
 
 void
-GenericVideoFrameBuffer::allocateMemory(int format, int width, int height, int align)
+GenericVideoBuffer::allocateMemory(int format, int width, int height, int align)
 {
     format_ = format;
     width_ = width;
@@ -62,31 +62,31 @@ GenericVideoFrameBuffer::allocateMemory(int format, int width, int height, int a
 }
 
 std::size_t
-GenericVideoFrameBuffer::size() const
+GenericVideoBuffer::size() const
 {
     return bufferSize_;
 }
 
 int
-GenericVideoFrameBuffer::width() const
+GenericVideoBuffer::width() const
 {
     return width_;
 }
 
 int
-GenericVideoFrameBuffer::height() const
+GenericVideoBuffer::height() const
 {
     return height_;
 }
 
 int
-GenericVideoFrameBuffer::planes() const
+GenericVideoBuffer::planes() const
 {
     return strides_.size();
 }
 
 int
-GenericVideoFrameBuffer::stride(int plane) const
+GenericVideoBuffer::stride(int plane) const
 {
     assert(height_ > 0);
     assert(bufferSize_ > 0);
@@ -94,7 +94,7 @@ GenericVideoFrameBuffer::stride(int plane) const
 }
 
 uint8_t*
-GenericVideoFrameBuffer::ptr(int plane)
+GenericVideoBuffer::ptr(int plane)
 {
     if (videoBuffer_)
         return videoBuffer_;
@@ -103,25 +103,22 @@ GenericVideoFrameBuffer::ptr(int plane)
 }
 
 int
-GenericVideoFrameBuffer::format() const
+GenericVideoBuffer::format() const
 {
     return format_;
 }
 
 AVFrame*
-GenericVideoFrameBuffer::avframe()
+GenericVideoBuffer::avframe()
 {
     return {};
 }
 
-} // namespace DRing
-
 // ***********************************************************************
+// *****   AV Frame Buffer
 // ***********************************************************************
 
-namespace DRing {
-
-AVVideoFrameBuffer::AVVideoFrameBuffer(std::size_t size)
+AVVideoBuffer::AVVideoBuffer(std::size_t size)
     : bufferSize_(size)
 {
     assert(bufferSize_ != 0);
@@ -129,10 +126,10 @@ AVVideoFrameBuffer::AVVideoFrameBuffer(std::size_t size)
     assert(avframe_ != nullptr);
 }
 
-AVVideoFrameBuffer::~AVVideoFrameBuffer() {}
+AVVideoBuffer::~AVVideoBuffer() {}
 
 void
-AVVideoFrameBuffer::allocateMemory(int format, int width, int height, int align)
+AVVideoBuffer::allocateMemory(int format, int width, int height, int align)
 {
     // For AVFrame, strides should not be set, but rather determined internally
     // using ffmpeg helpers.
@@ -161,35 +158,36 @@ AVVideoFrameBuffer::allocateMemory(int format, int width, int height, int align)
     }
 
     // Just validate that the provided size matches the frame properties.
-    assert(bufferSize_ == av_image_get_buffer_size((AVPixelFormat) format, width, height, align));
+    assert(bufferSize_
+           == (size_t) av_image_get_buffer_size((AVPixelFormat) format, width, height, align));
 }
 
 std::size_t
-AVVideoFrameBuffer::size() const
+AVVideoBuffer::size() const
 {
     return bufferSize_;
 }
 
 int
-AVVideoFrameBuffer::width() const
+AVVideoBuffer::width() const
 {
     return avframe_->width;
 }
 
 int
-AVVideoFrameBuffer::height() const
+AVVideoBuffer::height() const
 {
     return avframe_->height;
 }
 
 int
-AVVideoFrameBuffer::planes() const
+AVVideoBuffer::planes() const
 {
     return planes_;
 }
 
 int
-AVVideoFrameBuffer::stride(int plane) const
+AVVideoBuffer::stride(int plane) const
 {
     if (plane >= planes_)
         return 0;
@@ -197,7 +195,7 @@ AVVideoFrameBuffer::stride(int plane) const
 }
 
 uint8_t*
-AVVideoFrameBuffer::ptr(int plane)
+AVVideoBuffer::ptr(int plane)
 {
     if (plane >= planes_)
         return {};
@@ -205,15 +203,29 @@ AVVideoFrameBuffer::ptr(int plane)
 }
 
 int
-AVVideoFrameBuffer::format() const
+AVVideoBuffer::format() const
 {
     return avframe_->format;
 }
 
 AVFrame*
-AVVideoFrameBuffer::avframe()
+AVVideoBuffer::avframe()
 {
     return avframe_.get();
+}
+
+SinkTarget::VideoBufferIfPtr
+createVideoBufferInstance(size_t size, uint8_t* buf)
+{
+    if (buf != nullptr)
+        return std::make_unique<GenericVideoBuffer>(buf, size);
+    return std::make_unique<GenericVideoBuffer>(size);
+}
+
+SinkTarget::VideoBufferIfPtr
+createAVVideoBufferInstance(size_t size)
+{
+    return std::make_unique<AVVideoBuffer>(size);
 }
 
 } // namespace DRing
