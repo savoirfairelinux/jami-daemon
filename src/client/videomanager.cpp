@@ -543,17 +543,6 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 #endif
 }
 
-void
-registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target)
-{
-#ifdef ENABLE_VIDEO
-    if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
-        sink->registerAVTarget(target);
-    else
-        JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
-#endif
-}
-
 std::map<std::string, std::string>
 getRenderer(const std::string& callId)
 {
