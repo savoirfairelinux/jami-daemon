@@ -409,7 +409,7 @@ SinkClient::updateNew(const std::shared_ptr<jami::MediaFrame>& frame_p)
         assert(width > 0);
         assert(height > 0);
 
-        auto videoBuffer = std::make_unique<DRing::AVVideoFrameBuffer>(bytes);
+        auto videoBuffer = DRing::createAVVideoFrameBufferInstance(bytes);
         if (not videoBuffer) {
             // Log
             return;
@@ -422,10 +422,10 @@ SinkClient::updateNew(const std::shared_ptr<jami::MediaFrame>& frame_p)
 
         if (auto avframe = videoBuffer->avframe()) {
             scaler_->scale(*frame, avframe);
-        } else if (auto genFrame = videoBuffer->ptr()) {
+        } else if (auto bufferPtr = videoBuffer->ptr()) {
             // TODO. Delete me. Kept only for debug/transition.
             VideoFrame dst;
-            dst.setFromMemory(videoBuffer->ptr(), format, width, height);
+            dst.setFromMemory(bufferPtr, format, width, height);
             scaler_->scale(*frame, dst);
         } else {
             assert(false);
@@ -452,25 +452,6 @@ SinkClient::updateLegacy(const std::shared_ptr<MediaFrame>& frame_p)
 #endif
 
     std::unique_lock<std::mutex> lock(mtx_);
-    if (avTarget_.push) {
-        auto outFrame = std::make_unique<VideoFrame>();
-        outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
-        if (crop_.w || crop_.h) {
-            outFrame->pointer()->crop_top = crop_.y;
-            outFrame->pointer()->crop_bottom = (size_t) outFrame->height() - crop_.y - crop_.h;
-            outFrame->pointer()->crop_left = crop_.x;
-            outFrame->pointer()->crop_right = (size_t) outFrame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(outFrame->pointer(),
-                                    jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
-        }
-        if (outFrame->height() != height_ || outFrame->width() != width_) {
-            setFrameSize(0, 0);
-            setFrameSize(outFrame->width(), outFrame->height());
-            return;
-        }
-        avTarget_.push(std::move(outFrame));
-        return;
-    }
 
     bool doTransfer = (target_.pullFrame != nullptr);
 #if HAVE_SHM
@@ -551,7 +532,6 @@ SinkClient::updateLegacy(const std::shared_ptr<MediaFrame>& frame_p)
                     if (buffer_ptr->avframe()) {
                         scaler_->scale(*frame, buffer_ptr->avframe());
                     } else {
-                        auto stride = bytes / height;
                         buffer_ptr->allocateMemory(format,
                                                    width,
                                                    height,
