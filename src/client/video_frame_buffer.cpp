@@ -114,12 +114,9 @@ GenericVideoFrameBuffer::avframe()
     return {};
 }
 
-} // namespace DRing
-
 // ***********************************************************************
+// *****   AV Frame Buffer
 // ***********************************************************************
-
-namespace DRing {
 
 AVVideoFrameBuffer::AVVideoFrameBuffer(std::size_t size)
     : bufferSize_(size)
@@ -161,7 +158,8 @@ AVVideoFrameBuffer::allocateMemory(int format, int width, int height, int align)
     }
 
     // Just validate that the provided size matches the frame properties.
-    assert(bufferSize_ == av_image_get_buffer_size((AVPixelFormat) format, width, height, align));
+    assert(bufferSize_
+           == (size_t) av_image_get_buffer_size((AVPixelFormat) format, width, height, align));
 }
 
 std::size_t
@@ -214,6 +212,15 @@ AVFrame*
 AVVideoFrameBuffer::avframe()
 {
     return avframe_.get();
+}
+
+SinkTarget::VideoFrameBufferIfPtr
+createVideoFrameBufferInstance(uint8_t* buf, size_t size)
+{
+    if (buf != nullptr)
+        return std::make_unique<GenericVideoFrameBuffer>(buf, size);
+
+    return std::make_unique<GenericVideoFrameBuffer>(size);
 }
 
 } // namespace DRing
