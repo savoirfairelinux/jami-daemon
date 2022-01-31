@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "25fedd96_117780e9",
+        "filename": "src/jami/video_frame_buffer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-01-31T17:21:01Z",
+      "side": 1,
+      "message": "Duplicate with VideoFrame and its embedded AVFrame.\nAbstraction generally not needed or desired, as we move to always use AVFrame across the board for the public API.",
+      "range": {
+        "startLine": 21,
+        "startChar": 47,
+        "endLine": 21,
+        "endChar": 60
+      },
+      "revId": "b5530c3135481d48866c7504c937be169a910f74",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
