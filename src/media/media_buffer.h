@@ -38,6 +38,7 @@ using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
 using VideoFrame = DRing::VideoFrame;
 
 // Some helpers
+int videoFrameAlign(int format);
 int videoFrameSize(int format, int width, int height);
 
 #endif // ENABLE_VIDEO

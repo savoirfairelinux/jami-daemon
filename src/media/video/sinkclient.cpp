@@ -422,7 +422,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
             frame->pointer()->crop_left = crop_.x;
             frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+            av_frame_apply_cropping(frame->pointer(), 0);
         }
 
         if (frame->height() != height_ || frame->width() != width_) {
