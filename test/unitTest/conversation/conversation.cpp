@@ -728,11 +728,13 @@ ConversationTest::testSetMessageDisplayed()
         [&](const std::string& accountId,
             const std::string& conversationId,
             std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
+            if (accountId == aliceId && conversationId == convId) {
+                if (message["type"] == "member")
+                    memberMessageGenerated = true;
                 cv.notify_one();
             }
         }));
+    std::string aliceLastMsg;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
             [&](const std::string& accountId,
@@ -740,16 +742,20 @@ ConversationTest::testSetMessageDisplayed()
                 const std::string& peer,
                 const std::string& msgId,
                 int status) {
-                if (accountId == bobId && conversationId == convId && msgId == conversationId
-                    && peer == aliceUri && status == 3) {
-                    msgDisplayed = true;
+                if (conversationId == convId && peer == aliceUri && status == 3) {
+                    if (accountId == bobId && msgId == conversationId)
+                        msgDisplayed = true;
+                    else if (accountId == aliceId)
+                        aliceLastMsg = msgId;
                     cv.notify_one();
                 }
             }));
     DRing::registerSignalHandlers(confHandlers);
+    aliceLastMsg = "";
     DRing::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return memberMessageGenerated && !aliceLastMsg.empty();
+    }));
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
@@ -775,7 +781,9 @@ ConversationTest::testSetMessageDisplayed()
     CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
                                 membersInfos.end(),
                                 [&](auto infos) {
-                                    return infos["uri"] == aliceUri && infos["lastDisplayed"] == "";
+                                    // Last read for alice is when bob is added to the members
+                                    return infos["uri"] == aliceUri
+                                           && infos["lastDisplayed"] == aliceLastMsg;
                                 })
                    != membersInfos.end());
 
@@ -841,6 +849,7 @@ ConversationTest::testSetMessageDisplayedPreference()
                 cv.notify_one();
             }
         }));
+    std::string aliceLastMsg;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
             [&](const std::string& accountId,
@@ -848,9 +857,11 @@ ConversationTest::testSetMessageDisplayedPreference()
                 const std::string& peer,
                 const std::string& msgId,
                 int status) {
-                if (accountId == bobId && conversationId == convId && msgId == conversationId
-                    && peer == aliceUri && status == 3) {
-                    msgDisplayed = true;
+                if (conversationId == convId && peer == aliceUri && status == 3) {
+                    if (accountId == bobId && msgId == conversationId)
+                        msgDisplayed = true;
+                    else if (accountId == aliceId)
+                        aliceLastMsg = msgId;
                     cv.notify_one();
                 }
             }));
@@ -872,9 +883,10 @@ ConversationTest::testSetMessageDisplayedPreference()
     DRing::setAccountDetails(aliceId, details);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return aliceRegistered; }));
 
+    aliceLastMsg = "";
     DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
-        return requestReceived && memberMessageGenerated;
+        return requestReceived && memberMessageGenerated && !aliceLastMsg.empty();
     }));
     memberMessageGenerated = false;
     DRing::acceptConversationRequest(bobId, convId);
@@ -886,7 +898,9 @@ ConversationTest::testSetMessageDisplayedPreference()
     CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
                                 membersInfos.end(),
                                 [&](auto infos) {
-                                    return infos["uri"] == aliceUri && infos["lastDisplayed"] == "";
+                                    // Last read for alice is when bob is added to the members
+                                    return infos["uri"] == aliceUri
+                                           && infos["lastDisplayed"] == aliceLastMsg;
                                 })
                    != membersInfos.end());
 
@@ -2356,26 +2370,13 @@ ConversationTest::testSyncWithoutPinnedCert()
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
 
-    // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
-    std::remove(bobArchive.c_str());
-    bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB2";
-    details[ConfProperties::ALIAS] = "BOB2";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
-    bob2Id = Manager::instance().addAccount(details);
-
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::string convId = "";
-    auto bob2Announced = false, requestReceived = false, conversationReady = false, memberMessageGenerated = false, aliceMessageReceived = false, aliceStopped = false, bobStopped = false;
+    auto requestReceived = false, conversationReady = false, memberMessageGenerated = false,
+         aliceMessageReceived = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
@@ -2402,12 +2403,12 @@ ConversationTest::testSyncWithoutPinnedCert()
             if (accountId == aliceId && conversationId == convId) {
                 if (message["type"] == "member")
                     memberMessageGenerated = true;
-                else if ( message["type"] == "text/plain")
+                else if (message["type"] == "text/plain")
                     aliceMessageReceived = true;
             }
             cv.notify_one();
         }));
-
+    auto bob2Started = false, aliceStopped = false, bob2Stopped = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
@@ -2415,12 +2416,11 @@ ConversationTest::testSyncWithoutPinnedCert()
                 if (!bob2Account)
                     return;
                 auto details = bob2Account->getVolatileAccountDetails();
-                auto announced = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (announced == "true")
-                    bob2Announced = true;
+                if (daemonStatus == "REGISTERED")
+                    bob2Started = true;
                 if (daemonStatus == "UNREGISTERED")
-                    bobStopped = true;
+                    bob2Stopped = true;
                 details = aliceAccount->getVolatileAccountDetails();
                 daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
                 if (daemonStatus == "UNREGISTERED")
@@ -2429,9 +2429,25 @@ ConversationTest::testSyncWithoutPinnedCert()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
+    // Bob creates a second device
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+    bob2Id = Manager::instance().addAccount(details);
+
     // Disconnect bob2, to create a valid conv betwen Alice and Bob1
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bob2Announced; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bob2Started; }));
+    bob2Stopped = false;
     Manager::instance().sendRegister(bob2Id, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bob2Stopped; }));
 
     // Alice adds bob
     requestReceived = false;
@@ -2452,12 +2468,10 @@ ConversationTest::testSyncWithoutPinnedCert()
     aliceStopped = false;
     Manager::instance().sendRegister(aliceId, false);
     cv.wait_for(lk, std::chrono::seconds(10), [&]() { return aliceStopped; });
-    bob2Announced = false;
     Manager::instance().sendRegister(bob2Id, true);
 
     // Sync + validate
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bob2Announced && conversationReady; }));
-
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
 }
 
 } // namespace test
