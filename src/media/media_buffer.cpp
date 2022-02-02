@@ -33,11 +33,30 @@ namespace jami {
 #ifdef ENABLE_VIDEO
 
 //=== HELPERS ==================================================================
+// Memory alignment for video buffers.
+/**
+ * NOTE:
+ * Ideally, the alignment should be configurable and reflects the
+ * setup constraints (architecture, instruction set used, OS,
+ * thirdparty libs, ...).
+ */
+int
+videoFrameAlign(int format)
+{
+    auto pixelFormat = static_cast<AVPixelFormat>(format);
+    switch (pixelFormat) {
+    case AV_PIX_FMT_RGBA:
+    case AV_PIX_FMT_BGRA:
+        return 4;
+    default:
+        return 1;
+    }
+}
 
 int
 videoFrameSize(int format, int width, int height)
 {
-    return av_image_get_buffer_size((AVPixelFormat) format, width, height, 1);
+    return av_image_get_buffer_size((AVPixelFormat) format, width, height, videoFrameAlign(format));
 }
 
 #endif // ENABLE_VIDEO
