@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3da8279d_d611a9ab",
+        "filename": "bin/dbus/cx.ring.Ring.VideoManager.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-02T15:51:03Z",
+      "side": 1,
+      "message": "startShmSink ?",
+      "revId": "c6841b38508c1a109bb67b5c453c84c4c1760f26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cad30ca7_e17d5288",
+        "filename": "src/media/video/sinkclient.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-02T15:51:03Z",
+      "side": 1,
+      "message": "enableShm",
+      "revId": "c6841b38508c1a109bb67b5c453c84c4c1760f26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
