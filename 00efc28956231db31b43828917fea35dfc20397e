@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "09410225_ad9987cf",
+        "filename": "configure.ac",
+        "patchSetId": 6
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-02T19:11:49Z",
+      "side": 1,
+      "message": "is this needed ? To my knowledge, the codebase is all C++.",
+      "revId": "00efc28956231db31b43828917fea35dfc20397e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
