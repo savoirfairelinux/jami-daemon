@@ -38,6 +38,7 @@ void av_init();
 
 const char* const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
 const char* const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
+const int DEFAULT_VIDEO_BUFFER_ALIGN {64};
 
 bool is_yuv_planar(const AVPixFmtDescriptor& desc);
 

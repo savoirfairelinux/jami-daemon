@@ -79,7 +79,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
             std::shared_ptr<VideoFrame> framePtr;
 #ifdef RING_ACCEL
             auto desc = av_pix_fmt_desc_get(
-                (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(m))->format());
+                (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(m))->format());
             if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
                 try {
                     framePtr = jami::video::HardwareAccel::transferToMainMemory(
@@ -93,12 +93,13 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
                 framePtr = std::static_pointer_cast<VideoFrame>(m);
             int angle = framePtr->getOrientation();
             if (angle != rotation_) {
-                videoRotationFilter_ = jami::video::getTransposeFilter(angle,
-                                                                       ROTATION_FILTER_INPUT_NAME,
-                                                                       framePtr->width(),
-                                                                       framePtr->height(),
-                                                                       framePtr->format(),
-                                                                       true);
+                videoRotationFilter_
+                    = jami::video::getTransposeFilter(angle,
+                                                      ROTATION_FILTER_INPUT_NAME,
+                                                      framePtr->pointer()->linesize[0],
+                                                      framePtr->height(),
+                                                      framePtr->format(),
+                                                      true);
                 rotation_ = angle;
             }
             if (videoRotationFilter_) {
@@ -271,7 +272,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
 #ifdef ENABLE_VIDEO
     if (ms.isVideo) {
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame))->format());
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 clone = video::HardwareAccel::transferToMainMemory(

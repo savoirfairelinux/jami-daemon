@@ -398,7 +398,7 @@ VideoMixer::render_frame(VideoFrame& output,
     if (angle != source->rotation) {
         source->rotationFilter = video::getTransposeFilter(angle,
                                                            filterIn,
-                                                           input->width(),
+                                                           input->pointer()->linesize[0],
                                                            input->height(),
                                                            input->format(),
                                                            false);
