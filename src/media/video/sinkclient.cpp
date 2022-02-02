@@ -382,7 +382,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame_p))->format());
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
@@ -420,7 +420,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
             frame->pointer()->crop_left = crop_.x;
             frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+            av_frame_apply_cropping(frame->pointer(), jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN);
         }
 
         if (frame->height() != height_ || frame->width() != width_) {
@@ -441,20 +441,40 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #else
             const int format = AV_PIX_FMT_BGRA;
 #endif
+            const auto align = jami::libav_utils::DEFAULT_VIDEO_BUFFER_ALIGN;
             const auto bytes = videoFrameSize(format, width, height);
+
             if (bytes > 0) {
+                // This path handler sink targets that implements the 'pull' callback.
+                // The underlying frame is expected to be of type AVFrame only.
+                // The actual AVFrame memory buffer can be provided by the sink target.
+                // If not, a buffer is created here for it.
                 if (auto buffer_ptr = target_.pull(bytes)) {
-                    if (buffer_ptr->avframe) {
+                    if (auto& avframe = buffer_ptr->avframe) {
+                        if (avframe->buf[0] == nullptr) {
+                            avframe->format = format;
+                            avframe->width = width;
+                            avframe->height = height;
+                            if (av_frame_get_buffer(buffer_ptr->avframe.get(), align) < 0) {
+                                JAMI_ERR("Failed to allocate AV frame buffer");
+                                return;
+                            }
+
+                            // TODO. May be removed when fully tested. The previous check should be
+                            // enough. Just an extra validation that the provided size matches the
+                            // frame properties.
+                            if (bytes
+                                != av_image_get_buffer_size((AVPixelFormat) format,
+                                                            width,
+                                                            height,
+                                                            align)) {
+                                JAMI_ERR("Failed to allocate AV frame buffer");
+                            }
+                        }
+
                         scaler_->scale(*frame, buffer_ptr->avframe.get());
-                    } else {
-                        buffer_ptr->format = format;
-                        buffer_ptr->width = width;
-                        buffer_ptr->height = height;
-                        VideoFrame dst;
-                        dst.setFromMemory(buffer_ptr->ptr, format, width, height);
-                        scaler_->scale(*frame, dst);
+                        target_.push(std::move(buffer_ptr));
                     }
-                    target_.push(std::move(buffer_ptr));
                 }
             }
         }
