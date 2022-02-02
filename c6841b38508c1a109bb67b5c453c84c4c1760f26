@@ -35,6 +35,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7827d679_f8f75e31",
+        "filename": "bin/dbus/cx.ring.Ring.VideoManager.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-02T18:14:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3da8279d_d611a9ab",
+      "revId": "c6841b38508c1a109bb67b5c453c84c4c1760f26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cad30ca7_e17d5288",
@@ -48,6 +66,24 @@
       "writtenOn": "2022-02-02T15:51:03Z",
       "side": 1,
       "message": "enableShm",
+      "revId": "c6841b38508c1a109bb67b5c453c84c4c1760f26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0e292cf_1f2ee3f1",
+        "filename": "src/media/video/sinkclient.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-02T18:14:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cad30ca7_e17d5288",
       "revId": "c6841b38508c1a109bb67b5c453c84c4c1760f26",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
