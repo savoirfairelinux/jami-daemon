@@ -38,6 +38,15 @@ void av_init();
 
 const char* const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
 const char* const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
+// Memory alignment for video buffers.
+/**
+ * NOTE:
+ * Ideally, the alignment should be configurable and reflects the
+ * setup constraints (architecture, instruction set used, OS,
+ * thirdparty libs, ...).
+ * The current default value should cover all the supported setups.
+ */
+const int DEFAULT_VIDEO_BUFFER_ALIGN {64};
 
 bool is_yuv_planar(const AVPixFmtDescriptor& desc);
 
