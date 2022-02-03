@@ -16,6 +16,24 @@
       "message": "is this needed ? To my knowledge, the codebase is all C++.",
       "revId": "00efc28956231db31b43828917fea35dfc20397e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df7391f5_e5a9e713",
+        "filename": "configure.ac",
+        "patchSetId": 6
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-03T23:10:40Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "09410225_ad9987cf",
+      "revId": "00efc28956231db31b43828917fea35dfc20397e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
