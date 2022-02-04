@@ -28,14 +28,15 @@
 #include <filesystem>
 #include <msgpack.hpp>
 
-#include "manager.h"
 #include "../../test_runner.h"
-#include "jami.h"
-#include "base64.h"
-#include "fileutils.h"
 #include "account_const.h"
-#include "conversation/conversationcommon.h"
+#include "archiver.h"
+#include "base64.h"
 #include "common.h"
+#include "conversation/conversationcommon.h"
+#include "fileutils.h"
+#include "jami.h"
+#include "manager.h"
 
 using namespace std::string_literals;
 using namespace DRing::Account;
@@ -107,6 +108,7 @@ private:
     void testCountInteractions();
     void testReplayConversation();
     void testSyncWithoutPinnedCert();
+    void testImportMalformedContacts();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -138,6 +140,7 @@ private:
     CPPUNIT_TEST(testCountInteractions);
     CPPUNIT_TEST(testReplayConversation);
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
+    CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2375,7 +2378,9 @@ ConversationTest::testSyncWithoutPinnedCert()
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::string convId = "";
-    auto bob2Announced = false, requestReceived = false, conversationReady = false, memberMessageGenerated = false, aliceMessageReceived = false, aliceStopped = false, bobStopped = false;
+    auto bob2Announced = false, requestReceived = false, conversationReady = false,
+         memberMessageGenerated = false, aliceMessageReceived = false, aliceStopped = false,
+         bobStopped = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
@@ -2402,7 +2407,7 @@ ConversationTest::testSyncWithoutPinnedCert()
             if (accountId == aliceId && conversationId == convId) {
                 if (message["type"] == "member")
                     memberMessageGenerated = true;
-                else if ( message["type"] == "text/plain")
+                else if (message["type"] == "text/plain")
                     aliceMessageReceived = true;
             }
             cv.notify_one();
@@ -2456,8 +2461,35 @@ ConversationTest::testSyncWithoutPinnedCert()
     Manager::instance().sendRegister(bob2Id, true);
 
     // Sync + validate
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bob2Announced && conversationReady; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return bob2Announced && conversationReady;
+    }));
+}
 
+void
+ConversationTest::testImportMalformedContacts()
+{
+    auto malformedContacts = fileutils::loadFile(std::filesystem::current_path().string()
+                                                 + "/conversation/rsc/incorrectContacts");
+
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    archiver::compressGzip(malformedContacts, bobArchive);
+
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+    bob2Id = Manager::instance().addAccount(details);
+    wait_for_announcement_of({bob2Id});
+
+    auto contacts = DRing::getContacts(bob2Id);
+    CPPUNIT_ASSERT(contacts.size() == 1);
+    CPPUNIT_ASSERT(contacts[0][DRing::Account::TrustRequest::CONVERSATIONID] == "");
 }
 
 } // namespace test
