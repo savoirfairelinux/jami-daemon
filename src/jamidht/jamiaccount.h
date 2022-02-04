@@ -85,7 +85,6 @@ class IceTransport;
 struct Contact;
 struct AccountArchive;
 class DhtPeerConnector;
-class ContactList;
 class AccountManager;
 struct AccountInfo;
 class SipTransport;
@@ -598,6 +597,12 @@ public:
      * Try to reload the account to force the identity to be updated
      */
     void forceReloadAccount();
+
+    /**
+     * Make sure appdata/contacts.yml contains correct informations
+     * @param removedConv   The current removed conversations
+     */
+    void avoidIncorrectConversationId(const std::set<std::string>& removedConv);
 
 private:
     NON_COPYABLE(JamiAccount);
