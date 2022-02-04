@@ -106,9 +106,17 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 
     // get capture divice
     auto captureList = getDeviceList(true);
+    if(indexIn_ >= captureList.size()) {
+        JAMI_ERR("Input audio device out of range");
+        return;
+    }
     AudioDeviceID inputDeviceID = captureList[indexIn_].id_;
     // get playback device
     auto playbackList = getDeviceList(false);
+    if(indexOut_ >= playbackList.size()) {
+        JAMI_ERR("Playback audio device out of range");
+        return;
+    }
     AudioDeviceID playbackDeviceID = playbackList[indexOut_].id_;
 
     AudioUnitScope outputBus = 0;
