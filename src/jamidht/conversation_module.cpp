@@ -757,6 +757,9 @@ ConversationModule::ConversationModule(std::weak_ptr<JamiAccount>&& account,
 void
 ConversationModule::loadConversations()
 {
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return;
     JAMI_INFO("[Account %s] Start loading conversations…", pimpl_->accountId_.c_str());
     auto conversationsRepositories = fileutils::readDirectory(
         fileutils::get_data_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_ + DIR_SEPARATOR_STR
@@ -790,17 +793,24 @@ ConversationModule::loadConversations()
     // Prune any invalid conversations without members and
     // set the removed flag if needed
     size_t oldConvInfosSize = pimpl_->convInfos_.size();
+    std::set<std::string> removed;
     for (auto itInfo = pimpl_->convInfos_.cbegin(); itInfo != pimpl_->convInfos_.cend();) {
         const auto& info = itInfo->second;
         if (info.members.empty()) {
             itInfo = pimpl_->convInfos_.erase(itInfo);
             continue;
         }
+        if (info.removed)
+            removed.insert(info.id);
         auto itConv = pimpl_->conversations_.find(info.id);
         if (itConv != pimpl_->conversations_.end() && info.removed)
             itConv->second->setRemovingFlag();
         ++itInfo;
     }
+    // On oldest version, removeConversation didn't update "appdata/contacts"
+    // causing a potential incorrect state between "appdata/contacts" and "appdata/convInfos"
+    if (!removed.empty())
+        acc->avoidIncorrectConversationId(removed);
     // Save iff we've removed some invalid entries
     if (oldConvInfosSize != pimpl_->convInfos_.size())
         pimpl_->saveConvInfos();
