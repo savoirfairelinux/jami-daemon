@@ -93,101 +93,150 @@ CoreLayer::getAudioDeviceName(int index, AudioDeviceType type) const
     return "";
 }
 
-void
-CoreLayer::initAudioLayerIO(AudioDeviceType stream)
-{
-    // OS X uses Audio Units for output. Steps:
-    // 1) Create a description.
-    // 2) Find the audio unit that fits that.
-    // 3) Set the audio unit callback.
-    // 4) Initialize everything.
-    // 5) Profit...
-    JAMI_DBG("INIT AUDIO IO");
-
-    // get capture divice
+bool
+CoreLayer::setInputDevice() {
     auto captureList = getDeviceList(true);
-    AudioDeviceID inputDeviceID = captureList[indexIn_].id_;
-    // get playback device
-    auto playbackList = getDeviceList(false);
-    AudioDeviceID playbackDeviceID = playbackList[indexOut_].id_;
+    if(captureList.size() == 0) {
+        JAMI_ERR() << "no input audio device available";
+        return false;
+    }
 
-    AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
-    AudioComponentDescription desc = {0};
-    desc.componentType = kAudioUnitType_Output;
-    // kAudioOutputUnitProperty_EnableIO is ON and read-only
-    // for input and output SCOPE on this subtype
-    desc.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
-    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
-    desc.componentFlags = 0;
-    desc.componentFlagsMask = 0;
 
-    auto comp = AudioComponentFindNext(nullptr, &desc);
-    if (comp == nullptr) {
-        JAMI_ERR("Can't find default output audio component.");
-        return;
-    }
-
-    auto initError = AudioComponentInstanceNew(comp, &ioUnit_);
-    if (initError) {
-        checkErr(initError);
-        return;
-    }
-
-    // set capture device
+    bool fallbackInput = true;
+    AudioDeviceID inputDeviceID;
     UInt32 size = sizeof(inputDeviceID);
-    auto error = AudioUnitSetProperty(ioUnit_,
+    OSStatus result;
+    if(indexIn_ < captureList.size()) {
+        // set capture device
+        inputDeviceID = captureList[indexIn_].id_;
+        result = AudioUnitSetProperty(ioUnit_,
                                       kAudioOutputUnitProperty_CurrentDevice,
                                       kAudioUnitScope_Global,
                                       inputBus,
                                       &inputDeviceID,
                                       size);
-    // if failed get default device
-    if (error != kAudioServicesNoError) {
+        fallbackInput = (result != kAudioServicesNoError);
+    }
+    if (fallbackInput) {
+        // set defalt capture device
         const AudioObjectPropertyAddress inputInfo = {kAudioHardwarePropertyDefaultInputDevice,
-                                                      kAudioObjectPropertyScopeGlobal,
-                                                      kAudioObjectPropertyElementMaster};
-        auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
-                                                 &inputInfo,
-                                                 0,
-                                                 NULL,
-                                                 &size,
-                                                 &inputDeviceID);
+            kAudioObjectPropertyScopeGlobal,
+            kAudioObjectPropertyElementMaster};
+        result = AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                                            &inputInfo,
+                                            0,
+                                            NULL,
+                                            &size,
+                                            &inputDeviceID);
+        if(result != kAudioHardwareNoError || inputDeviceID == kAudioObjectUnknown) {
+            return false;
+        }
     }
-
-    // set playback device
-    size = sizeof(playbackDeviceID);
-    error = AudioUnitSetProperty(ioUnit_,
-                                 kAudioOutputUnitProperty_CurrentDevice,
-                                 kAudioUnitScope_Global,
-                                 outputBus,
-                                 &playbackDeviceID,
-                                 size);
-    // if failed get default device
-    if (error != kAudioServicesNoError) {
-        const AudioObjectPropertyAddress outputInfo = {kAudioHardwarePropertyDefaultOutputDevice,
-                                                       kAudioObjectPropertyScopeGlobal,
-                                                       kAudioObjectPropertyElementMaster};
-        auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
-                                                 &outputInfo,
-                                                 0,
-                                                 NULL,
-                                                 &size,
-                                                 &playbackDeviceID);
-    }
-
-    // add listener for detecting when devices are removed
+    // add listener for detecting when device is removed
     const AudioObjectPropertyAddress aliveAddress = {kAudioDevicePropertyDeviceIsAlive,
-                                                     kAudioObjectPropertyScopeGlobal,
-                                                     kAudioObjectPropertyElementMaster};
-    AudioObjectAddPropertyListener(playbackDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMaster};
     AudioObjectAddPropertyListener(inputDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
 
-    // add listener to detect when devices changed
-    const AudioObjectPropertyAddress changedAddress = {kAudioHardwarePropertyDevices,
-                                                     kAudioObjectPropertyScopeGlobal,
-                                                     kAudioObjectPropertyElementMaster};
-    AudioObjectAddPropertyListener(kAudioObjectSystemObject, &changedAddress, &devicesChangedCallback, this);
+    // Set stream format
+    AudioStreamBasicDescription info;
+    size = sizeof(info);
+    checkErr(AudioUnitGetProperty(ioUnit_,
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Input,
+                                  inputBus,
+                                  &info,
+                                  &size));
+
+    inSampleRate_ = info.mSampleRate;
+
+    // Set format on output *SCOPE* in input *BUS*.
+    checkErr(AudioUnitGetProperty(ioUnit_,
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Output,
+                                  inputBus,
+                                  &info,
+                                  &size));
+
+    audioInputFormat_ = {static_cast<unsigned int>(inSampleRate_),
+        static_cast<unsigned int>(info.mChannelsPerFrame)};
+    hardwareInputFormatAvailable(audioInputFormat_);
+    // Keep everything else and change only sample rate (or else SPLOSION!!!)
+    info.mSampleRate = audioInputFormat_.sample_rate;
+    // Keep some values to not ask them every time the read callback is fired up
+    inChannelsPerFrame_ = info.mChannelsPerFrame;
+
+    checkErr(AudioUnitSetProperty(ioUnit_,
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Output,
+                                  inputBus,
+                                  &info,
+                                  size));
+
+    // Input callback setup.
+    AURenderCallbackStruct inputCall;
+    inputCall.inputProc = inputCallback;
+    inputCall.inputProcRefCon = this;
+
+    checkErr(AudioUnitSetProperty(ioUnit_,
+                                  kAudioOutputUnitProperty_SetInputCallback,
+                                  kAudioUnitScope_Global,
+                                  inputBus,
+                                  &inputCall,
+                                  sizeof(AURenderCallbackStruct)));
+
+    return true;
+}
+
+bool
+CoreLayer::setOutputDevice(const int deviceIndex) {
+    auto playbackList = getDeviceList(false);
+    
+    if(playbackList.size() == 0) {
+        JAMI_ERR() << "No playback audio device available";
+        return false;
+    }
+
+    AudioUnitScope outputBus = 0;
+
+    AudioDeviceID playbackDeviceID;
+    UInt32 size = sizeof(playbackDeviceID);
+    bool fallbackOutput = true;
+    OSStatus result;
+    if (deviceIndex < playbackList.size()) {
+        // set playback device
+        playbackDeviceID = playbackList[deviceIndex].id_;
+        result = AudioUnitSetProperty(ioUnit_,
+                                      kAudioOutputUnitProperty_CurrentDevice,
+                                      kAudioUnitScope_Global,
+                                      outputBus,
+                                      &playbackDeviceID,
+                                      size);
+        fallbackOutput = (result != kAudioServicesNoError);
+    }
+
+    if (fallbackOutput) {
+        // fallback to default playback device
+        const AudioObjectPropertyAddress outputInfo = {kAudioHardwarePropertyDefaultOutputDevice,
+            kAudioObjectPropertyScopeGlobal,
+            kAudioObjectPropertyElementMaster};
+        result = AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                                            &outputInfo,
+                                            0,
+                                            NULL,
+                                            &size,
+                                            &playbackDeviceID);
+        if(result != kAudioHardwareNoError || playbackDeviceID == kAudioObjectUnknown) {
+            return false;
+        }
+    }
+
+    // add listener for detecting when device is removed
+    const AudioObjectPropertyAddress aliveAddress = {kAudioDevicePropertyDeviceIsAlive,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMaster};
+    AudioObjectAddPropertyListener(playbackDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
 
     // Set stream format
     AudioStreamBasicDescription info;
@@ -208,7 +257,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
                                   &size));
 
     audioFormat_ = {static_cast<unsigned int>(outSampleRate_),
-                    static_cast<unsigned int>(info.mChannelsPerFrame)};
+        static_cast<unsigned int>(info.mChannelsPerFrame)};
 
     outChannelsPerFrame_ = info.mChannelsPerFrame;
 
@@ -223,42 +272,6 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 
     hardwareFormatAvailable(audioFormat_);
 
-    // Setup audio formats
-    size = sizeof(AudioStreamBasicDescription);
-    checkErr(AudioUnitGetProperty(ioUnit_,
-                                  kAudioUnitProperty_StreamFormat,
-                                  kAudioUnitScope_Input,
-                                  inputBus,
-                                  &info,
-                                  &size));
-
-    inSampleRate_ = info.mSampleRate;
-
-    // Set format on output *SCOPE* in input *BUS*.
-    checkErr(AudioUnitGetProperty(ioUnit_,
-                                  kAudioUnitProperty_StreamFormat,
-                                  kAudioUnitScope_Output,
-                                  inputBus,
-                                  &info,
-                                  &size));
-
-    audioInputFormat_ = {static_cast<unsigned int>(inSampleRate_),
-                         static_cast<unsigned int>(info.mChannelsPerFrame)};
-    hardwareInputFormatAvailable(audioInputFormat_);
-    // Keep everything else and change only sample rate (or else SPLOSION!!!)
-    info.mSampleRate = audioInputFormat_.sample_rate;
-    // Keep some values to not ask them every time the read callback is fired up
-    inChannelsPerFrame_ = info.mChannelsPerFrame;
-
-    checkErr(AudioUnitSetProperty(ioUnit_,
-                                  kAudioUnitProperty_StreamFormat,
-                                  kAudioUnitScope_Output,
-                                  inputBus,
-                                  &info,
-                                  size));
-
-    // Input buffer setup. Note that ioData is empty and we have to store data
-    // in another buffer.
     UInt32 bufferSizeFrames = 0;
     size = sizeof(UInt32);
     checkErr(AudioUnitGetProperty(ioUnit_,
@@ -281,18 +294,6 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
         captureBuff_->mBuffers[i].mData = bufferBasePtr + bufferSizeBytes * i;
     }
 
-    // Input callback setup.
-    AURenderCallbackStruct inputCall;
-    inputCall.inputProc = inputCallback;
-    inputCall.inputProcRefCon = this;
-
-    checkErr(AudioUnitSetProperty(ioUnit_,
-                                  kAudioOutputUnitProperty_SetInputCallback,
-                                  kAudioUnitScope_Global,
-                                  inputBus,
-                                  &inputCall,
-                                  sizeof(AURenderCallbackStruct)));
-
     // Output callback setup.
     AURenderCallbackStruct callback;
     callback.inputProc = outputCallback;
@@ -304,6 +305,56 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
                                   outputBus,
                                   &callback,
                                   sizeof(AURenderCallbackStruct)));
+    return true;
+}
+
+bool
+CoreLayer::initAudioLayerIO(AudioDeviceType stream)
+{
+
+    JAMI_DBG("INIT AUDIO IO");
+
+    bool result = false;
+
+    AudioComponentDescription desc = {0};
+    desc.componentType = kAudioUnitType_Output;
+    desc.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
+    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+    desc.componentFlags = 0;
+    desc.componentFlagsMask = 0;
+
+    auto comp = AudioComponentFindNext(nullptr, &desc);
+    if (comp == nullptr) {
+        JAMI_ERR("Can't find default output audio component.");
+        return result;
+    }
+
+    auto initError = AudioComponentInstanceNew(comp, &ioUnit_);
+    if (initError) {
+        checkErr(initError);
+        return result;
+    }
+    switch (stream) {
+        case AudioDeviceType::CAPTURE:
+            result = setInputDevice();
+        case AudioDeviceType::PLAYBACK:
+            result = setOutputDevice(indexOut_);
+        case AudioDeviceType::RINGTONE:
+            result = setOutputDevice(indexRing_);
+        case AudioDeviceType::ALL:
+            result = (setOutputDevice(indexOut_) && setInputDevice());
+            
+    }
+    if (!result) {
+        JAMI_ERR("Failed to set audio device");
+        return result;
+    }
+    // add listener to detect when devices changed
+    const AudioObjectPropertyAddress changedAddress = {kAudioHardwarePropertyDevices,
+                                                     kAudioObjectPropertyScopeGlobal,
+                                                     kAudioObjectPropertyElementMaster};
+    AudioObjectAddPropertyListener(kAudioObjectSystemObject, &changedAddress, &devicesChangedCallback, this);
+    return result;
 }
 
 void
@@ -318,7 +369,11 @@ CoreLayer::startStream(AudioDeviceType stream)
 
         dcblocker_.reset();
 
-        initAudioLayerIO(stream);
+        if (!initAudioLayerIO(stream)) {
+            status_ = Status::Idle;
+            destroyAudioLayer();
+            return;
+        }
 
         auto inputError = AudioUnitInitialize(ioUnit_);
         auto outputError = AudioOutputUnitStart(ioUnit_);

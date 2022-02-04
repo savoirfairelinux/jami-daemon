@@ -78,7 +78,7 @@ public:
     /**
      * Configure the AudioUnit
      */
-    void initAudioLayerIO(AudioDeviceType stream);
+    bool initAudioLayerIO(AudioDeviceType stream);
 
     /**
      * Start the capture stream and prepare the playback stream.
@@ -101,6 +101,8 @@ private:
     NON_COPYABLE(CoreLayer);
 
     void initAudioFormat();
+    bool setOutputDevice(const int deviceIndex);
+    bool setInputDevice();
 
     static OSStatus outputCallback(void* inRefCon,
                                    AudioUnitRenderActionFlags* ioActionFlags,
