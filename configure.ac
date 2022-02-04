@@ -69,6 +69,8 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
+AC_LANG([C++])
+
 dnl
 dnl  Check the operating system
 dnl
@@ -186,7 +188,7 @@ dnl Check for C++17 support
 AX_CXX_COMPILE_STDCXX(17,[ext],[mandatory])
 
 dnl Check for header files
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h \
+AC_CHECK_HEADERS([arpa/inet.h cxxabi.h fcntl.h libintl.h limits.h \
                   netdb.h netinet/in.h stdlib.h string.h \
                   sys/ioctl.h sys/socket.h sys/time.h unistd.h])
 
