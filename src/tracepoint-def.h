@@ -118,6 +118,15 @@ LTTNG_UST_TRACEPOINT_EVENT(
 
 LTTNG_UST_TRACEPOINT_EVENT(
     jami,
+    emit_signal_end,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
     emit_signal_begin_callback,
     LTTNG_UST_TP_ARGS(
     const char*, filename,

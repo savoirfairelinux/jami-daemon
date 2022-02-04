@@ -30,6 +30,8 @@
 #include <memory>
 #include <type_traits>
 
+#include "src/trace-tools.h"
+
 namespace DRing {
 
 /* flags for initialization */
@@ -114,13 +116,18 @@ private:
     TFunc cb_; // The user-callback
 
 public:
+    const char* file_;
+    uint32_t linum_;
+
     // Empty wrapper: no callback associated.
     // Used to initialize internal callback arrays.
     CallbackWrapper() noexcept {}
 
     // Create and initialize a wrapper to given callback.
-    CallbackWrapper(TFunc&& func) noexcept
-        : cb_(std::forward<TFunc>(func))
+    CallbackWrapper(TFunc&& func, const char* filename, uint32_t linum) noexcept
+        : cb_(std::forward<TFunc>(func)),
+          file_(filename),
+          linum_(linum)
     {}
 
     // Create and initialize a wrapper from a generic CallbackWrapperBase
@@ -128,8 +135,13 @@ public:
     // Note: the given callback is copied into internal storage.
     CallbackWrapper(const std::shared_ptr<CallbackWrapperBase>& p) noexcept
     {
-        if (p)
-            cb_ = ((CallbackWrapper<TProto>*) p.get())->cb_;
+        if (p) {
+            auto other = (CallbackWrapper<TProto>*)p.get();
+
+            cb_    = other->cb_;
+            file_  = other->file_;
+            linum_ = other->linum_;
+        }
     }
 
     // Return user-callback reference.
@@ -149,11 +161,14 @@ public:
  */
 template<typename Ts>
 std::pair<std::string, std::shared_ptr<CallbackWrapperBase>>
-exportable_callback(std::function<typename Ts::cb_type>&& func)
+exportable_callback(std::function<typename Ts::cb_type>&& func,
+                    const char* file=CURRENT_FILENAME(),
+                    uint32_t linum=CURRENT_LINE())
 {
     return std::make_pair((const std::string&) Ts::name,
                           std::make_shared<CallbackWrapper<typename Ts::cb_type>>(
-                              std::forward<std::function<typename Ts::cb_type>>(func)));
+                              std::forward<std::function<typename Ts::cb_type>>(func),
+                              file, linum));
 }
 
 DRING_PUBLIC void registerSignalHandlers(
