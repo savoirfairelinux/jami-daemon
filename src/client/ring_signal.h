@@ -36,6 +36,8 @@
 
 #include "jami.h"
 #include "logger.h"
+#include "trace-tools.h"
+#include "tracepoint.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -56,19 +58,32 @@ extern SignalHandlerMap& getSignalHandlers();
  * Find related user given callback and call it with given
  * arguments.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 template<typename Ts, typename... Args>
-static void
-emitSignal(Args... args)
+void emitSignal(Args... args)
 {
+    if (jami_tracepoint_enabled(emit_signal)) {
+        jami_do_tracepoint(emit_signal,
+                           demangle<Ts>().c_str());
+    }
+
     const auto& handlers = getSignalHandlers();
-    if (auto cb = *DRing::CallbackWrapper<typename Ts::cb_type>(handlers.at(Ts::name))) {
+    if (auto wrap = DRing::CallbackWrapper<typename Ts::cb_type>(handlers.at(Ts::name))) {
         try {
+            auto cb = *wrap;
+            jami_tracepoint(emit_signal_begin_callback,
+                            wrap.file_, wrap.linum_);
             cb(args...);
+            jami_tracepoint(emit_signal_end_callback);
         } catch (std::exception& e) {
             JAMI_ERR("Exception during emit signal %s:\n%s", Ts::name, e.what());
         }
     }
+
+    jami_tracepoint(emit_signal_end);
 }
+#pragma GCC diagnostic pop
 
 template<typename Ts>
 std::pair<std::string, std::shared_ptr<DRing::CallbackWrapper<typename Ts::cb_type>>>
