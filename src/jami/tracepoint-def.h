@@ -100,6 +100,39 @@ LTTNG_UST_TRACEPOINT_EVENT(
     )
 )
 
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    emit_signal,
+    LTTNG_UST_TP_ARGS(
+            const char*, signal_type
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_string(signal_type, signal_type)
+
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    emit_signal_begin_callback,
+    LTTNG_UST_TP_ARGS(
+    const char*, filename,
+            uint32_t, linum
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_string(source_filename, filename)
+            lttng_ust_field_integer(uint32_t, source_line, linum)
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    emit_signal_end_callback,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
 
 #endif /* TRACEPOINT_DEF_H */
 
