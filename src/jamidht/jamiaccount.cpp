@@ -1042,6 +1042,26 @@ JamiAccount::forceReloadAccount()
     loadAccount();
 }
 
+void
+JamiAccount::unlinkConversations(const std::set<std::string>& removed)
+{
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    if (auto info = accountManager_->getInfo()) {
+        auto contacts = info->contacts->getContacts();
+        for (auto& [id, c] : contacts) {
+            if (removed.find(c.conversationId) != removed.end()) {
+                JAMI_WARN(
+                    "[Account %s] Detected removed conversation (%s) in contact details for %s",
+                    getAccountID().c_str(),
+                    c.conversationId.c_str(),
+                    id.to_c_str());
+                c.conversationId.clear();
+            }
+        }
+        info->contacts->setContacts(contacts);
+    }
+}
+
 bool
 JamiAccount::revokeDevice(const std::string& password, const std::string& device)
 {
