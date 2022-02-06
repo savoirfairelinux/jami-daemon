@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0f0e072c_d569d4f3",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 605,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-06T00:03:34Z",
+      "side": 1,
+      "message": "conversationRemoved, unlinkConversation...",
+      "range": {
+        "startLine": 605,
+        "startChar": 9,
+        "endLine": 605,
+        "endChar": 37
+      },
+      "revId": "84f4debc07b6fb0e3d358aed9383a78e069a7a47",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
