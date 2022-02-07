@@ -1101,11 +1101,15 @@ JamiAccount::loadAccount(const std::string& archive_password,
     JAMI_DBG("[Account %s] loading account", getAccountID().c_str());
     AccountManager::OnChangeCallback callbacks {
         [this](const std::string& uri, bool confirmed) {
+            if (!id_.first)
+                return;
             runOnMainThread([id = getAccountID(), uri, confirmed] {
                 emitSignal<DRing::ConfigurationSignal::ContactAdded>(id, uri, confirmed);
             });
         },
         [this](const std::string& uri, bool banned) {
+            if (!id_.first)
+                return;
             runOnMainThread([id = getAccountID(), uri, banned] {
                 emitSignal<DRing::ConfigurationSignal::ContactRemoved>(id, uri, banned);
             });
@@ -1114,6 +1118,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                const std::string& conversationId,
                const std::vector<uint8_t>& payload,
                time_t received) {
+            if (!id_.first)
+                return;
             if (conversationId.empty()) {
                 // Old path
                 emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
@@ -2291,7 +2297,8 @@ ConversationModule*
 JamiAccount::convModule()
 {
     if (!accountManager() || currentDeviceId() == "") {
-        JAMI_ERR() << "Calling convModule() with an uninitialized account.";
+        JAMI_ERR("[Account %s] Calling convModule() with an uninitialized account",
+                 getAccountID().c_str());
         return nullptr;
     }
     std::lock_guard<std::mutex> lk(moduleMtx_);
