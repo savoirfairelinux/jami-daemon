@@ -1,4 +1,5 @@
 libjami_includedirs = include_directories(
+    '.',
     '..',
     'jami',
     'media',
