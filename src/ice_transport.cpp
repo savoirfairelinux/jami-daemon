@@ -678,9 +678,9 @@ IceTransport::Impl::checkEventQueue(int maxEventToPoll)
 void
 IceTransport::Impl::onComplete(pj_ice_strans*, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT
-                             ? "initialization"
-                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
+                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
+                                                              : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -751,13 +751,11 @@ IceTransport::Impl::setInitiatorSession()
 {
     JAMI_DBG("[ice:%p] as master", this);
     initiatorSession_ = true;
+    std::lock_guard<std::mutex> lk(iceMutex_);
+    if (not icest_) {
+        return false;
+    }
     if (_isInitialized()) {
-        std::lock_guard<std::mutex> lk(iceMutex_);
-
-        if (not icest_) {
-            return false;
-        }
-
         auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
@@ -774,13 +772,11 @@ IceTransport::Impl::setSlaveSession()
 {
     JAMI_DBG("[ice:%p] as slave", this);
     initiatorSession_ = false;
+    std::lock_guard<std::mutex> lk(iceMutex_);
+    if (not icest_) {
+        return false;
+    }
     if (_isInitialized()) {
-        std::lock_guard<std::mutex> lk(iceMutex_);
-
-        if (not icest_) {
-            return false;
-        }
-
         auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
@@ -801,12 +797,6 @@ IceTransport::Impl::getSelectedCandidate(unsigned comp_id, bool remote) const
     // ICE has not concluded yet, but should be the nominated pair afterwards.
     if (not _isRunning()) {
         JAMI_ERR("[ice:%p] ICE transport is not running", this);
-        return nullptr;
-    }
-
-    std::lock_guard<std::mutex> lk(iceMutex_);
-
-    if (not icest_) {
         return nullptr;
     }
 
@@ -866,12 +856,6 @@ IceTransport::Impl::getUFragPwd()
 bool
 IceTransport::Impl::createIceSession(pj_ice_sess_role role)
 {
-    std::lock_guard<std::mutex> lk(iceMutex_);
-
-    if (not icest_) {
-        return false;
-    }
-
     if (pj_ice_strans_init_ice(icest_, role, nullptr, nullptr) != PJ_SUCCESS) {
         JAMI_ERR("[ice:%p] pj_ice_strans_init_ice() failed", this);
         return false;
