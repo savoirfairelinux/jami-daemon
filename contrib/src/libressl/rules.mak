@@ -20,9 +20,9 @@
 #
 SSL_VERSION := 3.4.0
 LIBRESSL_VERSION := v$(SSL_VERSION)
-OPENBSD_VERSION := libressl-v$(SSL_VERSION)
+OPENBSD_VERSION := libressl-$(SSL_VERSION)
 LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL_VERSION).tar.gz
-OPENBSD_URL := https://github.com/libressl-portable/openbsd/archive/$(OPENBSD_VERSION).tar.gz
+OPENBSD_URL := https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/${OPENBSD_VERSION}.tar.gz
 
 # Check if openssl or libressl is already present on the system
 ifeq ($(or $(call need_pkg,"openssl >= 1.0.0"),$(call need_pkg,"libressl >= 1.0.0")),)
