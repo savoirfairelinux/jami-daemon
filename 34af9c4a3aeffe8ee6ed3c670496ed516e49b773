@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0163010_6bbfe48e",
+        "filename": "contrib/src/libressl/SHA512SUMS",
+        "patchSetId": 2
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-09T05:06:55Z",
+      "side": 0,
+      "message": "use https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/ instead of github",
+      "range": {
+        "startLine": 2,
+        "startChar": 0,
+        "endLine": 2,
+        "endChar": 100
+      },
+      "revId": "34af9c4a3aeffe8ee6ed3c670496ed516e49b773",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
