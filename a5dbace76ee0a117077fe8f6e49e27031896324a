@@ -35,6 +35,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1a975436_66f57f74",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T19:32:42Z",
+      "side": 1,
+      "message": "this is an error, not a warning. Non fatal as we do a workaround, but still an error",
+      "parentUuid": "d089df89_e20601e6",
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "81b32277_f1610a91",
@@ -48,6 +66,30 @@
       "writtenOn": "2022-02-10T14:37:42Z",
       "side": 1,
       "message": "replacement",
+      "range": {
+        "startLine": 227,
+        "startChar": 30,
+        "endLine": 227,
+        "endChar": 42
+      },
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "83f7fdfe_368f9b5b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T19:32:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "81b32277_f1610a91",
       "range": {
         "startLine": 227,
         "startChar": 30,
@@ -104,6 +146,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "762fc460_436db041",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T19:32:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a5b43e5b_c731f14d",
+      "range": {
+        "startLine": 231,
+        "startChar": 60,
+        "endLine": 231,
+        "endChar": 64
+      },
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a077888f_c739b8ee",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T19:32:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9d9cd187_96c1754c",
+      "range": {
+        "startLine": 231,
+        "startChar": 65,
+        "endLine": 231,
+        "endChar": 70
+      },
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "45c973fe_446a82af",
@@ -117,6 +207,30 @@
       "writtenOn": "2022-02-10T14:37:42Z",
       "side": 1,
       "message": "I dont get it",
+      "range": {
+        "startLine": 250,
+        "startChar": 40,
+        "endLine": 250,
+        "endChar": 69
+      },
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d5b2b7e8_35210e9d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T19:32:42Z",
+      "side": 1,
+      "message": "clarified",
+      "parentUuid": "45c973fe_446a82af",
       "range": {
         "startLine": 250,
         "startChar": 40,
@@ -144,6 +258,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "74f45f3d_67be1116",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1353,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T19:32:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1048a7d0_1e5e8f6f",
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5fbcaf8a_65df3fdb",
@@ -157,6 +289,24 @@
       "writtenOn": "2022-02-10T14:37:42Z",
       "side": 1,
       "message": "empty block ...",
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "413d30be_2c4dda5c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1427,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T19:32:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5fbcaf8a_65df3fdb",
       "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
