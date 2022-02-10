@@ -1,0 +1,164 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8dc341cf_663f54ec",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:37:42Z",
+      "side": 1,
+      "message": "few minor things\nalso, missing gitlab issue.",
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d089df89_e20601e6",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:37:42Z",
+      "side": 1,
+      "message": "Typically, ERROR level means failure, we are not in this case. May be a Warning should be enough IMO.",
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81b32277_f1610a91",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:37:42Z",
+      "side": 1,
+      "message": "replacement",
+      "range": {
+        "startLine": 227,
+        "startChar": 30,
+        "endLine": 227,
+        "endChar": 42
+      },
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5b43e5b_c731f14d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:37:42Z",
+      "side": 1,
+      "message": "are ... \nthey are still buggy I guess",
+      "range": {
+        "startLine": 231,
+        "startChar": 60,
+        "endLine": 231,
+        "endChar": 64
+      },
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d9cd187_96c1754c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:37:42Z",
+      "side": 1,
+      "message": "they are not in the expected format, IMO they are not necessarily buggy. They still conform to X509 specs I guess.",
+      "range": {
+        "startLine": 231,
+        "startChar": 65,
+        "endLine": 231,
+        "endChar": 70
+      },
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "45c973fe_446a82af",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:37:42Z",
+      "side": 1,
+      "message": "I dont get it",
+      "range": {
+        "startLine": 250,
+        "startChar": 40,
+        "endLine": 250,
+        "endChar": 69
+      },
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1048a7d0_1e5e8f6f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1353,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:37:42Z",
+      "side": 1,
+      "message": "we should log",
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5fbcaf8a_65df3fdb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1427,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:37:42Z",
+      "side": 1,
+      "message": "empty block ...",
+      "revId": "a5dbace76ee0a117077fe8f6e49e27031896324a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
