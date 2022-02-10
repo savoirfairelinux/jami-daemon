@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2755ac95_4819559c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:24:08Z",
+      "side": 1,
+      "message": "-1 only for the shadowing thing",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0023eb3_6163440a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 745,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:24:08Z",
+      "side": 1,
+      "message": "it\u0027s weird to have an empty block for if/else statement. We could put \"return true;\", but it will be redundant with the one at the exit.",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3549894a_ee90679e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 985,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:24:08Z",
+      "side": 1,
+      "message": "shouldn\u0027t we assert then",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "193c79d0_f9d88c1b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1325,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:24:08Z",
+      "side": 1,
+      "message": "we should log here, at least to know why the validation failed.",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1fa76fe1_ff9b9504",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1342,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-10T14:24:08Z",
+      "side": 1,
+      "message": "shadows deviceCert in 1331. You should have got a compilation warning",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
