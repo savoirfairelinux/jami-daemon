@@ -35,6 +35,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "45d324f1_0f8cb2de",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 745,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T17:03:59Z",
+      "side": 1,
+      "message": "return true; will break the code. continue; will be ok",
+      "parentUuid": "f0023eb3_6163440a",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3549894a_ee90679e",
@@ -48,6 +66,24 @@
       "writtenOn": "2022-02-10T14:24:08Z",
       "side": 1,
       "message": "shouldn\u0027t we assert then",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb92907e_0ea397b0",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 985,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T17:03:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3549894a_ee90679e",
       "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -69,6 +105,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2412aea3_f5fc0bde",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1325,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T17:03:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "193c79d0_f9d88c1b",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1fa76fe1_ff9b9504",
@@ -82,6 +136,24 @@
       "writtenOn": "2022-02-10T14:24:08Z",
       "side": 1,
       "message": "shadows deviceCert in 1331. You should have got a compilation warning",
+      "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8e1b252_7b6c45fa",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1342,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-10T17:03:59Z",
+      "side": 1,
+      "message": "indeed",
+      "parentUuid": "1fa76fe1_ff9b9504",
       "revId": "965cf25554a0caf18e8de58835db63fbf47f3db7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
