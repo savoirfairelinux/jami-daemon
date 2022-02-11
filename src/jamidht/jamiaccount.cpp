@@ -442,9 +442,19 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
 
     if (call->isIceEnabled()) {
         if (call->createIceMediaTransport(false)) {
-            getIceOptions([call](auto&& opts) {
-                call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
+            std::promise<bool> p;
+            std::future<bool> f = p.get_future();
+            // Because local attributes will be added, we need to wait that the ice instance is
+            // correctly initialized.
+            getIceOptions([&](auto&& opts) {
+                p.set_value(
+                    call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts)));
             });
+            f.wait();
+            if (!f.get()) {
+                JAMI_ERR() << "Cannot init Ice transport for " << call->getCallId();
+                return {};
+            }
         }
     }
 
@@ -546,7 +556,8 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
 }
 
 void
-JamiAccount::handleIncomingConversationCall(const std::string& callId, const std::string& destination)
+JamiAccount::handleIncomingConversationCall(const std::string& callId,
+                                            const std::string& destination)
 {
     auto split = jami::split_string(destination, '/');
     if (split.size() != 4)
@@ -595,9 +606,10 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
         }
 
         conf->addParticipant(callId);
-        emitSignal<DRing::CallSignal::ConferenceChanged>(getAccountID(), conf->getConfId(), conf->getStateStr());
+        emitSignal<DRing::CallSignal::ConferenceChanged>(getAccountID(),
+                                                         conf->getConfId(),
+                                                         conf->getStateStr());
     }
-
 }
 
 std::shared_ptr<SIPCall>
