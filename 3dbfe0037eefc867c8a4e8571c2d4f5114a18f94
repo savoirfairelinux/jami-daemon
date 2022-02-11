@@ -46,6 +46,30 @@
       },
       "revId": "3dbfe0037eefc867c8a4e8571c2d4f5114a18f94",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b067023_1949533f",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1682,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-11T23:12:20Z",
+      "side": 1,
+      "message": "Reducing the wait would cause unnecessary cpu wakeups, while still incurring unneeded delays compared to using a condition variable.\n\nIf \"the signal is lost\", that\u0027s a bug that we can probably fix without removing the condition variable, the optimal and idiomatic way to wait on a condition.\nWhat\u0027s the context/condition of the bug ?\nMaybe this could be fixed by making sure iceMutex_ is always locked when notify_one/all() is called, and that notify is called at the right place.",
+      "parentUuid": "a1444a6a_9801b1bc",
+      "range": {
+        "startLine": 1668,
+        "startChar": 4,
+        "endLine": 1682,
+        "endChar": 27
+      },
+      "revId": "3dbfe0037eefc867c8a4e8571c2d4f5114a18f94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
