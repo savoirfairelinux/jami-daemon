@@ -75,6 +75,29 @@ using namespace upnp;
 
 //==============================================================================
 
+class ICELock
+{
+    pj_grp_lock_t* lk_;
+
+public:
+    ICELock(pj_ice_strans* strans) {
+        lk_ = pj_ice_strans_get_grp_lock(strans);
+        lock();
+    }
+
+    ~ICELock() {
+        unlock();
+    }
+
+    void lock() {
+        pj_grp_lock_acquire(lk_);
+    }
+
+    void unlock() {
+        pj_grp_lock_release(lk_);
+    }
+};
+
 class IceTransport::Impl
 {
 public:
@@ -100,14 +123,10 @@ public:
     bool setSlaveSession();
     bool createIceSession(pj_ice_sess_role role);
 
-    /**
-     * Must be called while holding iceMutex_
-     */
     void getUFragPwd();
 
     std::string link() const;
 
-    // Non-mutex protected of public versions
     bool _isInitialized() const;
     bool _isStarted() const;
     bool _isRunning() const;
@@ -140,7 +159,6 @@ public:
     bool upnpEnabled_ {false};
     IceTransportCompleteCb on_initdone_cb_ {};
     IceTransportCompleteCb on_negodone_cb_ {};
-    mutable std::mutex iceMutex_ {};
     pj_ice_strans* icest_ {nullptr};
     unsigned streamsCount_ {0};
     unsigned compCountPerStream_ {0};
@@ -148,7 +166,7 @@ public:
     std::string local_ufrag_ {};
     std::string local_pwd_ {};
     pj_sockaddr remoteAddr_ {};
-    std::condition_variable iceCV_ {};
+    std::condition_variable_any iceCV_ {};
     pj_ice_strans_cfg config_ {};
     std::string last_errmsg_ {};
 
@@ -316,7 +334,6 @@ IceTransport::Impl::~Impl()
     JAMI_DBG("[ice:%p] destroying %p", this, icest_);
 
     threadTerminateFlags_ = true;
-    iceCV_.notify_all();
 
     if (thread_.joinable()) {
         thread_.join();
@@ -469,10 +486,18 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
     };
 
     icecb.on_ice_complete = [](pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status) {
-        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
+        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
+            tr->iceCV_.notify_all();
             tr->onComplete(ice_st, op, status);
+        }
         else
             JAMI_WARN("null IceTransport");
+    };
+
+    icecb.on_valid_pair = [](pj_ice_strans* ice_st) {
+        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
+            tr->iceCV_.notify_all();
+        }
     };
 
     if (isTcp_) {
@@ -718,9 +743,6 @@ IceTransport::Impl::onComplete(pj_ice_strans*, pj_ice_strans_op op, pj_status_t 
         if (on_negodone_cb_)
             on_negodone_cb_(done);
     }
-
-    // Unlock waitForXXX APIs
-    iceCV_.notify_all();
 }
 
 std::string
@@ -752,11 +774,6 @@ IceTransport::Impl::setInitiatorSession()
     JAMI_DBG("[ice:%p] as master", this);
     initiatorSession_ = true;
     if (_isInitialized()) {
-        std::lock_guard<std::mutex> lk(iceMutex_);
-
-        if (not icest_) {
-            return false;
-        }
 
         auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
@@ -775,11 +792,6 @@ IceTransport::Impl::setSlaveSession()
     JAMI_DBG("[ice:%p] as slave", this);
     initiatorSession_ = false;
     if (_isInitialized()) {
-        std::lock_guard<std::mutex> lk(iceMutex_);
-
-        if (not icest_) {
-            return false;
-        }
 
         auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
@@ -801,12 +813,6 @@ IceTransport::Impl::getSelectedCandidate(unsigned comp_id, bool remote) const
     // ICE has not concluded yet, but should be the nominated pair afterwards.
     if (not _isRunning()) {
         JAMI_ERR("[ice:%p] ICE transport is not running", this);
-        return nullptr;
-    }
-
-    std::lock_guard<std::mutex> lk(iceMutex_);
-
-    if (not icest_) {
         return nullptr;
     }
 
@@ -866,8 +872,6 @@ IceTransport::Impl::getUFragPwd()
 bool
 IceTransport::Impl::createIceSession(pj_ice_sess_role role)
 {
-    std::lock_guard<std::mutex> lk(iceMutex_);
-
     if (not icest_) {
         return false;
     }
@@ -1138,35 +1142,30 @@ IceTransport::initIceInstance(const IceTransportOptions& options)
 bool
 IceTransport::isInitialized() const
 {
-    std::lock_guard<std::mutex> lk(pimpl_->iceMutex_);
     return pimpl_->_isInitialized();
 }
 
 bool
 IceTransport::isStarted() const
 {
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
     return pimpl_->_isStarted();
 }
 
 bool
 IceTransport::isRunning() const
 {
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
     return pimpl_->_isRunning();
 }
 
 bool
 IceTransport::isStopped() const
 {
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
     return pimpl_->is_stopped_;
 }
 
 bool
 IceTransport::isFailed() const
 {
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
     return pimpl_->_isFailed();
 }
 
@@ -1197,11 +1196,7 @@ bool
 IceTransport::isInitiator() const
 {
     if (isInitialized()) {
-        std::lock_guard<std::mutex> lk(pimpl_->iceMutex_);
-        if (pimpl_->icest_) {
-            return pj_ice_strans_get_role(pimpl_->icest_) == PJ_ICE_SESS_ROLE_CONTROLLING;
-        }
-        return false;
+        return pj_ice_strans_get_role(pimpl_->icest_) == PJ_ICE_SESS_ROLE_CONTROLLING;
     }
     return pimpl_->initiatorSession_;
 }
@@ -1253,12 +1248,6 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
     JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)",
              pimpl_.get(),
              rem_candidates.size());
-
-    std::unique_lock lk(pimpl_->iceMutex_);
-
-    if (not pimpl_->icest_) {
-        return false;
-    }
 
     auto status = pj_ice_strans_start_ice(pimpl_->icest_,
                                           pj_strset(&ufrag,
@@ -1316,12 +1305,6 @@ IceTransport::startIce(const SDP& sdp)
             rem_candidates.emplace_back(cand);
     }
 
-    std::unique_lock lk(pimpl_->iceMutex_);
-
-    if (not pimpl_->icest_) {
-        return false;
-    }
-
     auto status = pj_ice_strans_start_ice(pimpl_->icest_,
                                           pj_strset(&ufrag,
                                                     (char*) sdp.ufrag.c_str(),
@@ -1344,9 +1327,6 @@ IceTransport::stop()
 {
     pimpl_->is_stopped_ = true;
     if (isStarted()) {
-        std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
-        if (not pimpl_->icest_)
-            return false;
         auto status = pj_ice_strans_stop_ice(pimpl_->icest_);
         if (status != PJ_SUCCESS) {
             pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
@@ -1400,14 +1380,13 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     pj_ice_sess_cand cand[MAX_CANDIDATES];
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
-    {
-        std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
-        if (not pimpl_->icest_)
-            return res;
-        if (pj_ice_strans_enum_cands(pimpl_->icest_, comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
-            JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
-            return res;
-        }
+    if (!isInitialized()) {
+        return res;
+    }
+
+    if (pj_ice_strans_enum_cands(pimpl_->icest_, comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
+        JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
+        return res;
     }
 
     res.reserve(cand_cnt);
@@ -1462,21 +1441,20 @@ IceTransport::getLocalCandidates(unsigned streamIdx, unsigned compId) const
     pj_ice_sess_cand cand[MAX_CANDIDATES];
     unsigned cand_cnt = MAX_CANDIDATES;
 
-    {
-        std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
-        if (not pimpl_->icest_)
-            return res;
-        // In the implementation, the component IDs are enumerated globally
-        // (per SDP: 1, 2, 3, 4, ...). This is simpler because we create
-        // only one pj_ice_strans instance. However, the component IDs are
-        // enumerated per stream in the generated SDP (1, 2, 1, 2, ...) in
-        // order to be compliant with the spec.
+    if (not isInitialized()) {
+        return res;
+    }
 
-        auto globalCompId = streamIdx * 2 + compId;
-        if (pj_ice_strans_enum_cands(pimpl_->icest_, globalCompId, &cand_cnt, cand) != PJ_SUCCESS) {
-            JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
-            return res;
-        }
+    // In the implementation, the component IDs are enumerated globally
+    // (per SDP: 1, 2, 3, 4, ...). This is simpler because we create
+    // only one pj_ice_strans instance. However, the component IDs are
+    // enumerated per stream in the generated SDP (1, 2, 1, 2, ...) in
+    // order to be compliant with the spec.
+
+    auto globalCompId = streamIdx * 2 + compId;
+    if (pj_ice_strans_enum_cands(pimpl_->icest_, globalCompId, &cand_cnt, cand) != PJ_SUCCESS) {
+        JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
+        return res;
     }
 
     res.reserve(cand_cnt);
@@ -1683,12 +1661,6 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
         return -1;
     }
 
-    std::lock_guard lk(pimpl_->iceMutex_);
-
-    if (not pimpl_->icest_) {
-        return -1;
-    }
-
     std::unique_lock dlk(pimpl_->sendDataMutex_, std::defer_lock);
     if (isTCPEnabled())
         dlk.lock();
@@ -1722,17 +1694,21 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
     return len;
 }
 
-int
+bool
 IceTransport::waitForInitialization(std::chrono::milliseconds timeout)
 {
-    std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
+    ICELock lk(pimpl_->icest_);
+
     if (!pimpl_->iceCV_.wait_for(lk, timeout, [this] {
-            return pimpl_->threadTerminateFlags_ or pimpl_->_isInitialized() or pimpl_->_isFailed();
-        })) {
-        JAMI_WARN("[ice:%p] waitForInitialization: timeout", pimpl_.get());
-        return -1;
-    }
-    return not(pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
+        return (pimpl_->threadTerminateFlags_ or
+                isInitialized() or
+                isFailed());
+    })) {
+            JAMI_WARN("[ice:%p] waitForInitialization: timeout", pimpl_.get());
+            return false;
+        }
+
+    return isInitialized();
 }
 
 ssize_t
