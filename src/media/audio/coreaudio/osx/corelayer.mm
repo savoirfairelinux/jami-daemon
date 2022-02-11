@@ -104,13 +104,6 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
     // 5) Profit...
     JAMI_DBG("INIT AUDIO IO");
 
-    // get capture divice
-    auto captureList = getDeviceList(true);
-    AudioDeviceID inputDeviceID = captureList[indexIn_].id_;
-    // get playback device
-    auto playbackList = getDeviceList(false);
-    AudioDeviceID playbackDeviceID = playbackList[indexOut_].id_;
-
     AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
     AudioComponentDescription desc = {0};
@@ -134,46 +127,72 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
         return;
     }
 
-    // set capture device
-    UInt32 size = sizeof(inputDeviceID);
-    auto error = AudioUnitSetProperty(ioUnit_,
-                                      kAudioOutputUnitProperty_CurrentDevice,
-                                      kAudioUnitScope_Global,
-                                      inputBus,
-                                      &inputDeviceID,
-                                      size);
-    // if failed get default device
-    if (error != kAudioServicesNoError) {
-        const AudioObjectPropertyAddress inputInfo = {kAudioHardwarePropertyDefaultInputDevice,
-                                                      kAudioObjectPropertyScopeGlobal,
-                                                      kAudioObjectPropertyElementMaster};
-        auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
-                                                 &inputInfo,
-                                                 0,
-                                                 NULL,
-                                                 &size,
-                                                 &inputDeviceID);
+    AudioDeviceID inputDeviceID;
+    AudioDeviceID playbackDeviceID;
+    UInt32 size = sizeof(AudioDeviceID);
+    if (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL) {
+        auto captureList = getDeviceList(true);
+        bool useFallbackDevice = true;
+        // try to set the device selected by the user. Otherwise, the default device will be set automatically.
+        if(indexIn_ < captureList.size()) {
+            inputDeviceID = captureList[indexIn_].id_;
+
+            auto error = AudioUnitSetProperty(ioUnit_,
+                                              kAudioOutputUnitProperty_CurrentDevice,
+                                              kAudioUnitScope_Global,
+                                              inputBus,
+                                              &inputDeviceID,
+                                              size);
+            useFallbackDevice = error != kAudioServicesNoError;
+        }
+        // get a fallback capture device id so we could listen when the device disconnect.
+        if (useFallbackDevice) {
+            const AudioObjectPropertyAddress inputInfo = {kAudioHardwarePropertyDefaultInputDevice,
+                kAudioObjectPropertyScopeGlobal,
+                kAudioObjectPropertyElementMaster};
+            auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                                                     &inputInfo,
+                                                     0,
+                                                     NULL,
+                                                     &size,
+                                                     &inputDeviceID);
+            if (status != kAudioServicesNoError) {
+                JAMI_ERR() << "failed to set audio input device";
+                return;
+            }
+        }
     }
 
-    // set playback device
-    size = sizeof(playbackDeviceID);
-    error = AudioUnitSetProperty(ioUnit_,
-                                 kAudioOutputUnitProperty_CurrentDevice,
-                                 kAudioUnitScope_Global,
-                                 outputBus,
-                                 &playbackDeviceID,
-                                 size);
-    // if failed get default device
-    if (error != kAudioServicesNoError) {
-        const AudioObjectPropertyAddress outputInfo = {kAudioHardwarePropertyDefaultOutputDevice,
-                                                       kAudioObjectPropertyScopeGlobal,
-                                                       kAudioObjectPropertyElementMaster};
-        auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
-                                                 &outputInfo,
-                                                 0,
-                                                 NULL,
-                                                 &size,
-                                                 &playbackDeviceID);
+    if (stream == AudioDeviceType::PLAYBACK || stream == AudioDeviceType::ALL || stream == AudioDeviceType::RINGTONE) {
+        auto playbackList = getDeviceList(false);
+        auto index = stream == AudioDeviceType::RINGTONE ? indexRing_ : indexOut_;
+        bool useFallbackDevice = true;
+        if(index < playbackList.size()) {
+            playbackDeviceID = playbackList[index].id_;
+            auto error = AudioUnitSetProperty(ioUnit_,
+                                              kAudioOutputUnitProperty_CurrentDevice,
+                                              kAudioUnitScope_Global,
+                                              outputBus,
+                                              &playbackDeviceID,
+                                              size);
+            useFallbackDevice = error != kAudioServicesNoError;
+        }
+        // get fallback output device id.
+        if (useFallbackDevice) {
+            const AudioObjectPropertyAddress outputInfo = {kAudioHardwarePropertyDefaultOutputDevice,
+                kAudioObjectPropertyScopeGlobal,
+                kAudioObjectPropertyElementMaster};
+            auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                                                     &outputInfo,
+                                                     0,
+                                                     NULL,
+                                                     &size,
+                                                     &playbackDeviceID);
+            if (status != kAudioServicesNoError) {
+                JAMI_ERR() << "failed to set audio output device";
+                return;
+            }
+        }
     }
 
     // add listener for detecting when devices are removed
