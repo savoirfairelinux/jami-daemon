@@ -438,15 +438,18 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
     if (not call)
         return {};
 
-    if (call->isIceEnabled()) {
-        if (call->createIceMediaTransport(false)) {
-            getIceOptions([call](auto&& opts) {
-                call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
-            });
+    getIceOptions([call, w = weak(), uri = std::string(toUrl)](auto&& opts) {
+        if (call->isIceEnabled()) {
+            if (not call->createIceMediaTransport(false)
+                or not call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts))) {
+                return;
+            }
         }
-    }
-
-    newOutgoingCallHelper(call, toUrl);
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        shared->newOutgoingCallHelper(call, uri);
+    });
 
     return call;
 }
@@ -742,7 +745,8 @@ JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
 {
     JAMI_DBG("Start SIP call [%s]", call.getCallId().c_str());
 
-    call.addLocalIceAttributes();
+    if (call.isIceEnabled())
+        call.addLocalIceAttributes();
 
     std::string toUri(getToUri(call.getPeerNumber() + "@"
                                + target.toString(true))); // expecting a fully well formed sip uri
