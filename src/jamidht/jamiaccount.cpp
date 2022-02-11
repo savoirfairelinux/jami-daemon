@@ -440,9 +440,19 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
 
     if (call->isIceEnabled()) {
         if (call->createIceMediaTransport(false)) {
-            getIceOptions([call](auto&& opts) {
-                call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts));
+            std::promise<bool> p;
+            std::future<bool> f = p.get_future();
+            // Because local attributes will be added, we need to wait that the ice instance is
+            // correctly initialized.
+            getIceOptions([&](auto&& opts) {
+                p.set_value(
+                    call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts)));
             });
+            f.wait();
+            if (!f.get()) {
+                JAMI_ERR() << "Cannot init Ice transport for " << call->getCallId();
+                return {};
+            }
         }
     }
 
@@ -742,7 +752,8 @@ JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
 {
     JAMI_DBG("Start SIP call [%s]", call.getCallId().c_str());
 
-    call.addLocalIceAttributes();
+    if (call.isIceEnabled())
+        call.addLocalIceAttributes();
 
     std::string toUri(getToUri(call.getPeerNumber() + "@"
                                + target.toString(true))); // expecting a fully well formed sip uri
