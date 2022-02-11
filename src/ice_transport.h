@@ -228,7 +228,7 @@ public:
 
     ssize_t send(unsigned comp_id, const unsigned char* buf, size_t len);
 
-    int waitForInitialization(std::chrono::milliseconds timeout);
+    bool waitForInitialization(std::chrono::milliseconds timeout);
 
     int waitForNegotiation(std::chrono::milliseconds timeout);
 
