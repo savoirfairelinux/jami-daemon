@@ -22,6 +22,30 @@
       },
       "revId": "3dbfe0037eefc867c8a4e8571c2d4f5114a18f94",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a1444a6a_9801b1bc",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1682,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-11T22:59:52Z",
+      "side": 1,
+      "message": "The thing is that it\u0027s possible for the signal to be lost and thus we\u0027re waiting for the whole timeout (35 seconds for sipcall).  I think that it\u0027s best to wait 500 ms more than needed than 35 seconds.  500 ms might be a too huge value, it can be reduce to 1ms and I don\u0027t think there would be noticeable delays, but at least it would avoid the race condition for waiting 35 seconds, which is definitely a problem IMO.\n\nMaybe the solution would be to re-architecture the class instead.",
+      "parentUuid": "24cbd9c9_0f591c1c",
+      "range": {
+        "startLine": 1668,
+        "startChar": 4,
+        "endLine": 1682,
+        "endChar": 27
+      },
+      "revId": "3dbfe0037eefc867c8a4e8571c2d4f5114a18f94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
