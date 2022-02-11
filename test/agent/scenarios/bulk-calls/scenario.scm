@@ -54,26 +54,29 @@
      (make-exception
       (make-exception-with-message "Can't make friend with bob"))))
 
-  ;; Wait for Bob to install call handlers.
-  (sleep (* 2 GRACE-PERIOD))
-
-  (let loop ([cnt 1])
-    (when (<= cnt CALL-COUNT)
-      (jami:info "Alice sending call #~a" cnt)
-      (let ([this-call-id ""])
+  (define* (call-bob #:optional timeout)
+    (let ([this-call-id ""])
         (jami:with-signal-sync
          'state-changed
          (lambda (account-id call-id state code)
            (and (string= account-id (agent:account-id me))
                 (string= call-id this-call-id)
                 (string= state "CURRENT")))
-         GRACE-PERIOD
+         timeout
          (set! this-call-id (agent:call-friend me bob-id)))
 
         (sleep GRACE-PERIOD)
         (call:hang-up (agent:account-id me) this-call-id)
-        (sleep GRACE-PERIOD))
+        (sleep GRACE-PERIOD)))
 
+  ;; Sync the first call with Bob.
+  (jami:info "Alice synchronize with Bob")
+  (call-bob)
+
+  (let loop ([cnt 2])
+    (when (<= cnt CALL-COUNT)
+      (jami:info "Alice sending call #~a" cnt)
+      (call-bob GRACE-PERIOD)
       (loop (1+ cnt)))))
 
 (define (bob)
