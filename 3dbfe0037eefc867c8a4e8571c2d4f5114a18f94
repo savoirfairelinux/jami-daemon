@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24cbd9c9_0f591c1c",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1682,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-11T22:29:00Z",
+      "side": 1,
+      "message": "Condition variables avoid to wait more than needed on a condition, which is the case when using sleep_for. The current code is the idiomatic C++ way to optimally block waiting for a condition.\n\nWith this change, we would always wait at least 500ms before checking the condition, and then wait for blocks of 500ms until the condition is met, which is suboptimal and would lead to user-perceivable delays.\n\nhttps://en.cppreference.com/w/cpp/thread/condition_variable/wait_until\nA condition variable always check the condition before waiting.\n\n(Note that, when possible, when cv.notify_*() is used, the corresponding mutex should be locked to avoid race conditions.)",
+      "range": {
+        "startLine": 1668,
+        "startChar": 4,
+        "endLine": 1682,
+        "endChar": 27
+      },
+      "revId": "3dbfe0037eefc867c8a4e8571c2d4f5114a18f94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
