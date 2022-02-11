@@ -16,6 +16,24 @@
       "message": "* if only playback or record is available, it should ideally work\n* should we fallback to the default device if the selected one is not available ?",
       "revId": "91f4bd8e0268c5c3672947893a627968c65679b8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "20a81125_c7d596ad",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2022-02-11T20:33:42Z",
+      "side": 1,
+      "message": "done",
+      "parentUuid": "75b89d13_0c8d038f",
+      "revId": "91f4bd8e0268c5c3672947893a627968c65679b8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
