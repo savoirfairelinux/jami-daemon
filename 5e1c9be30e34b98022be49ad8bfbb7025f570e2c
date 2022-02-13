@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "db604095_a39a399f",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-13T20:50:26Z",
+      "side": 0,
+      "message": "needed to force rechecking the condition during shutdown.",
+      "range": {
+        "startLine": 319,
+        "startChar": 4,
+        "endLine": 319,
+        "endChar": 24
+      },
+      "revId": "5e1c9be30e34b98022be49ad8bfbb7025f570e2c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
