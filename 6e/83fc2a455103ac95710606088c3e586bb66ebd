@@ -1,0 +1,7 @@
+Code-Review+2: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Submitted-at: Mon, 14 Feb 2022 18:02:21 -0500
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/21093
+Project: jami-daemon
+Branch: refs/heads/master
