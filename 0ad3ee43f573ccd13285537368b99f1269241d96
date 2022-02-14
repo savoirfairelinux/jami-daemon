@@ -16,6 +16,24 @@
       "message": "I have some segfault on jenkins with ut_call, ut_conference, etc with this patch.\n\nIf you don\u0027t reproduce, I\u0027ll send a backtrace",
       "revId": "0ad3ee43f573ccd13285537368b99f1269241d96",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d086f4f8_d2bafb7a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-14T22:02:50Z",
+      "side": 1,
+      "message": "Which patchset?  I\u0027m trying with ut_call and also bulk-calls scenario, I don\u0027t get any segfault",
+      "parentUuid": "1ea276f1_b4b2b44e",
+      "revId": "0ad3ee43f573ccd13285537368b99f1269241d96",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
