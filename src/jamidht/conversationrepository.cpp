@@ -855,7 +855,7 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     std::string votedFile = "";
     for (const auto& changedFile : changedFiles) {
         // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
-        if (changedFile == std::string("devices") + "/" + userDevice + ".crt") {
+        if (changedFile == fmt::format("devices/{}.crt", userDevice)) {
             deviceFile = changedFile;
         } else if (changedFile.find("votes") == 0) {
             votedFile = changedFile;
@@ -931,13 +931,13 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
 
     // Check that peer voted is only other device or other member
     if (type == "members") {
-        // Voted uri = not self
         if (votedUri == userUri) {
             JAMI_ERR("Detected vote for self: %s", votedUri.c_str());
             return false;
         }
-        // file in members or admin
-        if (!memberCertificate(votedUri, treeOld)) {
+        // file in members or admin or invited
+        auto invitedFile = fmt::format("invited/{}", votedUri);
+        if (!memberCertificate(votedUri, treeOld) && !fileAtTree(invitedFile, treeOld)) {
             JAMI_ERR("No member file found for vote: %s", votedUri.c_str());
             return false;
         }
@@ -948,7 +948,7 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
             return false;
         }
         // File in devices
-        deviceFile = std::string("devices") + "/" + votedUri + ".crt";
+        deviceFile = fmt::format("devices/{}.crt", votedUri);
         if (!fileAtTree(deviceFile, treeOld)) {
             JAMI_ERR("No device file found for vote: %s", votedUri.c_str());
             return false;
@@ -1126,10 +1126,11 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
 
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
-    std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
-    std::string adminFile = std::string("admins") + "/" + uriMember + ".crt";
-    std::string memberFile = std::string("members") + "/" + uriMember + ".crt";
-    std::string crlFile = std::string("CRLs") + "/" + uriMember;
+    std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
+    std::string adminFile = fmt::format("admins/{}.crt", uriMember);
+    std::string memberFile = fmt::format("members/{}.crt", uriMember);
+    std::string crlFile = fmt::format("CRLs/{}", uriMember);
+    std::string invitedFile = fmt::format("invited/{}", uriMember);
     std::vector<std::string> voters;
     std::vector<std::string> devicesRemoved;
     std::vector<std::string> bannedFiles;
@@ -1140,8 +1141,9 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
     const std::regex regex_banned("banned.(members|devices).(\\w+)\\.crt");
     std::smatch base_match;
     for (const auto& f : changedFiles) {
-        if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile) {
+        if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile || f == invitedFile) {
             // Ignore
+            continue;
         } else if (std::regex_match(f, base_match, regex_votes)) {
             if (base_match.size() != 4 or base_match[2] != uriMember) {
                 JAMI_ERR("Invalid vote file detected: %s", f.c_str());
@@ -1170,7 +1172,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
 
     // Check that removed devices are for removed member (or directly uriMember)
     for (const auto& deviceUri : devicesRemoved) {
-        deviceFile = std::string("devices") + "/" + deviceUri + ".crt";
+        deviceFile = fmt::format("devices/{}.crt", deviceUri);
         if (!fileAtTree(deviceFile, treeOld)) {
             JAMI_ERR("device not found added (%s)", deviceFile.c_str());
             return false;
@@ -3072,18 +3074,17 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         return {};
     std::string repoPath = git_repository_workdir(repo.get());
     std::string adminsPath = repoPath + "admins";
+    std::string invitedPath = repoPath + "invited";
     std::string membersPath = repoPath + "members";
     std::string devicesPath = repoPath + "devices";
     std::string bannedPath = repoPath + "banned";
     auto isAdmin = fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
-    std::string type = "members";
-    if (isDevice)
-        type = "devices";
-    else if (isAdmin)
-        type = "admins";
+    auto isInvited = fileutils::isFile(fileutils::getFullPath(invitedPath, uri));
 
-    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + "votes" + DIR_SEPARATOR_STR
-                         + (isDevice ? "devices" : "members") + DIR_SEPARATOR_STR + uri;
+    auto voteDirectory = fmt::format("{}/votes/{}/{}",
+                                     repoPath,
+                                     (isDevice ? "devices" : "members"),
+                                     uri);
     for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
@@ -3102,14 +3103,16 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         fileutils::removeAll(voteDirectory, true);
 
         // Move from device or members file into banned
-        std::string originFilePath = membersPath;
+        std::string originFilePath = fmt::format("{}/{}.crt", membersPath, uri);
         if (isDevice)
-            originFilePath = devicesPath;
+            originFilePath = fmt::format("{}/{}.crt", devicesPath, uri);
         else if (isAdmin)
-            originFilePath = adminsPath;
-        originFilePath += DIR_SEPARATOR_STR + uri + ".crt";
+            originFilePath = fmt::format("{}/{}.crt", adminsPath, uri);
+        else if (isInvited)
+            originFilePath = fmt::format("{}/{}", invitedPath, uri);
+
         auto destPath = bannedPath + DIR_SEPARATOR_STR + (isDevice ? "devices" : "members");
-        auto destFilePath = destPath + DIR_SEPARATOR_STR + uri + ".crt";
+        auto destFilePath = fmt::format("{}/{}.crt", destPath, uri);
         if (!fileutils::recursive_mkdir(destPath, 0700)) {
             JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
             return {};
