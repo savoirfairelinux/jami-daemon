@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cdcec901_b87f40da",
+        "filename": "contrib/src/libarchive/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-14T20:58:17Z",
+      "side": 0,
+      "message": "lul I just did the exact same patch\n\nWe can also use 3.6.0, there was some security patch since the 3.5.1 (cf https://github.com/libarchive/libarchive/releases)",
+      "range": {
+        "startLine": 3,
+        "startChar": 36,
+        "endLine": 3,
+        "endChar": 138
+      },
+      "revId": "2269b76fa8da40ea3cdecbe617b66dc1b6cdc7f9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
