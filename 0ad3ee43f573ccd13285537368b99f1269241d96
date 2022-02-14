@@ -70,6 +70,24 @@
       "parentUuid": "82d6a2f9_52b36f4e",
       "revId": "0ad3ee43f573ccd13285537368b99f1269241d96",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abd16805_d9ff9261",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-14T23:01:37Z",
+      "side": 1,
+      "message": "anybody have access to the CI and add the pipeline they want. So it\u0027s possible to add. I just launched daemon-tests two times and saw this segfault each time, didn\u0027t dig.",
+      "parentUuid": "04586238_4942c390",
+      "revId": "0ad3ee43f573ccd13285537368b99f1269241d96",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
