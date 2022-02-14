@@ -1,6 +1,6 @@
 # LIBARCHIVE
 LIBARCHIVE_VERSION := 3.5.1
-LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/$(LIBARCHIVE_VERSION)/libarchive-$(LIBARCHIVE_VERSION).tar.xz
+LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/v$(LIBARCHIVE_VERSION)/libarchive-$(LIBARCHIVE_VERSION).tar.xz
 
 ifndef HAVE_MACOSX
 PKGS += libarchive
