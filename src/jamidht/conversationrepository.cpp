@@ -2847,18 +2847,17 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         return {};
     std::string repoPath = git_repository_workdir(repo.get());
     std::string adminsPath = repoPath + "admins";
+    std::string invitedPath = repoPath + "invited";
     std::string membersPath = repoPath + "members";
     std::string devicesPath = repoPath + "devices";
     std::string bannedPath = repoPath + "banned";
     auto isAdmin = fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
-    std::string type = "members";
-    if (isDevice)
-        type = "devices";
-    else if (isAdmin)
-        type = "admins";
+    auto isInvited = fileutils::isFile(fileutils::getFullPath(invitedPath, uri));
 
-    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + "votes" + DIR_SEPARATOR_STR
-                         + (isDevice ? "devices" : "members") + DIR_SEPARATOR_STR + uri;
+    auto voteDirectory = fmt::format("{}/votes/{}/{}",
+                                     repoPath,
+                                     (isDevice ? "devices" : "members"),
+                                     uri);
     for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
@@ -2877,14 +2876,16 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         fileutils::removeAll(voteDirectory, true);
 
         // Move from device or members file into banned
-        std::string originFilePath = membersPath;
+        std::string originFilePath = fmt::format("{}/{}.crt", membersPath, uri);
         if (isDevice)
-            originFilePath = devicesPath;
+            originFilePath = fmt::format("{}/{}.crt", devicesPath, uri);
         else if (isAdmin)
-            originFilePath = adminsPath;
-        originFilePath += DIR_SEPARATOR_STR + uri + ".crt";
+            originFilePath = fmt::format("{}/{}.crt", adminsPath, uri);
+        else if (isInvited)
+            originFilePath = fmt::format("{}/{}", invitedPath, uri);
+
         auto destPath = bannedPath + DIR_SEPARATOR_STR + (isDevice ? "devices" : "members");
-        auto destFilePath = destPath + DIR_SEPARATOR_STR + uri + ".crt";
+        auto destFilePath = fmt::format("{}/{}.crt", destPath, uri);
         if (!fileutils::recursive_mkdir(destPath, 0700)) {
             JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
             return {};
