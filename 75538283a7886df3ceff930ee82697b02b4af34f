@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "54963206_9483d849",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-14T14:41:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "98800526_f77fbc7e",
+      "range": {
+        "startLine": 78,
+        "startChar": 6,
+        "endLine": 78,
+        "endChar": 13
+      },
+      "revId": "75538283a7886df3ceff930ee82697b02b4af34f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a37c5b4e_27d82f7c",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-02-13T20:50:26Z",
       "side": 1,
       "message": "init with:\n\n IceLock(pj_ice_strans* strans)\n  : lk_(pj_ice_strans_get_grp_lock(strans))\n {\n     lock();\n }",
+      "range": {
+        "startLine": 84,
+        "startChar": 8,
+        "endLine": 84,
+        "endChar": 11
+      },
+      "revId": "75538283a7886df3ceff930ee82697b02b4af34f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c88f9eb_3a0e4cae",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-14T14:41:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "a37c5b4e_27d82f7c",
       "range": {
         "startLine": 84,
         "startChar": 8,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "932394e4_65c7c763",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 490,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-14T14:41:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "89b5dedd_c2c5d9d0",
+      "range": {
+        "startLine": 490,
+        "startChar": 12,
+        "endLine": 490,
+        "endChar": 36
+      },
+      "revId": "75538283a7886df3ceff930ee82697b02b4af34f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "99eeeea7_b21accc6",
@@ -83,6 +155,30 @@
       "writtenOn": "2022-02-13T20:50:26Z",
       "side": 1,
       "message": "These functions should not be exposed as-is because using them might cause race conditions:\n* they use pj_ice_strans_get_state without locking the mutex. Internally, pj_ice_strans_get_state doesn\u0027t lock the pj ice mutex.\n\n* they are used one after the other in SipCall, but the state might change between the calls, even if each call locks the mutex. SipCall should retrieve the state in one shot (might be done in a separate patch).",
+      "range": {
+        "startLine": 1135,
+        "startChar": 0,
+        "endLine": 1165,
+        "endChar": 0
+      },
+      "revId": "75538283a7886df3ceff930ee82697b02b4af34f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a3cb94a_45cf146e",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1165,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-14T14:41:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "99eeeea7_b21accc6",
       "range": {
         "startLine": 1135,
         "startChar": 0,
@@ -116,6 +212,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a0d33e76_7a5212ef",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1692,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-14T14:41:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "2f191fad_a8f9a30b",
+      "range": {
+        "startLine": 1692,
+        "startChar": 14,
+        "endLine": 1692,
+        "endChar": 35
+      },
+      "revId": "75538283a7886df3ceff930ee82697b02b4af34f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4ce31d86_e7f1652b",
@@ -139,6 +259,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f4c6b2d8_b605d258",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1697,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-14T14:41:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "4ce31d86_e7f1652b",
+      "range": {
+        "startLine": 1697,
+        "startChar": 15,
+        "endLine": 1697,
+        "endChar": 16
+      },
+      "revId": "75538283a7886df3ceff930ee82697b02b4af34f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ea06ae59_f57f0f37",
@@ -152,6 +296,30 @@
       "writtenOn": "2022-02-13T20:50:26Z",
       "side": 1,
       "message": "_isInitialized",
+      "range": {
+        "startLine": 1705,
+        "startChar": 11,
+        "endLine": 1705,
+        "endChar": 24
+      },
+      "revId": "75538283a7886df3ceff930ee82697b02b4af34f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c4a7b668_3ba4bac5",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1705,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-14T14:41:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ea06ae59_f57f0f37",
       "range": {
         "startLine": 1705,
         "startChar": 11,
