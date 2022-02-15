@@ -88,6 +88,24 @@
       "parentUuid": "04586238_4942c390",
       "revId": "0ad3ee43f573ccd13285537368b99f1269241d96",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5dcfa90a_b8c13aa2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-15T14:00:28Z",
+      "side": 1,
+      "message": "https://jenkins.jami.net/view/daemon/job/daemon-check-test/59/execution/node/47/log/",
+      "parentUuid": "abd16805_d9ff9261",
+      "revId": "0ad3ee43f573ccd13285537368b99f1269241d96",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
