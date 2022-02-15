@@ -124,6 +124,24 @@
       "parentUuid": "5dcfa90a_b8c13aa2",
       "revId": "0ad3ee43f573ccd13285537368b99f1269241d96",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0570a5a7_9fb28811",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-15T17:50:17Z",
+      "side": 1,
+      "message": "I think the reason is the following:\n\n  1. SipCall::addLocalIceAttributes check if the IceTransport is initialized.\n  2. IceTransport::initIceInstance has not been called yet, so icest_ is nullptr\n  3. pj_ice_strans_get_grp_lock(icest_) returns NULL\n  4. pj_grp_lock_acquire does not check for NULL and segfault\n\nI think this highlights an underlying problem with sipcall",
+      "parentUuid": "d6ddb29f_3aa67d0e",
+      "revId": "0ad3ee43f573ccd13285537368b99f1269241d96",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
