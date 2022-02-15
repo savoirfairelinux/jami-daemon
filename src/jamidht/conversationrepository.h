@@ -289,10 +289,12 @@ public:
     std::vector<ConversationMember> members() const;
 
     /**
-     * @param filter    If we want to remove one members
+     * @param filter           If we want to remove one member
+     * @param filteredRoles    If we want to ignore some roles
      * @return members' uris
      */
-    std::vector<std::string> memberUris(std::string_view filter = {}) const;
+    std::vector<std::string> memberUris(std::string_view filter,
+                                        std::set<MemberRole> filteredRoles) const;
 
     /**
      * To use after a merge with member's events, refresh members knowledge
