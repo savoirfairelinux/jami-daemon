@@ -21,7 +21,6 @@
 
 #include "fileutils.h"
 #include "jamiaccount.h"
-#include "conversationrepository.h"
 #include "client/ring_signal.h"
 
 #include <charconv>
@@ -610,9 +609,9 @@ Conversation::getMembers(bool includeInvited, bool includeLeft) const
 }
 
 std::vector<std::string>
-Conversation::memberUris(std::string_view filter) const
+Conversation::memberUris(std::string_view filter, const std::set<MemberRole>& filteredRoles) const
 {
-    return pimpl_->repository_->memberUris(filter);
+    return pimpl_->repository_->memberUris(filter, filteredRoles);
 }
 
 std::string
