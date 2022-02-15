@@ -62,6 +62,7 @@ public:
     void testAddOfflineMemberThenConnects();
     void testGetMembers();
     void testRemoveMember();
+    void testRemovedMemberDoesNotReceiveMessage();
     void testRemoveInvitedMember();
     void testMemberBanNoBadFile();
     void testMemberTryToRemoveAdmin();
@@ -94,6 +95,7 @@ private:
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
     CPPUNIT_TEST(testGetMembers);
     CPPUNIT_TEST(testRemoveMember);
+    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
     CPPUNIT_TEST(testRemoveInvitedMember);
     CPPUNIT_TEST(testMemberBanNoBadFile);
     CPPUNIT_TEST(testMemberTryToRemoveAdmin);
@@ -597,6 +599,68 @@ ConversationMembersEventTest::testRemoveMember()
     CPPUNIT_ASSERT(members.size() == 1);
     CPPUNIT_ASSERT(members[0]["uri"] == aliceAccount->getUsername());
     CPPUNIT_ASSERT(members[0]["role"] == "admin");
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessage()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto convId = DRing::startConversation(aliceId);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId && conversationId == convId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    bool memberMessageGenerated = false, voteMessageGenerated = false, messageBobReceived = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "vote")
+                voteMessageGenerated = true;
+            else if (accountId == aliceId && conversationId == convId && message["type"] == "member")
+                memberMessageGenerated = true;
+            else if (accountId == bobId && conversationId == convId)
+                messageBobReceived = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    memberMessageGenerated = false;
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
+
+    // Now check that alice, has the only admin, can remove bob
+    memberMessageGenerated = false;
+    voteMessageGenerated = false;
+    DRing::removeConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
+
+    // Now, bob is banned so they shoud not receive any message
+    messageBobReceived = false;
+    DRing::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return messageBobReceived; }));
     DRing::unregisterSignalHandlers();
 }
 
