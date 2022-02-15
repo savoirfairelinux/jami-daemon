@@ -28,6 +28,7 @@
 #include <msgpack.hpp>
 
 #include "jami/datatransfer_interface.h"
+#include "conversationrepository.h"
 
 namespace jami {
 
@@ -44,7 +45,7 @@ static constexpr const char* DECLINED = "declined";
 static constexpr const char* FROM = "from";
 static constexpr const char* CONVERSATIONID = "conversationId";
 static constexpr const char* METADATAS = "metadatas";
-}
+} // namespace ConversationMapKeys
 
 /**
  * A ConversationRequest is a request which corresponds to a trust request, but for conversations
@@ -151,10 +152,15 @@ public:
                                                                bool includeLeft = false) const;
 
     /**
-     * @param filter    If we want to remove one members
+     * @param filter           If we want to remove one member
+     * @param filteredRoles    If we want to ignore some roles
      * @return members' uris
      */
-    std::vector<std::string> memberUris(std::string_view filter = {}) const;
+    std::vector<std::string> memberUris(
+        std::string_view filter = {},
+        const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
+                                                     MemberRole::LEFT,
+                                                     MemberRole::BANNED}) const;
 
     /**
      * Join a conversation
