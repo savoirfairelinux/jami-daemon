@@ -148,17 +148,13 @@ public:
     bool resolveConflicts(git_index* index, const std::string& other_id);
 
     std::vector<std::string> memberUris(std::string_view filter,
-                                        bool includeInvited = false,
-                                        bool includeLeft = false) const
+                                        std::set<MemberRole> filteredRoles) const
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
         std::vector<std::string> ret;
         for (const auto& member : members_) {
-            if (not includeInvited and member.role == MemberRole::INVITED)
-                continue;
-            if (not includeLeft and member.role == MemberRole::LEFT)
-                continue;
-            if (not filter.empty() and filter == member.uri)
+            if ((filteredRoles.find(member.role) != filteredRoles.end())
+                or (not filter.empty() and filter == member.uri))
                 continue;
             ret.emplace_back(member.uri);
         }
@@ -3219,9 +3215,9 @@ ConversationRepository::members() const
 }
 
 std::vector<std::string>
-ConversationRepository::memberUris(std::string_view filter) const
+ConversationRepository::memberUris(std::string_view filter, std::set<MemberRole> filteredRoles) const
 {
-    return pimpl_->memberUris(filter);
+    return pimpl_->memberUris(filter, filteredRoles);
 }
 
 void
