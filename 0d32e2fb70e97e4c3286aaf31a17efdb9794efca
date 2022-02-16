@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5e8e6faa_b0c1148a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 614,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-16T16:56:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b4cfdac1_3b99f32c",
+      "revId": "0d32e2fb70e97e4c3286aaf31a17efdb9794efca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d81348db_aaab20dc",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-02-15T21:49:45Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027filteredRoles\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "0d32e2fb70e97e4c3286aaf31a17efdb9794efca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "289cdcf0_0b653d91",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3220,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-16T16:56:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d81348db_aaab20dc",
       "revId": "0d32e2fb70e97e4c3286aaf31a17efdb9794efca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
