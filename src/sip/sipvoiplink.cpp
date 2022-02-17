@@ -1067,7 +1067,7 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
         JAMI_DBG("[call %s] Media %s", call->getCallId().c_str(), media.toString(true).c_str());
     }
 
-    const bool created = sdp.createOffer(mediaList);
+    const bool created = call->createSdpOffer(mediaList);
 
     if (created and p_offer != nullptr)
         *p_offer = sdp.getLocalSdpSession();
