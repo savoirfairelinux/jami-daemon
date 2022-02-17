@@ -541,15 +541,6 @@ CoreLayer::getDeviceList(bool getCapture) const
                 //ignore VPAUAggregateAudioDevice
                 continue;
             }
-            //for input device check if it not speaker
-            //since the speaker device has input stream for echo cancellation.
-            if (getCapture) {
-                auto devOutput = AudioDevice {devids[i], !getCapture};
-                // it is output device
-                if (devOutput.channels_ > 0) {
-                    continue;
-                }
-            }
             ret.push_back(std::move(dev));
         }
     }
