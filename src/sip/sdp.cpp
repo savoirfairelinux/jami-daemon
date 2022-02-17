@@ -170,6 +170,12 @@ Sdp::mediaDirection(MediaType type, bool onHold)
 char const*
 Sdp::mediaDirection(const MediaAttribute& mediaAttr)
 {
+    if (mediaAttr.type_ == MediaType::MEDIA_AUDIO) {
+        if (mediaAttr.enabled_)
+            return "sendrecv";
+        return "inactive";
+    }
+
     if (not mediaAttr.enabled_)
         return "inactive";
 
