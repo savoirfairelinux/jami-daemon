@@ -503,7 +503,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
         return !PJ_SUCCESS;
     }
 
-    if (not sdp_->createOffer(mediaAttrList))
+    if (not createSdpOffer(mediaAttrList))
         return !PJ_SUCCESS;
 
     if (isIceEnabled() and needNewIce) {
@@ -640,6 +640,19 @@ SIPCall::sendMuteState(bool state)
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending mute state: %s", e.what());
     }
+}
+
+bool
+SIPCall::createSdpOffer(const std::vector<MediaAttribute>& mediaAttrList)
+{
+    sdp_->setMediaDirectionCb([w = weak()](const MediaAttribute& attr) {
+        if (auto call = w.lock()) {
+            return call->getMediaDirection(attr);
+        }
+        return MediaDirection::UNKNOWN;
+    });
+
+    return sdp_->createOffer(mediaAttrList);
 }
 
 void
@@ -821,6 +834,12 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
         updateMediaStream(mediaAttrList[idx], idx);
     }
 
+    sdp_->setMediaDirectionCb([w = weak()](const MediaAttribute& attr) {
+        if (auto call = w.lock()) {
+            return call->getMediaDirection(attr);
+        }
+        return MediaDirection::UNKNOWN;
+    });
     // Create the SDP answer
     sdp_->processIncomingOffer(mediaAttrList);
 
@@ -961,6 +980,12 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
 
     updateAllMediaStreams(remoteMediaAttrList);
 
+    sdp_->setMediaDirectionCb([w = weak()](const MediaAttribute& attr) {
+        if (auto call = w.lock()) {
+            return call->getMediaDirection(attr);
+        }
+        return MediaDirection::UNKNOWN;
+    });
     if (not sdp_->processIncomingOffer(remoteMediaAttrList)) {
         JAMI_WARN("[call:%s] Could not process the new offer, ignoring", getCallId().c_str());
         return;
@@ -2205,6 +2230,34 @@ SIPCall::updateRemoteMedia()
     }
 }
 
+MediaDirection
+SIPCall::getMediaDirection(const MediaAttribute& mediaAttr)
+{
+    if (not mediaAttr.enabled_) {
+        return MediaDirection::INACTIVE;
+    }
+
+    // Since mute/un-mute audio is only done locally (no re-invite),
+    // the media direction must be set to "sendrecv" regardless of
+    // the mute state.
+    if (mediaAttr.type_ == MediaType::MEDIA_AUDIO) {
+        return MediaDirection::SENDRECV;
+    }
+
+    if (mediaAttr.muted_) {
+        if (mediaAttr.onHold_) {
+            return MediaDirection::INACTIVE;
+        }
+        return MediaDirection::RECVONLY;
+    }
+
+    if (mediaAttr.onHold_) {
+        return MediaDirection::SENDONLY;
+    }
+
+    return MediaDirection::SENDRECV;
+}
+
 void
 SIPCall::muteMedia(const std::string& mediaType, bool mute)
 {
@@ -2776,6 +2829,12 @@ SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
 
     initMediaStreams(mediaList);
 
+    sdp_->setMediaDirectionCb([w = weak()](const MediaAttribute& attr) {
+        if (auto call = w.lock()) {
+            return call->getMediaDirection(attr);
+        }
+        return MediaDirection::UNKNOWN;
+    });
     sdp_->processIncomingOffer(mediaList);
 
     if (upnp_) {

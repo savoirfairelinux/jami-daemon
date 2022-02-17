@@ -195,6 +195,12 @@ public:
     std::vector<std::string> getIceCandidates(unsigned media_index) const;
 
     void clearIce();
+
+    // Set media direction callback. If not set, the media direction will
+    // default to "sendrecv".
+    using DirectionCb = std::function<MediaDirection(const MediaAttribute& mediaAttr)>;
+    void setMediaDirectionCb(DirectionCb&& dirCb);
+
     SdpDirection getSdpDirection() const { return sdpDirection_; };
     static const char* getSdpDirectionStr(SdpDirection direction);
 
@@ -221,60 +227,6 @@ private:
 
     static void clearIce(pjmedia_sdp_session* session);
 
-    /**
-     * The pool to allocate memory
-     */
-    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> memPool_;
-
-    /** negotiator */
-    pjmedia_sdp_neg* negotiator_ {nullptr};
-
-    /**
-     * Local SDP
-     */
-    pjmedia_sdp_session* localSession_ {nullptr};
-
-    /**
-     * Remote SDP
-     */
-    pjmedia_sdp_session* remoteSession_ {nullptr};
-
-    /**
-     * The negotiated SDP remote session
-     * Explanation: each endpoint's offer is negotiated, and a new sdp offer results from this
-     * negotiation, with the compatible media from each part
-     */
-    const pjmedia_sdp_session* activeLocalSession_ {nullptr};
-
-    /**
-     * The negotiated SDP remote session
-     * Explanation: each endpoint's offer is negotiated, and a new sdp offer results from this
-     * negotiation, with the compatible media from each part
-     */
-    const pjmedia_sdp_session* activeRemoteSession_ {nullptr};
-
-    /**
-     * Codec Map used for offer
-     */
-    std::vector<std::shared_ptr<AccountCodecInfo>> audio_codec_list_;
-    std::vector<std::shared_ptr<AccountCodecInfo>> video_codec_list_;
-
-    std::string publishedIpAddr_;
-    pj_uint16_t publishedIpAddrType_;
-
-    uint16_t localAudioRtpPort_ {0};
-    uint16_t localAudioRtcpPort_ {0};
-    uint16_t localVideoRtpPort_ {0};
-    uint16_t localVideoRtcpPort_ {0};
-
-    unsigned int telephoneEventPayload_;
-
-    // The call Id of the SDP owner
-    std::string sessionName_ {};
-
-    // Offer/Answer flag.
-    SdpDirection sdpDirection_ {SdpDirection::NONE};
-
     /*
      * Build the sdp media section
      * Add rtpmap field if necessary
@@ -282,7 +234,6 @@ private:
     pjmedia_sdp_media* addMediaDescription(const MediaAttribute& mediaAttr);
 
     // Determine media direction
-    char const* mediaDirection(MediaType type, bool onHold);
     char const* mediaDirection(const MediaAttribute& mediaAttr);
 
     // Get media direction
@@ -321,6 +272,50 @@ private:
     std::shared_ptr<AccountCodecInfo> findCodecByPayload(const unsigned payloadType);
     std::shared_ptr<AccountCodecInfo> findCodecBySpec(const std::string& codecName,
                                                       const unsigned clockrate = 0) const;
+
+    // Data members
+    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> memPool_;
+    pjmedia_sdp_neg* negotiator_ {nullptr};
+    pjmedia_sdp_session* localSession_ {nullptr};
+    pjmedia_sdp_session* remoteSession_ {nullptr};
+
+    /**
+     * The negotiated SDP remote session
+     * Explanation: each endpoint's offer is negotiated, and a new sdp offer results from this
+     * negotiation, with the compatible media from each part
+     */
+    const pjmedia_sdp_session* activeLocalSession_ {nullptr};
+
+    /**
+     * The negotiated SDP remote session
+     * Explanation: each endpoint's offer is negotiated, and a new sdp offer results from this
+     * negotiation, with the compatible media from each part
+     */
+    const pjmedia_sdp_session* activeRemoteSession_ {nullptr};
+
+    /**
+     * Codec Map used for offer
+     */
+    std::vector<std::shared_ptr<AccountCodecInfo>> audio_codec_list_;
+    std::vector<std::shared_ptr<AccountCodecInfo>> video_codec_list_;
+
+    std::string publishedIpAddr_;
+    pj_uint16_t publishedIpAddrType_;
+
+    uint16_t localAudioRtpPort_ {0};
+    uint16_t localAudioRtcpPort_ {0};
+    uint16_t localVideoRtpPort_ {0};
+    uint16_t localVideoRtcpPort_ {0};
+
+    unsigned int telephoneEventPayload_;
+
+    // The call Id of the SDP owner
+    std::string sessionName_ {};
+
+    // Offer/Answer flag.
+    SdpDirection sdpDirection_ {SdpDirection::NONE};
+
+    DirectionCb mediaDirectionCb_ {};
 };
 
 } // namespace jami

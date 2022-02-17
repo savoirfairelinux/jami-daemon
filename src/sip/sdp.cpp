@@ -55,6 +55,12 @@ using std::stringstream;
 static constexpr int POOL_INITIAL_SIZE = 16384;
 static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;
 
+static std::map<MediaDirection, const char*> DIRECTION_STR {{MediaDirection::SENDRECV, "sendrecv"},
+                                                            {MediaDirection::SENDONLY, "sendonly"},
+                                                            {MediaDirection::RECVONLY, "recvonly"},
+                                                            {MediaDirection::INACTIVE, "inactive"},
+                                                            {MediaDirection::UNKNOWN, "unknown"}};
+
 Sdp::Sdp(const std::string& id)
     : memPool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
     , publishedIpAddr_()
@@ -159,48 +165,48 @@ Sdp::generateSdesAttribute()
     return pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
 }
 
-// Legacy direction inference
-char const*
-Sdp::mediaDirection(MediaType type, bool onHold)
-{
-    return onHold ? (type == MediaType::MEDIA_AUDIO ? "sendonly" : "inactive") : "sendrecv";
-}
-
 // Direction inference based on RFC-3264 and RFC-6337
 char const*
 Sdp::mediaDirection(const MediaAttribute& mediaAttr)
 {
-    if (not mediaAttr.enabled_)
-        return "inactive";
-
-    if (mediaAttr.muted_) {
-        if (mediaAttr.onHold_)
-            return "inactive";
-        return "recvonly";
+    if (mediaDirectionCb_) {
+        return DIRECTION_STR[mediaDirectionCb_(mediaAttr)];
     }
-
-    if (mediaAttr.onHold_)
-        return "sendonly";
-
-    return "sendrecv";
+    return DIRECTION_STR[MediaDirection::SENDRECV];
 }
 
 MediaDirection
 Sdp::getMediaDirection(pjmedia_sdp_media* media)
 {
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, "sendrecv", nullptr) != nullptr) {
+    if (pjmedia_sdp_attr_find2(media->attr_count,
+                               media->attr,
+                               DIRECTION_STR[MediaDirection::SENDRECV],
+                               nullptr)
+        != nullptr) {
         return MediaDirection::SENDRECV;
     }
 
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, "sendonly", nullptr) != nullptr) {
+    if (pjmedia_sdp_attr_find2(media->attr_count,
+                               media->attr,
+                               DIRECTION_STR[MediaDirection::SENDONLY],
+                               nullptr)
+        != nullptr) {
         return MediaDirection::SENDONLY;
     }
 
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, "recvonly", nullptr) != nullptr) {
+    if (pjmedia_sdp_attr_find2(media->attr_count,
+                               media->attr,
+                               DIRECTION_STR[MediaDirection::RECVONLY],
+                               nullptr)
+        != nullptr) {
         return MediaDirection::RECVONLY;
     }
 
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, "inactive", nullptr) != nullptr) {
+    if (pjmedia_sdp_attr_find2(media->attr_count,
+                               media->attr,
+                               DIRECTION_STR[MediaDirection::INACTIVE],
+                               nullptr)
+        != nullptr) {
         return MediaDirection::INACTIVE;
     }
 
@@ -435,6 +441,12 @@ Sdp::setLocalMediaCapabilities(MediaType type,
         throw SdpException("Unsupported media type");
         break;
     }
+}
+
+void
+Sdp::setMediaDirectionCb(DirectionCb&& dirCb)
+{
+    mediaDirectionCb_ = std::move(dirCb);
 }
 
 const char*
@@ -790,10 +802,13 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             }
         }
 
-        descr.onHold = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "sendonly", nullptr)
+        descr.onHold = pjmedia_sdp_attr_find2(media->attr_count,
+                                              media->attr,
+                                              DIRECTION_STR[MediaDirection::SENDONLY],
+                                              nullptr)
                        || pjmedia_sdp_attr_find2(media->attr_count,
                                                  media->attr,
-                                                 "inactive",
+                                                 DIRECTION_STR[MediaDirection::INACTIVE],
                                                  nullptr);
 
         descr.direction_ = getMediaDirection(media);

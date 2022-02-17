@@ -771,8 +771,10 @@ SipBasicCallTest::hold_resume_test()
             auto& sdp = call->getSDP();
             auto mediaStreams = sdp.getMediaSlots();
             for (auto const& media : mediaStreams) {
-                CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::SENDRECV);
-                CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::SENDRECV);
+                if (media.first.type == MediaType::MEDIA_AUDIO) {
+                }
+                CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.first.direction_);
+                CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.second.direction_);
             }
         }
 
@@ -783,8 +785,8 @@ SipBasicCallTest::hold_resume_test()
             auto& sdp = call->getSDP();
             auto mediaStreams = sdp.getMediaSlots();
             for (auto const& media : mediaStreams) {
-                CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::SENDRECV);
-                CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::SENDRECV);
+                CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.first.direction_);
+                CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.second.direction_);
             }
         }
 
@@ -820,8 +822,13 @@ SipBasicCallTest::hold_resume_test()
             auto& sdp = call->getSDP();
             auto mediaStreams = sdp.getMediaSlots();
             for (auto const& media : mediaStreams) {
-                CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::SENDONLY);
-                CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::RECVONLY);
+                if (media.first.type == MediaType::MEDIA_AUDIO) {
+                    CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.first.direction_);
+                    CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.second.direction_);
+                } else {
+                    CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDONLY, media.first.direction_);
+                    CPPUNIT_ASSERT_EQUAL(MediaDirection::RECVONLY, media.second.direction_);
+                }
             }
         }
 
@@ -832,8 +839,13 @@ SipBasicCallTest::hold_resume_test()
             auto& sdp = call->getSDP();
             auto mediaStreams = sdp.getMediaSlots();
             for (auto const& media : mediaStreams) {
-                CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::RECVONLY);
-                CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::SENDONLY);
+                if (media.first.type == MediaType::MEDIA_AUDIO) {
+                    CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.first.direction_);
+                    CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.second.direction_);
+                } else {
+                    CPPUNIT_ASSERT_EQUAL(MediaDirection::RECVONLY, media.first.direction_);
+                    CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDONLY, media.second.direction_);
+                }
             }
         }
 
@@ -1053,8 +1065,8 @@ SipBasicCallTest::blind_transfer_test()
         auto& sdp = call->getSDP();
         auto mediaStreams = sdp.getMediaSlots();
         for (auto const& media : mediaStreams) {
-            CPPUNIT_ASSERT_EQUAL(media.first.direction_, MediaDirection::SENDRECV);
-            CPPUNIT_ASSERT_EQUAL(media.second.direction_, MediaDirection::SENDRECV);
+            CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.first.direction_);
+            CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, media.second.direction_);
         }
     }
 
