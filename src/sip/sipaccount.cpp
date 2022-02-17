@@ -263,7 +263,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Med
         sdp.setPublishedIP(getPublishedAddress());
 
     // TODO. We should not dot his here. Move it to SIPCall.
-    const bool created = sdp.createOffer(
+    const bool created = call->createSdpOffer(
         MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled()));
 
     if (created) {

@@ -712,7 +712,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         return;
     }
 
-    if (not sdp.createOffer(mediaAttrList)) {
+    if (not call->createSdpOffer(mediaAttrList)) {
         JAMI_ERR("Could not send outgoing INVITE request for new call");
         return;
     }
