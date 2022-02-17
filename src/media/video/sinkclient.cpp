@@ -444,7 +444,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             const auto bytes = videoFrameSize(format, width, height);
             if (bytes > 0) {
                 if (auto buffer_ptr = target_.pull(bytes)) {
-                    if (buffer_ptr->avframe) {
+                    if (buffer_ptr->avframe && buffer_ptr->avframe->data[0]) {
                         scaler_->scale(*frame, buffer_ptr->avframe.get());
                     } else {
                         buffer_ptr->format = format;
