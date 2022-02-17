@@ -170,6 +170,15 @@ Sdp::mediaDirection(MediaType type, bool onHold)
 char const*
 Sdp::mediaDirection(const MediaAttribute& mediaAttr)
 {
+    // Since mute/un-mute audio is only done locally (no re-invite),
+    // the media direction must be set to "sendrecv" (if enabled)
+    // regardless of the mute state.
+    if (mediaAttr.type_ == MediaType::MEDIA_AUDIO) {
+        if (mediaAttr.enabled_)
+            return "sendrecv";
+        return "inactive";
+    }
+
     if (not mediaAttr.enabled_)
         return "inactive";
 
