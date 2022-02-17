@@ -2205,6 +2205,34 @@ SIPCall::updateRemoteMedia()
     }
 }
 
+MediaDirection
+SIPCall::getMediaDirection(const MediaAttribute& mediaAttr)
+{
+    if (not mediaAttr.enabled_) {
+        return MediaDirection::INACTIVE;
+    }
+
+    // Since mute/un-mute audio is only done locally (no re-invite),
+    // the media direction must be set to "sendrecv" regardless of
+    // the mute state.
+    if (mediaAttr.type_ == MediaType::MEDIA_AUDIO) {
+        return MediaDirection::SENDRECV;
+    }
+
+    if (mediaAttr.muted_) {
+        if (mediaAttr.onHold_) {
+            return MediaDirection::INACTIVE;
+        }
+        return MediaDirection::RECVONLY;
+    }
+
+    if (mediaAttr.onHold_) {
+        return MediaDirection::SENDONLY;
+    }
+
+    return MediaDirection::SENDRECV;
+}
+
 void
 SIPCall::muteMedia(const std::string& mediaType, bool mute)
 {

@@ -6,6 +6,7 @@
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -321,6 +322,8 @@ private:
      * @param rotation Device orientation (0/90/180/270) (counterclockwise)
      */
     void setVideoOrientation(int rotation);
+
+    MediaDirection getMediaDirection(const MediaAttribute& mediaAttr);
 
     mutable std::mutex transportMtx_ {};
 
