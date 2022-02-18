@@ -71,45 +71,41 @@ void VideoDeviceMonitorImpl::start()
     auto myVideoDevices = [[AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]
                            arrayByAddingObjectsFromArray:
                            [AVCaptureDevice devicesWithMediaType:AVMediaTypeMuxed]];
-    if ( [myVideoDevices count] == 0 )
-    {
-        JAMI_ERR("Can't find any suitable video device");
-        return;
-    }
-
     int deviceCount = [myVideoDevices count];
-    int ivideo;
-    for ( ivideo = 0; ivideo < deviceCount; ++ivideo )
+    if (deviceCount > 0)
     {
-        AVCaptureDevice* avf_device = [myVideoDevices objectAtIndex:ivideo];
-        printf("avcapture %d/%d %s %s\n", ivideo + 1,
-               deviceCount,
-               [[avf_device modelID] UTF8String],
-               [[avf_device uniqueID] UTF8String]);
-        try {
-            monitor_->addDevice([[avf_device uniqueID] UTF8String]);
-        } catch (const std::runtime_error &e) {
-            JAMI_ERR("%s", e.what());
+        for (int ivideo = 0; ivideo < deviceCount; ++ivideo)
+        {
+            AVCaptureDevice* avf_device = [myVideoDevices objectAtIndex:ivideo];
+            printf("avcapture %d/%d %s %s\n", ivideo + 1,
+                   deviceCount,
+                   [[avf_device modelID] UTF8String],
+                   [[avf_device uniqueID] UTF8String]);
+            try {
+                monitor_->addDevice([[avf_device uniqueID] UTF8String]);
+            } catch (const std::runtime_error &e) {
+                JAMI_ERR("%s", e.what());
+            }
         }
     }
 
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     id deviceWasConnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasConnectedNotification
-                                    object:nil
-                                    queue:[NSOperationQueue mainQueue]
-                                    usingBlock:^(NSNotification *note) {
-                                        auto dev = (AVCaptureDevice*)note.object;
-                                        if([dev hasMediaType:AVMediaTypeVideo])
-                                            monitor_->addDevice([[dev uniqueID] UTF8String]);
-                                    }];
+                                                                    object:nil
+                                                                     queue:[NSOperationQueue mainQueue]
+                                                                usingBlock:^(NSNotification *note) {
+        auto dev = (AVCaptureDevice*)note.object;
+        if([dev hasMediaType:AVMediaTypeVideo])
+            monitor_->addDevice([[dev uniqueID] UTF8String]);
+    }];
     id deviceWasDisconnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasDisconnectedNotification
-                                        object:nil
-                                        queue:[NSOperationQueue mainQueue]
-                                        usingBlock:^(NSNotification *note) {
-                                            auto dev = (AVCaptureDevice*)note.object;
-                                            if([dev hasMediaType:AVMediaTypeVideo])
-                                                monitor_->removeDevice([[dev uniqueID] UTF8String]);
-                                        }];
+                                                                       object:nil
+                                                                        queue:[NSOperationQueue mainQueue]
+                                                                   usingBlock:^(NSNotification *note) {
+        auto dev = (AVCaptureDevice*)note.object;
+        if([dev hasMediaType:AVMediaTypeVideo])
+            monitor_->removeDevice([[dev uniqueID] UTF8String]);
+    }];
     observers = [[NSArray alloc] initWithObjects:deviceWasConnectedObserver, deviceWasDisconnectedObserver, nil];
 }
 
