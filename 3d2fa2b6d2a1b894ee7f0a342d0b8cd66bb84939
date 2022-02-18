@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6db5ab1b_d81e3cd2",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-18T16:32:36Z",
+      "side": 1,
+      "message": "ok, I will work on a cleaner solution then",
+      "parentUuid": "bd2d548e_299318dd",
+      "revId": "3d2fa2b6d2a1b894ee7f0a342d0b8cd66bb84939",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c84014a0_139cbdb6",
         "filename": "src/sip/sdp.cpp",
         "patchSetId": 2
@@ -49,6 +67,30 @@
       "writtenOn": "2022-02-18T16:08:57Z",
       "side": 1,
       "message": "this is tested by jami::test::SipBasicCallTest::hold_resume_test (causing a test failure)",
+      "range": {
+        "startLine": 178,
+        "startChar": 22,
+        "endLine": 179,
+        "endChar": 22
+      },
+      "revId": "3d2fa2b6d2a1b894ee7f0a342d0b8cd66bb84939",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0c1b8e3_0cdffced",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-18T16:32:36Z",
+      "side": 1,
+      "message": "will check it too",
+      "parentUuid": "c84014a0_139cbdb6",
       "range": {
         "startLine": 178,
         "startChar": 22,
