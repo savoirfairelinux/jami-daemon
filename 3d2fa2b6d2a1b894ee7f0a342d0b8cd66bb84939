@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3ea6ebee_191eccd3",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-18T15:18:25Z",
+      "side": 1,
+      "message": "this is not ideal, because the logic of reinvite is implemented in sipcall and here.\nMaybe a cleaner solution is to implement the direction logic in SIPCall, and the SDP will only apply the result.\nIf we decide to do re-invite for audio mute as well, this exception will not be needed.",
+      "revId": "3d2fa2b6d2a1b894ee7f0a342d0b8cd66bb84939",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
