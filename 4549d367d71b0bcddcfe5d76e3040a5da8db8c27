@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "200197e4_479cdc2c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2260,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-19T16:00:13Z",
+      "side": 1,
+      "message": "This seems unneeded, as it doesn\u0027t use any call property, only mediaAttr that is passed as an argument.\n\nIt seems like the sdp is the standard way to negotiate\u0026communicate the mute/hold state in a SIP call, not only for Jami-to-Jami but also when communicating with other SIP agents. If we can reinvite without restarting the media, why not using the standard ?",
+      "range": {
+        "startLine": 2232,
+        "startChar": 0,
+        "endLine": 2260,
+        "endChar": 0
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
