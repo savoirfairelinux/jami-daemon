@@ -22,6 +22,30 @@
       },
       "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dad4c1bc_10c03f68",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2260,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-20T20:18:14Z",
+      "side": 1,
+      "message": "when you mention \u0027standard\u0027, please put some references that we can refer to. SIP is made of dozens of RFCs, so I can\u0027t guess which one you are referring to.\nBut I can answer the question partially. The SDP is still responsible for media direction. This method only implements the app logic. \nIt was decided that only the mute video requires a re-invite. Although I do not necessarily find it problematic, by I did not find any justification for that. May be you can enlighten me. I did not change it because I do not see the need to. In addition, changing it should be done through an explicit requirement.\nThis method implements the app logic and avoid hard-coding the app logic in the SDP.",
+      "parentUuid": "200197e4_479cdc2c",
+      "range": {
+        "startLine": 2232,
+        "startChar": 0,
+        "endLine": 2260,
+        "endChar": 0
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
