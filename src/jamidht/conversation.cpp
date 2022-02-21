@@ -379,12 +379,14 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
     if (!cert || !cert->issuer) {
         JAMI_WARN("No author found for commit %s, reload certificates", commit.id.c_str());
         if (repository_)
-            repository_->pinCertificates();
+            repository_->pinCertificates(true);
         // Get certificate from repo
         try {
             cert = tls::CertificateStore::instance().getCertificate(authorDevice);
             if (!cert || !cert->issuer) {
-                JAMI_ERR("No author found for commit %s", commit.id.c_str());
+                JAMI_ERR("No author found for commit %s (device: %s)",
+                         commit.id.c_str(),
+                         authorDevice.c_str());
                 return std::nullopt;
             }
         } catch (...) {
