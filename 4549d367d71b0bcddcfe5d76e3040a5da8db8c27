@@ -46,6 +46,30 @@
       },
       "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "401ec37d_74419c6e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2260,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-21T16:28:53Z",
+      "side": 1,
+      "message": "Furthermore, SIP/SDP does not really define the notion of \u0027mute\u0027. Check SDP RFC-8866 (or even in the older RFC-4566). It only defines the media directions which only determines if the flow of RTP streams.",
+      "parentUuid": "dad4c1bc_10c03f68",
+      "range": {
+        "startLine": 2232,
+        "startChar": 0,
+        "endLine": 2260,
+        "endChar": 0
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
