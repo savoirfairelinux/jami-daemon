@@ -3,6 +3,52 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1bcf11d1_39a46277",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2245,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-22T21:22:17Z",
+      "side": 1,
+      "message": "Restarting. We agree that the original problem is:\n+ If we mute the audio, trigger a renegotiation (eg cut the video) and uncut the audio, the audio is not going back?\n\nMy question is where is the bug located? Is it in Sdp::getMediaAttributeListFromSdp, which will only be used during renegotiation (so in sdp.cpp, line 1030, mediaAttr.muted_ will be considered as MUTED?\n\nImho, the Sdp::mediaDirection you wrote on current master is what we want. I didn\u0027t like the first patchset, because it was considering audio medias differently in the SDP, which looks like a workaround\n\nIf we want to ignore and always enable audio, it should, I think, be done where we check this media direction (eg if it\u0027s in SIPCall::configureRtpSession we can check \"if (mediaAttr-\u003emuted_) {\"-\u003e\"if (mediaAttr-\u003emuted_ \u0026\u0026 mediaAttr-\u003etype !\u003d MediaType::MEDIA_AUDIO) {\"\n\nAs the SDP is correct (at least for me), but we want to ignore this in our implementation, as you said it\u0027s only related to our app logic",
+      "range": {
+        "startLine": 2243,
+        "startChar": 34,
+        "endLine": 2245,
+        "endChar": 5
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cbed89e4_eb723d30",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2258,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-22T21:22:17Z",
+      "side": 1,
+      "message": "I don\u0027t get this change neither, sdp was unrelated to SIPCall and the architecture was better without weird lambda which doesn\u0027t depends on call.",
+      "range": {
+        "startLine": 2236,
+        "startChar": 20,
+        "endLine": 2258,
+        "endChar": 14
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "200197e4_479cdc2c",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 5
@@ -67,6 +113,29 @@
         "startChar": 0,
         "endLine": 2260,
         "endChar": 0
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ccacdbe3_4c2481d5",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 775,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-02-22T21:22:17Z",
+      "side": 1,
+      "message": "empty",
+      "range": {
+        "startLine": 774,
+        "startChar": 23,
+        "endLine": 775,
+        "endChar": 17
       },
       "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
