@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d43d5206_882fcb3b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2245,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-22T22:33:22Z",
+      "side": 1,
+      "message": "Please read my first answer.\nOnce again, you need to know that mute state and media direction are not the same.\nSIP/SDP RFC does not define the mute, it only defines the media direction.\nSo you can mute the local media either by setting the media direction to recvonly/inactive, or by muting the local capture (the RTP packet will contain silence).\nFor the video, the first method is used, for audio the second is used. I do not know why. I asked many times, I haven\u0027t got an answer. But this is fine for me as long as we are consistent.\n\nNow, I am using the media direction in the SDP to know if the peer is sending the media (video in particular) to know if I need to start the receiver/renderer or not.\n\nI don\u0027t know what are you suggesting, but please be aware that from SDP/SIP perspective, the media configuration must comply to the negotiated SDP.\nFor instance, if the media direction for the audio is set sendrecv, we must send RTP packets with the negotiated codec, and be prepared to receive RTP packet as well.\n\nNow, since it was decided that the audio mute is done by muting the local capture, we need to pass that information. If do not like the callback, suggest anything you want, but again do not confuse the mute with the media direction.",
+      "parentUuid": "1bcf11d1_39a46277",
+      "range": {
+        "startLine": 2243,
+        "startChar": 34,
+        "endLine": 2245,
+        "endChar": 5
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cbed89e4_eb723d30",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 5
@@ -131,6 +155,30 @@
       "writtenOn": "2022-02-22T21:22:17Z",
       "side": 1,
       "message": "empty",
+      "range": {
+        "startLine": 774,
+        "startChar": 23,
+        "endLine": 775,
+        "endChar": 17
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "50fe6658_a6d3a675",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 775,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-22T22:33:22Z",
+      "side": 1,
+      "message": "indeed. fixed",
+      "parentUuid": "ccacdbe3_4c2481d5",
       "range": {
         "startLine": 774,
         "startChar": 23,
