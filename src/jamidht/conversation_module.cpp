@@ -1484,6 +1484,12 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
 std::map<std::string, std::string>
 ConversationModule::conversationInfos(const std::string& conversationId) const
 {
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+        auto itReq = pimpl_->conversationsRequests_.find(conversationId);
+        if (itReq != pimpl_->conversationsRequests_.end())
+            return itReq->second.metadatas;
+    }
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
