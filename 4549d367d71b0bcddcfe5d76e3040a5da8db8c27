@@ -74,6 +74,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "bb7b5509_8dd8bc04",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2245,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-23T21:59:28Z",
+      "side": 1,
+      "message": "\"And this is my comment since patchset 1, why Sdp::mediaDirection should contains a different path for audio\"\nBecause we want to control the media direction regardless of the mute state\n\n\"what I suggest is that upper (not sdp.cpp) classes should never pass muted_ \u003d true for choosing a media direction for audio ...\"\n\nYou want to have two mute states: one for SDP and one for the rest. So, for the same instance (audio in this case) the same attribute (mute) will have different values depending in which place is used. This is a very bad idea and a very bad design. Furthermore, you are still trying to couple the mute with the media direction.\n\n\"That\u0027s the whole point of \"My question is where is the bug located?\"\n\nI think the problem is you did not understand the rework of the re-invite I did in the previous, and possibly the problem with the previous re-invite, otherwise the current issue will be trivial to understand.I will try to summarize.\n\nPrior to my patch, when a re-invite is performed, the media transport (ICE, ...) and the RTP streams (sockets, media sender/receiver, codecs, ...) are destroyed and new sessions are negotiated. So when the SDP is created, it was created as if it was a new call, so the audio was not muted. It will be muted locally later if it was already muted.\nWith my patch, the RTP streams and transport are not destroyed. If the video is muted, it will recreate a new SDP using the updated state (video muted and audio unchanged). But here, if the audio was muted, then SDP will put a\u003drecvonly.\nSo we need to tell the SDP that even if the media is muted, we need to set direction to a\u003dsendrecv.\nIMHO, the callback is a very clean option, although I am open to any other alternative. However, overriding the mute state is a very bad solution.",
+      "parentUuid": "6dbc285f_12533a46",
+      "range": {
+        "startLine": 2243,
+        "startChar": 34,
+        "endLine": 2245,
+        "endChar": 5
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cbed89e4_eb723d30",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 5
