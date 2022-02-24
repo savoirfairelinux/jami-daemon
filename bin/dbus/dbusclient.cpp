@@ -316,9 +316,9 @@ DBusClient::initLibrary(int flags)
     const std::map<std::string, SharedCallback> videoEvHandlers = {
         exportable_callback<VideoSignal::DeviceEvent>(bind(&DBusVideoManager::deviceEvent, videoM)),
         exportable_callback<VideoSignal::DecodingStarted>(
-            bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5)),
+            bind(&DBusVideoManager::decodingStarted, videoM, _1, _2, _3, _4, _5)),
         exportable_callback<VideoSignal::DecodingStopped>(
-            bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)),
+            bind(&DBusVideoManager::decodingStopped, videoM, _1, _2, _3)),
     };
 #endif
 
