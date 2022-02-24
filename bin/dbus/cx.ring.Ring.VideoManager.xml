@@ -164,7 +164,7 @@
            <tp:docstring>Signal triggered by changes in the detected v4l2 devices, e.g. a camera being unplugged.</tp:docstring>
         </signal>
 
-        <signal name="startedDecoding" tp:name-for-bindings="startedDecoding">
+        <signal name="decodingStarted" tp:name-for-bindings="decodingStarted">
             <tp:docstring>Signal triggered when video is available in a shared memory buffer.</tp:docstring>
             <arg type="s" name="id">
               <tp:docstring>The ID of the call associated with the video, or "local" in the case of local video</tp:docstring>
@@ -183,7 +183,7 @@
             </arg>
         </signal>
 
-        <signal name="stoppedDecoding" tp:name-for-bindings="stoppedDecoding">
+        <signal name="decodingStopped" tp:name-for-bindings="decodingStopped">
             <tp:docstring>Signal triggered when video is no longer available in a shared memory buffer.</tp:docstring>
             <arg type="s" name="id">
               <tp:docstring>The ID of the call associated with the video, or "local" in the case of local video</tp:docstring>
