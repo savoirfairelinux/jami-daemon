@@ -2,7 +2,7 @@
 include $(top_srcdir)/globals.mk
 
 AM_CXXFLAGS += -I$(top_srcdir)/src
-AM_LDFLAGS += $(CPPUNIT_LIBS)
+AM_LDFLAGS += $(CPPUNIT_LIBS) -static
 LDADD = $(top_builddir)/src/libring.la
 check_PROGRAMS =
 

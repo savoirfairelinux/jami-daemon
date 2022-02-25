@@ -168,7 +168,7 @@ dnl fail on anything other than pass_all.
 AC_CACHE_VAL(lt_cv_deplibs_check_method,
     [lt_cv_deplibs_check_method=pass_all])
 
-LT_INIT([dlopen win32-dll shared disable-static])
+LT_INIT([dlopen win32-dll shared static])
 
 dnl Define C++ as default language
 LT_LANG(C++)
