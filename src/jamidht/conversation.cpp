@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2014-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2014-2022 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
@@ -320,6 +320,8 @@ public:
         msgpack::pack(file, lastDisplayed_);
     }
 
+    void voteUnban(const std::string& contactUri, const OnDoneCb& cb);
+
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
@@ -521,8 +523,18 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
         return;
     }
     if (isBanned(contactUri)) {
-        JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
-        cb(false, "");
+        if (pimpl_->isAdmin()) {
+            dht::ThreadPool::io().run([
+                w = weak(),
+                contactUri = std::move(contactUri),
+                cb = std::move(cb)] {
+                    if (auto sthis = w.lock())
+                        sthis->pimpl_->voteUnban(contactUri, cb);
+                });
+        } else {
+            JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
+            cb(false, "");
+        }
         return;
     }
 
@@ -537,6 +549,42 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
                 cb(!commit.empty(), commit);
         }
     });
+}
+
+void
+Conversation::Impl::voteUnban(const std::string& contactUri, const OnDoneCb& cb)
+{
+    // Check if admin
+    if (!isAdmin()) {
+        JAMI_WARN("You're not an admin of this repo. Cannot unban %s", contactUri.c_str());
+        cb(false, {});
+        return;
+    }
+    // Vote for removal
+    std::unique_lock<std::mutex> lk(writeMtx_);
+    auto voteCommit = repository_->voteUnban(contactUri);
+    if (voteCommit.empty()) {
+        JAMI_WARN("Unbanning %s failed", contactUri.c_str());
+        cb(false, "");
+        return;
+    }
+
+    auto lastId = voteCommit;
+    std::vector<std::string> commits;
+    commits.emplace_back(voteCommit);
+
+    // If admin, check vote
+    auto resolveCommit = repository_->resolveVote(contactUri, false, false);
+    if (!resolveCommit.empty()) {
+        commits.emplace_back(resolveCommit);
+        lastId = resolveCommit;
+        JAMI_WARN("Vote solved for unbanning %s.",
+                    contactUri.c_str());
+    }
+    announce(commits);
+    lk.unlock();
+    if (cb)
+        cb(!lastId.empty(), lastId);
 }
 
 void

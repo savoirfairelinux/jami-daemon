@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2019-2022 Savoir-faire Linux Inc.
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -258,8 +258,35 @@ public:
      */
     ConversationMode mode() const;
 
+    /**
+     * The voting system is divided in two parts. The voting phase where
+     * admins can decide an action (such as kicking someone)
+     * and the resolving phase, when > 50% of the admins voted, we can
+     * considered the vote as finished
+     */
+    /**
+     * Add a vote to kick a device or a user
+     * @param uri       identified of the user/device
+     * @param isDevice  if it's a device
+     * @return the commit id or empty if failed
+     */
     std::string voteKick(const std::string& uri, bool isDevice);
-    std::string resolveVote(const std::string& uri, bool isDevice);
+    /**
+     * Add a vote to re-add a user
+     * @param uri       identified of the user
+     * @return the commit id or empty if failed
+     */
+    std::string voteUnban(const std::string& uri);
+    /**
+     * Validate if a vote is finished
+     * @param uri       identified of the user/device
+     * @param isDevice  if it's a device
+     * @param isKick    if the vote is a kick or not
+     * @note isKick may be replaced by a vote type. For now, there
+     * is only 2 votes planned.
+     * @return the commit id or empty if failed
+     */
+    std::string resolveVote(const std::string& uri, bool isDevice, bool isKick = true);
 
     /**
      * Validate a fetch with remote device
