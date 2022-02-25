@@ -174,7 +174,7 @@ public:
      * @return true if uri is a member
      */
     bool isMember(const std::string& uri, bool includeInvited = false) const;
-    bool isBanned(const std::string& uri, bool isDevice = false) const;
+    bool isBanned(const std::string& uri) const;
 
     // Message send
     void sendMessage(std::string&& message,
