@@ -1,8 +1,10 @@
 # Rules for the test code (use `make check` to execute)
 include $(top_srcdir)/globals.mk
 
+# The unit tests require hidden symbols.  Thus, we link the tests
+# against a static version of libjami instead.
 AM_CXXFLAGS += -I$(top_srcdir)/src
-AM_LDFLAGS += $(CPPUNIT_LIBS)
+AM_LDFLAGS += $(CPPUNIT_LIBS) -static
 LDADD = $(top_builddir)/src/libring.la
 check_PROGRAMS =
 
