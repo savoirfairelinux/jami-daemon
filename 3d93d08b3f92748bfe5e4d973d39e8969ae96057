@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "663c9d99_d1822891",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-02-25T20:58:00Z",
+      "side": 1,
+      "message": "The explanation should be in the code, not in the commit message.",
+      "revId": "3d93d08b3f92748bfe5e4d973d39e8969ae96057",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3d1b1744_105c15ce",
         "filename": "test/unitTest/Makefile.am",
         "patchSetId": 1
