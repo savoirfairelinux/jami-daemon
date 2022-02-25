@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2019-2022 Savoir-faire Linux Inc.
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -99,6 +99,11 @@ public:
                           const std::string& uriMember,
                           const std::string& commitid,
                           const std::string& parentId) const;
+    bool checkValidVoteResolution(const std::string& userDevice,
+                                  const std::string& uriMember,
+                                  const std::string& commitId,
+                                  const std::string& parentId,
+                                  const std::string& voteType) const;
     bool checkValidProfileUpdate(const std::string& userDevice,
                                  const std::string& commitid,
                                  const std::string& parentId) const;
@@ -130,6 +135,9 @@ public:
     std::string getCommitType(const std::string& commitMsg) const;
 
     std::vector<std::string> getInitialMembers() const;
+
+    bool resolveBan(const std::string& type, const std::string& uri);
+    bool resolveUnban(const std::string& type, const std::string& uri);
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
@@ -892,20 +900,25 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     }
 
     // Check votedFile path
-    const std::regex regex_votes("votes.(members|devices).(\\w+).(\\w+)");
+    const std::regex regex_votes("votes.(\\w+).(members|devices|admins|invited).(\\w+).(\\w+)");
     std::smatch base_match;
-    if (!std::regex_match(votedFile, base_match, regex_votes) or base_match.size() != 4) {
+    if (!std::regex_match(votedFile, base_match, regex_votes) or base_match.size() != 5) {
         JAMI_WARN("Invalid votes path: %s", votedFile.c_str());
         return false;
     }
 
-    std::string matchedUri = base_match[3];
+    std::string matchedUri = base_match[4];
     if (matchedUri != userUri) {
         JAMI_ERR("Admin voted for other user: %s vs %s", userUri.c_str(), matchedUri.c_str());
         return false;
     }
-    std::string votedUri = base_match[2];
-    std::string type = base_match[1];
+    std::string votedUri = base_match[3];
+    std::string type = base_match[2];
+    std::string voteType = base_match[1];
+    if (voteType != "ban" && voteType != "unban") {
+        JAMI_ERR("Unrecognized vote %s", voteType.c_str());
+        return false;
+    }
 
     // Check that vote file is empty and wasn't modified
     if (fileAtTree(votedFile, treeOld)) {
@@ -926,7 +939,7 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     }
 
     // Check that peer voted is only other device or other member
-    if (type == "members") {
+    if (type != "devices") {
         if (votedUri == userUri) {
             JAMI_ERR("Detected vote for self: %s", votedUri.c_str());
             return false;
@@ -937,7 +950,7 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
             JAMI_ERR("No member file found for vote: %s", votedUri.c_str());
             return false;
         }
-    } else if (type == "devices") {
+    } else {
         // Check not current device
         if (votedUri == userDevice) {
             JAMI_ERR("Detected vote for self: %s", votedUri.c_str());
@@ -949,9 +962,6 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
             JAMI_ERR("No device file found for vote: %s", votedUri.c_str());
             return false;
         }
-    } else {
-        JAMI_ERR("Unknown vote type: %s", type.c_str());
-        return false;
     }
 
     return true;
@@ -1109,15 +1119,13 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
                                                const std::string& parentId) const
 {
     auto userUri = uriFromDevice(userDevice);
-    auto removeSelf = userUri == uriMember;
 
     // Retrieve tree for recent commit
     auto repo = repository();
     if (!repo)
         return false;
-    auto treeNew = treeAtCommit(repo.get(), commitId);
     auto treeOld = treeAtCommit(repo.get(), parentId);
-    if (not treeNew or not treeOld)
+    if (not treeOld)
         return false;
 
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
@@ -1127,39 +1135,19 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
     std::string memberFile = fmt::format("members/{}.crt", uriMember);
     std::string crlFile = fmt::format("CRLs/{}", uriMember);
     std::string invitedFile = fmt::format("invited/{}", uriMember);
-    std::vector<std::string> voters;
     std::vector<std::string> devicesRemoved;
-    std::vector<std::string> bannedFiles;
-    // Check that no weird file is added nor removed
 
-    const std::regex regex_votes("votes.(members|devices).(\\w+).(\\w+)");
+    // Check that no weird file is added nor removed
     const std::regex regex_devices("devices.(\\w+)\\.crt");
-    const std::regex regex_banned("banned.(members|devices).(\\w+)\\.crt");
     std::smatch base_match;
     for (const auto& f : changedFiles) {
-        if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile || f == invitedFile) {
+        if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile
+            || f == invitedFile) {
             // Ignore
             continue;
-        } else if (std::regex_match(f, base_match, regex_votes)) {
-            if (base_match.size() != 4 or base_match[2] != uriMember) {
-                JAMI_ERR("Invalid vote file detected: %s", f.c_str());
-                return false;
-            }
-            voters.emplace_back(base_match[3]);
-            // Check that votes were not added here
-            if (!fileAtTree(f, treeOld)) {
-                JAMI_ERR("invalid vote added (%s)", f.c_str());
-                return false;
-            }
         } else if (std::regex_match(f, base_match, regex_devices)) {
             if (base_match.size() == 2)
                 devicesRemoved.emplace_back(base_match[1]);
-        } else if (std::regex_match(f, base_match, regex_banned)) {
-            bannedFiles.emplace_back(f);
-            if (base_match.size() != 3 or base_match[2] != uriMember) {
-                JAMI_ERR("Invalid banned file detected :%s", f.c_str());
-                return false;
-            }
         } else {
             JAMI_ERR("Unwanted changed file detected: %s", f.c_str());
             return false;
@@ -1180,11 +1168,100 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
         }
     }
 
-    if (removeSelf) {
-        return bannedFiles.empty() && voters.empty();
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDevice,
+                                                       const std::string& uriMember,
+                                                       const std::string& commitId,
+                                                       const std::string& parentId,
+                                                       const std::string& voteType) const
+{
+    auto userUri = uriFromDevice(userDevice);
+
+    // Retrieve tree for recent commit
+    auto repo = repository();
+    if (!repo)
+        return false;
+    auto treeOld = treeAtCommit(repo.get(), parentId);
+    if (not treeOld)
+        return false;
+
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
+    std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
+    std::string adminFile = fmt::format("admins/{}.crt", uriMember);
+    std::string memberFile = fmt::format("members/{}.crt", uriMember);
+    std::string crlFile = fmt::format("CRLs/{}", uriMember);
+    std::string invitedFile = fmt::format("invited/{}", uriMember);
+    std::vector<std::string> voters;
+    std::vector<std::string> devicesRemoved;
+    std::vector<std::string> bannedFiles;
+    // Check that no weird file is added nor removed
+
+    const std::regex regex_votes("votes." + voteType
+                                 + ".(members|devices|admins|invited).(\\w+).(\\w+)");
+    const std::regex regex_devices("devices.(\\w+)\\.crt");
+    const std::regex regex_banned("banned.(members|devices|admins).(\\w+)\\.crt");
+    const std::regex regex_banned_invited("banned.(invited).(\\w+)");
+    std::smatch base_match;
+    for (const auto& f : changedFiles) {
+        if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile
+            || f == invitedFile) {
+            // Ignore
+            continue;
+        } else if (std::regex_match(f, base_match, regex_votes)) {
+            if (base_match.size() != 4 or base_match[2] != uriMember) {
+                JAMI_ERR("Invalid vote file detected: %s", f.c_str());
+                return false;
+            }
+            voters.emplace_back(base_match[3]);
+            // Check that votes were not added here
+            if (!fileAtTree(f, treeOld)) {
+                JAMI_ERR("invalid vote added (%s)", f.c_str());
+                return false;
+            }
+        } else if (std::regex_match(f, base_match, regex_devices)) {
+            if (base_match.size() == 2)
+                devicesRemoved.emplace_back(base_match[1]);
+        } else if (std::regex_match(f, base_match, regex_banned)
+                   || std::regex_match(f, base_match, regex_banned_invited)) {
+            bannedFiles.emplace_back(f);
+            if (base_match.size() != 3 or base_match[2] != uriMember) {
+                JAMI_ERR("Invalid banned file detected : %s", f.c_str());
+                return false;
+            }
+        } else {
+            JAMI_ERR("Unwanted changed file detected: %s", f.c_str());
+            return false;
+        }
     }
 
-    // If not for self check that user device is admin
+    // Check that removed devices are for removed member (or directly uriMember)
+    for (const auto& deviceUri : devicesRemoved) {
+        deviceFile = fmt::format("devices/{}.crt", deviceUri);
+        if (voteType == "ban") {
+            // If we ban a device, it should be there before
+            if (!fileAtTree(deviceFile, treeOld)) {
+                JAMI_ERR("device not found added (%s)", deviceFile.c_str());
+                return false;
+            }
+        } else if (voteType == "unban") {
+            // If we unban a device, it should not be there before
+            if (fileAtTree(deviceFile, treeOld)) {
+                JAMI_ERR("device not found added (%s)", deviceFile.c_str());
+                return false;
+            }
+        }
+        if (uriMember != uriFromDevice(deviceUri)
+            and uriMember != deviceUri /* If device is removed */) {
+            JAMI_ERR("device removed but not for removed user (%s)", deviceFile.c_str());
+            return false;
+        }
+    }
+
+    // Check that voters are admins
     adminFile = fmt::format("admins/{}.crt", userUri);
     if (!fileAtTree(adminFile, treeOld)) {
         JAMI_ERR("admin file (%s) not found", adminFile.c_str());
@@ -2344,9 +2421,13 @@ ConversationRepository::Impl::validCommits(
                         }
                         return false;
                     }
-                } else if (action == "ban") {
+                } else if (action == "ban" || action == "unban") {
                     // Note device.size() == "member".size()
-                    if (!checkValidRemove(userDevice, uriMember, commit.id, commit.parents[0])) {
+                    if (!checkValidVoteResolution(userDevice,
+                                                  uriMember,
+                                                  commit.id,
+                                                  commit.parents[0],
+                                                  action)) {
                         JAMI_WARN(
                             "Malformed removes commit %s. Please check you use the latest version "
                             "of Jami, or that your contact is not doing unwanted stuff.",
@@ -3012,10 +3093,8 @@ ConversationRepository::mode() const
 }
 
 std::string
-ConversationRepository::voteKick(const std::string& uri, bool isDevice)
+ConversationRepository::voteKick(const std::string& uri, const std::string& type)
 {
-    // Add vote + commit
-    // TODO simplify
     auto repo = pimpl_->repository();
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
@@ -3030,9 +3109,13 @@ ConversationRepository::voteKick(const std::string& uri, bool isDevice)
         return {};
     }
 
-    // TODO avoid duplicate
-    auto relativeVotePath = std::string("votes") + DIR_SEPARATOR_STR
-                            + (isDevice ? "devices" : "members") + DIR_SEPARATOR_STR + uri;
+    if (!fileutils::isFile(
+            fmt::format("{}/{}/{}{}", repoPath, type, uri, (type != "invited" ? ".crt" : "")))) {
+        JAMI_WARN("Didn't found file for %s with type %s", uri.c_str(), type.c_str());
+        return {};
+    }
+
+    auto relativeVotePath = fmt::format("votes/ban/{}/{}", type, uri);
     auto voteDirectory = repoPath + DIR_SEPARATOR_STR + relativeVotePath;
     if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
         JAMI_ERR("Error when creating %s. Abort vote", voteDirectory.c_str());
@@ -3060,7 +3143,146 @@ ConversationRepository::voteKick(const std::string& uri, bool isDevice)
 }
 
 std::string
-ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
+ConversationRepository::voteUnban(const std::string& uri, const std::string& type)
+{
+    auto repo = pimpl_->repository();
+    auto account = pimpl_->account_.lock();
+    if (!account || !repo)
+        return {};
+    std::string repoPath = git_repository_workdir(repo.get());
+    auto cert = account->identity().second;
+    if (!cert || !cert->issuer)
+        return {};
+    auto adminUri = cert->issuer->getId().toString();
+
+    auto relativeVotePath = fmt::format("votes/unban/{}/{}", type, uri);
+    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + relativeVotePath;
+    if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
+        JAMI_ERR("Error when creating %s. Abort vote", voteDirectory.c_str());
+        return {};
+    }
+    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
+    if (!voteFile.is_open()) {
+        JAMI_ERR("Could not write data to %s", votePath.c_str());
+        return {};
+    }
+    voteFile.close();
+
+    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri);
+    if (!pimpl_->add(toAdd.c_str()))
+        return {};
+
+    Json::Value json;
+    json["uri"] = uri;
+    json["type"] = "vote";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    return commitMessage(Json::writeString(wbuilder, json));
+}
+
+bool
+ConversationRepository::Impl::resolveBan(const std::string& type, const std::string& uri)
+{
+    auto repo = repository();
+    std::string repoPath = git_repository_workdir(repo.get());
+    std::string bannedPath = repoPath + "banned";
+    std::string devicesPath = repoPath + "devices";
+    // Move from device or members file into banned
+    auto crtStr = (type != "invited" ? ".crt" : "");
+    std::string originFilePath = fmt::format("{}/{}/{}{}", repoPath, type, uri, crtStr);
+
+    auto destPath = bannedPath + DIR_SEPARATOR_STR + type;
+    auto destFilePath = fmt::format("{}/{}{}", destPath, uri, crtStr);
+    if (!fileutils::recursive_mkdir(destPath, 0700)) {
+        JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
+        return false;
+    }
+
+    if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+        JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
+                 originFilePath.c_str(),
+                 destFilePath.c_str());
+        return false;
+    }
+
+    // If members, remove related devices and mark as banned
+    if (type != "devices") {
+        for (const auto& certificate : fileutils::readDirectory(devicesPath)) {
+            auto certPath = fileutils::getFullPath(devicesPath, certificate);
+            auto deviceCert = fileutils::loadTextFile(certPath);
+            try {
+                crypto::Certificate cert(deviceCert);
+                if (auto issuer = cert.issuer)
+                    if (issuer->toString() == uri)
+                        fileutils::remove(certPath, true);
+            } catch (...) {
+                continue;
+            }
+        }
+        std::lock_guard<std::mutex> lk(membersMtx_);
+        auto updated = false;
+
+        for (auto& member : members_) {
+            if (member.uri == uri) {
+                updated = true;
+                member.role = MemberRole::BANNED;
+                break;
+            }
+        }
+        if (!updated)
+            members_.emplace_back(ConversationMember {uri, MemberRole::BANNED});
+    }
+    return true;
+}
+
+bool
+ConversationRepository::Impl::resolveUnban(const std::string& type, const std::string& uri)
+{
+    auto repo = repository();
+    std::string repoPath = git_repository_workdir(repo.get());
+    std::string bannedPath = repoPath + "banned";
+    auto crtStr = (type != "invited" ? ".crt" : "");
+    auto originFilePath = fmt::format("{}/{}/{}{}", bannedPath, type, uri, crtStr);
+    auto destPath = repoPath + DIR_SEPARATOR_STR + type;
+    auto destFilePath = fmt::format("{}/{}{}", destPath, uri, crtStr);
+    if (!fileutils::recursive_mkdir(destPath, 0700)) {
+        JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
+        return false;
+    }
+    if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+        JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
+                 originFilePath.c_str(),
+                 destFilePath.c_str());
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lk(membersMtx_);
+    auto updated = false;
+
+    auto role = MemberRole::MEMBER;
+    if (type == "invited")
+        role = MemberRole::INVITED;
+    else if (type == "admins")
+        role = MemberRole::ADMIN;
+
+    for (auto& member : members_) {
+        if (member.uri == uri) {
+            updated = true;
+            member.role = role;
+            break;
+        }
+    }
+    if (!updated)
+        members_.emplace_back(ConversationMember {uri, role});
+    return true;
+}
+
+std::string
+ConversationRepository::resolveVote(const std::string& uri,
+                                    const std::string& type,
+                                    const std::string& voteType)
 {
     // Count ratio admin/votes
     auto nbAdmins = 0, nbVotes = 0;
@@ -3070,17 +3292,9 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         return {};
     std::string repoPath = git_repository_workdir(repo.get());
     std::string adminsPath = repoPath + "admins";
-    std::string invitedPath = repoPath + "invited";
-    std::string membersPath = repoPath + "members";
-    std::string devicesPath = repoPath + "devices";
-    std::string bannedPath = repoPath + "banned";
-    auto isAdmin = fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
-    auto isInvited = fileutils::isFile(fileutils::getFullPath(invitedPath, uri));
+    auto votePath = fmt::format("{}/{}", voteType, type);
 
-    auto voteDirectory = fmt::format("{}/votes/{}/{}",
-                                     repoPath,
-                                     (isDevice ? "devices" : "members"),
-                                     uri);
+    auto voteDirectory = fmt::format("{}/votes/{}/{}", repoPath, votePath, uri);
     for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
@@ -3098,43 +3312,12 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         // Remove vote directory
         fileutils::removeAll(voteDirectory, true);
 
-        // Move from device or members file into banned
-        std::string originFilePath = fmt::format("{}/{}.crt", membersPath, uri);
-        if (isDevice)
-            originFilePath = fmt::format("{}/{}.crt", devicesPath, uri);
-        else if (isAdmin)
-            originFilePath = fmt::format("{}/{}.crt", adminsPath, uri);
-        else if (isInvited)
-            originFilePath = fmt::format("{}/{}", invitedPath, uri);
-
-        auto destPath = bannedPath + DIR_SEPARATOR_STR + (isDevice ? "devices" : "members");
-        auto destFilePath = fmt::format("{}/{}.crt", destPath, uri);
-        if (!fileutils::recursive_mkdir(destPath, 0700)) {
-            JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
-            return {};
-        }
-
-        if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
-            JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
-                     originFilePath.c_str(),
-                     destFilePath.c_str());
-            return {};
-        }
-
-        // If members, remove related devices
-        if (!isDevice) {
-            for (const auto& certificate : fileutils::readDirectory(devicesPath)) {
-                auto certPath = fileutils::getFullPath(devicesPath, certificate);
-                auto deviceCert = fileutils::loadTextFile(certPath);
-                try {
-                    crypto::Certificate cert(deviceCert);
-                    if (auto issuer = cert.issuer)
-                        if (issuer->toString() == uri)
-                            fileutils::remove(certPath, true);
-                } catch (...) {
-                    continue;
-                }
-            }
+        if (voteType == "ban") {
+            if (!pimpl_->resolveBan(type, uri))
+                return {};
+        } else if (voteType == "unban") {
+            if (!pimpl_->resolveUnban(type, uri))
+                return {};
         }
 
         // Commit
@@ -3142,27 +3325,12 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
             return {};
 
         Json::Value json;
-        json["action"] = "ban";
+        json["action"] = voteType;
         json["uri"] = uri;
         json["type"] = "member";
         Json::StreamWriterBuilder wbuilder;
         wbuilder["commentStyle"] = "None";
         wbuilder["indentation"] = "";
-
-        if (!isDevice) {
-            std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
-            auto updated = false;
-
-            for (auto& member : pimpl_->members_) {
-                if (member.uri == uri) {
-                    updated = true;
-                    member.role = MemberRole::BANNED;
-                    break;
-                }
-            }
-            if (!updated)
-                pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::BANNED});
-        }
         return commitMessage(Json::writeString(wbuilder, json));
     }
 
