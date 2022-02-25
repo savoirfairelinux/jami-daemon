@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2014-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2014-2022 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
@@ -222,6 +222,8 @@ public:
                             action = 2;
                         else if (actionStr == "ban")
                             action = 3;
+                        else if (actionStr == "unban")
+                            action = 4;
                         if (action != -1) {
                             announceMember = true;
                             emitSignal<DRing::ConversationSignal::ConversationMemberEvent>(
@@ -318,6 +320,28 @@ public:
     {
         std::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, lastDisplayed_);
+    }
+
+    void voteUnban(const std::string& contactUri, const std::string& type, const OnDoneCb& cb);
+
+    std::string bannedType(const std::string& uri) const
+    {
+        auto shared = account_.lock();
+        if (!shared)
+            return {};
+        auto bannedMember = fmt::format("{}/banned/members/{}.crt", repoPath(), uri);
+        if (fileutils::isFile(bannedMember))
+            return "members";
+        auto bannedAdmin = fmt::format("{}/banned/admins/{}.crt", repoPath(), uri);
+        if (fileutils::isFile(bannedAdmin))
+            return "admins";
+        auto bannedInvited = fmt::format("{}/banned/invited/{}", repoPath(), uri);
+        if (fileutils::isFile(bannedInvited))
+            return "invited";
+        auto bannedDevice = fmt::format("{}/banned/devices/{}.crt", repoPath(), uri);
+        if (fileutils::isFile(bannedDevice))
+            return "devices";
+        return {};
     }
 
     std::unique_ptr<ConversationRepository> repository_;
@@ -521,8 +545,23 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
         return;
     }
     if (isBanned(contactUri)) {
-        JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
-        cb(false, "");
+        if (pimpl_->isAdmin()) {
+            dht::ThreadPool::io().run(
+                [w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
+                    if (auto sthis = w.lock()) {
+                        auto members = sthis->pimpl_->repository_->members();
+                        std::string type = sthis->pimpl_->bannedType(contactUri);
+                        if (type.empty()) {
+                            cb(false, {});
+                            return;
+                        }
+                        sthis->pimpl_->voteUnban(contactUri, type, cb);
+                    }
+                });
+        } else {
+            JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
+            cb(false, "");
+        }
         return;
     }
 
@@ -540,6 +579,44 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
 }
 
 void
+Conversation::Impl::voteUnban(const std::string& contactUri,
+                              const std::string& type,
+                              const OnDoneCb& cb)
+{
+    // Check if admin
+    if (!isAdmin()) {
+        JAMI_WARN("You're not an admin of this repo. Cannot unban %s", contactUri.c_str());
+        cb(false, {});
+        return;
+    }
+    // Vote for removal
+
+    std::unique_lock<std::mutex> lk(writeMtx_);
+    auto voteCommit = repository_->voteUnban(contactUri, type);
+    if (voteCommit.empty()) {
+        JAMI_WARN("Unbanning %s failed", contactUri.c_str());
+        cb(false, "");
+        return;
+    }
+
+    auto lastId = voteCommit;
+    std::vector<std::string> commits;
+    commits.emplace_back(voteCommit);
+
+    // If admin, check vote
+    auto resolveCommit = repository_->resolveVote(contactUri, type, "unban");
+    if (!resolveCommit.empty()) {
+        commits.emplace_back(resolveCommit);
+        lastId = resolveCommit;
+        JAMI_WARN("Vote solved for unbanning %s.", contactUri.c_str());
+    }
+    announce(commits);
+    lk.unlock();
+    if (cb)
+        cb(!lastId.empty(), lastId);
+}
+
+void
 Conversation::removeMember(const std::string& contactUri, bool isDevice, const OnDoneCb& cb)
 {
     dht::ThreadPool::io().run([w = weak(),
@@ -553,9 +630,34 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                 cb(false, {});
                 return;
             }
+
+            // Get current user type
+            std::string type;
+            if (isDevice) {
+                type = "devices";
+            } else {
+                auto members = sthis->pimpl_->repository_->members();
+                for (const auto& member : members) {
+                    if (member.uri == contactUri) {
+                        if (member.role == MemberRole::INVITED) {
+                            type = "invited";
+                        } else if (member.role == MemberRole::ADMIN) {
+                            type = "admins";
+                        } else if (member.role == MemberRole::MEMBER) {
+                            type = "members";
+                        }
+                        break;
+                    }
+                }
+                if (type.empty()) {
+                    cb(false, {});
+                    return;
+                }
+            }
+
             // Vote for removal
             std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
-            auto voteCommit = sthis->pimpl_->repository_->voteKick(contactUri, isDevice);
+            auto voteCommit = sthis->pimpl_->repository_->voteKick(contactUri, type);
             if (voteCommit.empty()) {
                 JAMI_WARN("Kicking %s failed", contactUri.c_str());
                 cb(false, "");
@@ -567,7 +669,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
             commits.emplace_back(voteCommit);
 
             // If admin, check vote
-            auto resolveCommit = sthis->pimpl_->repository_->resolveVote(contactUri, isDevice);
+            auto resolveCommit = sthis->pimpl_->repository_->resolveVote(contactUri, type, "ban");
             if (!resolveCommit.empty()) {
                 commits.emplace_back(resolveCommit);
                 lastId = resolveCommit;
@@ -577,8 +679,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
             }
             sthis->pimpl_->announce(commits);
             lk.unlock();
-            if (cb)
-                cb(!lastId.empty(), lastId);
+            cb(!lastId.empty(), lastId);
         }
     });
 }
@@ -661,16 +762,9 @@ Conversation::isMember(const std::string& uri, bool includeInvited) const
 }
 
 bool
-Conversation::isBanned(const std::string& uri, bool isDevice) const
+Conversation::isBanned(const std::string& uri) const
 {
-    auto shared = pimpl_->account_.lock();
-    if (!shared)
-        return true;
-
-    auto type = isDevice ? "devices" : "members";
-    auto bannedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "banned" + DIR_SEPARATOR_STR + type
-                      + DIR_SEPARATOR_STR + uri + ".crt";
-    return fileutils::isFile(bannedPath);
+    return !pimpl_->bannedType(uri).empty();
 }
 
 void
