@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "308193d1_1bd6902c",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1105,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-02-25T16:30:50Z",
+      "side": 1,
+      "message": "Note there\u0027s currently a deadlock here because of iceMutex_.",
+      "revId": "3abef4adb21eab750dbb2e5626865faa58bd7f94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
