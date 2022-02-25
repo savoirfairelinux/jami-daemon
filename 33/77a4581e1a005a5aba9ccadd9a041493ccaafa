@@ -1,0 +1,7 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Amin Bandali <amin.bandali@savoirfairelinux.com>
+Submitted-by: Amin Bandali <amin.bandali@savoirfairelinux.com>
+Submitted-at: Fri, 25 Feb 2022 15:19:40 -0500
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/20167
+Project: jami-daemon
+Branch: refs/heads/master
