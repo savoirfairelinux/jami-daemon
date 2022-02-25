@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2019-2022 Savoir-faire Linux Inc.
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -3014,8 +3014,6 @@ ConversationRepository::mode() const
 std::string
 ConversationRepository::voteKick(const std::string& uri, bool isDevice)
 {
-    // Add vote + commit
-    // TODO simplify
     auto repo = pimpl_->repository();
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
@@ -3030,9 +3028,7 @@ ConversationRepository::voteKick(const std::string& uri, bool isDevice)
         return {};
     }
 
-    // TODO avoid duplicate
-    auto relativeVotePath = std::string("votes") + DIR_SEPARATOR_STR
-                            + (isDevice ? "devices" : "members") + DIR_SEPARATOR_STR + uri;
+    auto relativeVotePath = fmt::format("votes/{}/{}", (isDevice ? "devices" : "members"), uri);
     auto voteDirectory = repoPath + DIR_SEPARATOR_STR + relativeVotePath;
     if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
         JAMI_ERR("Error when creating %s. Abort vote", voteDirectory.c_str());
@@ -3060,7 +3056,47 @@ ConversationRepository::voteKick(const std::string& uri, bool isDevice)
 }
 
 std::string
-ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
+ConversationRepository::voteUnban(const std::string& uri)
+{
+    auto repo = pimpl_->repository();
+    auto account = pimpl_->account_.lock();
+    if (!account || !repo)
+        return {};
+    std::string repoPath = git_repository_workdir(repo.get());
+    auto cert = account->identity().second;
+    if (!cert || !cert->issuer)
+        return {};
+    auto adminUri = cert->issuer->getId().toString();
+
+    auto relativeVotePath = fmt::format("votes/members/unban/{}", uri);
+    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + relativeVotePath;
+    if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
+        JAMI_ERR("Error when creating %s. Abort vote", voteDirectory.c_str());
+        return {};
+    }
+    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
+    if (!voteFile.is_open()) {
+        JAMI_ERR("Could not write data to %s", votePath.c_str());
+        return {};
+    }
+    voteFile.close();
+
+    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri);
+    if (!pimpl_->add(toAdd.c_str()))
+        return {};
+
+    Json::Value json;
+    json["uri"] = uri;
+    json["type"] = "vote";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    return commitMessage(Json::writeString(wbuilder, json));
+}
+
+std::string
+ConversationRepository::resolveVote(const std::string& uri, bool isDevice, bool isKick)
 {
     // Count ratio admin/votes
     auto nbAdmins = 0, nbVotes = 0;
@@ -3076,11 +3112,11 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
     std::string bannedPath = repoPath + "banned";
     auto isAdmin = fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
     auto isInvited = fileutils::isFile(fileutils::getFullPath(invitedPath, uri));
+    std::string votePath = (isDevice ? "devices" : "members");
+    if (!isKick)
+        votePath += "/unban";
 
-    auto voteDirectory = fmt::format("{}/votes/{}/{}",
-                                     repoPath,
-                                     (isDevice ? "devices" : "members"),
-                                     uri);
+    auto voteDirectory = fmt::format("{}/votes/{}/{}", repoPath, votePath, uri);
     for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
@@ -3098,43 +3134,82 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         // Remove vote directory
         fileutils::removeAll(voteDirectory, true);
 
-        // Move from device or members file into banned
-        std::string originFilePath = fmt::format("{}/{}.crt", membersPath, uri);
-        if (isDevice)
-            originFilePath = fmt::format("{}/{}.crt", devicesPath, uri);
-        else if (isAdmin)
-            originFilePath = fmt::format("{}/{}.crt", adminsPath, uri);
-        else if (isInvited)
-            originFilePath = fmt::format("{}/{}", invitedPath, uri);
+        if (isKick) {
+            // TODO move in a function
+            // Move from device or members file into banned
+            std::string originFilePath = fmt::format("{}/{}.crt", membersPath, uri);
+            if (isDevice)
+                originFilePath = fmt::format("{}/{}.crt", devicesPath, uri);
+            else if (isAdmin)
+                originFilePath = fmt::format("{}/{}.crt", adminsPath, uri);
+            else if (isInvited)
+                originFilePath = fmt::format("{}/{}", invitedPath, uri);
 
-        auto destPath = bannedPath + DIR_SEPARATOR_STR + (isDevice ? "devices" : "members");
-        auto destFilePath = fmt::format("{}/{}.crt", destPath, uri);
-        if (!fileutils::recursive_mkdir(destPath, 0700)) {
-            JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
-            return {};
-        }
+            auto destPath = bannedPath + DIR_SEPARATOR_STR + (isDevice ? "devices" : "members");
+            auto destFilePath = fmt::format("{}/{}.crt", destPath, uri);
+            if (!fileutils::recursive_mkdir(destPath, 0700)) {
+                JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
+                return {};
+            }
 
-        if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
-            JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
-                     originFilePath.c_str(),
-                     destFilePath.c_str());
-            return {};
-        }
+            if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+                JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
+                        originFilePath.c_str(),
+                        destFilePath.c_str());
+                return {};
+            }
 
-        // If members, remove related devices
-        if (!isDevice) {
-            for (const auto& certificate : fileutils::readDirectory(devicesPath)) {
-                auto certPath = fileutils::getFullPath(devicesPath, certificate);
-                auto deviceCert = fileutils::loadTextFile(certPath);
-                try {
-                    crypto::Certificate cert(deviceCert);
-                    if (auto issuer = cert.issuer)
-                        if (issuer->toString() == uri)
-                            fileutils::remove(certPath, true);
-                } catch (...) {
-                    continue;
+            // If members, remove related devices
+            if (!isDevice) {
+                for (const auto& certificate : fileutils::readDirectory(devicesPath)) {
+                    auto certPath = fileutils::getFullPath(devicesPath, certificate);
+                    auto deviceCert = fileutils::loadTextFile(certPath);
+                    try {
+                        crypto::Certificate cert(deviceCert);
+                        if (auto issuer = cert.issuer)
+                            if (issuer->toString() == uri)
+                                fileutils::remove(certPath, true);
+                    } catch (...) {
+                        continue;
+                    }
+                }
+                std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
+                auto updated = false;
+
+                for (auto& member : pimpl_->members_) {
+                    if (member.uri == uri) {
+                        updated = true;
+                        member.role = MemberRole::BANNED;
+                        break;
+                    }
+                }
+                if (!updated)
+                    pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::BANNED});
+            }
+
+        } else {
+            // TODO move in function
+            auto originFilePath = fmt::format("{}/members/{}.crt", bannedPath, uri);
+            auto destFilePath = fmt::format("{}/{}.crt", membersPath, uri);
+            if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+                JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
+                         originFilePath.c_str(),
+                         destFilePath.c_str());
+                return {};
+            }
+
+            std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
+            auto updated = false;
+
+            for (auto& member : pimpl_->members_) {
+                if (member.uri == uri) {
+                    updated = true;
+                    member.role = MemberRole::MEMBER;
+                    break;
                 }
             }
+            if (!updated)
+                pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::BANNED});
         }
 
         // Commit
@@ -3148,21 +3223,6 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         Json::StreamWriterBuilder wbuilder;
         wbuilder["commentStyle"] = "None";
         wbuilder["indentation"] = "";
-
-        if (!isDevice) {
-            std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
-            auto updated = false;
-
-            for (auto& member : pimpl_->members_) {
-                if (member.uri == uri) {
-                    updated = true;
-                    member.role = MemberRole::BANNED;
-                    break;
-                }
-            }
-            if (!updated)
-                pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::BANNED});
-        }
         return commitMessage(Json::writeString(wbuilder, json));
     }
 
