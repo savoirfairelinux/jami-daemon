@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2017-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2017-2022 Savoir-faire Linux Inc.
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -67,8 +67,9 @@ public:
     void testMemberBanNoBadFile();
     void testMemberTryToRemoveAdmin();
     void testBannedMemberCannotSendMessage();
-    void testAddBannedMember();
+    void testAdminCanReAddMember();
     void testMemberCannotBanOther();
+    void testMemberCannotUnBanOther();
     void testCheckAdminFakeAVoteIsDetected();
     void testAdminCannotKickTheirself();
     void testCommitUnauthorizedUser();
@@ -100,8 +101,9 @@ private:
     CPPUNIT_TEST(testMemberBanNoBadFile);
     CPPUNIT_TEST(testMemberTryToRemoveAdmin);
     CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAddBannedMember);
+    CPPUNIT_TEST(testAdminCanReAddMember);
     CPPUNIT_TEST(testMemberCannotBanOther);
+    CPPUNIT_TEST(testMemberCannotUnBanOther);
     CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
     CPPUNIT_TEST(testAdminCannotKickTheirself);
     CPPUNIT_TEST(testCommitUnauthorizedUser);
@@ -968,7 +970,7 @@ ConversationMembersEventTest::testBannedMemberCannotSendMessage()
 }
 
 void
-ConversationMembersEventTest::testAddBannedMember()
+ConversationMembersEventTest::testAdminCanReAddMember()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -1024,10 +1026,17 @@ ConversationMembersEventTest::testAddBannedMember()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
 
-    // Then check that bobUri cannot be re-added
-    memberMessageGenerated = false;
+    auto members = DRing::getConversationMembers(aliceId, convId);
+    CPPUNIT_ASSERT(members.size() == 1);
+
+    // Then check that bobUri can be re-added
+    memberMessageGenerated = false, voteMessageGenerated = false;
     DRing::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
+
+    members = DRing::getConversationMembers(aliceId, convId);
+    CPPUNIT_ASSERT(members.size() == 2);
     DRing::unregisterSignalHandlers();
 }
 
@@ -1125,6 +1134,112 @@ ConversationMembersEventTest::testMemberCannotBanOther()
 
     DRing::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageBobReceived; }));
+}
+
+void
+ConversationMembersEventTest::testMemberCannotUnBanOther()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto convId = DRing::startConversation(aliceId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
+         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false,
+         carlaConnected = false, messageCarlaReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string&, const std::string&, std::map<std::string, std::string>) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto deviceAnnounced = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                if (deviceAnnounced == "true") {
+                    carlaConnected = true;
+                    cv.notify_one();
+                }
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId && conversationId == convId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "vote") {
+                voteMessageGenerated = true;
+            } else if (accountId == aliceId && conversationId == convId
+                       && message["type"] == "member") {
+                memberMessageGenerated = true;
+            } else if (accountId == bobId && conversationId == convId) {
+                messageBobReceived = true;
+            } else if (accountId == carlaId && conversationId == convId) {
+                messageCarlaReceived = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::OnConversationError>(
+        [&](const std::string& /* accountId */,
+            const std::string& /* conversationId */,
+            int code,
+            const std::string& /* what */) {
+            if (code == 3)
+                errorDetected = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaConnected; }));
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return requestReceived && memberMessageGenerated; }));
+    memberMessageGenerated = false;
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
+    requestReceived = false;
+    memberMessageGenerated = false;
+    DRing::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return requestReceived && memberMessageGenerated; }));
+    memberMessageGenerated = false;
+    messageBobReceived = false;
+    DRing::acceptConversationRequest(carlaId, convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && messageBobReceived; }));
+
+    // Now check that alice, has the only admin, can remove bob
+    memberMessageGenerated = false;
+    messageCarlaReceived = false;
+    voteMessageGenerated = false;
+    DRing::removeConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return memberMessageGenerated && voteMessageGenerated && messageCarlaReceived;
+    }));
+
+    memberMessageGenerated = false;
+    voteMessageGenerated = false;
+    DRing::addConversationMember(carlaId, convId, bobUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() {
+        return memberMessageGenerated && voteMessageGenerated;
+    }));
+    auto members = DRing::getConversationMembers(aliceId, convId);
+    CPPUNIT_ASSERT(members.size() == 2);
 }
 
 void
