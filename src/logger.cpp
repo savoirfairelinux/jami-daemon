@@ -557,7 +557,7 @@ Logger::setFileLog(const std::string& path)
     FileLog::instance().setFile(path);
 }
 
-void
+DRING_PUBLIC void
 Logger::log(int level, const char* file, int line, bool linefeed, const char* fmt, ...)
 {
     va_list ap;
@@ -585,7 +585,7 @@ Logger::setDebugMode(bool enable)
     debugEnabled.store(enable);
 }
 
-void
+DRING_PUBLIC void
 Logger::vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
 {
     if (not debugEnabled.load() and
