@@ -122,6 +122,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d4d59446_4ad994be",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2245,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-02-27T17:35:44Z",
+      "side": 1,
+      "message": "I generally agree with Seb.\nPatchset 2 would be a mergeable fix for now.\n\nThe SDP mechanism is relatively simple: one offer + one answer \u003d one negotiation result. The SDP class should reflect this simplicity IMHO. For a different negotiation result, provide a different offer. If we want the audio to be negotiated as sendrecv, we should pass a non-muted MediaAttribute to createOffer.\n\"You want to have two mute states: one for SDP and one for the rest.\" -\u003e That\u0027s a consequence of the fact we wouldn\u0027t (for now) use the SDP to negotiate the audio state. For the SDP subsystem, the audio would be active, and the SDP logic doesn\u0027t need to be aware of the audio muting logic.\n\nWe could negotiate the audio state with the SDP, but that would require to have a glitch-less renegotiation.",
+      "parentUuid": "806dbf7d_bf183844",
+      "range": {
+        "startLine": 2243,
+        "startChar": 34,
+        "endLine": 2245,
+        "endChar": 5
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cbed89e4_eb723d30",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 5
