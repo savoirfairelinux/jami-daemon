@@ -146,6 +146,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "671878a2_59c6833b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2245,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-02-28T14:57:54Z",
+      "side": 1,
+      "message": "\"If we want the audio to be negotiated as sendrecv, we should pass a non-muted MediaAttribute to createOffer.\"\n\nFOR THE LAST TIME: MEDIA DIRECTION AND MUTE ARE TWO DIFFERENT THINGS. PLEASE READ THE RFC BEFORE MAKING ANY OTHER STATEMENT.\n\nI will revert to patch set two if it allows to move on.",
+      "parentUuid": "d4d59446_4ad994be",
+      "range": {
+        "startLine": 2243,
+        "startChar": 34,
+        "endLine": 2245,
+        "endChar": 5
+      },
+      "revId": "4549d367d71b0bcddcfe5d76e3040a5da8db8c27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cbed89e4_eb723d30",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 5
