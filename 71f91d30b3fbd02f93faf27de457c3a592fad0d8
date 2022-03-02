@@ -56,6 +56,30 @@
       },
       "revId": "71f91d30b3fbd02f93faf27de457c3a592fad0d8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ea5591d_51741ec2",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-03-02T15:59:54Z",
+      "side": 1,
+      "message": "otherwise, if this is okay, I\u0027ll abandon https://review.jami.net/c/jami-daemon/+/21111",
+      "parentUuid": "19c97103_cb58d045",
+      "range": {
+        "startLine": 454,
+        "startChar": 28,
+        "endLine": 454,
+        "endChar": 43
+      },
+      "revId": "71f91d30b3fbd02f93faf27de457c3a592fad0d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
