@@ -45,9 +45,10 @@ DBusPluginManagerInterface::getPluginDetails(const std::string& path)
 
 std::vector<std::map<std::string, std::string>>
 DBusPluginManagerInterface::getPluginPreferences(const std::string& path,
-                                                 const std::string& accountId)
+                                                 const std::string& accountId,
+                                                 const std::string& lang)
 {
-    return DRing::getPluginPreferences(path, accountId);
+    return DRing::getPluginPreferences(path, accountId, lang);
 }
 
 bool

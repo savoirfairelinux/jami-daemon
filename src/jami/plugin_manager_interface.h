@@ -38,7 +38,7 @@ DRING_PUBLIC bool loadPlugin(const std::string& path);
 DRING_PUBLIC bool unloadPlugin(const std::string& path);
 DRING_PUBLIC std::map<std::string, std::string> getPluginDetails(const std::string& path);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getPluginPreferences(
-    const std::string& path, const std::string& accountId);
+    const std::string& path, const std::string& accountId, const std::string& lang);
 DRING_PUBLIC bool setPluginPreference(const std::string& path,
                                       const std::string& accountId,
                                       const std::string& key,

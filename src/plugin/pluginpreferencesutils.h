@@ -41,6 +41,7 @@ public:
      * @brief Given a plugin installation path, returns the path to the
      * preference.json of this plugin.
      * @param rootPath
+     * @param accountId
      * @return preference.json file path.
      */
     static std::string getPreferencesConfigFilePath(const std::string& rootPath,
@@ -67,6 +68,24 @@ public:
     static std::string getAllowDenyListsPath();
 
     /**
+     * @brief Returns the available keys and translations for a given file.
+     * If the locale is not available, return empty map.
+     * @param localeFilePath
+     * @return locales map
+     */
+    static std::map<std::string, std::string> processLocaleFile(const std::string& localeFilePath);
+
+    /**
+     * @brief Returns the available keys and translations for a given plugin.
+     * If the locale is not available, return the english default.
+     * @param rootPath
+     * @param lang
+     * @return locales map
+     */
+    static std::map<std::string, std::string> getLocales(const std::string& rootPath,
+                                                         const std::string& lang);
+
+    /**
      * @brief Returns a colon separated string with values from a json::Value containing an array.
      * @param jsonArray
      * @return Colon separated string with jsonArray contents.
@@ -85,10 +104,13 @@ public:
      * @brief Reads a preference.json file from the plugin installed in rootPath.
      * @param rootPath
      * @param accountId
+     * @param lang
      * @return std::vector<std::map<std::string, std::string>> with preferences.json content
      */
     static std::vector<std::map<std::string, std::string>> getPreferences(
-        const std::string& rootPath, const std::string& accountId = "");
+        const std::string& rootPath,
+        const std::string& accountId = "",
+        const std::string& lang = "");
 
     /**
      * @brief Reads preferences values which were modified from defaultValue

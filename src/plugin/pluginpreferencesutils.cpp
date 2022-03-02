@@ -58,6 +58,54 @@ PluginPreferencesUtils::getAllowDenyListsPath()
            + "allowdeny.msgpack";
 }
 
+std::map<std::string, std::string>
+PluginPreferencesUtils::processLocaleFile(const std::string& preferenceLocaleFilePath)
+{
+    if (!fileutils::isFile(preferenceLocaleFilePath)) {
+        return {};
+    }
+    std::ifstream file(preferenceLocaleFilePath);
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferenceLocaleFilePath));
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    rbuilder["collectComments"] = false;
+    std::string errs;
+    std::set<std::string> keys;
+    std::map<std::string, std::string> locales {};
+    if (file) {
+        // Read the file to a json format
+        bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
+        if (ok) {
+            auto keys = root.getMemberNames();
+            for (const auto key : keys) {
+                auto value = root.get(key, "").asString();
+                locales[key] = value;
+            }
+        }
+    }
+    return locales;
+}
+
+std::map<std::string, std::string>
+PluginPreferencesUtils::getLocales(const std::string& rootPath, const std::string& lang)
+{
+    auto basePath = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "locale"
+                    + DIR_SEPARATOR_CH;
+
+    auto preferenceLocaleFilePath = basePath + "en.json";
+    auto locales = processLocaleFile(preferenceLocaleFilePath);
+
+    if (!lang.empty() && lang != "en") {
+        preferenceLocaleFilePath = basePath + lang + ".json";
+        auto langLocales = processLocaleFile(preferenceLocaleFilePath);
+        for (auto& pair : langLocales) {
+            locales[pair.first] = pair.second;
+        }
+    }
+
+    return locales;
+}
+
 std::string
 PluginPreferencesUtils::convertArrayToString(const Json::Value& jsonArray)
 {
@@ -99,7 +147,9 @@ PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference)
 }
 
 std::vector<std::map<std::string, std::string>>
-PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::string& accountId)
+PluginPreferencesUtils::getPreferences(const std::string& rootPath,
+                                       const std::string& accountId,
+                                       const std::string& lang)
 {
     std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferenceFilePath));
@@ -111,6 +161,9 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
     std::set<std::string> keys;
     std::vector<std::map<std::string, std::string>> preferences;
     if (file) {
+        // Get preferences locale
+        auto locales = getLocales(rootPath, lang);
+
         // Read the file to a json format
         bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
         if (ok && root.isArray()) {
@@ -136,6 +189,14 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
                         }
 
                         if (!preferenceAttributes.empty()) {
+                            if (!locales.empty()) {
+                                for (auto& pair : preferenceAttributes) {
+                                    auto locale = locales.find(pair.second);
+                                    if (locale != locales.end()) {
+                                        pair.second = locale->second;
+                                    }
+                                }
+                            }
                             preferences.push_back(std::move(preferenceAttributes));
                             keys.insert(key);
                         }

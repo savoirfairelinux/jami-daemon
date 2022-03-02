@@ -107,9 +107,10 @@ public:
      * @brief Returns contents of plugin's preferences.json file
      * @param rootPath
      * @param accountId
+     * @param lang
      */
     std::vector<std::map<std::string, std::string>> getPluginPreferences(
-        const std::string& rootPath, const std::string& accountId);
+        const std::string& rootPath, const std::string& accountId, const std::string& lang);
 
     /**
      * @brief Returns a Map with preferences keys and values.
