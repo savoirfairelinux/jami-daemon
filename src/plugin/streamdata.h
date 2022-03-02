@@ -45,8 +45,8 @@ struct StreamData
         : id {std::move(callId)}
         , direction {isReceived}
         , type {mediaType}
-        , conversation {std::move(conversationId)}
         , source {std::move(accountId)}
+        , conversation {std::move(conversationId)}
     {}
     // callId
     const std::string id;
