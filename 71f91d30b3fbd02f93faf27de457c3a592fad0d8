@@ -80,6 +80,30 @@
       },
       "revId": "71f91d30b3fbd02f93faf27de457c3a592fad0d8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f74dbf1_2eb56c62",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-03-02T16:54:14Z",
+      "side": 1,
+      "message": "The refactor of the QT is not reviewed yet, but I think that only SHM will need unmanaged avframe buffers (not handled in this path).\nBut I will for the other patch before resuming the work here.",
+      "parentUuid": "9ea5591d_51741ec2",
+      "range": {
+        "startLine": 454,
+        "startChar": 28,
+        "endLine": 454,
+        "endChar": 43
+      },
+      "revId": "71f91d30b3fbd02f93faf27de457c3a592fad0d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
