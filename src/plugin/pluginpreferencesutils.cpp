@@ -24,6 +24,8 @@
 #include <msgpack.hpp>
 #include <sstream>
 #include <fstream>
+#include <fmt/core.h>
+
 #include "logger.h"
 #include "fileutils.h"
 
@@ -56,6 +58,51 @@ PluginPreferencesUtils::getAllowDenyListsPath()
 {
     return fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH
            + "allowdeny.msgpack";
+}
+
+std::map<std::string, std::string>
+PluginPreferencesUtils::processLocaleFile(const std::string& preferenceLocaleFilePath)
+{
+    if (!fileutils::isFile(preferenceLocaleFilePath)) {
+        return {};
+    }
+    std::ifstream file(preferenceLocaleFilePath);
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    rbuilder["collectComments"] = false;
+    std::string errs;
+    std::map<std::string, std::string> locales {};
+    if (file) {
+        // Read the file to a json format
+        if (Json::parseFromStream(rbuilder, file, &root, &errs)) {
+            auto keys = root.getMemberNames();
+            for (const auto& key : keys) {
+                locales[key] = root.get(key, "").asString();
+            }
+        }
+    }
+    return locales;
+}
+
+std::map<std::string, std::string>
+PluginPreferencesUtils::getLocales(const std::string& rootPath, const std::string& lang)
+{
+    auto pluginName = rootPath.substr(rootPath.find_last_of(DIR_SEPARATOR_CH) + 1);
+    auto basePath = fmt::format("{}/data/locale/{}", rootPath, pluginName + "_");
+
+    std::map<std::string, std::string> locales = {};
+
+    // Get language translations
+    if (!lang.empty()) {
+        locales = processLocaleFile(basePath + lang + ".json");
+    }
+
+    // Get default english values if no translations were found
+    if (locales.empty()) {
+        locales = processLocaleFile(basePath + "en.json");
+    }
+
+    return locales;
 }
 
 std::string
@@ -111,6 +158,10 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
     std::set<std::string> keys;
     std::vector<std::map<std::string, std::string>> preferences;
     if (file) {
+        // Get preferences locale
+        std::string lang = std::locale("").name();
+        auto locales = getLocales(rootPath, std::string(string_remove_suffix(lang, '.')));
+
         // Read the file to a json format
         bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
         if (ok && root.isArray()) {
@@ -136,6 +187,13 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
                         }
 
                         if (!preferenceAttributes.empty()) {
+                            for (const auto& locale : locales) {
+                                for (auto& pair : preferenceAttributes) {
+                                    string_replace(pair.second,
+                                                   "{{" + locale.first + "}}",
+                                                   locale.second);
+                                }
+                            }
                             preferences.push_back(std::move(preferenceAttributes));
                             keys.insert(key);
                         }

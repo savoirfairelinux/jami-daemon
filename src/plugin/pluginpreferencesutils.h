@@ -41,6 +41,7 @@ public:
      * @brief Given a plugin installation path, returns the path to the
      * preference.json of this plugin.
      * @param rootPath
+     * @param accountId
      * @return preference.json file path.
      */
     static std::string getPreferencesConfigFilePath(const std::string& rootPath,
@@ -65,6 +66,24 @@ public:
      * @return allowdeny.msgpack file path.
      */
     static std::string getAllowDenyListsPath();
+
+    /**
+     * @brief Returns the available keys and translations for a given file.
+     * If the locale is not available, return empty map.
+     * @param localeFilePath
+     * @return locales map
+     */
+    static std::map<std::string, std::string> processLocaleFile(const std::string& localeFilePath);
+
+    /**
+     * @brief Returns the available keys and translations for a given plugin.
+     * If the locale is not available, return the english default.
+     * @param rootPath
+     * @param lang
+     * @return locales map
+     */
+    static std::map<std::string, std::string> getLocales(const std::string& rootPath,
+                                                         const std::string& lang);
 
     /**
      * @brief Returns a colon separated string with values from a json::Value containing an array.
