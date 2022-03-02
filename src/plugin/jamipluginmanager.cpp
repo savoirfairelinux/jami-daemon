@@ -223,9 +223,9 @@ JamiPluginManager::getLoadedPlugins() const
 }
 
 std::vector<std::map<std::string, std::string>>
-JamiPluginManager::getPluginPreferences(const std::string& rootPath)
+JamiPluginManager::getPluginPreferences(const std::string& rootPath, const std::string& lang)
 {
-    return PluginPreferencesUtils::getPreferences(rootPath);
+    return PluginPreferencesUtils::getPreferences(rootPath, lang);
 }
 
 bool

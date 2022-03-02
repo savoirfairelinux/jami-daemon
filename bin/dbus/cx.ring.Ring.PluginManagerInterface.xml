@@ -34,6 +34,8 @@
             <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
+            <arg type="s" name="lang" direction="in">
+            </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="PluginPreferences" direction="out" tp:type="String_String_Map">
             </arg>

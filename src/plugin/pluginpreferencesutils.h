@@ -43,7 +43,7 @@ public:
      * @param rootPath
      * @return preference.json file path.
      */
-    static std::string getPreferencesConfigFilePath(const std::string& rootPath);
+    static std::string getPreferencesConfigFilePath(const std::string& rootPath, const std::string& lang = "");
 
     /**
      * @brief Given a plugin installation path, returns the path to the
@@ -81,10 +81,11 @@ public:
     /**
      * @brief Reads a preference.json file from the plugin installed in rootPath.
      * @param rootPath
+     * @param lang
      * @return std::vector<std::map<std::string, std::string>> with preferences.json content
      */
     static std::vector<std::map<std::string, std::string>> getPreferences(
-        const std::string& rootPath);
+        const std::string& rootPath, const std::string& lang = "");
 
     /**
      * @brief Reads preferences values which were modified from defaultValue

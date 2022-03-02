@@ -30,8 +30,12 @@
 namespace jami {
 
 std::string
-PluginPreferencesUtils::getPreferencesConfigFilePath(const std::string& rootPath)
+PluginPreferencesUtils::getPreferencesConfigFilePath(const std::string& rootPath, const std::string& lang)
 {
+    auto langExt = lang.empty() ? "" : "_" + lang;
+    auto fileCandidate = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences" + langExt + ".json";
+    if (fileutils::isFile(fileCandidate))
+        return fileCandidate;
     return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences.json";
 }
 
@@ -89,9 +93,9 @@ PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference)
 }
 
 std::vector<std::map<std::string, std::string>>
-PluginPreferencesUtils::getPreferences(const std::string& rootPath)
+PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::string& lang)
 {
-    std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
+    std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath, lang);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferenceFilePath));
     std::ifstream file(preferenceFilePath);
     Json::Value root;

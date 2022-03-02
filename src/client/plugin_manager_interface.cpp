@@ -52,9 +52,9 @@ getPluginDetails(const std::string& path)
 }
 
 std::vector<std::map<std::string, std::string>>
-getPluginPreferences(const std::string& path)
+getPluginPreferences(const std::string& path, const std::string& lang)
 {
-    return jami::Manager::instance().getJamiPluginManager().getPluginPreferences(path);
+    return jami::Manager::instance().getJamiPluginManager().getPluginPreferences(path, lang);
 }
 
 bool
