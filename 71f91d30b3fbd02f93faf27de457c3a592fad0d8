@@ -33,6 +33,29 @@
       "message": "should be 0:\n\"flags\tSome combination of AV_FRAME_CROP_* flags, or 0.\"",
       "revId": "71f91d30b3fbd02f93faf27de457c3a592fad0d8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "19c97103_cb58d045",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-03-02T15:58:10Z",
+      "side": 1,
+      "message": "afaik this should be checking the unmanaged data according to the rest of the current redesign",
+      "range": {
+        "startLine": 454,
+        "startChar": 28,
+        "endLine": 454,
+        "endChar": 43
+      },
+      "revId": "71f91d30b3fbd02f93faf27de457c3a592fad0d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
