@@ -16,6 +16,24 @@
       "message": "This path should not be needed anymore",
       "revId": "31c4a388f1d561dc3a01de561beddfb1d689e485",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "14ba23a1_f555041b",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-03-04T18:52:21Z",
+      "side": 1,
+      "message": "Agreed, but it is not the objective of the patch. I\u0027d like to confirm the design objectives for such a change(e.g. AVSinkTarget and SinkTarget have little difference at that point).",
+      "parentUuid": "34815af5_5efa07f2",
+      "revId": "31c4a388f1d561dc3a01de561beddfb1d689e485",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
