@@ -39,7 +39,24 @@
 #include "client/videomanager.h"
 #endif // ENABLE_VIDEO
 
+#include <sys/resource.h>
+
 namespace DRing {
+
+void allows_more_fileno()
+{
+    struct rlimit lim;
+
+    getrlimit(RLIMIT_NOFILE, &lim);
+
+    lim.rlim_cur = lim.rlim_max;
+
+    setrlimit(RLIMIT_NOFILE, &lim);
+
+    getrlimit(RLIMIT_NOFILE, &lim);
+
+    JAMI_INFO("RLIMIT_NOFILE: %lu", lim.rlim_cur);
+}
 
 bool
 init(enum InitFlag flags) noexcept
@@ -54,6 +71,8 @@ init(enum InitFlag flags) noexcept
     if (log_file) {
         jami::Logger::setFileLog(log_file);
     }
+
+    allows_more_fileno();
 
     // Following function create a local static variable inside
     // This var must have the same live as Manager.
