@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34815af5_5efa07f2",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-03-04T14:32:39Z",
+      "side": 1,
+      "message": "This path should not be needed anymore",
+      "revId": "31c4a388f1d561dc3a01de561beddfb1d689e485",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
