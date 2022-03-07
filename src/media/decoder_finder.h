@@ -29,7 +29,7 @@ namespace jami {
  * Attempt to find standalone AVCodec decoder using AVCodecID,
  * or fallback to the default decoder.
  */
-AVCodec*
+const AVCodec*
 findDecoder(const enum AVCodecID codec_id)
 {
     const char* codec_name;
@@ -49,7 +49,7 @@ findDecoder(const enum AVCodecID codec_id)
     default:
         codec_name = nullptr;
     }
-    AVCodec* codec = nullptr;
+    const AVCodec* codec = nullptr;
     if (codec_name)
         codec = avcodec_find_decoder_by_name(codec_name);
     if (not codec)
