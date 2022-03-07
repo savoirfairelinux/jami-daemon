@@ -221,7 +221,7 @@ private:
 
     std::shared_ptr<MediaDemuxer> demuxer_;
 
-    AVCodec* inputDecoder_ = nullptr;
+    const AVCodec* inputDecoder_ = nullptr;
     AVCodecContext* decoderCtx_ = nullptr;
     AVStream* avStream_ = nullptr;
     bool emulateRate_ = false;

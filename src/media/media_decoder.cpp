@@ -91,7 +91,7 @@ int
 MediaDemuxer::openInput(const DeviceParams& params)
 {
     inputParams_ = params;
-    AVInputFormat* iformat = av_find_input_format(params.format.c_str());
+    const AVInputFormat* iformat = av_find_input_format(params.format.c_str());
 
     if (!iformat && !params.format.empty())
         JAMI_WARN("Cannot find format \"%s\"", params.format.c_str());
