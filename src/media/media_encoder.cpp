@@ -600,7 +600,7 @@ MediaEncoder::print_sdp()
 }
 
 AVCodecContext*
-MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
+MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
 {
     AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
 

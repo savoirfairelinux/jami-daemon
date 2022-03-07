@@ -119,7 +119,7 @@ public:
 
 private:
     NON_COPYABLE(MediaEncoder);
-    AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
+    AVCodecContext* prepareEncoderContext(const AVCodec* outputCodec, bool is_video);
     void forcePresetX2645(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
     int initStream(const std::string& codecName, AVBufferRef* framesCtx = {});
@@ -154,7 +154,7 @@ private:
     bool initialized_ {false};
     bool fileIO_ {false};
     unsigned int currentVideoCodecID_ {0};
-    AVCodec* outputCodec_ = nullptr;
+    const AVCodec* outputCodec_ = nullptr;
     std::mutex encMutex_;
     bool linkableHW_ {false};
     RateMode mode_ {RateMode::CRF_CONSTRAINED};
