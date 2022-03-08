@@ -42,14 +42,6 @@ namespace test {
 class RevokeTest : public CppUnit::TestFixture
 {
 public:
-    RevokeTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
-    }
-    ~RevokeTest() { DRing::fini(); }
     static std::string name() { return "Revoke"; }
     void setUp();
     void tearDown();
@@ -150,4 +142,4 @@ RevokeTest::testRevokeInvalidDevice()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::RevokeTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::RevokeTest::name())

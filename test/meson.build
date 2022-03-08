@@ -4,7 +4,7 @@
 ut_includedirs = ['unitTest', '../src', libjami_includedirs]
 ut_dependencies = [depjami, depcppunit, libjami_dependencies]
 ut_workdir = meson.project_source_root() / 'test' / 'unitTest'
-ut_library = static_library('ut_library',
+ut_library = static_library('common',
     sources: files('unitTest/common.cpp'),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies
@@ -20,6 +20,7 @@ ut_account_archive = executable('ut_account_archive',
 test('account_archive', ut_account_archive,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
+
 
 ut_migration = executable('ut_migration',
     sources: files('unitTest/account_archive/migration.cpp'),

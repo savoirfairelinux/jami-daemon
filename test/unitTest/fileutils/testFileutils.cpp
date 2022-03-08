@@ -24,8 +24,6 @@
 #include "../../test_runner.h"
 #include "fileutils.h"
 
-#include "jami.h"
-
 #include <string>
 #include <iostream>
 #include <cstdlib>
@@ -180,4 +178,4 @@ FileutilsTest::testFullPath()
 
 }}} // namespace jami::test::fileutils
 
-RING_TEST_RUNNER(jami::fileutils::test::FileutilsTest::name());
+JAMI_TEST_RUNNER_WITHOUT_DAEMON(jami::fileutils::test::FileutilsTest::name());

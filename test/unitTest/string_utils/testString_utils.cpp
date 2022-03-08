@@ -147,4 +147,4 @@ StringUtilsTest::version_test()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::StringUtilsTest::name());
+JAMI_TEST_RUNNER_WITHOUT_DAEMON(jami::test::StringUtilsTest::name());

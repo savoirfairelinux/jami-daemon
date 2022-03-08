@@ -92,15 +92,6 @@ struct CallData
 class HoldResumeTest : public CppUnit::TestFixture
 {
 public:
-    HoldResumeTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~HoldResumeTest() { DRing::fini(); }
-
     static std::string name() { return "HoldResumeTest"; }
     void setUp();
     void tearDown();
@@ -735,4 +726,4 @@ HoldResumeTest::audio_only_then_hold_resume()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::HoldResumeTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::HoldResumeTest::name())

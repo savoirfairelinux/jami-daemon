@@ -97,4 +97,4 @@ SmartoolsTest::testSetRemoteInformation()
 
 } // namespace jami
 
-RING_TEST_RUNNER(jami::SmartoolsTest::name())
+JAMI_TEST_RUNNER_WITHOUT_DAEMON(jami::SmartoolsTest::name())

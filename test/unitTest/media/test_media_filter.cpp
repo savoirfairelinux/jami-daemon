@@ -22,7 +22,6 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "jami.h"
 #include "libav_deps.h"
 #include "media_buffer.h"
 #include "media_filter.h"
@@ -61,7 +60,6 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaFilterTest, MediaFilterTest::name());
 void
 MediaFilterTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
     libav_utils::av_init();
     filter_.reset(new MediaFilter);
 }
@@ -69,7 +67,6 @@ MediaFilterTest::setUp()
 void
 MediaFilterTest::tearDown()
 {
-    DRing::fini();
 }
 
 static void
@@ -341,4 +338,4 @@ MediaFilterTest::testReinit()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::MediaFilterTest::name());
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::MediaFilterTest::name());

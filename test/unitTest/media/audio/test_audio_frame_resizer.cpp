@@ -24,7 +24,6 @@
 
 #include "audio/audio_frame_resizer.h"
 #include "audio/audiobuffer.h"
-#include "jami.h"
 #include "libav_deps.h"
 #include "media_buffer.h"
 
@@ -131,4 +130,4 @@ AudioFrameResizerTest::testDifferentFormat()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::AudioFrameResizerTest::name());
+JAMI_TEST_RUNNER_WITHOUT_DAEMON(jami::test::AudioFrameResizerTest::name());

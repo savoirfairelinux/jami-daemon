@@ -49,7 +49,6 @@ namespace test {
 class CompabilityTest : public CppUnit::TestFixture
 {
 public:
-    ~CompabilityTest() { DRing::fini(); }
     static std::string name() { return "Compability"; }
     void setUp();
     void tearDown();
@@ -76,11 +75,6 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(CompabilityTest, CompabilityTest::name());
 void
 CompabilityTest::setUp()
 {
-    // Init daemon
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    if (not Manager::instance().initialized)
-        CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
@@ -381,4 +375,4 @@ CompabilityTest::testSendFileCompatibility()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::CompabilityTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::CompabilityTest::name())

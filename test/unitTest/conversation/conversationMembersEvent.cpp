@@ -47,7 +47,6 @@ namespace test {
 class ConversationMembersEventTest : public CppUnit::TestFixture
 {
 public:
-    ~ConversationMembersEventTest() { DRing::fini(); }
     static std::string name() { return "ConversationMembersEventTest"; }
     void setUp();
     void tearDown();
@@ -122,11 +121,6 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConversationMembersEventTest,
 void
 ConversationMembersEventTest::setUp()
 {
-    // Init daemon
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    if (not Manager::instance().initialized)
-        CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-
     auto actors = load_actors("actors/alice-bob-carla.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
@@ -1892,4 +1886,4 @@ ConversationMembersEventTest::testGetConversationMembersWithSelfOneOne()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConversationMembersEventTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::ConversationMembersEventTest::name())

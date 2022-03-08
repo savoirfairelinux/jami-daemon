@@ -33,7 +33,6 @@
 #include "../../test_runner.h"
 #include "archiver.h"
 #include "base64.h"
-#include "jami.h"
 #include "fileutils.h"
 #include "account_const.h"
 #include "common.h"
@@ -50,14 +49,6 @@ namespace test {
 class AccountArchiveTest : public CppUnit::TestFixture
 {
 public:
-    AccountArchiveTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
-    }
-    ~AccountArchiveTest() { DRing::fini(); }
     static std::string name() { return "AccountArchive"; }
     void setUp();
     void tearDown();
@@ -248,4 +239,4 @@ AccountArchiveTest::testChangePassword()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::AccountArchiveTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::AccountArchiveTest::name())

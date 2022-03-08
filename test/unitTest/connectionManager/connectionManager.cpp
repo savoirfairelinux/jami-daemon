@@ -27,7 +27,6 @@
 #include "jamidht/multiplexed_socket.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
-#include "jami.h"
 #include "account_const.h"
 #include "common.h"
 
@@ -39,14 +38,6 @@ namespace test {
 class ConnectionManagerTest : public CppUnit::TestFixture
 {
 public:
-    ConnectionManagerTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~ConnectionManagerTest() { DRing::fini(); }
     static std::string name() { return "ConnectionManager"; }
     void setUp();
     void tearDown();
@@ -1186,4 +1177,4 @@ ConnectionManagerTest::testOnNoBeaconTriggersShutdown()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConnectionManagerTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::ConnectionManagerTest::name())

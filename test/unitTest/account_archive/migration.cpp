@@ -45,14 +45,6 @@ namespace test {
 class MigrationTest : public CppUnit::TestFixture
 {
 public:
-    MigrationTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
-    }
-    ~MigrationTest() { DRing::fini(); }
     static std::string name() { return "AccountArchive"; }
     void setUp();
     void tearDown();
@@ -364,4 +356,4 @@ MigrationTest::testExpiredDeviceInSwarm()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::MigrationTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::MigrationTest::name())

@@ -22,7 +22,6 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "jami.h"
 #include "videomanager_interface.h"
 #include "video/video_scaler.h"
 
@@ -57,13 +56,11 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(VideoScalerTest, VideoScalerTest::name());
 void
 VideoScalerTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
 }
 
 void
 VideoScalerTest::tearDown()
 {
-    DRing::fini();
 }
 
 void
@@ -107,4 +104,4 @@ VideoScalerTest::testScaleWithAspect()
 
 }}} // namespace jami::test
 
-RING_TEST_RUNNER(jami::video::test::VideoScalerTest::name());
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::video::test::VideoScalerTest::name());

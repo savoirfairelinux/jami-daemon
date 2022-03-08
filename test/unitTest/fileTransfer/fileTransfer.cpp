@@ -43,14 +43,6 @@ namespace test {
 class FileTransferTest : public CppUnit::TestFixture
 {
 public:
-    FileTransferTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~FileTransferTest() { DRing::fini(); }
     static std::string name() { return "Call"; }
     bool compare(const std::string& fileA, const std::string& fileB) const;
     void setUp();
@@ -1270,4 +1262,4 @@ FileTransferTest::testTransferInfo()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::FileTransferTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::FileTransferTest::name())

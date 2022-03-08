@@ -109,15 +109,6 @@ struct CallData
 class MediaNegotiationTest
 {
 public:
-    MediaNegotiationTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~MediaNegotiationTest() { DRing::fini(); }
-
     static std::string name() { return "MediaNegotiationTest"; }
 
 protected:
@@ -1147,4 +1138,4 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaNegotiationTestSip, MediaNegotiationT
 } // namespace test
 } // namespace jami
 
-JAMI_TEST_RUNNER(jami::test::MediaNegotiationTestJami::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::MediaNegotiationTestJami::name())

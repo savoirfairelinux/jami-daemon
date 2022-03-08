@@ -89,4 +89,4 @@ SchedulerTest::schedulerTest()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::SchedulerTest::name());
+JAMI_TEST_RUNNER_WITHOUT_DAEMON(jami::test::SchedulerTest::name());

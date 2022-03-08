@@ -41,14 +41,6 @@ namespace test {
 class CallTest : public CppUnit::TestFixture
 {
 public:
-    CallTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~CallTest() { DRing::fini(); }
     static std::string name() { return "Call"; }
     void setUp();
     void tearDown();
@@ -299,4 +291,4 @@ CallTest::testDeclineMultiDevice()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::CallTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::CallTest::name())

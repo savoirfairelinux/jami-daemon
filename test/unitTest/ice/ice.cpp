@@ -27,7 +27,6 @@
 #include "opendht/thread_pool.h"
 #include "src/ice_transport.h"
 #include "../../test_runner.h"
-#include "jami.h"
 #include "account_const.h"
 
 using namespace DRing::Account;
@@ -38,14 +37,6 @@ namespace test {
 class IceTest : public CppUnit::TestFixture
 {
 public:
-    IceTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~IceTest() { DRing::fini(); }
     static std::string name() { return "Ice"; }
     void setUp();
     void tearDown();
@@ -634,4 +625,4 @@ IceTest::testCompleteOnFailure()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::IceTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::IceTest::name())

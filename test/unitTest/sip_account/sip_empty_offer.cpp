@@ -68,15 +68,6 @@ struct CallData
 class SipEmptyOfferTest : public CppUnit::TestFixture
 {
 public:
-    SipEmptyOfferTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
-    }
-    ~SipEmptyOfferTest() { DRing::fini(); }
-
     static std::string name() { return "SipEmptyOfferTest"; }
     void setUp();
     void tearDown();
@@ -527,4 +518,4 @@ SipEmptyOfferTest::send_and_handle_empty_offer()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SipEmptyOfferTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::SipEmptyOfferTest::name())

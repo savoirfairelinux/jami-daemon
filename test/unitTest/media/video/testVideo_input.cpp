@@ -27,7 +27,6 @@
 
 #include "media/video/video_input.h"
 #include "media_const.h"
-#include "jami.h"
 #include "manager.h"
 
 #include <map>
@@ -40,14 +39,6 @@ class VideoInputTest : public CppUnit::TestFixture
 {
 public:
     static std::string name() { return "video_input"; }
-
-    VideoInputTest()
-    {
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        DRing::start("jami-sample.yml");
-    }
-
-    ~VideoInputTest() { DRing::fini(); }
 
 private:
     void testInput();
@@ -72,4 +63,4 @@ VideoInputTest::testInput()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::VideoInputTest::name());
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::VideoInputTest::name());

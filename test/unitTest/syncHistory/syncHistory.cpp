@@ -43,14 +43,6 @@ namespace test {
 class SyncHistoryTest : public CppUnit::TestFixture
 {
 public:
-    SyncHistoryTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~SyncHistoryTest() { DRing::fini(); }
     static std::string name() { return "SyncHistory"; }
     void setUp();
     void tearDown();
@@ -1271,4 +1263,4 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SyncHistoryTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::SyncHistoryTest::name())

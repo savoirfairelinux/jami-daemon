@@ -22,7 +22,6 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "jami.h"
 #include "videomanager_interface.h"
 #include "libav_deps.h"
 #include "audio/resampler.h"
@@ -57,13 +56,11 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ResamplerTest, ResamplerTest::name());
 void
 ResamplerTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
 }
 
 void
 ResamplerTest::tearDown()
 {
-    DRing::fini();
 }
 
 void
@@ -134,4 +131,4 @@ ResamplerTest::testRematrix()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::ResamplerTest::name());
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::ResamplerTest::name());

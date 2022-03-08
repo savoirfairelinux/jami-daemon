@@ -23,7 +23,6 @@
 
 #include "account_factory.h"
 #include "../../test_runner.h"
-#include "jami.h"
 #include "account_const.h"
 
 
@@ -56,18 +55,12 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Account_factoryTest, Account_factoryTest::
 void
 Account_factoryTest::setUp()
 {
-    // Init daemon
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-
     accountFactory.reset(new AccountFactory);
 }
 
 void
 Account_factoryTest::tearDown()
 {
-    // Stop daemon
-    DRing::fini();
 }
 
 
@@ -135,4 +128,4 @@ Account_factoryTest::testClear()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::Account_factoryTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::Account_factoryTest::name())

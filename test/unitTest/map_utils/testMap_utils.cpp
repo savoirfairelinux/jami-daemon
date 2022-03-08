@@ -91,4 +91,4 @@ MapUtilsTest::test_extractValues()
 
 }}} // namespace jami::map_utils::test
 
-RING_TEST_RUNNER(jami::map_utils::test::MapUtilsTest::name());
+JAMI_TEST_RUNNER_WITHOUT_DAEMON(jami::map_utils::test::MapUtilsTest::name());

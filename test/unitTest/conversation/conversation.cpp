@@ -58,7 +58,6 @@ namespace test {
 class ConversationTest : public CppUnit::TestFixture
 {
 public:
-    ~ConversationTest() { DRing::fini(); }
     static std::string name() { return "Conversation"; }
     void setUp();
     void tearDown();
@@ -155,11 +154,6 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConversationTest, ConversationTest::name()
 void
 ConversationTest::setUp()
 {
-    // Init daemon
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    if (not Manager::instance().initialized)
-        CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-
     auto actors = load_actors("actors/alice-bob-carla.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
@@ -2678,4 +2672,4 @@ ConversationTest::testImportMalformedContacts()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConversationTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::ConversationTest::name())

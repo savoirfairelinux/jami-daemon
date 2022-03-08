@@ -78,15 +78,6 @@ struct CallData
 class IceMediaCandExchangeTest : public CppUnit::TestFixture
 {
 public:
-    IceMediaCandExchangeTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~IceMediaCandExchangeTest() { DRing::fini(); }
-
     static std::string name() { return "IceMediaCandExchangeTest"; }
     void setUp();
     void tearDown();
@@ -836,4 +827,4 @@ IceMediaCandExchangeTest::jami_account_with_turn()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::IceMediaCandExchangeTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::IceMediaCandExchangeTest::name())

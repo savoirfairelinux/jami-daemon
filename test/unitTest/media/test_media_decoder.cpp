@@ -22,7 +22,6 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "jami.h"
 #include "fileutils.h"
 #include "libav_deps.h"
 #include "media_buffer.h"
@@ -59,7 +58,6 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaDecoderTest, MediaDecoderTest::name()
 void
 MediaDecoderTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
     libav_utils::av_init();
 }
 
@@ -67,7 +65,6 @@ void
 MediaDecoderTest::tearDown()
 {
     fileutils::remove(filename_);
-    DRing::fini();
 }
 
 void
@@ -144,4 +141,4 @@ MediaDecoderTest::writeWav()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::MediaDecoderTest::name());
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::MediaDecoderTest::name());

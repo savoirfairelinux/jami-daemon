@@ -28,7 +28,6 @@ extern "C" {
 }
 
 #include "audio/audiobuffer.h"
-#include "jami.h"
 #include "videomanager_interface.h"
 
 #include "../../test_runner.h"
@@ -58,13 +57,11 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaFrameTest, MediaFrameTest::name());
 void
 MediaFrameTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
 }
 
 void
 MediaFrameTest::tearDown()
 {
-    DRing::fini();
 }
 
 void
@@ -122,4 +119,4 @@ MediaFrameTest::testMix()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::MediaFrameTest::name());
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::MediaFrameTest::name());

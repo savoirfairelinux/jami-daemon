@@ -31,7 +31,6 @@
 #include "jamidht/gitserver.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
-#include "jami.h"
 #include "base64.h"
 #include "fileutils.h"
 #include "account_const.h"
@@ -49,14 +48,6 @@ namespace test {
 class ConversationRepositoryTest : public CppUnit::TestFixture
 {
 public:
-    ConversationRepositoryTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~ConversationRepositoryTest() { DRing::fini(); }
     static std::string name() { return "ConversationRepository"; }
     void setUp();
     void tearDown();
@@ -842,4 +833,4 @@ name) { return true; });
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConversationRepositoryTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::ConversationRepositoryTest::name())

@@ -22,7 +22,6 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "jami.h"
 #include "fileutils.h"
 #include "libav_deps.h"
 #include "media_encoder.h"
@@ -56,7 +55,6 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaEncoderTest, MediaEncoderTest::name()
 void
 MediaEncoderTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
     libav_utils::av_init();
     encoder_.reset(new MediaEncoder);
     files_.push_back("test.mkv");
@@ -68,7 +66,6 @@ MediaEncoderTest::tearDown()
     // clean up behind ourselves
     for (const auto& file : files_)
         fileutils::remove(file);
-    DRing::fini();
 }
 
 static AVFrame*
@@ -193,4 +190,4 @@ MediaEncoderTest::testMultiStream()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::MediaEncoderTest::name());
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::MediaEncoderTest::name());

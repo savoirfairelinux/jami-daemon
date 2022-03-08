@@ -68,4 +68,4 @@ Utf8UtilsTest::utf8_make_valid_test()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::Utf8UtilsTest::name());
+JAMI_TEST_RUNNER_WITHOUT_DAEMON(jami::test::Utf8UtilsTest::name());

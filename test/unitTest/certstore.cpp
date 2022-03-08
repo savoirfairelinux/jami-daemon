@@ -187,4 +187,4 @@ CertStoreTest::getCertificateWithSplitted()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::CertStoreTest::name());
+JAMI_TEST_RUNNER_WITHOUT_DAEMON(jami::test::CertStoreTest::name());

@@ -61,14 +61,6 @@ struct CallData
 class ConferenceTest : public CppUnit::TestFixture
 {
 public:
-    ConferenceTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-    }
-    ~ConferenceTest() { DRing::fini(); }
     static std::string name() { return "Conference"; }
     void setUp();
     void tearDown();
@@ -611,4 +603,4 @@ ConferenceTest::testDevices()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConferenceTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::ConferenceTest::name())

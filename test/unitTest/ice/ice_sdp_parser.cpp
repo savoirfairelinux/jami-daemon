@@ -122,16 +122,10 @@ class IceSdpParsingTest : public CppUnit::TestFixture
 public:
     IceSdpParsingTest()
     {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
-
         for (size_t idx = 0; idx < MEDIA_COUNT; idx++) {
             mediaReceivers_.emplace_back(std::make_shared<MediaReceiver>(MediaType::MEDIA_AUDIO));
         }
     }
-    ~IceSdpParsingTest() { DRing::fini(); }
 
     static std::string name() { return "IceSdpParsingTest"; }
     void setUp();
@@ -643,4 +637,4 @@ IceSdpParsingTest::call_with_rfc5245_compliancy_enabled()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::IceSdpParsingTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::IceSdpParsingTest::name())

@@ -81,15 +81,6 @@ struct CallData
 class SipBasicCallTest : public CppUnit::TestFixture
 {
 public:
-    SipBasicCallTest()
-    {
-        // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
-    }
-    ~SipBasicCallTest() { DRing::fini(); }
-
     static std::string name() { return "SipBasicCallTest"; }
     void setUp();
     void tearDown();
@@ -1093,4 +1084,4 @@ SipBasicCallTest::blind_transfer_test()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SipBasicCallTest::name())
+JAMI_TEST_RUNNER_WITH_DAEMON(jami::test::SipBasicCallTest::name())
