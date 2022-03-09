@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "632b9c63_4130c43d",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 496,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-03-09T17:46:51Z",
+      "side": 1,
+      "message": "I would think this logical adjustment should be applied outside this function. If not, then:\n  1. the log is incorrect\n  2. setCrop(0, 0, 0, 0) sets 1 -\u003e x,y and -1 -\u003e w,h ... is that intended?",
+      "range": {
+        "startLine": 492,
+        "startChar": 4,
+        "endLine": 496,
+        "endChar": 20
+      },
+      "revId": "2143dc0c71f316d8fbab18b8b2399538d2149329",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
