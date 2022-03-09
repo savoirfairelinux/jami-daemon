@@ -165,7 +165,11 @@ VideoDeviceImpl::getSizeList() const
 std::vector<FrameRate>
 VideoDeviceImpl::getRateList(const std::string& channel, VideoSize size) const
 {
-    return available_rates_.at(size);
+    auto it = available_rates_.find(size);
+    if (it != available_rates_.end()) {
+        return it->second;
+    }
+    return {};
 }
 
 std::vector<VideoSize>
