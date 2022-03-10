@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "97cff198_65fa8724",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-03-10T23:56:16Z",
+      "side": 1,
+      "message": "this will make the requirement to ffmpeg \u003e 5.0 for all platforms (should be changed in contrib/src/ffmpeg and at least configure.ac).\nOur patches should be re-added (auto birate, windows screen sharing, etc)\n\nAlso, for future reviewers didn\u0027t check but may introduce others warning (may be some new deprecated API), and calls needs to be checked (same as screensharing)",
+      "range": {
+        "startLine": 94,
+        "startChar": 5,
+        "endLine": 94,
+        "endChar": 28
+      },
+      "revId": "b93b82d3a0fee189819821268f8e7a148935c6e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
