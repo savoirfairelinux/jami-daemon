@@ -22,6 +22,30 @@
       },
       "revId": "b93b82d3a0fee189819821268f8e7a148935c6e9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a667086_d1bccbe3",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-03-11T11:09:12Z",
+      "side": 1,
+      "message": "Fixed. Now builds with both ffmpeg 4.4 and 5.0.\n\nI do not know ffmpeg, so can\u0027t rebase the patches easily.\n\nArch linux use ffmpeg 5.0 for Jami for 1+ month already, and no issues were reported. Personally can confirm that at least one-to-one video calls work fine.\n\nThe benefit from this patch is that it allows to build the daemon with ffmpeg 5.0 correctly (Arch linux use -fpermissive to suppress build errors).",
+      "parentUuid": "97cff198_65fa8724",
+      "range": {
+        "startLine": 94,
+        "startChar": 5,
+        "endLine": 94,
+        "endChar": 28
+      },
+      "revId": "b93b82d3a0fee189819821268f8e7a148935c6e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
