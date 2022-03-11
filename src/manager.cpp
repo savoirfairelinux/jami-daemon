@@ -953,6 +953,12 @@ Manager::monitor(bool continuous)
     Logger::setMonitorLog(continuous);
 }
 
+void
+Manager::setFileLogging(const std::string& path)
+{
+    Logger::setFileLog(path);
+}
+
 bool
 Manager::isCurrentCall(const Call& call) const
 {

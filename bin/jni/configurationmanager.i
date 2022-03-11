@@ -88,6 +88,7 @@ void setAccountDetails(const std::string& accountID, const std::map<std::string,
 void setAccountActive(const std::string& accountID, bool active);
 std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 void monitor(bool continuous);
+void setFileLogging(const std::string& path);
 std::string addAccount(const std::map<std::string, std::string>& details);
 void removeAccount(const std::string& accountID);
 std::vector<std::string> getAccountList();

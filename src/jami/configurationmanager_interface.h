@@ -63,6 +63,7 @@ DRING_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::st
 DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details,
                                     const std::string& accountID = {});
 DRING_PUBLIC void monitor(bool continuous);
+DRING_PUBLIC void setFileLogging(const std::string& path);
 DRING_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
 DRING_PUBLIC bool exportToFile(const std::string& accountID,
                                const std::string& destinationPath,

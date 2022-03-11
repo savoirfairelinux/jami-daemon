@@ -123,7 +123,24 @@ public:
      */
     void finish() noexcept;
 
+    /**
+     * Toggle continuous monitoring via the logger.
+     * Monitor mode causes the logger to emit a signal which can
+     * be subscribed to by registering a callback or by listening
+     * over dbus.
+     * Continuous mode will continuously emit logs.
+     * Discrete mode(continuous = false) will cause a short burst of
+     * logs when called containing some extra data:
+     *  - network library versions
+     *  - a list of opened sockets(Linux/Android)
+     */
     void monitor(bool continuous);
+
+    /**
+     * Toggle logging to a file.
+     * Leave the path empty to stop file logging.
+     */
+    void setFileLogging(const std::string& path);
 
     /**
      * Accessor to audiodriver.

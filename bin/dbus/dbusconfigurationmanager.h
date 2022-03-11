@@ -79,6 +79,7 @@ public:
     void setAccountActive(const std::string& accountID, const bool& active);
     std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
     void monitor(const bool& continuous);
+    void setFileLogging(const std::string& path);
     std::string addAccount(const std::map<std::string, std::string>& details);
     bool exportOnRing(const std::string& accountID, const std::string& password);
     bool exportToFile(const std::string& accountID,

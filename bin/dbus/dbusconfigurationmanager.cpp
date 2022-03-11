@@ -75,6 +75,12 @@ DBusConfigurationManager::monitor(const bool& continuous) -> decltype(DRing::mon
 }
 
 auto
+DBusConfigurationManager::setFileLogging(const std::string& path) -> decltype(DRing::setFileLogging(path))
+{
+    return DRing::setFileLogging(path);
+}
+
+auto
 DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::string& password)
     -> decltype(DRing::exportOnRing(accountID, password))
 {

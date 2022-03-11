@@ -442,6 +442,12 @@ monitor(bool continuous)
 }
 
 void
+setFileLogging(const std::string& path)
+{
+    return jami::Manager::instance().setFileLogging(path);
+}
+
+void
 removeAccount(const std::string& accountID)
 {
     return jami::Manager::instance().removeAccount(accountID, true); // with 'flush' enabled
