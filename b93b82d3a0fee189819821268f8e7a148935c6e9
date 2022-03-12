@@ -70,6 +70,30 @@
       },
       "revId": "b93b82d3a0fee189819821268f8e7a148935c6e9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22c4bb0a_05fd5f69",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-03-12T18:46:08Z",
+      "side": 1,
+      "message": "@Ovari: this is not the same as Qt6 vs Qt5, which is a major incompatible change.\n\nFFmpeg 5 mostly just removed deprecated APIs (that apparently we didn\u0027t use) and added some \"const\" here and there. It\u0027s easily possible to be compatible with both ffmpeg 4 and 5.\n\nMaking sure we can build with ffmpeg 5 (while still building with ffmpeg 4) would be part of normal maintenance. Indeed, we\u0027ll have to rebase our patches.\n\nWhen Jami is distributed as part of GNU/Linux distros, it\u0027s unfortunately almost always without our FFmpeg patches because of distro policies. So it\u0027s a tradeoff between project visibility and some features.",
+      "parentUuid": "63fc3dc2_c4dd4a93",
+      "range": {
+        "startLine": 94,
+        "startChar": 5,
+        "endLine": 94,
+        "endChar": 28
+      },
+      "revId": "b93b82d3a0fee189819821268f8e7a148935c6e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
