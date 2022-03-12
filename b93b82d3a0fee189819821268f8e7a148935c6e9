@@ -46,6 +46,30 @@
       },
       "revId": "b93b82d3a0fee189819821268f8e7a148935c6e9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63fc3dc2_c4dd4a93",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2022-03-12T04:07:53Z",
+      "side": 1,
+      "message": "1. Is supporting 2 versions of ffmpeg a backwards step? Would it be similar to supporting Qt5 and Qt6 at the same time. Additionally, will Jami’s packaging size unnecessarily increase?\n\n2. Would it be advisable to only add ffmpeg 5.0 to Jami when:\na) all the patches that Sébastien mentioned are re-added (auto birate, windows screen sharing, etc); and\nb) ffmeg 4.4 is removed at the same time?\n\n3. If Jami is released with ffmpeg 5.0 but without the patches:\na) People may start writing bug reports about the regressions.\nb) Or even worse, people may not write any bug reports; then abandon and spread negative word-of-mouth promotion about Jami.\nc) Anyone who has funded Jami features that no longer exist due to the patches not being re-added, i.e. causing regressions, may cease further funding.\n\n4. However, it seems that ffmpeg 5.0 with the re-added patches will provide a great improvement to Jami.\n\nThank you",
+      "parentUuid": "0a667086_d1bccbe3",
+      "range": {
+        "startLine": 94,
+        "startChar": 5,
+        "endLine": 94,
+        "endChar": 28
+      },
+      "revId": "b93b82d3a0fee189819821268f8e7a148935c6e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
