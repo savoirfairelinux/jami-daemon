@@ -117,7 +117,6 @@ contextHeader(const char* const file, int line)
 
     // Timestamp
     if (timestamp_fmt) {
-
         time_t t;
         struct tm tm;
         char buf[128];
@@ -139,7 +138,6 @@ contextHeader(const char* const file, int line)
         out << buf;
 
     } else {
-
         unsigned int secs, milli;
         struct timeval tv;
 
@@ -153,8 +151,7 @@ contextHeader(const char* const file, int line)
 
         const auto prev_fill = out.fill();
 
-        out << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
-            << std::left;
+        out << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli << std::left;
         out.fill(prev_fill);
     }
 
@@ -295,57 +292,34 @@ public:
         return *self;
     }
 
-    virtual void consume(jami::Logger::Msg& msg) override
+#ifdef _WIN32
+    void printLogImpl(jami::Logger::Msg& msg, bool with_color)
     {
-        static bool no_color = (getenv("NO_COLOR")   ||
-                                getenv("NO_COLORS")  ||
-                                getenv("NO_COLOUR")  ||
-                                getenv("NO_COLOURS"));
-
-#if defined(_WIN32) && !defined(RING_UWP)
         WORD saved_attributes;
-        HANDLE hConsole;
-#endif
+        static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (with_color) {
+            static WORD color_header = CYAN;
+            WORD color_prefix = LIGHT_GREEN;
+            CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
-        if (not no_color) {
-#ifndef _WIN32
-        const char* color_header = CYAN;
-        const char* color_prefix = "";
-#else
-        WORD color_prefix = LIGHT_GREEN;
-        WORD color_header = CYAN;
-#endif
-#if defined(_WIN32) && !defined(RING_UWP)
-        hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+            switch (msg.level_) {
+            case LOG_ERR:
+                color_prefix = RED;
+                break;
 
-#endif
+            case LOG_WARNING:
+                color_prefix = YELLOW;
+                break;
+            }
 
-        switch (msg.level_) {
-        case LOG_ERR:
-            color_prefix = RED;
-            break;
+            GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
+            saved_attributes = consoleInfo.wAttributes;
+            SetConsoleTextAttribute(hConsole, color_header);
 
-        case LOG_WARNING:
-            color_prefix = YELLOW;
-            break;
-        }
+            fputs(msg.header_.c_str(), stderr);
 
-#ifndef _WIN32
-        fputs(color_header, stderr);
-#elif !defined(RING_UWP)
-        GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
-        saved_attributes = consoleInfo.wAttributes;
-        SetConsoleTextAttribute(hConsole, color_header);
-#endif
-        fputs(msg.header_.c_str(), stderr);
-#ifndef _WIN32
-        fputs(END_COLOR, stderr);
-        fputs(color_prefix, stderr);
-#elif !defined(RING_UWP)
-        SetConsoleTextAttribute(hConsole, saved_attributes);
-        SetConsoleTextAttribute(hConsole, color_prefix);
-#endif
+            SetConsoleTextAttribute(hConsole, saved_attributes);
+            SetConsoleTextAttribute(hConsole, color_prefix);
         } else {
             fputs(msg.header_.c_str(), stderr);
         }
@@ -356,13 +330,57 @@ public:
             putc(ENDL, stderr);
         }
 
-        if (not no_color) {
-#ifndef _WIN32
-        fputs(END_COLOR, stderr);
-#elif !defined(RING_UWP)
-        SetConsoleTextAttribute(hConsole, saved_attributes);
-#endif
+        if (with_color) {
+            SetConsoleTextAttribute(hConsole, saved_attributes);
         }
+    }
+#else
+    void printLogImpl(jami::Logger::Msg& msg, bool with_color)
+    {
+        if (with_color) {
+            const char* color_header = CYAN;
+            const char* color_prefix = "";
+
+            switch (msg.level_) {
+            case LOG_ERR:
+                color_prefix = RED;
+                break;
+
+            case LOG_WARNING:
+                color_prefix = YELLOW;
+                break;
+            }
+
+            fputs(color_header, stderr);
+            fputs(msg.header_.c_str(), stderr);
+            fputs(END_COLOR, stderr);
+            fputs(color_prefix, stderr);
+        } else {
+            fputs(msg.header_.c_str(), stderr);
+        }
+
+        fputs(msg.payload_.get(), stderr);
+
+        if (msg.linefeed_) {
+            putc(ENDL, stderr);
+        }
+
+        if (with_color) {
+            fputs(END_COLOR, stderr);
+        }
+    }
+#endif /* _WIN32 */
+
+    virtual void consume(jami::Logger::Msg& msg) override
+    {
+        // clang-format off
+        static bool with_color = !(getenv("NO_COLOR")  ||
+                                   getenv("NO_COLORS") ||
+                                   getenv("NO_COLOUR") ||
+                                   getenv("NO_COLOURS"));
+        // clang-format on
+
+        printLogImpl(msg, with_color);
     }
 };
 
@@ -370,6 +388,36 @@ void
 Logger::setConsoleLog(bool en)
 {
     ConsoleLog::instance().enable(en);
+#ifdef _WIN32
+    static WORD original_attributes;
+    if (en) {
+        auto openStreams = []() {
+            FILE *fpstdout = stdout, *fpstderr = stderr;
+            freopen_s(&fpstdout, "CONOUT$", "w", stdout);
+            freopen_s(&fpstderr, "CONOUT$", "w", stderr);
+        };
+        if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+            openStreams();
+            // Save the original state of the console window.
+            CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+            GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
+            original_attributes = consoleInfo.wAttributes;
+        } else if (AllocConsole()) {
+            openStreams();
+            SetConsoleCP(CP_UTF8);
+            COORD coordInfo;
+            coordInfo.X = 130;
+            coordInfo.Y = 9000;
+            SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coordInfo);
+            SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE),
+                           ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS);
+        }
+    } else {
+        // Restore the original state of the console window in case we attached.
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), original_attributes);
+        FreeConsole();
+    }
+#endif
 }
 
 class SysLog : public jami::Logger::Handler
@@ -487,7 +535,6 @@ public:
 
         thread_ = std::thread([this] {
             while (isEnable()) {
-
                 {
                     std::unique_lock lk(mtx_);
 
@@ -570,14 +617,15 @@ Logger::log(int level, const char* file, int line, bool linefeed, const char* fm
 }
 
 template<typename T>
-void log_to_if_enabled(T& handler, Logger::Msg& msg)
+void
+log_to_if_enabled(T& handler, Logger::Msg& msg)
 {
     if (handler.isEnable()) {
         handler.consume(msg);
     }
 }
 
-static std::atomic_bool debugEnabled{false};
+static std::atomic_bool debugEnabled {false};
 
 void
 Logger::setDebugMode(bool enable)
@@ -588,17 +636,18 @@ Logger::setDebugMode(bool enable)
 DRING_PUBLIC void
 Logger::vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
 {
-    if (not debugEnabled.load() and
-        level < LOG_WARNING) {
+    if (not debugEnabled.load() and level < LOG_WARNING) {
         return;
     }
 
+    // clang-format off
     if (not(ConsoleLog::instance().isEnable() or
             SysLog::instance().isEnable() or
             MonitorLog::instance().isEnable() or
             FileLog::instance().isEnable())) {
         return;
     }
+    // clang-format on
 
     /* Timestamp is generated here. */
     Msg msg(level, file, line, linefeed, fmt, ap);
@@ -614,6 +663,10 @@ Logger::fini()
 {
     // Force close on file and join thread
     FileLog::instance().setFile({});
+
+#ifdef _WIN32
+    Logger::setConsoleLog(false);
+#endif /* _WIN32 */
 }
 
 } // namespace jami
