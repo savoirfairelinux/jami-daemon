@@ -3031,7 +3031,7 @@ Manager::createSinkClient(const std::string& id, bool mixer)
 void
 Manager::createSinkClients(const std::string& callId,
                            const ConfInfo& infos,
-                           const std::shared_ptr<video::VideoGenerator>& videoStream,
+                           const std::shared_ptr<video::VideoFrameActiveWriter>& videoStream,
                            std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
 {
     std::lock_guard<std::mutex> lk(pimpl_->sinksMutex_);
@@ -3048,7 +3048,6 @@ Manager::createSinkClients(const std::string& callId,
             auto currentSink = getSinkClient(sinkId);
             if (currentSink) {
                 currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
-                currentSink->setFrameSize(participant.w, participant.h);
                 sinkIdsList.emplace(sinkId);
                 continue;
             }

@@ -369,6 +369,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             setFrameSize(outFrame->width(), outFrame->height());
             return;
         }
+        notify(std::static_pointer_cast<MediaFrame>(frame_p));
         avTarget_.push(std::move(outFrame));
         return;
     }
@@ -382,7 +383,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame_p))->format());
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
@@ -414,6 +415,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame = std::static_pointer_cast<VideoFrame>(
                 std::shared_ptr<MediaFrame>(filter_->readOutput()));
         }
+        notify(std::static_pointer_cast<MediaFrame>(frame));
 
         if (crop_.w || crop_.h) {
             frame->pointer()->crop_top = crop_.y;

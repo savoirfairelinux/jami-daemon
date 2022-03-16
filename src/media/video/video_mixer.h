@@ -91,6 +91,8 @@ public:
 
     void updateLayout();
 
+    std::shared_ptr<SinkClient>& getSink() { return sink_; }
+
 private:
     NON_COPYABLE(VideoMixer);
     struct VideoMixerSource;
