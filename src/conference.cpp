@@ -200,11 +200,13 @@ Conference::~Conference()
         if (call->isPeerRecording())
             call->peerRecording(true);
     });
-    for (auto it = confSinksMap_.begin(); it != confSinksMap_.end();) {
-        if (videoMixer_)
-            videoMixer_->detach(it->second.get());
-        it->second->stop();
-        it = confSinksMap_.erase(it);
+    if (videoMixer_) {
+        auto& sink = videoMixer_->getSink();
+        for (auto it = confSinksMap_.begin(); it != confSinksMap_.end();) {
+            sink->detach(it->second.get());
+            it->second->stop();
+            it = confSinksMap_.erase(it);
+        }
     }
 #endif // ENABLE_VIDEO
 #ifdef ENABLE_PLUGIN
@@ -761,11 +763,11 @@ Conference::createSinks(const ConfInfo& infos)
     std::lock_guard<std::mutex> lk(sinksMtx_);
     if (!videoMixer_)
         return;
-
+    auto& sink = videoMixer_->getSink();
     Manager::instance().createSinkClients(getConfId(),
                                           infos,
-                                          std::static_pointer_cast<video::VideoGenerator>(
-                                              videoMixer_),
+                                          std::static_pointer_cast<video::VideoFrameActiveWriter>(
+                                              sink),
                                           confSinksMap_);
 }
 

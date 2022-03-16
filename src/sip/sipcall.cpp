@@ -2150,14 +2150,15 @@ SIPCall::stopAllMedia()
 
     {
         std::lock_guard<std::mutex> lk(sinksMtx_);
-        for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
-            auto& videoReceive = videoRtp->getVideoReceive();
-            if (videoReceive) {
-                videoReceive->detach(it->second.get());
-            }
+        auto& videoReceive = videoRtp->getVideoReceive();
+        if (videoReceive) {
+            auto& sink = videoReceive->getSink();
+            for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
+                sink->detach(it->second.get());
 
-            it->second->stop();
-            it = callSinksMap_.erase(it);
+                it->second->stop();
+                it = callSinksMap_.erase(it);
+            }
         }
     }
 
@@ -3019,12 +3020,13 @@ SIPCall::createSinks(const ConfInfo& infos)
     auto& videoReceive = videoRtp->getVideoReceive();
     if (!videoReceive)
         return;
+    auto& sink = videoReceive->getSink();
     auto conf = conf_.lock();
     const auto& id = conf ? conf->getConfId() : getCallId();
     Manager::instance().createSinkClients(id,
                                           infos,
-                                          std::static_pointer_cast<video::VideoGenerator>(
-                                              videoReceive),
+                                          std::static_pointer_cast<video::VideoFrameActiveWriter>(
+                                              sink),
                                           callSinksMap_);
 }
 #endif
