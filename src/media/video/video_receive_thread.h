@@ -65,6 +65,7 @@ public:
     };
     void startSink();
     void stopSink();
+    std::shared_ptr<SinkClient>& getSink() { return sink_; }
 
     // as VideoGenerator
     int getWidth() const;
