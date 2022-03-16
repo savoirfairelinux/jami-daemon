@@ -48,12 +48,12 @@ class ShmHolder;
 
 class VideoScaler;
 
-class SinkClient : public VideoFramePassiveReader
+class SinkClient : public VideoFramePassiveReader, public VideoFrameActiveWriter
 {
 public:
     SinkClient(const std::string& id = "", bool mixer = false);
 
-    const std::string& getId() const noexcept {return id_;}
+    const std::string& getId() const noexcept { return id_; }
 
     std::string openedName() const noexcept;
 
@@ -76,7 +76,8 @@ public:
     void setFrameSize(int width, int height);
     void setCrop(int x, int y, int w, int h);
 
-    void registerTarget(const DRing::SinkTarget& target) noexcept {
+    void registerTarget(const DRing::SinkTarget& target) noexcept
+    {
         std::lock_guard<std::mutex> lock(mtx_);
         target_ = target;
     }
@@ -93,7 +94,10 @@ private:
     int width_ {0};
     int height_ {0};
 
-    struct Rect { int x {0}, y {0}, w {0}, h {0}; };
+    struct Rect
+    {
+        int x {0}, y {0}, w {0}, h {0};
+    };
     Rect crop_ {};
 
     bool started_ {false}; // used to arbitrate client's stop signal.

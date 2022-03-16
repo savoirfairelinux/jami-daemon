@@ -810,12 +810,12 @@ public:
      * cache as a weak_ptr and populates sinksMap with sink ids and shared_ptrs.
      * @param callId
      * @param infos ConferenceInfos that will create the sinks
-     * @param videoStream the the VideoGenerator to with the sinks should be attached
+     * @param videoStream the the VideoFrameActiveWriter to which the sinks should be attached
      * @param sinksMap A map between sink ids and the respective shared pointer.
      */
     void createSinkClients(const std::string& callId,
                            const ConfInfo& infos,
-                           const std::shared_ptr<video::VideoGenerator>& videoStream,
+                           const std::shared_ptr<video::VideoFrameActiveWriter>& videoStream,
                            std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap);
 
     /**
