@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b6b2bf2_b9751e46",
+        "filename": "src/logger.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 410,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-03-17T18:00:53Z",
+      "side": 1,
+      "message": "- seems like a relic or a personal preference(https://git.jami.net/savoirfairelinux/jami-client-windows/-/commit/5c3ff7c9067338ef2388b6c4623793e4c3bc6ff5)\n- removed\n- made some additional simplification here",
+      "parentUuid": "36e0f6ef_5580adfa",
+      "range": {
+        "startLine": 408,
+        "startChar": 28,
+        "endLine": 410,
+        "endChar": 31
+      },
+      "revId": "6eff209aa5a6b58ae64725340938f089d25f1653",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "95b5e69f_f22193e6",
@@ -54,6 +78,30 @@
       "writtenOn": "2022-03-17T14:52:17Z",
       "side": 1,
       "message": "even if ugly I\u0027d avoid this, but whatever",
+      "range": {
+        "startLine": 643,
+        "startChar": 8,
+        "endLine": 643,
+        "endChar": 23
+      },
+      "revId": "6eff209aa5a6b58ae64725340938f089d25f1653",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f70edea_4087b9f6",
+        "filename": "src/logger.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 643,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-03-17T18:00:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "95b5e69f_f22193e6",
       "range": {
         "startLine": 643,
         "startChar": 8,
