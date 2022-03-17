@@ -357,18 +357,6 @@ public:
     virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
 
 #ifdef ENABLE_VIDEO
-    /**
-     * Add a dummy video stream with the attached sink.
-     * Typically needed in conference to display infos for participants
-     * that have joined the conference without video (audio only).
-     */
-    virtual bool addDummyVideoRtpSession() = 0;
-
-    /**
-     * Remove all dummy video streams.
-     */
-    virtual void removeDummyVideoRtpSessions() = 0;
-
     virtual std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
     getReceiveVideoFrameActiveWriter() = 0;
     virtual void createSinks(const ConfInfo& infos) = 0;
