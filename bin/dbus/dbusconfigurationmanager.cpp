@@ -544,8 +544,8 @@ DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
                                                   const std::string& privateKey,
                                                   const std::string& privateKeyPass,
                                                   const std::string& caList)
-    -> decltype(
-        DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
+    -> decltype(DRing::validateCertificatePath(
+        accountId, certificate, privateKey, privateKeyPass, caList))
 {
     return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
 }
@@ -877,6 +877,21 @@ DBusConfigurationManager::conversationInfos(const std::string& accountId,
                                             const std::string& conversationId)
 {
     return DRing::conversationInfos(accountId, conversationId);
+}
+
+void
+DBusConfigurationManager::setConversationPreferences(const std::string& accountId,
+                                                     const std::string& conversationId,
+                                                     const std::map<std::string, std::string>& infos)
+{
+    DRing::setConversationPreferences(accountId, conversationId, infos);
+}
+
+std::map<std::string, std::string>
+DBusConfigurationManager::getConversationPreferences(const std::string& accountId,
+                                                     const std::string& conversationId)
+{
+    return DRing::getConversationPreferences(accountId, conversationId);
 }
 
 void
