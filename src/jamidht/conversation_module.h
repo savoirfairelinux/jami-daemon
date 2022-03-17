@@ -35,14 +35,17 @@ struct SyncMsg
     jami::DeviceSync ds;
     std::map<std::string, jami::ConvInfo> c;
     std::map<std::string, jami::ConversationRequest> cr;
-    MSGPACK_DEFINE(ds, c, cr)
+    // p is conversation's preferences. It's not stored in c, as
+    // we can update the preferences without touching any confInfo.
+    std::map<std::string, std::map<std::string, std::string>> p;
+    MSGPACK_DEFINE(ds, c, cr, p)
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
 using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&)>;
 using SengMsgCb
     = std::function<uint64_t(const std::string&, std::map<std::string, std::string>&&, uint64_t)>;
-using NeedsSyncingCb = std::function<void()>;
+using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
 using UpdateConvReq = std::function<void(const std::string&, const std::string&, bool)>;
 
 class ConversationModule
@@ -309,7 +312,7 @@ public:
 
     // Conversation's infos management
     /**
-     * Update metadata from conversations (like title, avatar, etc)
+     * Update metadatas from conversations (like title, avatar, etc)
      * @param conversationId
      * @param infos
      * @param sync              If we need to sync with others (used for tests)
@@ -318,6 +321,19 @@ public:
                                  const std::map<std::string, std::string>& infos,
                                  bool sync = true);
     std::map<std::string, std::string> conversationInfos(const std::string& conversationId) const;
+    /**
+     * Update user's preferences (like color, notifications, etc) to be synced across devices
+     * @param conversationId
+     * @param preferences
+     */
+    void setConversationPreferences(const std::string& conversationId,
+                                    const std::map<std::string, std::string>& prefs);
+    std::map<std::string, std::string> getConversationPreferences(
+        const std::string& conversationId) const;
+    /**
+     * Retrieve all conversation preferences to sync with other devices
+     */
+    std::map<std::string, std::map<std::string, std::string>> getAllConversationsPreferences() const;
     // Get the map into a VCard format for storing
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
