@@ -441,18 +441,10 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #else
             const int format = AV_PIX_FMT_BGRA;
 #endif
-            const auto bytes = videoFrameSize(format, width, height);
-            if (bytes > 0) {
-                if (auto buffer_ptr = target_.pull(bytes)) {
+            if (width > 0 && height > 0) {
+                if (auto buffer_ptr = target_.pull()) {
                     if (buffer_ptr->avframe) {
                         scaler_->scale(*frame, buffer_ptr->avframe.get());
-                    } else {
-                        buffer_ptr->format = format;
-                        buffer_ptr->width = width;
-                        buffer_ptr->height = height;
-                        VideoFrame dst;
-                        dst.setFromMemory(buffer_ptr->ptr, format, width, height);
-                        scaler_->scale(*frame, dst);
                     }
                     target_.push(std::move(buffer_ptr));
                 }
