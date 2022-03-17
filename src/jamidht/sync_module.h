@@ -44,13 +44,17 @@ public:
      * Send sync informations to connected device
      * @param deviceId      Connected device
      * @param socket        Related socket
+     * @param syncMsg       Default message
      */
-    void syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
+    void syncWith(const DeviceId& deviceId,
+                  const std::shared_ptr<ChannelSocket>& socket,
+                  const std::shared_ptr<SyncMsg>& syncMsg = nullptr);
 
     /**
      * Send sync to all connected devices
+     * @param syncMsg       Default message
      */
-    void syncWithConnected();
+    void syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg = nullptr);
 
 private:
     class Impl;

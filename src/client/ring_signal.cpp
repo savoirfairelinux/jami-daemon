@@ -138,6 +138,7 @@ getSignalHandlers()
         exported_callback<DRing::ConversationSignal::ConversationSyncFinished>(),
         exported_callback<DRing::ConversationSignal::CallConnectionRequest>(),
         exported_callback<DRing::ConversationSignal::OnConversationError>(),
+        exported_callback<DRing::ConversationSignal::ConversationPreferencesUpdated>(),
 
 #ifdef ENABLE_PLUGIN
         exported_callback<DRing::PluginSignal::WebViewMessageReceived>(),
