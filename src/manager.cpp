@@ -3044,7 +3044,7 @@ Manager::createSinkClients(const std::string& callId,
             sinkId = callId;
             sinkId += string_remove_suffix(participant.uri, '@') + participant.device;
         }
-        if (participant.w && participant.h) {
+        if (participant.w && participant.h && !participant.videoMuted) {
             auto currentSink = getSinkClient(sinkId);
             if (currentSink) {
                 currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
