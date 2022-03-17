@@ -296,24 +296,25 @@ DBusClient::initLibrary(int flags)
             bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2, _3, _4, _5)),
     };
 
-    const std::map<std::string, SharedCallback> convEvHandlers = {
-        exportable_callback<ConversationSignal::ConversationLoaded>(
-            bind(&DBusConfigurationManager::conversationLoaded, confM, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::MessageReceived>(
-            bind(&DBusConfigurationManager::messageReceived, confM, _1, _2, _3)),
-        exportable_callback<ConversationSignal::ConversationRequestReceived>(
-            bind(&DBusConfigurationManager::conversationRequestReceived, confM, _1, _2, _3)),
-        exportable_callback<ConversationSignal::ConversationRequestDeclined>(
-            bind(&DBusConfigurationManager::conversationRequestDeclined, confM, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationReady>(
-            bind(&DBusConfigurationManager::conversationReady, confM, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationRemoved>(
-            bind(&DBusConfigurationManager::conversationRemoved, confM, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationMemberEvent>(
-            bind(&DBusConfigurationManager::conversationMemberEvent, confM, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::OnConversationError>(
-            bind(&DBusConfigurationManager::onConversationError, confM, _1, _2, _3, _4)),
-    };
+    const std::map<std::string, SharedCallback> convEvHandlers
+        = {exportable_callback<ConversationSignal::ConversationLoaded>(
+               bind(&DBusConfigurationManager::conversationLoaded, confM, _1, _2, _3, _4)),
+           exportable_callback<ConversationSignal::MessageReceived>(
+               bind(&DBusConfigurationManager::messageReceived, confM, _1, _2, _3)),
+           exportable_callback<ConversationSignal::ConversationRequestReceived>(
+               bind(&DBusConfigurationManager::conversationRequestReceived, confM, _1, _2, _3)),
+           exportable_callback<ConversationSignal::ConversationRequestDeclined>(
+               bind(&DBusConfigurationManager::conversationRequestDeclined, confM, _1, _2)),
+           exportable_callback<ConversationSignal::ConversationReady>(
+               bind(&DBusConfigurationManager::conversationReady, confM, _1, _2)),
+           exportable_callback<ConversationSignal::ConversationRemoved>(
+               bind(&DBusConfigurationManager::conversationRemoved, confM, _1, _2)),
+           exportable_callback<ConversationSignal::ConversationMemberEvent>(
+               bind(&DBusConfigurationManager::conversationMemberEvent, confM, _1, _2, _3, _4)),
+           exportable_callback<ConversationSignal::OnConversationError>(
+               bind(&DBusConfigurationManager::onConversationError, confM, _1, _2, _3, _4)),
+           exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(
+               bind(&DBusConfigurationManager::conversationPreferencesUpdated, confM, _1, _2, _3))};
 
 #ifdef ENABLE_VIDEO
     // Video event handlers
