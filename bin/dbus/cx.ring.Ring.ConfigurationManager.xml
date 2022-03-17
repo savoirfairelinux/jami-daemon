@@ -1720,6 +1720,28 @@
            <arg type="s" name="conversationId" direction="in"/>
        </method>
 
+       <method name="updateConversationPreferences" tp:name-for-bindings="updateConversationPreferences">
+           <tp:added version="12.0.1"/>
+           <tp:docstring>
+               Update conversation's preferences (synced across devices) such as color, notifications, etc.
+           </tp:docstring>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+           <arg type="a{ss}" name="prefs" direction="in"/>
+       </method>
+
+       <method name="conversationPreferences" tp:name-for-bindings="conversationPreferences">
+           <tp:added version="12.0.1"/>
+           <tp:docstring>
+               Get conversation's preferences
+           </tp:docstring>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="prefs" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+       </method>
+
        <method name="addConversationMember" tp:name-for-bindings="addConversationMember">
            <tp:added version="10.0.0"/>
            <tp:docstring>

@@ -49,6 +49,11 @@ DRING_PUBLIC void updateConversationInfos(const std::string& accountId,
                                           const std::map<std::string, std::string>& infos);
 DRING_PUBLIC std::map<std::string, std::string> conversationInfos(const std::string& accountId,
                                                                   const std::string& conversationId);
+DRING_PUBLIC void updateConversationPreferences(const std::string& accountId,
+                                          const std::string& conversationId,
+                                          const std::map<std::string, std::string>& prefs);
+DRING_PUBLIC std::map<std::string, std::string> conversationPreferences(const std::string& accountId,
+                                                                  const std::string& conversationId);
 
 // Member management
 DRING_PUBLIC void addConversationMember(const std::string& accountId,

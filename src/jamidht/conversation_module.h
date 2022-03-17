@@ -285,7 +285,7 @@ public:
 
     // Conversation's infos management
     /**
-     * Update metadata from conversations (like title, avatar, etc)
+     * Update metadatas from conversations (like title, avatar, etc)
      * @param conversationId
      * @param infos
      * @param sync              If we need to sync with others (used for tests)
@@ -294,6 +294,14 @@ public:
                                  const std::map<std::string, std::string>& infos,
                                  bool sync = true);
     std::map<std::string, std::string> conversationInfos(const std::string& conversationId) const;
+    /**
+     * Update user's preferences (like color, notifications, etc) to be synced across devices
+     * @param conversationId
+     * @param preferences
+     */
+    void updateConversationPreferences(const std::string& conversationId,
+                                 const std::map<std::string, std::string>& prefs);
+    std::map<std::string, std::string> conversationPreferences(const std::string& conversationId) const;
     // Get the map into a VCard format for storing
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 

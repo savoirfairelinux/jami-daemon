@@ -880,6 +880,21 @@ DBusConfigurationManager::conversationInfos(const std::string& accountId,
 }
 
 void
+DBusConfigurationManager::updateConversationPreferences(const std::string& accountId,
+                                                  const std::string& conversationId,
+                                                  const std::map<std::string, std::string>& infos)
+{
+    DRing::updateConversationPreferences(accountId, conversationId, infos);
+}
+
+std::map<std::string, std::string>
+DBusConfigurationManager::conversationPreferences(const std::string& accountId,
+                                            const std::string& conversationId)
+{
+    return DRing::conversationPreferences(accountId, conversationId);
+}
+
+void
 DBusConfigurationManager::addConversationMember(const std::string& accountId,
                                                 const std::string& conversationId,
                                                 const std::string& contactUri)

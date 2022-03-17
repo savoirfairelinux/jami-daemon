@@ -106,6 +106,25 @@ conversationInfos(const std::string& accountId, const std::string& conversationI
     return {};
 }
 
+void
+updateConversationPreferences(const std::string& accountId,
+                        const std::string& conversationId,
+                        const std::map<std::string, std::string>& prefs)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule())
+            convModule->updateConversationPreferences(conversationId, prefs);
+}
+
+std::map<std::string, std::string>
+conversationPreferences(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule())
+            return convModule->conversationPreferences(conversationId);
+    return {};
+}
+
 // Member management
 void
 addConversationMember(const std::string& accountId,

@@ -1465,7 +1465,6 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
                                             bool sync)
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end()) {
         JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
@@ -1485,7 +1484,6 @@ std::map<std::string, std::string>
 ConversationModule::conversationInfos(const std::string& conversationId) const
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end() or not it->second) {
         std::lock_guard<std::mutex> lkCi(pimpl_->convInfosMtx_);
@@ -1498,6 +1496,32 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
     }
 
     return it->second->infos();
+}
+
+void
+ConversationModule::updateConversationPreferences(const std::string& conversationId,
+                                                  const std::map<std::string, std::string>& prefs)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto it = pimpl_->conversations_.find(conversationId);
+    if (it == pimpl_->conversations_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return;
+    }
+
+    it->second->updatePreferences(prefs);
+    // TODO sync across devices
+}
+
+std::map<std::string, std::string>
+ConversationModule::conversationPreferences(const std::string& conversationId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto it = pimpl_->conversations_.find(conversationId);
+    if (it == pimpl_->conversations_.end() or not it->second)
+        return {};
+
+    return it->second->preferences();
 }
 
 std::vector<uint8_t>
@@ -1513,7 +1537,6 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
 
     return it->second->vCard();
 }
-
 bool
 ConversationModule::isBannedDevice(const std::string& convId, const std::string& deviceId) const
 {

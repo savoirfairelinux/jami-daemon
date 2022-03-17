@@ -297,10 +297,21 @@ public:
     void updateInfos(const std::map<std::string, std::string>& map, const OnDoneCb& cb = {});
 
     /**
+     * Change user's preferences
+     * @param map       New preferences
+     */
+    void updatePreferences(const std::map<std::string, std::string>& map);
+
+    /**
      * Retrieve current infos (title, description, avatar, mode)
      * @return infos
      */
     std::map<std::string, std::string> infos() const;
+    /**
+     * Retrieve current preferences (color, notification, etc)
+     * @return preferences
+     */
+    std::map<std::string, std::string> preferences() const;
     std::vector<uint8_t> vCard() const;
 
     /////// File transfer

@@ -1117,6 +1117,28 @@ Conversation::infos() const
     return pimpl_->repository_->infos();
 }
 
+void
+Conversation::updatePreferences(const std::map<std::string, std::string>& map)
+{
+    std::ofstream file(fmt::format("{}/preferences", pimpl_->conversationDataPath_),
+                       std::ios::trunc | std::ios::binary);
+    msgpack::pack(file, map);
+}
+
+std::map<std::string, std::string>
+Conversation::preferences() const
+{
+    try {
+        std::map<std::string, std::string> preferences;
+        auto file = fileutils::loadFile(fmt::format("{}/preferences", pimpl_->conversationDataPath_));
+        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+        oh.get().convert(preferences);
+        return preferences;
+    } catch (const std::exception& e) {
+    }
+    return {};
+}
+
 std::vector<uint8_t>
 Conversation::vCard() const
 {
