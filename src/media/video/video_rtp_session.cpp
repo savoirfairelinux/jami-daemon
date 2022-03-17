@@ -258,7 +258,11 @@ VideoRtpSession::startReceiver()
     } else {
         JAMI_DBG("[%p] Video receiver disabled", this);
         if (receiveThread_ and videoMixer_) {
+            auto activeParticipant =  videoMixer_->verifyActive(receiveThread_.get());
+            videoMixer_->addAudioOnlySource(callID_);
             receiveThread_->detach(videoMixer_.get());
+            if (activeParticipant)
+                videoMixer_->setActiveParticipant(callID_);
         }
     }
     if (socketPair_)
@@ -276,7 +280,11 @@ VideoRtpSession::stopReceiver()
         return;
 
     if (videoMixer_) {
+        auto activeParticipant =  videoMixer_->verifyActive(receiveThread_.get());
+        videoMixer_->addAudioOnlySource(callID_);
         receiveThread_->detach(videoMixer_.get());
+        if (activeParticipant)
+            videoMixer_->setActiveParticipant(callID_);
     }
 
     // We need to disable the read operation, otherwise the
@@ -463,9 +471,12 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
                  conference.getConfId().c_str(),
                  callID_.c_str());
         if (receiveThread_) {
-            conference.detachVideo(dummyVideoReceive_.get());
             receiveThread_->stopSink();
+            auto activeParticipant =  videoMixer_->verifyActive(callID_);
+            videoMixer_->removeAudioOnlySource(callID_);
             conference.attachVideo(receiveThread_.get(), callID_);
+            if (activeParticipant)
+                videoMixer_->setActiveParticipant(receiveThread_.get());
         } else {
             JAMI_WARN("[%p] no receiver", this);
         }
@@ -521,10 +532,12 @@ VideoRtpSession::exitConference()
             videoMixer_->detach(sender_.get());
 
         if (receiveThread_) {
+            auto activeParticipant =  videoMixer_->verifyActive(receiveThread_.get());
+            videoMixer_->addAudioOnlySource(callID_);
             conference_->detachVideo(receiveThread_.get());
+            if (activeParticipant)
+                videoMixer_->setActiveParticipant(callID_);
             receiveThread_->startSink();
-        } else {
-            conference_->detachVideo(dummyVideoReceive_.get());
         }
 
         videoMixer_.reset();

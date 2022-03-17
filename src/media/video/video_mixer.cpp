@@ -179,6 +179,7 @@ VideoMixer::stopInput()
 void
 VideoMixer::setActiveHost()
 {
+    activeAudioOnly_ = "";
     activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
     updateLayout();
 }
@@ -186,7 +187,16 @@ VideoMixer::setActiveHost()
 void
 VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
+    activeAudioOnly_ = "";
     activeSource_ = ob;
+    updateLayout();
+}
+
+void
+VideoMixer::setActiveParticipant(const std::string& id)
+{
+    activeAudioOnly_ = id;
+    activeSource_ = nullptr;
     updateLayout();
 }
 
@@ -289,12 +299,20 @@ VideoMixer::process()
         bool activeFound = false;
         bool needsUpdate = layoutUpdated_ > 0;
         bool successfullyRendered = false;
+        std::vector<SourceInfo> sourcesInfo;
+        sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
+        // add all audioonlysources
+        for (auto& id : audioOnlySources_) {
+            sourcesInfo.emplace_back(
+                SourceInfo {{}, 0, 0, 10, 10, false, id});
+        }
+        // add video sources
         for (auto& x : sources_) {
             /* thread stop pending? */
             if (!loop_.isRunning())
                 return;
 
-            if (currentLayout_ != Layout::ONE_BIG or activeSource_ == x->source) {
+            if (currentLayout_ != Layout::ONE_BIG or activeSource_ == x->source or !activeAudioOnly_.empty()) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
                 std::shared_ptr<VideoFrame> input = x->getRenderFrame();
@@ -359,11 +377,9 @@ VideoMixer::process()
         if (needsUpdate and successfullyRendered) {
             layoutUpdated_ -= 1;
             if (layoutUpdated_ == 0) {
-                std::vector<SourceInfo> sourcesInfo;
-                sourcesInfo.reserve(sources_.size());
                 for (auto& x : sources_) {
                     sourcesInfo.emplace_back(
-                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo});
+                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo, {}});
                 }
                 if (onSourcesUpdated_)
                     onSourcesUpdated_(std::move(sourcesInfo));
