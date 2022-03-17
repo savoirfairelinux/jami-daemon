@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <filesystem>
 #include <mutex>
 #include <cstdio>
 #include <ios>
@@ -154,6 +155,8 @@ std::string sha3sum(const std::vector<uint8_t>& buffer);
  * Windows compatibility wrapper for checking read-only attribute
  */
 int accessFile(const std::string& file, int mode);
+
+uint64_t lastWriteTime(const std::filesystem::path& p);
 
 } // namespace fileutils
 } // namespace jami

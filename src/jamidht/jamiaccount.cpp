@@ -2331,10 +2331,10 @@ JamiAccount::convModule()
     if (!convModule_) {
         convModule_ = std::make_unique<ConversationModule>(
             weak(),
-            [this] {
-                runOnMainThread([w = weak()] {
+            [this](auto&& syncMsg) {
+                runOnMainThread([w = weak(), syncMsg = std::move(syncMsg)] {
                     if (auto shared = w.lock())
-                        shared->syncModule()->syncWithConnected();
+                        shared->syncModule()->syncWithConnected(syncMsg);
                 });
             },
             [this](auto&& uri, auto&& msg, auto token = 0) {
@@ -2944,7 +2944,8 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri,
     std::string conversationId = {};
     if (uri.scheme() == Uri::Scheme::SWARM)
         conversationId = uri.authority();
-    auto sendMessage = status == (int) DRing::Account::MessageStates::DISPLAYED && isReadReceiptEnabled();
+    auto sendMessage = status == (int) DRing::Account::MessageStates::DISPLAYED
+                       && isReadReceiptEnabled();
     if (!conversationId.empty())
         sendMessage &= convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
     if (sendMessage)

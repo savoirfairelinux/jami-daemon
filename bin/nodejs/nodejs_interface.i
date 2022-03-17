@@ -153,7 +153,8 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConversationSignal::ConversationReady>(bind(&conversationReady, _1, _2)),
         exportable_callback<ConversationSignal::ConversationRemoved>(bind(&conversationRemoved, _1, _2)),
         exportable_callback<ConversationSignal::ConversationMemberEvent>(bind(&conversationMemberEvent, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::OnConversationError>(bind(&onConversationError, _1, _2, _3, _4))
+        exportable_callback<ConversationSignal::OnConversationError>(bind(&onConversationError, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(bind(&ConversationCallback::conversationPreferencesUpdated, convM, _1, _2, _3))
     };
 
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
