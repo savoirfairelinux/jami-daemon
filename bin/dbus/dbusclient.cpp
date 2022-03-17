@@ -296,65 +296,67 @@ DBusClient::initLibrary(int flags)
             bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2, _3, _4, _5)),
     };
 
-    const std::map<std::string, SharedCallback> convEvHandlers = {
-        exportable_callback<ConversationSignal::ConversationLoaded>(
-            bind(&DBusConfigurationManager::conversationLoaded, confM, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::MessageReceived>(
-            bind(&DBusConfigurationManager::messageReceived, confM, _1, _2, _3)),
-        exportable_callback<ConversationSignal::ConversationProfileUpdated>(
-            bind(&DBusConfigurationManager::conversationProfileUpdated, confM, _1, _2, _3)),
-        exportable_callback<ConversationSignal::ConversationRequestReceived>(
-            bind(&DBusConfigurationManager::conversationRequestReceived, confM, _1, _2, _3)),
-        exportable_callback<ConversationSignal::ConversationRequestDeclined>(
-            bind(&DBusConfigurationManager::conversationRequestDeclined, confM, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationReady>(
-            bind(&DBusConfigurationManager::conversationReady, confM, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationRemoved>(
-            bind(&DBusConfigurationManager::conversationRemoved, confM, _1, _2)),
-        exportable_callback<ConversationSignal::ConversationMemberEvent>(
-            bind(&DBusConfigurationManager::conversationMemberEvent, confM, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::OnConversationError>(
-            bind(&DBusConfigurationManager::onConversationError, confM, _1, _2, _3, _4)),
-    };
+    const std::map<std::string, SharedCallback> convEvHandlers
+        = {exportable_callback<ConversationSignal::ConversationLoaded>(
+               bind(&DBusConfigurationManager::conversationLoaded, confM, _1, _2, _3, _4)),
+           exportable_callback<ConversationSignal::MessageReceived>(
+               bind(&DBusConfigurationManager::messageReceived, confM, _1, _2, _3)),
+           exportable_callback<ConversationSignal::ConversationProfileUpdated>(
+               bind(&DBusConfigurationManager::conversationProfileUpdated, confM, _1, _2, _3)),
+           exportable_callback<ConversationSignal::ConversationRequestReceived>(
+               bind(&DBusConfigurationManager::conversationRequestReceived, confM, _1, _2, _3)),
+           exportable_callback<ConversationSignal::ConversationRequestDeclined>(
+               bind(&DBusConfigurationManager::conversationRequestDeclined, confM, _1, _2)),
+           exportable_callback<ConversationSignal::ConversationReady>(
+               bind(&DBusConfigurationManager::conversationReady, confM, _1, _2)),
+           exportable_callback<ConversationSignal::ConversationRemoved>(
+               bind(&DBusConfigurationManager::conversationRemoved, confM, _1, _2)),
+           exportable_callback<ConversationSignal::ConversationMemberEvent>(
+               bind(&DBusConfigurationManager::conversationMemberEvent, confM, _1, _2, _3, _4)),
+           exportable_callback<ConversationSignal::OnConversationError>(
+               bind(&DBusConfigurationManager::onConversationError, confM, _1, _2, _3, _4)),
+           exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(
+               bind(&DBusConfigurationManager::conversationPreferencesUpdated, confM, _1, _2, _3))};
+};
 
 #ifdef ENABLE_VIDEO
-    // Video event handlers
-    const std::map<std::string, SharedCallback> videoEvHandlers = {
-        exportable_callback<VideoSignal::DeviceEvent>(bind(&DBusVideoManager::deviceEvent, videoM)),
-        exportable_callback<VideoSignal::DecodingStarted>(
-            bind(&DBusVideoManager::decodingStarted, videoM, _1, _2, _3, _4, _5)),
-        exportable_callback<VideoSignal::DecodingStopped>(
-            bind(&DBusVideoManager::decodingStopped, videoM, _1, _2, _3)),
-    };
+// Video event handlers
+const std::map<std::string, SharedCallback> videoEvHandlers = {
+    exportable_callback<VideoSignal::DeviceEvent>(bind(&DBusVideoManager::deviceEvent, videoM)),
+    exportable_callback<VideoSignal::DecodingStarted>(
+        bind(&DBusVideoManager::decodingStarted, videoM, _1, _2, _3, _4, _5)),
+    exportable_callback<VideoSignal::DecodingStopped>(
+        bind(&DBusVideoManager::decodingStopped, videoM, _1, _2, _3)),
+};
 #endif
 
 #ifdef ENABLE_PLUGIN
-    // Plugin event handlers
-    const std::map<std::string, SharedCallback> pluginEvHandlers = {
-        exportable_callback<DRing::PluginSignal::WebViewMessageReceived>(
-            bind(&DBusPluginManagerInterface::webViewMessageReceived, pluginM, _1, _2, _3, _4)),
-    };
+// Plugin event handlers
+const std::map<std::string, SharedCallback> pluginEvHandlers = {
+    exportable_callback<DRing::PluginSignal::WebViewMessageReceived>(
+        bind(&DBusPluginManagerInterface::webViewMessageReceived, pluginM, _1, _2, _3, _4)),
+};
 #endif
 
-    if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
-        return -1;
+if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
+    return -1;
 
-    DRing::registerSignalHandlers(callEvHandlers);
-    DRing::registerSignalHandlers(configEvHandlers);
-    DRing::registerSignalHandlers(presEvHandlers);
-    DRing::registerSignalHandlers(audioEvHandlers);
-    DRing::registerSignalHandlers(dataXferEvHandlers);
-    DRing::registerSignalHandlers(convEvHandlers);
+DRing::registerSignalHandlers(callEvHandlers);
+DRing::registerSignalHandlers(configEvHandlers);
+DRing::registerSignalHandlers(presEvHandlers);
+DRing::registerSignalHandlers(audioEvHandlers);
+DRing::registerSignalHandlers(dataXferEvHandlers);
+DRing::registerSignalHandlers(convEvHandlers);
 #ifdef ENABLE_VIDEO
-    DRing::registerSignalHandlers(videoEvHandlers);
+DRing::registerSignalHandlers(videoEvHandlers);
 #endif
 #ifdef ENABLE_PLUGIN
-    DRing::registerSignalHandlers(pluginEvHandlers);
+DRing::registerSignalHandlers(pluginEvHandlers);
 #endif
 
-    if (!DRing::start())
-        return -1;
-    return 0;
+if (!DRing::start())
+    return -1;
+return 0;
 }
 
 void
