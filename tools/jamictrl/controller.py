@@ -129,6 +129,7 @@ class DRingCtrl(Thread):
             proxy_confmgr.connect_to_signal('dataTransferEvent', self.onDataTransferEvent)
             proxy_confmgr.connect_to_signal('conversationReady', self.onConversationReady)
             proxy_confmgr.connect_to_signal('conversationRequestReceived', self.onConversationRequestReceived)
+            proxy_confmgr.connect_to_signal('conversationPreferencesUpdated', self.onConversationPreferencesUpdated)
             proxy_confmgr.connect_to_signal('messageReceived', self.onMessageReceived)
 
         except dbus.DBusException as e:
@@ -313,6 +314,9 @@ class DRingCtrl(Thread):
 
     def onConversationRequestReceived(self, account, conversationId, metadatas):
         print(f'New conversation request for {account} with id {conversationId}')
+
+    def onConversationPreferencesUpdated(self, account, conversationId, metadatas):
+        print(f'New conversation preferences for {account} with id {conversationId}')
 
     def onMessageReceived(self, account, conversationId, message):
         print(f'New message for {account} in conversation {conversationId} with id {message["id"]}')

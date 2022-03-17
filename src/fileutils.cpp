@@ -320,7 +320,9 @@ writeTime(const std::string& path)
 #endif
 }
 
-bool createSymlink(const std::string& linkFile, const std::string& target) {
+bool
+createSymlink(const std::string& linkFile, const std::string& target)
+{
 #if !USE_STD_FILESYSTEM
     if (symlink(target.c_str(), linkFile.c_str())) {
         JAMI_ERR("Couldn't create soft link: %s", strerror(errno));
@@ -337,7 +339,9 @@ bool createSymlink(const std::string& linkFile, const std::string& target) {
     return true;
 }
 
-bool createHardlink(const std::string& linkFile, const std::string& target) {
+bool
+createHardlink(const std::string& linkFile, const std::string& target)
+{
 #if !USE_STD_FILESYSTEM
     if (link(target.c_str(), linkFile.c_str())) {
         JAMI_ERR("Couldn't create hard link: %s", strerror(errno));
@@ -561,7 +565,6 @@ readArchive(const std::string& path, const std::string& pwd)
         JAMI_ERR("Error loading archive: %s", e.what());
         throw e;
     }
-
 
     if (isUnencryptedGzip(data)) {
         if (!pwd.empty())
@@ -1109,6 +1112,14 @@ accessFile(const std::string& file, int mode)
 #else
     return access(file.c_str(), mode);
 #endif
+}
+
+uint64_t
+lastWriteTime(const std::filesystem::path& p)
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::filesystem::last_write_time(p).time_since_epoch())
+        .count();
 }
 
 } // namespace fileutils

@@ -39,6 +39,7 @@ Persistent<Function> conferenceCreatedCb;
 Persistent<Function> conferenceChangedCb;
 Persistent<Function> conferenceRemovedCb;
 Persistent<Function> onConferenceInfosUpdatedCb;
+Persistent<Function> conversationPreferencesUpdatedCb;
 
 std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -108,6 +109,8 @@ getPresistentCb(std::string_view signal)
         return &conferenceRemovedCb;
     else if (signal == "OnConferenceInfosUpdated")
         return &onConferenceInfosUpdatedCb;
+    else if (signal == "ConversationPreferencesUpdated")
+        return &conversationPreferencesUpdatedCb;
 
     else
         return nullptr;
@@ -450,12 +453,10 @@ callStateChanged(const std::string& accountId,
     pendingSignals.emplace([accountId, callId, state, detail_code]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), callStateChangedCb);
         if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {
-                V8_STRING_NEW_LOCAL(accountId),
-                V8_STRING_NEW_LOCAL(callId),
-                V8_STRING_NEW_LOCAL(state),
-                SWIGV8_INTEGER_NEW(detail_code)
-            };
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(callId),
+                                            V8_STRING_NEW_LOCAL(state),
+                                            SWIGV8_INTEGER_NEW(detail_code)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
@@ -472,11 +473,9 @@ mediaChangeRequested(const std::string& accountId,
     pendingSignals.emplace([accountId, callId, mediaList]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), mediaChangeRequestedCb);
         if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {
-                V8_STRING_NEW_LOCAL(accountId),
-                V8_STRING_NEW_LOCAL(callId),
-                stringMapVecToJsMapArray(mediaList)
-            };
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(callId),
+                                            stringMapVecToJsMapArray(mediaList)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
