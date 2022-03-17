@@ -57,7 +57,7 @@ public:
 
 %{
 
-std::map<ANativeWindow*, std::unique_ptr<DRing::FrameBuffer>> windows {};
+std::map<ANativeWindow*, DRing::FrameBuffer> windows {};
 std::mutex windows_mutex;
 
 std::vector<uint8_t> workspace;
@@ -159,13 +159,9 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoPacket(JN
         auto frame = DRing::getNewFrame(input);
         if (not frame)
             return;
-        auto packet = std::unique_ptr<AVPacket, void(*)(AVPacket*)>(new AVPacket, [](AVPacket* pkt){
-            if (pkt) {
-                av_packet_unref(pkt);
-                delete pkt;
-            }
+        auto packet = std::unique_ptr<AVPacket, void(*)(AVPacket*)>(av_packet_alloc(), [](AVPacket* pkt){
+            av_packet_free(&pkt);
         });
-        av_init_packet(packet.get());
         if (keyframe)
             packet->flags = AV_PKT_FLAG_KEY;
         setRotation(rotation);
@@ -314,7 +310,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_setNativeWindowGeomet
     ANativeWindow_setBuffersGeometry(window, width, height, WINDOW_FORMAT_RGBX_8888);
 }
 
-void releaseBuffer(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer> frame)
+void releaseBuffer(ANativeWindow *window, DRing::FrameBuffer frame)
 {
     std::unique_lock<std::mutex> guard(windows_mutex);
     try {
@@ -324,16 +320,16 @@ void releaseBuffer(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer> fr
     }
 }
 
-void AndroidDisplayCb(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer> frame)
+void AndroidDisplayCb(ANativeWindow *window, DRing::FrameBuffer frame)
 {
     ANativeWindow_unlockAndPost(window);
     releaseBuffer(window, std::move(frame));
 }
 
-std::unique_ptr<DRing::FrameBuffer> sinkTargetPullCallback(ANativeWindow *window, std::size_t bytes)
+DRing::FrameBuffer sinkTargetPullCallback(ANativeWindow *window)
 {
     try {
-        std::unique_ptr<DRing::FrameBuffer> frame;
+        DRing::FrameBuffer frame;
         {
             std::lock_guard<std::mutex> guard(windows_mutex);
             frame = std::move(windows.at(window));
@@ -341,11 +337,11 @@ std::unique_ptr<DRing::FrameBuffer> sinkTargetPullCallback(ANativeWindow *window
         if (frame) {
             ANativeWindow_Buffer buffer;
             if (ANativeWindow_lock(window, &buffer, nullptr) == 0) {
-                frame->avframe->format = AV_PIX_FMT_RGBA;
-                frame->avframe->width = buffer.width;
-                frame->avframe->height = buffer.height;
-                frame->avframe->data[0] = (uint8_t *) buffer.bits;
-                frame->avframe->linesize[0] = buffer.stride * 4;
+                frame->format = AV_PIX_FMT_RGBA;
+                frame->width = buffer.width;
+                frame->height = buffer.height;
+                frame->data[0] = (uint8_t *) buffer.bits;
+                frame->linesize[0] = buffer.stride * 4;
                 return frame;
             } else {
                 __android_log_print(ANDROID_LOG_WARN, TAG, "Can't lock window");
@@ -371,13 +367,11 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCallback
 
     ANativeWindow* nativeWindow = (ANativeWindow*)((intptr_t) window);
     auto f_display_cb = std::bind(&AndroidDisplayCb, nativeWindow, std::placeholders::_1);
-    auto p_display_cb = std::bind(&sinkTargetPullCallback, nativeWindow, std::placeholders::_1);
+    auto p_display_cb = std::bind(&sinkTargetPullCallback, nativeWindow);
 
     {
         std::lock_guard<std::mutex> guard(windows_mutex);
-        auto buf = std::make_unique<DRing::FrameBuffer>();
-        buf->avframe.reset(av_frame_alloc());
-        windows.emplace(nativeWindow, std::move(buf));
+        windows.emplace(nativeWindow, av_frame_alloc());
     }
     DRing::registerSinkTarget(sink, DRing::SinkTarget {.pull=p_display_cb, .push=f_display_cb});
 }
