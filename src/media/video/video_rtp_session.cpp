@@ -255,10 +255,23 @@ VideoRtpSession::startReceiver()
         receiveThread_->startLoop();
         receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
         receiveThread_->setRotation(rotation_.load());
+        if (videoMixer_) {
+            auto activeParticipant = videoMixer_->verifyActive(receiveThread_.get())
+                                     || videoMixer_->verifyActive(callID_);
+            videoMixer_->removeAudioOnlySource(callID_);
+            if (activeParticipant)
+                videoMixer_->setActiveParticipant(receiveThread_.get());
+        }
+
     } else {
         JAMI_DBG("[%p] Video receiver disabled", this);
         if (receiveThread_ and videoMixer_) {
+            auto activeParticipant = videoMixer_->verifyActive(receiveThread_.get())
+                                     || videoMixer_->verifyActive(callID_);
+            videoMixer_->addAudioOnlySource(callID_);
             receiveThread_->detach(videoMixer_.get());
+            if (activeParticipant)
+                videoMixer_->setActiveParticipant(callID_);
         }
     }
     if (socketPair_)
@@ -276,7 +289,11 @@ VideoRtpSession::stopReceiver()
         return;
 
     if (videoMixer_) {
+        auto activeParticipant = videoMixer_->verifyActive(receiveThread_.get()) || videoMixer_->verifyActive(callID_);
+        videoMixer_->addAudioOnlySource(callID_);
         receiveThread_->detach(videoMixer_.get());
+        if (activeParticipant)
+            videoMixer_->setActiveParticipant(callID_);
     }
 
     // We need to disable the read operation, otherwise the
@@ -463,13 +480,20 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
                  conference.getConfId().c_str(),
                  callID_.c_str());
         if (receiveThread_) {
-            conference.detachVideo(dummyVideoReceive_.get());
             receiveThread_->stopSink();
             conference.attachVideo(receiveThread_.get(), callID_);
         } else {
             JAMI_WARN("[%p] no receiver", this);
         }
     }
+}
+
+std::shared_ptr<VideoFrameActiveWriter>
+VideoRtpSession::getReceiveVideoFrameActiveWriter()
+{
+    if (isReceiving() && receiveThread_ && conference_)
+        return std::static_pointer_cast<VideoFrameActiveWriter>(receiveThread_);
+    return {};
 }
 
 void
@@ -521,10 +545,11 @@ VideoRtpSession::exitConference()
             videoMixer_->detach(sender_.get());
 
         if (receiveThread_) {
+            auto activetParticipant = videoMixer_->verifyActive(receiveThread_.get());
             conference_->detachVideo(receiveThread_.get());
             receiveThread_->startSink();
-        } else {
-            conference_->detachVideo(dummyVideoReceive_.get());
+            if (activetParticipant)
+                videoMixer_->setActiveParticipant(callID_);
         }
 
         videoMixer_.reset();

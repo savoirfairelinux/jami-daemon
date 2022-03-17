@@ -63,7 +63,12 @@ public:
     }
 
     bool isSending() const noexcept { return send_.enabled; }
-    bool isReceiving() const noexcept { return receive_.enabled; }
+    bool isReceiving() const noexcept
+    {
+        return receive_.enabled
+               && (receive_.direction_ == MediaDirection::RECVONLY
+                   || receive_.direction_ == MediaDirection::SENDRECV);
+    }
 
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
