@@ -27,14 +27,6 @@
 #include <memory>
 #include <functional>
 
-extern "C" {
-struct AVFrame;
-}
-
-namespace DRing {
-struct FrameBuffer; //  from jami/videomanager_interface.h
-}
-
 namespace jami {
 
 using MediaFrame = DRing::MediaFrame;
