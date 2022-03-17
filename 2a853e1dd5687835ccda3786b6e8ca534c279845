@@ -34,6 +34,24 @@
       "parentUuid": "4bb47a9c_1718bb5d",
       "revId": "2a853e1dd5687835ccda3786b6e8ca534c279845",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2f1cadac_e2c4eae2",
+        "filename": "src/jami/videomanager_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-03-17T19:30:43Z",
+      "side": 1,
+      "message": "Replaced by a simple typedef, and removed one level of pointer indirection.\n\nIndeed, we could also merge AVSinkTarget in SinkTarget. I suggest doing that in another patch.",
+      "parentUuid": "35acf4af_907cd660",
+      "revId": "2a853e1dd5687835ccda3786b6e8ca534c279845",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
