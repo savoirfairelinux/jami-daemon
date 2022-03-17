@@ -40,6 +40,7 @@ static constexpr const char* REMOVED = "removed";
 static constexpr const char* ERASED = "erased";
 static constexpr const char* MEMBERS = "members";
 static constexpr const char* LAST_DISPLAYED = "lastDisplayed";
+static constexpr const char* PREFERENCES = "preferences";
 static constexpr const char* CACHED = "cached";
 static constexpr const char* RECEIVED = "received";
 static constexpr const char* DECLINED = "declined";
@@ -289,10 +290,22 @@ public:
     void updateInfos(const std::map<std::string, std::string>& map, const OnDoneCb& cb = {});
 
     /**
+     * Change user's preferences
+     * @param map       New preferences
+     */
+    void updatePreferences(const std::map<std::string, std::string>& map);
+
+    /**
      * Retrieve current infos (title, description, avatar, mode)
      * @return infos
      */
     std::map<std::string, std::string> infos() const;
+    /**
+     * Retrieve current preferences (color, notification, etc)
+     * @param includeLastModified       If we want to know when the preferences were modified
+     * @return preferences
+     */
+    std::map<std::string, std::string> preferences(bool includeLastModified) const;
     std::vector<uint8_t> vCard() const;
 
     /////// File transfer
