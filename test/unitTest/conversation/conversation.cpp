@@ -107,6 +107,7 @@ private:
     void testReplayConversation();
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
+    void testConversationPreferences();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -144,6 +145,7 @@ private:
     CPPUNIT_TEST(testReplayConversation);
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
+    CPPUNIT_TEST(testConversationPreferences);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2680,6 +2682,60 @@ ConversationTest::testImportMalformedContacts()
     auto contacts = DRing::getContacts(bob2Id);
     CPPUNIT_ASSERT(contacts.size() == 1);
     CPPUNIT_ASSERT(contacts[0][DRing::Account::TrustRequest::CONVERSATIONID] == "");
+}
+
+void
+ConversationTest::testConversationPreferences()
+{
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = aliceAccount->currentDeviceId();
+    auto uri = aliceAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, conversationRemoved = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == aliceId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
+        [&](const std::string& accountId, const std::string&) {
+            if (accountId == aliceId)
+                conversationRemoved = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Start conversation and set preferences
+    auto convId = DRing::startConversation(aliceId);
+    cv.wait_for(lk, 30s, [&]() { return conversationReady; });
+
+    CPPUNIT_ASSERT(DRing::getConversationPreferences(aliceId, convId).size() == 0);
+
+    DRing::setConversationPreferences(aliceId, convId, {{"foo", "bar"}});
+
+    auto preferences = DRing::getConversationPreferences(aliceId, convId);
+    CPPUNIT_ASSERT(preferences.size() == 1);
+    CPPUNIT_ASSERT(preferences["foo"] == "bar");
+
+    // Update
+    DRing::setConversationPreferences(aliceId, convId, {{"foo", "bar"}, {"bar", "foo"}});
+    preferences = DRing::getConversationPreferences(aliceId, convId);
+    CPPUNIT_ASSERT(preferences.size() == 2);
+    CPPUNIT_ASSERT(preferences["foo"] == "bar2");
+    CPPUNIT_ASSERT(preferences["bar"] == "foo");
+
+    // Remove conversations removes its preferences.
+    CPPUNIT_ASSERT(DRing::removeConversation(aliceId, convId));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationRemoved; }));
+    CPPUNIT_ASSERT(DRing::getConversationPreferences(aliceId, convId).size() == 0);
+
 }
 
 } // namespace test
