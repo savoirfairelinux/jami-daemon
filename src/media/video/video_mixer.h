@@ -45,6 +45,7 @@ struct SourceInfo
     int w;
     int h;
     bool hasVideo;
+    std::string id;
 };
 using OnSourcesUpdatedCb = std::function<void(std::vector<SourceInfo>&&)>;
 
@@ -73,9 +74,23 @@ public:
     void stopInput();
 
     void setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
+    void setActiveParticipant(const std::string& id);
+    void resetActiveParticipant() {
+        activeAudioOnly_ = "";
+        activeSource_ = nullptr;
+        updateLayout();
+    }
     void setActiveHost();
 
-    Observable<std::shared_ptr<MediaFrame>>* getActiveParticipant() { return activeSource_; }
+    bool verifyActive(const std::string& id)
+    {
+        return id == activeAudioOnly_;
+    }
+
+    bool verifyActive(Observable<std::shared_ptr<MediaFrame>>* ob)
+    {
+        return ob == activeSource_;
+    }
 
     void setVideoLayout(Layout newLayout)
     {
@@ -92,6 +107,20 @@ public:
     void updateLayout();
 
     std::shared_ptr<SinkClient>& getSink() { return sink_; }
+
+    void addAudioOnlySource(const std::string& id)
+    {
+        JAMI_WARN("insert id %s: ", id.c_str());
+        audioOnlySources_.insert(id);
+        updateLayout();
+    }
+    
+    void removeAudioOnlySource(const std::string& id)
+    {
+        JAMI_WARN("erase id %s: ", id.c_str());
+        audioOnlySources_.erase(id);
+        updateLayout();
+    }
 
 private:
     NON_COPYABLE(VideoMixer);
@@ -129,6 +158,8 @@ private:
     Layout currentLayout_ {Layout::GRID};
     Observable<std::shared_ptr<MediaFrame>>* activeSource_ {nullptr};
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
+    std::set<std::string> audioOnlySources_;
+    std::string activeAudioOnly_{};
 
     std::atomic_int layoutUpdated_ {0};
     OnSourcesUpdatedCb onSourcesUpdated_ {};
