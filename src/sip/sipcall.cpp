@@ -54,6 +54,7 @@
 #include <chrono>
 #include <libavutil/display.h>
 #include <video/sinkclient.h>
+#include "media/video/video_mixer.h"
 #endif
 #include "audio/ringbufferpool.h"
 #include "jamidht/channeled_transport.h"
@@ -90,8 +91,6 @@ static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION
 static constexpr auto REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR = "11.0.2"sv;
 static const std::vector<unsigned> REUSE_ICE_IN_REINVITE_REQUIRED_VERSION
     = split_string_to_unsigned(REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR, '.');
-
-constexpr auto DUMMY_VIDEO_STR = "dummy video session";
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
@@ -1042,6 +1041,11 @@ SIPCall::hangup(int reason)
 
     // Stop all RTP streams
     stopAllMedia();
+    if (auto conf = getConference()) {
+        if (auto mixer = conf->getVideoMixer()) {
+            mixer->removeAudioOnlySource(getCallId());
+        }
+    }
     setState(Call::ConnectionState::DISCONNECTED, reason);
     dht::ThreadPool::io().run([w = weak()] {
         if (auto shared = w.lock())
@@ -1397,6 +1401,11 @@ SIPCall::peerHungup()
 
     if (inviteSession_)
         terminateSipSession(PJSIP_SC_NOT_FOUND);
+    if (auto conf = getConference()) {
+        if (auto mixer = conf->getVideoMixer()) {
+            mixer->removeAudioOnlySource(getCallId());
+        }
+    }
 
     Call::peerHungup();
 }
@@ -2046,19 +2055,11 @@ SIPCall::startAllMedia()
     // reset
     readyToRecord_ = false;
     resetMediaReady();
-#ifdef ENABLE_VIDEO
-    bool hasActiveVideo = false;
-#endif
 
     for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
         if (not iter->mediaAttribute_) {
             throw std::runtime_error("Missing media attribute");
         }
-
-#ifdef ENABLE_VIDEO
-        if (iter->mediaAttribute_->type_ == MEDIA_VIDEO)
-            hasActiveVideo |= iter->mediaAttribute_->enabled_;
-#endif
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
         // because of the audio loop
@@ -2070,16 +2071,6 @@ SIPCall::startAllMedia()
             }
         }
     }
-
-#ifdef ENABLE_VIDEO
-    // TODO. Move this elsewhere (when adding participant to conf?)
-    if (not hasActiveVideo) {
-        if (auto conference = conf_.lock())
-            if (conference->isVideoEnabled())
-                if (auto recv = getReceiveVideoFrameActiveWriter())
-                    conference->attachVideo(recv.get(), getCallId());
-    }
-#endif
 
     // Media is restarted, we can process the last holding request.
     isWaitingForIceAndMedia_ = false;
@@ -2900,15 +2891,8 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
 #ifdef ENABLE_VIDEO
     if (conference->isVideoEnabled()) {
         auto videoRtp = getVideoRtp();
-        if (not videoRtp) {
-            // In conference, we need to have a video RTP session even
-            // if it's an audio only call
-            if (not addDummyVideoRtpSession()) {
-                JAMI_ERR("[call:%s] Failed to get a valid video RTP session", getCallId().c_str());
-                throw std::runtime_error("Failed to get a valid video RTP session");
-            }
-        }
-        videoRtp->enterConference(*conference);
+        if (videoRtp)
+            videoRtp->enterConference(*conference);
     }
 #endif
 
@@ -2960,47 +2944,6 @@ SIPCall::getVideoRtp() const
     return {};
 }
 
-bool
-SIPCall::addDummyVideoRtpSession()
-{
-    JAMI_DBG("[call:%s] Add dummy video stream", getCallId().c_str());
-
-    MediaAttribute mediaAttr(MediaType::MEDIA_VIDEO,
-                             true,
-                             true,
-                             false,
-                             "dummy source",
-                             DUMMY_VIDEO_STR);
-
-    addMediaStream(mediaAttr);
-    auto& stream = rtpStreams_.back();
-    createRtpSession(stream);
-    return stream.rtpSession_ != nullptr;
-}
-
-void
-SIPCall::removeDummyVideoRtpSessions()
-{
-    // It's not expected to have more than one dummy video stream, but
-    // check just in case.
-    auto removed = std::remove_if(rtpStreams_.begin(),
-                                  rtpStreams_.end(),
-                                  [](const RtpStream& stream) {
-                                      return stream.mediaAttribute_->label_ == DUMMY_VIDEO_STR;
-                                  });
-    auto count = std::distance(removed, rtpStreams_.end());
-    rtpStreams_.erase(removed, rtpStreams_.end());
-
-    if (count > 0) {
-        JAMI_DBG("[call:%s] Removed %lu dummy video stream(s)", getCallId().c_str(), count);
-        if (count > 1) {
-            JAMI_WARN("[call:%s] Expected to find 1 dummy video stream, found %lu",
-                      getCallId().c_str(),
-                      count);
-        }
-    }
-}
-
 void
 SIPCall::setRotation(int rotation)
 {
@@ -3017,6 +2960,8 @@ SIPCall::createSinks(const ConfInfo& infos)
 
     std::lock_guard<std::mutex> lk(sinksMtx_);
     auto videoRtp = getVideoRtp();
+    if (!videoRtp)
+        return;
     auto& videoReceive = videoRtp->getVideoReceive();
     if (!videoReceive)
         return;

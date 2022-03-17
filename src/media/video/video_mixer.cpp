@@ -179,6 +179,7 @@ VideoMixer::stopInput()
 void
 VideoMixer::setActiveHost()
 {
+    activeAudioOnly_ = "";
     activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
     updateLayout();
 }
@@ -186,7 +187,16 @@ VideoMixer::setActiveHost()
 void
 VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
+    activeAudioOnly_ = "";
     activeSource_ = ob;
+    updateLayout();
+}
+
+void
+VideoMixer::setActiveParticipant(const std::string& id)
+{
+    activeAudioOnly_ = id;
+    activeSource_ = nullptr;
     updateLayout();
 }
 
@@ -219,9 +229,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
         if (x->source == ob) {
             // Handle the case where the current shown source leave the conference
             if (activeSource_ == ob) {
-                currentLayout_ = Layout::GRID;
-                activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get()
-                                                     : videoLocal_.get();
+                resetActiveParticipant();
             }
             JAMI_DBG("Remove source [%p]", x.get());
             sources_.remove(x);
@@ -283,12 +291,24 @@ VideoMixer::process()
     libav_utils::fillWithBlack(output.pointer());
 
     {
+        std::lock_guard<std::mutex> lk(audioOnlySourcesMtx_);
         auto lock(rwMutex_.read());
 
         int i = 0;
         bool activeFound = false;
         bool needsUpdate = layoutUpdated_ > 0;
         bool successfullyRendered = false;
+        std::vector<SourceInfo> sourcesInfo;
+        sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
+        // add all audioonlysources
+        for (auto& id : audioOnlySources_) {
+            if (currentLayout_ != Layout::ONE_BIG or activeAudioOnly_ == id) {
+                sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, id});
+            }
+            if (currentLayout_ == Layout::ONE_BIG and activeAudioOnly_ == id)
+                successfullyRendered = true;
+        }
+        // add video sources
         for (auto& x : sources_) {
             /* thread stop pending? */
             if (!loop_.isRunning())
@@ -359,11 +379,9 @@ VideoMixer::process()
         if (needsUpdate and successfullyRendered) {
             layoutUpdated_ -= 1;
             if (layoutUpdated_ == 0) {
-                std::vector<SourceInfo> sourcesInfo;
-                sourcesInfo.reserve(sources_.size());
                 for (auto& x : sources_) {
                     sourcesInfo.emplace_back(
-                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo});
+                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo, {}});
                 }
                 if (onSourcesUpdated_)
                     onSourcesUpdated_(std::move(sourcesInfo));
