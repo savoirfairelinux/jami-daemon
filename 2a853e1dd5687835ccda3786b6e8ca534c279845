@@ -16,6 +16,24 @@
       "message": "I don\u0027t see any utility having a struct with a single member",
       "revId": "2a853e1dd5687835ccda3786b6e8ca534c279845",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35acf4af_907cd660",
+        "filename": "src/jami/videomanager_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-03-17T18:55:16Z",
+      "side": 1,
+      "message": "can be moved to SinkTarget\n\nmoreover, I don\u0027t see any utility keeping both SinkTarget and AVSinkTarget",
+      "parentUuid": "4bb47a9c_1718bb5d",
+      "revId": "2a853e1dd5687835ccda3786b6e8ca534c279845",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
