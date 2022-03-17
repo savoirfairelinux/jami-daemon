@@ -1720,6 +1720,28 @@
            <arg type="s" name="conversationId" direction="in"/>
        </method>
 
+       <method name="setConversationPreferences" tp:name-for-bindings="setConversationPreferences">
+           <tp:added version="13.5.0"/>
+           <tp:docstring>
+               Update conversation's preferences (synced across devices) such as color, notifications, etc.
+           </tp:docstring>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+           <arg type="a{ss}" name="prefs" direction="in"/>
+       </method>
+
+       <method name="getConversationPreferences" tp:name-for-bindings="getConversationPreferences">
+           <tp:added version="13.5.0"/>
+           <tp:docstring>
+               Get conversation's preferences
+           </tp:docstring>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="prefs" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+       </method>
+
        <method name="addConversationMember" tp:name-for-bindings="addConversationMember">
            <tp:added version="10.0.0"/>
            <tp:docstring>
@@ -2115,6 +2137,29 @@
            <arg type="s" name="what">
                <tp:docstring>
                    The error's description
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <signal name="conversationPreferencesUpdated" tp:name-for-bindings="conversationPreferencesUpdated">
+           <tp:added version="13.5.0"/>
+           <tp:docstring>
+               Notify clients when preferences for a conversation are updated
+           </tp:docstring>
+           <arg type="s" name="account_id">
+               <tp:docstring>
+                   Account id related
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="conversation_id">
+               <tp:docstring>
+                   Conversation id
+               </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="MapStringString"/>
+           <arg type="a{ss}" name="preferences">
+               <tp:docstring>
+                    New preferences
                </tp:docstring>
            </arg>
        </signal>

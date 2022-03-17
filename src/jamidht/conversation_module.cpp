@@ -557,7 +557,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             sendMessageNotification(conversationId, commitId, false);
         // Inform user that the conversation is ready
         emitSignal<DRing::ConversationSignal::ConversationReady>(accountId_, conversationId);
-        needsSyncingCb_();
+        needsSyncingCb_({});
         std::vector<Json::Value> values;
         values.reserve(messages.size());
         for (const auto& message : messages) {
@@ -696,7 +696,7 @@ ConversationModule::Impl::removeRepository(const std::string& conversationId, bo
         auto convIt = convInfos_.find(conversationId);
         if (convIt != convInfos_.end()) {
             convIt->second.erased = std::time(nullptr);
-            needsSyncingCb_();
+            needsSyncingCb_({});
         }
         saveConvInfos();
     }
@@ -722,7 +722,7 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId)
         itConv->second.erased = std::time(nullptr);
     // Sync now, because it can take some time to really removes the datas
     if (hasMembers)
-        needsSyncingCb_();
+        needsSyncingCb_({});
     saveConvInfos();
     lockCi.unlock();
     emitSignal<DRing::ConversationSignal::ConversationRemoved>(accountId_, conversationId);
@@ -1124,7 +1124,7 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
     }
     emitSignal<DRing::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
                                                                        conversationId);
-    pimpl_->needsSyncingCb_();
+    pimpl_->needsSyncingCb_({});
 }
 
 std::string
@@ -1157,7 +1157,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
         info.members.emplace_back(otherMember);
     addConvInfo(info);
 
-    pimpl_->needsSyncingCb_();
+    pimpl_->needsSyncingCb_({});
 
     emitSignal<DRing::ConversationSignal::ConversationReady>(pimpl_->accountId_, convId);
     return convId;
@@ -1464,6 +1464,14 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                                                                            convId,
                                                                            req.toMap());
     }
+
+    // Updates preferences for conversations
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (const auto& [convId, p] : msg.p) {
+        auto itConv = pimpl_->conversations_.find(convId);
+        if (itConv != pimpl_->conversations_.end() && itConv->second)
+            itConv->second->updatePreferences(p);
+    }
 }
 
 bool
@@ -1648,7 +1656,6 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
                                             bool sync)
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end()) {
         JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
@@ -1674,7 +1681,6 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
             return itReq->second.metadatas;
     }
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end() or not it->second) {
         std::lock_guard<std::mutex> lkCi(pimpl_->convInfosMtx_);
@@ -1687,6 +1693,52 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
     }
 
     return it->second->infos();
+}
+
+void
+ConversationModule::setConversationPreferences(const std::string& conversationId,
+                                               const std::map<std::string, std::string>& prefs)
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto it = pimpl_->conversations_.find(conversationId);
+    if (it == pimpl_->conversations_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return;
+    }
+
+    it->second->updatePreferences(prefs);
+    auto msg = std::make_shared<SyncMsg>();
+    std::map<std::string, std::map<std::string, std::string>> p;
+    p[conversationId] = it->second->preferences(true);
+    msg->p = std::move(p);
+    lk.unlock();
+    pimpl_->needsSyncingCb_(std::move(msg));
+}
+
+std::map<std::string, std::string>
+ConversationModule::getConversationPreferences(const std::string& conversationId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto it = pimpl_->conversations_.find(conversationId);
+    if (it == pimpl_->conversations_.end() or not it->second)
+        return {};
+
+    return it->second->preferences(false);
+}
+
+std::map<std::string, std::map<std::string, std::string>>
+ConversationModule::getAllConversationsPreferences() const
+{
+    std::map<std::string, std::map<std::string, std::string>> p;
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (const auto& [id, conv] : pimpl_->conversations_) {
+        if (conv) {
+            auto prefs = conv->preferences(true);
+            if (!prefs.empty())
+                p[id] = std::move(prefs);
+        }
+    }
+    return p;
 }
 
 std::vector<uint8_t>
@@ -1702,7 +1754,6 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
 
     return it->second->vCard();
 }
-
 bool
 ConversationModule::isBannedDevice(const std::string& convId, const std::string& deviceId) const
 {
