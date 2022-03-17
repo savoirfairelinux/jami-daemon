@@ -271,8 +271,6 @@ public:
      * Returns a pointer to the VideoRtp object
      */
     std::shared_ptr<video::VideoRtpSession> getVideoRtp() const;
-    bool addDummyVideoRtpSession() override;
-    void removeDummyVideoRtpSessions() override;
     void setRotation(int rotation);
 #endif
     // Get the list of current RTP sessions
