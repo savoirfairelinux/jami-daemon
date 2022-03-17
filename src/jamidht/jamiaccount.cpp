@@ -2342,10 +2342,10 @@ JamiAccount::convModule()
     if (!convModule_) {
         convModule_ = std::make_unique<ConversationModule>(
             weak(),
-            [this] {
-                runOnMainThread([w = weak()] {
+            [this](auto&& syncMsg) {
+                runOnMainThread([w = weak(), syncMsg = std::move(syncMsg)] {
                     if (auto shared = w.lock())
-                        shared->syncModule()->syncWithConnected();
+                        shared->syncModule()->syncWithConnected(syncMsg);
                 });
             },
             [this](auto&& uri, auto&& msg) {

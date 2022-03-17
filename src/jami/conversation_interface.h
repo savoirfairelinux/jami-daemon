@@ -49,6 +49,11 @@ DRING_PUBLIC void updateConversationInfos(const std::string& accountId,
                                           const std::map<std::string, std::string>& infos);
 DRING_PUBLIC std::map<std::string, std::string> conversationInfos(const std::string& accountId,
                                                                   const std::string& conversationId);
+DRING_PUBLIC void setConversationPreferences(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const std::map<std::string, std::string>& prefs);
+DRING_PUBLIC std::map<std::string, std::string> getConversationPreferences(
+    const std::string& accountId, const std::string& conversationId);
 
 // Member management
 DRING_PUBLIC void addConversationMember(const std::string& accountId,
@@ -158,6 +163,15 @@ struct DRING_PUBLIC ConversationSignal
                              const std::string& /* conversationId */,
                              int code,
                              const std::string& what);
+    };
+
+    // Preferences
+    struct DRING_PUBLIC ConversationPreferencesUpdated
+    {
+        constexpr static const char* name = "ConversationPreferencesUpdated";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /*conversationId*/,
+                             std::map<std::string, std::string> /*preferences*/);
     };
 };
 

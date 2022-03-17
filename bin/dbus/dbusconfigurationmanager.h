@@ -265,6 +265,11 @@ public:
                                  const std::map<std::string, std::string>& infos);
     std::map<std::string, std::string> conversationInfos(const std::string& accountId,
                                                          const std::string& conversationId);
+    void setConversationPreferences(const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::map<std::string, std::string>& prefs);
+    std::map<std::string, std::string> getConversationPreferences(const std::string& accountId,
+                                                                  const std::string& conversationId);
     void addConversationMember(const std::string& accountId,
                                const std::string& conversationId,
                                const std::string& contactUri);

@@ -43,7 +43,8 @@ public:
      * Build SyncMsg and send it on socket
      * @param socket
      */
-    void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
+    void syncInfos(const std::shared_ptr<ChannelSocket>& socket,
+                   const std::shared_ptr<SyncMsg>& syncMsg);
 };
 
 SyncModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account)
@@ -51,7 +52,8 @@ SyncModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account)
 {}
 
 void
-SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
+SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
+                            const std::shared_ptr<SyncMsg>& syncMsg)
 {
     auto acc = account_.lock();
     if (!acc)
@@ -59,13 +61,19 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
     Json::Value syncValue;
     std::error_code ec;
     msgpack::sbuffer buffer(8192);
-    SyncMsg msg;
-    if (auto info = acc->accountManager()->getInfo())
-        if (info->contacts)
-            msg.ds = info->contacts->getSyncData();
-    msg.c = ConversationModule::convInfos(acc->getAccountID());
-    msg.cr = ConversationModule::convRequests(acc->getAccountID());
-    msgpack::pack(buffer, msg);
+    if (!syncMsg) {
+        SyncMsg msg;
+        if (auto info = acc->accountManager()->getInfo())
+            if (info->contacts)
+                msg.ds = info->contacts->getSyncData();
+        msg.c = ConversationModule::convInfos(acc->getAccountID());
+        msg.cr = ConversationModule::convRequests(acc->getAccountID());
+        if (auto cm = acc->convModule())
+            msg.p = cm->getAllConversationsPreferences();
+        msgpack::pack(buffer, msg);
+    } else {
+        msgpack::pack(buffer, *syncMsg);
+    }
     socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
     if (ec)
         return;
@@ -124,7 +132,9 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
 }
 
 void
-SyncModule::syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+SyncModule::syncWith(const DeviceId& deviceId,
+                     const std::shared_ptr<ChannelSocket>& socket,
+                     const std::shared_ptr<SyncMsg>& syncMsg)
 {
     if (!socket)
         return;
@@ -150,16 +160,16 @@ SyncModule::syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSock
         });
         pimpl_->syncConnections_[deviceId].emplace_back(socket);
     }
-    pimpl_->syncInfos(socket);
+    pimpl_->syncInfos(socket, syncMsg);
 }
 
 void
-SyncModule::syncWithConnected()
+SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg)
 {
     std::lock_guard<std::mutex> lk(pimpl_->syncConnectionsMtx_);
     for (auto& [_deviceId, sockets] : pimpl_->syncConnections_) {
         if (not sockets.empty())
-            pimpl_->syncInfos(sockets[0]);
+            pimpl_->syncInfos(sockets[0], syncMsg);
     }
 }
 } // namespace jami

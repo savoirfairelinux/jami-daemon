@@ -327,7 +327,8 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConversationSignal::ConversationReady>(bind(&ConversationCallback::conversationReady, convM, _1, _2)),
         exportable_callback<ConversationSignal::ConversationRemoved>(bind(&ConversationCallback::conversationRemoved, convM, _1, _2)),
         exportable_callback<ConversationSignal::ConversationMemberEvent>(bind(&ConversationCallback::conversationMemberEvent, convM, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::OnConversationError>(bind(&ConversationCallback::onConversationError, convM, _1, _2, _3, _4))
+        exportable_callback<ConversationSignal::OnConversationError>(bind(&ConversationCallback::onConversationError, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(bind(&ConversationCallback::conversationPreferencesUpdated, convM, _1, _2, _3))
     };
 
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
