@@ -157,26 +157,16 @@ private:
     void setGeometry(int format, int width, int height) noexcept;
 };
 
-/* FrameBuffer is a generic video frame container */
-struct DRING_PUBLIC FrameBuffer
-{
-    uint8_t* ptr {nullptr};  // data as a plain raw pointer
-    std::size_t ptrSize {0}; // size in byte of ptr array
-    int format {0};          // as listed by AVPixelFormat (avutils/pixfmt.h)
-    int width {0};           // frame width
-    int height {0};          // frame height
-    std::vector<uint8_t> storage;
-    // If set, new frame will be written to this buffer instead
-    std::unique_ptr<AVFrame, void (*)(AVFrame*)> avframe {nullptr, [](AVFrame* frame) {
-                                                              av_frame_free(&frame);
-                                                          }};
+struct DRING_PUBLIC AVFrame_deleter {
+    void operator()(AVFrame* frame) const { av_frame_free(&frame); }
 };
+
+typedef std::unique_ptr<AVFrame, AVFrame_deleter> FrameBuffer;
 
 struct DRING_PUBLIC SinkTarget
 {
-    using FrameBufferPtr = std::unique_ptr<FrameBuffer>;
-    std::function<FrameBufferPtr(std::size_t bytes)> pull;
-    std::function<void(FrameBufferPtr)> push;
+    std::function<FrameBuffer()> pull;
+    std::function<void(FrameBuffer)> push;
 };
 
 struct DRING_PUBLIC AVSinkTarget
