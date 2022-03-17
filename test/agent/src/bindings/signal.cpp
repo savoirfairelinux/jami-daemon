@@ -540,5 +540,10 @@ install_signal_primitives(void*)
                 int,
                 const std::string&>(handlers, "conversation-error");
 
+    add_handler<DRing::ConversationSignal::ConversationPreferencesUpdated,
+                const std::string&,
+                const std::string&,
+                std::map<std::string, std::string>>(handlers, "conversation-preferences-updated");
+
     DRing::registerSignalHandlers(handlers);
 }

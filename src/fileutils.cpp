@@ -1119,5 +1119,20 @@ accessFile(const std::string& file, int mode)
 #endif
 }
 
+uint64_t
+lastWriteTime(const std::string& p)
+{
+#if USE_STD_FILESYSTEM
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::filesystem::last_write_time(std::filesystem::path(p)).time_since_epoch())
+        .count();
+#else
+    struct stat result;
+    if (stat(p.c_str(), &result) == 0)
+        return result.st_mtime;
+    return 0;
+#endif
+}
+
 } // namespace fileutils
 } // namespace jami

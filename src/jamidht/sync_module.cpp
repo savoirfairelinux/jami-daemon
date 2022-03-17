@@ -43,7 +43,8 @@ public:
      * Build SyncMsg and send it on socket
      * @param socket
      */
-    void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
+    void syncInfos(const std::shared_ptr<ChannelSocket>& socket,
+                   const std::shared_ptr<SyncMsg>& syncMsg);
 };
 
 SyncModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account)
@@ -51,7 +52,8 @@ SyncModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account)
 {}
 
 void
-SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
+SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
+                            const std::shared_ptr<SyncMsg>& syncMsg)
 {
     auto acc = account_.lock();
     if (!acc)
@@ -59,13 +61,30 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
     Json::Value syncValue;
     msgpack::sbuffer buffer(UINT16_MAX); // Use max pkt size
     std::error_code ec;
-    // Send contacts infos
-    // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
-    // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all informations).
-    if (auto info = acc->accountManager()->getInfo()) {
-        if (info->contacts) {
+    if (!syncMsg) {
+        // Send contacts infos
+        // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
+        // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all informations).
+        if (auto info = acc->accountManager()->getInfo()) {
+            if (info->contacts) {
+                SyncMsg msg;
+                msg.ds = info->contacts->getSyncData();
+                msgpack::pack(buffer, msg);
+                socket->write(reinterpret_cast<const unsigned char*>(buffer.data()),
+                              buffer.size(),
+                              ec);
+                if (ec) {
+                    JAMI_ERR("%s", ec.message().c_str());
+                    return;
+                }
+            }
+        }
+        buffer.clear();
+        // Sync conversations
+        auto c = ConversationModule::convInfos(acc->getAccountID());
+        if (!c.empty()) {
             SyncMsg msg;
-            msg.ds = info->contacts->getSyncData();
+            msg.c = std::move(c);
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
@@ -73,32 +92,24 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
                 return;
             }
         }
-    }
-    buffer.clear();
-    // Sync conversations
-    auto c = ConversationModule::convInfos(acc->getAccountID());
-    if (!c.empty()) {
-        SyncMsg msg;
-        msg.c = std::move(c);
-        msgpack::pack(buffer, msg);
-        socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-        if (ec) {
-            JAMI_ERR("%s", ec.message().c_str());
-            return;
+        buffer.clear();
+        // Sync requests
+        auto cr = ConversationModule::convRequests(acc->getAccountID());
+        if (!cr.empty()) {
+            SyncMsg msg;
+            msg.cr = std::move(cr);
+            msgpack::pack(buffer, msg);
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERR("%s", ec.message().c_str());
+                return;
+            }
         }
-    }
-    buffer.clear();
-    // Sync requests
-    auto cr = ConversationModule::convRequests(acc->getAccountID());
-    if (!cr.empty()) {
-        SyncMsg msg;
-        msg.cr = std::move(cr);
-        msgpack::pack(buffer, msg);
+    } else {
+        msgpack::pack(buffer, *syncMsg);
         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-        if (ec) {
+        if (ec)
             JAMI_ERR("%s", ec.message().c_str());
-            return;
-        }
     }
 }
 
@@ -149,14 +160,16 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
         if (auto manager = dynamic_cast<ArchiveAccountManager*>(acc->accountManager()))
             manager->onSyncData(std::move(msg.ds), false);
 
-        if (!msg.c.empty() || !msg.cr.empty())
+        if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty())
             acc->convModule()->onSyncData(msg, peerId, device.toString());
         return len;
     });
 }
 
 void
-SyncModule::syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+SyncModule::syncWith(const DeviceId& deviceId,
+                     const std::shared_ptr<ChannelSocket>& socket,
+                     const std::shared_ptr<SyncMsg>& syncMsg)
 {
     if (!socket)
         return;
@@ -182,16 +195,16 @@ SyncModule::syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSock
         });
         pimpl_->syncConnections_[deviceId].emplace_back(socket);
     }
-    pimpl_->syncInfos(socket);
+    pimpl_->syncInfos(socket, syncMsg);
 }
 
 void
-SyncModule::syncWithConnected()
+SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg)
 {
     std::lock_guard<std::mutex> lk(pimpl_->syncConnectionsMtx_);
     for (auto& [_deviceId, sockets] : pimpl_->syncConnections_) {
         if (not sockets.empty())
-            pimpl_->syncInfos(sockets[0]);
+            pimpl_->syncInfos(sockets[0], syncMsg);
     }
 }
 } // namespace jami

@@ -35,6 +35,7 @@ public:
     virtual void conversationRemoved(const std::string& /*accountId*/, const std::string& /* conversationId */){}
     virtual void conversationMemberEvent(const std::string& /*accountId*/, const std::string& /* conversationId */, const std::string& /* memberUri */, int /* event */){}
     virtual void onConversationError(const std::string& /*accountId*/, const std::string& /* conversationId */, uint32_t /* code */, const std::string& /* what */){}
+    virtual void conversationPreferencesUpdated(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /* preferences */){}
 };
 %}
 
@@ -51,6 +52,8 @@ namespace DRing {
   std::vector<std::map<std::string, std::string>> getConversationRequests(const std::string& accountId);
   void updateConversationInfos(const std::string& accountId, const std::string& conversationId, const std::map<std::string, std::string>& infos);
   std::map<std::string, std::string> conversationInfos(const std::string& accountId, const std::string& conversationId);
+  void setConversationPreferences(const std::string& accountId, const std::string& conversationId, const std::map<std::string, std::string>& prefs);
+  std::map<std::string, std::string> getConversationPreferences(const std::string& accountId, const std::string& conversationId);
 
   // Member management
   void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
@@ -86,4 +89,5 @@ public:
     virtual void conversationRemoved(const std::string& /*accountId*/, const std::string& /* conversationId */){}
     virtual void conversationMemberEvent(const std::string& /*accountId*/, const std::string& /* conversationId */, const std::string& /* memberUri */, int /* event */){}
     virtual void onConversationError(const std::string& /*accountId*/, const std::string& /* conversationId */, uint32_t /* code */, const std::string& /* what */){}
+    virtual void conversationPreferencesUpdated(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /* preferences */){}
 };

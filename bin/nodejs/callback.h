@@ -42,6 +42,7 @@ Persistent<Function> conferenceCreatedCb;
 Persistent<Function> conferenceChangedCb;
 Persistent<Function> conferenceRemovedCb;
 Persistent<Function> onConferenceInfosUpdatedCb;
+Persistent<Function> conversationPreferencesUpdatedCb;
 
 std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -117,6 +118,8 @@ getPresistentCb(std::string_view signal)
         return &conferenceRemovedCb;
     else if (signal == "OnConferenceInfosUpdated")
         return &onConferenceInfosUpdatedCb;
+    else if (signal == "ConversationPreferencesUpdated")
+        return &conversationPreferencesUpdatedCb;
     else
         return nullptr;
 }
@@ -131,7 +134,7 @@ getPresistentCb(std::string_view signal)
 inline std::string_view
 toView(const String::Utf8Value& utf8)
 {
-    return {*utf8, (size_t)utf8.length()};
+    return {*utf8, (size_t) utf8.length()};
 }
 
 inline SWIGV8_ARRAY
@@ -237,8 +240,7 @@ composingStatusChanged(const std::string& accountId,
 {
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId, from, state]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
-                                                    composingStatusChangedCb);
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), composingStatusChangedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
                                             V8_STRING_NEW_LOCAL(conversationId),
@@ -592,7 +594,10 @@ conversationLoaded(uint32_t id,
 }
 
 void
-messagesFound(uint32_t id, const std::string& accountId, const std::string&  conversationId, const std::vector<std::map<std::string, std::string>>& messages)
+messagesFound(uint32_t id,
+              const std::string& accountId,
+              const std::string& conversationId,
+              const std::vector<std::map<std::string, std::string>>& messages)
 {
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([id, accountId, conversationId, messages]() {
@@ -628,12 +633,13 @@ messageReceived(const std::string& accountId,
 
 void
 conversationProfileUpdated(const std::string& accountId,
-                            const std::string&  conversationId ,
-                            const std::map<std::string, std::string>& profile)
+                           const std::string& conversationId,
+                           const std::map<std::string, std::string>& profile)
 {
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId, profile]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conversationProfileUpdatedCb);
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    conversationProfileUpdatedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
                                             V8_STRING_NEW_LOCAL(conversationId),
@@ -813,6 +819,25 @@ onConferenceInfosUpdated(const std::string& accountId,
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
                                             V8_STRING_NEW_LOCAL(confId),
                                             stringMapVecToJsMapArray(infos)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+conversationPreferencesUpdated(const std::string& accountId,
+                               const std::string& convId,
+                               const std::map<std::string, std::string>& preferences)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, convId, preferences]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    conversationPreferencesUpdatedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(convId),
+                                            stringMapToJsMap(preferences)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
