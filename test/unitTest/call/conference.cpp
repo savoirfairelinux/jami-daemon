@@ -46,6 +46,7 @@ struct CallData
     std::string hostState {};
     std::atomic_bool moderatorMuted {false};
     std::atomic_bool raisedHand {false};
+    std::atomic_bool active {false};
 
     void reset()
     {
@@ -54,6 +55,7 @@ struct CallData
         device = "";
         hostState = "";
         moderatorMuted = false;
+        active = false;
         raisedHand = false;
     }
 };
@@ -79,6 +81,7 @@ private:
     void testAudioVideoMutedStates();
     void testCreateParticipantsSinks();
     void testMuteStatusAfterRemove();
+    void testActiveStatusAfterRemove();
     void testHandsUp();
     void testPeerLeaveConference();
     void testJoinCallFromOtherAccount();
@@ -90,6 +93,7 @@ private:
     CPPUNIT_TEST(testAudioVideoMutedStates);
     CPPUNIT_TEST(testCreateParticipantsSinks);
     CPPUNIT_TEST(testMuteStatusAfterRemove);
+    CPPUNIT_TEST(testActiveStatusAfterRemove);
     CPPUNIT_TEST(testHandsUp);
     CPPUNIT_TEST(testPeerLeaveConference);
     CPPUNIT_TEST(testJoinCallFromOtherAccount);
@@ -212,14 +216,17 @@ ConferenceTest::registerSignalHandlers()
             const std::vector<std::map<std::string, std::string>> participantsInfos) {
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
+                    bobCall.active = infos.at("active") == "true";
                     bobCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     bobCall.raisedHand = infos.at("handRaised") == "true";
                     bobCall.device = infos.at("device");
                 } else if (infos.at("uri").find(carlaUri) != std::string::npos) {
+                    carlaCall.active = infos.at("active") == "true";
                     carlaCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     carlaCall.raisedHand = infos.at("handRaised") == "true";
                     carlaCall.device = infos.at("device");
                 } else if (infos.at("uri").find(daviUri) != std::string::npos) {
+                    daviCall.active = infos.at("active") == "true";
                     daviCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     daviCall.raisedHand = infos.at("handRaised") == "true";
                     daviCall.device = infos.at("device");
@@ -442,6 +449,64 @@ ConferenceTest::testMuteStatusAfterRemove()
 
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !daviCall.moderatorMuted.load(); }));
+
+    Manager::instance().hangupCall(daviId, daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "OVER"; }));
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+
+void
+ConferenceTest::testActiveStatusAfterRemove()
+{
+    registerSignalHandlers();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
+    auto daviUri = daviAccount->getUsername();
+
+    startConference();
+
+    MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
+    defaultAudio.label_ = "audio_0";
+    defaultAudio.enabled_ = true;
+
+    JAMI_INFO("Start call between Alice and Davi");
+    auto call1 = DRing::placeCallWithMedia(aliceId,
+                                           daviUri,
+                                           MediaAttribute::mediaAttributesToMediaMaps(
+                                                       {defaultAudio}));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
+    Manager::instance().answerCall(daviId, daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
+    Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
+
+    DRing::setActiveParticipant(aliceId, confId, daviUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return daviCall.active.load(); }));
+
+    Manager::instance().hangupCall(daviId, daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "OVER"; }));
+    daviCall.reset();
+
+    auto call2 = DRing::placeCallWithMedia(aliceId, daviUri, {defaultAudio});
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
+    Manager::instance().answerCall(daviId, daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
+    Manager::instance().addParticipant(aliceId, call2, aliceId, confId);
+
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return !daviCall.active.load(); }));
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(

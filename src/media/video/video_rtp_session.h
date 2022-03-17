@@ -112,7 +112,7 @@ public:
     {
         if (isReceiving() && receiveThread_)
             return std::static_pointer_cast<VideoFrameActiveWriter>(receiveThread_);
-        return dummyVideoReceive_;
+        return {};
     }
 
 private:
@@ -129,8 +129,6 @@ private:
 
     std::unique_ptr<VideoSender> sender_;
     std::shared_ptr<VideoReceiveThread> receiveThread_;
-    std::shared_ptr<VideoFrameActiveWriter> dummyVideoReceive_
-        = std::make_shared<VideoFrameActiveWriter>();
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoInput> videoLocal_;
