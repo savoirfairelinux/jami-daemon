@@ -16,6 +16,24 @@
       "message": "bump major version?",
       "revId": "820c66f8265bd1dc9cb2f9e9dbed3be4a8a2a982",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cef7743a_b13a9806",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-03-18T20:12:49Z",
+      "side": 1,
+      "message": "done in https://review.jami.net/c/jami-daemon/+/21271",
+      "parentUuid": "d103efbe_52a45404",
+      "revId": "820c66f8265bd1dc9cb2f9e9dbed3be4a8a2a982",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
