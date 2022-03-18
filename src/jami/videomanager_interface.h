@@ -56,6 +56,12 @@ namespace DRing {
 [[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC void registerVideoHandlers(
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
+struct DRING_PUBLIC AVFrame_deleter {
+    void operator()(AVFrame* frame) const { av_frame_free(&frame); }
+};
+
+typedef std::unique_ptr<AVFrame, AVFrame_deleter> FrameBuffer;
+
 class DRING_PUBLIC MediaFrame
 {
 public:
@@ -80,10 +86,10 @@ public:
     // Reset internal buffers (return to an empty MediaFrame)
     virtual void reset() noexcept;
 
-    std::unique_ptr<AVFrame, void (*)(AVFrame*)> getFrame() { return std::move(frame_); }
+    FrameBuffer getFrame() { return std::move(frame_); }
 
 protected:
-    std::unique_ptr<AVFrame, void (*)(AVFrame*)> frame_;
+    FrameBuffer frame_;
     std::unique_ptr<AVPacket, void (*)(AVPacket*)> packet_;
 };
 
@@ -157,21 +163,10 @@ private:
     void setGeometry(int format, int width, int height) noexcept;
 };
 
-struct DRING_PUBLIC AVFrame_deleter {
-    void operator()(AVFrame* frame) const { av_frame_free(&frame); }
-};
-
-typedef std::unique_ptr<AVFrame, AVFrame_deleter> FrameBuffer;
-
 struct DRING_PUBLIC SinkTarget
 {
     std::function<FrameBuffer()> pull;
     std::function<void(FrameBuffer)> push;
-};
-
-struct DRING_PUBLIC AVSinkTarget
-{
-    std::function<void(std::unique_ptr<VideoFrame>)> push;
     int /* AVPixelFormat */ preferredFormat {-1 /* AV_PIX_FMT_NONE */};
 };
 
@@ -199,8 +194,7 @@ DRING_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
 DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
-DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
-DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
+DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, SinkTarget target);
 #if HAVE_SHM
 DRING_PUBLIC void startShmSink(const std::string& sinkId, bool value);
 #endif

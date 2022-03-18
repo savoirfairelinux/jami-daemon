@@ -63,7 +63,7 @@ public:
 
     AVPixelFormat getPreferredFormat() const noexcept
     {
-        return (AVPixelFormat) avTarget_.preferredFormat;
+        return (AVPixelFormat) target_.preferredFormat;
     }
 
     // as VideoFramePassiveReader
@@ -76,12 +76,11 @@ public:
     void setFrameSize(int width, int height);
     void setCrop(int x, int y, int w, int h);
 
-    void registerTarget(const DRing::SinkTarget& target) noexcept
+    void registerTarget(DRing::SinkTarget target) noexcept
     {
         std::lock_guard<std::mutex> lock(mtx_);
-        target_ = target;
+        target_ = std::move(target);
     }
-    void registerAVTarget(const DRing::AVSinkTarget& target) noexcept { avTarget_ = target; }
 
 #if HAVE_SHM
     void enableShm(bool value) { doShmTransfer_.store(value); }
@@ -103,7 +102,6 @@ private:
     bool started_ {false}; // used to arbitrate client's stop signal.
     int rotation_ {0};
     DRing::SinkTarget target_;
-    DRing::AVSinkTarget avTarget_;
     std::unique_ptr<VideoScaler> scaler_;
     std::unique_ptr<MediaFilter> filter_;
     std::mutex mtx_;
