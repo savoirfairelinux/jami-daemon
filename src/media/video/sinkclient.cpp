@@ -354,23 +354,23 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
 
     std::unique_lock<std::mutex> lock(mtx_);
-    if (avTarget_.push) {
-        auto outFrame = std::make_unique<VideoFrame>();
-        outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
+    if (target_.push and not target_.pull) {
+        VideoFrame outFrame;
+        outFrame.copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
         if (crop_.w || crop_.h) {
-            outFrame->pointer()->crop_top = crop_.y;
-            outFrame->pointer()->crop_bottom = (size_t) outFrame->height() - crop_.y - crop_.h;
-            outFrame->pointer()->crop_left = crop_.x;
-            outFrame->pointer()->crop_right = (size_t) outFrame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(outFrame->pointer(), AV_FRAME_CROP_UNALIGNED);
+            outFrame.pointer()->crop_top = crop_.y;
+            outFrame.pointer()->crop_bottom = (size_t) outFrame.height() - crop_.y - crop_.h;
+            outFrame.pointer()->crop_left = crop_.x;
+            outFrame.pointer()->crop_right = (size_t) outFrame.width() - crop_.x - crop_.w;
+            av_frame_apply_cropping(outFrame.pointer(), AV_FRAME_CROP_UNALIGNED);
         }
-        if (outFrame->height() != height_ || outFrame->width() != width_) {
+        if (outFrame.height() != height_ || outFrame.width() != width_) {
             setFrameSize(0, 0);
-            setFrameSize(outFrame->width(), outFrame->height());
+            setFrameSize(outFrame.width(), outFrame.height());
             return;
         }
         notify(std::static_pointer_cast<MediaFrame>(frame_p));
-        avTarget_.push(std::move(outFrame));
+        target_.push(outFrame.getFrame());
         return;
     }
 
