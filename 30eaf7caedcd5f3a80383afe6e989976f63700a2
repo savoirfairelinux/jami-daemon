@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "176d6b06_20d8e552",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 592,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-03-18T21:19:16Z",
+      "side": 1,
+      "message": "maybe put this comment a line down",
+      "range": {
+        "startLine": 592,
+        "startChar": 4,
+        "endLine": 592,
+        "endChar": 23
+      },
+      "revId": "30eaf7caedcd5f3a80383afe6e989976f63700a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
