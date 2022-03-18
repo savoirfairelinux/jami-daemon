@@ -58,10 +58,7 @@ extern "C" {
 namespace DRing {
 
 MediaFrame::MediaFrame()
-    : frame_ {av_frame_alloc(),
-              [](AVFrame* frame) {
-                  av_frame_free(&frame);
-              }}
+    : frame_ {av_frame_alloc()}
     , packet_(nullptr, [](AVPacket* p) {
         if (p) {
             av_packet_unref(p);
@@ -526,11 +523,11 @@ stopLocalRecorder(const std::string& filepath)
 }
 
 void
-registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
+registerSinkTarget(const std::string& sinkId, SinkTarget target)
 {
 #ifdef ENABLE_VIDEO
     if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
-        sink->registerTarget(target);
+        sink->registerTarget(std::move(target));
     else
         JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
 #endif
@@ -548,17 +545,6 @@ startShmSink(const std::string& sinkId, bool value)
 #endif
 }
 #endif
-
-void
-registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target)
-{
-#ifdef ENABLE_VIDEO
-    if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
-        sink->registerAVTarget(target);
-    else
-        JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
-#endif
-}
 
 std::map<std::string, std::string>
 getRenderer(const std::string& callId)
