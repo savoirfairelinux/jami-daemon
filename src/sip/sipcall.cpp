@@ -2147,18 +2147,18 @@ SIPCall::stopAllMedia()
         audioRtp->stop();
 #ifdef ENABLE_VIDEO
     auto const& videoRtp = getVideoRtp();
-
     {
         std::lock_guard<std::mutex> lk(sinksMtx_);
-        auto& videoReceive = videoRtp->getVideoReceive();
-        if (videoReceive) {
-            auto& sink = videoReceive->getSink();
-            for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
-                sink->detach(it->second.get());
-
-                it->second->stop();
-                it = callSinksMap_.erase(it);
+        for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
+            if (videoRtp) {
+                auto& videoReceive = videoRtp->getVideoReceive();
+                if (videoReceive) {
+                    auto& sink = videoReceive->getSink();
+                    sink->detach(it->second.get());
+                }
             }
+            it->second->stop();
+            it = callSinksMap_.erase(it);
         }
     }
 
