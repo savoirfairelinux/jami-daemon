@@ -1,4 +1,4 @@
-FFMPEG_HASH := n4.4.2
+FFMPEG_HASH := n5.0
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
@@ -365,8 +365,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/rtp_ext_abs_send_time.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusdec-enable-FEC.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
-	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
-	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
