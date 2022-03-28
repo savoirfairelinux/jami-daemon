@@ -205,14 +205,6 @@ public:
 void
 MultiplexedSocket::Impl::eventLoop()
 {
-    endpoint->setOnStateChange([this](tls::TlsSessionState state) {
-        if (state == tls::TlsSessionState::SHUTDOWN && !isShutdown_) {
-            JAMI_INFO("Tls endpoint is down, shutdown multiplexed socket");
-            shutdown();
-            return false;
-        }
-        return true;
-    });
     sendVersion();
     std::error_code ec;
     while (!stop) {
