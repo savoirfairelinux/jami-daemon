@@ -1363,12 +1363,7 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 bool
 Manager::ManagerPimpl::hangupConference(Conference& conference)
 {
-    JAMI_DBG("Hangup conference %s", conference.getConfId().c_str());
-    ParticipantSet participants(conference.getParticipantList());
-    for (const auto& callId : participants) {
-        if (auto call = base_.getCallFromCallID(callId))
-            base_.hangupCall(call->getAccountId(), callId);
-    }
+    conference.hangup();
     unsetCurrentCall();
     return true;
 }

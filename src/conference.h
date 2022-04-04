@@ -347,6 +347,7 @@ public:
     void setModerator(const std::string& uri, const bool& state);
     void setHandRaised(const std::string& uri, const bool& state);
     void muteParticipant(const std::string& uri, const bool& state);
+    void hangup();
     void hangupParticipant(const std::string& participant_id);
     void updateMuted();
     void muteLocalHost(bool is_muted, const std::string& mediaType);
@@ -375,6 +376,8 @@ private:
 
     mutable std::mutex confInfoMutex_ {};
     ConfInfo confInfo_ {};
+
+    std::atomic_bool stopping_ {false};
 
     void sendConferenceInfos();
     // We need to convert call to frame

@@ -95,7 +95,7 @@ Conference::Conference(const std::shared_ptr<Account>& account)
     videoMixer_->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
-            if (!shared)
+            if (!shared || shared->stopping_)
                 return;
             auto acc = std::dynamic_pointer_cast<JamiAccount>(shared->account_.lock());
             if (!acc)
@@ -1410,6 +1410,21 @@ Conference::updateConferenceInfo(ConfInfo confInfo)
     std::lock_guard<std::mutex> lk(confInfoMutex_);
     confInfo_ = std::move(confInfo);
     sendConferenceInfos();
+}
+
+void
+Conference::hangup()
+{
+    JAMI_DBG("Hangup conference %s", getConfId().c_str());
+    stopping_ = true;
+    for (const auto& callId : getParticipantList()) {
+        if (auto call = getCall(callId)) {
+            // Check the account as conference can mix calls between several accounts
+            if (auto account = call->getAccount().lock()) {
+                Manager::instance().hangupCall(account->getAccountID(), call->getCallId());
+            }
+        }
+    }
 }
 
 void
