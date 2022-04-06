@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "40d8f867_592673bf",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-04-06T18:06:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5ad3ecf6_5220f61a",
+      "range": {
+        "startLine": 115,
+        "startChar": 32,
+        "endLine": 117,
+        "endChar": 25
+      },
+      "revId": "effb6ba1d740bd3cf864a4e3b7ecea3b1a7508ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fef5c727_a4a434be",
@@ -61,6 +85,30 @@
       "writtenOn": "2022-03-29T13:47:42Z",
       "side": 1,
       "message": "if videoMixer accepts callId, we can do the else condition everytime instead of doing a check on videoRecv?",
+      "range": {
+        "startLine": 698,
+        "startChar": 16,
+        "endLine": 704,
+        "endChar": 5
+      },
+      "revId": "effb6ba1d740bd3cf864a4e3b7ecea3b1a7508ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a524bc0_b5fb004a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-04-06T18:06:40Z",
+      "side": 1,
+      "message": "No... the call id is accepted only for the audio only calls",
+      "parentUuid": "fef5c727_a4a434be",
       "range": {
         "startLine": 698,
         "startChar": 16,
@@ -105,6 +153,30 @@
         "id": 220
       },
       "writtenOn": "2022-04-06T18:01:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f9c2a224_fc601831",
+      "range": {
+        "startLine": 837,
+        "startChar": 37,
+        "endLine": 838,
+        "endChar": 39
+      },
+      "revId": "effb6ba1d740bd3cf864a4e3b7ecea3b1a7508ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "059a7452_60fdc9b4",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 838,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-04-06T18:06:40Z",
       "side": 1,
       "message": "Done",
       "parentUuid": "f9c2a224_fc601831",
@@ -165,6 +237,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "309c3660_b9c7495a",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-04-06T18:06:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8b55c3e8_f280ed48",
+      "range": {
+        "startLine": 113,
+        "startChar": 8,
+        "endLine": 113,
+        "endChar": 17
+      },
+      "revId": "effb6ba1d740bd3cf864a4e3b7ecea3b1a7508ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1739a51d_67e261f4",
@@ -199,6 +295,30 @@
         "id": 220
       },
       "writtenOn": "2022-04-06T18:01:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1739a51d_67e261f4",
+      "range": {
+        "startLine": 114,
+        "startChar": 5,
+        "endLine": 114,
+        "endChar": 37
+      },
+      "revId": "effb6ba1d740bd3cf864a4e3b7ecea3b1a7508ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e60eb7b8_d2f3bb90",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-04-06T18:06:40Z",
       "side": 1,
       "message": "Done",
       "parentUuid": "1739a51d_67e261f4",
@@ -259,6 +379,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6a396a3a_86abd885",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-04-06T18:06:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "87d813eb_e165a946",
+      "range": {
+        "startLine": 117,
+        "startChar": 0,
+        "endLine": 117,
+        "endChar": 4
+      },
+      "revId": "effb6ba1d740bd3cf864a4e3b7ecea3b1a7508ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a490afd5_b8e68cee",
@@ -306,6 +450,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "60ae8c9f_1a95cfe0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1047,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-04-06T18:06:40Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "a490afd5_b8e68cee",
+      "range": {
+        "startLine": 1047,
+        "startChar": 7,
+        "endLine": 1047,
+        "endChar": 37
+      },
+      "revId": "effb6ba1d740bd3cf864a4e3b7ecea3b1a7508ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "299eee32_e008b999",
@@ -342,6 +510,30 @@
       "writtenOn": "2022-04-06T18:01:56Z",
       "side": 1,
       "message": "Done",
+      "parentUuid": "299eee32_e008b999",
+      "range": {
+        "startLine": 1410,
+        "startChar": 19,
+        "endLine": 1410,
+        "endChar": 29
+      },
+      "revId": "effb6ba1d740bd3cf864a4e3b7ecea3b1a7508ff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "123fa6fc_53e4f517",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1410,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-04-06T18:06:40Z",
+      "side": 1,
+      "message": "Ack",
       "parentUuid": "299eee32_e008b999",
       "range": {
         "startLine": 1410,
