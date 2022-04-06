@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b265f10c_233a6f5d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2087,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-06T18:01:56Z",
+      "side": 1,
+      "message": "if (auto const\u0026 videoRtp \u003d getVideoRtp()) { if (videoMuted)...",
+      "range": {
+        "startLine": 2087,
+        "startChar": 7,
+        "endLine": 2087,
+        "endChar": 45
+      },
+      "revId": "6575e7200a4f640631786697bbe47dccd20f31a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
