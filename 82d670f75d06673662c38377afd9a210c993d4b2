@@ -34,6 +34,24 @@
       "parentUuid": "32549cf9_6934e965",
       "revId": "82d670f75d06673662c38377afd9a210c993d4b2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83d67627_bf49fad8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-07T20:09:11Z",
+      "side": 1,
+      "message": "If the issue is the alignment (not sure it is in this issue), the fix is to track down all ffmpeg APIs that takes the alignment as input (set it to 0 should do the work).",
+      "parentUuid": "6acf3af5_21de66ff",
+      "revId": "82d670f75d06673662c38377afd9a210c993d4b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
