@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c657877_bcaec39a",
+        "filename": "src/media/rtp_session.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-07T11:56:05Z",
+      "side": 1,
+      "message": "I guess if we need to change isReceiving, isSending is to check too",
+      "range": {
+        "startLine": 65,
+        "startChar": 11,
+        "endLine": 65,
+        "endChar": 52
+      },
+      "revId": "954cc692f995231d8b8262052d7399351b1ad39c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
