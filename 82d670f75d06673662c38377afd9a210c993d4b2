@@ -16,6 +16,24 @@
       "message": "should we also rebase or reuse parts of https://review.jami.net/c/jami-daemon/+/21033 ?",
       "revId": "82d670f75d06673662c38377afd9a210c993d4b2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6acf3af5_21de66ff",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-07T19:14:57Z",
+      "side": 1,
+      "message": "Yeah, I guess it should be grouped with the aligned work Mohamed did.\n\nHowever it doesn\u0027t seems to solve the video on dbus",
+      "parentUuid": "32549cf9_6934e965",
+      "revId": "82d670f75d06673662c38377afd9a210c993d4b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
