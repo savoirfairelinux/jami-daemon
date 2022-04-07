@@ -362,7 +362,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             outFrame.pointer()->crop_bottom = (size_t) outFrame.height() - crop_.y - crop_.h;
             outFrame.pointer()->crop_left = crop_.x;
             outFrame.pointer()->crop_right = (size_t) outFrame.width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(outFrame.pointer(), AV_FRAME_CROP_UNALIGNED);
+            av_frame_apply_cropping(outFrame.pointer(), 0);
         }
         if (outFrame.height() != height_ || outFrame.width() != width_) {
             setFrameSize(0, 0);
@@ -422,7 +422,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
             frame->pointer()->crop_left = crop_.x;
             frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+            av_frame_apply_cropping(frame->pointer(), 0);
         }
 
         if (frame->height() != height_ || frame->width() != width_) {
