@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "32549cf9_6934e965",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-04-07T15:35:26Z",
+      "side": 1,
+      "message": "should we also rebase or reuse parts of https://review.jami.net/c/jami-daemon/+/21033 ?",
+      "revId": "82d670f75d06673662c38377afd9a210c993d4b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
