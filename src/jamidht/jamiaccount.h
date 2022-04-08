@@ -856,9 +856,12 @@ private:
      * Ask a device to open a channeled SIP socket
      * @param peerId        The contact who owns the device
      * @param deviceId      The device to ask
+     * @param forceNewConnection If we want a new SIP connection
      * @note triggers cacheSIPConnection
      */
-    void requestSIPConnection(const std::string& peerId, const DeviceId& deviceId);
+    void requestSIPConnection(const std::string& peerId,
+                              const DeviceId& deviceId,
+                              bool forceNewConnection = false);
     /**
      * Store a new SIP connection into sipConnections_
      * @param channel   The new sip channel

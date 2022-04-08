@@ -46,7 +46,8 @@ struct PeerConnectionRequest : public dht::EncryptedValue<PeerConnectionRequest>
     dht::Value::Id id = dht::Value::INVALID_ID;
     std::string ice_msg {};
     bool isAnswer {false};
-    MSGPACK_DEFINE_MAP(id, ice_msg, isAnswer)
+    bool forceSocket {false};
+    MSGPACK_DEFINE_MAP(id, ice_msg, isAnswer, forceSocket)
 };
 
 /**
@@ -56,7 +57,8 @@ using onICERequestCallback = std::function<bool(const DeviceId&)>;
 /**
  * Used to accept or decline an incoming channel request
  */
-using ChannelRequestCallback = std::function<bool(const std::shared_ptr<dht::crypto::Certificate>&, const std::string& /* name */)>;
+using ChannelRequestCallback = std::function<bool(const std::shared_ptr<dht::crypto::Certificate>&,
+                                                  const std::string& /* name */)>;
 /**
  * Used by connectDevice, when the socket is ready
  */
@@ -81,19 +83,23 @@ public:
      * Open a new channel between the account's device and another device
      * This method will send a message on the account's DHT, wait a reply
      * and then, create a Tls socket with remote peer.
-     * @param deviceId      Remote device
-     * @param name          Name of the channel
-     * @param cb            Callback called when socket is ready ready
-     * @param noNewSocket   Do not negotiate a new socekt if there is none
+     * @param deviceId       Remote device
+     * @param name           Name of the channel
+     * @param cb             Callback called when socket is ready ready
+     * @param noNewSocket    Do not negotiate a new socket if there is none
+     * @param forceNewSocket Negotiate a new socket even if there is one // todo group with previous
+     * (enum)
      */
     void connectDevice(const DeviceId& deviceId,
                        const std::string& name,
                        ConnectCallback cb,
-                       bool noNewSocket = false);
+                       bool noNewSocket = false,
+                       bool forceNewSocket = false);
     void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                        const std::string& name,
                        ConnectCallback cb,
-                       bool noNewSocket = false);
+                       bool noNewSocket = false,
+                       bool forceNewSocket = false);
 
     /**
      * Check if we are already connecting to a device with a specific name
