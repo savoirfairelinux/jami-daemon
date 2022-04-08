@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := 2.4.3
+OPENDHT_VERSION := d3d6d48516a983baf1148440d0f9d4887a889f38
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -37,11 +37,12 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/opendht/test.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
 
 .opendht: opendht .sum-opendht
 	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) $(OPENDHT_CONF) ./configure --enable-static --disable-shared --disable-tools --disable-indexation --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --enable-push-notifications $(HOSTCONF)
+	cd $< && $(HOSTVARS) $(OPENDHT_CONF) CXXFLAGS="-g -O0" ./configure --enable-static --disable-shared --disable-tools --disable-indexation --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --enable-push-notifications $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
