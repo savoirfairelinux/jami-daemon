@@ -1,0 +1,15 @@
+#!/bin/sh
+
+tmp=$(mktemp --tmpdir --directory "jami-tablet-android.XXXXXXXXXX")
+
+export GUILE_AUTO_COMPILE=0
+export SIPLOGLEVEL=5
+
+export XDG_CONFIG_HOME="$tmp"
+export XDG_CACHE_HOME="$tmp"
+export XDG_DATA_HOME="$tmp"
+
+export JAMI_LOG_FILE="tablet-android.log"
+./agent -l ./scenarios/tablet-android/scenario.scm -c "(run-scenario \"$1\")"
+
+rm -rf "$tmp"
