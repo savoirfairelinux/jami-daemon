@@ -70,6 +70,24 @@
       "parentUuid": "83d67627_bf49fad8",
       "revId": "82d670f75d06673662c38377afd9a210c993d4b2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a769192b_95a603cb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-08T13:09:51Z",
+      "side": 1,
+      "message": "regardless, it has to do with the alignment of the internal buffer of the AVFrame. What I am saying is if want to check/fix the alignment, we need to check all FFMpeg API we use that require alignment value/flag.\nI started the work in https://review.jami.net/c/jami-daemon/+/21033, but then, I was only focused on the DirectRender since the one that was problematic. With the use of QFrameVideo, the alignment seems not to be an issue anymore for DirectRender, probably because the QVideoFrame uses aligned buffers.\nSo we need to recheck again for both DirectRender and SHM for the alignment.",
+      "parentUuid": "edc070dc_12073a74",
+      "revId": "82d670f75d06673662c38377afd9a210c993d4b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
