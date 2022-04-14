@@ -334,6 +334,16 @@
             <arg type="s" name="callId" direction="in"/>
         </method>
 
+        <method name="setActiveSink" tp:name-for-bindings="setActiveSink">
+            <tp:added version="13.1.0"/>
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="accountUri" direction="in"/>
+            <arg type="s" name="deviceId" direction="in"/>
+            <arg type="s" name="sinkId" direction="in"/>
+            <arg type="b" name="state" direction="in"/>
+        </method>
+
         <method name="setModerator" tp:name-for-bindings="setModerator">
             <tp:added version="11.0.0"/>
             <arg type="s" name="accountId" direction="in" />
@@ -347,6 +357,16 @@
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="confId" direction="in"/>
             <arg type="s" name="peerId" direction="in"/>
+            <arg type="b" name="state" direction="in"/>
+        </method>
+
+        <method name="muteStream" tp:name-for-bindings="muteStream">
+            <tp:added version="13.1.0"/>
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="accountUri" direction="in"/>
+            <arg type="s" name="deviceId" direction="in"/>
+            <arg type="s" name="sinkId" direction="in"/>
             <arg type="b" name="state" direction="in"/>
         </method>
 
@@ -365,11 +385,28 @@
             <arg type="b" name="state" direction="in"/>
         </method>
 
+        <method name="raiseHand" tp:name-for-bindings="raiseHand">
+            <tp:added version="13.1.0"/>
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="accountUri" direction="in"/>
+            <arg type="s" name="deviceId" direction="in"/>
+            <arg type="b" name="state" direction="in"/>
+        </method>
+
         <method name="hangupParticipant" tp:name-for-bindings="hangupParticipant">
             <tp:added version="11.0.0"/>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="confId" direction="in"/>
             <arg type="s" name="peerId" direction="in"/>
+        </method>
+
+        <method name="kickDevice" tp:name-for-bindings="kickDevice">
+            <tp:added version="13.1.0"/>
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="accountUri" direction="in"/>
+            <arg type="s" name="deviceId" direction="in"/>
         </method>
 
         <method name="addParticipant" tp:name-for-bindings="addParticipant">
