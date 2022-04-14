@@ -106,6 +106,7 @@ libjami_sources = files(
     'call.cpp',
     'call_factory.cpp',
     'conference.cpp',
+    'conference_protocol.cpp',
     'data_transfer.cpp',
     'fileutils.cpp',
     'ftp_server.cpp',

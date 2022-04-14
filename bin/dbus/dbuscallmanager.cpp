@@ -183,6 +183,38 @@ DBusCallManager::setActiveParticipant(const std::string& accountId,
     DRing::setActiveParticipant(accountId, confId, callId);
 }
 
+void
+DBusCallManager::muteStream(const std::string& accountId,
+                            const std::string& confId,
+                            const std::string& accountUri,
+                            const std::string& deviceId,
+                            const std::string& streamId,
+                            const bool& state)
+{
+    DRing::muteStream(accountId, confId, accountUri, deviceId, streamId, state);
+}
+
+void
+DBusCallManager::setActiveStream(const std::string& accountId,
+                                 const std::string& confId,
+                                 const std::string& accountUri,
+                                 const std::string& deviceId,
+                                 const std::string& streamId,
+                                 const bool& state)
+{
+    DRing::setActiveStream(accountId, confId, accountUri, deviceId, streamId, state);
+}
+
+void
+DBusCallManager::raiseHand(const std::string& accountId,
+                           const std::string& confId,
+                           const std::string& accountUri,
+                           const std::string& deviceId,
+                           const bool& state)
+{
+    DRing::raiseHand(accountId, confId, accountUri, deviceId, state);
+}
+
 auto
 DBusCallManager::isConferenceParticipant(const std::string& accountId, const std::string& call_id)
     -> decltype(DRing::isConferenceParticipant(accountId, call_id))
@@ -388,9 +420,10 @@ DBusCallManager::muteParticipant(const std::string& accountId,
 void
 DBusCallManager::hangupParticipant(const std::string& accountId,
                                    const std::string& confId,
-                                   const std::string& peerId)
+                                   const std::string& peerId,
+                                   const std::string& deviceId)
 {
-    DRing::hangupParticipant(accountId, confId, peerId);
+    DRing::hangupParticipant(accountId, confId, peerId, deviceId);
 }
 
 void

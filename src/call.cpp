@@ -655,6 +655,10 @@ Call::setConferenceInfo(const std::string& msg)
                     newInfo.emplace_back(pInfo);
                 }
             }
+            if (json.isMember("v")) {
+                newInfo.v = json["v"].asInt();
+                peerConfProtocol_ = newInfo.v;
+            }
             if (json.isMember("w"))
                 newInfo.w = json["w"].asInt();
             if (json.isMember("h"))
