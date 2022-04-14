@@ -147,6 +147,7 @@ struct ConfInfo : public std::vector<ParticipantInfo>
 {
     int h {0};
     int w {0};
+    int layout {0};
 
     friend bool operator==(const ConfInfo& c1, const ConfInfo& c2)
     {
@@ -323,9 +324,12 @@ public:
     void switchSecondaryInput(const std::string& input);
 
     void setActiveParticipant(const std::string& participant_id);
+    void setActiveStream(const std::string& sinkId, bool state);
     void setLayout(int layout);
 
     void onConfOrder(const std::string& callId, const std::string& order);
+    void onOldOrders(std::string_view peerId, const Json::Value& order);
+    void onNewOrders(std::string_view peerId, const Json::Value& order);
 
     bool isVideoEnabled() const;
 
@@ -345,13 +349,29 @@ public:
 
     void updateConferenceInfo(ConfInfo confInfo);
     void setModerator(const std::string& uri, const bool& state);
-    void setHandRaised(const std::string& uri, const bool& state);
-    void muteParticipant(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& participant_id);
-    void updateMuted();
+    void kickDevice(const std::string& accountUri, const std::string& deviceId);
+    void setHandRaised(const std::string& uri, const bool& state);
+
+    void muteParticipant(const std::string& uri, const bool& state);
     void muteLocalHost(bool is_muted, const std::string& mediaType);
     bool isRemoteParticipant(const std::string& uri);
     void mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI);
+
+    /**
+     * The client shows one tile per stream (video/audio related to a media)
+     * @note for now, in conferences we can only mute the audio of a call
+     * @todo add a track (audio OR video) parameter to know what we want to mute
+     * @param accountUri        Account of the stream
+     * @param deviceId          Device of the stream
+     * @param sinkId            Media linked
+     * @param state             True to mute, false to unmute
+     */
+    void muteStream(const std::string& accountUri,
+                    const std::string& deviceId,
+                    const std::string& sinkId,
+                    const bool& state);
+    void updateMuted();
 
 private:
     std::weak_ptr<Conference> weak()
@@ -364,6 +384,8 @@ private:
     bool isHandRaised(std::string_view uri) const;
     void updateModerators();
     void updateHandsRaised();
+    void muteHost(bool state);
+    void muteCall(const std::string& callId, bool state);
 
     void foreachCall(const std::function<void(const std::shared_ptr<Call>& call)>& cb);
 
@@ -424,8 +446,11 @@ private:
 #ifdef ENABLE_VIDEO
     void resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI);
 #endif
-    std::string_view findHostforRemoteParticipant(std::string_view uri);
+    std::string_view findHostforRemoteParticipant(std::string_view uri,
+                                                  std::string_view deviceId = "");
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
+
+    std::shared_ptr<Call> getCallWith(const std::string& accountUri, const std::string& deviceId);
 
     std::mutex sinksMtx_ {};
 
