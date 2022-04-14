@@ -323,6 +323,7 @@ public:
     void switchSecondaryInput(const std::string& input);
 
     void setActiveParticipant(const std::string& participant_id);
+    void setActiveSink(const std::string& sinkId, bool state);
     void setLayout(int layout);
 
     void onConfOrder(const std::string& callId, const std::string& order);
@@ -345,9 +346,12 @@ public:
 
     void updateConferenceInfo(ConfInfo confInfo);
     void setModerator(const std::string& uri, const bool& state);
-    void setHandRaised(const std::string& uri, const bool& state);
-    void muteParticipant(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& participant_id);
+    void kickDevice(const std::string& accountUri, const std::string& deviceId);
+    void setHandRaised(const std::string& uri, const bool& state);
+
+    void muteParticipant(const std::string& uri, const bool& state);
+    void muteSinkId(const std::string& accountUri, const std::string& deviceId, const std::string& sinkId, const bool& state);
     void updateMuted();
     void muteLocalHost(bool is_muted, const std::string& mediaType);
     bool isRemoteParticipant(const std::string& uri);
@@ -364,6 +368,8 @@ private:
     bool isHandRaised(std::string_view uri) const;
     void updateModerators();
     void updateHandsRaised();
+    void muteHost(bool state);
+    void muteCall(const std::string& callId, bool state);
 
     void foreachCall(const std::function<void(const std::shared_ptr<Call>& call)>& cb);
 
@@ -426,6 +432,9 @@ private:
 #endif
     std::string_view findHostforRemoteParticipant(std::string_view uri);
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
+
+    std::shared_ptr<Call> getCallWith(const std::string& accountUri,
+                                        const std::string& deviceId);
 
     std::mutex sinksMtx_ {};
 

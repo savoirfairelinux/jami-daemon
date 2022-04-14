@@ -73,23 +73,32 @@ public:
     void switchSecondaryInput(const std::string& input);
     void stopInput();
 
-    void setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
-    void setActiveParticipant(const std::string& id);
-    void resetActiveParticipant() {
-        activeAudioOnly_ = "";
-        activeSource_ = nullptr;
+    void addActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
+    void addActiveParticipant(const std::string& id);
+    void rmActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
+    void rmActiveParticipant(const std::string& id);
+    void resetActiveParticipants() {
+        activeAudioOnly_.clear();
+        activeSources_.clear();
         updateLayout();
     }
-    void setActiveHost();
+    void addActiveHost();
 
+    // TODO group, we can only use a set of string to identify actives
     bool verifyActive(const std::string& id)
     {
-        return id == activeAudioOnly_;
+        return std::find_if(activeAudioOnly_.cbegin(),
+                           activeAudioOnly_.cend(),
+                           [&](const auto& v) { return id == v; })
+               != activeAudioOnly_.end();
     }
 
     bool verifyActive(Observable<std::shared_ptr<MediaFrame>>* ob)
     {
-        return ob == activeSource_;
+        return std::find_if(activeSources_.cbegin(),
+                            activeSources_.cend(),
+                            [&](const auto& v) { return ob == v; })
+               != activeSources_.end();
     }
 
     void setVideoLayout(Layout newLayout)
@@ -156,12 +165,12 @@ private:
     ThreadLoop loop_; // as to be last member
 
     Layout currentLayout_ {Layout::GRID};
-    Observable<std::shared_ptr<MediaFrame>>* activeSource_ {nullptr};
+    std::set<Observable<std::shared_ptr<MediaFrame>>*> activeSources_ {nullptr};
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
 
     std::mutex audioOnlySourcesMtx_;
     std::set<std::string> audioOnlySources_;
-    std::string activeAudioOnly_{};
+    std::set<std::string> activeAudioOnly_{};
 
     std::atomic_int layoutUpdated_ {0};
     OnSourcesUpdatedCb onSourcesUpdated_ {};
