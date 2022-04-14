@@ -260,7 +260,7 @@ VideoRtpSession::startReceiver()
                                      || videoMixer_->verifyActive(callID_);
             videoMixer_->removeAudioOnlySource(callID_);
             if (activeParticipant)
-                videoMixer_->setActiveParticipant(receiveThread_.get());
+                videoMixer_->setActiveStream(receiveThread_.get());
         }
 
     } else {
@@ -271,7 +271,7 @@ VideoRtpSession::startReceiver()
             videoMixer_->addAudioOnlySource(callID_);
             receiveThread_->detach(videoMixer_.get());
             if (activeParticipant)
-                videoMixer_->setActiveParticipant(callID_);
+                videoMixer_->setActiveStream(callID_);
         }
     }
     if (socketPair_)
@@ -293,7 +293,7 @@ VideoRtpSession::stopReceiver()
         videoMixer_->addAudioOnlySource(callID_);
         receiveThread_->detach(videoMixer_.get());
         if (activeParticipant)
-            videoMixer_->setActiveParticipant(callID_);
+            videoMixer_->setActiveStream(callID_);
     }
 
     // We need to disable the read operation, otherwise the
@@ -549,7 +549,7 @@ VideoRtpSession::exitConference()
             conference_->detachVideo(receiveThread_.get());
             receiveThread_->startSink();
             if (activetParticipant)
-                videoMixer_->setActiveParticipant(callID_);
+                videoMixer_->setActiveStream(callID_);
         }
 
         videoMixer_.reset();
