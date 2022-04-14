@@ -144,6 +144,28 @@ public:
                       const std::string& confId,
                       const std::string& peerId,
                       const bool& state);
+    void muteStream(const std::string& accountId,
+                    const std::string& confId,
+                    const std::string& accountUri,
+                    const std::string& deviceId,
+                    const std::string& streamId,
+                    const bool& state);
+    void setActiveStream(const std::string& accountId,
+                         const std::string& confId,
+                         const std::string& accountUri,
+                         const std::string& deviceId,
+                         const std::string& streamId,
+                         const bool& state);
+    void kickDevice(const std::string& accountId,
+                    const std::string& confId,
+                    const std::string& accountUri,
+                    const std::string& deviceId);
+    void raiseHand(const std::string& accountId,
+                   const std::string& confId,
+                   const std::string& accountUri,
+                   const std::string& deviceId,
+                   const bool& state);
+    // DEPRECATED
     void muteParticipant(const std::string& accountId,
                          const std::string& confId,
                          const std::string& peerId,
