@@ -75,6 +75,7 @@ endif
 libring_la_SOURCES = \
 		buildinfo.cpp \
 		conference.cpp \
+		conference_protocol.cpp \
 		account_factory.cpp \
 		call_factory.cpp \
 		preferences.cpp \
@@ -93,6 +94,7 @@ libring_la_SOURCES = \
 		ice_transport.h \
 		threadloop.h \
 		conference.h \
+		conference_protocol.h \
 		account_factory.h \
 		call_factory.h \
 		preferences.h \
