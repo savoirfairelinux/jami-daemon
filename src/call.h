@@ -436,6 +436,8 @@ public:
 
     virtual void monitor() const = 0;
 
+    int conferenceProtocolVersion() const { return peerConfProtocol_; }
+
 protected:
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
@@ -516,6 +518,9 @@ protected:
 
     ///< MultiDevice: message received by subcall to merged yet
     MsgList pendingInMessages_;
+
+    /// Supported conference protocol version
+    int peerConfProtocol_ {0};
 };
 
 // Helpers
