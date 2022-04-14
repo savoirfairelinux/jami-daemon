@@ -144,6 +144,28 @@ public:
                       const std::string& confId,
                       const std::string& peerId,
                       const bool& state);
+    void muteSinkAudio(const std::string& accountId,
+                                    const std::string& confId,
+                                    const std::string& accountUri,
+                                    const std::string& deviceId,
+                                    const std::string& sinkId,
+                                    const bool& state);
+    void setActiveSink(const std::string& accountId,
+                                    const std::string& confId,
+                                    const std::string& accountUri,
+                                    const std::string& deviceId,
+                                    const std::string& sinkId,
+                                    const bool& state);
+    void kickDevice(const std::string& accountId,
+                                 const std::string& confId,
+                                 const std::string& accountUri,
+                                 const std::string& deviceId);
+    void raiseHand(const std::string& accountId,
+                   const std::string& confId,
+                   const std::string& accountUri,
+                   const std::string& deviceId,
+                   const bool& state);
+    // DEPRECATED
     void muteParticipant(const std::string& accountId,
                          const std::string& confId,
                          const std::string& peerId,

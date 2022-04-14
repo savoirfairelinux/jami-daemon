@@ -102,6 +102,28 @@ std::string getConferenceId(const std::string& accountId, const std::string& cal
 std::map<std::string, std::string> getConferenceDetails(const std::string& accountId, const std::string& callId);
 std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& accountId, const std::string& confId);
 void setModerator(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
+void muteSinkAudio(const std::string& accountId,
+                    const std::string& confId,
+                    const std::string& accountUri,
+                    const std::string& deviceId,
+                    const std::string& sinkId,
+                    const bool& state);
+void setActiveSink(const std::string& accountId,
+                    const std::string& confId,
+                    const std::string& accountUri,
+                    const std::string& deviceId,
+                    const std::string& sinkId,
+                    const bool& state);
+void kickDevice(const std::string& accountId,
+                const std::string& confId,
+                const std::string& accountUri,
+                const std::string& deviceId);
+void raiseHand(const std::string& accountId,
+                const std::string& confId,
+                const std::string& accountUri,
+                const std::string& deviceId,
+                const bool& state);
+// DEPRECATED
 void muteParticipant(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
 void hangupParticipant(const std::string& accountId, const std::string& confId, const std::string& peerId);
 void raiseParticipantHand(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
