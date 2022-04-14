@@ -73,30 +73,36 @@ public:
     void switchSecondaryInput(const std::string& input);
     void stopInput();
 
-    void setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
-    void setActiveParticipant(const std::string& id);
-    void resetActiveParticipant() {
-        activeAudioOnly_ = "";
-        activeSource_ = nullptr;
+    void setActiveStream(Observable<std::shared_ptr<MediaFrame>>* ob);
+    void setActiveStream(const std::string& id);
+    void resetActiveStream()
+    {
+        activeStream_ = {};
+        activeSource_ = {};
         updateLayout();
     }
-    void setActiveHost();
+    void addActiveHost();
 
+    // TODO group, we can only use a set of string to identify actives
     bool verifyActive(const std::string& id)
     {
-        return id == activeAudioOnly_;
+        return activeStream_ == id;
     }
 
     bool verifyActive(Observable<std::shared_ptr<MediaFrame>>* ob)
     {
-        return ob == activeSource_;
+        return activeSource_ == ob;
     }
 
     void setVideoLayout(Layout newLayout)
     {
         currentLayout_ = newLayout;
+        if (currentLayout_ == Layout::GRID)
+            resetActiveStream();
         layoutUpdated_ += 1;
     }
+
+    Layout getVideoLayout() const { return currentLayout_; }
 
     void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) { onSourcesUpdated_ = std::move(cb); }
 
@@ -118,8 +124,8 @@ public:
     void removeAudioOnlySource(const std::string& id)
     {
         std::lock_guard<std::mutex> lk(audioOnlySourcesMtx_);
-        audioOnlySources_.erase(id);
-        updateLayout();
+        if (audioOnlySources_.erase(id))
+            updateLayout();
     }
 
 private:
@@ -161,7 +167,7 @@ private:
 
     std::mutex audioOnlySourcesMtx_;
     std::set<std::string> audioOnlySources_;
-    std::string activeAudioOnly_{};
+    std::string activeStream_ {};
 
     std::atomic_int layoutUpdated_ {0};
     OnSourcesUpdatedCb onSourcesUpdated_ {};
