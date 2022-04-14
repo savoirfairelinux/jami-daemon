@@ -297,6 +297,8 @@ public:
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
+    bool supportsNewConfProtocol() const { return peerSupportNewConfProtocol_; }
+
 private:
     void generateMediaPorts();
 
@@ -418,6 +420,9 @@ private:
     std::string peerUserAgent_ {};
     // Flag to indicate if the peer's Daemon version supports multi-stream.
     bool peerSupportMultiStream_ {false};
+
+    // Flag to indicate if the peer's daemon version supports new conference protocol
+    bool peerSupportNewConfProtocol_ {false};
 
     // Flag to indicate if the peer's Daemon version supports re-invite
     // without ICE renegotiation.
