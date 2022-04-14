@@ -183,6 +183,47 @@ DBusCallManager::setActiveParticipant(const std::string& accountId,
     DRing::setActiveParticipant(accountId, confId, callId);
 }
 
+void
+DBusCallManager::muteSinkAudio(const std::string& accountId,
+                   const std::string& confId,
+                   const std::string& accountUri,
+                   const std::string& deviceId,
+                   const std::string& sinkId,
+                   const bool& state)
+{
+    DRing::muteSinkAudio(accountId, confId, accountUri, deviceId, sinkId, state);
+}
+
+void
+DBusCallManager::setActiveSink(const std::string& accountId,
+                   const std::string& confId,
+                   const std::string& accountUri,
+                   const std::string& deviceId,
+                   const std::string& sinkId,
+                   const bool& state)
+{
+    DRing::setActiveSink(accountId, confId, accountUri, deviceId, sinkId, state);
+}
+
+void
+DBusCallManager::kickDevice(const std::string& accountId,
+                const std::string& confId,
+                const std::string& accountUri,
+                const std::string& deviceId)
+{
+    DRing::kickDevice(accountId, confId, accountUri, deviceId);
+}
+
+void
+DBusCallManager::raiseHand(const std::string& accountId,
+                           const std::string& confId,
+                           const std::string& accountUri,
+                           const std::string& deviceId,
+                           const bool& state)
+{
+    DRing::raiseHand(accountId, confId, accountUri, deviceId, state);
+}
+
 auto
 DBusCallManager::isConferenceParticipant(const std::string& accountId, const std::string& call_id)
     -> decltype(DRing::isConferenceParticipant(accountId, call_id))

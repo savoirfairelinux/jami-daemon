@@ -177,26 +177,37 @@ VideoMixer::stopInput()
 }
 
 void
-VideoMixer::setActiveHost()
+VideoMixer::addActiveHost()
 {
-    activeAudioOnly_ = "";
-    activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
+    activeSources_.insert(videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get());
     updateLayout();
 }
 
 void
-VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
+VideoMixer::addActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    activeAudioOnly_ = "";
-    activeSource_ = ob;
+    activeSources_.insert(ob);
     updateLayout();
 }
 
 void
-VideoMixer::setActiveParticipant(const std::string& id)
+VideoMixer::addActiveParticipant(const std::string& id)
 {
-    activeAudioOnly_ = id;
-    activeSource_ = nullptr;
+    activeAudioOnly_.insert(id);
+    updateLayout();
+}
+
+void
+VideoMixer::rmActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
+{
+    activeSources_.erase(ob);
+    updateLayout();
+}
+
+void
+VideoMixer::rmActiveParticipant(const std::string& id)
+{
+    activeAudioOnly_.erase(id);
     updateLayout();
 }
 
@@ -228,8 +239,8 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
     for (const auto& x : sources_) {
         if (x->source == ob) {
             // Handle the case where the current shown source leave the conference
-            if (activeSource_ == ob) {
-                resetActiveParticipant();
+            if (verifyActive(ob)) {
+                rmActiveParticipant(ob);
             }
             JAMI_DBG("Remove source [%p]", x.get());
             sources_.remove(x);
@@ -302,10 +313,11 @@ VideoMixer::process()
         sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
         // add all audioonlysources
         for (auto& id : audioOnlySources_) {
-            if (currentLayout_ != Layout::ONE_BIG or activeAudioOnly_ == id) {
+            auto active = verifyActive(id);
+            if (currentLayout_ != Layout::ONE_BIG or active) {
                 sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, id});
             }
-            if (currentLayout_ == Layout::ONE_BIG and activeAudioOnly_ == id)
+            if (currentLayout_ == Layout::ONE_BIG and active)
                 successfullyRendered = true;
         }
         // add video sources
@@ -314,7 +326,8 @@ VideoMixer::process()
             if (!loop_.isRunning())
                 return;
 
-            if (currentLayout_ != Layout::ONE_BIG or activeSource_ == x->source) {
+            auto activeSource = verifyActive(x->source);
+            if (currentLayout_ != Layout::ONE_BIG or activeSource) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
                 std::shared_ptr<VideoFrame> input = x->getRenderFrame();
@@ -325,7 +338,7 @@ VideoMixer::process()
                     wantedIndex = 0;
                     activeFound = true;
                 } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-                    if (activeSource_ == x->source) {
+                    if (activeSource) {
                         wantedIndex = 0;
                         activeFound = true;
                     } else if (not activeFound) {
