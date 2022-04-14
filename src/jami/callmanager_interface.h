@@ -96,9 +96,6 @@ DRING_PUBLIC void createConfFromParticipantList(const std::string& accountId,
 DRING_PUBLIC void setConferenceLayout(const std::string& accountId,
                                       const std::string& confId,
                                       uint32_t layout);
-DRING_PUBLIC void setActiveParticipant(const std::string& accountId,
-                                       const std::string& confId,
-                                       const std::string& callId);
 DRING_PUBLIC bool isConferenceParticipant(const std::string& accountId, const std::string& callId);
 DRING_PUBLIC bool addParticipant(const std::string& accountId,
                                  const std::string& callId,
@@ -124,19 +121,48 @@ DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
     const std::string& accountId, const std::string& confId);
 DRING_PUBLIC void setModerator(const std::string& accountId,
                                const std::string& confId,
-                               const std::string& peerId,
+                               const std::string& accountUri,
                                const bool& state);
+/// DEPRECATED USE muteStream
 DRING_PUBLIC void muteParticipant(const std::string& accountId,
                                   const std::string& confId,
-                                  const std::string& peerId,
+                                  const std::string& accountUri,
                                   const bool& state);
+// Note: muting Audio not supported yet
+DRING_PUBLIC void muteStream(const std::string& accountId,
+                             const std::string& confId,
+                             const std::string& accountUri,
+                             const std::string& deviceId,
+                             const std::string& streamId,
+                             const bool& state);
+/// DEPRECATED, USE setActiveStream
+DRING_PUBLIC void setActiveParticipant(const std::string& accountId,
+                                       const std::string& confId,
+                                       const std::string& callId);
+DRING_PUBLIC void setActiveStream(const std::string& accountId,
+                                  const std::string& confId,
+                                  const std::string& accountUri,
+                                  const std::string& deviceId,
+                                  const std::string& streamId,
+                                  const bool& state);
+/// DEPRECATED, USE kickDevice
 DRING_PUBLIC void hangupParticipant(const std::string& accountId,
                                     const std::string& confId,
-                                    const std::string& participant);
+                                    const std::string& accountUri);
+DRING_PUBLIC void kickDevice(const std::string& accountId,
+                             const std::string& confId,
+                             const std::string& accountUri,
+                             const std::string& deviceId);
+/// DEPRECATED, use raiseHand
 DRING_PUBLIC void raiseParticipantHand(const std::string& accountId,
                                        const std::string& confId,
                                        const std::string& peerId,
                                        const bool& state);
+DRING_PUBLIC void raiseHand(const std::string& accountId,
+                            const std::string& confId,
+                            const std::string& accountUri,
+                            const std::string& deviceId,
+                            const bool& state);
 
 /* Statistic related methods */
 DRING_PUBLIC void startSmartInfo(uint32_t refreshTimeMs);

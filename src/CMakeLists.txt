@@ -22,6 +22,8 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/compiler_intrinsics.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/conference.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/conference.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/conference_protocol.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/conference_protocol.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/data_transfer.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/data_transfer.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/enumclass_utils.h"
