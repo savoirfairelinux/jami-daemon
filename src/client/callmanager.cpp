@@ -27,12 +27,14 @@
 #include "client/ring_signal.h"
 
 #include "sip/sipvoiplink.h"
+#include "sip/sipcall.h"
 #include "audio/audiolayer.h"
 #include "media/media_attribute.h"
 #include "string_utils.h"
 
 #include "logger.h"
 #include "manager.h"
+#include "jamidht/jamiaccount.h"
 
 #include "smartools.h"
 
@@ -211,22 +213,6 @@ setConferenceLayout(const std::string& accountId, const std::string& confId, uin
     }
 }
 
-void
-setActiveParticipant(const std::string& accountId,
-                     const std::string& confId,
-                     const std::string& participant)
-{
-    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
-        if (auto conf = account->getConference(confId)) {
-            conf->setActiveParticipant(participant);
-        } else if (auto call = account->getCall(confId)) {
-            Json::Value root;
-            root["activeParticipant"] = participant;
-            call->sendConfOrder(root);
-        }
-    }
-}
-
 bool
 isConferenceParticipant(const std::string& accountId, const std::string& callId)
 {
@@ -270,7 +256,7 @@ detachLocalParticipant()
 }
 
 bool
-detachParticipant(const std::string& accountId, const std::string& callId)
+detachParticipant(const std::string&, const std::string& callId)
 {
     return jami::Manager::instance().detachParticipant(callId);
 }
@@ -514,6 +500,7 @@ muteParticipant(const std::string& accountId,
                 const std::string& peerId,
                 const bool& state)
 {
+    JAMI_ERR() << "muteParticipant is deprecated, please use muteSinkAudio";
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->muteParticipant(peerId, state);
@@ -527,10 +514,101 @@ muteParticipant(const std::string& accountId,
 }
 
 void
+muteSinkAudio(const std::string& accountId,
+              const std::string& confId,
+              const std::string& accountUri,
+              const std::string& deviceId,
+              const std::string& sinkId,
+              const bool& state)
+{
+    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (auto conf = account->getConference(confId)) {
+            conf->muteSinkId(accountUri, deviceId, sinkId, state);
+        } else if (auto call = jami::Manager::instance().callFactory.getCall<jami::SIPCall>(
+                       confId)) {
+            if (call->supportsNewConfProtocol()) {
+                Json::Value sinkVal;
+                sinkVal["muteAudio"] = state;
+                Json::Value mediasObj;
+                mediasObj[sinkId] = sinkVal;
+                Json::Value deviceVal;
+                deviceVal["medias"] = mediasObj;
+                Json::Value deviceObj;
+                deviceObj[deviceId] = deviceVal;
+                Json::Value accountVal;
+                deviceVal["devices"] = deviceObj;
+                Json::Value root;
+                root[accountUri] = deviceVal;
+                call->sendConfOrder(root);
+            } else {
+                Json::Value root;
+                root["muteParticipant"] = accountUri;
+                root["muteState"] = state ? jami::TRUE_STR : jami::FALSE_STR;
+                call->sendConfOrder(root);
+            }
+        }
+    }
+}
+
+void
+setActiveParticipant(const std::string& accountId,
+                     const std::string& confId,
+                     const std::string& participant)
+{
+    JAMI_ERR() << "setActiveParticipant is deprecated, please use setActiveSink";
+    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (auto conf = account->getConference(confId)) {
+            conf->setActiveParticipant(participant);
+        } else if (auto call = account->getCall(confId)) {
+            Json::Value root;
+            root["activeParticipant"] = participant;
+            call->sendConfOrder(root);
+        }
+    }
+}
+
+void
+setActiveSink(const std::string& accountId,
+              const std::string& confId,
+              const std::string& accountUri,
+              const std::string& deviceId,
+              const std::string& sinkId,
+              const bool& state)
+{
+    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (auto conf = account->getConference(confId)) {
+            conf->setActiveSink(sinkId, state);
+        } else if (auto call = jami::Manager::instance().callFactory.getCall<jami::SIPCall>(
+                       confId)) {
+            if (call->supportsNewConfProtocol()) {
+                Json::Value sinkVal;
+                sinkVal["active"] = state;
+                Json::Value mediasObj;
+                mediasObj[sinkId] = sinkVal;
+                Json::Value deviceVal;
+                deviceVal["medias"] = mediasObj;
+                Json::Value deviceObj;
+                deviceObj[deviceId] = deviceVal;
+                Json::Value accountVal;
+                deviceVal["devices"] = deviceObj;
+                Json::Value root;
+                root[accountUri] = deviceVal;
+                call->sendConfOrder(root);
+            } else {
+                Json::Value root;
+                root["activeParticipant"] = accountUri;
+                call->sendConfOrder(root);
+            }
+        }
+    }
+}
+
+void
 hangupParticipant(const std::string& accountId,
                   const std::string& confId,
                   const std::string& participant)
 {
+    JAMI_ERR() << "hangupParticipant is deprecated, please use kickDevice";
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->hangupParticipant(participant);
@@ -543,11 +621,42 @@ hangupParticipant(const std::string& accountId,
 }
 
 void
+kickDevice(const std::string& accountId,
+           const std::string& confId,
+           const std::string& accountUri,
+           const std::string& deviceId)
+{
+    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (auto conf = account->getConference(confId)) {
+            conf->kickDevice(accountUri, deviceId);
+        } else if (auto call = jami::Manager::instance().callFactory.getCall<jami::SIPCall>(
+                       confId)) {
+            if (call->supportsNewConfProtocol()) {
+                Json::Value deviceVal;
+                deviceVal["hangup"] = jami::TRUE_STR;
+                Json::Value deviceObj;
+                deviceObj[deviceId] = deviceVal;
+                Json::Value accountVal;
+                deviceVal["devices"] = deviceObj;
+                Json::Value root;
+                root[accountUri] = deviceVal;
+                call->sendConfOrder(root);
+            } else {
+                Json::Value root;
+                root["hangupParticipant"] = accountUri;
+                call->sendConfOrder(root);
+            }
+        }
+    }
+}
+
+void
 raiseParticipantHand(const std::string& accountId,
                      const std::string& confId,
                      const std::string& peerId,
                      const bool& state)
 {
+    JAMI_ERR() << "raiseParticipantHand is deprecated, please use raiseHand";
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->setHandRaised(peerId, state);
@@ -556,6 +665,41 @@ raiseParticipantHand(const std::string& accountId,
             root["handRaised"] = peerId;
             root["handState"] = state ? jami::TRUE_STR : jami::FALSE_STR;
             call->sendConfOrder(root);
+        }
+    }
+}
+
+void
+raiseHand(const std::string& accountId,
+          const std::string& confId,
+          const std::string& accountUri,
+          const std::string& deviceId,
+          const bool& state)
+{
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        if (auto conf = account->getConference(confId)) {
+            conf->setHandRaised(account->getUsername(), state);
+        } else if (auto call = jami::Manager::instance().callFactory.getCall<jami::SIPCall>(
+                       confId)) {
+            if (call->supportsNewConfProtocol()) {
+                Json::Value deviceVal;
+                deviceVal["raiseHand"] = state;
+                Json::Value deviceObj;
+                std::string device = deviceId.empty() ? std::string(account->currentDeviceId())
+                                                      : deviceId;
+                deviceObj[device] = deviceVal;
+                Json::Value accountVal;
+                deviceVal["devices"] = deviceObj;
+                Json::Value root;
+                std::string uri = accountUri.empty() ? account->getUsername() : accountUri;
+                root[uri] = deviceVal;
+                call->sendConfOrder(root);
+            } else {
+                Json::Value root;
+                root["handRaised"] = account->getUsername();
+                root["handState"] = state ? jami::TRUE_STR : jami::FALSE_STR;
+                call->sendConfOrder(root);
+            }
         }
     }
 }
