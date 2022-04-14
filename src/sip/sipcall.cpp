@@ -88,6 +88,9 @@ static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
 static constexpr auto MULTISTREAM_REQUIRED_VERSION_STR = "10.0.2"sv;
 static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION
     = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
+static constexpr auto NEW_CONFPROTOCOL_VERSION_STR = "13.1.0"sv;
+static const std::vector<unsigned> NEW_CONFPROTOCOL_VERSION
+    = split_string_to_unsigned(NEW_CONFPROTOCOL_VERSION_STR, '.');
 static constexpr auto REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR = "11.0.2"sv;
 static const std::vector<unsigned> REUSE_ICE_IN_REINVITE_REQUIRED_VERSION
     = split_string_to_unsigned(REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR, '.');
@@ -1685,6 +1688,18 @@ SIPCall::setPeerUaVersion(std::string_view ua)
                  version.data(),
                  (int) REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR.size(),
                  REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR.data());
+    }
+
+    // Check if peer's version is at least 13.1.0 to enable new conference protocol.
+    peerSupportNewConfProtocol_ = Account::meetMinimumRequiredVersion(peerVersion,
+                                                                  NEW_CONFPROTOCOL_VERSION);
+    if (not peerSupportNewConfProtocol_) {
+        JAMI_DBG(
+            "Peer's version [%.*s] does not support multi-stream. Min required version: [%.*s]",
+            (int) version.size(),
+            version.data(),
+            (int) NEW_CONFPROTOCOL_VERSION_STR.size(),
+            NEW_CONFPROTOCOL_VERSION_STR.data());
     }
 }
 
