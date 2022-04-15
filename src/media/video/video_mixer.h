@@ -130,8 +130,8 @@ public:
     void removeAudioOnlySource(const std::string& id)
     {
         std::lock_guard<std::mutex> lk(audioOnlySourcesMtx_);
-        audioOnlySources_.erase(id);
-        updateLayout();
+        if (audioOnlySources_.erase(id))
+            updateLayout();
     }
 
 private:
