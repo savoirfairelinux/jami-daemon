@@ -200,20 +200,22 @@ VideoMixer::addActiveParticipant(const std::string& id)
 void
 VideoMixer::rmActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    activeSources_.erase(ob);
-    updateLayout();
+    if (activeSources_.erase(ob))
+        updateLayout();
 }
 
 void
 VideoMixer::rmActiveParticipant(const std::string& id)
 {
-    activeAudioOnly_.erase(id);
-    updateLayout();
+    if (activeAudioOnly_.erase(id))
+        updateLayout();
 }
 
 void
 VideoMixer::updateLayout()
 {
+    if (activeAudioOnly_.size() + activeSources_.size() == 0)
+        currentLayout_ = Layout::GRID;
     layoutUpdated_ += 1;
 }
 
@@ -306,18 +308,14 @@ VideoMixer::process()
         auto lock(rwMutex_.read());
 
         int i = 0;
-        bool activeFound = false;
         bool needsUpdate = layoutUpdated_ > 0;
         bool successfullyRendered = false;
         std::vector<SourceInfo> sourcesInfo;
         sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
         // add all audioonlysources
         for (auto& id : audioOnlySources_) {
-            auto active = verifyActive(id);
-            if (currentLayout_ != Layout::ONE_BIG or active) {
-                sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, id});
-            }
-            if (currentLayout_ == Layout::ONE_BIG and active)
+            sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, id});
+            if (currentLayout_ == Layout::ONE_BIG)
                 successfullyRendered = true;
         }
         // add video sources
@@ -325,66 +323,43 @@ VideoMixer::process()
             /* thread stop pending? */
             if (!loop_.isRunning())
                 return;
+            // make rendered frame temporarily unavailable for update()
+            // to avoid concurrent access.
+            std::shared_ptr<VideoFrame> input = x->getRenderFrame();
+            std::shared_ptr<VideoFrame> fooInput = std::make_shared<VideoFrame>();
 
-            auto activeSource = verifyActive(x->source);
-            if (currentLayout_ != Layout::ONE_BIG or activeSource) {
-                // make rendered frame temporarily unavailable for update()
-                // to avoid concurrent access.
-                std::shared_ptr<VideoFrame> input = x->getRenderFrame();
-                std::shared_ptr<VideoFrame> fooInput = std::make_shared<VideoFrame>();
+            auto hasVideo = x->hasVideo;
+            bool blackFrame = false;
 
-                auto wantedIndex = i;
-                if (currentLayout_ == Layout::ONE_BIG) {
-                    wantedIndex = 0;
-                    activeFound = true;
-                } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-                    if (activeSource) {
-                        wantedIndex = 0;
-                        activeFound = true;
-                    } else if (not activeFound) {
-                        wantedIndex += 1;
-                    }
-                }
+            if (!input->height() or !input->width()) {
+                successfullyRendered = true;
+                fooInput->reserve(format_, width_, height_);
+                blackFrame = true;
+            } else {
+                fooInput.swap(input);
+            }
 
-                auto hasVideo = x->hasVideo;
-                bool blackFrame = false;
+            // If orientation changed or if the first valid frame for source
+            // is received -> trigger layout calculation and confInfo update
+            if (x->rotation != fooInput->getOrientation() or !x->w or !x->h) {
+                updateLayout();
+                needsUpdate = true;
+            }
 
-                if (!input->height() or !input->width()) {
-                    successfullyRendered = true;
-                    fooInput->reserve(format_, width_, height_);
-                    blackFrame = true;
-                } else {
-                    fooInput.swap(input);
-                }
+            if (needsUpdate)
+                calc_position(x, fooInput, i);
 
-                // If orientation changed or if the first valid frame for source
-                // is received -> trigger layout calculation and confInfo update
-                if (x->rotation != fooInput->getOrientation() or !x->w or !x->h) {
-                    updateLayout();
-                    needsUpdate = true;
-                }
+            if (!blackFrame) {
+                if (fooInput)
+                    successfullyRendered |= render_frame(output, fooInput, x);
+                else
+                    JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
+            }
 
-                if (needsUpdate)
-                    calc_position(x, fooInput, wantedIndex);
-
-                if (!blackFrame) {
-                    if (fooInput)
-                        successfullyRendered |= render_frame(output, fooInput, x);
-                    else
-                        JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
-                }
-
-                x->hasVideo = !blackFrame && successfullyRendered;
-                if (hasVideo != x->hasVideo) {
-                    updateLayout();
-                    needsUpdate = true;
-                }
-            } else if (needsUpdate) {
-                x->x = 0;
-                x->y = 0;
-                x->w = 0;
-                x->h = 0;
-                x->hasVideo = false;
+            x->hasVideo = !blackFrame && successfullyRendered;
+            if (hasVideo != x->hasVideo) {
+                updateLayout();
+                needsUpdate = true;
             }
 
             ++i;
@@ -458,36 +433,16 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
 
     // Compute cell size/position
     int cell_width, cell_height, cellW_off, cellH_off;
-    const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
-    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(MIN_LINE_ZOOM, n)
-                                                                  : ceil(sqrt(n));
-    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
-        // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
-        // The rest is the active source
-        cell_width = width_;
-        cell_height = height_ - height_ / zoom;
-    } else {
-        cell_width = width_ / zoom;
-        cell_height = height_ / zoom;
+    const int n = sources_.size();
+    const int zoom = ceil(sqrt(n));
+    cell_width = width_ / zoom;
+    cell_height = height_ / zoom;
+    cellW_off = (index % zoom) * cell_width;
+    if (n % zoom != 0 && index >= (zoom * ((n - 1) / zoom))) {
+        // Last line, center participants if not full
+        cellW_off += (width_ - (n % zoom) * cell_width) / 2;
     }
-    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-        if (index == 0) {
-            cellW_off = 0;
-            cellH_off = height_ / zoom; // First line height
-        } else {
-            cellW_off = (index - 1) * cell_width;
-            // Show sources in center
-            cellW_off += (width_ - (n - 1) * cell_width) / 2;
-            cellH_off = 0;
-        }
-    } else {
-        cellW_off = (index % zoom) * cell_width;
-        if (currentLayout_ == Layout::GRID && n % zoom != 0 && index >= (zoom * ((n - 1) / zoom))) {
-            // Last line, center participants if not full
-            cellW_off += (width_ - (n % zoom) * cell_width) / 2;
-        }
-        cellH_off = (index / zoom) * cell_height;
-    }
+    cellH_off = (index / zoom) * cell_height;
 
     // Compute frame size/position
     float zoomW, zoomH;
