@@ -78,7 +78,7 @@ using yaml_utils::parseValue;
 constexpr const char* const Preferences::CONFIG_LABEL;
 const char* const Preferences::DFT_ZONE = "North America";
 const char* const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
-constexpr std::string_view DEFAULT_CONFERENCE_RESOLUTION {"1280x720"};
+constexpr std::string_view DEFAULT_CONFERENCE_RESOLUTION {"1920x1080"};
 
 // general preferences
 static constexpr const char* ORDER_KEY {"order"};
