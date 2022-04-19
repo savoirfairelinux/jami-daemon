@@ -43,6 +43,7 @@ struct CallData
     std::string callId {};
     std::string state {};
     std::string device {};
+    std::string sinkId {};
     std::string hostState {};
     std::atomic_bool moderatorMuted {false};
     std::atomic_bool raisedHand {false};
@@ -53,6 +54,7 @@ struct CallData
         callId = "";
         state = "";
         device = "";
+        sinkId = "";
         hostState = "";
         moderatorMuted = false;
         active = false;
@@ -220,16 +222,19 @@ ConferenceTest::registerSignalHandlers()
                     bobCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     bobCall.raisedHand = infos.at("handRaised") == "true";
                     bobCall.device = infos.at("device");
+                    bobCall.sinkId = infos.at("sinkId");
                 } else if (infos.at("uri").find(carlaUri) != std::string::npos) {
                     carlaCall.active = infos.at("active") == "true";
                     carlaCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     carlaCall.raisedHand = infos.at("handRaised") == "true";
                     carlaCall.device = infos.at("device");
+                    carlaCall.sinkId = infos.at("sinkId");
                 } else if (infos.at("uri").find(daviUri) != std::string::npos) {
                     daviCall.active = infos.at("active") == "true";
                     daviCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     daviCall.raisedHand = infos.at("handRaised") == "true";
                     daviCall.device = infos.at("device");
+                    daviCall.sinkId = infos.at("sinkId");
                 }
             }
             cv.notify_one();
@@ -312,11 +317,11 @@ ConferenceTest::testModeratorMuteUpdateParticipantsInfos()
     startConference();
 
     JAMI_INFO("Play with mute from the moderator");
-    DRing::muteParticipant(aliceId, confId, bobUri, true);
+    DRing::muteSinkAudio(aliceId, confId, bobUri, bobCall.device, bobCall.sinkId, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return bobCall.moderatorMuted.load(); }));
 
-    DRing::muteParticipant(aliceId, confId, bobUri, false);
+    DRing::muteSinkAudio(aliceId, confId, bobUri, bobCall.device, bobCall.sinkId, false);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.moderatorMuted.load(); }));
 
@@ -430,7 +435,7 @@ ConferenceTest::testMuteStatusAfterRemove()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
 
-    DRing::muteParticipant(aliceId, confId, daviUri, true);
+    DRing::muteSinkAudio(aliceId, confId, daviUri, daviCall.device, daviCall.sinkId, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return daviCall.moderatorMuted.load(); }));
 
@@ -458,7 +463,6 @@ ConferenceTest::testMuteStatusAfterRemove()
     DRing::unregisterSignalHandlers();
 }
 
-
 void
 ConferenceTest::testActiveStatusAfterRemove()
 {
@@ -480,7 +484,7 @@ ConferenceTest::testActiveStatusAfterRemove()
     auto call1 = DRing::placeCallWithMedia(aliceId,
                                            daviUri,
                                            MediaAttribute::mediaAttributesToMediaMaps(
-                                                       {defaultAudio}));
+                                               {defaultAudio}));
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
@@ -488,16 +492,18 @@ ConferenceTest::testActiveStatusAfterRemove()
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.hostState == "CURRENT"; }));
     Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
 
-    DRing::setActiveParticipant(aliceId, confId, daviUri);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(5), [&] { return daviCall.active.load(); }));
+    DRing::setActiveSink(aliceId, confId, daviUri, daviCall.device, daviCall.sinkId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&] { return daviCall.active.load(); }));
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = DRing::placeCallWithMedia(aliceId, daviUri, MediaAttribute::mediaAttributesToMediaMaps({defaultAudio}));
+    auto call2 = DRing::placeCallWithMedia(aliceId,
+                                           daviUri,
+                                           MediaAttribute::mediaAttributesToMediaMaps(
+                                               {defaultAudio}));
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
@@ -532,11 +538,11 @@ ConferenceTest::testHandsUp()
     startConference();
 
     JAMI_INFO("Play with raise hand");
-    DRing::raiseParticipantHand(bobId, bobCall.callId, bobUri, true);
+    DRing::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return bobCall.raisedHand.load(); }));
 
-    DRing::raiseParticipantHand(bobId, bobCall.callId, bobUri, false);
+    DRing::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, false);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.raisedHand.load(); }));
 
@@ -553,25 +559,25 @@ ConferenceTest::testHandsUp()
     DRing::setModerator(aliceId, confId, daviUri, false);
 
     // Test to raise hand
-    DRing::raiseParticipantHand(daviId, daviCall.callId, daviUri, true);
+    DRing::raiseHand(daviId, daviCall.callId, daviUri, daviCall.device, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return daviCall.raisedHand.load(); }));
 
     // Test to raise hand for another one (should fail)
-    DRing::raiseParticipantHand(bobId, bobCall.callId, carlaUri, true);
+    DRing::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, true);
     CPPUNIT_ASSERT(
         !cv.wait_for(lk, std::chrono::seconds(5), [&] { return carlaCall.raisedHand.load(); }));
 
     // However, a moderator should be able to lower the hand (but not a non moderator)
-    DRing::raiseParticipantHand(carlaId, carlaCall.callId, carlaUri, true);
+    DRing::raiseHand(carlaId, carlaCall.callId, carlaUri, carlaCall.device, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return carlaCall.raisedHand.load(); }));
 
-    DRing::raiseParticipantHand(daviId, carlaCall.callId, carlaUri, false);
+    DRing::raiseHand(daviId, carlaCall.callId, carlaUri, carlaCall.device, false);
     CPPUNIT_ASSERT(
         !cv.wait_for(lk, std::chrono::seconds(5), [&] { return !carlaCall.raisedHand.load(); }));
 
-    DRing::raiseParticipantHand(bobId, bobCall.callId, carlaUri, false);
+    DRing::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, false);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !carlaCall.raisedHand.load(); }));
 
@@ -631,11 +637,11 @@ ConferenceTest::testJoinCallFromOtherAccount()
     startConference();
 
     JAMI_INFO("Play with raise hand");
-    DRing::raiseParticipantHand(aliceId, confId, bobUri, true);
+    DRing::raiseHand(aliceId, confId, bobUri, bobCall.device, true);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return bobCall.raisedHand.load(); }));
 
-    DRing::raiseParticipantHand(aliceId, confId, bobUri, false);
+    DRing::raiseHand(aliceId, confId, bobUri, bobCall.device, false);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.raisedHand.load(); }));
 
