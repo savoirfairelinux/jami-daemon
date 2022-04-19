@@ -207,8 +207,8 @@ VideoMixer::rmActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 void
 VideoMixer::rmActiveParticipant(const std::string& id)
 {
-    activeAudioOnly_.erase(id);
-    updateLayout();
+    if (activeAudioOnly_.erase(id))
+        updateLayout();
 }
 
 void
@@ -312,11 +312,8 @@ VideoMixer::process()
         sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
         // add all audioonlysources
         for (auto& id : audioOnlySources_) {
-            auto active = verifyActive(id);
-            if (active) {
-                sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, id});
-            }
-            if (currentLayout_ == Layout::ONE_BIG and active)
+            sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, id});
+            if (currentLayout_ == Layout::ONE_BIG)
                 successfullyRendered = true;
         }
         // add video sources

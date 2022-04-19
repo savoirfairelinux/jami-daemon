@@ -668,8 +668,9 @@ Conference::addParticipant(const std::string& participant_id)
         // call, it must be listed in the audioonlylist.
         auto mediaList = call->getMediaAttributeList();
         if (not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
-            if (videoMixer_)
+            if (videoMixer_) {
                 videoMixer_->addAudioOnlySource(call->getCallId());
+            }
         }
         call->enterConference(shared_from_this());
         // Continue the recording for the conference if one participant was recording
@@ -854,11 +855,14 @@ Conference::removeParticipant(const std::string& participant_id)
             return;
     }
     if (auto call = getCall(participant_id)) {
-        if (videoMixer_->verifyActive(call->getCallId()))
-            videoMixer_->rmActiveParticipant(call->getCallId());
+        auto peerId = std::string(string_remove_suffix(call->getPeerNumber(), '@'));
         participantsMuted_.erase(call->getCallId());
-        handsRaised_.erase(std::string(string_remove_suffix(call->getPeerNumber(), '@')));
+        handsRaised_.erase(peerId);
 #ifdef ENABLE_VIDEO
+        auto sinkId = getConfId() + peerId;
+        // Remove if active
+        if (videoMixer_)
+            videoMixer_->rmActiveParticipant(sinkId);
         call->exitConference();
         if (call->isPeerRecording())
             call->peerRecording(false);
@@ -1371,6 +1375,8 @@ Conference::muteSinkId(const std::string& accountUri,
             muteHost(state);
         } else if (auto call = getCallWith(accountUri, deviceId)) {
             muteCall(call->getCallId(), state);
+        } else {
+            JAMI_WARN("No call with %s - %s", accountUri.c_str(), deviceId.c_str());
         }
     }
 }

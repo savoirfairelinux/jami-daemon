@@ -524,8 +524,7 @@ muteSinkAudio(const std::string& accountId,
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->muteSinkId(accountUri, deviceId, sinkId, state);
-        } else if (auto call = jami::Manager::instance().callFactory.getCall<jami::SIPCall>(
-                       confId)) {
+        } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->supportsNewConfProtocol()) {
                 Json::Value sinkVal;
                 sinkVal["muteAudio"] = state;
@@ -578,8 +577,7 @@ setActiveSink(const std::string& accountId,
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->setActiveSink(sinkId, state);
-        } else if (auto call = jami::Manager::instance().callFactory.getCall<jami::SIPCall>(
-                       confId)) {
+        } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->supportsNewConfProtocol()) {
                 Json::Value sinkVal;
                 sinkVal["active"] = state;
@@ -629,8 +627,7 @@ kickDevice(const std::string& accountId,
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->kickDevice(accountUri, deviceId);
-        } else if (auto call = jami::Manager::instance().callFactory.getCall<jami::SIPCall>(
-                       confId)) {
+        } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->supportsNewConfProtocol()) {
                 Json::Value deviceVal;
                 deviceVal["hangup"] = jami::TRUE_STR;
@@ -678,9 +675,8 @@ raiseHand(const std::string& accountId,
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            conf->setHandRaised(account->getUsername(), state);
-        } else if (auto call = jami::Manager::instance().callFactory.getCall<jami::SIPCall>(
-                       confId)) {
+            conf->setHandRaised(accountUri, state);
+        } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->supportsNewConfProtocol()) {
                 Json::Value deviceVal;
                 deviceVal["raiseHand"] = state;
