@@ -180,7 +180,15 @@ addContactHeader(const std::string& contactHdr, pjsip_tx_data* tdata)
         JAMI_WARN("Contact header won't be added (empty string)");
         return;
     }
-    auto pjContact = sip_utils::CONST_PJ_STR(contactHdr);
+
+    /*
+     * Duplicate contact header because tdata->msg keep a reference to it and
+     * can be used in a callback after destruction of the contact header in
+     * Jami.  Bind lifetime of the duplicated string to the pool allocator of
+     * tdata.
+     */
+    auto pjContact = pj_strdup3(tdata->pool, contactHdr.c_str());
+
     pjsip_contact_hdr* contact = pjsip_contact_hdr_create(tdata->pool);
     contact->uri = pjsip_parse_uri(tdata->pool,
                                    pjContact.ptr,
