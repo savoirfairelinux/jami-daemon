@@ -1,6 +1,6 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.7.1
+GNUTLS_VERSION := 3.7.4
 
 GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7/gnutls-$(GNUTLS_VERSION).tar.xz
 
@@ -17,7 +17,6 @@ $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 
 gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 	$(UNPACK)
-	$(APPLY) $(SRC)/gnutls/gnutls_tasn.patch
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/gnutls/gnutls-win32.patch
 else
