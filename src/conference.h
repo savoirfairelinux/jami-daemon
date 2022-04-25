@@ -373,6 +373,8 @@ public:
                     const bool& state);
     void updateMuted();
 
+    std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
+
 private:
     std::weak_ptr<Conference> weak()
     {
@@ -423,6 +425,7 @@ private:
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
+    bool isHostDevice(std::string_view deviceId) const;
 
     /**
      * If the local host is participating in the conference (attached
@@ -448,7 +451,6 @@ private:
 #endif
     std::string_view findHostforRemoteParticipant(std::string_view uri,
                                                   std::string_view deviceId = "");
-    std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
 
     std::shared_ptr<Call> getCallWith(const std::string& accountUri, const std::string& deviceId);
 
