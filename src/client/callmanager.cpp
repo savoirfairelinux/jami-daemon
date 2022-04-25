@@ -26,6 +26,7 @@
 #include "call_factory.h"
 #include "client/ring_signal.h"
 
+#include "sip/siptransport.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
 #include "audio/audiolayer.h"
@@ -666,7 +667,11 @@ raiseParticipantHand(const std::string& accountId,
     JAMI_ERR() << "raiseParticipantHand is deprecated, please use raiseHand";
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            conf->setHandRaised(peerId, state);
+            if (auto call = std::static_pointer_cast<jami::SIPCall>(
+                    conf->getCallFromPeerID(peerId))) {
+                if (auto* transport = call->getTransport())
+                    conf->setHandRaised(std::string(transport->deviceId()), state);
+            }
         } else if (auto call = account->getCall(confId)) {
             Json::Value root;
             root["handRaised"] = peerId;
@@ -685,7 +690,7 @@ raiseHand(const std::string& accountId,
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            conf->setHandRaised(accountUri, state);
+            conf->setHandRaised(deviceId, state);
         } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->conferenceProtocolVersion() == 1) {
                 Json::Value deviceVal;
