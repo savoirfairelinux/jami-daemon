@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1b18268_83d96d21",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 363,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-25T19:21:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7bf22c10_3593d505",
+      "range": {
+        "startLine": 363,
+        "startChar": 22,
+        "endLine": 363,
+        "endChar": 35
+      },
+      "revId": "d49855eb27eb66e80f27639c82fc691bb1f30a05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f494d922_fe728dc8",
@@ -282,6 +306,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "47965040_7726a048",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-25T19:21:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6cbbeaa6_d2a3a861",
+      "range": {
+        "startLine": 163,
+        "startChar": 21,
+        "endLine": 163,
+        "endChar": 35
+      },
+      "revId": "d49855eb27eb66e80f27639c82fc691bb1f30a05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b3ae79cc_ad21d111",
@@ -305,6 +353,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7898fb6e_e07dd584",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 725,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-25T19:21:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b3ae79cc_ad21d111",
+      "range": {
+        "startLine": 725,
+        "startChar": 17,
+        "endLine": 725,
+        "endChar": 45
+      },
+      "revId": "d49855eb27eb66e80f27639c82fc691bb1f30a05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4ed17fd1_a77afd60",
@@ -318,6 +390,30 @@
       "writtenOn": "2022-04-19T13:15:22Z",
       "side": 1,
       "message": "TODO",
+      "range": {
+        "startLine": 1218,
+        "startChar": 0,
+        "endLine": 1218,
+        "endChar": 1
+      },
+      "revId": "d49855eb27eb66e80f27639c82fc691bb1f30a05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "35fb52e6_02b6bbff",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1218,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-25T19:21:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4ed17fd1_a77afd60",
       "range": {
         "startLine": 1218,
         "startChar": 0,
@@ -364,6 +460,30 @@
       "writtenOn": "2022-04-19T13:15:22Z",
       "side": 1,
       "message": "group",
+      "range": {
+        "startLine": 1443,
+        "startChar": 8,
+        "endLine": 1444,
+        "endChar": 13
+      },
+      "revId": "d49855eb27eb66e80f27639c82fc691bb1f30a05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ea66d9b_a425c661",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1444,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-25T19:21:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cdb36718_d8b34d72",
       "range": {
         "startLine": 1443,
         "startChar": 8,
