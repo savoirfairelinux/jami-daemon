@@ -69,6 +69,24 @@
       "parentUuid": "81a60a5e_77b0f800",
       "revId": "05e6e80e4cfb4be92bbe99518dcb34bdc385b726",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "28104668_55f47269",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-25T19:06:03Z",
+      "side": 1,
+      "message": "Moving the contactHeader should not change anything, the contactHeader should be movable without changing anything there. Binding the lifetime to the object makes more sense to me, as we pass a const ref in addContactHeader().\n\nAlso, pjsip_parse_uri heavily uses the pool and I prefer to see pjContact using the same pool",
+      "parentUuid": "87544ab8_e3e1254a",
+      "revId": "05e6e80e4cfb4be92bbe99518dcb34bdc385b726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
