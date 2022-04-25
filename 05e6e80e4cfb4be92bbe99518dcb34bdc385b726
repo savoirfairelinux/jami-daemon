@@ -51,6 +51,24 @@
       "parentUuid": "7ca9ec7d_943f8874",
       "revId": "05e6e80e4cfb4be92bbe99518dcb34bdc385b726",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87544ab8_e3e1254a",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-25T18:48:13Z",
+      "side": 1,
+      "message": "The patch will probably do, but the issue I think is in SIPCall::merge(Call\u0026 call), when calling setSipTransport. We should not use std::move, to keep the string valid.",
+      "parentUuid": "81a60a5e_77b0f800",
+      "revId": "05e6e80e4cfb4be92bbe99518dcb34bdc385b726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
