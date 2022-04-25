@@ -425,6 +425,7 @@ private:
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
+    bool isHostDevice(std::string_view deviceId) const;
 
     /**
      * If the local host is participating in the conference (attached
