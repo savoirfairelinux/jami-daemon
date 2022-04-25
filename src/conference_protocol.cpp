@@ -75,14 +75,13 @@ ConfProtocolParser::parseV0()
     auto isPeerModerator = checkAuthorization_(peerId_);
     if (data_.isMember(ProtocolKeys::HANDRAISED)) {
         auto state = data_[ProtocolKeys::HANDSTATE].asString() == TRUE_STR;
-        std::string deviceId;
         auto uri = data_[ProtocolKeys::HANDRAISED].asString();
         if (peerId_ == uri) {
             // In this case, the user want to change their state
-            raiseHandUri_(deviceId, state);
+            raiseHandUri_(uri, state);
         } else if (!state && isPeerModerator) {
             // In this case a moderator can lower the hand
-            raiseHandUri_(deviceId, state);
+            raiseHandUri_(uri, state);
         }
     }
     if (!isPeerModerator) {
