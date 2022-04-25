@@ -33,6 +33,24 @@
       "message": "what is the bug here? AFAIK, the string is only needed locally to create the uri. Do we need to keep it longer than that ?",
       "revId": "05e6e80e4cfb4be92bbe99518dcb34bdc385b726",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81a60a5e_77b0f800",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-04-25T14:25:40Z",
+      "side": 1,
+      "message": "The string is used in a callback, probably in a DHT thread, after the SIPCall object -- owner of contactHdr -- is destroyed.  Resutling in used a after free corruption.  Read the gitlab issue for more information.",
+      "parentUuid": "7ca9ec7d_943f8874",
+      "revId": "05e6e80e4cfb4be92bbe99518dcb34bdc385b726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
