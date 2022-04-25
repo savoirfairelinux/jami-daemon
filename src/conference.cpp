@@ -124,7 +124,7 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                     }
                     std::string_view peerId = string_remove_suffix(uri, '@');
                     auto isModerator = shared->isModerator(peerId);
-                    auto isHandRaised = shared->isHandRaised(peerId);
+                    auto isHandRaised = shared->isHandRaised(deviceId);
                     auto isModeratorMuted = shared->isMuted(info.id);
                     auto sinkId = shared->getConfId() + peerId;
                     if (auto videoMixer = shared->videoMixer_)
@@ -903,10 +903,11 @@ Conference::removeParticipant(const std::string& participant_id)
         if (!participants_.erase(participant_id))
             return;
     }
-    if (auto call = getCall(participant_id)) {
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(participant_id))) {
         auto peerId = std::string(string_remove_suffix(call->getPeerNumber(), '@'));
         participantsMuted_.erase(call->getCallId());
-        handsRaised_.erase(peerId);
+        if (auto* transport = call->getTransport())
+            handsRaised_.erase(std::string(transport->deviceId()));
 #ifdef ENABLE_VIDEO
         auto sinkId = getConfId() + peerId;
         // Remove if active
@@ -1191,7 +1192,7 @@ void
 Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 {
     // Check if the peer is a master
-    if (auto call = Manager::instance().getCallFromCallID(callId)) {
+    if (auto call = getCall(callId)) {
         auto peerId = string_remove_suffix(call->getPeerNumber(), '@');
 
         std::string err;
@@ -1223,16 +1224,16 @@ Conference::isModerator(std::string_view uri) const
 }
 
 bool
-Conference::isHandRaised(std::string_view uri) const
+Conference::isHandRaised(std::string_view deviceId) const
 {
-    return isHost(uri) ? handsRaised_.find("host"sv) != handsRaised_.end()
-                       : handsRaised_.find(uri) != handsRaised_.end();
+    return isHostDevice(deviceId) ? handsRaised_.find("host"sv) != handsRaised_.end()
+                                  : handsRaised_.find(deviceId) != handsRaised_.end();
 }
 
 void
-Conference::setHandRaised(const std::string& participant_id, const bool& state)
+Conference::setHandRaised(const std::string& deviceId, const bool& state)
 {
-    if (isHost(participant_id)) {
+    if (isHostDevice(deviceId)) {
         auto isPeerRequiringAttention = isHandRaised("host"sv);
         if (state and not isPeerRequiringAttention) {
             JAMI_DBG("Raise host hand");
@@ -1243,27 +1244,30 @@ Conference::setHandRaised(const std::string& participant_id, const bool& state)
             handsRaised_.erase("host");
             updateHandsRaised();
         }
-        return;
     } else {
         for (const auto& p : getParticipantList()) {
-            if (auto call = getCall(p)) {
-                auto isPeerRequiringAttention = isHandRaised(participant_id);
-                if (participant_id == string_remove_suffix(call->getPeerNumber(), '@')) {
+            if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(p))) {
+                auto isPeerRequiringAttention = isHandRaised(deviceId);
+                std::string callDeviceId;
+                if (auto* transport = call->getTransport())
+                    callDeviceId = transport->deviceId();
+                if (deviceId == callDeviceId) {
+                    JAMI_ERR() << "@@@X";
                     if (state and not isPeerRequiringAttention) {
-                        JAMI_DBG("Raise %s hand", participant_id.c_str());
-                        handsRaised_.emplace(participant_id);
+                        JAMI_DBG("Raise %s hand", deviceId.c_str());
+                        handsRaised_.emplace(deviceId);
                         updateHandsRaised();
                     } else if (not state and isPeerRequiringAttention) {
-                        JAMI_DBG("Remove %s raised hand", participant_id.c_str());
-                        handsRaised_.erase(participant_id);
+                        JAMI_DBG("Remove %s raised hand", deviceId.c_str());
+                        handsRaised_.erase(deviceId);
                         updateHandsRaised();
                     }
                     return;
                 }
             }
         }
+        JAMI_WARN("Fail to raise %s hand (participant not found)", deviceId.c_str());
     }
-    JAMI_WARN("Fail to raise %s hand (participant not found)", participant_id.c_str());
 }
 
 void
@@ -1303,9 +1307,8 @@ void
 Conference::updateHandsRaised()
 {
     std::lock_guard<std::mutex> lk(confInfoMutex_);
-    for (auto& info : confInfo_) {
-        info.handRaised = isHandRaised(string_remove_suffix(info.uri, '@'));
-    }
+    for (auto& info : confInfo_)
+        info.handRaised = isHandRaised(info.device);
     sendConferenceInfos();
 }
 
@@ -1473,6 +1476,14 @@ Conference::isHost(std::string_view uri) const
             }
         }
     }
+    return false;
+}
+
+bool
+Conference::isHostDevice(std::string_view deviceId) const
+{
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+        return deviceId == acc->currentDeviceId();
     return false;
 }
 
