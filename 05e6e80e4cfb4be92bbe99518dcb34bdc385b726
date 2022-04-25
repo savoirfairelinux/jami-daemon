@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "de784618_7b0684fc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-25T13:20:03Z",
+      "side": 1,
+      "message": "just need to understand why we need this change",
+      "revId": "05e6e80e4cfb4be92bbe99518dcb34bdc385b726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ca9ec7d_943f8874",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-25T13:20:03Z",
+      "side": 1,
+      "message": "what is the bug here? AFAIK, the string is only needed locally to create the uri. Do we need to keep it longer than that ?",
+      "revId": "05e6e80e4cfb4be92bbe99518dcb34bdc385b726",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
