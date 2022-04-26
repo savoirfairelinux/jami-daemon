@@ -441,16 +441,22 @@ incomingTrustRequest(const std::string& accountId,
 }
 
 void
-callStateChanged(const std::string& callId, const std::string& state, int detail_code)
+callStateChanged(const std::string& accountId,
+                 const std::string& callId,
+                 const std::string& state,
+                 int detail_code)
 {
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
-    pendingSignals.emplace([callId, state, detail_code]() {
+    pendingSignals.emplace([accountId, callId, state, detail_code]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), callStateChangedCb);
         if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(callId),
-                                            V8_STRING_NEW_LOCAL(state),
-                                            SWIGV8_INTEGER_NEW(detail_code)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+            SWIGV8_VALUE callback_args[] = {
+                V8_STRING_NEW_LOCAL(accountId),
+                V8_STRING_NEW_LOCAL(callId),
+                V8_STRING_NEW_LOCAL(state),
+                SWIGV8_INTEGER_NEW(detail_code)
+            };
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
 
@@ -466,9 +472,11 @@ mediaChangeRequested(const std::string& accountId,
     pendingSignals.emplace([accountId, callId, mediaList]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), mediaChangeRequestedCb);
         if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
-                                            V8_STRING_NEW_LOCAL(callId),
-                                            stringMapVecToJsMapArray(mediaList)};
+            SWIGV8_VALUE callback_args[] = {
+                V8_STRING_NEW_LOCAL(accountId),
+                V8_STRING_NEW_LOCAL(callId),
+                stringMapVecToJsMapArray(mediaList)
+            };
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
@@ -477,15 +485,17 @@ mediaChangeRequested(const std::string& accountId,
 }
 
 void
-incomingMessage(const std::string& id,
+incomingMessage(const std::string& accountId,
+                const std::string& id,
                 const std::string& from,
                 const std::map<std::string, std::string>& messages)
 {
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
-    pendingSignals.emplace([id, from, messages]() {
+    pendingSignals.emplace([accountId, id, from, messages]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingMessageCb);
         if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(id),
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(id),
                                             V8_STRING_NEW_LOCAL(from),
                                             stringMapToJsMap(messages)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
