@@ -28,7 +28,7 @@
 class Callback {
 public:
     virtual ~Callback() {}
-    virtual void callStateChanged(const std::string& callId, const std::string& state, int detail_code){}
+    virtual void callStateChanged(const std::string& accountId, const std::string& callId, const std::string& state, int detail_code){}
     virtual void transferFailed(void){}
     virtual void transferSucceeded(void){}
     virtual void recordPlaybackStopped(const std::string& path){}
@@ -40,9 +40,9 @@ public:
     virtual void mediaChangeRequested(const std::string& accountId, const std::string& callId,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
-    virtual void conferenceCreated(const std::string& accountId, const std::string& conf_id){}
-    virtual void conferenceChanged(const std::string& accountId, const std::string& conf_id, const std::string& state){}
-    virtual void conferenceRemoved(const std::string& accountId, const std::string& conf_id){}
+    virtual void conferenceCreated(const std::string& accountId, const std::string& confId){}
+    virtual void conferenceChanged(const std::string& accountId, const std::string& confId, const std::string& state){}
+    virtual void conferenceRemoved(const std::string& accountId, const std::string& confId){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
     virtual void recordingStateChanged(const std::string& callId, int code){}
@@ -50,6 +50,8 @@ public:
     virtual void onRtcpReportReceived(const std::string& callId, const std::map<std::string, int>& stats){}
     virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& callId, bool holding){}
+    virtual void audioMuted(const std::string& callId, bool muted){}
+    virtual void videoMuted(const std::string& callId, bool muted){}
     virtual void connectionUpdate(const std::string& id, int state){}
     virtual void remoteRecordingChanged(const std::string& callId, const std::string& peer_number, bool state){}
     virtual void mediaNegotiationStatus(const std::string& callId, const std::string& event,
@@ -64,7 +66,6 @@ public:
 namespace DRing {
 
 /* Call related methods */
-std::string placeCall(const std::string& accountId, const std::string& to, const std::map<std::string, std::string>& volatileCallDetails);
 std::string placeCallWithMedia(const std::string& accountId,
                                const std::string& to,
                                const std::vector<std::map<std::string, std::string>>& mediaList);
@@ -129,7 +130,7 @@ void sendTextMessage(const std::string& accountId, const std::string& callId, co
 class Callback {
 public:
     virtual ~Callback() {}
-    virtual void callStateChanged(const std::string& callId, const std::string& state, int detail_code){}
+    virtual void callStateChanged(const std::string& accountId, const std::string& callId, const std::string& state, int detail_code){}
     virtual void transferFailed(void){}
     virtual void transferSucceeded(void){}
     virtual void recordPlaybackStopped(const std::string& path){}
@@ -141,9 +142,9 @@ public:
     virtual void mediaChangeRequested(const std::string& accountId, const std::string& callId,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
-    virtual void conferenceCreated(const std::string& accountId, const std::string& conf_id){}
-    virtual void conferenceChanged(const std::string& accountId, const std::string& conf_id, const std::string& state){}
-    virtual void conferenceRemoved(const std::string& accountId, const std::string& conf_id){}
+    virtual void conferenceCreated(const std::string& accountId, const std::string& confId){}
+    virtual void conferenceChanged(const std::string& accountId, const std::string& confId, const std::string& state){}
+    virtual void conferenceRemoved(const std::string& accountId, const std::string& confId){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void newCall(const std::string& accountId, const std::string& callId, const std::string& to){}
     virtual void recordingStateChanged(const std::string& callId, int code){}
@@ -151,6 +152,8 @@ public:
     virtual void onRtcpReportReceived(const std::string& callId, const std::map<std::string, int>& stats){}
     virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& callId, bool holding){}
+    virtual void audioMuted(const std::string& callId, bool muted){}
+    virtual void videoMuted(const std::string& callId, bool muted){}
     virtual void connectionUpdate(const std::string& id, int state){}
     virtual void remoteRecordingChanged(const std::string& callId, const std::string& peer_number, bool state){}
     virtual void mediaNegotiationStatus(const std::string& callId, const std::string& event,
