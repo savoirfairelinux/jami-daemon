@@ -39,6 +39,30 @@
       },
       "revId": "16d0e727d554ab02f8d88a59a460ace3aada1375",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "971691f5_8c9bcb42",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 8
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-26T13:58:13Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "aef56696_c994c00b",
+      "range": {
+        "startLine": 337,
+        "startChar": 22,
+        "endLine": 337,
+        "endChar": 35
+      },
+      "revId": "16d0e727d554ab02f8d88a59a460ace3aada1375",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
