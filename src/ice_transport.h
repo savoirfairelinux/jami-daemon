@@ -22,6 +22,7 @@
 
 #include "ice_socket.h"
 #include "ip_utils.h"
+#include "scheduled_executor.h"
 
 #include <pjnath.h>
 #include <pjlib.h>
@@ -31,6 +32,10 @@
 #include <memory>
 #include <msgpack.hpp>
 #include <vector>
+
+#ifdef __linux__
+#include <sys/syscall.h>
+#endif
 
 namespace jami {
 
@@ -115,6 +120,48 @@ struct SDP
 
     std::vector<std::string> candidates;
     MSGPACK_DEFINE(ufrag, pwd, candidates)
+};
+
+class IceExecutionQueue
+{
+public:
+    virtual ~IceExecutionQueue() {};
+
+#ifdef __linux__
+    long threadId_;
+    long getCurrentThread() const { 
+        return syscall(__NR_gettid) & 0xffff;
+    }
+    bool isValidThread() const { return threadId_ == getCurrentThread(); }
+#else
+    std::thread::id threadId_;
+    std::thread::id getCurrentThread() const { 
+        return std::this_thread::get_id();
+    }
+    bool isValidThread() const { return threadId_ == getCurrentThread(); }
+#endif // __linux__
+
+
+
+    template<typename Callback>
+    void runOnIceExecQueue(Callback&& cb)
+    {
+        iceScheduler_.run([cb = std::forward<Callback>(cb)]() mutable { cb(); });
+    }
+
+    virtual bool waitForShutDown()
+    {
+        std::unique_lock<std::mutex> lk(syncMutex_);
+        return shutdownCv_.wait_for(lk, std::chrono::seconds(30), [this] {
+            return shutdownComplete_;
+        });
+    }
+
+    ScheduledExecutor iceScheduler_ {};
+    // Shutdown synchronization
+    std::mutex syncMutex_;
+    std::condition_variable shutdownCv_ {};
+    bool shutdownComplete_ {false};
 };
 
 class IceTransport
@@ -235,10 +282,6 @@ public:
     ssize_t waitForData(unsigned comp_id, std::chrono::milliseconds timeout, std::error_code& ec);
 
     unsigned getComponentCount() const;
-
-    // Set session state
-    bool setSlaveSession();
-    bool setInitiatorSession();
 
     /**
      * Get SDP messages list

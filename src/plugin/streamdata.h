@@ -54,10 +54,10 @@ struct StreamData
     const bool direction;
     // StreamType -> audio or video.
     const StreamType type;
-    // accountId
-    const std::string source;
     // conversationId
     const std::string conversation;
+    // accountId
+    const std::string source;
 };
 
 /**
