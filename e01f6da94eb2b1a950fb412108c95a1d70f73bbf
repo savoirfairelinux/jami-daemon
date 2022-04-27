@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "acf349e2_d4e3893a",
+        "filename": "tools/trace/ice-transport/stats",
+        "patchSetId": 17
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-04-27T18:20:23Z",
+      "side": 1,
+      "message": "I find it awkward to do `./tool.py` instead of `./tool` but sure.\n\nFor syntax colorization, a good editor should parse the shebang without problem.",
+      "parentUuid": "67023e3a_13d13968",
+      "range": {
+        "startLine": 1,
+        "startChar": 16,
+        "endLine": 1,
+        "endChar": 18
+      },
+      "revId": "e01f6da94eb2b1a950fb412108c95a1d70f73bbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c6a0d52f_f768e962",
         "filename": "tools/trace/ice-transport/stats",
         "patchSetId": 17
