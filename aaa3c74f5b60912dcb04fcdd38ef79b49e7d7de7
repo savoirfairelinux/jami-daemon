@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32dba480_fc6fc397",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 730,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-27T19:58:19Z",
+      "side": 1,
+      "message": "Must have only one active",
+      "range": {
+        "startLine": 729,
+        "startChar": 0,
+        "endLine": 730,
+        "endChar": 27
+      },
+      "revId": "aaa3c74f5b60912dcb04fcdd38ef79b49e7d7de7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
