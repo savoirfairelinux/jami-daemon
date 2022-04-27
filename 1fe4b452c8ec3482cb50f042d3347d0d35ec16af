@@ -50,6 +50,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2147d7ed_6bcd4592",
+        "filename": "contrib/src/lttng-ust/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-27T17:15:45Z",
+      "side": 1,
+      "message": "yeah it\u0027s configurable in the rules.mak for sure, I did this for now.\nThe question is do we need this flag for our contrib?\n\nElse, we can remove numactl from the dependencies and disable this in the rules.mak",
+      "parentUuid": "32a87fa1_4cdae0fe",
+      "range": {
+        "startLine": 10,
+        "startChar": 25,
+        "endLine": 10,
+        "endChar": 32
+      },
+      "revId": "1fe4b452c8ec3482cb50f042d3347d0d35ec16af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1b516c8d_ddbfafa3",
         "filename": "contrib/src/lttng-ust/rules.mak",
         "patchSetId": 12
