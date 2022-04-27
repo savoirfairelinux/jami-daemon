@@ -2182,6 +2182,13 @@ JamiAccount::doRegister_()
                           getAccountID().c_str(),
                           name.c_str());
 
+                if (turnEnabled_ && !cacheTurnV4_) {
+                    // If TURN is enabled, but no TURN cached, there can be a temporary resolution
+                    // error to solve. Sometimes, a connectivity change is not enough, so even if
+                    // this case is really rare, it should be easy to avoid.
+                    cacheTurnServers();
+                }
+
                 auto uri = Uri(name);
                 auto itHandler = channelHandlers_.find(uri.scheme());
                 if (itHandler != channelHandlers_.end() && itHandler->second)
