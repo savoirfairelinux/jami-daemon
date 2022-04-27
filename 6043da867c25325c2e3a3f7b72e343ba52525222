@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d1fc1b6_f331a16b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-04-27T17:40:00Z",
+      "side": 1,
+      "message": "Should only be included if built with instrumentation like lttng.",
+      "revId": "6043da867c25325c2e3a3f7b72e343ba52525222",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
