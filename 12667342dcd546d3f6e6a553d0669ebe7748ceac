@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6627d0a9_36aadd76",
+        "filename": "contrib/src/liburcu/rules.mak",
+        "patchSetId": 9
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-27T16:24:14Z",
+      "side": 1,
+      "message": "a detail, but not the same version in the configure.ac",
+      "range": {
+        "startLine": 6,
+        "startChar": 37,
+        "endLine": 6,
+        "endChar": 42
+      },
+      "revId": "12667342dcd546d3f6e6a553d0669ebe7748ceac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
