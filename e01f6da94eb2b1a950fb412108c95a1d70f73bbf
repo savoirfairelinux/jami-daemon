@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "67023e3a_13d13968",
+        "filename": "tools/trace/ice-transport/stats",
+        "patchSetId": 17
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-27T16:22:57Z",
+      "side": 1,
+      "message": "files should have an extension (better for the users about what is in the file, syntax colorization, etc)",
+      "range": {
+        "startLine": 1,
+        "startChar": 16,
+        "endLine": 1,
+        "endChar": 18
+      },
+      "revId": "e01f6da94eb2b1a950fb412108c95a1d70f73bbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c6a0d52f_f768e962",
+        "filename": "tools/trace/ice-transport/stats",
+        "patchSetId": 17
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-27T16:22:57Z",
+      "side": 1,
+      "message": "PEP8 gives some types/error about the format",
+      "range": {
+        "startLine": 12,
+        "startChar": 18,
+        "endLine": 16,
+        "endChar": 21
+      },
+      "revId": "e01f6da94eb2b1a950fb412108c95a1d70f73bbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
