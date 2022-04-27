@@ -22,6 +22,7 @@
 
 #include "ice_socket.h"
 #include "ip_utils.h"
+#include "scheduled_executor.h"
 
 #include <pjnath.h>
 #include <pjlib.h>
@@ -117,7 +118,30 @@ struct SDP
     MSGPACK_DEFINE(ufrag, pwd, candidates)
 };
 
-class IceTransport
+class IceExecutionQueue
+{
+public:
+    virtual ~IceExecutionQueue() {};
+
+protected:
+    std::thread::id getCurrentThread() const { return std::this_thread::get_id(); }
+
+    bool isValidThread() const { return threadId_ == getCurrentThread(); }
+
+    // Upnp context execution queue (same as manager's scheduler)
+    // Helpers to run tasks on upnp context queue.
+    virtual ScheduledExecutor* getScheduler() { return &iceScheduler_; };
+    template<typename Callback>
+    void runOnIceExecQueue(Callback&& cb)
+    {
+        getScheduler()->run([cb = std::forward<Callback>(cb)]() mutable { cb(); });
+    }
+
+    ScheduledExecutor iceScheduler_ {};
+    std::thread::id threadId_;
+};
+
+class IceTransport : public IceExecutionQueue
 {
 public:
     using Attribute = struct
@@ -235,10 +259,6 @@ public:
     ssize_t waitForData(unsigned comp_id, std::chrono::milliseconds timeout, std::error_code& ec);
 
     unsigned getComponentCount() const;
-
-    // Set session state
-    bool setSlaveSession();
-    bool setInitiatorSession();
 
     /**
      * Get SDP messages list

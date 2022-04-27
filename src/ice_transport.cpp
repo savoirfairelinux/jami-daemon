@@ -78,7 +78,7 @@ using namespace upnp;
 class IceTransport::Impl
 {
 public:
-    Impl(const char* name);
+    Impl(const char* name, ScheduledExecutor* scheduler);
     ~Impl();
 
     void initIceInstance(const IceTransportOptions& options);
@@ -87,16 +87,8 @@ public:
 
     void onReceiveData(unsigned comp_id, void* pkt, pj_size_t size);
 
-    /**
-     * Set/change transport role as initiator.
-     * Should be called before start method.
-     */
-    bool setInitiatorSession();
+    bool setRole(bool master);
 
-    /**
-     * Set/change transport role as slave.
-     * Should be called before start method.
-     */
     bool setSlaveSession();
     bool createIceSession(pj_ice_sess_role role);
 
@@ -113,7 +105,7 @@ public:
     bool _isRunning() const;
     bool _isFailed() const;
 
-    const pj_ice_sess_cand* getSelectedCandidate(unsigned comp_id, bool remote) const;
+    void updateSelectedCandidates();
     IpAddr getLocalAddress(unsigned comp_id) const;
     IpAddr getRemoteAddress(unsigned comp_id) const;
     static const char* getCandidateType(const pj_ice_sess_cand* cand);
@@ -147,11 +139,17 @@ public:
     unsigned compCount_ {0};
     std::string local_ufrag_ {};
     std::string local_pwd_ {};
-    pj_sockaddr remoteAddr_ {};
     std::condition_variable iceCV_ {};
     pj_ice_strans_cfg config_ {};
     std::string last_errmsg_ {};
-
+    struct addrPair
+    {
+        IpAddr local;
+        std::string localType;
+        IpAddr remote;
+        std::string remoteType;
+    };
+    std::vector<addrPair> selectedCand_;
     std::atomic_bool is_stopped_ {false};
 
     struct Packet
@@ -206,7 +204,6 @@ public:
     bool onlyIPv4Private_ {true};
 
     // IO/Timer events are handled by following thread
-    std::thread thread_ {};
     std::atomic_bool threadTerminateFlags_ {false};
 
     // Wait data on components
@@ -215,6 +212,8 @@ public:
     pj_size_t lastSentLen_ {0};
     std::atomic_bool destroying_ {false};
     onShutdownCb scb {};
+    std::atomic<pj_ice_strans_state> iceState_ {PJ_ICE_STRANS_STATE_NULL};
+    ScheduledExecutor* scheduler_ {nullptr};
 };
 
 //==============================================================================
@@ -303,10 +302,10 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 
 //==============================================================================
 
-IceTransport::Impl::Impl(const char* name)
+IceTransport::Impl::Impl(const char* name, ScheduledExecutor* scheduler)
     : sessionName_(name)
+    , scheduler_(scheduler)
     , pool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
-    , thread_()
 {
     JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\"", this, name);
 }
@@ -317,10 +316,6 @@ IceTransport::Impl::~Impl()
 
     threadTerminateFlags_ = true;
     iceCV_.notify_all();
-
-    if (thread_.joinable()) {
-        thread_.join();
-    }
 
     if (icest_) {
         pj_ice_strans* strans = nullptr;
@@ -366,6 +361,8 @@ IceTransport::Impl::~Impl()
 void
 IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
 {
+    selectedCand_.resize(4);
+
     isTcp_ = options.tcpEnable;
     upnpEnabled_ = options.upnpEnable;
     on_initdone_cb_ = options.onInitDone;
@@ -488,6 +485,7 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
 
     icecb.on_destroy = [](pj_ice_strans* ice_st) {
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
+            tr->iceState_ = pj_ice_strans_get_state(tr->icest_);
             std::lock_guard lk(tr->sendDataMutex_);
             tr->destroying_ = true;
             tr->waitDataCv_.notify_all();
@@ -509,6 +507,7 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
     static constexpr auto IOQUEUE_MAX_HANDLES = std::min(PJ_IOQUEUE_MAX_HANDLES, 64);
     TRY(pj_timer_heap_create(pool_.get(), 100, &config_.stun_cfg.timer_heap));
     TRY(pj_ioqueue_create(pool_.get(), IOQUEUE_MAX_HANDLES, &config_.stun_cfg.ioqueue));
+    pj_ioqueue_set_default_concurrency(config_.stun_cfg.ioqueue, true);
     std::ostringstream sessionName {};
     // We use the instance pointer as the PJNATH session name in order
     // to easily identify the logs reported by PJNATH.
@@ -524,52 +523,48 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
         throw std::runtime_error("pj_ice_strans_create() failed");
     }
 
+    iceState_ = pj_ice_strans_get_state(icest_);
+
+    scheduler_->scheduleAtFixedRate(
+        [this] {
+            handleEvents(HANDLE_EVENT_DURATION - 10);
+            return not threadTerminateFlags_;
+        },
+        std::chrono::milliseconds(10));
+
     // Must be created after any potential failure
-    thread_ = std::thread([this] {
-        while (not threadTerminateFlags_) {
-            // NOTE: handleEvents can return false in this case
-            // but here we don't care if there is event or not.
-            handleEvents(HANDLE_EVENT_DURATION);
-        }
-    });
+
+    // thread_ = std::thread([this] {
+    //     while (not threadTerminateFlags_) {
+    //         // NOTE: handleEvents can return false in this case
+    //         // but here we don't care if there is event or not.
+    //         handleEvents(HANDLE_EVENT_DURATION);
+    //     }
+    // });
 }
 
 bool
 IceTransport::Impl::_isInitialized() const
 {
-    if (auto icest = icest_) {
-        auto state = pj_ice_strans_get_state(icest);
-        return state >= PJ_ICE_STRANS_STATE_SESS_READY and state != PJ_ICE_STRANS_STATE_FAILED;
-    }
-    return false;
+    return iceState_ >= PJ_ICE_STRANS_STATE_SESS_READY and iceState_ != PJ_ICE_STRANS_STATE_FAILED;
 }
 
 bool
 IceTransport::Impl::_isStarted() const
 {
-    if (auto icest = icest_) {
-        auto state = pj_ice_strans_get_state(icest);
-        return state >= PJ_ICE_STRANS_STATE_NEGO and state != PJ_ICE_STRANS_STATE_FAILED;
-    }
-    return false;
+    return iceState_ >= PJ_ICE_STRANS_STATE_NEGO and iceState_ != PJ_ICE_STRANS_STATE_FAILED;
 }
 
 bool
 IceTransport::Impl::_isRunning() const
 {
-    if (auto icest = icest_) {
-        auto state = pj_ice_strans_get_state(icest);
-        return state >= PJ_ICE_STRANS_STATE_RUNNING and state != PJ_ICE_STRANS_STATE_FAILED;
-    }
-    return false;
+    return iceState_ >= PJ_ICE_STRANS_STATE_RUNNING and iceState_ != PJ_ICE_STRANS_STATE_FAILED;
 }
 
 bool
 IceTransport::Impl::_isFailed() const
 {
-    if (auto icest = icest_)
-        return pj_ice_strans_get_state(icest) == PJ_ICE_STRANS_STATE_FAILED;
-    return false;
+    return iceState_ == PJ_ICE_STRANS_STATE_FAILED;
 }
 
 bool
@@ -698,26 +693,31 @@ IceTransport::Impl::onComplete(pj_ice_strans*, pj_ice_strans_op op, pj_status_t 
     }
 
     if (done and op == PJ_ICE_STRANS_OP_INIT) {
-        if (initiatorSession_)
-            setInitiatorSession();
-        else
-            setSlaveSession();
+        if (_isInitialized()) {
+            setRole(initiatorSession_);
+        } else {
+            createIceSession(initiatorSession_ ? pj_ice_sess_role::PJ_ICE_SESS_ROLE_CONTROLLING
+                                               : pj_ice_sess_role::PJ_ICE_SESS_ROLE_CONTROLLED);
+        }
     }
 
     if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_)
         on_initdone_cb_(done);
     else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
         if (done) {
+            updateSelectedCandidates();
             // Dump of connection pairs
-            auto out = link();
-            JAMI_DBG("[ice:%p] %s connection pairs ([comp id] local [type] <-> remote [type]):\n%s",
-                     this,
-                     (config_.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP"),
-                     out.c_str());
+            // auto out = link();
+            // JAMI_DBG("[ice:%p] %s connection pairs ([comp id] local [type] <-> remote [type]):\n%s",
+            //          this,
+            //          (config_.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP"),
+            //          out.c_str());
         }
         if (on_negodone_cb_)
             on_negodone_cb_(done);
     }
+
+    iceState_ = pj_ice_strans_get_state(icest_);
 
     // Unlock waitForXXX APIs
     iceCV_.notify_all();
@@ -727,121 +727,86 @@ std::string
 IceTransport::Impl::link() const
 {
     std::ostringstream out;
-    for (unsigned strm = 0; strm < streamsCount_; strm++) {
-        for (unsigned i = 1; i <= compCountPerStream_; i++) {
-            auto absIdx = strm * streamsCount_ + i;
-            auto laddr = getLocalAddress(absIdx);
-            auto raddr = getRemoteAddress(absIdx);
+    // for (unsigned strm = 0; strm < streamsCount_; strm++) {
+    //     for (unsigned i = 1; i <= compCountPerStream_; i++) {
+    //         auto absIdx = strm * streamsCount_ + i;
+    //         auto laddr = getLocalAddress(absIdx);
+    //         auto raddr = getRemoteAddress(absIdx);
 
-            if (laddr and laddr.getPort() != 0 and raddr and raddr.getPort() != 0) {
-                out << " [" << i << "] " << laddr.toString(true, true) << " ["
-                    << getCandidateType(getSelectedCandidate(absIdx, false)) << "] "
-                    << " <-> " << raddr.toString(true, true) << " ["
-                    << getCandidateType(getSelectedCandidate(absIdx, true)) << "] " << '\n';
-            } else {
-                out << " [" << i << "] disabled\n";
-            }
-        }
-    }
+    //         if (laddr and laddr.getPort() != 0 and raddr and raddr.getPort() != 0) {
+    //             out << " [" << i << "] " << laddr.toString(true, true) << " ["
+    //                 << getCandidateType(getLocalAddress(absIdx)) << "] "
+    //                 << " <-> " << raddr.toString(true, true) << " ["
+    //                 << getCandidateType(getRemoteAddress(absIdx)) << "] " << '\n';
+    //         } else {
+    //             out << " [" << i << "] disabled\n";
+    //         }
+    //     }
+    // }
     return out.str();
 }
 
 bool
-IceTransport::Impl::setInitiatorSession()
+IceTransport::Impl::setRole(bool master)
 {
-    JAMI_DBG("[ice:%p] as master", this);
-    initiatorSession_ = true;
-    if (_isInitialized()) {
-        std::lock_guard<std::mutex> lk(iceMutex_);
-
-        if (not icest_) {
-            return false;
-        }
-
-        auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLING);
-        if (status != PJ_SUCCESS) {
-            last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
-            return false;
-        }
-        return true;
-    }
-    return createIceSession(PJ_ICE_SESS_ROLE_CONTROLLING);
-}
-
-bool
-IceTransport::Impl::setSlaveSession()
-{
-    JAMI_DBG("[ice:%p] as slave", this);
-    initiatorSession_ = false;
-    if (_isInitialized()) {
-        std::lock_guard<std::mutex> lk(iceMutex_);
-
-        if (not icest_) {
-            return false;
-        }
-
-        auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLED);
-        if (status != PJ_SUCCESS) {
-            last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
-            return false;
-        }
-        return true;
-    }
-    return createIceSession(PJ_ICE_SESS_ROLE_CONTROLLED);
-}
-
-const pj_ice_sess_cand*
-IceTransport::Impl::getSelectedCandidate(unsigned comp_id, bool remote) const
-{
-    ASSERT_COMP_ID(comp_id, compCount_);
-
-    // Return the selected candidate pair. Might not be the nominated pair if
-    // ICE has not concluded yet, but should be the nominated pair afterwards.
-    if (not _isRunning()) {
-        JAMI_ERR("[ice:%p] ICE transport is not running", this);
-        return nullptr;
-    }
-
+    // CHECK_VALID_THREAD();
     std::lock_guard<std::mutex> lk(iceMutex_);
 
+    JAMI_DBG("[ice:%p] Change role to %s", this, master ? "Master" : "Slave");
+
     if (not icest_) {
-        return nullptr;
+        return false;
     }
 
-    const auto* sess = pj_ice_strans_get_valid_pair(icest_, comp_id);
-    if (sess == nullptr) {
-        JAMI_WARN("[ice:%p] Component %i has no valid pair (disabled)", this, comp_id);
-        return nullptr;
+    auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLING);
+    if (status != PJ_SUCCESS) {
+        last_errmsg_ = sip_utils::sip_strerror(status);
+        JAMI_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
+        return false;
     }
 
-    if (remote)
-        return sess->rcand;
-    else
-        return sess->lcand;
+    return true;
+}
+
+void
+IceTransport::Impl::updateSelectedCandidates()
+{
+    // CHECK_VALID_THREAD();
+
+    if (not icest_) {
+        return;
+    }
+
+    for (unsigned compId = 1; compId <= compCount_; compId++) {
+        const auto* sess = pj_ice_strans_get_valid_pair(icest_, compId);
+        if (sess == nullptr) {
+            JAMI_WARN("[ice:%p] Component %i has no valid pair (disabled)", this, compId);
+            return;
+        }
+
+        selectedCand_[compId].local = sess->lcand->addr;
+        selectedCand_[compId].remote = sess->rcand->addr;
+    }
 }
 
 IpAddr
-IceTransport::Impl::getLocalAddress(unsigned comp_id) const
+IceTransport::Impl::getLocalAddress(unsigned compId) const
 {
-    ASSERT_COMP_ID(comp_id, compCount_);
-
-    if (auto cand = getSelectedCandidate(comp_id, false))
-        return cand->addr;
-
-    return {};
+    ASSERT_COMP_ID(compId, compCount_);
+    if (selectedCand_.empty() or compId > selectedCand_.size() - 1) {
+        return {};
+    }
+    return selectedCand_[compId].local;
 }
 
 IpAddr
-IceTransport::Impl::getRemoteAddress(unsigned comp_id) const
+IceTransport::Impl::getRemoteAddress(unsigned compId) const
 {
-    ASSERT_COMP_ID(comp_id, compCount_);
-
-    if (auto cand = getSelectedCandidate(comp_id, true))
-        return cand->addr;
-
-    return {};
+    ASSERT_COMP_ID(compId, compCount_);
+    if (selectedCand_.empty() or compId > selectedCand_.size() - 1) {
+        return {};
+    }
+    return selectedCand_[compId].remote;
 }
 
 const char*
@@ -854,6 +819,7 @@ IceTransport::Impl::getCandidateType(const pj_ice_sess_cand* cand)
 void
 IceTransport::Impl::getUFragPwd()
 {
+    // CHECK_VALID_THREAD();
     if (icest_) {
         pj_str_t local_ufrag, local_pwd;
 
@@ -866,7 +832,14 @@ IceTransport::Impl::getUFragPwd()
 bool
 IceTransport::Impl::createIceSession(pj_ice_sess_role role)
 {
+    // CHECK_VALID_THREAD();
+
     std::lock_guard<std::mutex> lk(iceMutex_);
+
+    bool master = (role == pj_ice_sess_role::PJ_ICE_SESS_ROLE_CONTROLLING);
+    JAMI_DBG("[ice:%p] Init ICE as %s", this, master ? "Master" : "Slave");
+
+    initiatorSession_ = master;
 
     if (not icest_) {
         return false;
@@ -1120,8 +1093,10 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 //==============================================================================
 
 IceTransport::IceTransport(const char* name)
-    : pimpl_ {std::make_unique<Impl>(name)}
-{}
+    : pimpl_ {std::make_unique<Impl>(name, &iceScheduler_)}
+{
+    runOnIceExecQueue([this] { threadId_ = getCurrentThread(); });
+}
 
 IceTransport::~IceTransport()
 {
@@ -1132,41 +1107,41 @@ IceTransport::~IceTransport()
 void
 IceTransport::initIceInstance(const IceTransportOptions& options)
 {
+    if (not isValidThread()) {
+        runOnIceExecQueue([this, opt = std::move(options)] { initIceInstance(opt); });
+        return;
+    }
+
     pimpl_->initIceInstance(options);
 }
 
 bool
 IceTransport::isInitialized() const
 {
-    std::lock_guard<std::mutex> lk(pimpl_->iceMutex_);
     return pimpl_->_isInitialized();
 }
 
 bool
 IceTransport::isStarted() const
 {
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
     return pimpl_->_isStarted();
 }
 
 bool
 IceTransport::isRunning() const
 {
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
     return pimpl_->_isRunning();
 }
 
 bool
 IceTransport::isStopped() const
 {
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
     return pimpl_->is_stopped_;
 }
 
 bool
 IceTransport::isFailed() const
 {
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
     return pimpl_->_isFailed();
 }
 
@@ -1174,17 +1149,6 @@ unsigned
 IceTransport::getComponentCount() const
 {
     return pimpl_->compCount_;
-}
-
-bool
-IceTransport::setSlaveSession()
-{
-    return pimpl_->setSlaveSession();
-}
-bool
-IceTransport::setInitiatorSession()
-{
-    return pimpl_->setInitiatorSession();
 }
 
 std::string
@@ -1196,6 +1160,7 @@ IceTransport::getLastErrMsg() const
 bool
 IceTransport::isInitiator() const
 {
+    CHECK_VALID_THREAD();
     if (isInitialized()) {
         std::lock_guard<std::mutex> lk(pimpl_->iceMutex_);
         if (pimpl_->icest_) {
@@ -1214,6 +1179,13 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
         pimpl_->is_stopped_ = true;
         return false;
     }
+
+    // if (not isValidThread()) {
+    //     runOnIceExecQueue([this, &] {
+    //         return startIce(rem_attrs, rem_candidates);
+    //     });
+    //     return true;
+    // }
 
     // pj_ice_strans_start_ice crashes if remote candidates array is empty
     if (rem_candidates.empty()) {
@@ -1282,6 +1254,7 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
 bool
 IceTransport::startIce(const SDP& sdp)
 {
+    // TODO. same here.
     if (pimpl_->streamsCount_ != 1) {
         JAMI_ERR("Expected exactly one stream per SDP (found %u streams)", pimpl_->streamsCount_);
         return false;
@@ -1342,6 +1315,11 @@ IceTransport::startIce(const SDP& sdp)
 bool
 IceTransport::stop()
 {
+    if (not isValidThread()) {
+        runOnIceExecQueue([this] { stop(); });
+        return true;
+    }
+
     pimpl_->is_stopped_ = true;
     if (isStarted()) {
         std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
@@ -1360,6 +1338,7 @@ IceTransport::stop()
 void
 IceTransport::cancelOperations()
 {
+    CHECK_VALID_THREAD();
     isCancelled_ = true;
     for (auto& c : pimpl_->peerChannels_) {
         c.stop();
@@ -1395,6 +1374,7 @@ IceTransport::getLocalAttributes() const
 std::vector<std::string>
 IceTransport::getLocalCandidates(unsigned comp_id) const
 {
+    CHECK_VALID_THREAD();
     ASSERT_COMP_ID(comp_id, getComponentCount());
     std::vector<std::string> res;
     pj_ice_sess_cand cand[MAX_CANDIDATES];
@@ -1456,6 +1436,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
 std::vector<std::string>
 IceTransport::getLocalCandidates(unsigned streamIdx, unsigned compId) const
 {
+    CHECK_VALID_THREAD();
     ASSERT_COMP_ID(compId, getComponentCount());
 
     std::vector<std::string> res;
@@ -1673,6 +1654,7 @@ IceTransport::setOnShutdown(onShutdownCb&& cb)
 ssize_t
 IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
 {
+    // CHECK_VALID_THREAD();
     ASSERT_COMP_ID(compId, getComponentCount());
 
     auto remote = getRemoteAddress(compId);

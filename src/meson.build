@@ -111,6 +111,7 @@ libjami_sources = files(
     'ftp_server.cpp',
     'gittransport.cpp',
     'ice_transport.cpp',
+    'transport/peer_channel.cpp'
     'ip_utils.cpp',
     'logger.cpp',
     'manager.cpp',

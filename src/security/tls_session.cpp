@@ -1550,6 +1550,8 @@ TlsSession::TlsSessionImpl::handleStateShutdown(TlsSessionState state)
 void
 TlsSession::TlsSessionImpl::process()
 {
+    JAMI_DBG("[TLS:%p] process", this);
+    
     auto old_state = state_.load();
     auto new_state = fsmHandlers_[old_state](old_state);
 

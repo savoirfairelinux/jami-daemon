@@ -129,6 +129,7 @@ libring_la_SOURCES = \
 		scheduled_executor.h \
 		scheduled_executor.cpp \
 		transport/peer_channel.h \
+        transport/peer_channel.cpp \
 		uri.h \
 		uri.cpp \
 		vcard.h
