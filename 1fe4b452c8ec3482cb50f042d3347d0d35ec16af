@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46127f1b_34f2cb2b",
+        "filename": "contrib/src/lttng-ust/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-27T16:23:03Z",
+      "side": 1,
+      "message": "Do we really need libnuma?\n\nI ask this as it\u0027s not packaged on Fedora (and Fedora 35 use lttng-ust 2.12), so ideally a rules.make is necessary for this",
+      "range": {
+        "startLine": 10,
+        "startChar": 25,
+        "endLine": 10,
+        "endChar": 32
+      },
+      "revId": "1fe4b452c8ec3482cb50f042d3347d0d35ec16af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b516c8d_ddbfafa3",
+        "filename": "contrib/src/lttng-ust/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-27T16:23:03Z",
+      "side": 1,
+      "message": "indentation",
+      "range": {
+        "startLine": 25,
+        "startChar": 0,
+        "endLine": 25,
+        "endChar": 8
+      },
+      "revId": "1fe4b452c8ec3482cb50f042d3347d0d35ec16af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
