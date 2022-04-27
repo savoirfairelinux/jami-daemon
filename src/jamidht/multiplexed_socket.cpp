@@ -753,7 +753,7 @@ public:
     std::vector<uint8_t> buf {};
     std::mutex mutex {};
     std::condition_variable cv {};
-    GenericSocket<uint8_t>::RecvCb cb {};
+    GenericSocket<uint8_t>::RecvCb onRecvCb {};
 };
 
 ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
@@ -818,9 +818,9 @@ void
 ChannelSocket::setOnRecv(RecvCb&& cb)
 {
     std::lock_guard<std::mutex> lkSockets(pimpl_->mutex);
-    pimpl_->cb = std::move(cb);
-    if (!pimpl_->buf.empty() && pimpl_->cb) {
-        pimpl_->cb(pimpl_->buf.data(), pimpl_->buf.size());
+    pimpl_->onRecvCb = std::move(cb);
+    if (!pimpl_->buf.empty() && pimpl_->onRecvCb) {
+        pimpl_->onRecvCb(pimpl_->buf.data(), pimpl_->buf.size());
         pimpl_->buf.clear();
     }
 }
@@ -829,8 +829,8 @@ void
 ChannelSocket::onRecv(std::vector<uint8_t>&& pkt)
 {
     std::lock_guard<std::mutex> lkSockets(pimpl_->mutex);
-    if (pimpl_->cb) {
-        pimpl_->cb(&pkt[0], pkt.size());
+    if (pimpl_->onRecvCb) {
+        pimpl_->onRecvCb(&pkt[0], pkt.size());
         return;
     }
     pimpl_->buf.insert(pimpl_->buf.end(),
