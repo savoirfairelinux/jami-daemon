@@ -16,6 +16,24 @@
       "message": "Should only be included if built with instrumentation like lttng.",
       "revId": "6043da867c25325c2e3a3f7b72e343ba52525222",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "52cc40cd_744cfeed",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-04-27T18:22:53Z",
+      "side": 1,
+      "message": "IIRC, this only define a macro in config.h.  It does not break the build even if cxxabi.h is not present on the system.\n\nI guess that the conditional is useful for understanding why this check is made.  But does you think is it really necessary?",
+      "parentUuid": "3d1fc1b6_f331a16b",
+      "revId": "6043da867c25325c2e3a3f7b72e343ba52525222",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
