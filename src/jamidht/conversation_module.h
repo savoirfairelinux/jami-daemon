@@ -324,15 +324,6 @@ public:
      * @return if successfully removed
      */
     bool removeConversation(const std::string& conversationId);
-
-    /**
-     * When a DHT message is coming, during swarm transition
-     * check if a swarm is linked to that contact and remove
-     * the swarm if needed
-     * @param peerUri   the one who sent a DHT message
-     */
-    void checkIfRemoveForCompat(const std::string& peerUri);
-
     void initReplay(const std::string& oldConvId, const std::string& newConvId);
 
     // The following methods modify what is stored on the disk

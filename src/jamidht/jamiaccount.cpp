@@ -1195,14 +1195,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests" + DIR_SEPARATOR_STR
                                + uri;
             fileutils::remove(requestPath);
-            if (convFromReq.empty()) {
-                // If we receives a confirmation of a trust request
-                // but without the conversation, this means that the peer is
-                // using an old version of Jami, without swarm support.
-                // In this case, delete current conversation linked with that
-                // contact because he will not get messages anyway.
-                convModule()->checkIfRemoveForCompat(uri);
-            } else {
+            if (!convFromReq.empty()) {
                 auto oldConv = convModule()->getOneToOneConversation(uri);
                 // If we previously removed the contact, and re-add it, we may
                 // receive a convId different from the request. In that case,
@@ -3677,12 +3670,6 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         }
         convModule()->onConversationRequest(from, json);
         return true;
-    } else if (m.first == MIME_TYPE_TEXT_PLAIN) {
-        // This means that a text is received, so that
-        // the conversation is not a swarm. For compatibility,
-        // check if we have a swarm created. It can be the case
-        // when the trust request confirm was not received.
-        convModule()->checkIfRemoveForCompat(from);
     } else if (m.first == MIME_TYPE_IM_COMPOSING) {
         try {
             static const std::regex COMPOSING_REGEX("<state>\\s*(\\w+)\\s*<\\/state>");
