@@ -1659,27 +1659,6 @@ ConversationModule::removeConversation(const std::string& conversationId)
 }
 
 void
-ConversationModule::checkIfRemoveForCompat(const std::string& peerUri)
-{
-    auto convId = getOneToOneConversation(peerUri);
-    if (convId.empty())
-        return;
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    auto it = pimpl_->conversations_.find(convId);
-    if (it == pimpl_->conversations_.end()) {
-        JAMI_ERR("Conversation %s doesn't exist", convId.c_str());
-        return;
-    }
-    // We will only removes the conversation if the member is invited
-    // the contact can have mutiple devices with only some with swarm
-    // support, in this case, just go with recent versions.
-    if (it->second->isMember(peerUri))
-        return;
-    lk.unlock();
-    removeConversation(convId);
-}
-
-void
 ConversationModule::initReplay(const std::string& oldConvId, const std::string& newConvId)
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
