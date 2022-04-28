@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f07566e6_4397cb01",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2022-04-28T15:48:37Z",
+      "side": 1,
+      "message": "i think it\u0027s still a bit too soon for this; many distros\u0027 packages may have not yet caught up yet.\n\nimho, since this is a small amount of code (besides the unit test) and not terribly complex, we should keep it for at least another year or so before considering removing it.",
+      "revId": "c819c60f592ded9038642396f6d73be649506912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
