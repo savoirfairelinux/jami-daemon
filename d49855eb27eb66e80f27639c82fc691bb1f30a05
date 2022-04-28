@@ -447,6 +447,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b79fdbae_637c785a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1368,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-28T20:08:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "caa3e2f9_b3b524fc",
+      "range": {
+        "startLine": 1368,
+        "startChar": 5,
+        "endLine": 1368,
+        "endChar": 53
+      },
+      "revId": "d49855eb27eb66e80f27639c82fc691bb1f30a05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cdb36718_d8b34d72",
