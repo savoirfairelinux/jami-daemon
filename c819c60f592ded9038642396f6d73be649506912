@@ -16,6 +16,24 @@
       "message": "i think it\u0027s still a bit too soon for this; many distros\u0027 packages may have not yet caught up yet.\n\nimho, since this is a small amount of code (besides the unit test) and not terribly complex, we should keep it for at least another year or so before considering removing it.",
       "revId": "c819c60f592ded9038642396f6d73be649506912",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02d971f2_ac963751",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-28T16:11:16Z",
+      "side": 1,
+      "message": "Even distributions like debian have a recent enough version (202111 is ok, this code is really old) (https://packages.debian.org/sid/jami ; https://archlinux.org/packages/community/x86_64/jami-qt/ ; https://guix.gnu.org/en/packages/jami-libclient-20211223.2.37be4c3/), what distro do you have in mind?",
+      "parentUuid": "f07566e6_4397cb01",
+      "revId": "c819c60f592ded9038642396f6d73be649506912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
