@@ -52,6 +52,24 @@
       "parentUuid": "02d971f2_ac963751",
       "revId": "c819c60f592ded9038642396f6d73be649506912",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e11112d_0528dea3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2022-04-29T13:49:38Z",
+      "side": 1,
+      "message": "Mohamed, I think that would make sense.\n\nSéb, I did mainly mean Debian and its derivatives.  They actually have 202101 (January 2021), not 202111 (November 2021).  And that\u0027s both for sid/unstable and for bullseye/stable.\n\nAs far as I can remember, 202101 is before we merged Swarm.  I know at least for client-gnome (what Debian has) we did the adaptation to Swarm changes around June/July 2021, and that is sadly not in Debian, not even in sid/unstable.\n\nI propose we maintain this backward compatibility until the next Debian stable release, and hopefully by that time we will have been able to package latest client-qt for them. :)",
+      "parentUuid": "cd5367b8_09f32c4a",
+      "revId": "c819c60f592ded9038642396f6d73be649506912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
