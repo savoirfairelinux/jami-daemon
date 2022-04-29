@@ -34,6 +34,24 @@
       "parentUuid": "f07566e6_4397cb01",
       "revId": "c819c60f592ded9038642396f6d73be649506912",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cd5367b8_09f32c4a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-29T13:26:14Z",
+      "side": 1,
+      "message": "The requirement to keep/remove the backward compatibility should have been discussed before this patch is executed.\nThe PO may have a word on it as it impacts the product behaviour",
+      "parentUuid": "02d971f2_ac963751",
+      "revId": "c819c60f592ded9038642396f6d73be649506912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
