@@ -70,6 +70,24 @@
       "parentUuid": "cd5367b8_09f32c4a",
       "revId": "c819c60f592ded9038642396f6d73be649506912",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a44036a5_dd0dd61b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-04-29T15:29:31Z",
+      "side": 1,
+      "message": "Note, I don\u0027t remove code for supporting non swarm, but about downgrading a swarm to a non-swarm. Code that were introduced only as a transitional phase to avoid to get non syncing conv in a multi-device env. Non swarm conv will be kept until we plan an archive button.\n\nThis was always a hacky feature and which can be surprising for most of users (if you have a conversation for months and you get an old device sending a message, all history will be forever deleted for all devices in the conversation to go back to non swarm). I even think it\u0027s linked to some behaviours Larbi/Christophe said or even verojean on the forum.\n\nFor debian, as I see no movement from any maintainer for months (and we pushed a lot, you, the one who was working for weeks on updating Jami mid 2021, etc) and no answer for your patches, we also provide packages from our repo, snap repo, guix repo. I mostly think this small transitional code is error prone, not understandable for users and got a bad UX and should not happen on conversations users got for months now.\n\nFor the rest, it\u0027s indeed something to choose. At least the patch is there and easy to rebase the day we want it, as I prepared the file cleanup 1 year ago ; https://review.jami.net/c/jami-daemon/+/17875",
+      "parentUuid": "6e11112d_0528dea3",
+      "revId": "c819c60f592ded9038642396f6d73be649506912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
