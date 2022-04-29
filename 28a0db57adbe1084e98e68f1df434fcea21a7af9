@@ -22,6 +22,63 @@
       },
       "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc3de32f_cb5e0fcf",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1161,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-29T13:55:47Z",
+      "side": 1,
+      "message": "IMHO, to have a clean and maintainable code, the processing of the conf order should moved to a dedicated class. The remaining code should as agnostic as possible from the conf order protocol version. The appropriate version of the conf order should instantiated and injected in run-time.",
+      "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c9e2189_74433d56",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1182,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-29T13:55:47Z",
+      "side": 1,
+      "message": "It\u0027s very hacky way to check the protocol version.\nThe protocol may also evolve for future needs, and we need to reliably detect which version.\nThe best way is to add a version field. See https://git.jami.net/savoirfairelinux/jami-project/-/wikis/technical/6.1.-Conference-Protocol#notescomments",
+      "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac0b0385_52aa3f30",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1233,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-04-29T13:55:47Z",
+      "side": 1,
+      "message": "please, use const strings for the keywords. It\u0027s very to introduce a bug because of misspelling:\nlayout -\u003e layouts\nmedias -\u003e media\nraiseHand -\u003e raisedHand\n...",
+      "range": {
+        "startLine": 1233,
+        "startChar": 38,
+        "endLine": 1233,
+        "endChar": 46
+      },
+      "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
