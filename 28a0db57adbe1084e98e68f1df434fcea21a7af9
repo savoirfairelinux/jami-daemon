@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "91d3c7f0_ff933250",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 10
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-01T09:18:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "557c643d_9a76172e",
+      "range": {
+        "startLine": 343,
+        "startChar": 32,
+        "endLine": 343,
+        "endChar": 38
+      },
+      "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dc3de32f_cb5e0fcf",
@@ -37,6 +61,24 @@
       "writtenOn": "2022-04-29T13:55:47Z",
       "side": 1,
       "message": "IMHO, to have a clean and maintainable code, the processing of the conf order should moved to a dedicated class. The remaining code should as agnostic as possible from the conf order protocol version. The appropriate version of the conf order should instantiated and injected in run-time.",
+      "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3978eba1_e90050cf",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1161,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-01T09:18:08Z",
+      "side": 1,
+      "message": "Moved",
+      "parentUuid": "dc3de32f_cb5e0fcf",
       "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -76,6 +118,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "89fce574_d8ad30e1",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1182,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-01T09:18:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "97a81b80_5f5efdc7",
+      "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ac0b0385_52aa3f30",
@@ -89,6 +149,30 @@
       "writtenOn": "2022-04-29T13:55:47Z",
       "side": 1,
       "message": "please, use const strings for the keywords. It\u0027s very to introduce a bug because of misspelling:\nlayout -\u003e layouts\nmedias -\u003e media\nraiseHand -\u003e raisedHand\n...",
+      "range": {
+        "startLine": 1233,
+        "startChar": 38,
+        "endLine": 1233,
+        "endChar": 46
+      },
+      "revId": "28a0db57adbe1084e98e68f1df434fcea21a7af9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3242cac3_89deeaf9",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1233,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-01T09:18:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ac0b0385_52aa3f30",
       "range": {
         "startLine": 1233,
         "startChar": 38,
