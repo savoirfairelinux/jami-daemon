@@ -158,9 +158,7 @@ ConfProtocolParser::parseV1()
                                             mediaVal[ProtocolKeys::MUTEAUDIO].asBool());
                                 }
                                 if (mediaVal.isMember(ProtocolKeys::ACTIVE)) {
-                                    // TODO streamId
-                                    setActiveStream_(accountUri,
-                                                    deviceId,
+                                    setActiveStream_(streamId,
                                                     mediaVal[ProtocolKeys::ACTIVE].asBool());
                                 }
                             }

@@ -70,7 +70,7 @@ class VideoRtpSession : public RtpSession
 public:
     using BaseType = RtpSession;
 
-    VideoRtpSession(const std::string& callID, const DeviceParams& localVideoParams);
+    VideoRtpSession(const std::string& callId, const std::string& streamId, const DeviceParams& localVideoParams);
     ~VideoRtpSession();
 
     void setRequestKeyFrameCallback(std::function<void(void)> cb);
