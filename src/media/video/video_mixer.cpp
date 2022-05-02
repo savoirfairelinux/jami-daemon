@@ -32,6 +32,7 @@
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif
+#include "sip/sip_utils.h"
 
 #include <cmath>
 #include <unistd.h>
@@ -88,8 +89,7 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput)
     // Local video camera is the main participant
     if (not localInput.empty())
         videoLocal_ = getVideoInput(localInput);
-    if (videoLocal_)
-        videoLocal_->attach(this);
+    attachVideo(videoLocal_.get(), "", sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
     loop_.start();
     nextProcess_ = std::chrono::steady_clock::now();
 
@@ -100,16 +100,10 @@ VideoMixer::~VideoMixer()
 {
     stop_sink();
 
-    if (videoLocal_) {
-        videoLocal_->detach(this);
-        // prefer to release it now than after the next join
-        videoLocal_.reset();
-    }
-    if (videoLocalSecondary_) {
-        videoLocalSecondary_->detach(this);
-        // prefer to release it now than after the next join
-        videoLocalSecondary_.reset();
-    }
+    detachVideo(videoLocal_.get());
+    videoLocal_.reset();
+    detachVideo(videoLocalSecondary_.get());
+    videoLocalSecondary_.reset();
 
     loop_.join();
 
@@ -139,8 +133,7 @@ VideoMixer::switchInput(const std::string& input)
 
     // Re-attach videoInput to mixer
     videoLocal_ = getVideoInput(input);
-    if (videoLocal_)
-        videoLocal_->attach(this);
+    attachVideo(videoLocal_.get(), "", sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
 }
 
 void
@@ -164,9 +157,7 @@ VideoMixer::switchSecondaryInput(const std::string& input)
 
     // Re-attach videoInput to mixer
     videoLocalSecondary_ = getVideoInput(input);
-    if (videoLocalSecondary_) {
-        videoLocalSecondary_->attach(this);
-    }
+    attachVideo(videoLocalSecondary_.get(), "", sip_utils::streamId("", 1, MediaType::MEDIA_VIDEO));
 }
 
 void
@@ -178,25 +169,8 @@ VideoMixer::stopInput()
 }
 
 void
-VideoMixer::addActiveHost()
-{
-    activeStream_ = "";
-    activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
-    updateLayout();
-}
-
-void
-VideoMixer::setActiveStream(Observable<std::shared_ptr<MediaFrame>>* ob)
-{
-    activeStream_ = "";
-    activeSource_ = ob;
-    updateLayout();
-}
-
-void
 VideoMixer::setActiveStream(const std::string& id)
 {
-    activeSource_ = nullptr;
     activeStream_ = id;
     updateLayout();
 }
@@ -204,9 +178,41 @@ VideoMixer::setActiveStream(const std::string& id)
 void
 VideoMixer::updateLayout()
 {
-    if (activeStream_ == "" && activeSource_ == nullptr)
+    if (activeStream_ == "")
         currentLayout_ = Layout::GRID;
     layoutUpdated_ += 1;
+}
+
+void
+VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId, const std::string& streamId)
+{
+    if (!frame) return;
+    JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
+    std::lock_guard<std::mutex> lk(videoToStreamInfoMtx_);
+    videoToStreamInfo_.emplace(frame, StreamInfo {callId, streamId});
+    frame->attach(this);
+}
+
+void
+VideoMixer::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
+{
+    if (!frame)
+        return;
+    bool detach = false;
+    std::unique_lock<std::mutex> lk(videoToStreamInfoMtx_);
+    auto it = videoToStreamInfo_.find(frame);
+    if (it != videoToStreamInfo_.end()) {
+        JAMI_DBG("Detaching video of call %s", it->second.callId.c_str());
+        detach = true;
+        // Handle the case where the current shown source leave the conference
+        // Note, do not call resetActiveStream() to avoid multiple updates
+        if (verifyActive(it->second.streamId))
+            activeStream_ = {};
+        videoToStreamInfo_.erase(it);
+    }
+    lk.unlock();
+    if (detach)
+        frame->detach(this);
 }
 
 void
@@ -230,9 +236,6 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            // Handle the case where the current shown source leave the conference
-            if (verifyActive(ob))
-                resetActiveStream();
             JAMI_DBG("Remove source [%p]", x.get());
             sources_.remove(x);
             JAMI_DBG("Total sources: %lu", sources_.size());
@@ -303,11 +306,10 @@ VideoMixer::process()
         std::vector<SourceInfo> sourcesInfo;
         sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
         // add all audioonlysources
-        for (auto& id : audioOnlySources_) {
-            JAMI_ERR() << "@@@ " << id;
-            auto active = verifyActive(id);
+        for (auto& [callId, streamId] : audioOnlySources_) {
+            auto active = verifyActive(streamId);
             if (currentLayout_ != Layout::ONE_BIG or active) {
-                sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, id});
+                sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, callId, streamId});
             }
             if (currentLayout_ == Layout::ONE_BIG and active)
                 successfullyRendered = true;
@@ -318,7 +320,8 @@ VideoMixer::process()
             if (!loop_.isRunning())
                 return;
 
-            auto activeSource = verifyActive(x->source);
+            auto sinfo = streamInfo(x->source);
+            auto activeSource = verifyActive(sinfo.streamId);
             if (currentLayout_ != Layout::ONE_BIG or activeSource) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
@@ -385,8 +388,9 @@ VideoMixer::process()
             layoutUpdated_ -= 1;
             if (layoutUpdated_ == 0) {
                 for (auto& x : sources_) {
+                    auto sinfo = streamInfo(x->source);
                     sourcesInfo.emplace_back(
-                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo, {}});
+                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo, sinfo.callId, sinfo.streamId});
                 }
                 if (onSourcesUpdated_)
                     onSourcesUpdated_(std::move(sourcesInfo));
