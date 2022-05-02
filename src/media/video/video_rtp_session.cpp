@@ -59,15 +59,16 @@ constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
 constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(1);
 constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 
-VideoRtpSession::VideoRtpSession(const string& callID, const DeviceParams& localVideoParams)
-    : RtpSession(callID, MediaType::MEDIA_VIDEO)
+VideoRtpSession::VideoRtpSession(const string& id, uint32_t idx, const DeviceParams& localVideoParams)
+    : RtpSession(id, idx, MediaType::MEDIA_VIDEO)
     , localVideoParams_(localVideoParams)
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 {
+    streamIdAudio_ = sip_utils::streamId(id, 0, MediaType::MEDIA_AUDIO);
     setupVideoBitrateInfo(); // reset bitrate
     cc = std::make_unique<CongestionControl>();
-    JAMI_DBG("[%p] Video RTP session created for call %s", this, callID_.c_str());
+    JAMI_DBG("[%p] Video RTP session created for call %s", this, callId_.c_str());
 }
 
 VideoRtpSession::~VideoRtpSession()
@@ -247,7 +248,7 @@ VideoRtpSession::startReceiver()
         if (receiveThread_)
             JAMI_WARN("[%p] Already has a receiver, restarting", this);
         receiveThread_.reset(
-            new VideoReceiveThread(callID_, !conference_, receive_.receiving_sdp, mtu_));
+            new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
 
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
@@ -255,23 +256,21 @@ VideoRtpSession::startReceiver()
         receiveThread_->startLoop();
         receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
         receiveThread_->setRotation(rotation_.load());
-        if (videoMixer_) {
-            auto activeParticipant = videoMixer_->verifyActive(receiveThread_.get())
-                                     || videoMixer_->verifyActive(callID_);
-            videoMixer_->removeAudioOnlySource(callID_);
-            if (activeParticipant)
-                videoMixer_->setActiveStream(receiveThread_.get());
+        if (videoMixer_ and conference_) {
+            auto activeStream = videoMixer_->verifyActive(streamIdAudio_);
+            videoMixer_->removeAudioOnlySource(streamIdAudio_);
+            if (activeStream)
+                videoMixer_->setActiveStream(streamId_);
         }
 
     } else {
         JAMI_DBG("[%p] Video receiver disabled", this);
-        if (receiveThread_ and videoMixer_) {
-            auto activeParticipant = videoMixer_->verifyActive(receiveThread_.get())
-                                     || videoMixer_->verifyActive(callID_);
-            videoMixer_->addAudioOnlySource(callID_);
+        if (receiveThread_ and videoMixer_ and conference_) {
+            auto activeStream = videoMixer_->verifyActive(streamId_);
+            videoMixer_->addAudioOnlySource(streamIdAudio_);
             receiveThread_->detach(videoMixer_.get());
-            if (activeParticipant)
-                videoMixer_->setActiveStream(callID_);
+            if (activeStream)
+                videoMixer_->setActiveStream(streamIdAudio_);
         }
     }
     if (socketPair_)
@@ -289,11 +288,11 @@ VideoRtpSession::stopReceiver()
         return;
 
     if (videoMixer_) {
-        auto activeParticipant = videoMixer_->verifyActive(receiveThread_.get()) || videoMixer_->verifyActive(callID_);
-        videoMixer_->addAudioOnlySource(callID_);
+        auto activeStream = videoMixer_->verifyActive(streamId_);
+        videoMixer_->addAudioOnlySource(streamIdAudio_);
         receiveThread_->detach(videoMixer_.get());
-        if (activeParticipant)
-            videoMixer_->setActiveStream(callID_);
+        if (activeStream)
+            videoMixer_->setActiveStream(streamIdAudio_);
     }
 
     // We need to disable the read operation, otherwise the
@@ -463,7 +462,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
         JAMI_DBG("[%p] Setup video sender pipeline on conference %s for call %s",
                  this,
                  conference.getConfId().c_str(),
-                 callID_.c_str());
+                 callId_.c_str());
         videoMixer_ = conference.getVideoMixer();
         if (sender_) {
             // Swap sender from local video to conference video mixer
@@ -478,10 +477,11 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
         JAMI_DBG("[%p] Setup video receiver pipeline on conference %s for call %s",
                  this,
                  conference.getConfId().c_str(),
-                 callID_.c_str());
+                 callId_.c_str());
         if (receiveThread_) {
             receiveThread_->stopSink();
-            conference.attachVideo(receiveThread_.get(), callID_);
+            if (videoMixer_)
+                videoMixer_->attachVideo(receiveThread_.get(), streamId_);
         } else {
             JAMI_WARN("[%p] no receiver", this);
         }
@@ -545,11 +545,11 @@ VideoRtpSession::exitConference()
             videoMixer_->detach(sender_.get());
 
         if (receiveThread_) {
-            auto activetParticipant = videoMixer_->verifyActive(receiveThread_.get());
-            conference_->detachVideo(receiveThread_.get());
+            auto activeStream = videoMixer_->verifyActive(streamId_);
+            videoMixer_->detachVideo(receiveThread_.get());
             receiveThread_->startSink();
-            if (activetParticipant)
-                videoMixer_->setActiveStream(callID_);
+            if (activeStream)
+                videoMixer_->setActiveStream(streamId_);
         }
 
         videoMixer_.reset();
