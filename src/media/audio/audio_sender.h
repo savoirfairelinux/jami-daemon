@@ -37,8 +37,7 @@ class Resampler;
 class AudioSender : public Observer<std::shared_ptr<MediaFrame>>
 {
 public:
-    AudioSender(const std::string& id,
-                const std::string& dest,
+    AudioSender(const std::string& dest,
                 const MediaDescription& args,
                 SocketPair& socketPair,
                 const uint16_t seqVal,
@@ -56,7 +55,6 @@ private:
 
     bool setup(SocketPair& socketPair);
 
-    std::string id_;
     std::string dest_;
     MediaDescription args_;
     std::unique_ptr<MediaEncoder> audioEncoder_;
