@@ -32,6 +32,7 @@
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif
+#include "sip/sip_utils.h"
 
 #include <cmath>
 #include <unistd.h>
@@ -87,8 +88,7 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput)
     // Local video camera is the main participant
     if (not localInput.empty())
         videoLocal_ = getVideoInput(localInput);
-    if (videoLocal_)
-        videoLocal_->attach(this);
+    attachVideo(videoLocal_.get(), sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
     loop_.start();
     nextProcess_ = std::chrono::steady_clock::now();
 
@@ -99,16 +99,10 @@ VideoMixer::~VideoMixer()
 {
     stop_sink();
 
-    if (videoLocal_) {
-        videoLocal_->detach(this);
-        // prefer to release it now than after the next join
-        videoLocal_.reset();
-    }
-    if (videoLocalSecondary_) {
-        videoLocalSecondary_->detach(this);
-        // prefer to release it now than after the next join
-        videoLocalSecondary_.reset();
-    }
+    detachVideo(videoLocal_.get());
+    videoLocal_.reset();
+    detachVideo(videoLocalSecondary_.get());
+    videoLocalSecondary_.reset();
 
     loop_.join();
 
@@ -138,8 +132,7 @@ VideoMixer::switchInput(const std::string& input)
 
     // Re-attach videoInput to mixer
     videoLocal_ = getVideoInput(input);
-    if (videoLocal_)
-        videoLocal_->attach(this);
+    attachVideo(videoLocal_.get(), sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
 }
 
 void
@@ -163,9 +156,7 @@ VideoMixer::switchSecondaryInput(const std::string& input)
 
     // Re-attach videoInput to mixer
     videoLocalSecondary_ = getVideoInput(input);
-    if (videoLocalSecondary_) {
-        videoLocalSecondary_->attach(this);
-    }
+    attachVideo(videoLocalSecondary_.get(), sip_utils::streamId("", 1, MediaType::MEDIA_VIDEO));
 }
 
 void
@@ -177,25 +168,15 @@ VideoMixer::stopInput()
 }
 
 void
-VideoMixer::addActiveHost()
-{
-    activeStream_ = "";
-    activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
-    updateLayout();
-}
-
-void
 VideoMixer::setActiveStream(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     activeStream_ = "";
-    activeSource_ = ob;
     updateLayout();
 }
 
 void
 VideoMixer::setActiveStream(const std::string& id)
 {
-    activeSource_ = nullptr;
     activeStream_ = id;
     updateLayout();
 }
@@ -203,14 +184,43 @@ VideoMixer::setActiveStream(const std::string& id)
 void
 VideoMixer::updateLayout()
 {
-    if (activeStream_ == "" && activeSource_ == nullptr)
+    if (activeStream_ == "")
         currentLayout_ = Layout::GRID;
     layoutUpdated_ += 1;
 }
 
 void
+VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& streamId)
+{
+    if (!frame) return;
+    JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
+    std::lock_guard<std::mutex> lk(videoToStreamIdMtx_);
+    videoToStreamId_.emplace(frame, streamId);
+    frame->attach(this);
+}
+
+void
+VideoMixer::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
+{
+    if (!frame)
+        return;
+    std::lock_guard<std::mutex> lk(videoToStreamIdMtx_);
+    auto it = videoToStreamId_.find(frame);
+    if (it != videoToStreamId_.end()) {
+        JAMI_DBG("Detaching video of call %s", it->second.c_str());
+        it->first->detach(this);
+        // Handle the case where the current shown source leave the conference
+        if (verifyActive(it->second))
+            resetActiveStream();
+        videoToStreamId_.erase(it);
+    }
+}
+
+void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
+    if (!ob)
+        return;
     auto lock(rwMutex_.write());
 
     auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
@@ -225,13 +235,12 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 void
 VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
+    if (!ob)
+        return;
     auto lock(rwMutex_.write());
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            // Handle the case where the current shown source leave the conference
-            if (verifyActive(ob))
-                resetActiveStream();
             JAMI_DBG("Remove source [%p]", x.get());
             sources_.remove(x);
             JAMI_DBG("Total sources: %lu", sources_.size());
@@ -303,7 +312,6 @@ VideoMixer::process()
         sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
         // add all audioonlysources
         for (auto& id : audioOnlySources_) {
-            JAMI_ERR() << "@@@ " << id;
             auto active = verifyActive(id);
             if (currentLayout_ != Layout::ONE_BIG or active) {
                 sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, id});
@@ -317,7 +325,7 @@ VideoMixer::process()
             if (!loop_.isRunning())
                 return;
 
-            auto activeSource = verifyActive(x->source);
+            auto activeSource = verifyActive(streamId(x->source));
             if (currentLayout_ != Layout::ONE_BIG or activeSource) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
