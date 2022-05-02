@@ -50,7 +50,7 @@ struct RTCPInfo
 class AudioRtpSession : public RtpSession
 {
 public:
-    AudioRtpSession(const std::string& id);
+    AudioRtpSession(const std::string& callId, const std::string& streamId);
     virtual ~AudioRtpSession();
 
     void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;

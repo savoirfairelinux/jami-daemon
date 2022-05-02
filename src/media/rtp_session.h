@@ -42,8 +42,10 @@ public:
     // Media direction
     enum class Direction { SEND, RECV };
 
-    RtpSession(const std::string& callID, MediaType type)
-        : callID_(callID)
+    // Note: callId is used for ring buffers and smarttools
+    RtpSession(const std::string& callId, const std::string& streamId, MediaType type)
+        : callId_(callId)
+        , streamId_(streamId)
         , mediaType_(type)
     {}
     virtual ~RtpSession() {};
@@ -82,9 +84,12 @@ public:
     const IpAddr& getSendAddr() const { return send_.addr; };
     const IpAddr& getRecvAddr() const { return receive_.addr; };
 
+    inline std::string streamId() const { return streamId_; }
+
 protected:
     std::recursive_mutex mutex_;
-    const std::string callID_;
+    const std::string callId_;
+    const std::string streamId_;
     MediaType mediaType_;
     std::unique_ptr<SocketPair> socketPair_;
     std::string input_ {};
