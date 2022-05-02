@@ -42,9 +42,11 @@ public:
     // Media direction
     enum class Direction { SEND, RECV };
 
-    RtpSession(const std::string& callID, MediaType type)
-        : callID_(callID)
+    RtpSession(const std::string& callId, uint32_t idx, MediaType type)
+        : callId_(callId)
+        , idx_(idx)
         , mediaType_(type)
+        , streamId_(sip_utils::streamId(callId, idx, type))
     {}
     virtual ~RtpSession() {};
 
@@ -84,8 +86,10 @@ public:
 
 protected:
     std::recursive_mutex mutex_;
-    const std::string callID_;
+    const std::string callId_;
+    uint32_t idx_;
     MediaType mediaType_;
+    std::string streamId_;
     std::unique_ptr<SocketPair> socketPair_;
     std::string input_ {};
     MediaDescription send_;

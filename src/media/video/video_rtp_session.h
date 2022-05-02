@@ -70,7 +70,7 @@ class VideoRtpSession : public RtpSession
 public:
     using BaseType = RtpSession;
 
-    VideoRtpSession(const std::string& callID, const DeviceParams& localVideoParams);
+    VideoRtpSession(const std::string& id, uint32_t idx, const DeviceParams& localVideoParams);
     ~VideoRtpSession();
 
     void setRequestKeyFrameCallback(std::function<void(void)> cb);
@@ -121,6 +121,8 @@ private:
     using time_point = clock::time_point;
 
     DeviceParams localVideoParams_;
+
+    std::string streamIdAudio_;
 
     std::unique_ptr<VideoSender> sender_;
     std::shared_ptr<VideoReceiveThread> receiveThread_;

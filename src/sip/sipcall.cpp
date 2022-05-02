@@ -175,12 +175,27 @@ SIPCall::createRtpSession(RtpStream& stream)
     if (not stream.mediaAttribute_)
         throw std::runtime_error("Missing media attribute");
 
+    // Find idx of this stream as we can share several audio/videos
+    auto streamIdx = [&]() {
+        auto idx = 0;
+        for (const auto& st : rtpStreams_) {
+            if (st.mediaAttribute_->label_ == stream.mediaAttribute_->label_)
+                return idx;
+            if (st.mediaAttribute_->type_ == stream.mediaAttribute_->type_)
+                idx++;
+        }
+        return -1;
+    };
+
+    // To get audio_0 ; video_0
+    auto idx = streamIdx();
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
-        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_);
+        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_,
+                                                               idx);
     }
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
-        stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_, getVideoSettings());
+        stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_, idx, getVideoSettings());
         std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->setRotation(rotation_);
     }
 #endif
@@ -1044,16 +1059,29 @@ SIPCall::hangup(int reason)
 
     // Stop all RTP streams
     stopAllMedia();
-    if (auto conf = getConference()) {
-        if (auto mixer = conf->getVideoMixer()) {
-            mixer->removeAudioOnlySource(getCallId());
-        }
-    }
+    detachAudioFromConference();
     setState(Call::ConnectionState::DISCONNECTED, reason);
     dht::ThreadPool::io().run([w = weak()] {
         if (auto shared = w.lock())
             shared->removeCall();
     });
+}
+
+void
+SIPCall::detachAudioFromConference()
+{
+    if (auto conf = getConference()) {
+        if (auto mixer = conf->getVideoMixer()) {
+            auto idx = 0;
+            for (auto& stream : rtpStreams_) {
+                if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+                    mixer->removeAudioOnlySource(
+                        sip_utils::streamId(getCallId(), idx, MediaType::MEDIA_AUDIO));
+                    idx++;
+                }
+            }
+        }
+    }
 }
 
 void
@@ -1404,12 +1432,7 @@ SIPCall::peerHungup()
 
     if (inviteSession_)
         terminateSipSession(PJSIP_SC_NOT_FOUND);
-    if (auto conf = getConference()) {
-        if (auto mixer = conf->getVideoMixer()) {
-            mixer->removeAudioOnlySource(getCallId());
-        }
-    }
-
+    detachAudioFromConference();
     Call::peerHungup();
 }
 
