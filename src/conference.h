@@ -335,8 +335,6 @@ public:
 
 #ifdef ENABLE_VIDEO
     void createSinks(const ConfInfo& infos);
-    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
-    void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
     std::shared_ptr<video::VideoMixer> getVideoMixer();
     std::string getVideoInput() const { return hostVideoSource_.sourceUri_; }
 #endif
@@ -401,9 +399,6 @@ private:
     ConfInfo confInfo_ {};
 
     void sendConferenceInfos();
-    // We need to convert call to frame
-    std::mutex videoToCallMtx_;
-    std::map<Observable<std::shared_ptr<MediaFrame>>*, std::string> videoToCall_ {};
     std::shared_ptr<RingBuffer> ghostRingBuffer_;
 
 #ifdef ENABLE_VIDEO
