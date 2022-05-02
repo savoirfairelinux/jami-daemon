@@ -59,10 +59,7 @@ public:
     {
         raiseHand_ = std::move(cb);
     }
-    /**
-     * @todo, replace the 2 strings per streamId
-     */
-    void onSetActiveStream(std::function<void(const std::string&, const std::string&, bool)>&& cb)
+    void onSetActiveStream(std::function<void(const std::string&, bool)>&& cb)
     {
         setActiveStream_ = std::move(cb);
     }
@@ -125,7 +122,7 @@ private:
     std::function<bool(std::string_view)> checkAuthorization_;
     std::function<void(const std::string&, const std::string&)> kickDevice_;
     std::function<void(const std::string&, bool)> raiseHand_;
-    std::function<void(const std::string&, const std::string&, bool)> setActiveStream_;
+    std::function<void(const std::string&, bool)> setActiveStream_;
     std::function<void(const std::string&, const std::string&, const std::string&, bool)>
         muteStreamAudio_;
     std::function<void(const std::string&, const std::string&, const std::string&, bool)>

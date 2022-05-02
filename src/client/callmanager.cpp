@@ -578,14 +578,7 @@ setActiveStream(const std::string& accountId,
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            // TODO, as for now the videoMixer doesn't have the streamId
-            if (deviceId == account->currentDeviceId() && accountUri == account->getUsername()) {
-                conf->setActiveStream("", state);
-            } else if (auto call = std::static_pointer_cast<jami::SIPCall>(
-                    conf->getCallFromPeerID(accountUri))) {
-                conf->setActiveStream(call->getCallId(), state);
-            }
-            // conf->setActiveStream(streamId, state);
+            conf->setActiveStream(streamId, state);
         } else if (auto call = account->getCall(confId)) {
             if (call->conferenceProtocolVersion() == 1) {
                 Json::Value sinkVal;
