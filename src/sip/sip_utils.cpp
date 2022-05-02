@@ -293,6 +293,14 @@ sip_strerror(pj_status_t code)
     return std::string {ret.ptr, ret.ptr + ret.slen};
 }
 
+std::string
+streamId(const std::string& callId, uint32_t idx, MediaType mt)
+{
+    if (callId.empty())
+        return fmt::format("host_{}_{}", (mt == MediaType::MEDIA_VIDEO ? "video" : "audio"), idx);
+    return fmt::format("{}_{}_{}", callId, (mt == MediaType::MEDIA_VIDEO ? "video" : "audio"), idx);
+}
+
 void
 sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sockaddr* addr)
 {
