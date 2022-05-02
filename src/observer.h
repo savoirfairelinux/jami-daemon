@@ -146,6 +146,7 @@ protected:
     std::mutex mutex_; // lock observers_
     std::list<std::weak_ptr<Observer<T>>> priority_observers_;
     std::set<Observer<T>*> observers_;
+    std::string identifier_;
 };
 
 template<typename T>

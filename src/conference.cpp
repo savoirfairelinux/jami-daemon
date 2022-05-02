@@ -109,14 +109,14 @@ Conference::Conference(const std::shared_ptr<Account>& account)
             }
             auto hostAdded = false;
             // Handle participants showing their video
-            std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
             for (const auto& info : infos) {
                 std::string uri {};
                 bool isLocalMuted = false;
                 std::string deviceId {};
                 auto active = false;
                 if (!info.id.empty()) {
-                    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(info.id))) {
+                    std::string callId = std::string(string_remove_suffix(info.id, '_'));
+                    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
                         uri = call->getPeerNumber();
                         isLocalMuted = call->isPeerMuted();
                         if (auto* transport = call->getTransport())
@@ -125,13 +125,12 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                     std::string_view peerId = string_remove_suffix(uri, '@');
                     auto isModerator = shared->isModerator(peerId);
                     auto isHandRaised = shared->isHandRaised(deviceId);
-                    auto isModeratorMuted = shared->isMuted(info.id);
-                    auto sinkId = shared->getConfId() + peerId;
+                    auto isModeratorMuted = shared->isMuted(callId);
                     if (auto videoMixer = shared->videoMixer_)
-                        active = videoMixer->verifyActive(info.id); // TODO streamId
+                        active = videoMixer->verifyActive(info.id);
                     newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                           deviceId,
-                                                          std::move(sinkId),
+                                                          std::move(info.id),
                                                           active,
                                                           info.x,
                                                           info.y,
@@ -143,30 +142,31 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                                                           isModerator,
                                                           isHandRaised});
                 } else {
-                    auto it = shared->videoToCall_.find(info.source);
-                    if (it == shared->videoToCall_.end())
-                        it = shared->videoToCall_.emplace_hint(it, info.source, std::string());
-                    // If not local
                     auto isModeratorMuted = false;
-                    if (!it->second.empty()) {
+                    // If not local
+                    auto streamId = shared->videoMixer_->streamId(info.source);
+                    if (!streamId.empty()) {
+                        std::string callId = std::string(string_remove_suffix(streamId, '_'));
                         // Retrieve calls participants
                         // TODO: this is a first version, we assume that the peer is not
                         // a master of a conference and there is only one remote
                         // In the future, we should retrieve confInfo from the call
                         // To merge layouts informations
-                        // TODO sinkId
-                        auto isModeratorMuted = shared->isMuted(it->second);
+                        isModeratorMuted = shared->isMuted(streamId);
                         if (auto videoMixer = shared->videoMixer_)
-                            active = videoMixer->verifyActive(it->second);
-                        if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(it->second))) {
+                            active = videoMixer->verifyActive(streamId);
+                        if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
                             uri = call->getPeerNumber();
                             isLocalMuted = call->isPeerMuted();
                             if (auto* transport = call->getTransport())
                                 deviceId = transport->deviceId();
                         }
+                    } else {
+                        streamId = sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO);
+                        if (auto videoMixer = shared->videoMixer_)
+                            active = videoMixer->verifyActive(streamId);
                     }
                     std::string_view peerId = string_remove_suffix(uri, '@');
-                    // TODO (another patch): use deviceId instead of peerId as specified in protocol
                     auto isModerator = shared->isModerator(peerId);
                     if (uri.empty() && !hostAdded) {
                         hostAdded = true;
@@ -175,12 +175,9 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                         isLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
                     }
                     auto isHandRaised = shared->isHandRaised(deviceId);
-                    auto sinkId = shared->getConfId() + peerId;
-                    if (auto videoMixer = shared->videoMixer_)
-                        active |= videoMixer->verifyActive(info.source);
                     newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                           deviceId,
-                                                          std::move(sinkId),
+                                                          std::move(streamId),
                                                           active,
                                                           info.x,
                                                           info.y,
@@ -197,7 +194,6 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                 newInfo.h = videoMixer->getHeight();
                 newInfo.w = videoMixer->getWidth();
             }
-            lk.unlock();
             if (!hostAdded) {
                 ParticipantInfo pi;
                 pi.videoMuted = true;
@@ -218,10 +214,8 @@ Conference::Conference(const std::shared_ptr<Account>& account)
     });
     parser_.onRaiseHand(
         [&](const auto& deviceId, bool state) { setHandRaised(deviceId, state); });
-    parser_.onSetActiveStream([&](const auto& accountUri, const auto& deviceId, bool state) {
-        // TODO replace per streamId
-        if (auto call = getCallWith(accountUri, deviceId))
-            setHandRaised(call->getCallId(), state);
+    parser_.onSetActiveStream([&](const auto& streamId, bool state) {
+        setActiveStream(streamId, state);
     });
     parser_.onMuteStreamAudio
     (
@@ -616,11 +610,11 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
 
 #ifdef ENABLE_VIDEO
     // If the new media list has video, remove the participant from audioonlylist.
-    if (MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
-                                                                              false),
-                                     MediaType::MEDIA_VIDEO)) {
-        if (videoMixer_)
-            videoMixer_->removeAudioOnlySource(call->getCallId());
+    if (videoMixer_ && MediaAttribute::hasMediaType(
+            MediaAttribute::buildMediaAttributesList(remoteMediaList, false),
+            MediaType::MEDIA_VIDEO)) {
+        videoMixer_->removeAudioOnlySource(
+            std::string(sip_utils::streamId(call->getCallId(), 0, MediaType::MEDIA_VIDEO)));
     }
 #endif
 
@@ -708,10 +702,8 @@ Conference::addParticipant(const std::string& participant_id)
         // In conference, if a participant joins with an audio only
         // call, it must be listed in the audioonlylist.
         auto mediaList = call->getMediaAttributeList();
-        if (not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
-            if (videoMixer_) {
-                videoMixer_->addAudioOnlySource(call->getCallId());
-            }
+        if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
+            videoMixer_->addAudioOnlySource(call->getCallId());
         }
         call->enterConference(shared_from_this());
         // Continue the recording for the conference if one participant was recording
@@ -739,14 +731,11 @@ Conference::setActiveParticipant(const std::string& participant_id)
     if (!videoMixer_)
         return;
     if (isHost(participant_id)) {
-        videoMixer_->addActiveHost();
+        videoMixer_->setActiveStream(sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
         return;
     }
     if (auto call = getCallFromPeerID(participant_id)) {
-        if (auto videoRecv = call->getReceiveVideoFrameActiveWriter())
-            videoMixer_->setActiveStream(videoRecv.get());
-        else
-            videoMixer_->setActiveStream(call->getCallId());
+        videoMixer_->setActiveStream(sip_utils::streamId(call->getCallId(), 0, MediaType::MEDIA_VIDEO));
         return;
     }
 
@@ -764,25 +753,13 @@ Conference::setActiveParticipant(const std::string& participant_id)
 void
 Conference::setActiveStream(const std::string& streamId, bool state)
 {
-    // TODO BUG: for now activeStream is the callId, and should be the sink!
 #ifdef ENABLE_VIDEO
     if (!videoMixer_)
         return;
-    if (state) {
-        // TODO remove
-        if (streamId.empty()) {
-            videoMixer_->addActiveHost();
-        } else if (auto call = getCall(streamId)) {
-            if (auto videoRecv = call->getReceiveVideoFrameActiveWriter())
-                videoMixer_->setActiveStream(videoRecv.get());
-            else
-                videoMixer_->setActiveStream(call->getCallId());
-            return;
-        }
-        // TODO videoMixer_->setActiveStream(sinkId);
-    } else {
+    if (state)
+        videoMixer_->setActiveStream(streamId);
+    else
         videoMixer_->resetActiveStream();
-    }
 #endif
 }
 
@@ -872,27 +849,6 @@ Conference::createSinks(const ConfInfo& infos)
                                               sink),
                                           confSinksMap_);
 }
-
-void
-Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId)
-{
-    JAMI_DBG("[conf:%s] attaching video of call %s", id_.c_str(), callId.c_str());
-    std::lock_guard<std::mutex> lk(videoToCallMtx_);
-    videoToCall_.emplace(frame, callId);
-    frame->attach(videoMixer_.get());
-}
-
-void
-Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
-{
-    std::lock_guard<std::mutex> lk(videoToCallMtx_);
-    auto it = videoToCall_.find(frame);
-    if (it != videoToCall_.end()) {
-        JAMI_DBG("[conf:%s] detaching video of call %s", id_.c_str(), it->second.c_str());
-        it->first->detach(videoMixer_.get());
-        videoToCall_.erase(it);
-    }
-}
 #endif
 
 void
@@ -911,8 +867,8 @@ Conference::removeParticipant(const std::string& participant_id)
 #ifdef ENABLE_VIDEO
         auto sinkId = getConfId() + peerId;
         // Remove if active
-        // TODO if (videoMixer_->verifyActive(sinkId))
-        if (videoMixer_->verifyActive(participant_id))
+        // TODO all streams
+        if (videoMixer_->verifyActive(sip_utils::streamId(participant_id, 0, MediaType::MEDIA_VIDEO)))
             videoMixer_->resetActiveStream();
         call->exitConference();
         if (call->isPeerRecording())
@@ -1252,7 +1208,6 @@ Conference::setHandRaised(const std::string& deviceId, const bool& state)
                 if (auto* transport = call->getTransport())
                     callDeviceId = transport->deviceId();
                 if (deviceId == callDeviceId) {
-                    JAMI_ERR() << "@@@X";
                     if (state and not isPeerRequiringAttention) {
                         JAMI_DBG("Raise %s hand", deviceId.c_str());
                         handsRaised_.emplace(deviceId);

@@ -78,20 +78,12 @@ public:
     void resetActiveStream()
     {
         activeStream_ = {};
-        activeSource_ = {};
         updateLayout();
     }
-    void addActiveHost();
 
-    // TODO group, we can only use a set of string to identify actives
     bool verifyActive(const std::string& id)
     {
         return activeStream_ == id;
-    }
-
-    bool verifyActive(Observable<std::shared_ptr<MediaFrame>>* ob)
-    {
-        return activeSource_ == ob;
     }
 
     void setVideoLayout(Layout newLayout)
@@ -128,6 +120,18 @@ public:
             updateLayout();
     }
 
+    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& streamId);
+    void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
+
+    std::string streamId(Observable<std::shared_ptr<MediaFrame>>* frame) const
+    {
+        std::lock_guard<std::mutex> lk(videoToStreamIdMtx_);
+        auto it = videoToStreamId_.find(frame);
+        if (it == videoToStreamId_.end())
+            return {};
+        return it->second;
+    }
+
 private:
     NON_COPYABLE(VideoMixer);
     struct VideoMixerSource;
@@ -162,8 +166,11 @@ private:
     ThreadLoop loop_; // as to be last member
 
     Layout currentLayout_ {Layout::GRID};
-    Observable<std::shared_ptr<MediaFrame>>* activeSource_ {nullptr};
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
+
+    // We need to convert call to frame
+    mutable std::mutex videoToStreamIdMtx_ {};
+    std::map<Observable<std::shared_ptr<MediaFrame>>*, std::string> videoToStreamId_ {};
 
     std::mutex audioOnlySourcesMtx_;
     std::set<std::string> audioOnlySources_;
