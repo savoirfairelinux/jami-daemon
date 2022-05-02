@@ -143,6 +143,9 @@ as_view(const pj_str_t& str) noexcept
     return {str.ptr, (size_t) str.slen};
 }
 
+std::string
+streamId(const std::string& callId, uint32_t idx, MediaType mt);
+
 // PJSIP dialog locking in RAII way
 // Usage: declare local variable like this: sip_utils::PJDialogLock lock {dialog};
 // The lock is kept until the local variable is deleted
