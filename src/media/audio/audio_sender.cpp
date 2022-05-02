@@ -33,14 +33,12 @@
 
 namespace jami {
 
-AudioSender::AudioSender(const std::string& id,
-                         const std::string& dest,
+AudioSender::AudioSender(const std::string& dest,
                          const MediaDescription& args,
                          SocketPair& socketPair,
                          const uint16_t seqVal,
                          const uint16_t mtu)
-    : id_(id)
-    , dest_(dest)
+    : dest_(dest)
     , args_(args)
     , seqVal_(seqVal)
     , mtu_(mtu)
