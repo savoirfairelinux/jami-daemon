@@ -485,6 +485,7 @@ private:
                                                    {"v:remote", false}};
 
     void resetMediaReady();
+    void detachAudioFromConference();
 
     std::mutex setupSuccessMutex_;
 #ifdef ENABLE_VIDEO
