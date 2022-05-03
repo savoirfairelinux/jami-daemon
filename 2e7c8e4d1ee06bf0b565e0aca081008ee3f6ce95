@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c397741d_df7298b3",
+        "filename": "src/media/rtp_session.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-03T09:35:14Z",
+      "side": 1,
+      "message": "yes, there is still some tweaks to do and still a WIP, but callId from the RtpSession is still used (mostly for the audio part), so for now it still uses callId/idx and then pass the stream, as I don\u0027t want to break all the things yet.",
+      "parentUuid": "a9cddaad_24812d2f",
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "80f38774_5f79d202",
         "filename": "src/media/video/video_mixer.cpp",
         "patchSetId": 3
@@ -31,6 +49,24 @@
       "writtenOn": "2022-05-02T21:07:17Z",
       "side": 1,
       "message": "do we still need this ?",
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e3f88935_92085733",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-03T09:35:14Z",
+      "side": 1,
+      "message": "There is still the API, but ideally it should be removed. However I don\u0027t touch this in my patch.",
+      "parentUuid": "80f38774_5f79d202",
       "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -60,6 +96,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "13ad2557_54baa164",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-03T09:35:14Z",
+      "side": 1,
+      "message": "indeed will do",
+      "parentUuid": "ecb6e3b4_c3972f48",
+      "range": {
+        "startLine": 123,
+        "startChar": 88,
+        "endLine": 123,
+        "endChar": 98
+      },
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ce370ad7_e24a7b7a",
         "filename": "src/media/video/video_rtp_session.cpp",
         "patchSetId": 3
@@ -77,6 +137,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4fae78da_c8ccf21a",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-03T09:35:14Z",
+      "side": 1,
+      "message": "Imho streamIdAudio_ should not exists in video_rtp_session, but it\u0027s used in this class for linking to the videoMixer and for the setActive, so it\u0027s a bit like comment 1, I avoid to break all the things, will add notes if I think I\u0027ll do it here or later.",
+      "parentUuid": "ce370ad7_e24a7b7a",
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "919f7cc1_09e998d5",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 3
@@ -88,6 +166,30 @@
       "writtenOn": "2022-05-02T21:07:17Z",
       "side": 1,
       "message": "const auto\u0026",
+      "range": {
+        "startLine": 1076,
+        "startChar": 17,
+        "endLine": 1076,
+        "endChar": 23
+      },
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a6affae1_1191c928",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1076,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-03T09:35:14Z",
+      "side": 1,
+      "message": "indeed",
+      "parentUuid": "919f7cc1_09e998d5",
       "range": {
         "startLine": 1076,
         "startChar": 17,
