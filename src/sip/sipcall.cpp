@@ -1453,11 +1453,14 @@ SIPCall::setVideoOrientation(int rotation)
 void
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, const std::string& from)
 {
+    // TODO. True scoped_lock
+
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     // TODO: for now we ignore the "from" (the previous implementation for sending this info was
     //      buggy and verbose), another way to send the original message sender will be implemented
     //      in the future
     if (not subcalls_.empty()) {
+        std::lock_guard<std::mutex> lk {pendingMsgMutex_};
         pendingOutMessages_.emplace_back(messages, from);
         for (auto& c : subcalls_)
             c->sendTextMessage(messages, from);
@@ -1489,6 +1492,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
                 JAMI_ERR("[call:%s] Failed to send SIP text message", getCallId().c_str());
             }
         } else {
+            std::lock_guard<std::mutex> lk {pendingMsgMutex_};
             pendingOutMessages_.emplace_back(messages, from);
             JAMI_ERR("[call:%s] sendTextMessage: no invite session for this call",
                      getCallId().c_str());
@@ -3224,7 +3228,23 @@ SIPCall::merge(Call& call)
     peerAllowedMethods_ = subcall.peerAllowedMethods_;
     peerSupportReuseIceInReinv_ = subcall.peerSupportReuseIceInReinv_;
 
-    Call::merge(subcall);
+    {
+        // Merge data
+        std::lock_guard<std::mutex> lk {pendingMsgMutex_};
+        pendingInMessages_ = std::move(subcall.pendingInMessages_);
+    }
+    
+    if (peerNumber_.empty())
+        peerNumber_ = std::move(subcall.peerNumber_);
+    peerDisplayName_ = std::move(subcall.peerDisplayName_);
+    setState(subcall.getState(), subcall.getConnectionState());
+
+    std::weak_ptr<Call> subCallWeak = subcall.shared_from_this();
+    runOnMainThread([subCallWeak] {
+        if (auto subcall = subCallWeak.lock())
+            subcall->removeCall();
+    });
+
     if (isIceEnabled())
         startIceMedia();
 }
