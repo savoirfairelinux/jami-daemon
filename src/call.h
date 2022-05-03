@@ -321,7 +321,7 @@ public:
 
     void addStateListener(StateListenerCb&& listener)
     {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::unique_lock<std::mutex> lock(stateListenerMutex_);
         stateChangedListeners_.emplace_back(std::move(listener));
     }
 
@@ -336,7 +336,6 @@ public:
     ///
     bool isSubcall() const
     {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
         return parent_ != nullptr;
     }
 
@@ -439,7 +438,7 @@ public:
 protected:
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
-    virtual void merge(Call& scall);
+    virtual void merge(Call& scall) = 0;
 
     /**
      * Constructor of a call
@@ -484,7 +483,8 @@ private:
     void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
 
     SubcallSet safePopSubcalls();
-
+    
+    std::mutex stateListenerMutex_ {};
     std::vector<StateListenerCb> stateChangedListeners_ {};
 
 protected:
@@ -498,10 +498,10 @@ protected:
     std::weak_ptr<Account> account_;
 
     /** Disconnected/Progressing/Trying/Ringing/Connected */
-    ConnectionState connectionState_ {ConnectionState::DISCONNECTED};
+    std::atomic<ConnectionState> connectionState_ {ConnectionState::DISCONNECTED};
 
     /** Inactive/Active/Hold/Busy/Error */
-    CallState callState_ {CallState::INACTIVE};
+    std::atomic<CallState> callState_ {CallState::INACTIVE};
 
     /** Direct IP-to-IP or classic call */
     bool isIPToIP_ {false};
@@ -515,6 +515,7 @@ protected:
     time_t timestamp_start_ {0};
 
     ///< MultiDevice: message received by subcall to merged yet
+    std::mutex pendingMsgMutex_ {};
     MsgList pendingInMessages_;
 };
 
