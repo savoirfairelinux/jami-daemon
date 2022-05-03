@@ -129,19 +129,16 @@ public:
 
 #ifdef __linux__
     long threadId_;
-    long getCurrentThread() const { 
-        return syscall(__NR_gettid) & 0xffff;
-    }
+    long getCurrentThread() const { return syscall(__NR_gettid) & 0xffff; }
     bool isValidThread() const { return threadId_ == getCurrentThread(); }
 #else
     std::thread::id threadId_;
-    std::thread::id getCurrentThread() const { 
-        return std::this_thread::get_id();
-    }
+    std::thread::id getCurrentThread() const { return std::this_thread::get_id(); }
     bool isValidThread() const { return threadId_ == getCurrentThread(); }
 #endif // __linux__
 
-
+    // Set the valid thread. Must be called once.
+    void setThreadId() { threadId_ = getCurrentThread(); }
 
     template<typename Callback>
     void runOnIceExecQueue(Callback&& cb)
@@ -164,7 +161,7 @@ public:
     bool shutdownComplete_ {false};
 };
 
-class IceTransport
+class IceTransport : public IceExecutionQueue
 {
 public:
     using Attribute = struct
@@ -180,6 +177,8 @@ public:
     ~IceTransport();
 
     void initIceInstance(const IceTransportOptions& options);
+
+    void shutDown();
 
     /**
      * Get current state

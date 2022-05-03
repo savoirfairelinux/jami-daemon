@@ -59,14 +59,14 @@
     } while (0)
 
 #define CHECK_VALID_ICE_THREAD() \
-    if (not pimpl_->isValidThread()) \
-        JAMI_ERR() << "The calling thread " << pimpl_->getCurrentThread() \
-                   << " is not the expected thread: " << pimpl_->threadId_;
-
-#define ASSERT_VALID_ICE_THREAD() \
     if (not isValidThread()) \
         JAMI_ERR() << "The calling thread " << getCurrentThread() \
                    << " is not the expected thread: " << threadId_;
+
+#define ASSERT_VALID_ICE_THREAD() \
+    if (not scheduler_.isValidThread()) \
+        JAMI_ERR() << "The calling thread " << scheduler_.getCurrentThread() \
+                   << " is not the expected thread: " << scheduler_.threadId_;
 
 namespace jami {
 
@@ -85,10 +85,10 @@ using namespace upnp;
 
 //==============================================================================
 
-class IceTransport::Impl : public IceExecutionQueue
+class IceTransport::Impl
 {
 public:
-    Impl(const char* name);
+    Impl(const char* name, IceExecutionQueue& scheduler);
     ~Impl();
 
     void initIceInstance(const IceTransportOptions& options);
@@ -225,6 +225,7 @@ public:
     std::atomic_bool destroying_ {false};
     onShutdownCb scb {};
     std::atomic<pj_ice_strans_state> iceState_ {PJ_ICE_STRANS_STATE_NULL};
+    IceExecutionQueue& scheduler_;
 };
 
 //==============================================================================
@@ -313,13 +314,12 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 
 //==============================================================================
 
-IceTransport::Impl::Impl(const char* name)
+IceTransport::Impl::Impl(const char* name, IceExecutionQueue& scheduler)
     : sessionName_(name)
     , pool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
+    , scheduler_(scheduler)
 {
     JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\"", this, name);
-
-    runOnIceExecQueue([this] { threadId_ = getCurrentThread(); });
 }
 
 IceTransport::Impl::~Impl()
@@ -329,70 +329,58 @@ IceTransport::Impl::~Impl()
     threadTerminateFlags_ = true;
     iceCV_.notify_all();
 
-    shutDown();
-
-    iceScheduler_.stop();
-
     JAMI_DBG("[ice:%p] done destroying", this);
 }
 
 void
 IceTransport::Impl::shutDown()
 {
-    if (not isValidThread()) {
-        JAMI_DBG("Waiting for shutdown ...");
-        runOnIceExecQueue([this] { shutDown(); });
-        if (waitForShutDown()) {
-            JAMI_DBG("Shutdown completed");
-        } else {
-            JAMI_ERR("Shutdown timed-out");
-        }
-        return;
-    }
-
+    ASSERT_VALID_ICE_THREAD();
     if (not icest_) {
         JAMI_WARN("[ice:%p] ice_strans not set, skipping the shutdown", this);
-        return;
+
+    } else {
+        pj_ice_strans* strans = nullptr;
+
+        std::swap(strans, icest_);
+
+        // must be done before ioqueue/timer destruction
+        JAMI_INFO("[ice:%p] Shutting down ice_strans %p",
+                  pj_ice_strans_get_user_data(strans),
+                  strans);
+
+        pj_ice_strans_stop_ice(strans);
+        pj_ice_strans_destroy(strans);
+
+        // NOTE: This last timer heap and IO queue polling is necessary to close
+        // TURN socket.
+        // Because when destroying the TURN session pjproject creates a pj_timer
+        // to postpone the TURN destruction. This timer is only called if we poll
+        // the event queue.
+
+        int ret = flushTimerHeapAndIoQueue();
+
+        if (ret < 0) {
+            JAMI_ERR("[ice:%p] IO queue polling failed", this);
+        } else if (ret > 0) {
+            JAMI_ERR("[ice:%p] Unexpected left timer in timer heap. "
+                     "Please report the bug",
+                     this);
+        }
+
+        if (checkEventQueue(1) > 0) {
+            JAMI_WARN("[ice:%p] Unexpected left events in IO queue", this);
+        }
+
+        if (config_.stun_cfg.ioqueue)
+            pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
+
+        if (config_.stun_cfg.timer_heap)
+            pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
     }
 
-    pj_ice_strans* strans = nullptr;
-
-    std::swap(strans, icest_);
-
-    // must be done before ioqueue/timer destruction
-    JAMI_INFO("[ice:%p] Shutting down ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
-
-    pj_ice_strans_stop_ice(strans);
-    pj_ice_strans_destroy(strans);
-
-    // NOTE: This last timer heap and IO queue polling is necessary to close
-    // TURN socket.
-    // Because when destroying the TURN session pjproject creates a pj_timer
-    // to postpone the TURN destruction. This timer is only called if we poll
-    // the event queue.
-
-    int ret = flushTimerHeapAndIoQueue();
-
-    if (ret < 0) {
-        JAMI_ERR("[ice:%p] IO queue polling failed", this);
-    } else if (ret > 0) {
-        JAMI_ERR("[ice:%p] Unexpected left timer in timer heap. "
-                 "Please report the bug",
-                 this);
-    }
-
-    if (checkEventQueue(1) > 0) {
-        JAMI_WARN("[ice:%p] Unexpected left events in IO queue", this);
-    }
-
-    if (config_.stun_cfg.ioqueue)
-        pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
-
-    if (config_.stun_cfg.timer_heap)
-        pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
-
-    shutdownComplete_ = true;
-    shutdownCv_.notify_one();
+    scheduler_.shutdownComplete_ = true;
+    scheduler_.shutdownCv_.notify_one();
 }
 
 void
@@ -562,12 +550,9 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
 
     iceState_ = pj_ice_strans_get_state(icest_);
 
-    iceScheduler_.run(
-        [this] {
-            JAMI_DBG("[ice:%p] Start polling io queue", this);
-        });
+    scheduler_.runOnIceExecQueue([this] { JAMI_DBG("[ice:%p] Start polling io queue", this); });
 
-    iceScheduler_.scheduleAtFixedRate(
+    scheduler_.iceScheduler_.scheduleAtFixedRate(
         [this] {
             handleEvents(HANDLE_EVENT_DURATION);
             return not threadTerminateFlags_;
@@ -1102,6 +1087,9 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 {
     ASSERT_COMP_ID(comp_id, compCount_);
 
+    if (is_stopped_) {
+        JAMI_INFO("[ice:%p] ICE session is closing, ignore received data", this);
+    }
     if (size == 0)
         return;
 
@@ -1125,24 +1113,45 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 //==============================================================================
 
 IceTransport::IceTransport(const char* name)
-    : pimpl_ {std::make_unique<Impl>(name)}
-{}
+    : pimpl_ {std::make_unique<Impl>(name, *this)}
+{
+    runOnIceExecQueue([this] { setThreadId(); });
+}
 
 IceTransport::~IceTransport()
 {
     isStopped_ = true;
-    cancelOperations();
+
+    JAMI_DBG("Waiting for shutdown ...");
+    if (not isValidThread()) {
+        runOnIceExecQueue([this] { shutDown(); });
+    } else {
+        shutDown();
+    }
 }
 
 void
 IceTransport::initIceInstance(const IceTransportOptions& options)
 {
-    if (not pimpl_->isValidThread()) {
-        pimpl_->runOnIceExecQueue([this, opt = std::move(options)] { initIceInstance(opt); });
+    if (not isValidThread()) {
+        runOnIceExecQueue([this, opt = std::move(options)] { initIceInstance(opt); });
         return;
     }
 
     pimpl_->initIceInstance(options);
+}
+
+void
+IceTransport::shutDown()
+{
+    cancelOperations();
+    pimpl_->shutDown();
+    iceScheduler_.stop();
+    if (waitForShutDown()) {
+        JAMI_DBG("Shutdown completed");
+    } else {
+        JAMI_ERR("Shutdown timed-out");
+    }
 }
 
 bool
@@ -1344,8 +1353,8 @@ IceTransport::startIce(const SDP& sdp)
 bool
 IceTransport::stop()
 {
-    if (not pimpl_->isValidThread()) {
-        pimpl_->runOnIceExecQueue([this] { stop(); });
+    if (not isValidThread()) {
+        runOnIceExecQueue([this] { stop(); });
         return true;
     }
 

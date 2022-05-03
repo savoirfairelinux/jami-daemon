@@ -334,10 +334,7 @@ public:
     ///
     /// Return true if this call instance is a subcall (internal call for multi-device handling)
     ///
-    bool isSubcall() const
-    {
-        return parent_ != nullptr;
-    }
+    bool isSubcall() const { return parent_ != nullptr; }
 
     /**
      * @return Call duration in milliseconds
@@ -483,7 +480,7 @@ private:
     void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
 
     SubcallSet safePopSubcalls();
-    
+
     std::mutex stateListenerMutex_ {};
     std::vector<StateListenerCb> stateChangedListeners_ {};
 
