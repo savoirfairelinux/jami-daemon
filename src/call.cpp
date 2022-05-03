@@ -165,14 +165,12 @@ Call::getAccountId() const
 Call::ConnectionState
 Call::getConnectionState() const
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return connectionState_;
 }
 
 Call::CallState
 Call::getState() const
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return callState_;
 }
 
@@ -235,12 +233,11 @@ Call::validStateTransition(CallState newState)
 bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
-    std::unique_lock<std::recursive_mutex> lock(callMutex_);
     JAMI_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d",
              id_.c_str(),
-             (unsigned) callState_,
+             (unsigned) callState_.load(),
              (unsigned) call_state,
-             (unsigned) connectionState_,
+             (unsigned) connectionState_.load(),
              (unsigned) cnx_state,
              code);
 
@@ -248,7 +245,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
         if (not validStateTransition(call_state)) {
             JAMI_ERR("[call:%s] invalid call state transition from %u to %u",
                      id_.c_str(),
-                     (unsigned) callState_,
+                     (unsigned) callState_.load(),
                      (unsigned) call_state);
             return false;
         }
@@ -261,11 +258,14 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 
-    for (auto it = stateChangedListeners_.begin(); it != stateChangedListeners_.end();) {
-        if ((*it)(callState_, connectionState_, code))
-            ++it;
-        else
-            it = stateChangedListeners_.erase(it);
+    {
+        std::unique_lock<std::mutex> lock(stateListenerMutex_);
+        for (auto it = stateChangedListeners_.begin(); it != stateChangedListeners_.end();) {
+            if ((*it)(callState_, connectionState_, code))
+                ++it;
+            else
+                it = stateChangedListeners_.erase(it);
+        }
     }
 
     if (old_client_state != new_client_state) {
@@ -274,7 +274,6 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
                      id_.c_str(),
                      new_client_state.c_str(),
                      code);
-            lock.unlock();
             emitSignal<DRing::CallSignal::StateChange>(getAccountId(), id_, new_client_state, code);
         }
     }
@@ -285,14 +284,12 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 bool
 Call::setState(CallState call_state, signed code)
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return setState(call_state, connectionState_, code);
 }
 
 bool
 Call::setState(ConnectionState cnx_state, signed code)
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return setState(callState_, cnx_state, code);
 }
 
@@ -404,13 +401,12 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
         return;
     }
 
-    {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
-        if (parent_) {
-            pendingInMessages_.emplace_back(std::move(messages), "");
-            return;
-        }
+    if (parent_) {
+        std::lock_guard<std::mutex> lk {pendingMsgMutex_};
+        pendingInMessages_.emplace_back(std::move(messages), "");
+        return;
     }
+
 #ifdef ENABLE_PLUGIN
     auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
     if (pluginChatManager.hasHandlers()) {
@@ -450,10 +446,11 @@ Call::addSubCall(Call& subcall)
 
     JAMI_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
     subcall.parent_ = getPtr(*this);
-
-    for (const auto& msg : pendingOutMessages_)
-        subcall.sendTextMessage(msg.first, msg.second);
-
+    {    
+        std::lock_guard<std::mutex> lk {pendingMsgMutex_};
+        for (const auto& msg : pendingOutMessages_)
+            subcall.sendTextMessage(msg.first, msg.second);
+    }
     subcall.addStateListener(
         [sub = subcall.weak(), parent = weak()](Call::CallState new_state,
                                                 Call::ConnectionState new_cstate,
@@ -553,31 +550,10 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
     if (new_state == CallState::ACTIVE && callState_ == CallState::INACTIVE) {
         setState(new_state);
     }
-    if (static_cast<unsigned>(connectionState_) < static_cast<unsigned>(new_cstate)
+    if (static_cast<unsigned>(connectionState_.load()) < static_cast<unsigned>(new_cstate)
         and static_cast<unsigned>(new_cstate) <= static_cast<unsigned>(ConnectionState::RINGING)) {
         setState(new_cstate);
     }
-}
-
-/// Replace current call data with ones from the given \a subcall.
-/// Must be called while locked by subclass
-void
-Call::merge(Call& subcall)
-{
-    JAMI_DBG("[call:%s] merge subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
-
-    // Merge data
-    pendingInMessages_ = std::move(subcall.pendingInMessages_);
-    if (peerNumber_.empty())
-        peerNumber_ = std::move(subcall.peerNumber_);
-    peerDisplayName_ = std::move(subcall.peerDisplayName_);
-    setState(subcall.getState(), subcall.getConnectionState());
-
-    std::weak_ptr<Call> subCallWeak = subcall.shared_from_this();
-    runOnMainThread([subCallWeak] {
-        if (auto subcall = subCallWeak.lock())
-            subcall->removeCall();
-    });
 }
 
 /// Handle pending IM message
@@ -586,12 +562,11 @@ Call::merge(Call& subcall)
 void
 Call::checkPendingIM()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
-
     auto state = getStateStr();
     // Let parent call handles IM after the merge
     if (not parent_) {
         if (state == DRing::Call::StateEvent::CURRENT) {
+            std::lock_guard<std::mutex> lk {pendingMsgMutex_};
             for (const auto& msg : pendingInMessages_)
                 Manager::instance().incomingMessage(getAccountId(),
                                                     getCallId(),
