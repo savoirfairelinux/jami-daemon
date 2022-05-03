@@ -326,9 +326,6 @@ IceTransport::Impl::~Impl()
 {
     JAMI_DBG("[ice:%p] destroying %p", this, icest_);
 
-    threadTerminateFlags_ = true;
-    iceCV_.notify_all();
-
     JAMI_DBG("[ice:%p] done destroying", this);
 }
 
@@ -336,6 +333,9 @@ void
 IceTransport::Impl::shutDown()
 {
     ASSERT_VALID_ICE_THREAD();
+
+    iceCV_.notify_all();
+
     if (not icest_) {
         JAMI_WARN("[ice:%p] ice_strans not set, skipping the shutdown", this);
 
@@ -378,9 +378,6 @@ IceTransport::Impl::shutDown()
         if (config_.stun_cfg.timer_heap)
             pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
     }
-
-    scheduler_.shutdownComplete_ = true;
-    scheduler_.shutdownCv_.notify_one();
 }
 
 void
@@ -1120,13 +1117,20 @@ IceTransport::IceTransport(const char* name)
 
 IceTransport::~IceTransport()
 {
-    isStopped_ = true;
+    pimpl_->threadTerminateFlags_ = true;
 
-    JAMI_DBG("Waiting for shutdown ...");
     if (not isValidThread()) {
         runOnIceExecQueue([this] { shutDown(); });
     } else {
         shutDown();
+    }
+
+    JAMI_DBG("Waiting for shutdown ...");
+
+    if (waitForShutDown()) {
+        JAMI_DBG("Shutdown completed");
+    } else {
+        JAMI_ERR("Shutdown timed-out");
     }
 }
 
@@ -1144,14 +1148,12 @@ IceTransport::initIceInstance(const IceTransportOptions& options)
 void
 IceTransport::shutDown()
 {
+    JAMI_DBG("Shuting down ...");
     cancelOperations();
     pimpl_->shutDown();
-    iceScheduler_.stop();
-    if (waitForShutDown()) {
-        JAMI_DBG("Shutdown completed");
-    } else {
-        JAMI_ERR("Shutdown timed-out");
-    }
+    std::unique_lock<std::mutex> lk(syncMutex_);
+    shutdownComplete_ = true;
+    shutdownCv_.notify_all();
 }
 
 bool

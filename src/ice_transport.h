@@ -149,7 +149,7 @@ public:
     virtual bool waitForShutDown()
     {
         std::unique_lock<std::mutex> lk(syncMutex_);
-        return shutdownCv_.wait_for(lk, std::chrono::seconds(30), [this] {
+        return shutdownCv_.wait_for(lk, std::chrono::seconds(10), [this] {
             return shutdownComplete_;
         });
     }
@@ -299,7 +299,6 @@ public:
 
 private:
     class Impl;
-    bool isStopped_ {false};
     bool isCancelled_ {false};
     std::unique_ptr<Impl> pimpl_;
 };

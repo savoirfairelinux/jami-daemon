@@ -446,7 +446,7 @@ Call::addSubCall(Call& subcall)
 
     JAMI_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
     subcall.parent_ = getPtr(*this);
-    {    
+    {
         std::lock_guard<std::mutex> lk {pendingMsgMutex_};
         for (const auto& msg : pendingOutMessages_)
             subcall.sendTextMessage(msg.first, msg.second);

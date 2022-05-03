@@ -97,7 +97,6 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  Call::CallType type,
                  const std::vector<DRing::MediaMap>& mediaList)
     : Call(account, callId, type)
-    , peerSupportMultiStream_(false)
     , sdp_(new Sdp(callId))
     , enableIce_(account->isIceForMediaEnabled())
     , srtpEnabled_(account->isSrtpEnabled())
@@ -283,7 +282,11 @@ SIPCall::createCallAVStreams()
     // Preview
     if (auto& localAudio = audioRtp->getAudioLocal()) {
         auto previewSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData microStreamData {baseId, false, StreamType::audio, getPeerNumber(), getAccountId()};
+        StreamData microStreamData {baseId,
+                                    false,
+                                    StreamType::audio,
+                                    getPeerNumber(),
+                                    getAccountId()};
         createCallAVStream(microStreamData, *localAudio, previewSubject);
     }
 
@@ -306,14 +309,22 @@ SIPCall::createCallAVStreams()
         // Preview
         if (auto& videoPreview = videoRtp->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(map);
-            StreamData previewStreamData {getCallId(), false, StreamType::video, getPeerNumber(), getAccountId()};
+            StreamData previewStreamData {getCallId(),
+                                          false,
+                                          StreamType::video,
+                                          getPeerNumber(),
+                                          getAccountId()};
             createCallAVStream(previewStreamData, *videoPreview, previewSubject);
         }
 
         // Receive
         if (auto& videoReceive = videoRtp->getVideoReceive()) {
             auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
-            StreamData receiveStreamData {getCallId(), true, StreamType::video, getPeerNumber(), getAccountId()};
+            StreamData receiveStreamData {getCallId(),
+                                          true,
+                                          StreamType::video,
+                                          getPeerNumber(),
+                                          getAccountId()};
             createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
         }
     }
@@ -1482,7 +1493,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
                     // Print peer's allowed methods
                     JAMI_INFO() << fmt::format("[call:{}] Peer's allowed methods: {}",
                                                getCallId(),
-                                               peerAllowedMethods_);
+                                               peerInfos_.getAlloweMethods());
                     return;
                 }
 
@@ -1608,27 +1619,28 @@ SIPCall::isIceEnabled() const
 void
 SIPCall::setPeerUaVersion(std::string_view ua)
 {
-    if (peerUserAgent_ == ua or ua.empty()) {
+    auto currUa = peerInfos_.getUA();
+    if (currUa == ua or ua.empty()) {
         // Silently ignore if it did not change or empty.
         return;
     }
 
-    if (peerUserAgent_.empty()) {
+    if (currUa.empty()) {
         JAMI_DBG("[call:%s] Set peer's User-Agent to [%.*s]",
                  getCallId().c_str(),
                  (int) ua.size(),
                  ua.data());
-    } else if (not peerUserAgent_.empty()) {
+    } else if (not currUa.empty()) {
         // Unlikely, but should be handled since we dont have control over the peer.
         // Even if it's unexpected, we still try to parse the UA version.
         JAMI_WARN("[call:%s] Peer's User-Agent unexpectedly changed from [%s] to [%.*s]",
                   getCallId().c_str(),
-                  peerUserAgent_.c_str(),
+                  currUa.c_str(),
                   (int) ua.size(),
                   ua.data());
     }
 
-    peerUserAgent_ = ua;
+    peerInfos_.setUA(std::string(ua));
 
     // User-agent parsing
     constexpr std::string_view PACK_NAME(PACKAGE_NAME " ");
@@ -1668,9 +1680,10 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     // Check if peer's version is at least 10.0.2 to enable multi-stream.
-    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerVersion,
-                                                                  MULTISTREAM_REQUIRED_VERSION);
-    if (not peerSupportMultiStream_) {
+    peerInfos_.setSupportMultiStream(
+        Account::meetMinimumRequiredVersion(peerVersion, MULTISTREAM_REQUIRED_VERSION));
+
+    if (not peerInfos_.getSupportMultiStream()) {
         JAMI_DBG(
             "Peer's version [%.*s] does not support multi-stream. Min required version: [%.*s]",
             (int) version.size(),
@@ -1680,9 +1693,9 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     // Check if peer's version supports re-invite without ICE renegotiation.
-    peerSupportReuseIceInReinv_
-        = Account::meetMinimumRequiredVersion(peerVersion, REUSE_ICE_IN_REINVITE_REQUIRED_VERSION);
-    if (not peerSupportReuseIceInReinv_) {
+    peerInfos_.setSupportReuseIceInReinv(
+        Account::meetMinimumRequiredVersion(peerVersion, REUSE_ICE_IN_REINVITE_REQUIRED_VERSION));
+    if (not peerInfos_.getSupportReuseIceInReinv()) {
         JAMI_DBG("Peer's version [%.*s] does not support re-invite without ICE renegotiation. Min "
                  "required version: [%.*s]",
                  (int) version.size(),
@@ -1695,17 +1708,13 @@ SIPCall::setPeerUaVersion(std::string_view ua)
 void
 SIPCall::setPeerAllowMethods(std::vector<std::string> methods)
 {
-    std::lock_guard<std::recursive_mutex> lock {callMutex_};
-    peerAllowedMethods_ = std::move(methods);
+    peerInfos_.setAllowedMethods(std::move(methods));
 }
 
 bool
 SIPCall::isSipMethodAllowedByPeer(const std::string_view method) const
 {
-    std::lock_guard<std::recursive_mutex> lock {callMutex_};
-
-    return std::find(peerAllowedMethods_.begin(), peerAllowedMethods_.end(), method)
-           != peerAllowedMethods_.end();
+    return peerInfos_.hasMethod(method);
 }
 
 void
@@ -2361,8 +2370,10 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
 {
     // Always needs a new ICE media if the peer does not support
     // re-invite without ICE renegotiation
-    if (not peerSupportReuseIceInReinv_)
-        return true;
+    {
+        if (not peerInfos_.getSupportReuseIceInReinv())
+            return true;
+    }
 
     // Always needs a new ICE media when the number of media changes.
     if (mediaAttrList.size() != rtpStreams_.size())
@@ -2415,7 +2426,8 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
     // If the peer does not support multi-stream and the size of the new
     // media list is different from the current media list, the media
     // change request will be ignored.
-    if (not peerSupportMultiStream_ and rtpStreams_.size() != mediaAttrList.size()) {
+
+    if (not peerInfos_.getSupportMultiStream() and rtpStreams_.size() != mediaAttrList.size()) {
         JAMI_WARN("[call:%s] Peer does not support multi-stream. Media change request ignored",
                   getCallId().c_str());
         return false;
@@ -3223,17 +3235,20 @@ SIPCall::merge(Call& call)
     upnp_ = std::move(subcall.upnp_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
-    peerUserAgent_ = subcall.peerUserAgent_;
-    peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
-    peerAllowedMethods_ = subcall.peerAllowedMethods_;
-    peerSupportReuseIceInReinv_ = subcall.peerSupportReuseIceInReinv_;
+
+    peerInfos_.setUA(subcall.peerInfos_.getUA());
+    peerInfos_.setSupportMultiStream(subcall.peerInfos_.getSupportMultiStream());
+    peerInfos_.setAllowedMethods(subcall.peerInfos_.getAlloweMethods());
+    peerInfos_.setSupportReuseIceInReinv(subcall.peerInfos_.getSupportMultiStream());
 
     {
+        // TODO. Try scoped_lock
         // Merge data
-        std::lock_guard<std::mutex> lk {pendingMsgMutex_};
+        std::lock_guard<std::mutex> lk1 {pendingMsgMutex_};
+        std::lock_guard<std::mutex> lk2 {subcall.pendingMsgMutex_};
         pendingInMessages_ = std::move(subcall.pendingInMessages_);
     }
-    
+
     if (peerNumber_.empty())
         peerNumber_ = std::move(subcall.peerNumber_);
     peerDisplayName_ = std::move(subcall.peerDisplayName_);
