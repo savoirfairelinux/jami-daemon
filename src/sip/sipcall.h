@@ -94,6 +94,68 @@ public:
         std::unique_ptr<IceSocket> rtcpSocket_;
     };
 
+    struct PeerInfos
+    {
+        void setUA(const std::string& ua)
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            userAgent_ = ua;
+        };
+        std::string getUA() const
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            return userAgent_;
+        };
+        void setAllowedMethods(const std::vector<std::string> methods)
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            allowedMethods_ = methods;
+        };
+        std::vector<std::string> getAlloweMethods() const
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            return allowedMethods_;
+        };
+        void setSupportMultiStream(bool support)
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            supportMultiStream_ = support;
+        };
+        bool getSupportMultiStream() const
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            return supportMultiStream_;
+        };
+        void setSupportReuseIceInReinv(bool support)
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            supportReuseIceInReinv_ = support;
+        };
+        bool getSupportReuseIceInReinv() const
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            return supportReuseIceInReinv_;
+        };
+        bool hasMethod(std::string_view method) const
+        {
+            std::lock_guard<std::mutex> lock(infosMutex_);
+            return std::find(allowedMethods_.begin(), allowedMethods_.end(), method)
+                   != allowedMethods_.end();
+        }
+
+    private:
+        mutable std::mutex infosMutex_ {};
+        // Peer's User-Agent.
+        std::string userAgent_ {};
+        // Flag to indicate if the peer's Daemon version supports multi-stream.
+        bool supportMultiStream_ {false};
+        // Flag to indicate if the peer's Daemon version supports re-invite
+        // without ICE renegotiation.
+        bool supportReuseIceInReinv_ {false};
+        // Peer's allowed methods.
+        std::vector<std::string> allowedMethods_;
+    };
+
     /**
      * Destructor
      */
@@ -414,17 +476,8 @@ private:
     }
     inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
 
-    // Peer's User-Agent.
-    std::string peerUserAgent_ {};
-    // Flag to indicate if the peer's Daemon version supports multi-stream.
-    bool peerSupportMultiStream_ {false};
-
-    // Flag to indicate if the peer's Daemon version supports re-invite
-    // without ICE renegotiation.
-    bool peerSupportReuseIceInReinv_ {false};
-
-    // Peer's allowed methods.
-    std::vector<std::string> peerAllowedMethods_;
+    // Peer infos
+    PeerInfos peerInfos_;
 
     // Vector holding the current RTP sessions.
     std::vector<RtpStream> rtpStreams_;
