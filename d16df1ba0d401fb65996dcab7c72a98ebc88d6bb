@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae069ea7_6b21bacb",
+        "filename": "src/call.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-04T15:30:52Z",
+      "side": 1,
+      "message": "Both callState_ and connectionState_ are accessed multiple times in this function, but they could change during the execution, as the function could be called concurrently by multiple threads (it\u0027s a race condition). This was previously prevented using callMutex",
+      "range": {
+        "startLine": 244,
+        "startChar": 8,
+        "endLine": 244,
+        "endChar": 18
+      },
+      "revId": "d16df1ba0d401fb65996dcab7c72a98ebc88d6bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
