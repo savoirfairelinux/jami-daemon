@@ -72,6 +72,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "31ead33e_5066db9c",
+        "filename": "src/media/rtp_session.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-04T12:05:54Z",
+      "side": 1,
+      "message": "I only pass streamId and not the idx.\nThere is still streamId and callId at least for now.\nI think moving the ringbuffer/smarttools will allow us to remove at least the callId later, but yeah I think this patch is ok for now.",
+      "parentUuid": "bb95df53_2e1ad025",
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "80f38774_5f79d202",
@@ -172,6 +190,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b14636e1_d79be19e",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-04T12:05:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "13ad2557_54baa164",
+      "range": {
+        "startLine": 123,
+        "startChar": 88,
+        "endLine": 123,
+        "endChar": 98
+      },
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ce370ad7_e24a7b7a",
@@ -221,6 +263,24 @@
       "side": 1,
       "message": "fair enough",
       "parentUuid": "4fae78da_c8ccf21a",
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c10d452_f2d4e6b9",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-04T12:05:54Z",
+      "side": 1,
+      "message": "I removed the member to replace it by a variable created only when necessary, at least to delete it later. I don\u0027t have a better way yet. But added it to the list of things to check",
+      "parentUuid": "cfcf9476_55b9d3a5",
       "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -286,6 +346,30 @@
       "side": 1,
       "message": "Done",
       "parentUuid": "a6affae1_1191c928",
+      "range": {
+        "startLine": 1076,
+        "startChar": 17,
+        "endLine": 1076,
+        "endChar": 23
+      },
+      "revId": "2e7c8e4d1ee06bf0b565e0aca081008ee3f6ce95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "13cec4a7_24c06a6e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1076,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-04T12:05:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4e3a8f33_b5310aa5",
       "range": {
         "startLine": 1076,
         "startChar": 17,
