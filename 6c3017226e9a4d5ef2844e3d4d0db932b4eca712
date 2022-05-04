@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8539d6d5_09c10972",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1698,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-04T15:42:18Z",
+      "side": 1,
+      "message": "lock mutex only once to avoid race conditions",
+      "range": {
+        "startLine": 1683,
+        "startChar": 4,
+        "endLine": 1698,
+        "endChar": 53
+      },
+      "revId": "6c3017226e9a4d5ef2844e3d4d0db932b4eca712",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15419e00_95408f29",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3243,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-04T15:42:18Z",
+      "side": 1,
+      "message": "Add copy operator ?",
+      "range": {
+        "startLine": 3238,
+        "startChar": 0,
+        "endLine": 3243,
+        "endChar": 0
+      },
+      "revId": "6c3017226e9a4d5ef2844e3d4d0db932b4eca712",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92751df6_7ab216f1",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-04T15:42:18Z",
+      "side": 1,
+      "message": "since we often read/write multiple fields at the same time in a way that expects atomicity, this could be a simple struct and the caller would be responsible to lock (once for multiple read/write).",
+      "range": {
+        "startLine": 99,
+        "startChar": 8,
+        "endLine": 144,
+        "endChar": 9
+      },
+      "revId": "6c3017226e9a4d5ef2844e3d4d0db932b4eca712",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
