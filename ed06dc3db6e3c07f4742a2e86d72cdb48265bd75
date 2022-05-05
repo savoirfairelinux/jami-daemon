@@ -16,6 +16,23 @@
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
       "revId": "ed06dc3db6e3c07f4742a2e86d72cdb48265bd75",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ecbebd8_aab51f27",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 1738,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-05-05T15:36:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ed06dc3db6e3c07f4742a2e86d72cdb48265bd75",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
