@@ -289,7 +289,8 @@ VideoRtpSession::stopReceiver()
         return;
 
     if (videoMixer_) {
-        auto activeParticipant = videoMixer_->verifyActive(receiveThread_.get()) || videoMixer_->verifyActive(callID_);
+        auto activeParticipant = videoMixer_->verifyActive(receiveThread_.get())
+                                 || videoMixer_->verifyActive(callID_);
         videoMixer_->addAudioOnlySource(callID_);
         receiveThread_->detach(videoMixer_.get());
         if (activeParticipant)
@@ -310,6 +311,8 @@ void
 VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    JAMI_INFO("[%p] Starting rtp session", this);
 
     if (not send_.enabled and not receive_.enabled) {
         stop();
@@ -367,6 +370,8 @@ void
 VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    JAMI_INFO("[%p] Stopping rtp session", this);
 
     stopSender();
     stopReceiver();

@@ -106,7 +106,7 @@ private:
     uint16_t mtu_;
     int rotation_ {0};
 
-    std::shared_ptr<AVBufferRef> displayMatrix_;
+    std::atomic_int angle_;
 
     static int interruptCb(void* ctx);
     static int readFunction(void* opaque, uint8_t* buf, int buf_size);
