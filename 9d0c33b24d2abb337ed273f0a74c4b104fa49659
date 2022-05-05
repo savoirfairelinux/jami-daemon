@@ -16,6 +16,24 @@
       "message": "getAccount().lock() may return null ...",
       "revId": "9d0c33b24d2abb337ed273f0a74c4b104fa49659",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6f78a309_739eb56b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-05-05T14:42:22Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "3fcd2b3a_1c14a4a7",
+      "revId": "9d0c33b24d2abb337ed273f0a74c4b104fa49659",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
