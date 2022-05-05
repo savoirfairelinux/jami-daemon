@@ -154,7 +154,6 @@ VideoReceiveThread::cleanup()
     sink_->stop();
 
     videoDecoder_.reset();
-    demuxContext_.reset();
 }
 
 // This callback is used by libav internally to break out of blocking calls
