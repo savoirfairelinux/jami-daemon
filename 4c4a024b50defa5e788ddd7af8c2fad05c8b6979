@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a4d5e06c_6029208e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2022-05-06T20:51:33Z",
+      "side": 1,
+      "message": "Should the issues below be added to the description?\n\nhttps://git.jami.net/savoirfairelinux/jami-daemon/-/issues/694\n\nhttps://git.jami.net/savoirfairelinux/jami-project/-/issues/879",
+      "revId": "4c4a024b50defa5e788ddd7af8c2fad05c8b6979",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
