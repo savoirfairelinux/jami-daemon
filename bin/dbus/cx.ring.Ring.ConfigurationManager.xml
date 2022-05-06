@@ -1689,7 +1689,7 @@
        </method>
 
        <method name="getActiveCalls" tp:name-for-bindings="getActiveCalls">
-           <tp:added version="10.1.0"/>
+           <tp:added version="13.2.0"/>
            <tp:docstring>
                Get the active call list per conversation
            </tp:docstring>

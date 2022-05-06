@@ -383,9 +383,32 @@ public:
                                const std::string& fromId = "",
                                const std::string& authorUri = "") const;
 
+    /**
+     * Host a conference in the conversation
+     * @note the message must have "confId"
+     * @note Update hostedCalls_ and commit in the conversation
+     * @param message       message to commit
+     * @param cb            callback triggered when committed
+     */
     void hostConference(Json::Value&& message, OnDoneCb&& cb = {});
+    /**
+     * Announce the end of a call
+     * @note the message must have "confId"
+     * @note called when conference is finished
+     * @param message       message to commit
+     * @param cb            callback triggered when committed
+     */
     void removeActiveConference(Json::Value&& message, OnDoneCb&& cb = {});
-    bool isHosting(const std::string& confID) const;
+    /**
+     * Check if we're currently hosting this conference
+     * @param confId
+     * @return true if hosting
+     */
+    bool isHosting(const std::string& confId) const;
+    /**
+     * Return current detected calls
+     * @return a vector of tuples <ConfId, Uri, Device> (uri and device of the host)
+     */
     std::set<std::tuple<std::string, std::string, std::string>> currentCalls() const;
 
 private:

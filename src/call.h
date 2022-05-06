@@ -170,8 +170,16 @@ public:
      */
     void setPeerDisplayName(const std::string& name) { peerDisplayName_ = name; }
 
+    /**
+     * Get destination, mostly used to join incoming call to conversations
+     * @return destination's username
+     */
     const std::string& toUsername() const { return toUsername_; }
-    void toUsername(const std::string& newValue) { toUsername_ = newValue; }
+    /**
+     * Updated by sipvoiplink
+     * @param username      Destination's username
+     */
+    void toUsername(const std::string& username) { toUsername_ = username; }
 
     /**
      * Get the peer display name (caller in ingoing)

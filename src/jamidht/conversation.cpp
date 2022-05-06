@@ -176,6 +176,11 @@ public:
         }
     }
 
+    /**
+     * If, for whatever reason, the daemon is stopped while hosting a conference,
+     * we need to announce the end of this call when restarting.
+     * To avoid to keep active calls forever.
+     */
     void announceEndedCalls()
     {
         auto shared = account_.lock();
@@ -241,6 +246,51 @@ public:
         announce(convCommitToMap(convcommits));
     }
 
+    /**
+     * Update activeCalls_ via announced commits (in load or via new commits)
+     * @param commit        Commit to check
+     * @param eraseOnly     If we want to ignore added commits
+     * @note eraseOnly is used by loadMessages. This is a fail-safe, this SHOULD NOT happen
+     */
+    void updateActiveCalls(const std::map<std::string, std::string>& commit, bool eraseOnly = false) const
+    {
+        if (!repository_)
+            return;
+        if (commit.find("confId") != commit.end() && commit.find("uri") != commit.end() && commit.find("device") != commit.end()) {
+            auto convId = repository_->id();
+            auto confId = commit.at("confId");
+            auto uri = commit.at("uri");
+            auto device = commit.at("device");
+            std::lock_guard<std::mutex> lk(activeCallsMtx_);
+            if (commit.find("duration") == commit.end()) {
+                if (!eraseOnly) {
+                    JAMI_DBG("swarm:%s new current call detected: %s on device %s, account %s",
+                             convId.c_str(),
+                             confId.c_str(),
+                             device.c_str(),
+                             uri.c_str());
+                    activeCalls_.insert({confId, uri, device});
+                }
+            } else {
+                if (eraseOnly) {
+                    JAMI_WARN("previous swarm:%s call finished detected: %s on device %s, account %s",
+                            convId.c_str(),
+                            confId.c_str(),
+                            device.c_str(),
+                            uri.c_str());
+                } else {
+                    JAMI_DBG("swarm:%s call finished: %s on device %s, account %s",
+                            convId.c_str(),
+                            confId.c_str(),
+                            device.c_str(),
+                            uri.c_str());
+                }
+                activeCalls_.erase({confId, uri, device});
+            }
+            saveActiveCalls();
+        }
+    }
+
     void announce(const std::vector<std::map<std::string, std::string>>& commits) const
     {
         auto shared = account_.lock();
@@ -276,32 +326,7 @@ public:
                         }
                     }
                 } else if (c.at("type") == "application/call-history+json") {
-                    if (c.find("confId") != c.end() && c.find("uri") != c.end()
-                        && c.find("device") != c.end()) {
-                        // TODO this update current calls, but this may not be the actual state (if
-                        // relaunched during a call)
-                        auto confId = c.at("confId");
-                        auto uri = c.at("uri");
-                        auto device = c.at("device");
-                        std::lock_guard<std::mutex> lk(activeCallsMtx_);
-                        if (c.find("duration") == c.end()) {
-                            JAMI_DBG(
-                                "swarm:%s new current call detected: %s on device %s, account %s",
-                                convId.c_str(),
-                                confId.c_str(),
-                                device.c_str(),
-                                uri.c_str());
-                            activeCalls_.insert({confId, uri, device});
-                        } else {
-                            JAMI_DBG("swarm:%s call finished: %s on device %s, account %s",
-                                     convId.c_str(),
-                                     confId.c_str(),
-                                     device.c_str(),
-                                     uri.c_str());
-                            activeCalls_.erase({confId, uri, device});
-                        }
-                        saveActiveCalls();
-                    }
+                    updateActiveCalls(c);
                 }
 #ifdef ENABLE_PLUGIN
                 auto& pluginChatManager
@@ -481,9 +506,11 @@ public:
     mutable std::map<std::string, std::string> lastDisplayed_ {};
     std::function<void(const std::string&, const std::string&)> lastDisplayedUpdatedCb_ {};
 
+    // Manage hosted calls on this device
     std::string hostedCallsPath_ {};
     mutable std::mutex hostedCallsMtx_ {};
     mutable std::set<std::string> hostedCalls_ {};
+    // Manage active calls for this conversation
     std::string activeCallsPath_ {};
     mutable std::mutex activeCallsMtx_ {};
     mutable std::set<std::tuple<std::string, std::string, std::string>> activeCalls_ {};
@@ -577,25 +604,8 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
         if (!extension.empty())
             message["fileId"] += "." + extension;
     } else if (repository_ && type == "application/call-history+json") {
-        // TODO move out, this is a fallback
-        if (message.find("confId") != message.end() && message.find("uri") != message.end()
-            && message.find("device") != message.end()) {
-            auto confId = message.at("confId");
-            auto uri = message.at("uri");
-            auto device = message.at("device");
-            auto convId = repository_->id();
-            std::lock_guard<std::mutex> lk(activeCallsMtx_);
-            if (message.find("duration") != message.end()) {
-                JAMI_WARN("swarm:%s call finished detected outside announcement: %s on device %s, "
-                          "account %s",
-                          convId.c_str(),
-                          confId.c_str(),
-                          device.c_str(),
-                          uri.c_str());
-                activeCalls_.erase({confId, uri, device});
-            }
-            saveActiveCalls();
-        }
+        // TODO move out, this is a fail-safe
+        updateActiveCalls(message, true);
     }
     message[ConversationMapKeys::ID] = commit.id;
     message["parents"] = parents;
