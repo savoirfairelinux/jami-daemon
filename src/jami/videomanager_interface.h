@@ -194,7 +194,7 @@ DRING_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
 DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
-DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, SinkTarget target);
+DRING_PUBLIC bool registerSinkTarget(const std::string& sinkId, SinkTarget target);
 #if HAVE_SHM
 DRING_PUBLIC void startShmSink(const std::string& sinkId, bool value);
 #endif

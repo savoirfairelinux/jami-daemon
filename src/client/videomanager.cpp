@@ -522,15 +522,17 @@ stopLocalRecorder(const std::string& filepath)
     jami::LocalRecorderManager::instance().removeRecorderByPath(filepath);
 }
 
-void
+bool
 registerSinkTarget(const std::string& sinkId, SinkTarget target)
 {
 #ifdef ENABLE_VIDEO
-    if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
+    if (auto sink = jami::Manager::instance().getSinkClient(sinkId)) {
         sink->registerTarget(std::move(target));
-    else
+        return true;
+    } else
         JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
 #endif
+    return false;
 }
 
 #if HAVE_SHM
