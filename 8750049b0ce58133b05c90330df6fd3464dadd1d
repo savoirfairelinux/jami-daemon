@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fce85ef7_e0584474",
+        "filename": "src/media/video/video_receive_thread.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-06T20:52:50Z",
+      "side": 0,
+      "message": "was not able to reproduce the crash, but this my best guess.\nThe demuxCtx is created on the main thread but was destroyed in the receiver thread. IMHO, no need to destroy it here, just wait for the class destructor.",
+      "revId": "8750049b0ce58133b05c90330df6fd3464dadd1d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
