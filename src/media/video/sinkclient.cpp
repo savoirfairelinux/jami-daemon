@@ -354,7 +354,8 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
 
     std::unique_lock<std::mutex> lock(mtx_);
-    if (target_.push and not target_.pull) {
+    bool hasListener = target_.push and not target_.pull;
+    if (hasListener or getObserversCount() != 0) {
         VideoFrame outFrame;
         outFrame.copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
         if (crop_.w || crop_.h) {
@@ -370,7 +371,8 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             return;
         }
         notify(std::static_pointer_cast<MediaFrame>(frame_p));
-        target_.push(outFrame.getFrame());
+        if (hasListener)
+            target_.push(outFrame.getFrame());
         return;
     }
 
