@@ -102,6 +102,11 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , enableIce_(account->isIceForMediaEnabled())
     , srtpEnabled_(account->isSrtpEnabled())
 {
+    if (type == CallType::DUMMY) {
+        JAMI_DBG("[call:%s] Dummy call, skip media setup", getCallId().c_str());
+        return;
+    };
+
     if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller());
 
@@ -133,9 +138,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
 
     JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu media",
              getCallId().c_str(),
-             type == Call::CallType::INCOMING
-                 ? "INCOMING"
-                 : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
+             callTypeStr().c_str(),
              mediaList.size());
 
     initMediaStreams(mediaAttrList);
@@ -144,9 +147,9 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
 SIPCall::~SIPCall()
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
-
     setSipTransport({});
-    setInviteSession(); // prevents callback usage
+    setInviteSession();
+    JAMI_DBG("[call:%s] [%s] SIP destroyed", getCallId().c_str(), callTypeStr().c_str());
 }
 
 int
@@ -283,7 +286,11 @@ SIPCall::createCallAVStreams()
     // Preview
     if (auto& localAudio = audioRtp->getAudioLocal()) {
         auto previewSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData microStreamData {baseId, false, StreamType::audio, getPeerNumber(), getAccountId()};
+        StreamData microStreamData {baseId,
+                                    false,
+                                    StreamType::audio,
+                                    getPeerNumber(),
+                                    getAccountId()};
         createCallAVStream(microStreamData, *localAudio, previewSubject);
     }
 
@@ -306,14 +313,22 @@ SIPCall::createCallAVStreams()
         // Preview
         if (auto& videoPreview = videoRtp->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(map);
-            StreamData previewStreamData {getCallId(), false, StreamType::video, getPeerNumber(), getAccountId()};
+            StreamData previewStreamData {getCallId(),
+                                          false,
+                                          StreamType::video,
+                                          getPeerNumber(),
+                                          getAccountId()};
             createCallAVStream(previewStreamData, *videoPreview, previewSubject);
         }
 
         // Receive
         if (auto& videoReceive = videoRtp->getVideoReceive()) {
             auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
-            StreamData receiveStreamData {getCallId(), true, StreamType::video, getPeerNumber(), getAccountId()};
+            StreamData receiveStreamData {getCallId(),
+                                          true,
+                                          StreamType::video,
+                                          getPeerNumber(),
+                                          getAccountId()};
             createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
         }
     }

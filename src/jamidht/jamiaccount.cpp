@@ -492,8 +492,12 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
 }
 
 std::shared_ptr<SIPCall>
-JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall)
+JamiAccount::createSubCall(const std::shared_ptr<SIPCall>& mainCall, bool dummy)
 {
+    if (dummy) {
+        return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::DUMMY, {});
+    }
+
     auto mediaList = MediaAttribute::mediaAttributesToMediaMaps(mainCall->getMediaAttributeList());
     return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
 }
@@ -532,10 +536,10 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     std::unique_lock<std::mutex> lkSipConn(sipConnsMtx_);
     // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
     // cached connection is failing with ICE (close event still not detected).
-    auto dummyCall = createSubCall(call);
+    auto dummyCall = createSubCall(call, true);
 
     call->addSubCall(*dummyCall);
-    dummyCall->setIceMedia(call->getIceMedia());
+
     auto sendRequest =
         [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
                                                                bool eraseDummy) {

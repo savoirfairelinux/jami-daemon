@@ -124,7 +124,7 @@ public:
      * This determines if the call originated from the local user (OUTGOING)
      * or from some remote peer (INCOMING, MISSED).
      */
-    enum class CallType : unsigned { INCOMING, OUTGOING, MISSED };
+    enum class CallType : unsigned { INCOMING, OUTGOING, MISSED, DUMMY };
 
     virtual ~Call();
 

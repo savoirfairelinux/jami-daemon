@@ -715,7 +715,8 @@ private:
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
     void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::string_view toUri);
-    std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
+    std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall,
+                                           bool dummy = false);
 
     void updateContactHeader();
 

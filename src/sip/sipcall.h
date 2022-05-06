@@ -298,6 +298,20 @@ public:
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
 private:
+    std::string callTypeStr() const
+    {
+        switch (type_) {
+        case Call::CallType::INCOMING:
+            return "INCOMING";
+        case Call::CallType::OUTGOING:
+            return "OUTGOING";
+        case Call::CallType::MISSED:
+            return "MISSED";
+        case Call::CallType::DUMMY:
+            return "DUMMY";
+            assert(false);
+        }
+    };
     void generateMediaPorts();
 
     void openPortsUPnP();
