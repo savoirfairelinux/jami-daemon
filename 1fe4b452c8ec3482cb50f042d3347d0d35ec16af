@@ -72,6 +72,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e44dc1b4_b05c8ef3",
+        "filename": "contrib/src/lttng-ust/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-06T18:17:50Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "2147d7ed_6bcd4592",
+      "range": {
+        "startLine": 10,
+        "startChar": 25,
+        "endLine": 10,
+        "endChar": 32
+      },
+      "revId": "1fe4b452c8ec3482cb50f042d3347d0d35ec16af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1b516c8d_ddbfafa3",
@@ -85,6 +109,30 @@
       "writtenOn": "2022-04-27T16:23:03Z",
       "side": 1,
       "message": "indentation",
+      "range": {
+        "startLine": 25,
+        "startChar": 0,
+        "endLine": 25,
+        "endChar": 8
+      },
+      "revId": "1fe4b452c8ec3482cb50f042d3347d0d35ec16af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8ba35f36_7867e875",
+        "filename": "contrib/src/lttng-ust/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-06T18:17:50Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "1b516c8d_ddbfafa3",
       "range": {
         "startLine": 25,
         "startChar": 0,
