@@ -349,19 +349,20 @@ DRing::FrameBuffer sinkTargetPullCallback(ANativeWindow *window)
             }
         }
     } catch (...) {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Exception in pull callback");
     }
     return {};
 }
 
-JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCallback(JNIEnv *jenv, jclass jcls, jstring sinkId, jlong window)
+JNIEXPORT jboolean JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCallback(JNIEnv *jenv, jclass jcls, jstring sinkId, jlong window)
 {
     if(!sinkId) {
         SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null string");
-        return;
+        return JNI_FALSE;
     }
     const char *arg1_pstr = (const char *)jenv->GetStringUTFChars(sinkId, 0);
     if (!arg1_pstr)
-        return;
+        return JNI_FALSE;
     std::string sink(arg1_pstr);
     jenv->ReleaseStringUTFChars(sinkId, arg1_pstr);
 
@@ -371,9 +372,9 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCallback
 
     {
         std::lock_guard<std::mutex> guard(windows_mutex);
-        windows.emplace(nativeWindow, av_frame_alloc());
+        windows.emplace(nativeWindow, DRing::FrameBuffer{av_frame_alloc()});
     }
-    DRing::registerSinkTarget(sink, DRing::SinkTarget {.pull=p_display_cb, .push=f_display_cb});
+    return DRing::registerSinkTarget(sink, DRing::SinkTarget {.pull=p_display_cb, .push=f_display_cb}) ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_unregisterVideoCallback(JNIEnv *jenv, jclass jcls, jstring sinkId, jlong window)
@@ -400,7 +401,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_unregisterVideoCallba
 %native(acquireNativeWindow) jlong acquireNativeWindow(jobject);
 %native(releaseNativeWindow) void releaseNativeWindow(jlong);
 %native(setNativeWindowGeometry) void setNativeWindowGeometry(jlong, int, int);
-%native(registerVideoCallback) void registerVideoCallback(jstring, jlong);
+%native(registerVideoCallback) jboolean registerVideoCallback(jstring, jlong);
 %native(unregisterVideoCallback) void unregisterVideoCallback(jstring, jlong);
 
 %native(captureVideoFrame) void captureVideoFrame(jstring, jobject, jint);
@@ -419,7 +420,7 @@ void applySettings(const std::string& name, const std::map<std::string, std::str
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 void setDeviceOrientation(const std::string& name, int angle);
-void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
+bool registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
 std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
 void stopLocalRecorder(const std::string& filepath);
 bool getDecodingAccelerated();
