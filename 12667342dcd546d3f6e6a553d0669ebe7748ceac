@@ -22,6 +22,30 @@
       },
       "revId": "12667342dcd546d3f6e6a553d0669ebe7748ceac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab0b61ee_7cb5115c",
+        "filename": "contrib/src/liburcu/rules.mak",
+        "patchSetId": 9
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-06T18:19:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "6627d0a9_36aadd76",
+      "range": {
+        "startLine": 6,
+        "startChar": 37,
+        "endLine": 6,
+        "endChar": 42
+      },
+      "revId": "12667342dcd546d3f6e6a553d0669ebe7748ceac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
