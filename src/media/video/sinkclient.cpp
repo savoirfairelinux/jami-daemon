@@ -365,7 +365,6 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             av_frame_apply_cropping(outFrame.pointer(), AV_FRAME_CROP_UNALIGNED);
         }
         if (outFrame.height() != height_ || outFrame.width() != width_) {
-            setFrameSize(0, 0);
             setFrameSize(outFrame.width(), outFrame.height());
             return;
         }
@@ -427,7 +426,6 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 
         if (frame->height() != height_ || frame->width() != width_) {
             lock.unlock();
-            setFrameSize(0, 0);
             setFrameSize(frame->width(), frame->height());
             return;
         }
