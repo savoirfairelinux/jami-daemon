@@ -31,6 +31,7 @@
 #include "media_stream.h"
 #include "threadloop.h"
 #include "noncopyable.h"
+#include "libav_utils.h"
 
 #include <functional>
 #include <map>
@@ -106,7 +107,8 @@ private:
     uint16_t mtu_;
     int rotation_ {0};
 
-    std::shared_ptr<AVBufferRef> displayMatrix_;
+    std::mutex rotationMtx_;
+    libav_utils::AVBufferPtr displayMatrix_;
 
     static int interruptCb(void* ctx);
     static int readFunction(void* opaque, uint8_t* buf, int buf_size);

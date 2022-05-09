@@ -29,6 +29,8 @@ extern "C" {
 struct AVDictionary;
 struct AVFrame;
 struct AVPixFmtDescriptor;
+struct AVBufferRef;
+void av_buffer_unref(AVBufferRef **buf);
 }
 
 namespace jami {
@@ -50,6 +52,12 @@ void setDictValue(AVDictionary** d, const std::string& key, const std::string& v
 void fillWithBlack(AVFrame* frame);
 
 void fillWithSilence(AVFrame* frame);
+
+struct AVBufferRef_deleter {
+    void operator()(AVBufferRef* buf) const { av_buffer_unref(&buf); }
+};
+
+typedef std::unique_ptr<AVBufferRef, AVBufferRef_deleter> AVBufferPtr;
 
 } // namespace libav_utils
 } // namespace jami

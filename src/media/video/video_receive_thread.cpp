@@ -92,10 +92,16 @@ VideoReceiveThread::setup()
     JAMI_DBG("[%p] Setupping video receiver", this);
 
     videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
-        if (auto displayMatrix = displayMatrix_)
+        libav_utils::AVBufferPtr displayMatrix;
+        {
+            std::lock_guard<std::mutex> l(rotationMtx_);
+            if (displayMatrix_)
+                displayMatrix.reset(av_buffer_ref(displayMatrix_.get()));
+        }
+        if (displayMatrix)
             av_frame_new_side_data_from_buf(frame->pointer(),
                                             AV_FRAME_DATA_DISPLAYMATRIX,
-                                            av_buffer_ref(displayMatrix.get()));
+                                            displayMatrix.release());
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
     videoDecoder_->setResolutionChangedCallback([this](int width, int height) {
@@ -304,14 +310,10 @@ VideoReceiveThread::getInfo() const
 void
 VideoReceiveThread::setRotation(int angle)
 {
-    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9),
-                                                [](AVBufferRef* buf) {
-                                                    av_buffer_unref(&buf);
-                                                }};
-    if (displayMatrix) {
-        av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
-        displayMatrix_ = std::move(displayMatrix);
-    }
+    libav_utils::AVBufferPtr displayMatrix(av_buffer_alloc(sizeof(int32_t) * 9));
+    av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
+    std::lock_guard<std::mutex> l(rotationMtx_);
+    displayMatrix_ = std::move(displayMatrix);
 }
 
 } // namespace video
