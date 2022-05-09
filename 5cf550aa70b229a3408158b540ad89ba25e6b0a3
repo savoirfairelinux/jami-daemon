@@ -121,6 +121,30 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "f3d88cd4_f0ea72ad",
+        "filename": "src/media/video/video_receive_thread.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-09T18:30:09Z",
+      "side": 1,
+      "message": "right.\nBut still, there is a clear data race on the displayMatrix_ variable, and could be on of the source of seen crashes. This is a simple way to fix it. \nI am really not convinced that this kind of optimization is really helping. The overhead of creating the side data is insignificant compared to the rest of decoding operation.\nanyway. reverted.",
+      "parentUuid": "7fcd92ef_9e373ac3",
+      "range": {
+        "startLine": 97,
+        "startChar": 8,
+        "endLine": 100,
+        "endChar": 55
+      },
+      "revId": "5cf550aa70b229a3408158b540ad89ba25e6b0a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "96e2dfb7_71b9a19f",
         "filename": "src/media/video/video_receive_thread.cpp",
         "patchSetId": 1
