@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "38c42c1b_e1e64971",
+        "filename": "src/media/video/video_receive_thread.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-09T16:34:25Z",
+      "side": 1,
+      "message": "could be removed indeed.",
+      "parentUuid": "a72f9831_be77d764",
+      "range": {
+        "startLine": 96,
+        "startChar": 9,
+        "endLine": 96,
+        "endChar": 30
+      },
+      "revId": "5cf550aa70b229a3408158b540ad89ba25e6b0a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "63ed807f_25e1f2ba",
         "filename": "src/media/video/video_receive_thread.cpp",
         "patchSetId": 1
@@ -37,6 +61,30 @@
       "writtenOn": "2022-05-09T14:26:34Z",
       "side": 1,
       "message": "This will alloc and compute a new rotation matrix for every frame, instead of doing it once, which is the opposite of \"create the side info data only when needed.\"\n\nThe current design uses the side data ref-counting system to attach the same matrix to every generated frame.",
+      "range": {
+        "startLine": 97,
+        "startChar": 8,
+        "endLine": 100,
+        "endChar": 55
+      },
+      "revId": "5cf550aa70b229a3408158b540ad89ba25e6b0a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2036118a_223eb4ac",
+        "filename": "src/media/video/video_receive_thread.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-09T16:34:25Z",
+      "side": 1,
+      "message": "setup() is the cb used by ThreadLoop to setup the thread, and called only once.\nplease re-check your statement.",
+      "parentUuid": "63ed807f_25e1f2ba",
       "range": {
         "startLine": 97,
         "startChar": 8,
