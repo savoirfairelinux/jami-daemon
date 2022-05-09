@@ -22,6 +22,30 @@
       },
       "revId": "2ba2806d977a17ccf9ea3726645012d21e36f4b3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f02cb3b5_7a8fd6d8",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 529,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-09T14:48:19Z",
+      "side": 1,
+      "message": "Wait for decodingStarted and retry.\n\nThis allows the client to not keep track of the current state of every sink exposed by the daemon and still be able to connect in a robust way.",
+      "parentUuid": "aba3113f_0a8c8de6",
+      "range": {
+        "startLine": 529,
+        "startChar": 40,
+        "endLine": 529,
+        "endChar": 70
+      },
+      "revId": "2ba2806d977a17ccf9ea3726645012d21e36f4b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
