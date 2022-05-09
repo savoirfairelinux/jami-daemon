@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a72f9831_be77d764",
+        "filename": "src/media/video/video_receive_thread.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-09T06:40:35Z",
+      "side": 1,
+      "message": "not really useful as init just before this line and only check if alloc fails",
+      "range": {
+        "startLine": 96,
+        "startChar": 9,
+        "endLine": 96,
+        "endChar": 30
+      },
+      "revId": "5cf550aa70b229a3408158b540ad89ba25e6b0a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "96e2dfb7_71b9a19f",
+        "filename": "src/media/video/video_receive_thread.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 307,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-09T06:40:35Z",
+      "side": 1,
+      "message": "nice",
+      "range": {
+        "startLine": 307,
+        "startChar": 7,
+        "endLine": 307,
+        "endChar": 19
+      },
+      "revId": "5cf550aa70b229a3408158b540ad89ba25e6b0a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
