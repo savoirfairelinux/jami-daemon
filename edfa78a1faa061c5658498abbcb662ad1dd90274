@@ -16,6 +16,23 @@
       "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
       "revId": "edfa78a1faa061c5658498abbcb662ad1dd90274",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92e8584d_2dc7324a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 1795,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-05-09T13:47:12Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "edfa78a1faa061c5658498abbcb662ad1dd90274",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
