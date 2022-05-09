@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "037c28c4_0ea48452",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 1795,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-05-09T13:28:45Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "edfa78a1faa061c5658498abbcb662ad1dd90274",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
