@@ -95,6 +95,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "7fcd92ef_9e373ac3",
+        "filename": "src/media/video/video_receive_thread.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-09T18:04:27Z",
+      "side": 1,
+      "message": "Your code is in the MediaDecoder callback that is called every frame...",
+      "parentUuid": "2036118a_223eb4ac",
+      "range": {
+        "startLine": 97,
+        "startChar": 8,
+        "endLine": 100,
+        "endChar": 55
+      },
+      "revId": "5cf550aa70b229a3408158b540ad89ba25e6b0a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "96e2dfb7_71b9a19f",
