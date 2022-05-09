@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aba3113f_0a8c8de6",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 529,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-09T06:27:59Z",
+      "side": 1,
+      "message": "question, what do we want the client to do if it fails? Just log a warning?",
+      "range": {
+        "startLine": 529,
+        "startChar": 40,
+        "endLine": 529,
+        "endChar": 70
+      },
+      "revId": "2ba2806d977a17ccf9ea3726645012d21e36f4b3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
