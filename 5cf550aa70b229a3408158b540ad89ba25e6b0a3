@@ -24,6 +24,29 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "63ed807f_25e1f2ba",
+        "filename": "src/media/video/video_receive_thread.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-09T14:26:34Z",
+      "side": 1,
+      "message": "This will alloc and compute a new rotation matrix for every frame, instead of doing it once, which is the opposite of \"create the side info data only when needed.\"\n\nThe current design uses the side data ref-counting system to attach the same matrix to every generated frame.",
+      "range": {
+        "startLine": 97,
+        "startChar": 8,
+        "endLine": 100,
+        "endChar": 55
+      },
+      "revId": "5cf550aa70b229a3408158b540ad89ba25e6b0a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "96e2dfb7_71b9a19f",
