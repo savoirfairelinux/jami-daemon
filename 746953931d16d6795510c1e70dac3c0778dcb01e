@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3711895f_bb3ea038",
+        "filename": "src/media/system_codec_container.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-10T07:06:22Z",
+      "side": 1,
+      "message": "If somebody can setup a JamiAccount with those 2 new codecs at least to test, our SIP server doesn\u0027t have it I think",
+      "range": {
+        "startLine": 132,
+        "startChar": 57,
+        "endLine": 133,
+        "endChar": 56
+      },
+      "revId": "746953931d16d6795510c1e70dac3c0778dcb01e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
