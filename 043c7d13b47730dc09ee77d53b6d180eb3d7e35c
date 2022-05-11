@@ -16,6 +16,23 @@
       "message": "just need to do quick test",
       "revId": "043c7d13b47730dc09ee77d53b6d180eb3d7e35c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "274ca2ac_0421cb95",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-11T17:50:50Z",
+      "side": 1,
+      "message": "AFAIK, this path is used by Android client which only implements the push callback.\nNow, this path will be executed if it\u0027s Android or the sink has observers. So, if we have observers, the frame will be processed, then we exit this method.\nI don\u0027t really know in which cases we will have observers. For instance, can we have observers with SHM ? in that case, the frame will not be transferred.",
+      "revId": "043c7d13b47730dc09ee77d53b6d180eb3d7e35c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
