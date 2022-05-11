@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6559b634_6505a039",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-11T07:45:19Z",
+      "side": 1,
+      "message": "I do not have any sound between two Jami accounts in g723 or g726",
+      "revId": "fe23c07f00b2effcd1942cdbe06aba0477ce4bf4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
