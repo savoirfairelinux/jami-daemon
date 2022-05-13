@@ -3168,6 +3168,7 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     };
 
     iceOptions.master = master;
+    JAMI_ERR() << "@@@ rtp stream size: " << rtpStreams_.size();
     iceOptions.streamsCount = static_cast<unsigned>(rtpStreams_.size());
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
     iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
