@@ -1086,5 +1086,29 @@
               </tp:docstring>
             </arg>
         </signal>
+
+        <method name="currentMediaList" tp:name-for-bindings="currentMediaList">
+            <tp:added version="13.3.0"/>
+            <tp:docstring>
+              <p>Retrieve current active medias for call.</p>
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in">
+              <tp:docstring>
+                The local account Id.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="callId" direction="in">
+              <tp:docstring>
+                Call's id (or conference's id)
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="out">
+              <tp:docstring>
+                List of active medias in the call.
+              </tp:docstring>
+            </arg>
+        </method>
+
     </interface>
 </node>
