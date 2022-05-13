@@ -120,7 +120,8 @@ std::string sip_strerror(pj_status_t code);
 // that may be statically casted into char pointer.
 // Per convention, the input array is supposed to be null terminated.
 template<typename T, std::size_t N>
-constexpr const pj_str_t CONST_PJ_STR(T (&a)[N]) noexcept
+constexpr const pj_str_t
+CONST_PJ_STR(T (&a)[N]) noexcept
 {
     return {const_cast<char*>(a), N - 1};
 }
@@ -143,8 +144,10 @@ as_view(const pj_str_t& str) noexcept
     return {str.ptr, (size_t) str.slen};
 }
 
-std::string
-streamId(const std::string& callId, uint32_t idx, MediaType mt);
+constexpr std::string_view DEFAULT_VIDEO_STREAMID = "video_0";
+constexpr std::string_view DEFAULT_AUDIO_STREAMID = "audio_0";
+
+std::string streamId(const std::string& callId, std::string_view label);
 
 // PJSIP dialog locking in RAII way
 // Usage: declare local variable like this: sip_utils::PJDialogLock lock {dialog};
