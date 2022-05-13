@@ -383,6 +383,12 @@ public:
     virtual bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList) = 0;
 
     /**
+     * Retrieve current medias list
+     * @return current medias
+     */
+    virtual std::vector<DRing::MediaMap> currentMediaList() const = 0;
+
+    /**
      * Send a message to a call identified by its callid
      *
      * @param A list of mimetype/payload pairs
@@ -394,8 +400,14 @@ public:
 
     void onTextMessage(std::map<std::string, std::string>&& messages);
 
-    virtual std::shared_ptr<AccountCodecInfo> getAudioCodec() const { return {}; }
-    virtual std::shared_ptr<AccountCodecInfo> getVideoCodec() const { return {}; }
+    virtual std::shared_ptr<AccountCodecInfo> getAudioCodec() const
+    {
+        return {};
+    }
+    virtual std::shared_ptr<AccountCodecInfo> getVideoCodec() const
+    {
+        return {};
+    }
 
     virtual void restartMediaSender() = 0;
 
@@ -434,7 +446,10 @@ public:
 
     virtual void monitor() const = 0;
 
-    int conferenceProtocolVersion() const { return peerConfProtocol_; }
+    int conferenceProtocolVersion() const
+    {
+        return peerConfProtocol_;
+    }
 
 protected:
     using clock = std::chrono::steady_clock;
