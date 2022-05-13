@@ -305,6 +305,20 @@ getConferenceDetails(const std::string& accountId, const std::string& confId)
     return {};
 }
 
+std::vector<std::map<std::string, std::string>>
+currentMediaList(const std::string& accountId, const std::string& callId)
+{
+    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (auto call = account->getCall(callId)) {
+            return call->currentMediaList();
+        } else if (auto conf = account->getConference(callId)) {
+            return conf->currentMediaList();
+        }
+    }
+    JAMI_WARN("Call not found %s", callId.c_str());
+    return {};
+}
+
 std::vector<std::string>
 getConferenceList(const std::string& accountId)
 {
@@ -601,9 +615,9 @@ setActiveStream(const std::string& accountId,
 
 void
 hangupParticipant(const std::string& accountId,
-           const std::string& confId,
-           const std::string& accountUri,
-           const std::string& deviceId)
+                  const std::string& confId,
+                  const std::string& accountUri,
+                  const std::string& deviceId)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
