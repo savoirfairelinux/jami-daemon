@@ -117,6 +117,8 @@ DRING_PUBLIC std::vector<std::string> getParticipantList(const std::string& acco
 DRING_PUBLIC std::string getConferenceId(const std::string& accountId, const std::string& callId);
 DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& accountId,
                                                                      const std::string& callId);
+DRING_PUBLIC std::vector<DRing::MediaMap> currentMediaList(const std::string& accountId,
+                                                           const std::string& callId);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
     const std::string& accountId, const std::string& confId);
 DRING_PUBLIC void setModerator(const std::string& accountId,

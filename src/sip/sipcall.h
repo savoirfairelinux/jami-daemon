@@ -133,6 +133,7 @@ public:
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
     bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList) override;
+    std::vector<DRing::MediaMap> currentMediaList() const override;
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
     void removeCall() override;
@@ -153,7 +154,10 @@ public:
 #endif
     bool hasVideo() const override;
     bool isCaptureDeviceMuted(const MediaType& mediaType) const override;
-    bool isSrtpEnabled() const { return srtpEnabled_; }
+    bool isSrtpEnabled() const
+    {
+        return srtpEnabled_;
+    }
     // End of override of Call class
 
     // Override of Recordable class
@@ -182,7 +186,10 @@ public:
     /**
      * Return the SDP's manager of this call
      */
-    Sdp& getSDP() { return *sdp_; }
+    Sdp& getSDP()
+    {
+        return *sdp_;
+    }
 
     // Implementation of events reported by SipVoipLink.
     /**
@@ -222,7 +229,10 @@ public:
     void setSipTransport(const std::shared_ptr<SipTransport>& transport,
                          const std::string& contactHdr = {});
 
-    SipTransport* getTransport() { return sipTransport_.get(); }
+    SipTransport* getTransport()
+    {
+        return sipTransport_.get();
+    }
 
     void sendSIPInfo(std::string_view body, std::string_view subtype);
 
@@ -268,12 +278,19 @@ public:
     void setRotation(int rotation);
 #endif
     // Get the list of current RTP sessions
-    std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(MediaType type = MediaType::MEDIA_ALL) const;
+    std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(
+        MediaType type = MediaType::MEDIA_ALL) const;
     static size_t getActiveMediaStreamCount(const std::vector<MediaAttribute>& mediaAttrList);
 
-    void setPeerRegisteredName(const std::string& name) { peerRegisteredName_ = name; }
+    void setPeerRegisteredName(const std::string& name)
+    {
+        peerRegisteredName_ = name;
+    }
 
-    void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
+    void setPeerUri(const std::string& peerUri)
+    {
+        peerUri_ = peerUri;
+    }
 
     // Create a new ICE media session. If we already have an instance,
     // it will be destroyed first.
@@ -406,12 +423,17 @@ private:
     {
         return std::weak_ptr<const SIPCall>(shared());
     }
-    inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
+    inline std::weak_ptr<SIPCall> weak()
+    {
+        return std::weak_ptr<SIPCall>(shared());
+    }
 
     // Peer's User-Agent.
     std::string peerUserAgent_ {};
     // Flag to indicate if the peer's Daemon version supports multi-stream.
     bool peerSupportMultiStream_ {false};
+    // Flag to indicate if the peer's Daemon version can negotiate more than 2 ICE medias
+    bool peerSupportMultiIce_ {false};
 
     // Flag to indicate if the peer's Daemon version supports re-invite
     // without ICE renegotiation.

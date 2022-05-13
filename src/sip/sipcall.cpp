@@ -88,6 +88,9 @@ static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
 static constexpr auto MULTISTREAM_REQUIRED_VERSION_STR = "10.0.2"sv;
 static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION
     = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
+static constexpr auto MULTIICE_REQUIRED_VERSION_STR = "13.3.0"sv;
+static const std::vector<unsigned> MULTIICE_REQUIRED_VERSION
+    = split_string_to_unsigned(MULTIICE_REQUIRED_VERSION_STR, '.');
 static constexpr auto NEW_CONFPROTOCOL_VERSION_STR = "13.1.0"sv;
 static const std::vector<unsigned> NEW_CONFPROTOCOL_VERSION
     = split_string_to_unsigned(NEW_CONFPROTOCOL_VERSION_STR, '.');
@@ -100,7 +103,6 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  Call::CallType type,
                  const std::vector<DRing::MediaMap>& mediaList)
     : Call(account, callId, type)
-    , peerSupportMultiStream_(false)
     , sdp_(new Sdp(callId))
     , enableIce_(account->isIceForMediaEnabled())
     , srtpEnabled_(account->isSrtpEnabled())
@@ -191,12 +193,13 @@ SIPCall::createRtpSession(RtpStream& stream)
     auto idx = streamIdx();
     auto streamId = sip_utils::streamId(id_, idx, stream.mediaAttribute_->type_);
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
-        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_,
-                                                               streamId);
+        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId);
     }
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
-        stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_, streamId, getVideoSettings());
+        stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_,
+                                                                      streamId,
+                                                                      getVideoSettings());
         std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->setRotation(rotation_);
     }
 #endif
@@ -275,7 +278,7 @@ void
 SIPCall::createCallAVStreams()
 {
 #ifdef ENABLE_VIDEO
-    for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+    for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
         if (std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->hasConference()) {
             clearCallAVStreams();
             return;
@@ -295,7 +298,7 @@ SIPCall::createCallAVStreams()
         return std::static_pointer_cast<VideoFrame>(m)->pointer();
     };
 
-    for (const auto& rtpSession: getRtpSessionList()) {
+    for (const auto& rtpSession : getRtpSessionList()) {
         auto isVideo = rtpSession->getMediaType() == MediaType::MEDIA_VIDEO;
         auto streamType = isVideo ? StreamType::video : StreamType::audio;
         std::shared_ptr<MediaStreamSubject> subject;
@@ -1064,7 +1067,7 @@ SIPCall::detachAudioFromConference()
 {
     if (auto conf = getConference()) {
         if (auto mixer = conf->getVideoMixer()) {
-            for (auto& stream: getRtpSessionList(MediaType::MEDIA_AUDIO)) {
+            for (auto& stream : getRtpSessionList(MediaType::MEDIA_AUDIO)) {
                 mixer->removeAudioOnlySource(getCallId(), stream->streamId());
             }
         }
@@ -1600,7 +1603,7 @@ SIPCall::sendKeyframe()
     dht::ThreadPool::computation().run([w = weak()] {
         if (auto sthis = w.lock()) {
             JAMI_DBG("handling picture fast update request");
-            for (const auto& videoRtp: sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
+            for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
                 std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
         }
     });
@@ -1685,6 +1688,17 @@ SIPCall::setPeerUaVersion(std::string_view ua)
             version.data(),
             (int) MULTISTREAM_REQUIRED_VERSION_STR.size(),
             MULTISTREAM_REQUIRED_VERSION_STR.data());
+    }
+    // Check if peer's version is at least 13.3.0 to enable multi-ICE.
+    peerSupportMultiIce_ = Account::meetMinimumRequiredVersion(peerVersion,
+                                                               MULTIICE_REQUIRED_VERSION);
+    if (not peerSupportMultiIce_) {
+        JAMI_DBG("Peer's version [%.*s] does not support more than 2 ICE medias. Min required "
+                 "version: [%.*s]",
+                 (int) version.size(),
+                 version.data(),
+                 (int) MULTIICE_REQUIRED_VERSION_STR.size(),
+                 MULTIICE_REQUIRED_VERSION_STR.data());
     }
 
     // Check if peer's version supports re-invite without ICE renegotiation.
@@ -1862,7 +1876,7 @@ SIPCall::getVideoCodec() const
 {
 #ifdef ENABLE_VIDEO
     // Return first video codec as we negotiate only one codec for the call
-    for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO))
+    for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
         return videoRtp->getCodec();
 #endif
     return {};
@@ -1872,7 +1886,7 @@ std::shared_ptr<AccountCodecInfo>
 SIPCall::getAudioCodec() const
 {
     // Return first video codec as we negotiate only one codec for the call
-    for (const auto& audioRtp: getRtpSessionList(MediaType::MEDIA_AUDIO))
+    for (const auto& audioRtp : getRtpSessionList(MediaType::MEDIA_AUDIO))
         return audioRtp->getCodec();
     return {};
 }
@@ -2126,7 +2140,7 @@ void
 SIPCall::restartMediaSender()
 {
     JAMI_DBG("[call:%s] restarting TX media streams", getCallId().c_str());
-    for (const auto& rtpSession: getRtpSessionList())
+    for (const auto& rtpSession : getRtpSessionList())
         rtpSession->restartSender();
 }
 
@@ -2142,8 +2156,9 @@ SIPCall::stopAllMedia()
     {
         std::lock_guard<std::mutex> lk(sinksMtx_);
         for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
-            for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO)) {
-                auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->getVideoReceive();
+            for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+                auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)
+                                         ->getVideoReceive();
                 if (videoReceive) {
                     auto& sink = videoReceive->getSink();
                     sink->detach(it->second.get());
@@ -2154,7 +2169,7 @@ SIPCall::stopAllMedia()
         }
     }
 #endif
-    for (const auto& rtpSession: getRtpSessionList())
+    for (const auto& rtpSession : getRtpSessionList())
         rtpSession->stop();
 
 #ifdef ENABLE_PLUGIN
@@ -2292,7 +2307,10 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
     JAMI_DBG("[call:%s] New local media", getCallId().c_str());
 
     if (mediaAttrList.size() > PJ_ICE_MAX_COMP / 2) {
-        JAMI_DBG("[call:%s] Too many medias, limit it (%lu vs %u)", getCallId().c_str(), mediaAttrList.size(), PJ_ICE_MAX_COMP);
+        JAMI_DBG("[call:%s] Too many medias, limit it (%lu vs %u)",
+                 getCallId().c_str(),
+                 mediaAttrList.size(),
+                 PJ_ICE_MAX_COMP);
         return false;
     }
 
@@ -2313,6 +2331,7 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
             // Media does not exist, add a new one.
             addMediaStream(newAttr);
             auto& stream = rtpStreams_.back();
+            stream.mediaAttribute_->muted_ = true;
             createRtpSession(stream);
             JAMI_DBG("[call:%s] Added a new media stream [%s] @ index %i",
                      getCallId().c_str(),
@@ -2323,8 +2342,18 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
         }
     }
 
-    if (mediaAttrList.size() < rtpStreams_.size())
+    if (mediaAttrList.size() < rtpStreams_.size()) {
+#ifdef ENABLE_VIDEO
+        // If new medias list got more medias than current size, we can remove old medias from conference
+        for (auto i = mediaAttrList.size(); i < rtpStreams_.size(); ++i) {
+            auto& stream = rtpStreams_[i];
+            if (stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
+                std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)
+                    ->exitConference();
+        }
+#endif
         rtpStreams_.resize(mediaAttrList.size());
+    }
     return true;
 }
 
@@ -2397,7 +2426,6 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
 {
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
-    // TODO. is the right place?
     // Disable video if disabled in the account.
     auto account = getSIPAccount();
     if (not account) {
@@ -2426,6 +2454,35 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
         return false;
     }
 
+    // If peer doesn't support multiple ice, keep only the last audio/video
+    // This keep the old behaviour (if sharing both camera + sharing a file, will keep the shared file)
+    if (!peerSupportMultiIce_) {
+        if (mediaList.size() > 2)
+            JAMI_WARN("[call:%s] Peer does not support more than 2 ICE medias. Media change "
+                      "request modified",
+                      getCallId().c_str());
+        MediaAttribute audioAttr;
+        MediaAttribute videoAttr;
+        auto hasVideo = false, hasAudio = false;
+        for (auto it = mediaAttrList.rbegin(); it != mediaAttrList.rend(); ++it) {
+            if (it->type_ == MediaType::MEDIA_VIDEO && !hasVideo) {
+                videoAttr = *it;
+                videoAttr.label_ = "video_0";
+                hasVideo = true;
+            } else if (it->type_ == MediaType::MEDIA_AUDIO && !hasAudio) {
+                audioAttr = *it;
+                audioAttr.label_ = "audio_0";
+                hasAudio = true;
+            }
+            if (hasVideo && hasAudio)
+                break;
+        }
+        mediaAttrList.clear();
+        // Note: use the order VIDEO/AUDIO to avoid reinvite.
+        mediaAttrList.emplace_back(audioAttr);
+        if (hasVideo)
+            mediaAttrList.emplace_back(videoAttr);
+    }
     JAMI_DBG("[call:%s] Requesting media change. List of new media:", getCallId().c_str());
 
     unsigned idx = 0;
@@ -2447,11 +2504,18 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  getCallId().c_str());
         requestReinvite(mediaAttrList, needNewIce);
     } else {
-        JAMI_WARN("[call:%s] Media change DOES NOT require a new negotiation (re-invite)",
-                  getCallId().c_str());
+        JAMI_DBG("[call:%s] Media change DOES NOT require a new negotiation (re-invite)",
+                 getCallId().c_str());
+        reportMediaNegotiationStatus();
     }
 
     return true;
+}
+
+std::vector<std::map<std::string, std::string>>
+SIPCall::currentMediaList() const
+{
+    return MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList());
 }
 
 std::vector<MediaAttribute>
@@ -2516,9 +2580,7 @@ SIPCall::reportMediaNegotiationStatus()
     // Notify using the parent Id if it's a subcall.
     auto callId = isSubcall() ? parent_->getCallId() : getCallId();
     emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
-        callId,
-        DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
-        MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
+        callId, DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS, currentMediaList());
 }
 
 void
@@ -2703,7 +2765,14 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
 
     sdp_->setReceivedOffer(offer);
 
-    auto const& mediaAttrList = Sdp::getMediaAttributeListFromSdp(offer);
+    // Note: For multistream, here we must ignore disabled remote medias, because
+    // we will answer from our medias and remote enabled medias.
+    // Example: if remote disables its camera and share its screen, the offer will
+    // have an active and a disabled media (with port = 0).
+    // In this case, if we have only one video, we can just negotiate 1 video instead of 2
+    // with 1 disabled.
+    // cf. pjmedia_sdp_neg_modify_local_offer2 for more details.
+    auto const& mediaAttrList = Sdp::getMediaAttributeListFromSdp(offer, true);
     if (mediaAttrList.empty()) {
         JAMI_WARN("[call:%s] Media list is empty, ignoring", getCallId().c_str());
         return res;
@@ -2900,7 +2969,7 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
 
 #ifdef ENABLE_VIDEO
     if (conference->isVideoEnabled())
-        for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO))
+        for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
             std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->enterConference(*conference);
 #endif
 
@@ -2921,7 +2990,7 @@ SIPCall::exitConference()
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 #ifdef ENABLE_VIDEO
-    for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO))
+    for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
         std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->exitConference();
 #endif
 #ifdef ENABLE_PLUGIN
@@ -2947,18 +3016,17 @@ SIPCall::createSinks(const ConfInfo& infos)
 
     std::lock_guard<std::mutex> lk(sinksMtx_);
     std::vector<std::shared_ptr<video::VideoFrameActiveWriter>> sinks;
-    for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO)) {
-        auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->getVideoReceive();
+    for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+        auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)
+                                 ->getVideoReceive();
         if (!videoReceive)
             return;
-        sinks.emplace_back(std::static_pointer_cast<video::VideoFrameActiveWriter>(videoReceive->getSink()));
+        sinks.emplace_back(
+            std::static_pointer_cast<video::VideoFrameActiveWriter>(videoReceive->getSink()));
     }
     auto conf = conf_.lock();
     const auto& id = conf ? conf->getConfId() : getCallId();
-    Manager::instance().createSinkClients(id,
-                                          infos,
-                                          sinks,
-                                          callSinksMap_);
+    Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_);
 }
 #endif
 
@@ -2967,7 +3035,7 @@ SIPCall::getAudioRtp() const
 {
     // For the moment, the clients support only one audio stream, so we
     // return the first audio stream.
-    for (const auto& rtp: getRtpSessionList(MediaType::MEDIA_AUDIO))
+    for (const auto& rtp : getRtpSessionList(MediaType::MEDIA_AUDIO))
         return std::dynamic_pointer_cast<AudioRtpSession>(rtp);
     return nullptr;
 }
@@ -3027,7 +3095,7 @@ SIPCall::toggleRecording()
                                  account->getUserUri(),
                                  peerUri_);
         recorder_->setMetadata(title, ""); // use default description
-        for (const auto& rtpSession: getRtpSessionList())
+        for (const auto& rtpSession : getRtpSessionList())
             rtpSession->initRecorder(recorder_);
     } else {
         updateRecState(false);
@@ -3041,7 +3109,7 @@ void
 SIPCall::deinitRecorder()
 {
     if (Call::isRecording())
-        for (const auto& rtpSession: getRtpSessionList())
+        for (const auto& rtpSession : getRtpSessionList())
             rtpSession->deinitRecorder(recorder_);
 }
 
@@ -3186,6 +3254,7 @@ SIPCall::merge(Call& call)
     localVideoPort_ = subcall.localVideoPort_;
     peerUserAgent_ = subcall.peerUserAgent_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
+    peerSupportMultiIce_ = subcall.peerSupportMultiIce_;
     peerAllowedMethods_ = subcall.peerAllowedMethods_;
     peerSupportReuseIceInReinv_ = subcall.peerSupportReuseIceInReinv_;
 

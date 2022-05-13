@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <mutex>
 
+#include "videomanager_interface.h"
 #include <opendht/thread_pool.h>
 
 static constexpr auto MIN_LINE_ZOOM
@@ -109,41 +110,33 @@ VideoMixer::~VideoMixer()
 }
 
 void
-VideoMixer::switchInput(const std::string& input, unsigned idx)
-{
-    std::shared_ptr<VideoFrameActiveWriter> oldInput;
-    auto newInput = getVideoInput(input);
-    std::unique_lock<std::mutex> lk(localInputsMtx_);
-    if (idx < localInputs_.size())
-        oldInput = std::move(localInputs_[idx]);
-    else
-        localInputs_.resize(idx + 1);
-    localInputs_[idx] = newInput;
-    lk.unlock();
-    if (oldInput)
-        stopInput(oldInput);
-    attachVideo(newInput.get(), "", sip_utils::streamId("", idx, MediaType::MEDIA_VIDEO));
-}
-
-void
 VideoMixer::switchInputs(const std::vector<std::string>& inputs)
 {
-    stopInputs();
-
-    if (inputs.empty()) {
-        JAMI_DBG("[mixer:%s] Inputs is empty, don't add it to the mixer", id_.c_str());
-        return;
-    }
-
-    // Re-attach videoInput to mixer
+    // Do not stop video inputs that are already there
+    // But only detach it to get new index
+    std::lock_guard<std::mutex> lk(localInputsMtx_);
+    decltype(localInputs_) newInputs;
     for (auto i = 0u; i != inputs.size(); ++i) {
         auto videoInput = getVideoInput(inputs[i]);
-        {
-            std::lock_guard<std::mutex> lk(localInputsMtx_);
-            localInputs_.emplace_back(videoInput);
+        // Note, video can be a previously stopped device (eg. restart a screen sharing)
+        // in this case, the videoInput will be found and must be restarted
+        videoInput->restart();
+        auto onlyDetach = false;
+        auto it = std::find(localInputs_.cbegin(), localInputs_.cend(), videoInput);
+        onlyDetach = it != localInputs_.cend();
+        newInputs.emplace_back(videoInput);
+        if (onlyDetach) {
+            videoInput->detach(this);
+            localInputs_.erase(it);
         }
-        attachVideo(videoInput.get(), "", sip_utils::streamId("", i, MediaType::MEDIA_VIDEO));
     }
+    // Stop other video inputs
+    stopInputs();
+    localInputs_ = std::move(newInputs);
+
+    // Re-attach videoInput to mixer
+    for (auto i = 0u; i != localInputs_.size(); ++i)
+        attachVideo(localInputs_[i].get(), "", sip_utils::streamId("", i, MediaType::MEDIA_VIDEO));
 }
 
 void
@@ -152,17 +145,16 @@ VideoMixer::stopInput(const std::shared_ptr<VideoFrameActiveWriter>& input)
     // Detach videoInputs from mixer
     input->detach(this);
 #if !VIDEO_CLIENT_INPUT
-        // Stop old VideoInput
-        if (auto oldInput = std::dynamic_pointer_cast<VideoInput>(input))
-            oldInput->stopInput();
+    // Stop old VideoInput
+    if (auto oldInput = std::dynamic_pointer_cast<VideoInput>(input))
+        oldInput->stopInput();
 #endif
 }
 
 void
 VideoMixer::stopInputs()
 {
-    std::lock_guard<std::mutex> lk(localInputsMtx_);
-    for (auto& input: localInputs_)
+    for (auto& input : localInputs_)
         stopInput(input);
     localInputs_.clear();
 }
@@ -183,12 +175,17 @@ VideoMixer::updateLayout()
 }
 
 void
-VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId, const std::string& streamId)
+VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
+                        const std::string& callId,
+                        const std::string& streamId)
 {
-    if (!frame) return;
+    if (!frame)
+        return;
     JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
-    std::lock_guard<std::mutex> lk(videoToStreamInfoMtx_);
-    videoToStreamInfo_.emplace(frame, StreamInfo {callId, streamId});
+    {
+        std::lock_guard<std::mutex> lk(videoToStreamInfoMtx_);
+        videoToStreamInfo_[frame] = StreamInfo {callId, streamId};
+    }
     frame->attach(this);
 }
 
@@ -388,8 +385,14 @@ VideoMixer::process()
             if (layoutUpdated_ == 0) {
                 for (auto& x : sources_) {
                     auto sinfo = streamInfo(x->source);
-                    sourcesInfo.emplace_back(
-                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo, sinfo.callId, sinfo.streamId});
+                    sourcesInfo.emplace_back(SourceInfo {x->source,
+                                                         x->x,
+                                                         x->y,
+                                                         x->w,
+                                                         x->h,
+                                                         x->hasVideo,
+                                                         sinfo.callId,
+                                                         sinfo.streamId});
                 }
                 if (onSourcesUpdated_)
                     onSourcesUpdated_(std::move(sourcesInfo));

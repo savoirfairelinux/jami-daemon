@@ -19,7 +19,6 @@
  */
 
 #include "dbuscallmanager.h"
-#include "callmanager_interface.h"
 
 DBusCallManager::DBusCallManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/CallManager")
@@ -309,6 +308,13 @@ DBusCallManager::getConferenceDetails(const std::string& accountId, const std::s
     -> decltype(DRing::getConferenceDetails(accountId, callId))
 {
     return DRing::getConferenceDetails(accountId, callId);
+}
+
+auto
+DBusCallManager::currentMediaList(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::currentMediaList(accountId, callId))
+{
+    return DRing::currentMediaList(accountId, callId);
 }
 
 auto

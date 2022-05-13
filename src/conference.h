@@ -368,7 +368,18 @@ public:
                     const bool& state);
     void updateMuted();
 
-    std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
+    std::shared_ptr<Call> getCallFromPeerID(std::string_view peerId);
+
+    /**
+     * Announce to the client that medias are successfully negotiated
+     */
+    void reportMediaNegotiationStatus();
+
+    /**
+     * Retrieve current medias list
+     * @return current medias
+     */
+    std::vector<DRing::MediaMap> currentMediaList() const;
 
 private:
     std::weak_ptr<Conference> weak()
