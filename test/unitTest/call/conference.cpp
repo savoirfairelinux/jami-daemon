@@ -94,6 +94,8 @@ private:
     void testHangup();
     void testIsConferenceParticipant();
     void testAudioConferenceConfInfo();
+    void testHostAddRmSecondVideo();
+    void testParticipantAddRmSecondVideo();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -111,6 +113,8 @@ private:
     CPPUNIT_TEST(testHangup);
     CPPUNIT_TEST(testIsConferenceParticipant);
     CPPUNIT_TEST(testAudioConferenceConfInfo);
+    CPPUNIT_TEST(testHostAddRmSecondVideo);
+    CPPUNIT_TEST(testParticipantAddRmSecondVideo);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -119,6 +123,7 @@ private:
     std::string carlaId;
     std::string daviId;
     std::string confId {};
+    std::vector<std::map<std::string, std::string>> pInfos_ {};
     bool confChanged {false};
 
     CallData bobCall {};
@@ -227,6 +232,7 @@ ConferenceTest::registerSignalHandlers()
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::OnConferenceInfosUpdated>(
         [=](const std::string&,
             const std::vector<std::map<std::string, std::string>> participantsInfos) {
+            pInfos_ = participantsInfos;
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
                     bobCall.active = infos.at("active") == "true";
@@ -763,12 +769,135 @@ ConferenceTest::testIsConferenceParticipant()
     DRing::unregisterSignalHandlers();
 }
 
+ConferenceTest::testHostAddRmSecondVideo()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    registerSignalHandlers();
+
+    startConference();
+
+    // Alice adds new media
+    pInfos_.clear();
+    std::vector<std::map<std::string, std::string>> mediaList = {
+        {
+            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
+            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
+            {DRing::Media::MediaAttributeKey::MUTED, "false"},
+            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
+            {DRing::Media::MediaAttributeKey::SOURCE, ""},
+            {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}
+        },
+        {
+            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
+            {DRing::Media::MediaAttributeKey::MUTED, "false"},
+            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
+            {DRing::Media::MediaAttributeKey::SOURCE, "bar"},
+            {DRing::Media::MediaAttributeKey::LABEL, "video_0"}
+        },
+        {
+            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
+            {DRing::Media::MediaAttributeKey::MUTED, "false"},
+            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
+            {DRing::Media::MediaAttributeKey::SOURCE, "foo"},
+            {DRing::Media::MediaAttributeKey::LABEL, "video_1"}
+        }
+    };
+    DRing::requestMediaChange(aliceId, confId, mediaList);
+
+    // Check that alice has two videos attached to the conference
+    auto aliceVideos = [&]() {
+        int result = 0;
+        for (auto i = 0u; i < pInfos_.size(); ++i)
+            if (pInfos_[i]["uri"].find(aliceUri) != std::string::npos)
+                result += 1;
+        return result;
+    };
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideos() == 2; }));
+
+    // Alice removes her second video
+    pInfos_.clear();
+    mediaList.pop_back();
+    DRing::requestMediaChange(aliceId, confId, mediaList);
+
+    // Check that alice has ont video attached to the conference
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideos() == 1; }));
+
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
 void
 ConferenceTest::testAudioConferenceConfInfo()
 {
     registerSignalHandlers();
 
     startConference(true);
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testParticipantAddRmSecondVideo()
+{
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    registerSignalHandlers();
+
+    startConference();
+
+    // Bob adds new media
+    pInfos_.clear();
+    std::vector<std::map<std::string, std::string>> mediaList = {
+        {
+            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
+            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
+            {DRing::Media::MediaAttributeKey::MUTED, "false"},
+            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
+            {DRing::Media::MediaAttributeKey::SOURCE, ""},
+            {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}
+        },
+        {
+            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
+            {DRing::Media::MediaAttributeKey::MUTED, "false"},
+            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
+            {DRing::Media::MediaAttributeKey::SOURCE, "bar"},
+            {DRing::Media::MediaAttributeKey::LABEL, "video_0"}
+        },
+        {
+            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
+            {DRing::Media::MediaAttributeKey::MUTED, "false"},
+            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
+            {DRing::Media::MediaAttributeKey::SOURCE, "foo"},
+            {DRing::Media::MediaAttributeKey::LABEL, "video_1"}
+        }
+    };
+    DRing::requestMediaChange(bobId, bobCall.callId, mediaList);
+
+    // Check that bob has two videos attached to the conference
+    auto bobVideos = [&]() {
+        int result = 0;
+        for (auto i = 0u; i < pInfos_.size(); ++i)
+            if (pInfos_[i]["uri"].find(bobUri) != std::string::npos)
+                result += 1;
+        return result;
+    };
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 2; }));
+
+    // Bob removes his second video
+    pInfos_.clear();
+    mediaList.pop_back();
+    DRing::requestMediaChange(bobId, confId, mediaList);
+
+    // Check that bob has ont video attached to the conference
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 1; }));
+
+    hangupConference();
 
     DRing::unregisterSignalHandlers();
 }
