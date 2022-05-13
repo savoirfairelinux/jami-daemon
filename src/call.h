@@ -383,6 +383,12 @@ public:
     virtual bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList) = 0;
 
     /**
+     * Retrieve current medias list
+     * @return current active medias
+     */
+    virtual std::vector<std::map<std::string, std::string>> currentMediaList() const = 0;
+
+    /**
      * Send a message to a call identified by its callid
      *
      * @param A list of mimetype/payload pairs
