@@ -412,6 +412,8 @@ private:
     std::string peerUserAgent_ {};
     // Flag to indicate if the peer's Daemon version supports multi-stream.
     bool peerSupportMultiStream_ {false};
+    // Flag to indicate if the peer's Daemon version can negotiate more than 2 ICE medias
+    bool peerSupportMultiIce_ {false};
 
     // Flag to indicate if the peer's Daemon version supports re-invite
     // without ICE renegotiation.

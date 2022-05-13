@@ -1436,6 +1436,7 @@ Manager::joinParticipant(const std::string& accountId,
     auto conf = std::make_shared<Conference>(account);
     account->attach(conf);
     emitSignal<DRing::CallSignal::ConferenceCreated>(account->getAccountID(), conf->getConfId());
+    conf->reportNegStatus();
 
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
@@ -1494,6 +1495,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
     if (successCounter >= 2) {
         account->attach(conf);
         emitSignal<DRing::CallSignal::ConferenceCreated>(accountId, conf->getConfId());
+        conf->reportNegStatus();
     }
 }
 
@@ -2527,6 +2529,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
             account->attach(conf);
             emitSignal<DRing::CallSignal::ConferenceCreated>(account->getAccountID(),
                                                              conf->getConfId());
+            conf->reportNegStatus();
 
             // Bind calls according to their state
             bindCallToConference(*incomCall, *conf);
