@@ -103,6 +103,8 @@ public:
         onSuccessfulSetup_ = cb;
     }
 
+    void restart();
+
 private:
     NON_COPYABLE(VideoInput);
 
