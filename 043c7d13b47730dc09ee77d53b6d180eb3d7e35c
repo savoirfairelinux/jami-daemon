@@ -33,6 +33,24 @@
       "message": "AFAIK, this path is used by Android client which only implements the push callback.\nNow, this path will be executed if it\u0027s Android or the sink has observers. So, if we have observers, the frame will be processed, then we exit this method.\nI don\u0027t really know in which cases we will have observers. For instance, can we have observers with SHM ? in that case, the frame will not be transferred.",
       "revId": "043c7d13b47730dc09ee77d53b6d180eb3d7e35c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4f2fe60e_b6c7d546",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-13T18:27:51Z",
+      "side": 1,
+      "message": "Thanks for the review. We studied your comment carefully.\n\n* This class clearly needs a cleanup/refactoring because curent code paths are not clear. This would be done separately.\n* Android doesn\u0027t use this code path. It is used by direct renderers (iOS only these days). Other clients use the other paths (shm or scale).\n* Indeed, with this PR, indirect renderers would not work with the parent sink if this sink has observers. This is fixed in the latest revision.",
+      "parentUuid": "274ca2ac_0421cb95",
+      "revId": "043c7d13b47730dc09ee77d53b6d180eb3d7e35c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
