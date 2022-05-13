@@ -345,6 +345,18 @@ Conference::setLocalHostDefaultMediaSource()
         hostSources_.emplace_back(videoAttr);
     }
 #endif
+
+    reportNegStatus();
+}
+
+void
+Conference::reportNegStatus()
+{
+    // TODO getter for client
+    emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
+        getConfId(),
+        DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
+        MediaAttribute::mediaAttributesToMediaMaps(hostSources_));
 }
 
 #ifdef ENABLE_PLUGIN
@@ -537,9 +549,6 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  mediaAttr.toString(true).c_str());
     }
 
-    if (videoMixer_)
-        videoMixer_->stopInputs();
-
     std::vector<std::string> newVideoInputs;
     for (auto const& mediaAttr : mediaAttrList) {
         // Find media
@@ -566,6 +575,8 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
     if (videoMixer_)
         videoMixer_->switchInputs(newVideoInputs);
     hostSources_ = mediaAttrList; // New medias
+
+    reportNegStatus();
     return true;
 }
 
@@ -901,8 +912,6 @@ Conference::detachLocalParticipant()
         if (videoMixer_)
             videoMixer_->stopInputs();
 #endif
-        hostSources_.clear();
-        setState(State::ACTIVE_DETACHED);
     } else {
         JAMI_WARN(
             "Invalid conference state in detach participant: current \"%s\" - expected \"%s\"",
