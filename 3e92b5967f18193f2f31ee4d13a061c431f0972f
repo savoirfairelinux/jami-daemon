@@ -62,6 +62,29 @@
       "message": "after giving it another thought, I believe it\u0027s best if we minimize the changes by setting only the streamId. The callId can be extracted from the streamId using a helper if needed. Once we get rid of it, we will not have to change the signature again.",
       "revId": "3e92b5967f18193f2f31ee4d13a061c431f0972f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3c6fdaa_120be993",
+        "filename": "src/media/rtp_session.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-13T18:20:36Z",
+      "side": 1,
+      "message": "duplicate streamId_?",
+      "range": {
+        "startLine": 90,
+        "startChar": 4,
+        "endLine": 92,
+        "endChar": 26
+      },
+      "revId": "3e92b5967f18193f2f31ee4d13a061c431f0972f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
