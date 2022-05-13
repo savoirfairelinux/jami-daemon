@@ -354,7 +354,11 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
 
     std::unique_lock<std::mutex> lock(mtx_);
-    if (target_.push and not target_.pull) {
+    bool hasObservers = getObserversCount() != 0;
+    bool hasDirectListener = target_.push and not target_.pull;
+    bool hasScaleListener = target_.push and target_.pull;
+
+    if (hasDirectListener or (hasObservers and not hasScaleListener)) {
         VideoFrame outFrame;
         outFrame.copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
         if (crop_.w || crop_.h) {
@@ -369,12 +373,13 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             setFrameSize(outFrame.width(), outFrame.height());
             return;
         }
-        notify(std::static_pointer_cast<MediaFrame>(frame_p));
-        target_.push(outFrame.getFrame());
+        notify(frame_p);
+        if (hasDirectListener)
+            target_.push(outFrame.getFrame());
         return;
     }
 
-    bool doTransfer = (target_.pull != nullptr);
+    bool doTransfer = hasScaleListener;
 #if HAVE_SHM
     doTransfer |= (shm_ && doShmTransfer_);
 #endif
@@ -435,7 +440,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         if (shm_ && doShmTransfer_)
             shm_->renderFrame(*frame);
 #endif
-        if (target_.pull) {
+        if (hasScaleListener) {
             int width = frame->width();
             int height = frame->height();
             if (width > 0 && height > 0) {
