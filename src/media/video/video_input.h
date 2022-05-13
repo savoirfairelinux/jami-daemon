@@ -103,6 +103,13 @@ public:
         onSuccessfulSetup_ = cb;
     }
 
+    /**
+     * Restart stopped video input
+     * @note if a media is removed, then re-added in a conference, the loop will be stopped
+     * and this input must be restarted
+     */
+    void restart();
+
 private:
     NON_COPYABLE(VideoInput);
 

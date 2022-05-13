@@ -305,6 +305,18 @@ getConferenceDetails(const std::string& accountId, const std::string& confId)
     return {};
 }
 
+std::vector<std::map<std::string, std::string>>
+currentMediaList(const std::string& accountId, const std::string& callId)
+{
+    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
+        if (auto call = account->getCall(callId)) {
+            return call->currentMediaList();
+        } else if (auto conf = account->getConference(callId)) {
+            return conf->currentMediaList();
+        }
+    }
+}
+
 std::vector<std::string>
 getConferenceList(const std::string& accountId)
 {
