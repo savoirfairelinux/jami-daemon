@@ -312,6 +312,13 @@ DBusCallManager::getConferenceDetails(const std::string& accountId, const std::s
 }
 
 auto
+DBusCallManager::currentMediaList(const std::string& accountId, const std::string& callId)
+    -> decltype(DRing::currentMediaList(accountId, callId))
+{
+    return DRing::currentMediaList(accountId, callId);
+}
+
+auto
 DBusCallManager::startRecordedFilePlayback(const std::string& filepath)
     -> decltype(DRing::startRecordedFilePlayback(filepath))
 {
