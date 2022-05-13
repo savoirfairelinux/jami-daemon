@@ -128,22 +128,33 @@ VideoMixer::switchInput(const std::string& input, unsigned idx)
 void
 VideoMixer::switchInputs(const std::vector<std::string>& inputs)
 {
-    stopInputs();
-
     if (inputs.empty()) {
         JAMI_DBG("[mixer:%s] Inputs is empty, don't add it to the mixer", id_.c_str());
         return;
     }
 
-    // Re-attach videoInput to mixer
+    // Do not stop video inputs that are already there
+    // But only detach it to get new index
+    std::lock_guard<std::mutex> lk(localInputsMtx_);
+    decltype(localInputs_) newInputs;
     for (auto i = 0u; i != inputs.size(); ++i) {
         auto videoInput = getVideoInput(inputs[i]);
-        {
-            std::lock_guard<std::mutex> lk(localInputsMtx_);
-            localInputs_.emplace_back(videoInput);
+        auto onlyDetach = false;
+        auto it = std::find(localInputs_.cbegin(), localInputs_.cbegin(), videoInput);
+        onlyDetach = it != localInputs_.end();
+        newInputs.emplace_back(videoInput);
+        if (onlyDetach) {
+            videoInput->detach(this);
+            localInputs_.erase(it);
         }
-        attachVideo(videoInput.get(), "", sip_utils::streamId("", i, MediaType::MEDIA_VIDEO));
     }
+    // Stop other video inputs
+    stopInputs();
+    localInputs_ = std::move(newInputs);
+
+    // Re-attach videoInput to mixer
+    for (auto i = 0u; i != localInputs_.size(); ++i)
+        attachVideo(localInputs_[i].get(), "", sip_utils::streamId("", i, MediaType::MEDIA_VIDEO));
 }
 
 void
@@ -161,7 +172,6 @@ VideoMixer::stopInput(const std::shared_ptr<VideoFrameActiveWriter>& input)
 void
 VideoMixer::stopInputs()
 {
-    std::lock_guard<std::mutex> lk(localInputsMtx_);
     for (auto& input: localInputs_)
         stopInput(input);
     localInputs_.clear();

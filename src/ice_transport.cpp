@@ -727,21 +727,24 @@ std::string
 IceTransport::Impl::link() const
 {
     std::ostringstream out;
-    for (unsigned strm = 0; strm < streamsCount_; strm++) {
-        for (unsigned i = 1; i <= compCountPerStream_; i++) {
-            auto absIdx = strm * streamsCount_ + i;
+    JAMI_ERR() << "@@@ " << streamsCount_ << " * " << compCountPerStream_;
+    // TODO
+    for (unsigned strm = 1; strm <= streamsCount_ * compCountPerStream_; strm++) {
+        //for (unsigned i = 1; i <= compCountPerStream_; i++) {
+            auto absIdx = strm;// * streamsCount_ + i;
+            JAMI_ERR() << "@@@ " << absIdx;
             auto laddr = getLocalAddress(absIdx);
             auto raddr = getRemoteAddress(absIdx);
 
             if (laddr and laddr.getPort() != 0 and raddr and raddr.getPort() != 0) {
-                out << " [" << i << "] " << laddr.toString(true, true) << " ["
+                out << " [" << strm << "] " << laddr.toString(true, true) << " ["
                     << getCandidateType(getSelectedCandidate(absIdx, false)) << "] "
                     << " <-> " << raddr.toString(true, true) << " ["
                     << getCandidateType(getSelectedCandidate(absIdx, true)) << "] " << '\n';
             } else {
-                out << " [" << i << "] disabled\n";
+                out << " [" << strm << "] disabled\n";
             }
-        }
+        //}
     }
     return out.str();
 }
@@ -1005,6 +1008,7 @@ IceTransport::Impl::addServerReflexiveCandidates(
     }
 
     stun.cfg.user_mapping_cnt = compCount_;
+    JAMI_ERR() << "@@@" << PJ_ICE_MAX_COMP << " vs " << stun.cfg.user_mapping_cnt;
     assert(stun.cfg.user_mapping_cnt <= PJ_ICE_MAX_COMP);
 }
 
