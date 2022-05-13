@@ -166,7 +166,7 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                                 deviceId = transport->deviceId();
                         }
                     } else {
-                        streamId = sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO);
+                        streamId = sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID);
                         if (auto videoMixer = shared->videoMixer_)
                             active = videoMixer->verifyActive(streamId);
                     }
@@ -313,7 +313,8 @@ Conference::setLocalHostDefaultMediaSource()
     // Setup local audio source
     MediaAttribute audioAttr;
     if (confState_ == State::ACTIVE_ATTACHED) {
-        audioAttr = {MediaType::MEDIA_AUDIO, false, false, true, {}, "audio_0"};
+        audioAttr
+            = {MediaType::MEDIA_AUDIO, false, false, true, {}, sip_utils::DEFAULT_AUDIO_STREAMID};
         audioAttr.sourceType_ = MediaSourceType::CAPTURE_DEVICE;
     }
 
@@ -333,7 +334,7 @@ Conference::setLocalHostDefaultMediaSource()
                    false,
                    true,
                    Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice(),
-                   "video_0"};
+                   sip_utils::DEFAULT_VIDEO_STREAMID};
             videoAttr.sourceType_ = MediaSourceType::CAPTURE_DEVICE;
         }
         JAMI_DBG("[conf %s] Setting local host video source to [%s]",
@@ -342,6 +343,23 @@ Conference::setLocalHostDefaultMediaSource()
         hostSources_.emplace_back(videoAttr);
     }
 #endif
+
+    reportMediaNegotiationStatus();
+}
+
+void
+Conference::reportMediaNegotiationStatus()
+{
+    emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
+        getConfId(),
+        DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
+        currentMediaList());
+}
+
+std::vector<std::map<std::string, std::string>>
+Conference::currentMediaList() const
+{
+    return MediaAttribute::mediaAttributesToMediaMaps(hostSources_);
 }
 
 #ifdef ENABLE_PLUGIN
@@ -534,9 +552,6 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  mediaAttr.toString(true).c_str());
     }
 
-    if (videoMixer_)
-        videoMixer_->stopInputs();
-
     std::vector<std::string> newVideoInputs;
     for (auto const& mediaAttr : mediaAttrList) {
         // Find media
@@ -563,6 +578,9 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
     if (videoMixer_)
         videoMixer_->switchInputs(newVideoInputs);
     hostSources_ = mediaAttrList; // New medias
+
+    // It's host medias, so no need to negotiate anything, but inform the client.
+    reportMediaNegotiationStatus();
     return true;
 }
 
@@ -571,24 +589,39 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      const std::vector<DRing::MediaMap>& remoteMediaList)
 {
     JAMI_DBG("Conf [%s] Answer to media change request", getConfId().c_str());
+    auto currentMediaList = hostSources_;
 
 #ifdef ENABLE_VIDEO
     // If the new media list has video, remove the participant from audioonlylist.
-    if (videoMixer_
-        && MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
-                                                                                 false),
-                                        MediaType::MEDIA_VIDEO)) {
+    auto remoteHasVideo
+        = MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
+                                                                                false),
+                                       MediaType::MEDIA_VIDEO);
+    if (videoMixer_ && remoteHasVideo) {
         auto callId = call->getCallId();
-        videoMixer_->removeAudioOnlySource(callId,
-                                           std::string(sip_utils::streamId(callId,
-                                                                           0,
-                                                                           MediaType::MEDIA_VIDEO)));
+        videoMixer_->removeAudioOnlySource(
+            callId, std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
     }
 #endif
 
-    // Check if we need to update the mixer.
-    // We need to check before the media is changed.
-    auto updateMixer = call->checkMediaChangeRequest(remoteMediaList);
+    auto remoteList = remoteMediaList;
+    for (auto it = remoteList.begin(); it != remoteList.end();) {
+        if (it->at(DRing::Media::MediaAttributeKey::MUTED) == TRUE_STR
+            or it->at(DRing::Media::MediaAttributeKey::ENABLED) == FALSE_STR) {
+            it = remoteList.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    // Create minimum media list (ignore muted and disabled medias)
+    std::vector<DRing::MediaMap> newMediaList;
+    newMediaList.reserve(remoteMediaList.size());
+    for (auto const& media : currentMediaList) {
+        if (media.enabled_ and not media.muted_)
+            newMediaList.emplace_back(MediaAttribute::toMediaMap(media));
+    }
+    for (auto idx = newMediaList.size(); idx < remoteMediaList.size(); idx++)
+        newMediaList.emplace_back(remoteMediaList[idx]);
 
     // NOTE:
     // Since this is a conference, newly added media will be also
@@ -596,26 +629,8 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     // This also means that if original call was an audio-only call,
     // the local camera will be enabled, unless the video is disabled
     // in the account settings.
-
-    std::vector<DRing::MediaMap> newMediaList;
-    newMediaList.reserve(remoteMediaList.size());
-    for (auto const& media : call->getMediaAttributeList()) {
-        newMediaList.emplace_back(MediaAttribute::toMediaMap(media));
-    }
-
-    if (remoteMediaList.size() > newMediaList.size()) {
-        for (auto idx = newMediaList.size(); idx < remoteMediaList.size(); idx++) {
-            newMediaList.emplace_back(remoteMediaList[idx]);
-        }
-    }
-
     call->answerMediaChangeRequest(newMediaList);
     call->enterConference(shared_from_this());
-
-    if (updateMixer and getState() == Conference::State::ACTIVE_ATTACHED) {
-        detachLocalParticipant();
-        attachLocalParticipant();
-    }
 }
 
 void
@@ -673,8 +688,7 @@ Conference::addParticipant(const std::string& participant_id)
         if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
             videoMixer_->addAudioOnlySource(call->getCallId(),
                                             sip_utils::streamId(call->getCallId(),
-                                                                0,
-                                                                MediaType::MEDIA_AUDIO));
+                                                                sip_utils::DEFAULT_AUDIO_STREAMID));
         }
         call->enterConference(shared_from_this());
         // Continue the recording for the conference if one participant was recording
@@ -702,12 +716,12 @@ Conference::setActiveParticipant(const std::string& participant_id)
     if (!videoMixer_)
         return;
     if (isHost(participant_id)) {
-        videoMixer_->setActiveStream(sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
+        videoMixer_->setActiveStream(sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID));
         return;
     }
     if (auto call = getCallFromPeerID(participant_id)) {
         videoMixer_->setActiveStream(
-            sip_utils::streamId(call->getCallId(), 0, MediaType::MEDIA_VIDEO));
+            sip_utils::streamId(call->getCallId(), sip_utils::DEFAULT_VIDEO_STREAMID));
         return;
     }
 
@@ -841,7 +855,7 @@ Conference::removeParticipant(const std::string& participant_id)
         // Remove if active
         // TODO all streams
         if (videoMixer_->verifyActive(
-                sip_utils::streamId(participant_id, 0, MediaType::MEDIA_VIDEO)))
+                sip_utils::streamId(participant_id, sip_utils::DEFAULT_VIDEO_STREAMID)))
             videoMixer_->resetActiveStream();
         call->exitConference();
         if (call->isPeerRecording())
@@ -907,8 +921,6 @@ Conference::detachLocalParticipant()
         if (videoMixer_)
             videoMixer_->stopInputs();
 #endif
-        hostSources_.clear();
-        setState(State::ACTIVE_DETACHED);
     } else {
         JAMI_WARN(
             "Invalid conference state in detach participant: current \"%s\" - expected \"%s\"",
