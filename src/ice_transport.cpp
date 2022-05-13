@@ -1005,6 +1005,7 @@ IceTransport::Impl::addServerReflexiveCandidates(
     }
 
     stun.cfg.user_mapping_cnt = compCount_;
+    JAMI_ERR() << "@@@" << PJ_ICE_MAX_COMP << " vs " << stun.cfg.user_mapping_cnt;
     assert(stun.cfg.user_mapping_cnt <= PJ_ICE_MAX_COMP);
 }
 
