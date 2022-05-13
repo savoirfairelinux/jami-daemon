@@ -127,6 +127,7 @@ protected:
     void audio_and_video_then_caller_mute_audio();
     void audio_and_video_answer_muted_video_then_mute_video();
     void audio_and_video_then_change_video_source();
+    void negotiate_2_videos_1_audio();
 
     // Event/Signal handlers
     static void onCallStateChange(const std::string& accountId,
@@ -213,6 +214,7 @@ private:
     CPPUNIT_TEST(audio_and_video_then_caller_mute_audio);
     CPPUNIT_TEST(audio_and_video_answer_muted_video_then_mute_video);
     CPPUNIT_TEST(audio_and_video_then_change_video_source);
+    CPPUNIT_TEST(negotiate_2_videos_1_audio);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -293,6 +295,7 @@ private:
     CPPUNIT_TEST(audio_and_video_then_caller_mute_audio);
     CPPUNIT_TEST(audio_and_video_answer_muted_video_then_mute_video);
     CPPUNIT_TEST(audio_and_video_then_change_video_source);
+    CPPUNIT_TEST(negotiate_2_videos_1_audio);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1133,6 +1136,56 @@ MediaNegotiationTest::audio_and_video_then_change_video_source()
 
     scenario.expectMediaRenegotiation_ = true;
     scenario.expectMediaChangeRequest_ = false;
+
+    testWithScenario(callDataMap_["ALICE"], callDataMap_["BOB"], scenario);
+
+    DRing::unregisterSignalHandlers();
+
+    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+}
+
+void
+MediaNegotiationTest::negotiate_2_videos_1_audio()
+{
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
+    configureScenario();
+
+    MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
+    defaultAudio.label_ = "audio_0";
+    defaultAudio.enabled_ = true;
+
+    MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
+    defaultVideo.label_ = "video_0";
+    defaultVideo.sourceUri_ = "foo";
+    defaultVideo.enabled_ = true;
+
+    MediaAttribute defaultVideo2(MediaType::MEDIA_VIDEO);
+    defaultVideo2.label_ = "video_1";
+    defaultVideo2.sourceUri_ = "bar";
+    defaultVideo2.enabled_ = true;
+
+    MediaAttribute audio(defaultAudio);
+    MediaAttribute video(defaultVideo);
+    MediaAttribute video2(defaultVideo2);
+
+    TestScenario scenario;
+    // First offer/answer
+    scenario.offer_.emplace_back(audio);
+    scenario.offer_.emplace_back(video);
+    scenario.answer_.emplace_back(audio);
+    scenario.answer_.emplace_back(video);
+
+    // Update offer/answer with 2 videos
+    scenario.offerUpdate_.emplace_back(audio);
+    scenario.offerUpdate_.emplace_back(video);
+    scenario.offerUpdate_.emplace_back(video2);
+    scenario.answerUpdate_.emplace_back(audio);
+    scenario.answerUpdate_.emplace_back(video);
+    scenario.answerUpdate_.emplace_back(video2);
+
+    scenario.expectMediaRenegotiation_ = true;
+    scenario.expectMediaChangeRequest_ = true;
 
     testWithScenario(callDataMap_["ALICE"], callDataMap_["BOB"], scenario);
 
