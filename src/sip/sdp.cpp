@@ -1021,7 +1021,7 @@ Sdp::clearIce(pjmedia_sdp_session* session)
 }
 
 std::vector<MediaAttribute>
-Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession)
+Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ignoreDisabled)
 {
     if (sdpSession == nullptr) {
         return {};
@@ -1050,6 +1050,11 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession)
 
         // Set enabled flag
         mediaAttr.enabled_ = media->desc.port > 0;
+
+        if (!mediaAttr.enabled_ && ignoreDisabled) {
+            mediaList.pop_back();
+            continue;
+        }
 
         // Get mute state.
         auto direction = getMediaDirection(media);

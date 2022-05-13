@@ -133,6 +133,7 @@ public:
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
     bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList) override;
+    std::vector<std::map<std::string, std::string>> currentMediaList() const override;
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
     void removeCall() override;
@@ -412,6 +413,8 @@ private:
     std::string peerUserAgent_ {};
     // Flag to indicate if the peer's Daemon version supports multi-stream.
     bool peerSupportMultiStream_ {false};
+    // Flag to indicate if the peer's Daemon version can negotiate more than 2 ICE medias
+    bool peerSupportMultiIce_ {false};
 
     // Flag to indicate if the peer's Daemon version supports re-invite
     // without ICE renegotiation.
