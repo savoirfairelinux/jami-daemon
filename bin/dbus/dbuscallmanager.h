@@ -120,6 +120,7 @@ public:
     std::string getConferenceId(const std::string& accountId, const std::string& callId);
     std::map<std::string, std::string> getConferenceDetails(const std::string& accountId,
                                                             const std::string& confId);
+    std::vector<std::map<std::string, std::string>> currentMediaList(const std::string& accountId, const std::string& callId);
     bool startRecordedFilePlayback(const std::string& filepath);
     void stopRecordedFilePlayback();
     bool toggleRecording(const std::string& accountId, const std::string& callId);

@@ -369,7 +369,18 @@ public:
                     const bool& state);
     void updateMuted();
 
-    std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
+    std::shared_ptr<Call> getCallFromPeerID(std::string_view peerId);
+
+    /**
+     * Announce to the client that medias are successfully negotiated
+     */
+    void reportMediaNegotiationStatus();
+
+    /**
+     * Retrieve current medias list
+     * @return current active medias
+     */
+    std::vector<std::map<std::string, std::string>> currentMediaList() const;
 
 private:
     std::weak_ptr<Conference> weak()
@@ -418,6 +429,7 @@ private:
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
     bool isHostDevice(std::string_view deviceId) const;
+
 
     /**
      * If the local host is participating in the conference (attached
