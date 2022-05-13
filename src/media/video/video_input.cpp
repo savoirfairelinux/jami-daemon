@@ -535,12 +535,16 @@ VideoInput::initFile(std::string path)
     return false;
 }
 
+void
+VideoInput::restart()
+{
+    if (loop_.isStopping())
+        switchInput(currentResource_);
+}
+
 std::shared_future<DeviceParams>
 VideoInput::switchInput(const std::string& resource)
 {
-    if (resource == currentResource_)
-        return futureDecOpts_;
-
     JAMI_DBG("MRL: '%s'", resource.c_str());
 
     if (switchPending_.exchange(true)) {
