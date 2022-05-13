@@ -500,24 +500,7 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  mediaAttr.toString(true).c_str());
     }
 
-    // NOTE:
-    // The current design support only one stream per media type. The
-    // request will be ignored if this condition is not respected.
-    for (auto mediaType : {MediaType::MEDIA_AUDIO, MediaType::MEDIA_VIDEO}) {
-        auto count = std::count_if(mediaAttrList.begin(),
-                                   mediaAttrList.end(),
-                                   [&mediaType](auto const& attr) {
-                                       return attr.type_ == mediaType;
-                                   });
-
-        if (count > 1) {
-            JAMI_ERR("[conf %s] Cant handle more than 1 stream per media type (found %lu)",
-                     getConfId().c_str(),
-                     count);
-            return false;
-        }
-    }
-
+    auto videoIdx = 0;
     for (auto const& mediaAttr : mediaAttrList) {
 #ifdef ENABLE_VIDEO
         auto& mediaSource = mediaAttr.type_ == MediaType::MEDIA_AUDIO ? hostAudioSource_
@@ -528,11 +511,11 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
         if (not mediaAttr.sourceUri_.empty() and mediaSource.sourceUri_ != mediaAttr.sourceUri_) {
             // For now, only video source URI can be changed by the client,
             // so it's an error if we get here and the type is not video.
-            if (mediaAttr.type_ != MediaType::MEDIA_VIDEO) {
+            /*if (mediaAttr.type_ != MediaType::MEDIA_VIDEO) {
                 JAMI_ERR("[conf %s] Media source can be changed only for video!",
                          getConfId().c_str());
                 return false;
-            }
+            }*/
 
             mediaSource.sourceUri_ = mediaAttr.sourceUri_;
             mediaSource.sourceType_ = mediaAttr.sourceType_;
@@ -545,8 +528,16 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                                   ? DRing::Media::Details::MEDIA_TYPE_AUDIO
                                   : DRing::Media::Details::MEDIA_TYPE_VIDEO);
             } else {
-                switchInput(mediaSource.sourceUri_);
+                // TODO vector for videoMixer in inputs/outputs
+                if (videoIdx != 0)
+                    switchSecondaryInput(mediaSource.sourceUri_);
+                else
+                    switchInput(mediaSource.sourceUri_);
             }
+        }
+
+        if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
+            ++videoIdx;
         }
 
         // Update the mute state if changed.
