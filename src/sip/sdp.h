@@ -179,7 +179,7 @@ public:
                                                        bool remote) const;
 
     static std::vector<MediaAttribute> getMediaAttributeListFromSdp(
-        const pjmedia_sdp_session* sdpSession);
+        const pjmedia_sdp_session* sdpSession, bool ignoreDisabled = false);
 
     using MediaSlot = std::pair<MediaDescription, MediaDescription>;
     std::vector<MediaSlot> getMediaSlots() const;
