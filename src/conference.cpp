@@ -345,6 +345,18 @@ Conference::setLocalHostDefaultMediaSource()
         hostSources_.emplace_back(videoAttr);
     }
 #endif
+
+    reportNegStatus();
+}
+
+void
+Conference::reportNegStatus()
+{
+    // TODO getter for client
+    emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
+        getConfId(),
+        DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
+        MediaAttribute::mediaAttributesToMediaMaps(hostSources_));
 }
 
 #ifdef ENABLE_PLUGIN
@@ -537,9 +549,6 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  mediaAttr.toString(true).c_str());
     }
 
-    if (videoMixer_)
-        videoMixer_->stopInputs();
-
     std::vector<std::string> newVideoInputs;
     for (auto const& mediaAttr : mediaAttrList) {
         // Find media
@@ -566,6 +575,8 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
     if (videoMixer_)
         videoMixer_->switchInputs(newVideoInputs);
     hostSources_ = mediaAttrList; // New medias
+
+    reportNegStatus();
     return true;
 }
 
@@ -596,20 +607,7 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     // This also means that if original call was an audio-only call,
     // the local camera will be enabled, unless the video is disabled
     // in the account settings.
-
-    std::vector<DRing::MediaMap> newMediaList;
-    newMediaList.reserve(remoteMediaList.size());
-    for (auto const& media : call->getMediaAttributeList()) {
-        newMediaList.emplace_back(MediaAttribute::toMediaMap(media));
-    }
-
-    if (remoteMediaList.size() > newMediaList.size()) {
-        for (auto idx = newMediaList.size(); idx < remoteMediaList.size(); idx++) {
-            newMediaList.emplace_back(remoteMediaList[idx]);
-        }
-    }
-
-    call->answerMediaChangeRequest(newMediaList);
+    call->answerMediaChangeRequest(remoteMediaList);
     call->enterConference(shared_from_this());
 
     if (updateMixer and getState() == Conference::State::ACTIVE_ATTACHED) {
@@ -901,8 +899,6 @@ Conference::detachLocalParticipant()
         if (videoMixer_)
             videoMixer_->stopInputs();
 #endif
-        hostSources_.clear();
-        setState(State::ACTIVE_DETACHED);
     } else {
         JAMI_WARN(
             "Invalid conference state in detach participant: current \"%s\" - expected \"%s\"",

@@ -82,12 +82,6 @@ public:
      */
     void switchInputs(const std::vector<std::string>& inputs);
     /**
-     * Update one specific output
-     * @param input     New input for this index
-     * @param idx       Media's index
-     */
-    void switchInput(const std::string& input, unsigned idx);
-    /**
      * Stop all inputs
      */
     void stopInputs();
