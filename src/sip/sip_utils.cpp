@@ -294,11 +294,11 @@ sip_strerror(pj_status_t code)
 }
 
 std::string
-streamId(const std::string& callId, uint32_t idx, MediaType mt)
+streamId(const std::string& callId, std::string_view label)
 {
     if (callId.empty())
-        return fmt::format("host_{}_{}", (mt == MediaType::MEDIA_VIDEO ? "video" : "audio"), idx);
-    return fmt::format("{}_{}_{}", callId, (mt == MediaType::MEDIA_VIDEO ? "video" : "audio"), idx);
+        return fmt::format("host_{}", label);
+    return fmt::format("{}_{}", callId, label);
 }
 
 void
