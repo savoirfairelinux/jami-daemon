@@ -88,6 +88,9 @@ static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
 static constexpr auto MULTISTREAM_REQUIRED_VERSION_STR = "10.0.2"sv;
 static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION
     = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
+static constexpr auto MULTIICE_REQUIRED_VERSION_STR = "13.3.0"sv;
+static const std::vector<unsigned> MULTIICE_REQUIRED_VERSION
+    = split_string_to_unsigned(MULTIICE_REQUIRED_VERSION_STR, '.');
 static constexpr auto NEW_CONFPROTOCOL_VERSION_STR = "13.1.0"sv;
 static const std::vector<unsigned> NEW_CONFPROTOCOL_VERSION
     = split_string_to_unsigned(NEW_CONFPROTOCOL_VERSION_STR, '.');
@@ -100,7 +103,6 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  Call::CallType type,
                  const std::vector<DRing::MediaMap>& mediaList)
     : Call(account, callId, type)
-    , peerSupportMultiStream_(false)
     , sdp_(new Sdp(callId))
     , enableIce_(account->isIceForMediaEnabled())
     , srtpEnabled_(account->isSrtpEnabled())
@@ -1683,6 +1685,17 @@ SIPCall::setPeerUaVersion(std::string_view ua)
             (int) MULTISTREAM_REQUIRED_VERSION_STR.size(),
             MULTISTREAM_REQUIRED_VERSION_STR.data());
     }
+    // Check if peer's version is at least 13.3.0 to enable multi-ICE.
+    peerSupportMultiIce_ = Account::meetMinimumRequiredVersion(peerVersion,
+                                                                  MULTIICE_REQUIRED_VERSION);
+    if (not peerSupportMultiIce_) {
+        JAMI_DBG(
+            "Peer's version [%.*s] does not support more than 2 ICE medias. Min required version: [%.*s]",
+            (int) version.size(),
+            version.data(),
+            (int) MULTIICE_REQUIRED_VERSION_STR.size(),
+            MULTIICE_REQUIRED_VERSION_STR.data());
+    }
 
     // Check if peer's version supports re-invite without ICE renegotiation.
     peerSupportReuseIceInReinv_
@@ -2320,8 +2333,17 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
         }
     }
 
-    if (mediaAttrList.size() < rtpStreams_.size())
+    if (mediaAttrList.size() < rtpStreams_.size()) {
+#ifdef ENABLE_VIDEO
+        // If new medias list got more medias than current size, we can remove old medias from ocnference
+        for (auto i = mediaAttrList.size(); i < rtpStreams_.size(); ++i) {
+            auto& stream = rtpStreams_[i];
+            if (stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
+                std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->exitConference();
+        }
+#endif
         rtpStreams_.resize(mediaAttrList.size());
+    }
     return true;
 }
 
@@ -2394,7 +2416,6 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
 {
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
-    // TODO. is the right place?
     // Disable video if disabled in the account.
     auto account = getSIPAccount();
     if (not account) {
@@ -2423,6 +2444,36 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
         return false;
     }
 
+
+    // If peer doesn't support multiple ice, keep only the last audio/video
+    // This keep the old behaviour (if sharing both camera + sharing a file, will keep the shared file)
+    std::vector<MediaAttribute> newList;
+    if (!peerSupportMultiIce_) {
+        if (mediaList.size() != 2)
+            JAMI_WARN("[call:%s] Peer does not support more than 2 ICE medias. Media change request modified",
+                    getCallId().c_str());
+        MediaAttribute audioAttr;
+        MediaAttribute videoAttr;
+        auto hasVideo = false, hasAudio = false;
+        for (auto it = mediaAttrList.rbegin(); it != mediaAttrList.rend(); ++it) {
+            if (it->type_ == MediaType::MEDIA_VIDEO && !hasVideo) {
+                videoAttr = *it;
+                videoAttr.label_ = "video_0";
+                hasVideo = true;
+            } else if (it->type_ == MediaType::MEDIA_AUDIO && !hasAudio) {
+                audioAttr = *it;
+                audioAttr.label_ = "audio_0";
+                hasAudio = true;
+            }
+            if (hasVideo && hasAudio)
+                break;
+        }
+        mediaAttrList.clear();
+        // Note: use the order VIDEO/AUDIO to avoid reinvite.
+        if (hasVideo)
+            mediaAttrList.emplace_back(videoAttr);
+        mediaAttrList.emplace_back(audioAttr);
+    }
     JAMI_DBG("[call:%s] Requesting media change. List of new media:", getCallId().c_str());
 
     unsigned idx = 0;
@@ -2444,11 +2495,18 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  getCallId().c_str());
         requestReinvite(mediaAttrList, needNewIce);
     } else {
-        JAMI_WARN("[call:%s] Media change DOES NOT require a new negotiation (re-invite)",
+        JAMI_DBG("[call:%s] Media change DOES NOT require a new negotiation (re-invite)",
                   getCallId().c_str());
+        reportMediaNegotiationStatus();
     }
 
     return true;
+}
+
+std::vector<std::map<std::string, std::string>>
+SIPCall::currentMediaList() const
+{
+    return MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList());
 }
 
 std::vector<MediaAttribute>
@@ -2515,7 +2573,7 @@ SIPCall::reportMediaNegotiationStatus()
     emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
         callId,
         DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
-        MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
+        currentMediaList());
 }
 
 void
@@ -2700,7 +2758,14 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
 
     sdp_->setReceivedOffer(offer);
 
-    auto const& mediaAttrList = Sdp::getMediaAttributeListFromSdp(offer);
+    // Note: For multistream, here we must ignore disabled remote medias, because
+    // we will answer from our medias and remote enabled medias.
+    // Example: if remote disables its camera and share its screen, the offer will
+    // have an active and a disabled media (with port = 0).
+    // In this case, if we have only one video, we can just negotiate 1 video instead of 2
+    // with 1 disabled.
+    // cf. pjmedia_sdp_neg_modify_local_offer2 for more details.
+    auto const& mediaAttrList = Sdp::getMediaAttributeListFromSdp(offer, true);
     if (mediaAttrList.empty()) {
         JAMI_WARN("[call:%s] Media list is empty, ignoring", getCallId().c_str());
         return res;
@@ -3183,6 +3248,7 @@ SIPCall::merge(Call& call)
     localVideoPort_ = subcall.localVideoPort_;
     peerUserAgent_ = subcall.peerUserAgent_;
     peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
+    peerSupportMultiIce_ = subcall.peerSupportMultiIce_;
     peerAllowedMethods_ = subcall.peerAllowedMethods_;
     peerSupportReuseIceInReinv_ = subcall.peerSupportReuseIceInReinv_;
 
