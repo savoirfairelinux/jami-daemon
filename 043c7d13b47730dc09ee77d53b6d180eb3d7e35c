@@ -69,6 +69,24 @@
       "parentUuid": "4f2fe60e_b6c7d546",
       "revId": "043c7d13b47730dc09ee77d53b6d180eb3d7e35c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "58a07c19_ff08ccb6",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-16T20:12:59Z",
+      "side": 1,
+      "message": "The use-case is the commit title : it allows clients to observe child sinks if the parent sink has no observer.\n\nIn practice, this allows the client to observe conference participants without observing the mixer.\n\nAbout the cleanup: this commit fixes a broken use-case that prevents video-split to work on Android. I updated the commit message to clarify the intent.",
+      "parentUuid": "04a24bc2_5e207512",
+      "revId": "043c7d13b47730dc09ee77d53b6d180eb3d7e35c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
