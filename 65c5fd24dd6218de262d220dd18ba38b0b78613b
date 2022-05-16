@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a8560299_16eb825c",
+        "filename": "src/jami/tracepoint-def.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-16T06:19:23Z",
+      "side": 1,
+      "message": "small indent error, else lgtm",
+      "range": {
+        "startLine": 119,
+        "startChar": 3,
+        "endLine": 119,
+        "endChar": 10
+      },
+      "revId": "65c5fd24dd6218de262d220dd18ba38b0b78613b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
