@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a7b863bc_c592cd02",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-16T09:37:14Z",
+      "side": 1,
+      "message": "yeah agreed (needs some changes in the videoMixer)",
+      "parentUuid": "ed83a40d_8521c31e",
+      "range": {
+        "startLine": 118,
+        "startChar": 20,
+        "endLine": 118,
+        "endChar": 89
+      },
+      "revId": "3e92b5967f18193f2f31ee4d13a061c431f0972f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f3384785_1ef0e407",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-05-13T18:19:09Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 149,
+        "startChar": 25,
+        "endLine": 149,
+        "endChar": 94
+      },
+      "revId": "3e92b5967f18193f2f31ee4d13a061c431f0972f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e31591d_4a059b2d",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-16T09:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f3384785_1ef0e407",
       "range": {
         "startLine": 149,
         "startChar": 25,
@@ -64,6 +112,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cce9c4e0_23582030",
+        "filename": "src/media/rtp_session.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-16T09:37:14Z",
+      "side": 1,
+      "message": "In fact, streamId and callId are separated concepts and I prefer to keep them as separated as possible. StreamId may not have the callId in the future",
+      "parentUuid": "4ea11d9d_a9d43378",
+      "revId": "3e92b5967f18193f2f31ee4d13a061c431f0972f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b3c6fdaa_120be993",
@@ -77,6 +143,30 @@
       "writtenOn": "2022-05-13T18:20:36Z",
       "side": 1,
       "message": "duplicate streamId_?",
+      "range": {
+        "startLine": 90,
+        "startChar": 4,
+        "endLine": 92,
+        "endChar": 26
+      },
+      "revId": "3e92b5967f18193f2f31ee4d13a061c431f0972f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e5fe1ac2_9fb0d55f",
+        "filename": "src/media/rtp_session.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-16T09:37:14Z",
+      "side": 1,
+      "message": "indeed",
+      "parentUuid": "b3c6fdaa_120be993",
       "range": {
         "startLine": 90,
         "startChar": 4,
