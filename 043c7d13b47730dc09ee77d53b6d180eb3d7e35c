@@ -51,6 +51,24 @@
       "parentUuid": "274ca2ac_0421cb95",
       "revId": "043c7d13b47730dc09ee77d53b6d180eb3d7e35c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "04a24bc2_5e207512",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-16T16:46:10Z",
+      "side": 1,
+      "message": "right, used by iOS. \nThis method was already messy, it\u0027s worse now. It\u0027s not even mentioned what use case (or bugfix) we trying the solve.\nThe clean-up should be done first, at least for this method.",
+      "parentUuid": "4f2fe60e_b6c7d546",
+      "revId": "043c7d13b47730dc09ee77d53b6d180eb3d7e35c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
