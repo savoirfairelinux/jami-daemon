@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7aa05aa3_630e5580",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-16T08:50:56Z",
+      "side": 1,
+      "message": "what bug is solved with this patch? Something with video-split on android?",
+      "range": {
+        "startLine": 7,
+        "startChar": 3,
+        "endLine": 7,
+        "endChar": 54
+      },
+      "revId": "9b3a286ff0f633c975a5d0a5276c065ecb3812e3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9f7f0a65_36e3195b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-16T08:50:56Z",
+      "side": 1,
+      "message": "Code seems correct and doesn\u0027t break client-qt",
+      "revId": "9b3a286ff0f633c975a5d0a5276c065ecb3812e3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
