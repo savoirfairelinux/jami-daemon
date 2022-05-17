@@ -119,7 +119,7 @@ private:
 
 #ifdef DEBUG_FPS
     unsigned frameCount_;
-    std::chrono::time_point<std::chrono::system_clock> lastFrameDebug_;
+    std::chrono::steady_clock::time_point lastFrameDebug_;
 #endif
 
 #if HAVE_SHM
