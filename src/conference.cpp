@@ -155,7 +155,8 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                         isModeratorMuted = shared->isMuted(streamId);
                         if (auto videoMixer = shared->videoMixer_)
                             active = videoMixer->verifyActive(streamId);
-                        if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(streamInfo.callId))) {
+                        if (auto call = std::dynamic_pointer_cast<SIPCall>(
+                                getCall(streamInfo.callId))) {
                             uri = call->getPeerNumber();
                             isLocalMuted = call->isPeerMuted();
                             if (auto* transport = call->getTransport())
@@ -212,21 +213,17 @@ Conference::Conference(const std::shared_ptr<Account>& account)
     parser_.onHangupParticipant([&](const auto& accountUri, const auto& deviceId) {
         hangupParticipant(accountUri, deviceId);
     });
-    parser_.onRaiseHand(
-        [&](const auto& deviceId, bool state) { setHandRaised(deviceId, state); });
-    parser_.onSetActiveStream([&](const auto& streamId, bool state) {
-        setActiveStream(streamId, state);
-    });
-    parser_.onMuteStreamAudio
-    (
+    parser_.onRaiseHand([&](const auto& deviceId, bool state) { setHandRaised(deviceId, state); });
+    parser_.onSetActiveStream(
+        [&](const auto& streamId, bool state) { setActiveStream(streamId, state); });
+    parser_.onMuteStreamAudio(
         [&](const auto& accountUri, const auto& deviceId, const auto& streamId, bool state) {
             muteStream(accountUri, deviceId, streamId, state);
         });
     parser_.onSetLayout([&](int layout) { setLayout(layout); });
 
     // Version 0, deprecated
-    parser_.onKickParticipant(
-        [&](const auto& participantId) { hangupParticipant(participantId); });
+    parser_.onKickParticipant([&](const auto& participantId) { hangupParticipant(participantId); });
     parser_.onSetActiveParticipant(
         [&](const auto& participantId) { setActiveParticipant(participantId); });
     parser_.onMuteParticipant(
@@ -371,7 +368,7 @@ Conference::createConfAVStreams()
         createConfAVStream(receiveStreamData, *videoMixer_, receiveSubject);
 
         // Preview
-        if (auto& videoPreview = videoMixer_->getVideoLocal()) {
+        if (auto videoPreview = videoMixer_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
             StreamData previewStreamData {getConfId(),
                                           false,
@@ -541,24 +538,7 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  mediaAttr.toString(true).c_str());
     }
 
-    // NOTE:
-    // The current design support only one stream per media type. The
-    // request will be ignored if this condition is not respected.
-    for (auto mediaType : {MediaType::MEDIA_AUDIO, MediaType::MEDIA_VIDEO}) {
-        auto count = std::count_if(mediaAttrList.begin(),
-                                   mediaAttrList.end(),
-                                   [&mediaType](auto const& attr) {
-                                       return attr.type_ == mediaType;
-                                   });
-
-        if (count > 1) {
-            JAMI_ERR("[conf %s] Cant handle more than 1 stream per media type (found %lu)",
-                     getConfId().c_str(),
-                     count);
-            return false;
-        }
-    }
-
+    uint32_t videoIdx = 0;
     for (auto const& mediaAttr : mediaAttrList) {
 #ifdef ENABLE_VIDEO
         auto& mediaSource = mediaAttr.type_ == MediaType::MEDIA_AUDIO ? hostAudioSource_
@@ -586,8 +566,9 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                                   ? DRing::Media::Details::MEDIA_TYPE_AUDIO
                                   : DRing::Media::Details::MEDIA_TYPE_VIDEO);
             } else {
-                switchInput(mediaSource.sourceUri_);
+                videoMixer_->switchInput(mediaAttr.sourceUri_, videoIdx);
             }
+            videoIdx++;
         }
 
         // Update the mute state if changed.
@@ -610,12 +591,15 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
 
 #ifdef ENABLE_VIDEO
     // If the new media list has video, remove the participant from audioonlylist.
-    if (videoMixer_ && MediaAttribute::hasMediaType(
-            MediaAttribute::buildMediaAttributesList(remoteMediaList, false),
-            MediaType::MEDIA_VIDEO)) {
+    if (videoMixer_
+        && MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
+                                                                                 false),
+                                        MediaType::MEDIA_VIDEO)) {
         auto callId = call->getCallId();
         videoMixer_->removeAudioOnlySource(callId,
-            std::string(sip_utils::streamId(callId, 0, MediaType::MEDIA_VIDEO)));
+                                           std::string(sip_utils::streamId(callId,
+                                                                           0,
+                                                                           MediaType::MEDIA_VIDEO)));
     }
 #endif
 
@@ -704,7 +688,10 @@ Conference::addParticipant(const std::string& participant_id)
         // call, it must be listed in the audioonlylist.
         auto mediaList = call->getMediaAttributeList();
         if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
-            videoMixer_->addAudioOnlySource(call->getCallId(), sip_utils::streamId(call->getCallId(), 0, MediaType::MEDIA_AUDIO));
+            videoMixer_->addAudioOnlySource(call->getCallId(),
+                                            sip_utils::streamId(call->getCallId(),
+                                                                0,
+                                                                MediaType::MEDIA_AUDIO));
         }
         call->enterConference(shared_from_this());
         // Continue the recording for the conference if one participant was recording
@@ -736,7 +723,8 @@ Conference::setActiveParticipant(const std::string& participant_id)
         return;
     }
     if (auto call = getCallFromPeerID(participant_id)) {
-        videoMixer_->setActiveStream(sip_utils::streamId(call->getCallId(), 0, MediaType::MEDIA_VIDEO));
+        videoMixer_->setActiveStream(
+            sip_utils::streamId(call->getCallId(), 0, MediaType::MEDIA_VIDEO));
         return;
     }
 
@@ -869,7 +857,8 @@ Conference::removeParticipant(const std::string& participant_id)
         auto sinkId = getConfId() + peerId;
         // Remove if active
         // TODO all streams
-        if (videoMixer_->verifyActive(sip_utils::streamId(participant_id, 0, MediaType::MEDIA_VIDEO)))
+        if (videoMixer_->verifyActive(
+                sip_utils::streamId(participant_id, 0, MediaType::MEDIA_VIDEO)))
             videoMixer_->resetActiveStream();
         call->exitConference();
         if (call->isPeerRecording())
@@ -904,9 +893,10 @@ Conference::attachLocalParticipant()
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
-            videoMixer_->switchInput(hostVideoSource_.sourceUri_);
+            std::vector<std::string> videoInputs = {hostVideoSource_.sourceUri_};
             if (not mediaSecondaryInput_.empty())
-                videoMixer_->switchSecondaryInput(mediaSecondaryInput_);
+                videoInputs.emplace_back(mediaSecondaryInput_);
+            videoMixer_->switchInputs(videoInputs);
         }
 #endif
     } else {
@@ -933,7 +923,7 @@ Conference::detachLocalParticipant()
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_)
-            videoMixer_->stopInput();
+            videoMixer_->stopInputs();
 
         // Reset local video source
         hostVideoSource_ = {};
@@ -1054,10 +1044,10 @@ Conference::switchInput(const std::string& input)
         return;
 
     if (auto mixer = videoMixer_) {
-        mixer->switchInput(input);
+        mixer->switchInputs({input});
 #ifdef ENABLE_PLUGIN
         // Preview
-        if (auto& videoPreview = mixer->getVideoLocal()) {
+        if (auto videoPreview = mixer->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
             StreamData previewStreamData {getConfId(),
                                           false,
@@ -1067,17 +1057,6 @@ Conference::switchInput(const std::string& input)
             createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
         }
 #endif
-    }
-#endif
-}
-
-void
-Conference::switchSecondaryInput(const std::string& input)
-{
-#ifdef ENABLE_VIDEO
-    mediaSecondaryInput_ = input;
-    if (videoMixer_) {
-        videoMixer_->switchSecondaryInput(input);
     }
 #endif
 }
@@ -1518,13 +1497,13 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         setLocalHostMuteState(MediaType::MEDIA_VIDEO, is_muted);
         if (is_muted) {
             if (auto mixer = videoMixer_) {
-                JAMI_DBG("Muting local video source");
-                mixer->stopInput();
+                JAMI_DBG("Muting local video sources");
+                mixer->stopInputs();
             }
         } else {
             if (auto mixer = videoMixer_) {
                 JAMI_DBG("Un-muting local video source");
-                switchInput(hostVideoSource_.sourceUri_);
+                mixer->switchInputs({hostVideoSource_.sourceUri_});
             }
         }
         emitSignal<DRing::CallSignal::VideoMuted>(id_, is_muted);
