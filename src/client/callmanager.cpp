@@ -457,12 +457,7 @@ switchSecondaryInput(const std::string& accountId,
                      const std::string& confId,
                      const std::string& resource)
 {
-    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
-        if (auto conf = account->getConference(confId)) {
-            conf->switchSecondaryInput(resource);
-            return true;
-        }
-    }
+    JAMI_ERR("Use requestMediaChange");
     return false;
 }
 
