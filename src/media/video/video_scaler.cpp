@@ -42,14 +42,12 @@ VideoScaler::~VideoScaler()
 
 void
 VideoScaler::scale(const VideoFrame& input, VideoFrame& output){
-    scale(input, output.pointer());
+    scale(input.pointer(), output.pointer());
 }
 
 void
-VideoScaler::scale(const VideoFrame& input, AVFrame* output_frame)
+VideoScaler::scale(const AVFrame* input_frame, AVFrame* output_frame)
 {
-    const auto input_frame = input.pointer();
-
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
                                 input_frame->height,

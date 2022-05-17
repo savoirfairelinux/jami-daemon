@@ -70,6 +70,21 @@ public:
     void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
                 const std::shared_ptr<jami::MediaFrame>&) override;
 
+    void sendFrameDirect(const std::shared_ptr<jami::MediaFrame>&);
+    void sendFrameScaled(AVFrame* frame);
+
+    /**
+     * Apply required transformations before sending frame to clients/observers:
+     * -  Transfer the frame from gpu to main memory, if needed.
+     *    Doing this here prevents multiple copies of the same frame later,
+     *    by clients and/or observers.
+     * - Rotate the frame if needed.
+     * 
+     * @param frame 
+     * @return std::shared_ptr<VideoFrame> 
+     */
+    std::shared_ptr<VideoFrame> applyTransform(VideoFrame& frame);
+
     bool start() noexcept;
     bool stop() noexcept;
 
