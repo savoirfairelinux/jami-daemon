@@ -86,9 +86,11 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput)
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
 {
     // Local video camera is the main participant
-    if (not localInput.empty())
-        videoLocal_ = getVideoInput(localInput);
-    attachVideo(videoLocal_.get(), "", sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
+    if (not localInput.empty()) {
+        auto videoInput = getVideoInput(localInput);
+        localInputs_.emplace_back(videoInput);
+        attachVideo(videoInput.get(), "", sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
+    }
     loop_.start();
     nextProcess_ = std::chrono::steady_clock::now();
 
@@ -97,12 +99,8 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput)
 
 VideoMixer::~VideoMixer()
 {
-    stop_sink();
-
-    detachVideo(videoLocal_.get());
-    videoLocal_.reset();
-    detachVideo(videoLocalSecondary_.get());
-    videoLocalSecondary_.reset();
+    stopSink();
+    stopInputs();
 
     loop_.join();
 
@@ -110,61 +108,59 @@ VideoMixer::~VideoMixer()
 }
 
 void
-VideoMixer::switchInput(const std::string& input)
+VideoMixer::setInput(const std::string& input, uint32_t idx)
 {
-    JAMI_DBG("Set new input %s", input.c_str());
+    std::unique_lock<std::mutex> lk(localInputsMtx_);
+    if (idx < localInputs_.size())
+        stopInput(localInputs_[idx]);
+    else
+        localInputs_.resize(idx + 1);
+    localInputs_[idx] = getVideoInput(input);
+    lk.unlock();
+    attachVideo(localInputs_[idx].get(), "", sip_utils::streamId("", idx, MediaType::MEDIA_VIDEO));
+}
 
-    if (auto local = videoLocal_) {
-        // Detach videoInput from mixer
-        local->detach(this);
-#if !VIDEO_CLIENT_INPUT
-        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local)) {
-            // Stop old VideoInput
-            localInput->stopInput();
-        }
-#endif
-    }
 
-    if (input.empty()) {
-        JAMI_DBG("[mixer:%s] Input is empty, don't add it to the mixer", id_.c_str());
+void
+VideoMixer::switchInputs(const std::vector<std::string>& inputs)
+{
+    stopInputs();
+
+    if (inputs.empty()) {
+        JAMI_DBG("[mixer:%s] Inputs is empty, don't add it to the mixer", id_.c_str());
         return;
     }
 
     // Re-attach videoInput to mixer
-    videoLocal_ = getVideoInput(input);
-    attachVideo(videoLocal_.get(), "", sip_utils::streamId("", 0, MediaType::MEDIA_VIDEO));
-}
-
-void
-VideoMixer::switchSecondaryInput(const std::string& input)
-{
-    if (auto local = videoLocalSecondary_) {
-        // Detach videoInput from mixer
-        local->detach(this);
-#if !VIDEO_CLIENT_INPUT
-        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local)) {
-            // Stop old VideoInput
-            localInput->stopInput();
+    for (auto i = 0u; i != inputs.size(); ++i) {
+        auto videoInput = getVideoInput(inputs[i]);
+        {
+            std::lock_guard<std::mutex> lk(localInputsMtx_);
+            localInputs_.emplace_back(videoInput);
         }
-#endif
+        attachVideo(videoInput.get(), "", sip_utils::streamId("", i, MediaType::MEDIA_VIDEO));
     }
-
-    if (input.empty()) {
-        JAMI_DBG("[mixer:%s] Input is empty, don't add it in the mixer", id_.c_str());
-        return;
-    }
-
-    // Re-attach videoInput to mixer
-    videoLocalSecondary_ = getVideoInput(input);
-    attachVideo(videoLocalSecondary_.get(), "", sip_utils::streamId("", 1, MediaType::MEDIA_VIDEO));
 }
 
 void
-VideoMixer::stopInput()
+VideoMixer::stopInput(const std::shared_ptr<VideoFrameActiveWriter>& input)
 {
-    if (auto local = std::move(videoLocal_)) {
-        local->detach(this);
-    }
+    // Detach videoInputs from mixer
+    input->detach(this);
+#if !VIDEO_CLIENT_INPUT
+        // Stop old VideoInput
+        if (auto oldInput = std::dynamic_pointer_cast<VideoInput>(input))
+            oldInput->stopInput();
+#endif
+}
+
+void
+VideoMixer::stopInputs()
+{
+    std::lock_guard<std::mutex> lk(localInputsMtx_);
+    for (auto& input: localInputs_)
+        stopInput(input);
+    localInputs_.clear();
 }
 
 void
@@ -530,15 +526,15 @@ VideoMixer::setParameters(int width, int height, AVPixelFormat format)
     if (previous_p)
         libav_utils::fillWithBlack(previous_p->pointer());
 
-    start_sink();
+    startSink();
     updateLayout();
     startTime_ = av_gettime();
 }
 
 void
-VideoMixer::start_sink()
+VideoMixer::startSink()
 {
-    stop_sink();
+    stopSink();
 
     if (width_ == 0 or height_ == 0) {
         JAMI_WARN("[mixer:%s] MX: unable to start with zero-sized output", id_.c_str());
@@ -555,7 +551,7 @@ VideoMixer::start_sink()
 }
 
 void
-VideoMixer::stop_sink()
+VideoMixer::stopSink()
 {
     this->detach(sink_.get());
     sink_->stop();

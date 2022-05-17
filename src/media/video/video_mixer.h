@@ -75,9 +75,22 @@ public:
     void attached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
     void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
 
-    void switchInput(const std::string& input);
-    void switchSecondaryInput(const std::string& input);
-    void stopInput();
+    /**
+     * Set all inputs at once
+     * @param inputs        New inputs
+     * @note previous inputs will be stopped
+     */
+    void switchInputs(const std::vector<std::string>& inputs);
+    /**
+     * Update one specific output
+     * @param input     New input for this index
+     * @param idx       Media's index
+     */
+    void switchInput(const std::string& input, uint32_t idx);
+    /**
+     * Stop all inputs
+     */
+    void stopInputs();
 
     void setActiveStream(const std::string& id);
     void resetActiveStream()
@@ -105,7 +118,11 @@ public:
 
     MediaStream getStream(const std::string& name) const;
 
-    std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() { return videoLocal_; }
+    std::weak_ptr<VideoFrameActiveWriter> getVideoLocal() const {
+        if (!localInputs_.empty())
+            return *localInputs_.begin();
+        return {};
+    }
 
     void updateLayout();
 
@@ -152,8 +169,8 @@ private:
                        const std::shared_ptr<VideoFrame>& input,
                        int index);
 
-    void start_sink();
-    void stop_sink();
+    void startSink();
+    void stopSink();
 
     void process();
 
@@ -166,8 +183,9 @@ private:
     std::shared_ptr<SinkClient> sink_;
 
     std::chrono::time_point<std::chrono::steady_clock> nextProcess_;
-    std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
-    std::shared_ptr<VideoFrameActiveWriter> videoLocalSecondary_;
+    std::mutex localInputsMtx_;
+    std::vector<std::shared_ptr<VideoFrameActiveWriter>> localInputs_ {};
+    void stopInput(const std::shared_ptr<VideoFrameActiveWriter>& input);
 
     VideoScaler scaler_;
 
