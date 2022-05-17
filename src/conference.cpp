@@ -371,7 +371,7 @@ Conference::createConfAVStreams()
         createConfAVStream(receiveStreamData, *videoMixer_, receiveSubject);
 
         // Preview
-        if (auto& videoPreview = videoMixer_->getVideoLocal()) {
+        if (auto videoPreview = videoMixer_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
             StreamData previewStreamData {getConfId(),
                                           false,
@@ -541,24 +541,7 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  mediaAttr.toString(true).c_str());
     }
 
-    // NOTE:
-    // The current design support only one stream per media type. The
-    // request will be ignored if this condition is not respected.
-    for (auto mediaType : {MediaType::MEDIA_AUDIO, MediaType::MEDIA_VIDEO}) {
-        auto count = std::count_if(mediaAttrList.begin(),
-                                   mediaAttrList.end(),
-                                   [&mediaType](auto const& attr) {
-                                       return attr.type_ == mediaType;
-                                   });
-
-        if (count > 1) {
-            JAMI_ERR("[conf %s] Cant handle more than 1 stream per media type (found %lu)",
-                     getConfId().c_str(),
-                     count);
-            return false;
-        }
-    }
-
+    uint32_t videoIdx = 0;
     for (auto const& mediaAttr : mediaAttrList) {
 #ifdef ENABLE_VIDEO
         auto& mediaSource = mediaAttr.type_ == MediaType::MEDIA_AUDIO ? hostAudioSource_
@@ -578,16 +561,19 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
             mediaSource.sourceUri_ = mediaAttr.sourceUri_;
             mediaSource.sourceType_ = mediaAttr.sourceType_;
 
-            if (mediaSource.muted_ != mediaAttr.muted_) {
-                // If the current media source is muted, just call un-mute, it
-                // will set the new source as input.
-                muteLocalHost(mediaAttr.muted_,
-                              mediaAttr.type_ == MediaType::MEDIA_AUDIO
-                                  ? DRing::Media::Details::MEDIA_TYPE_AUDIO
-                                  : DRing::Media::Details::MEDIA_TYPE_VIDEO);
-            } else {
-                switchInput(mediaSource.sourceUri_);
+                if (mediaSource.muted_ != mediaAttr.muted_) {
+                    // If the current media source is muted, just call un-mute, it
+                    // will set the new source as input.
+                    muteLocalHost(mediaAttr.muted_,
+                                mediaAttr.type_ == MediaType::MEDIA_AUDIO
+                                    ? DRing::Media::Details::MEDIA_TYPE_AUDIO
+                                    : DRing::Media::Details::MEDIA_TYPE_VIDEO);
+                } else {
+                    videoMixer_->switchInput(mediaAttr.sourceUri_, videoIdx);
+
+                }
             }
+            videoIdx++;
         }
 
         // Update the mute state if changed.
@@ -904,9 +890,10 @@ Conference::attachLocalParticipant()
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
-            videoMixer_->switchInput(hostVideoSource_.sourceUri_);
+            std::vector<std::string> videoInputs = {hostVideoSource_.sourceUri_};
             if (not mediaSecondaryInput_.empty())
-                videoMixer_->switchSecondaryInput(mediaSecondaryInput_);
+                videoInputs.emplace_back(mediaSecondaryInput_);
+            videoMixer_->switchInputs(videoInputs);
         }
 #endif
     } else {
@@ -933,7 +920,7 @@ Conference::detachLocalParticipant()
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_)
-            videoMixer_->stopInput();
+            videoMixer_->stopInputs();
 
         // Reset local video source
         hostVideoSource_ = {};
@@ -1054,10 +1041,10 @@ Conference::switchInput(const std::string& input)
         return;
 
     if (auto mixer = videoMixer_) {
-        mixer->switchInput(input);
+        mixer->switchInputs({input});
 #ifdef ENABLE_PLUGIN
         // Preview
-        if (auto& videoPreview = mixer->getVideoLocal()) {
+        if (auto videoPreview = mixer->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
             StreamData previewStreamData {getConfId(),
                                           false,
@@ -1067,17 +1054,6 @@ Conference::switchInput(const std::string& input)
             createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
         }
 #endif
-    }
-#endif
-}
-
-void
-Conference::switchSecondaryInput(const std::string& input)
-{
-#ifdef ENABLE_VIDEO
-    mediaSecondaryInput_ = input;
-    if (videoMixer_) {
-        videoMixer_->switchSecondaryInput(input);
     }
 #endif
 }
@@ -1544,13 +1520,13 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         setLocalHostMuteState(MediaType::MEDIA_VIDEO, is_muted);
         if (is_muted) {
             if (auto mixer = videoMixer_) {
-                JAMI_DBG("Muting local video source");
-                mixer->stopInput();
+                JAMI_DBG("Muting local video sources");
+                mixer->stopInputs();
             }
         } else {
             if (auto mixer = videoMixer_) {
                 JAMI_DBG("Un-muting local video source");
-                switchInput(hostVideoSource_.sourceUri_);
+                mixer->switchInputs({hostVideoSource_.sourceUri_});
             }
         }
         emitSignal<DRing::CallSignal::VideoMuted>(id_, is_muted);
