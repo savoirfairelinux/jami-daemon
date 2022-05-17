@@ -337,12 +337,87 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 }
 
 void
+SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
+{
+    notify(frame_p);
+
+    DRing::FrameBuffer outFrame(av_frame_alloc());
+    av_frame_ref(outFrame.get(), std::static_pointer_cast<VideoFrame>(frame_p)->pointer());
+    if (crop_.w || crop_.h) {
+        outFrame->crop_top = crop_.y;
+        outFrame->crop_bottom = (size_t) outFrame->height - crop_.y - crop_.h;
+        outFrame->crop_left = crop_.x;
+        outFrame->crop_right = (size_t) outFrame->width - crop_.x - crop_.w;
+        av_frame_apply_cropping(outFrame.get(), AV_FRAME_CROP_UNALIGNED);
+    }
+    if (outFrame->height != height_ || outFrame->width != width_) {
+        setFrameSize(outFrame->width, outFrame->height);
+        return;
+    }
+    target_.push(std::move(outFrame));
+}
+
+void
+SinkClient::sendFrameTransformed(AVFrame* frame)
+{
+    if (frame->width > 0 and frame->height > 0) {
+        if (auto buffer_ptr = target_.pull()) {
+            scaler_->scale(frame, buffer_ptr.get());
+            target_.push(std::move(buffer_ptr));
+        }
+    }
+}
+
+std::shared_ptr<VideoFrame>
+SinkClient::applyTransform(VideoFrame& frame_p)
+{
+    std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
+#ifdef RING_ACCEL
+    auto desc = av_pix_fmt_desc_get((AVPixelFormat)frame_p.format());
+    if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
+        try {
+            frame = HardwareAccel::transferToMainMemory(frame_p, AV_PIX_FMT_NV12);
+        } catch (const std::runtime_error& e) {
+            JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s",
+                        this,
+                        e.what());
+            return {};
+        }
+    } else
+#endif
+        frame->copyFrom(frame_p);
+
+    int angle = frame->getOrientation();
+    if (angle != rotation_) {
+        filter_ = getTransposeFilter(angle,
+                                        FILTER_INPUT_NAME,
+                                        frame->width(),
+                                        frame->height(),
+                                        frame->format(),
+                                        false);
+        rotation_ = angle;
+    }
+    if (filter_) {
+        filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
+        frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
+    }
+    if (crop_.w || crop_.h) {
+        frame->pointer()->crop_top = crop_.y;
+        frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
+        frame->pointer()->crop_left = crop_.x;
+        frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
+        av_frame_apply_cropping(frame->pointer(), 0);
+    }
+    return frame;
+}
+
+void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
-    const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
+    std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
     ++frameCount_;
     if (seconds.count() > 1) {
         auto fps = frameCount_ / seconds.count();
@@ -354,75 +429,26 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
 
     std::unique_lock<std::mutex> lock(mtx_);
-    if (target_.push and not target_.pull) {
-        VideoFrame outFrame;
-        outFrame.copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
-        if (crop_.w || crop_.h) {
-            outFrame.pointer()->crop_top = crop_.y;
-            outFrame.pointer()->crop_bottom = (size_t) outFrame.height() - crop_.y - crop_.h;
-            outFrame.pointer()->crop_left = crop_.x;
-            outFrame.pointer()->crop_right = (size_t) outFrame.width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(outFrame.pointer(), AV_FRAME_CROP_UNALIGNED);
-        }
-        if (outFrame.height() != height_ || outFrame.width() != width_) {
-            setFrameSize(outFrame.width(), outFrame.height());
-            return;
-        }
-        notify(std::static_pointer_cast<MediaFrame>(frame_p));
-        target_.push(outFrame.getFrame());
+    bool hasObservers = getObserversCount() != 0;
+    bool hasDirectListener = target_.push and not target_.pull;
+    bool hasTransformedListener = target_.push and target_.pull;
+
+    if (hasDirectListener) {
+        sendFrameDirect(frame_p);
         return;
     }
 
-    bool doTransfer = (target_.pull != nullptr);
+    bool doTransfer = hasTransformedListener or hasObservers;
 #if HAVE_SHM
     doTransfer |= (shm_ && doShmTransfer_);
 #endif
 
     if (doTransfer) {
-        std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
-#ifdef RING_ACCEL
-        auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
-        if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
-            try {
-                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
-                                                                frame_p),
-                                                            AV_PIX_FMT_NV12);
-            } catch (const std::runtime_error& e) {
-                JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s",
-                         this,
-                         e.what());
-                return;
-            }
-        } else
-#endif
-            frame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
+        auto frame = applyTransform(*std::static_pointer_cast<VideoFrame>(frame_p));
+        if (not frame)
+            return;
 
-        int angle = frame->getOrientation();
-
-        if (angle != rotation_) {
-            filter_ = getTransposeFilter(angle,
-                                         FILTER_INPUT_NAME,
-                                         frame->width(),
-                                         frame->height(),
-                                         frame->format(),
-                                         false);
-            rotation_ = angle;
-        }
-        if (filter_) {
-            filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
-            frame = std::static_pointer_cast<VideoFrame>(
-                std::shared_ptr<MediaFrame>(filter_->readOutput()));
-        }
         notify(std::static_pointer_cast<MediaFrame>(frame));
-
-        if (crop_.w || crop_.h) {
-            frame->pointer()->crop_top = crop_.y;
-            frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
-            frame->pointer()->crop_left = crop_.x;
-            frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
-            av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
-        }
 
         if (frame->height() != height_ || frame->width() != width_) {
             lock.unlock();
@@ -437,16 +463,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         if (shm_ && doShmTransfer_)
             shm_->renderFrame(*frame);
 #endif
-        if (target_.pull) {
-            int width = frame->width();
-            int height = frame->height();
-            if (width > 0 && height > 0) {
-                if (auto buffer_ptr = target_.pull()) {
-                    scaler_->scale(*frame, buffer_ptr.get());
-                    target_.push(std::move(buffer_ptr));
-                }
-            }
-        }
+        sendFrameTransformed(frame->pointer());
     }
 }
 
