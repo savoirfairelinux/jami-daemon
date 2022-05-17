@@ -323,8 +323,6 @@ public:
     bool toggleRecording() override;
 
     void switchInput(const std::string& input);
-    void switchSecondaryInput(const std::string& input);
-
     void setActiveParticipant(const std::string& participant_id);
     void setActiveStream(const std::string& streamId, bool state);
     void setLayout(int layout);
