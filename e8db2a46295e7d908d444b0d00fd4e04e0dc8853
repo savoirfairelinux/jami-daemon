@@ -1,0 +1,95 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b29ef351_0b8b3b01",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-17T18:35:36Z",
+      "side": 1,
+      "message": "just a quick review",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7a73e536_5a996a0c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1525,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-17T18:35:36Z",
+      "side": 1,
+      "message": "\u0027video sources\u0027 I guess",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b29ca61_2ab8169a",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-17T18:35:36Z",
+      "side": 1,
+      "message": "there is two problems with the concurrency in this method:\n1- calling stopInput() while holding locaInputsMtx. stopInput() will acquire VideoFrameActiveWriter mutex at least.\n2- reading from localInputs_ array after releasing the locaInputsMtx",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46f233af_7941afad",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-17T18:35:36Z",
+      "side": 1,
+      "message": "no need to force the size I guess. A generic unsigned or size_t would do (the compiler will chose)",
+      "range": {
+        "startLine": 89,
+        "startChar": 47,
+        "endLine": 89,
+        "endChar": 55
+      },
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9affbf4f_086ba62f",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-17T18:35:36Z",
+      "side": 1,
+      "message": "should not we lock and return the shared_ptr instead ?",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
