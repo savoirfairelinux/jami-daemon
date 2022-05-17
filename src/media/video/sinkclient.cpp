@@ -330,7 +330,7 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
     , scaler_(new VideoScaler())
 #ifdef DEBUG_FPS
     , frameCount_(0u)
-    , lastFrameDebug_(std::chrono::system_clock::now())
+    , lastFrameDebug_(std::chrono::steady_clock::now())
 #endif
 {
     JAMI_DBG("[Sink:%p] Sink [%s] created", this, getId().c_str());
@@ -416,11 +416,11 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
 #ifdef DEBUG_FPS
-    auto currentTime = std::chrono::system_clock::now();
-    std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
+    auto currentTime = std::chrono::steady_clock::now();
+    auto seconds = currentTime - lastFrameDebug_;
     ++frameCount_;
-    if (seconds.count() > 1) {
-        auto fps = frameCount_ / seconds.count();
+    if (seconds > std::chrono::seconds(1)) {
+        auto fps = frameCount_ / std::chrono::duration_cast<std::chrono::duration<double>>(seconds).count();
         // Send the framerate in smartInfo
         Smartools::getInstance().setFrameRate(id_, std::to_string(fps));
         frameCount_ = 0;
