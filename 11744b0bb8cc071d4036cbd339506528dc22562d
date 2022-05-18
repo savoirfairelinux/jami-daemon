@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "510fdda2_e1bb38a4",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-18T21:50:42Z",
+      "side": 1,
+      "message": "we are calling this method (which will acquire Observable::mutex_) while holding mtx_. It should not be a problem as long as there is no lock inversion, but I would not bet on it.",
+      "range": {
+        "startLine": 432,
+        "startChar": 24,
+        "endLine": 432,
+        "endChar": 41
+      },
+      "revId": "11744b0bb8cc071d4036cbd339506528dc22562d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "41b5b3b2_8b6c6c71",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 436,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-18T21:50:42Z",
+      "side": 1,
+      "message": "It\u0027s clearly much better with the refactor. However, my main concern with this code is the inference we are making about what processing a frame goes through depending on how target_.push/target_.pull are set.\npush/pull control how video memory are managed (ownership) and has nothing to do with the type of processing that should be applied. For instance, for client-qt, the fact that push/pull are set and the frame needs to be transformed is only incidental. For client-qt, the transformation done here could and should done by the renderer (and would be more efficient), so the inference on push/pull is clearly unreliable, and even misleading.\nBut anyway, the problem is not new and I would not block this patch for this.",
+      "revId": "11744b0bb8cc071d4036cbd339506528dc22562d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
