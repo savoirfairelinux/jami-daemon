@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a8848545_45636d1e",
+        "filename": "configure.ac",
+        "patchSetId": 16
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T09:36:01Z",
+      "side": 1,
+      "message": "AM_CONDITIONAL([ENABLE_TRACEPOINTS], [test \"x$enable_tracepoints\" \u003d \"xyes\"])",
+      "range": {
+        "startLine": 59,
+        "startChar": 2,
+        "endLine": 59,
+        "endChar": 43
+      },
+      "revId": "0286edbf60af4f0f34a7f6749521e29045f5ed63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
