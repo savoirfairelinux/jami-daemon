@@ -111,10 +111,10 @@ public:
         return false;
     }
 
-    int getObserversCount()
+    size_t getObserversCount()
     {
         std::lock_guard<std::mutex> lk(mutex_);
-        return observers_.size();
+        return observers_.size() + priority_observers_.size();
     }
 
 protected:
