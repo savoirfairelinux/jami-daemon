@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d65c2e8_1c919691",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T10:04:45Z",
+      "side": 1,
+      "message": "Better methods 😊",
+      "revId": "6dfe643d02bd547deaa51eb03b08facc2ff4fbbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a922845a_8ad2d1e4",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 372,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T10:04:45Z",
+      "side": 1,
+      "message": "I didn\u0027t dig much, but with the latest patchset the video with dbus is broken (freeze for the first frame)\n\nI do not see any lock or anormal thread, just that the video is not updated when using DBUS",
+      "range": {
+        "startLine": 372,
+        "startChar": 12,
+        "endLine": 372,
+        "endChar": 26
+      },
+      "revId": "6dfe643d02bd547deaa51eb03b08facc2ff4fbbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
