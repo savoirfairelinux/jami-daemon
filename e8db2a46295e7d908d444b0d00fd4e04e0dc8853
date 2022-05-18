@@ -35,6 +35,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "81f919ab_5c8128ba",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1525,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T12:39:04Z",
+      "side": 1,
+      "message": "indeed",
+      "parentUuid": "7a73e536_5a996a0c",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2b29ca61_2ab8169a",
@@ -48,6 +66,24 @@
       "writtenOn": "2022-05-17T18:35:36Z",
       "side": 1,
       "message": "there is two problems with the concurrency in this method:\n1- calling stopInput() while holding locaInputsMtx. stopInput() will acquire VideoFrameActiveWriter mutex at least.\n2- reading from localInputs_ array after releasing the locaInputsMtx",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "47770503_2b92fcea",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T12:39:04Z",
+      "side": 1,
+      "message": "totally indeed. 1. should not be a problem but still. did another patchset.",
+      "parentUuid": "2b29ca61_2ab8169a",
       "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -75,6 +111,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9b694c25_5833552d",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T12:39:04Z",
+      "side": 1,
+      "message": "true",
+      "parentUuid": "46f233af_7941afad",
+      "range": {
+        "startLine": 89,
+        "startChar": 47,
+        "endLine": 89,
+        "endChar": 55
+      },
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9affbf4f_086ba62f",
@@ -88,6 +148,24 @@
       "writtenOn": "2022-05-17T18:35:36Z",
       "side": 1,
       "message": "should not we lock and return the shared_ptr instead ?",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9fdfe577_32bda585",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T12:39:04Z",
+      "side": 1,
+      "message": "Imho this method must be removed as conference.cpp should not even access this. But    I want to limit the changes to videoMixer and to just avoid secondaryLocalInput\n\nVideoManager should be the only one managing, and instead of returning a reference to a shared_ptr as done before, I think a weak_ptr like a cache view makes more sense as it\u0027s managed by videoMixer_ for now.",
+      "parentUuid": "9affbf4f_086ba62f",
       "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
