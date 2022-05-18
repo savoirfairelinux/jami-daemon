@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "32c5b0d2_a761969c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T09:22:20Z",
+      "side": 1,
+      "message": "With this patch I got a regression. Calling an android device in vertical orientation show a distorted video in 4:3\n\nBut it\u0027s sure that this setFramSize(0,0) is ugly as hell",
+      "revId": "295d490cf9c0e76cfbca17c1c5e72d22d5cd4a32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
