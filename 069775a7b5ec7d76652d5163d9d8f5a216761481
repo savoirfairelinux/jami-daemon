@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9aac033_a0b5fb67",
+        "filename": "src/Makefile.am",
+        "patchSetId": 17
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-18T17:01:55Z",
+      "side": 1,
+      "message": "Why in `jami` directory ?\nCould be cxx_utils.h or trace_utils.h in the main directory along with debug_utils.h, sip_utils.h etc.",
+      "range": {
+        "startLine": 135,
+        "startChar": 2,
+        "endLine": 135,
+        "endChar": 6
+      },
+      "revId": "069775a7b5ec7d76652d5163d9d8f5a216761481",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
