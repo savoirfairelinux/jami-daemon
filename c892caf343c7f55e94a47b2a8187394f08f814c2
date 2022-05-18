@@ -16,6 +16,24 @@
       "message": "This seems to be a debug/tracing library specific to Linux.\n\nDo we need it in contrib (meant for cross platform build and distribution), or would it make sense to simply use the system version, if available ?",
       "revId": "c892caf343c7f55e94a47b2a8187394f08f814c2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fcc09c66_1e3e7329",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-18T18:12:30Z",
+      "side": 1,
+      "message": "it\u0027s a dependency for lttng ust and we generally need a up to date version for lttng",
+      "parentUuid": "c610a9ce_d180f86d",
+      "revId": "c892caf343c7f55e94a47b2a8187394f08f814c2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
