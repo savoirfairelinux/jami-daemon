@@ -106,7 +106,16 @@ private:
     std::unique_ptr<MediaFilter> filter_;
     std::mutex mtx_;
 
-    void setRotation(int rotation);
+    void sendFrameDirect(const std::shared_ptr<jami::MediaFrame>&);
+    void sendFrameTransformed(AVFrame* frame);
+
+    /**
+     * Apply required transformations before sending frames to clients/observers:
+     * - Transfer the frame from gpu to main memory, if needed.
+     * - Rotate the frame as needed.
+     * - Apply cropping as needed
+     */
+    std::shared_ptr<VideoFrame> applyTransform(VideoFrame& frame);
 
 #ifdef DEBUG_FPS
     unsigned frameCount_;
