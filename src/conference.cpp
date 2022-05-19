@@ -573,7 +573,7 @@ void
 Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      const std::vector<DRing::MediaMap>& remoteMediaList)
 {
-    JAMI_DBG("Conf [%s] Answer to media change request", getConfId().c_str());
+    JAMI_DBG("@@@Conf [%s] Answer to media change request", getConfId().c_str());
 
 #ifdef ENABLE_VIDEO
     // If the new media list has video, remove the participant from audioonlylist.

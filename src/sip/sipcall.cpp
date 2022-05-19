@@ -2669,7 +2669,7 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
 pj_status_t
 SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
-    JAMI_DBG("[call:%s] Received a re-invite", getCallId().c_str());
+    JAMI_DBG("@@@@[call:%s] Received a re-invite", getCallId().c_str());
 
     pj_status_t res = PJ_SUCCESS;
 
@@ -2713,8 +2713,10 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
     auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
 
     if (auto conf = getConference()) {
+        JAMI_ERR() << "@@@ HANDLE";
         conf->handleMediaChangeRequest(shared_from_this(), remoteMediaList);
     } else {
+        JAMI_ERR() << "@@@ HANDLE 2";
         handleMediaChangeRequest(remoteMediaList);
     }
     return res;
@@ -2882,7 +2884,7 @@ SIPCall::getDetails() const
 void
 SIPCall::enterConference(std::shared_ptr<Conference> conference)
 {
-    JAMI_DBG("[call:%s] Entering conference [%s]",
+    JAMI_DBG("@@@[call:%s] Entering conference [%s]",
              getCallId().c_str(),
              conference->getConfId().c_str());
     conf_ = conference;
