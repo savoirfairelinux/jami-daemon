@@ -16,6 +16,24 @@
       "message": "should not be included only if enabled ?",
       "revId": "284a1b03a9791a17c10a29f75ceffa6f139cd2fc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04ec6259_d3e1a9bb",
+        "filename": "src/Makefile.am",
+        "patchSetId": 16
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-19T18:27:47Z",
+      "side": 1,
+      "message": "No. `jami/trace-tools.h` is always included to simplify inclusion and avoiding #ifdef.  However, macros in it expand differently depending if tracepoints are enabled or not.",
+      "parentUuid": "6b65bd43_02960e67",
+      "revId": "284a1b03a9791a17c10a29f75ceffa6f139cd2fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
