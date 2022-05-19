@@ -46,6 +46,29 @@
       },
       "revId": "069775a7b5ec7d76652d5163d9d8f5a216761481",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5964f496_bd37e145",
+        "filename": "src/jami/trace-tools.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-19T19:42:58Z",
+      "side": 1,
+      "message": "what about lowercase `demangle`, or something like `symbol_name` ?\n\nIt would be used like\ndemangle\u003cdht::InfoHash\u003e()\nor \nsymbol_name\u003cdht::InfoHash\u003e()",
+      "range": {
+        "startLine": 19,
+        "startChar": 12,
+        "endLine": 19,
+        "endChar": 25
+      },
+      "revId": "069775a7b5ec7d76652d5163d9d8f5a216761481",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
