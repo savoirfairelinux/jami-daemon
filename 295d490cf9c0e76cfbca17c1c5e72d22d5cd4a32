@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5e1b5648_928bb6c5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-19T16:28:54Z",
+      "side": 1,
+      "message": "The goal is to merge this along with the refactoring of the Android video pipeline that includes video-split.",
+      "parentUuid": "0c035e1b_88d6afe6",
+      "revId": "295d490cf9c0e76cfbca17c1c5e72d22d5cd4a32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b8eea6af_561c3fc5",
         "filename": "src/media/video/sinkclient.cpp",
         "patchSetId": 3
