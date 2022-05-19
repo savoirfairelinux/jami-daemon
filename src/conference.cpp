@@ -541,7 +541,11 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                  mediaAttr.toString(true).c_str());
     }
 
+    if (videoMixer_)
+        videoMixer_->stopInputs();
+
     uint32_t videoIdx = 0;
+    std::vector<std::string> newInputs;
     for (auto const& mediaAttr : mediaAttrList) {
 #ifdef ENABLE_VIDEO
         // TODO multiple hostVideo (keep idx)
@@ -553,7 +557,7 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
         if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
             // For now, only video source URI can be changed by the client,
             // so it's an error if we get here and the type is not video.
-            if (not mediaAttr.sourceUri_.empty() and mediaSource.sourceUri_ != mediaAttr.sourceUri_) {
+            if (not mediaAttr.sourceUri_.empty() /*and mediaSource.sourceUri_ != mediaAttr.sourceUri_*/) {
                 if (mediaAttr.type_ != MediaType::MEDIA_VIDEO) {
                     JAMI_ERR("[conf %s] Media source can be changed only for video!",
                             getConfId().c_str());
@@ -571,7 +575,8 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                                     ? DRing::Media::Details::MEDIA_TYPE_AUDIO
                                     : DRing::Media::Details::MEDIA_TYPE_VIDEO);
                 } else {
-                    videoMixer_->switchInput(mediaAttr.sourceUri_, videoIdx);
+                    newInputs.emplace_back(mediaAttr.sourceUri_);
+//                    videoMixer_->switchInput(mediaAttr.sourceUri_, videoIdx);
 
                 }
             }
@@ -587,6 +592,9 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
         }
     }
 
+    if (videoMixer_)
+        videoMixer_->switchInputs(newInputs);
+
     return true;
 }
 
@@ -594,7 +602,7 @@ void
 Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      const std::vector<DRing::MediaMap>& remoteMediaList)
 {
-    JAMI_DBG("Conf [%s] Answer to media change request", getConfId().c_str());
+    JAMI_DBG("@@@Conf [%s] Answer to media change request", getConfId().c_str());
 
 #ifdef ENABLE_VIDEO
     // If the new media list has video, remove the participant from audioonlylist.

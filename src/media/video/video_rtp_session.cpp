@@ -202,6 +202,7 @@ VideoRtpSession::startSender()
 void
 VideoRtpSession::restartSender()
 {
+    JAMI_WARN() << "@@@ RESTART";
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     // ensure that start has been called before restart
@@ -317,6 +318,7 @@ VideoRtpSession::stopReceiver()
 void
 VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock)
 {
+    JAMI_WARN() << "@@@ START";
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     if (not send_.enabled and not receive_.enabled) {
@@ -489,6 +491,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
                  callId_.c_str());
         if (receiveThread_) {
             receiveThread_->stopSink();
+            JAMI_ERR() << "@@@!!!!";
             if (videoMixer_)
                 videoMixer_->attachVideo(receiveThread_.get(), callId_, streamId_);
         } else {
@@ -508,6 +511,7 @@ VideoRtpSession::getReceiveVideoFrameActiveWriter()
 void
 VideoRtpSession::enterConference(Conference& conference)
 {
+    JAMI_ERR() << "@@@!!!!";
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     exitConference();
