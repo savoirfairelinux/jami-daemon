@@ -489,6 +489,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
                  callId_.c_str());
         if (receiveThread_) {
             receiveThread_->stopSink();
+            JAMI_ERR() << "@@@!!!!";
             if (videoMixer_)
                 videoMixer_->attachVideo(receiveThread_.get(), callId_, streamId_);
         } else {
@@ -508,6 +509,7 @@ VideoRtpSession::getReceiveVideoFrameActiveWriter()
 void
 VideoRtpSession::enterConference(Conference& conference)
 {
+    JAMI_ERR() << "@@@!!!!";
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     exitConference();
