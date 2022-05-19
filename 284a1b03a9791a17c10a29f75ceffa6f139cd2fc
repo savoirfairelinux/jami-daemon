@@ -34,6 +34,23 @@
       "parentUuid": "6b65bd43_02960e67",
       "revId": "284a1b03a9791a17c10a29f75ceffa6f139cd2fc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56718ee8_f7049bf7",
+        "filename": "src/jami/trace-tools.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-05-19T21:18:45Z",
+      "side": 1,
+      "message": "copyright ?",
+      "revId": "284a1b03a9791a17c10a29f75ceffa6f139cd2fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
