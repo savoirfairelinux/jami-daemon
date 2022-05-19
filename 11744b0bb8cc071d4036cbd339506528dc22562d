@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f6150d8_146c6f73",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-19T16:28:59Z",
+      "side": 1,
+      "message": "It\u0027s certainly something we should be careful about. That being said, we already locked this mutex later in this function through notify().",
+      "parentUuid": "510fdda2_e1bb38a4",
+      "range": {
+        "startLine": 432,
+        "startChar": 24,
+        "endLine": 432,
+        "endChar": 41
+      },
+      "revId": "11744b0bb8cc071d4036cbd339506528dc22562d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "41b5b3b2_8b6c6c71",
@@ -37,6 +61,24 @@
       "writtenOn": "2022-05-18T21:50:42Z",
       "side": 1,
       "message": "It\u0027s clearly much better with the refactor. However, my main concern with this code is the inference we are making about what processing a frame goes through depending on how target_.push/target_.pull are set.\npush/pull control how video memory are managed (ownership) and has nothing to do with the type of processing that should be applied. For instance, for client-qt, the fact that push/pull are set and the frame needs to be transformed is only incidental. For client-qt, the transformation done here could and should done by the renderer (and would be more efficient), so the inference on push/pull is clearly unreliable, and even misleading.\nBut anyway, the problem is not new and I would not block this patch for this.",
+      "revId": "11744b0bb8cc071d4036cbd339506528dc22562d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d260c1e_452b7376",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 436,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-19T16:28:59Z",
+      "side": 1,
+      "message": "To be discussed separately, as this patch doesn\u0027t change this behavior.",
+      "parentUuid": "41b5b3b2_8b6c6c71",
       "revId": "11744b0bb8cc071d4036cbd339506528dc22562d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
