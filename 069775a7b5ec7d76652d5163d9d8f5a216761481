@@ -22,6 +22,30 @@
       },
       "revId": "069775a7b5ec7d76652d5163d9d8f5a216761481",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d95b9839_90c02545",
+        "filename": "src/Makefile.am",
+        "patchSetId": 17
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-19T17:14:08Z",
+      "side": 1,
+      "message": "IIRC, since I\u0027ve added tracepoint in the signal mechanism, tracepoint definition and tools must be available on the client side, that is dbus, etc.",
+      "parentUuid": "d9aac033_a0b5fb67",
+      "range": {
+        "startLine": 135,
+        "startChar": 2,
+        "endLine": 135,
+        "endChar": 6
+      },
+      "revId": "069775a7b5ec7d76652d5163d9d8f5a216761481",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
