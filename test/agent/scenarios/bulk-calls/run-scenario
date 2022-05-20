@@ -3,6 +3,8 @@
 tmp_alice=$(mktemp --tmpdir --directory "jami-bulk-calls.XXXXXXXXXX")
 tmp_bob=$(mktemp --tmpdir --directory "jami-bulk-calls.XXXXXXXXXX")
 
+echo $GUILE_LOAD_PATH
+
 export GUILE_AUTO_COMPILE=0
 export SIPLOGLEVEL=5
 
@@ -13,7 +15,7 @@ export XDG_CACHE_HOME="$tmp_bob"
 export XDG_DATA_HOME="$tmp_bob"
 
 export JAMI_LOG_FILE="bob.log"
-./scenario.scm "bob" > bob-guile.txt 2>&1 &
+./pre-inst-env agent -e main -s scenarios/bulk-calls/scenario.scm "bob" > bob-guile.txt 2>&1 &
 
 bob_pid=$!
 
@@ -23,7 +25,7 @@ export XDG_CONFIG_HOME="$tmp_alice"
 export XDG_CACHE_HOME="$tmp_alice"
 export XDG_DATA_HOME="$tmp_alice"
 export JAMI_LOG_FILE="alice.log"
-./scenario.scm "alice" "$bob_id" > alice-guile.txt 2>&1
+./pre-inst-env agent -e main -s ./scenarios/bulk-calls/scenario.scm "alice" "$bob_id" > alice-guile.txt 2>&1
 
 wait $bob_pid
 
