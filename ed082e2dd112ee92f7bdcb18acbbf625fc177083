@@ -33,6 +33,42 @@
       "message": "MAJOR SonarQube violation:\n\n\nadd explicit braces to avoid dangling else\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-dangling-else",
       "revId": "ed082e2dd112ee92f7bdcb18acbbf625fc177083",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "80512b3c_268df2d7",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 1875,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-20T13:24:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6b8a6cf7_73776550",
+      "revId": "ed082e2dd112ee92f7bdcb18acbbf625fc177083",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a41ede4d_c2097669",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 1875,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-20T13:24:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d270aed2_ee1a82f5",
+      "revId": "ed082e2dd112ee92f7bdcb18acbbf625fc177083",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
