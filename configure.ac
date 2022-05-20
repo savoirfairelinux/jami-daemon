@@ -54,8 +54,10 @@ AM_COND_IF([ENABLE_AGENT], [AC_CONFIG_FILES([test/agent/Makefile])])
 
 AC_ARG_ENABLE([tracepoints], AS_HELP_STRING([--enable-tracepoints], [Enable tracepoints]))
 
-AM_CONDITIONAL([ENABLE_TRACEPOINTS], [test "x$enable_tracepoints" = "xyes"])
-
+AS_IF([test "x$enable_tracepoints" = "xyes"],
+  [AC_DEFINE(ENABLE_TRACEPOINTS, [], [Static tracepoints enabled])
+   AM_CONDITIONAL(ENABLE_TRACEPOINTS, true)],
+  [AM_CONDITIONAL(ENABLE_TRACEPOINTS, false)]);
 
 dnl Check for programs
 AC_PROG_CC
