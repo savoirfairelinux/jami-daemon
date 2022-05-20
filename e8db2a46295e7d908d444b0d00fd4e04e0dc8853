@@ -168,6 +168,24 @@
       "parentUuid": "9affbf4f_086ba62f",
       "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ababcce8_bb84b2ac",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-20T19:57:18Z",
+      "side": 1,
+      "message": "Being locked (as shared_ptr) is the only thing a weak_ptr can do.\nFrom a semantic point of view, it would make sense to return shared_ptr.",
+      "parentUuid": "9fdfe577_32bda585",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
