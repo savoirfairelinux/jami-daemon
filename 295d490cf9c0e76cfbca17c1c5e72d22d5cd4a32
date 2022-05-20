@@ -105,6 +105,24 @@
       "parentUuid": "b8eea6af_561c3fc5",
       "revId": "295d490cf9c0e76cfbca17c1c5e72d22d5cd4a32",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bdfa76cc_492bc9a0",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 431,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-20T09:02:03Z",
+      "side": 1,
+      "message": "So we can also remove this one, and then LGTM",
+      "parentUuid": "7c1993b3_731e95b9",
+      "revId": "295d490cf9c0e76cfbca17c1c5e72d22d5cd4a32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
