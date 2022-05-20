@@ -53,6 +53,10 @@ static constexpr const char* CONVERSATIONID = "conversationId";
 static constexpr const char* METADATAS = "metadatas";
 } // namespace ConversationMapKeys
 
+namespace ConversationPreferences {
+static constexpr const char* HOST_CONFERENCES = "hostConferences";
+}
+
 /**
  * A ConversationRequest is a request which corresponds to a trust request, but for conversations
  * It's signed by the sender and contains the members list, the conversationId, and the metadatas
