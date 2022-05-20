@@ -69,6 +69,30 @@
       },
       "revId": "069775a7b5ec7d76652d5163d9d8f5a216761481",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb4b5a2f_869e64eb",
+        "filename": "src/jami/trace-tools.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-20T15:06:11Z",
+      "side": 1,
+      "message": "I\u0027ll go with `demangle`",
+      "parentUuid": "5964f496_bd37e145",
+      "range": {
+        "startLine": 19,
+        "startChar": 12,
+        "endLine": 19,
+        "endChar": 25
+      },
+      "revId": "069775a7b5ec7d76652d5163d9d8f5a216761481",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

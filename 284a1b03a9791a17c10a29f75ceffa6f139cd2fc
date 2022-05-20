@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f726b7d8_90795d53",
+        "filename": "src/Makefile.am",
+        "patchSetId": 16
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-20T15:06:11Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "04ec6259_d3e1a9bb",
+      "revId": "284a1b03a9791a17c10a29f75ceffa6f139cd2fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "56718ee8_f7049bf7",
@@ -49,6 +67,24 @@
       "writtenOn": "2022-05-19T21:18:45Z",
       "side": 1,
       "message": "copyright ?",
+      "revId": "284a1b03a9791a17c10a29f75ceffa6f139cd2fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c95ae8f_a5a60c18",
+        "filename": "src/jami/trace-tools.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-20T15:06:11Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "56718ee8_f7049bf7",
       "revId": "284a1b03a9791a17c10a29f75ceffa6f139cd2fc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
