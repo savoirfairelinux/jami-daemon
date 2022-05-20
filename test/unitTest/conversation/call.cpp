@@ -73,12 +73,14 @@ private:
     void testActiveCalls3Peers();
     void testRejoinCall();
     void testParticipantHangupConfNotRemoved();
+    void testJoinFinishedCall();
 
     CPPUNIT_TEST_SUITE(ConversationCallTest);
     CPPUNIT_TEST(testActiveCalls);
     CPPUNIT_TEST(testActiveCalls3Peers);
     CPPUNIT_TEST(testRejoinCall);
     CPPUNIT_TEST(testParticipantHangupConfNotRemoved);
+    CPPUNIT_TEST(testJoinFinishedCall);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -102,7 +104,7 @@ ConversationCallTest::setUp()
     carlaData_ = {};
 
     Manager::instance().sendRegister(carlaId, false);
-    wait_for_announcement_of({aliceId, bobId}, 60s);
+    wait_for_announcement_of({aliceId, bobId});
 }
 
 void
@@ -121,11 +123,6 @@ ConversationCallTest::tearDown()
 void
 ConversationCallTest::connectSignals()
 {
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
-    auto carlaUri = carlaAccount->getUsername();
-
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
@@ -187,10 +184,17 @@ ConversationCallTest::connectSignals()
                                                                        signed) {
             if (accountId == aliceId) {
                 auto details = DRing::getCallDetails(aliceId, callId);
-                if (details["PEER_NUMBER"].find(bobUri) != std::string::npos)
-                    bobData_.hostState = state;
-                else if (details["PEER_NUMBER"].find(carlaUri) != std::string::npos)
-                    carlaData_.hostState = state;
+                if (details.find("PEER_NUMBER") != details.end()) {
+                    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+                    auto bobUri = bobAccount->getUsername();
+                    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+                    auto carlaUri = carlaAccount->getUsername();
+
+                    if (details["PEER_NUMBER"].find(bobUri) != std::string::npos)
+                        bobData_.hostState = state;
+                    else if (details["PEER_NUMBER"].find(carlaUri) != std::string::npos)
+                        carlaData_.hostState = state;
+                }
             }
             cv.notify_one();
         }));
@@ -217,7 +221,7 @@ ConversationCallTest::enableCarla()
     DRing::registerSignalHandlers(confHandlers);
 
     Manager::instance().sendRegister(carlaId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaConnected; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaConnected; }));
     confHandlers.clear();
     DRing::unregisterSignalHandlers();
 }
@@ -519,6 +523,96 @@ ConversationCallTest::testParticipantHangupConfNotRemoved()
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
         return aliceData_.conferenceRemoved;
     }));
+}
+
+void
+ConversationCallTest::testJoinFinishedCall()
+{
+    enableCarla();
+    connectSignals();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    // Start conversation
+    DRing::startConversation(aliceId);
+    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    DRing::addConversationMember(aliceId, aliceData_.id, bobUri);
+    DRing::addConversationMember(aliceId, aliceData_.id, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        return bobData_.requestReceived && carlaData_.requestReceived;
+    }));
+    aliceData_.messages.clear();
+    DRing::acceptConversationRequest(bobId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !bobData_.id.empty() && !aliceData_.messages.empty();
+    }));
+    aliceData_.messages.clear();
+    DRing::acceptConversationRequest(carlaId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !carlaData_.id.empty() && !aliceData_.messages.empty();
+    }));
+    // start call
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    auto callId = DRing::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    auto lastCommitIsCall = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->at("type") == "application/call-history+json";
+    };
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_)
+               && lastCommitIsCall(carlaData_);
+    });
+    auto confId = bobData_.messages.rbegin()->at("confId");
+    auto destination = fmt::format("swarm:{}/{}/{}/{}",
+                      bobData_.id,
+                      bobData_.messages.rbegin()->at("uri"),
+                      bobData_.messages.rbegin()->at("device"),
+                      bobData_.messages.rbegin()->at("confId"));
+    // hangup
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    Manager::instance().hangupCall(aliceId, callId);
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return !aliceData_.messages.empty() && !bobData_.messages.empty()
+               && !carlaData_.messages.empty();
+    });
+    CPPUNIT_ASSERT(DRing::getActiveCalls(aliceId, aliceData_.id).size() == 0);
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    // If bob try to join the call, it will re-host a new conference
+    // and commit a new active call.
+    auto bobCall = DRing::placeCallWithMedia(bobId, destination, {});
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_)
+               && lastCommitIsCall(carlaData_) && bobData_.hostState == "CURRENT";
+    });
+    confId = bobData_.messages.rbegin()->at("confId");
+    CPPUNIT_ASSERT(DRing::getActiveCalls(aliceId, aliceData_.id).size() == 1);
+    // hangup
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    Manager::instance().hangupConference(aliceId, confId);
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return !aliceData_.messages.empty() && !bobData_.messages.empty()
+               && !carlaData_.messages.empty();
+    });
+    CPPUNIT_ASSERT(aliceData_.messages[0].find("duration") != aliceData_.messages[0].end());
+    CPPUNIT_ASSERT(bobData_.messages[0].find("duration") != bobData_.messages[0].end());
+    CPPUNIT_ASSERT(carlaData_.messages[0].find("duration") != carlaData_.messages[0].end());
+    // get active calls = 0
+    CPPUNIT_ASSERT(DRing::getActiveCalls(aliceId, aliceData_.id).size() == 0);
 }
 
 } // namespace test
