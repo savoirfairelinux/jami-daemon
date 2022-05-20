@@ -1,0 +1,17 @@
+{
+    "name": "libunistring",
+    "version": "0.9.10",
+    "url": "https://ftp.gnu.org/gnu/libunistring/libunistring-__VERSION__.tar.gz"
+    "deps": [
+    ],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [
+    ],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}

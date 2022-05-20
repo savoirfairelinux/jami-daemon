@@ -7,7 +7,7 @@ ifeq ($(call need_pkg "libguile-3.0 >= 3.0.7"),)
 PKGS_FOUND += guile
 endif
 
-DEPS_guile = gmp iconv
+DEPS_guile = gmp iconv libunistring libffi libgc
 
 $(TARBALLS)/guile-$(GUILE_VERSION).tar.gz:
 	$(call download,$(GUILE_URL))
