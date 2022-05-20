@@ -27,12 +27,12 @@ MODULES =                                       \
 	scenarios/bulk-calls/scenario.scm       \
 	scenarios/peer-monitor/scenario.scm
 
-GOBJECTS = $(MODULES:%=%.go)
+GOBJECTS = $(MODULES:%.scm=%.go)
 
-%.go: % | agent.exe
-	@echo "agent.exe compile $^"
+%.go: %.scm
+	@echo "agent compile $^"
 	@ASAN_OPTIONS=alloc_dealloc_mismatch=0:detect_leaks=0 \
-	./agent.exe compile $< $@
+	./pre-inst-env agent compile $< $@
 
 compile: $(GOBJECTS)
 
