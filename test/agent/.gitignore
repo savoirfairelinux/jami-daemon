@@ -1,4 +1,5 @@
 agent
+pre-inst-env
 *.yml
 *.txt
 *.log
