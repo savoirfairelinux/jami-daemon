@@ -94,6 +94,30 @@
       },
       "revId": "0286edbf60af4f0f34a7f6749521e29045f5ed63",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "35be5a60_ecea8e8e",
+        "filename": "configure.ac",
+        "patchSetId": 16
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-20T19:30:17Z",
+      "side": 1,
+      "message": "Turns out the original thing was needed.  Your change does not generate ENABLE_TRACEPOINTS in config.h",
+      "parentUuid": "25e645ff_f8d40676",
+      "range": {
+        "startLine": 59,
+        "startChar": 2,
+        "endLine": 59,
+        "endChar": 43
+      },
+      "revId": "0286edbf60af4f0f34a7f6749521e29045f5ed63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
