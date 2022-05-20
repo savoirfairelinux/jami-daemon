@@ -70,6 +70,30 @@
       },
       "revId": "0286edbf60af4f0f34a7f6749521e29045f5ed63",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "25e645ff_f8d40676",
+        "filename": "configure.ac",
+        "patchSetId": 16
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-20T15:15:27Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ef72c74f_2e1634a3",
+      "range": {
+        "startLine": 59,
+        "startChar": 2,
+        "endLine": 59,
+        "endChar": 43
+      },
+      "revId": "0286edbf60af4f0f34a7f6749521e29045f5ed63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
