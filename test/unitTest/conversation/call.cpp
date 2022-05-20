@@ -72,12 +72,14 @@ private:
     void testActiveCalls3Peers();
     void testRejoinCall();
     void testJoinFinishedCall();
+    void testJoinFinishedCallForbidden();
 
     CPPUNIT_TEST_SUITE(ConversationCallTest);
     CPPUNIT_TEST(testActiveCalls);
     CPPUNIT_TEST(testActiveCalls3Peers);
     CPPUNIT_TEST(testRejoinCall);
     CPPUNIT_TEST(testJoinFinishedCall);
+    CPPUNIT_TEST(testJoinFinishedCallForbidden);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -472,6 +474,113 @@ ConversationCallTest::testJoinFinishedCall()
     // Start conversation
     DRing::startConversation(aliceId);
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+
+    DRing::addConversationMember(aliceId, aliceData_.id, bobUri);
+    DRing::addConversationMember(aliceId, aliceData_.id, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        return bobData_.requestReceived && carlaData_.requestReceived;
+    }));
+
+    aliceData_.messages.clear();
+    DRing::acceptConversationRequest(bobId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !bobData_.id.empty() && !aliceData_.messages.empty();
+    }));
+    aliceData_.messages.clear();
+    DRing::acceptConversationRequest(carlaId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !carlaData_.id.empty() && !aliceData_.messages.empty();
+    }));
+
+    // start call
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    auto callId = DRing::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    auto lastCommitIsCall = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->at("type") == "application/call-history+json";
+    };
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_)
+               && lastCommitIsCall(carlaData_);
+    });
+
+    auto confId = bobData_.messages.rbegin()->at("confId");
+    auto destination = fmt::format("swarm:{}/{}/{}/{}",
+                      bobData_.id,
+                      bobData_.messages.rbegin()->at("uri"),
+                      bobData_.messages.rbegin()->at("device"),
+                      bobData_.messages.rbegin()->at("confId"));
+
+    // hangup
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    Manager::instance().hangupCall(aliceId, callId);
+
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return !aliceData_.messages.empty() && !bobData_.messages.empty()
+               && !carlaData_.messages.empty();
+    });
+
+    CPPUNIT_ASSERT(DRing::getActiveCalls(aliceId, aliceData_.id).size() == 0);
+
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    // If bob try to join the call, it will re-host a new conference
+    // and commit a new active call.
+    auto bobCall = DRing::placeCallWithMedia(bobId, destination, {});
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_)
+               && lastCommitIsCall(carlaData_) && bobData_.hostState == "CURRENT";
+    });
+
+    confId = bobData_.messages.rbegin()->at("confId");
+
+    CPPUNIT_ASSERT(DRing::getActiveCalls(aliceId, aliceData_.id).size() == 1);
+
+    // hangup
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    Manager::instance().hangupConference(aliceId, confId);
+
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return !aliceData_.messages.empty() && !bobData_.messages.empty()
+               && !carlaData_.messages.empty();
+    });
+    CPPUNIT_ASSERT(aliceData_.messages[0].find("duration") != aliceData_.messages[0].end());
+    CPPUNIT_ASSERT(bobData_.messages[0].find("duration") != bobData_.messages[0].end());
+    CPPUNIT_ASSERT(carlaData_.messages[0].find("duration") != carlaData_.messages[0].end());
+
+    // get active calls = 0
+    CPPUNIT_ASSERT(DRing::getActiveCalls(aliceId, aliceData_.id).size() == 0);
+}
+
+void
+ConversationCallTest::testJoinFinishedCallForbidden()
+{
+    enableCarla();
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    // Start conversation
+    DRing::startConversation(aliceId);
+    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+
+    // Do not host conference for others
+    DRing::updateConversationPreferences(aliceId, aliceData_.id, {{"hostConference", "false"}});
 
     DRing::addConversationMember(aliceId, aliceData_.id, bobUri);
     DRing::addConversationMember(aliceId, aliceData_.id, carlaUri);
