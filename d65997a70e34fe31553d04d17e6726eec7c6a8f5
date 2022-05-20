@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69876691_2d656a9f",
+        "filename": "configure.ac",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-05-20T19:47:44Z",
+      "side": 1,
+      "message": "AM_CONDITIONAL should be a top-level statement (see https://www.gnu.org/software/automake/manual/html_node/Usage-of-Conditionals.html and other uses of AM_CONDITIONAL in this file)",
+      "range": {
+        "startLine": 59,
+        "startChar": 3,
+        "endLine": 60,
+        "endChar": 45
+      },
+      "revId": "d65997a70e34fe31553d04d17e6726eec7c6a8f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
