@@ -564,14 +564,32 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
     if (getUsername() != accountUri || currentDeviceId() != deviceId)
         return;
 
+    auto isNotHosting = !convModule()->isHosting(conversationId, confId);
+    auto preferences = convModule()->getConversationPreferences(conversationId);
+    auto canHost = true;
+#if defined(__ANDROID__) || defined(__APPLE__)
+    // By default, mobile devices SHOULD NOT host conferences.
+    canHost = false;
+#endif
+    auto itPref = preferences.find(ConversationPreferences::HOST_CONFERENCES);
+    if (itPref != preferences.end()) {
+        canHost = itPref->second == TRUE_STR;
+    }
+
     auto call = getCall(callId);
     if (!call) {
         JAMI_ERR("Call %s not found", callId.c_str());
         return;
     }
+
+    if (isNotHosting && !canHost) {
+        JAMI_DBG("Request for hosting a conference declined");
+        Manager::instance().hangupCall(getAccountID(), callId);
+        return;
+    }
     Manager::instance().answerCall(*call);
 
-    if (!convModule()->isHosting(conversationId, confId)) {
+    if (isNotHosting) {
         // Create conference and host it.
         convModule()->hostConference(conversationId, confId, callId);
         if (auto conf = getConference(confId))

@@ -39,6 +39,7 @@ struct ConvData
 {
     std::string id {};
     bool requestReceived {false};
+    bool needsHost {false};
     bool conferenceChanged {false};
     bool conferenceRemoved {false};
     std::string hostState {};
@@ -77,6 +78,8 @@ private:
     void testJoinFinishedCall();
     void testJoinFinishedCallForbidden();
     void testUsePreference();
+    void testCallSelfIfDefaultHost();
+    void testNeedsHost();
 
     CPPUNIT_TEST_SUITE(ConversationCallTest);
     CPPUNIT_TEST(testActiveCalls);
@@ -86,6 +89,8 @@ private:
     CPPUNIT_TEST(testJoinFinishedCall);
     CPPUNIT_TEST(testJoinFinishedCallForbidden);
     CPPUNIT_TEST(testUsePreference);
+    CPPUNIT_TEST(testCallSelfIfDefaultHost);
+    CPPUNIT_TEST(testNeedsHost);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -168,6 +173,20 @@ ConversationCallTest::connectSignals()
                     bob2Data_.requestReceived = true;
                 if (accountId == carlaId)
                     carlaData_.requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::NeedsHost>(
+            [&](const std::string& accountId,
+                const std::string& /*conversationId*/) {
+                if (accountId == aliceId)
+                    aliceData_.needsHost = true;
+                if (accountId == bobId)
+                    bobData_.needsHost = true;
+                if (accountId == bob2Id)
+                    bob2Data_.needsHost = true;
+                if (accountId == carlaId)
+                    carlaData_.needsHost = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceChanged>(
@@ -777,6 +796,116 @@ ConversationCallTest::testUsePreference()
     // Alice should be the host
     CPPUNIT_ASSERT(aliceAccount->getConference(confId));
     Manager::instance().hangupCall(bobId, callId);
+}
+
+void
+ConversationCallTest::testCallSelfIfDefaultHost()
+{
+    enableCarla();
+    connectSignals();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto aliceDevice = std::string(aliceAccount->currentDeviceId());
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    // Start conversation
+    DRing::startConversation(aliceId);
+    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    DRing::addConversationMember(aliceId, aliceData_.id, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
+    aliceData_.messages.clear();
+    DRing::acceptConversationRequest(bobId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !bobData_.id.empty() && !aliceData_.messages.empty();
+    }));
+
+    // Update preferences
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    auto lastCommitIsProfile = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->at("type") == "application/update-profile";
+    };
+    DRing::updateConversationInfos(aliceId,
+                                   aliceData_.id,
+                                   std::map<std::string, std::string> {
+                                       {"rdvAccount", aliceUri},
+                                       {"rdvDevice", aliceDevice},
+                                   });
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return lastCommitIsProfile(aliceData_) && lastCommitIsProfile(bobData_);
+    });
+
+    // start call
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    auto callId = DRing::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    auto lastCommitIsCall = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->at("type") == "application/call-history+json";
+    };
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_);
+    });
+    auto confId = aliceData_.messages.rbegin()->at("confId");
+
+    // Alice should be the host
+    CPPUNIT_ASSERT(aliceAccount->getConference(confId));
+    Manager::instance().hangupConference(aliceId, confId);
+}
+
+
+void
+ConversationCallTest::testNeedsHost()
+{
+    enableCarla();
+    connectSignals();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto aliceDevice = std::string(aliceAccount->currentDeviceId());
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    // Start conversation
+    DRing::startConversation(aliceId);
+    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+    DRing::addConversationMember(aliceId, aliceData_.id, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
+    aliceData_.messages.clear();
+    DRing::acceptConversationRequest(bobId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !bobData_.id.empty() && !aliceData_.messages.empty();
+    }));
+
+    // Update preferences
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    auto lastCommitIsProfile = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->at("type") == "application/update-profile";
+    };
+    DRing::updateConversationInfos(aliceId,
+                                   aliceData_.id,
+                                   std::map<std::string, std::string> {
+                                       {"rdvAccount", aliceUri},
+                                       {"rdvDevice", aliceDevice},
+                                   });
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return lastCommitIsProfile(aliceData_) && lastCommitIsProfile(bobData_);
+    });
+
+    // Disable Host
+    Manager::instance().sendRegister(aliceId, false);
+
+
+    // start call
+    auto callId = DRing::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
+    // should get message
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bobData_.needsHost;
+    }));
 }
 
 } // namespace test
