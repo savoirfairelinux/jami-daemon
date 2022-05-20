@@ -54,6 +54,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f78988f5_3288a2bd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-20T09:00:35Z",
+      "side": 1,
+      "message": "I took some time to dig this distortion.\nThis is, not an issue with the daemon, but in LRC where the surface didn\u0027t update it\u0027s resolution correctly.\nSo will do the patch for LRC, as this setFrameSize(0,0), is anyway, ugly as hell.",
+      "parentUuid": "5e1b5648_928bb6c5",
+      "revId": "295d490cf9c0e76cfbca17c1c5e72d22d5cd4a32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b8eea6af_561c3fc5",
@@ -67,6 +85,24 @@
       "writtenOn": "2022-05-18T21:15:29Z",
       "side": 1,
       "message": "why do we still need this? can\u0027t be removed as above?",
+      "revId": "295d490cf9c0e76cfbca17c1c5e72d22d5cd4a32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c1993b3_731e95b9",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 431,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-20T09:00:35Z",
+      "side": 1,
+      "message": "It\u0027s indeed not necessary to keep it. The shmrenderer has no issue changing its size with https://review.jami.net/c/jami-libclient/+/21538",
+      "parentUuid": "b8eea6af_561c3fc5",
       "revId": "295d490cf9c0e76cfbca17c1c5e72d22d5cd4a32",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
