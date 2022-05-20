@@ -1,0 +1,71 @@
+[dbus-c++] rearrange some deckchairs in types.h
+
+clang requires that when you invoke an operator with type-based dispatch, the
+variant for the type you are invoking it on has already been pre-declared; this
+bites us in the Variant T() operator, which relies on the overloaded '>>'
+operator for MessageIter; we invoke >> on some type T, but >> for T is declared
+later in the file.
+
+To hack around this, switch over to just forward-declaring the existence of the
+T() operator, and put the body of the T() operator after all the
+declarations/definitions of MessageIter >> operators. Also, shuffle the Variant
+MessageIter >> operator to be above the map >> operator, since if someone tries
+to invoke >> on a map of variants, they'll have the same problem.
+
+There will probably be other, similar problems requiring more rearrangements in
+future.
+
+BUG=chromium-os:37776
+TEST=trybot
+
+Change-Id: I024ec58d427d960372d92ecaa48f711b4569778f
+Signed-off-by: Elly Fong-Jones <ellyjones@chromium.org>
+Reviewed-on: https://gerrit.chromium.org/gerrit/41576
+Reviewed-by: Guozhi Wei <carrot@google.com>
+Reviewed-by: Ryan Sleevi <rsleevi@chromium.org>
+
+diff --git a/include/dbus-c++/types.h b/include/dbus-c++/types.h
+index a11149a..72606f6 100644
+--- a/include/dbus-c++/types.h
++++ b/include/dbus-c++/types.h
+
+@@ -103,13 +103,7 @@
+ 	}
+
+ 	template <typename T>
+-	operator T() const
+-	{
+-		T cast;
+-		MessageIter ri = _msg.reader();
+-		ri >> cast;
+-		return cast;
+-	}
++	operator T() const;
+
+ private:
+
+@@ -440,6 +434,8 @@
+ 	return ++iter;
+ }
+
++extern DXXAPI DBus::MessageIter &operator >> (DBus::MessageIter &iter, DBus::Variant &val);
++
+ template<typename E>
+ inline DBus::MessageIter &operator >> (DBus::MessageIter &iter, std::vector<E>& val)
+ {
+@@ -521,6 +517,14 @@
+ 	return ++iter;
+ }
+
+-extern DXXAPI DBus::MessageIter &operator >> (DBus::MessageIter &iter, DBus::Variant &val);
++template <typename T>
++inline DBus::Variant::operator T() const
++{
++	T cast;
++	DBus::MessageIter ri = _msg.reader();
++	ri >> cast;
++	return cast;
++}
++
+
+ #endif//__DBUSXX_TYPES_H

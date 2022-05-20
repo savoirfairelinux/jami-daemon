@@ -20,9 +20,11 @@ $(TARBALLS)/libdbus-c++-${DBUS_CPP_VERSION}.tar.gz:
 
 dbus-cpp: $(TARBALLS)/libdbus-c++-${DBUS_CPP_VERSION}.tar.gz .sum-dbus-cpp
 	$(UNPACK)
-	$(APPLY) $(SRC)/dbus-cpp/dbus-c++-threading.patch
-	$(APPLY) $(SRC)/dbus-cpp/dbus-c++-writechar.patch
-	$(APPLY) $(SRC)/dbus-cpp/dbus-c++-gcc4.7.patch
+	$(APPLY) $(SRC)/dbus-cpp/0001-dbus-c++-gcc4.7.patch
+	$(APPLY) $(SRC)/dbus-cpp/0002-dbus-c++-threading.patch
+	$(APPLY) $(SRC)/dbus-cpp/0003-dbus-c++-writechar.patch
+	$(APPLY) $(SRC)/dbus-cpp/0004-g++12.patch
+	$(APPLY) $(SRC)/dbus-cpp/0005-g++12-part2.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

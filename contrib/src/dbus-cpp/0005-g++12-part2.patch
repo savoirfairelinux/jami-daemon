@@ -1,0 +1,109 @@
+[dbus-c++] DBus-C++ operator overloading should rely on ADL
+
+DBus-C++ operator overloading (operator >>/<<) should rely on
+argument-dependent lookup, rather than on sticking the overloads in the
+global namespace, so that they can always be found correctly when used in
+templates.
+
+See http://clang.llvm.org/compatibility.html#dep_lookup to understand why the
+existing behaviour was incorrect
+
+BUG=none
+TEST=Compile against types.h with Clang
+
+Change-Id: I9239e960f6872f0f312561050d1bbd4cc9b87458
+Reviewed-on: https://gerrit.chromium.org/gerrit/42027
+Tested-by: Liam McLoughlin <lmcloughlin@chromium.org>
+Commit-Queue: Ryan Sleevi <rsleevi@chromium.org>
+Reviewed-by: Ryan Sleevi <rsleevi@chromium.org>
+
+diff --git a/include/dbus-c++/types.h b/include/dbus-c++/types.h
+index 9acb0a3..6652cd4 100644
+--- a/include/dbus-c++/types.h
++++ b/include/dbus-c++/types.h
+@@ -310,7 +310,7 @@ struct type< Struct<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14,
+   }
+ };
+
+-} /* namespace DBus */
++extern DXXAPI DBus::MessageIter &operator << (DBus::MessageIter &iter, const DBus::Variant &val);
+
+ inline DBus::MessageIter &operator << (DBus::MessageIter &iter, const DBus::Invalid &)
+ {
+@@ -649,6 +649,7 @@ inline DBus::Variant::operator T() const
+ 	return cast;
+ }
+
++} /* namespace DBus */
+
+ #endif//__DBUSXX_TYPES_H
+
+diff --git a/src/types.cpp b/src/types.cpp
+index d414a3e..70f9ac0 100644
+--- a/src/types.cpp
++++ b/src/types.cpp
+@@ -34,7 +34,7 @@
+ #include "message_p.h"
+ #include "internalerror.h"
+
+-using namespace DBus;
++namespace DBus {
+
+ Variant::Variant()
+   : _msg(CallMessage()) // dummy message used as temporary storage for variant data
+@@ -104,3 +104,4 @@ MessageIter &operator >> (MessageIter &iter, Variant &val)
+   return ++iter;
+ }
+
++} /* namespace DBus */
+diff --git a/tools/xml.cpp b/tools/xml.cpp
+index d3cc3ab..e21f7f5 100644
+--- a/tools/xml.cpp
++++ b/tools/xml.cpp
+@@ -26,6 +26,10 @@
+
+ #include <expat.h>
+
++namespace DBus {
++
++namespace Xml {
++
+ std::istream &operator >> (std::istream &in, DBus::Xml::Document &doc)
+ {
+   std::stringbuf xmlbuf;
+@@ -40,9 +44,6 @@ std::ostream &operator << (std::ostream &out, const DBus::Xml::Document &doc)
+   return out << doc.to_xml();
+ }
+
+-using namespace DBus;
+-using namespace DBus::Xml;
+-
+ Error::Error(const char *error, int line, int column)
+ {
+   std::ostringstream estream;
+@@ -311,3 +312,6 @@ void Document::Expat::end_element_handler(void *data, const XML_Char *name)
+   doc->_depth--;
+ }
+
++} /* namespace Xml */
++
++} /* namespace DBus */
+diff --git a/tools/xml.h b/tools/xml.h
+index 736a0dd..7edb65c 100644
+--- a/tools/xml.h
++++ b/tools/xml.h
+@@ -134,11 +134,11 @@ private:
+   int _depth;
+ };
+
++std::istream &operator >> (std::istream &, DBus::Xml::Document &);
++std::ostream &operator << (std::ostream &, DBus::Xml::Document &);
++
+ } /* namespace Xml */
+
+ } /* namespace DBus */
+
+-std::istream &operator >> (std::istream &, DBus::Xml::Document &);
+-std::ostream &operator << (std::ostream &, DBus::Xml::Document &);
+-
+ #endif//__DBUSXX_XML_H
