@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := e1f389d0b905011e0cb62cbdf7a8b37fc1bcde1a
+PJPROJECT_VERSION := ffca1df9bb3d0d08777f66c2bff55f4134150571
 PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
 PJPROJECT_OPTIONS := --disable-sound        \
