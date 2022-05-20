@@ -22,6 +22,30 @@
       },
       "revId": "0286edbf60af4f0f34a7f6749521e29045f5ed63",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c1408ddf_0887e6ad",
+        "filename": "configure.ac",
+        "patchSetId": 16
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-05-20T15:03:55Z",
+      "side": 1,
+      "message": "I\u0027m not sure what your proposal is doing.  Could you elaborate?",
+      "parentUuid": "a8848545_45636d1e",
+      "range": {
+        "startLine": 59,
+        "startChar": 2,
+        "endLine": 59,
+        "endChar": 43
+      },
+      "revId": "0286edbf60af4f0f34a7f6749521e29045f5ed63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
