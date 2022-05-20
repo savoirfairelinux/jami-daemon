@@ -1,4 +1,4 @@
-#!/usr/bin/env -S ./agent.exe --no-auto-compile -e main -s
+#!/usr/bin/env -S agent --no-auto-compile -e main -s
 !#
 
 ;;; Commentary:
