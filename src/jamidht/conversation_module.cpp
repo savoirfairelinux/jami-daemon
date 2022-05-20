@@ -1508,7 +1508,7 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
 
 void
 ConversationModule::setConversationPreferences(const std::string& conversationId,
-                                                  const std::map<std::string, std::string>& prefs)
+                                               const std::map<std::string, std::string>& prefs)
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto it = pimpl_->conversations_.find(conversationId);
@@ -1827,35 +1827,55 @@ ConversationModule::call(const std::string& url,
     }
 
     // Else, we are the host.
-    auto accountUri = pimpl_->username_;
     confId = Manager::instance().callFactory.getNewCallID();
-    uri = fmt::format("{}/{}/{}/{}", conversationId, accountUri, pimpl_->deviceId_, confId);
+    call->setState(Call::ConnectionState::CONNECTED);
+    // In this case, the call is the only one in the conference
+    // and there is no peer, so media succeeded and are shown to
+    // the client.
+    call->reportMediaNegotiationStatus();
+    lk.unlock();
+    hostConference(conversationId, confId, call->getCallId());
+}
 
-    if (auto acc = pimpl_->account_.lock()) {
-        auto conf = acc->getConference(confId);
-        auto createConf = !conf;
-        if (createConf) {
-            conf = std::make_shared<Conference>(acc, confId);
-            acc->attach(conf);
-        }
-        conf->addParticipant(call->getCallId());
-        call->setState(Call::ConnectionState::CONNECTED);
-
-        if (createConf)
-            emitSignal<DRing::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
-        else
-            emitSignal<DRing::CallSignal::ConferenceChanged>(acc->getAccountID(),
-                                                             conf->getConfId(),
-                                                             conf->getStateStr());
-        // In this case, the call is the only one in the conference
-        // and there is no peer, so media succeeded and are shown to
-        // the client.
-        call->reportMediaNegotiationStatus();
+void
+ConversationModule::hostConference(const std::string& conversationId,
+                                   const std::string& confId,
+                                   const std::string& callId)
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return;
+    std::shared_ptr<Call> call;
+    call = acc->getCall(callId);
+    if (!call) {
+        JAMI_WARN("No call with id %s found", callId.c_str());
+        return;
     }
+    auto conf = acc->getConference(confId);
+    auto createConf = !conf;
+    if (createConf) {
+        conf = std::make_shared<Conference>(acc, confId);
+        acc->attach(conf);
+    }
+    conf->addParticipant(callId);
 
+    if (createConf)
+        emitSignal<DRing::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
+    else
+        emitSignal<DRing::CallSignal::ConferenceChanged>(acc->getAccountID(),
+                                                         conf->getConfId(),
+                                                         conf->getStateStr());
+
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second) {
+        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        return;
+    }
+    auto& conv = conversation->second;
     // Add commit to conversation
     Json::Value value;
-    value["uri"] = accountUri;
+    value["uri"] = pimpl_->username_;
     value["device"] = pimpl_->deviceId_;
     value["confId"] = confId;
     value["type"] = "application/call-history+json";
@@ -1875,7 +1895,7 @@ ConversationModule::call(const std::string& url,
     // Master call, so when it's stopped, the conference will be stopped (as we use the hold state
     // for detaching the call)
     call->addStateListener([w = pimpl_->weak(),
-                            accountUri,
+                            accountUri = pimpl_->username_,
                             confId,
                             conversationId,
                             call](Call::CallState call_state, Call::ConnectionState cnx_state, int) {
