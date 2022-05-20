@@ -556,23 +556,30 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
     auto deviceId = std::string(split[2]);
     auto confId = std::string(split[3]);
 
-    if (getUsername() != accountUri || currentDeviceId() != deviceId
-        || !convModule()->isHosting(conversationId, confId))
+    if (getUsername() != accountUri || currentDeviceId() != deviceId)
         return;
 
-    auto conf = getConference(confId);
     auto call = getCall(callId);
-    if (!conf) {
-        JAMI_ERR("Conference %s not found", confId.c_str());
-        return;
-    } else if (!call) {
+    if (!call) {
         JAMI_ERR("Call %s not found", callId.c_str());
         return;
     }
-
     Manager::instance().answerCall(*call);
-    conf->addParticipant(callId);
-    emitSignal<DRing::CallSignal::ConferenceChanged>(getAccountID(), conf->getConfId(), conf->getStateStr());
+
+    if (!convModule()->isHosting(conversationId, confId)) {
+        // Create conference and host it.
+        convModule()->hostConference(conversationId, confId, callId);
+    } else {
+        auto conf = getConference(confId);
+        if (!conf) {
+            JAMI_ERR("Conference %s not found", confId.c_str());
+            return;
+        }
+
+        conf->addParticipant(callId);
+        emitSignal<DRing::CallSignal::ConferenceChanged>(getAccountID(), conf->getConfId(), conf->getStateStr());
+    }
+
 }
 
 std::shared_ptr<SIPCall>
