@@ -81,9 +81,6 @@ main(int argc, char* argv[])
 {
     struct args args = { argc, argv };
 
-    setenv("GUILE_LOAD_PATH", ".", 1);
-    setenv("GUILE_LOAD_COMPILED_PATH", ".", 1);
-
     if (argc > 1 && streq(argv[1], "compile")) {
         scm_with_guile(compile_in_guile, (void*)&args);
     } else {
