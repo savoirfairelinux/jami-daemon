@@ -51,7 +51,6 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/registration_states.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/ring_api.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/ring_types.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/rw_mutex.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/scheduled_executor.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/scheduled_executor.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/smartools.cpp"

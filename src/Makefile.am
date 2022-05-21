@@ -112,7 +112,6 @@ libring_la_SOURCES = \
 		map_utils.h \
 		string_utils.h \
 		string_utils.cpp \
-		rw_mutex.h \
 		ring_api.cpp \
 		rational.h \
 		smartools.cpp \

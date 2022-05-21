@@ -35,6 +35,7 @@
 
 #include <cmath>
 #include <unistd.h>
+#include <mutex>
 
 #include <opendht/thread_pool.h>
 
@@ -209,7 +210,7 @@ VideoMixer::updateLayout()
 void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    auto lock(rwMutex_.write());
+    std::unique_lock lock(rwMutex_);
 
     auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
     src->render_frame = std::make_shared<VideoFrame>();
@@ -223,7 +224,7 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 void
 VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    auto lock(rwMutex_.write());
+    std::unique_lock lock(rwMutex_);
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
@@ -244,7 +245,7 @@ void
 VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
-    auto lock(rwMutex_.read());
+    std::shared_lock lock(rwMutex_);
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
@@ -292,7 +293,7 @@ VideoMixer::process()
 
     {
         std::lock_guard<std::mutex> lk(audioOnlySourcesMtx_);
-        auto lock(rwMutex_.read());
+        std::shared_lock lock(rwMutex_);
 
         int i = 0;
         bool activeFound = false;
@@ -507,7 +508,7 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
 void
 VideoMixer::setParameters(int width, int height, AVPixelFormat format)
 {
-    auto lock(rwMutex_.write());
+    std::unique_lock lock(rwMutex_);
 
     width_ = width;
     height_ = height;
