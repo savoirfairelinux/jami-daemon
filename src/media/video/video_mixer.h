@@ -25,12 +25,12 @@
 #include "video_base.h"
 #include "video_scaler.h"
 #include "threadloop.h"
-#include "rw_mutex.h"
 #include "media_stream.h"
 
 #include <list>
 #include <chrono>
 #include <memory>
+#include <shared_mutex>
 
 namespace jami {
 namespace video {
@@ -143,7 +143,7 @@ private:
     int width_ = 0;
     int height_ = 0;
     AVPixelFormat format_ = AV_PIX_FMT_YUV422P;
-    rw_mutex rwMutex_;
+    std::shared_mutex rwMutex_;
 
     std::shared_ptr<SinkClient> sink_;
 
