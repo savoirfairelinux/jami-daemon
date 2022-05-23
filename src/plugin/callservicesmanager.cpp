@@ -285,7 +285,7 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
     if (applyRestart) {
         auto call = Manager::instance().callFactory.getCall<SIPCall>(callId);
         if (call && !call->isConferenceParticipant()) {
-            if (auto const& videoRtp = call->getVideoRtp())
+            for (auto const& videoRtp: call->getRtpSessionList(MediaType::MEDIA_VIDEO))
                 videoRtp->restartSender();
         }
     }
