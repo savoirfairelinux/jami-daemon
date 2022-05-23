@@ -275,11 +275,8 @@ void
 SIPCall::createCallAVStreams()
 {
 #ifdef ENABLE_VIDEO
-    if (hasVideo()) {
-        auto videoRtp = getVideoRtp();
-        if (not videoRtp)
-            return;
-        if (videoRtp->hasConference()) {
+    for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+        if (std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->hasConference()) {
             clearCallAVStreams();
             return;
         }
@@ -293,50 +290,43 @@ SIPCall::createCallAVStreams()
     auto audioMap = [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
         return std::static_pointer_cast<AudioFrame>(m)->pointer();
     };
+    // Map: maps the VideoFrame to an AVFrame
+    auto videoMap = [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
+        return std::static_pointer_cast<VideoFrame>(m)->pointer();
+    };
 
-    auto const& audioRtp = getAudioRtp();
-    if (not audioRtp) {
-        throw std::runtime_error("Must have a valid Audio RTP Session");
-    }
-
-    // Preview
-    if (auto& localAudio = audioRtp->getAudioLocal()) {
-        auto previewSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData microStreamData {baseId, false, StreamType::audio, getPeerNumber(), getAccountId()};
-        createCallAVStream(microStreamData, *localAudio, previewSubject);
-    }
-
-    // Receive
-    if (auto& audioReceive = audioRtp->getAudioReceive()) {
-        auto receiveSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData phoneStreamData {baseId, true, StreamType::audio, getPeerNumber(), getAccountId()};
-        createCallAVStream(phoneStreamData, (AVMediaStream&) *audioReceive, receiveSubject);
-    }
+    for (const auto& rtpSession: getRtpSessionList()) {
+        auto isVideo = rtpSession->getMediaType() == MediaType::MEDIA_VIDEO;
+        auto streamType = isVideo ? StreamType::video : StreamType::audio;
+        std::shared_ptr<MediaStreamSubject> subject;
+        if (isVideo)
+            subject = std::make_shared<MediaStreamSubject>(videoMap);
+        else
+            subject = std::make_shared<MediaStreamSubject>(audioMap);
+        StreamData previewStreamData {baseId, false, streamType, getPeerNumber(), getAccountId()};
+        StreamData receiveStreamData {baseId, true, streamType, getPeerNumber(), getAccountId()};
 #ifdef ENABLE_VIDEO
-    if (hasVideo()) {
-        auto videoRtp = getVideoRtp();
-        if (not videoRtp)
-            return;
-
-        // Map: maps the VideoFrame to an AVFrame
-        auto map = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
-            return std::static_pointer_cast<VideoFrame>(m)->pointer();
-        };
-        // Preview
-        if (auto& videoPreview = videoRtp->getVideoLocal()) {
-            auto previewSubject = std::make_shared<MediaStreamSubject>(map);
-            StreamData previewStreamData {getCallId(), false, StreamType::video, getPeerNumber(), getAccountId()};
-            createCallAVStream(previewStreamData, *videoPreview, previewSubject);
-        }
-
-        // Receive
-        if (auto& videoReceive = videoRtp->getVideoReceive()) {
-            auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
-            StreamData receiveStreamData {getCallId(), true, StreamType::video, getPeerNumber(), getAccountId()};
-            createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
-        }
-    }
+        if (isVideo) {
+            // Preview
+            auto videoRtp = std::static_pointer_cast<video::VideoRtpSession>(rtpSession);
+            if (auto& videoPreview = videoRtp->getVideoLocal())
+                createCallAVStream(previewStreamData, *videoPreview, subject);
+            // Receive
+            if (auto& videoReceive = videoRtp->getVideoReceive())
+                createCallAVStream(receiveStreamData, *videoReceive, subject);
+        } else {
 #endif
+            auto audioRtp = std::static_pointer_cast<AudioRtpSession>(rtpSession);
+            // Preview
+            if (auto& localAudio = audioRtp->getAudioLocal())
+                createCallAVStream(previewStreamData, *localAudio, subject);
+            // Receive
+            if (auto& audioReceive = audioRtp->getAudioReceive())
+                createCallAVStream(receiveStreamData, (AVMediaStream&) *audioReceive, subject);
+#ifdef ENABLE_VIDEO
+        }
+#endif
+    }
 }
 
 void
@@ -1073,10 +1063,8 @@ SIPCall::detachAudioFromConference()
 {
     if (auto conf = getConference()) {
         if (auto mixer = conf->getVideoMixer()) {
-            for (const auto& stream : rtpStreams_) {
-                if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
-                    mixer->removeAudioOnlySource(getCallId(), stream.rtpSession_->streamId());
-                }
+            for (auto& stream: getRtpSessionList(MediaType::MEDIA_AUDIO)) {
+                mixer->removeAudioOnlySource(getCallId(), stream->streamId());
             }
         }
     }
@@ -1611,9 +1599,8 @@ SIPCall::sendKeyframe()
     dht::ThreadPool::computation().run([w = weak()] {
         if (auto sthis = w.lock()) {
             JAMI_DBG("handling picture fast update request");
-            if (auto const& videoRtp = sthis->getVideoRtp()) {
-                videoRtp->forceKeyFrame();
-            }
+            for (const auto& videoRtp: sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
+                std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
         }
     });
 #endif
@@ -1873,7 +1860,8 @@ std::shared_ptr<AccountCodecInfo>
 SIPCall::getVideoCodec() const
 {
 #ifdef ENABLE_VIDEO
-    if (auto const& videoRtp = getVideoRtp())
+    // Return first video codec as we negotiate only one codec for the call
+    for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO))
         return videoRtp->getCodec();
 #endif
     return {};
@@ -1882,7 +1870,8 @@ SIPCall::getVideoCodec() const
 std::shared_ptr<AccountCodecInfo>
 SIPCall::getAudioCodec() const
 {
-    if (auto const& audioRtp = getAudioRtp())
+    // Return first video codec as we negotiate only one codec for the call
+    for (const auto& audioRtp: getRtpSessionList(MediaType::MEDIA_AUDIO))
         return audioRtp->getCodec();
     return {};
 }
@@ -2136,17 +2125,8 @@ void
 SIPCall::restartMediaSender()
 {
     JAMI_DBG("[call:%s] restarting TX media streams", getCallId().c_str());
-    auto const& audioRtp = getAudioRtp();
-    if (audioRtp)
-        audioRtp->restartSender();
-
-#ifdef ENABLE_VIDEO
-    if (hasVideo()) {
-        auto const& videoRtp = getVideoRtp();
-        if (videoRtp)
-            videoRtp->restartSender();
-    }
-#endif
+    for (const auto& rtpSession: getRtpSessionList())
+        rtpSession->restartSender();
 }
 
 void
@@ -2157,16 +2137,12 @@ SIPCall::stopAllMedia()
         deinitRecorder();
         stopRecording(); // if call stops, finish recording
     }
-    auto const& audioRtp = getAudioRtp();
-    if (audioRtp)
-        audioRtp->stop();
 #ifdef ENABLE_VIDEO
-    auto const& videoRtp = getVideoRtp();
     {
         std::lock_guard<std::mutex> lk(sinksMtx_);
         for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
-            if (videoRtp) {
-                auto& videoReceive = videoRtp->getVideoReceive();
+            for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+                auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->getVideoReceive();
                 if (videoReceive) {
                     auto& sink = videoReceive->getSink();
                     sink->detach(it->second.get());
@@ -2176,10 +2152,9 @@ SIPCall::stopAllMedia()
             it = callSinksMap_.erase(it);
         }
     }
-
-    if (videoRtp)
-        videoRtp->stop();
 #endif
+    for (const auto& rtpSession: getRtpSessionList())
+        rtpSession->stop();
 
 #ifdef ENABLE_PLUGIN
     {
@@ -2913,11 +2888,9 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
     conf_ = conference;
 
 #ifdef ENABLE_VIDEO
-    if (conference->isVideoEnabled()) {
-        auto videoRtp = getVideoRtp();
-        if (videoRtp)
-            videoRtp->enterConference(*conference);
-    }
+    if (conference->isVideoEnabled())
+        for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO))
+            std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->enterConference(*conference);
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -2930,16 +2903,15 @@ SIPCall::exitConference()
 {
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
-    auto const& audioRtp = getAudioRtp();
-    if (audioRtp && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
+    auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
+    if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
         auto& rbPool = Manager::instance().getRingBufferPool();
         rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 #ifdef ENABLE_VIDEO
-    auto const& videoRtp = getVideoRtp();
-    if (videoRtp)
-        videoRtp->exitConference();
+    for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO))
+        std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->exitConference();
 #endif
 #ifdef ENABLE_PLUGIN
     createCallAVStreams();
@@ -2947,33 +2919,13 @@ SIPCall::exitConference()
 }
 
 #ifdef ENABLE_VIDEO
-std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
-SIPCall::getReceiveVideoFrameActiveWriter()
-{
-    auto videoRtp = getVideoRtp();
-    if (videoRtp)
-        return videoRtp->getReceiveVideoFrameActiveWriter();
-    return {};
-}
-
-std::shared_ptr<video::VideoRtpSession>
-SIPCall::getVideoRtp() const
-{
-    for (auto const& stream : rtpStreams_) {
-        auto rtp = stream.rtpSession_;
-        if (rtp->getMediaType() == MediaType::MEDIA_VIDEO) {
-            return std::dynamic_pointer_cast<video::VideoRtpSession>(rtp);
-        }
-    }
-    return {};
-}
-
 void
 SIPCall::setRotation(int rotation)
 {
     rotation_ = rotation;
-    if (auto videoRtp = getVideoRtp())
-        videoRtp->setRotation(rotation);
+    // For now, only apply rotation on all videos
+    for (auto const& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
+        std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->setRotation(rotation);
 }
 
 void
@@ -2983,19 +2935,18 @@ SIPCall::createSinks(const ConfInfo& infos)
         return;
 
     std::lock_guard<std::mutex> lk(sinksMtx_);
-    auto videoRtp = getVideoRtp();
-    if (!videoRtp)
-        return;
-    auto& videoReceive = videoRtp->getVideoReceive();
-    if (!videoReceive)
-        return;
-    auto& sink = videoReceive->getSink();
+    std::vector<std::shared_ptr<video::VideoFrameActiveWriter>> sinks;
+    for (const auto& videoRtp: getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+        auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->getVideoReceive();
+        if (!videoReceive)
+            return;
+        sinks.emplace_back(std::static_pointer_cast<video::VideoFrameActiveWriter>(videoReceive->getSink()));
+    }
     auto conf = conf_.lock();
     const auto& id = conf ? conf->getConfId() : getCallId();
     Manager::instance().createSinkClients(id,
                                           infos,
-                                          std::static_pointer_cast<video::VideoFrameActiveWriter>(
-                                              sink),
+                                          sinks,
                                           callSinksMap_);
 }
 #endif
@@ -3005,23 +2956,19 @@ SIPCall::getAudioRtp() const
 {
     // For the moment, the clients support only one audio stream, so we
     // return the first audio stream.
-    for (auto const& stream : rtpStreams_) {
-        auto rtp = stream.rtpSession_;
-        if (rtp->getMediaType() == MediaType::MEDIA_AUDIO) {
-            return std::dynamic_pointer_cast<AudioRtpSession>(rtp);
-        }
-    }
-
+    for (const auto& rtp: getRtpSessionList(MediaType::MEDIA_AUDIO))
+        return std::dynamic_pointer_cast<AudioRtpSession>(rtp);
     return nullptr;
 }
 
 std::vector<std::shared_ptr<RtpSession>>
-SIPCall::getRtpSessionList() const
+SIPCall::getRtpSessionList(MediaType type) const
 {
     std::vector<std::shared_ptr<RtpSession>> rtpList;
     rtpList.reserve(rtpStreams_.size());
     for (auto const& stream : rtpStreams_) {
-        rtpList.emplace_back(stream.rtpSession_);
+        if (type == MediaType::MEDIA_ALL || stream.rtpSession_->getMediaType() == type)
+            rtpList.emplace_back(stream.rtpSession_);
     }
     return rtpList;
 }
@@ -3069,16 +3016,8 @@ SIPCall::toggleRecording()
                                  account->getUserUri(),
                                  peerUri_);
         recorder_->setMetadata(title, ""); // use default description
-        auto const& audioRtp = getAudioRtp();
-        if (audioRtp)
-            audioRtp->initRecorder(recorder_);
-#ifdef ENABLE_VIDEO
-        if (hasVideo()) {
-            auto const& videoRtp = getVideoRtp();
-            if (videoRtp)
-                videoRtp->initRecorder(recorder_);
-        }
-#endif
+        for (const auto& rtpSession: getRtpSessionList())
+            rtpSession->initRecorder(recorder_);
     } else {
         updateRecState(false);
         deinitRecorder();
@@ -3090,18 +3029,9 @@ SIPCall::toggleRecording()
 void
 SIPCall::deinitRecorder()
 {
-    if (Call::isRecording()) {
-        auto const& audioRtp = getAudioRtp();
-        if (audioRtp)
-            audioRtp->deinitRecorder(recorder_);
-#ifdef ENABLE_VIDEO
-        if (hasVideo()) {
-            auto const& videoRtp = getVideoRtp();
-            if (videoRtp)
-                videoRtp->deinitRecorder(recorder_);
-        }
-#endif
-    }
+    if (Call::isRecording())
+        for (const auto& rtpSession: getRtpSessionList())
+            rtpSession->deinitRecorder(recorder_);
 }
 
 void
