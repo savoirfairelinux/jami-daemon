@@ -334,7 +334,7 @@ public:
 #ifdef ENABLE_VIDEO
     void createSinks(const ConfInfo& infos);
     std::shared_ptr<video::VideoMixer> getVideoMixer();
-    std::string getVideoInput() const { return hostVideoSource_.sourceUri_; }
+    std::string getVideoInput() const;
 #endif
 
     std::vector<std::map<std::string, std::string>> getConferenceInfos() const
@@ -400,7 +400,6 @@ private:
 
 #ifdef ENABLE_VIDEO
     bool videoEnabled_;
-    std::string mediaSecondaryInput_ {};
     std::shared_ptr<video::VideoMixer> videoMixer_;
     std::map<std::string, std::shared_ptr<video::SinkClient>> confSinksMap_ {};
 #endif
@@ -421,19 +420,10 @@ private:
 
     /**
      * If the local host is participating in the conference (attached
-     * mode ), these two  variables will hold the media source states
+     * mode ), this variable will hold the media source states
      * of the local host.
-     *
-     * NOTE:
-     * Currently, the conference and the client support only one stream
-     * per media type, even if the call supports an arbitrary number of
-     * streams per media type. Thus, these two variables will hold the
-     * current media source attributes
      */
-    MediaAttribute hostAudioSource_ {};
-#ifdef ENABLE_VIDEO
-    MediaAttribute hostVideoSource_ {};
-#endif
+    std::vector<MediaAttribute> hostSources_;
 
     bool localModAdded_ {false};
 
