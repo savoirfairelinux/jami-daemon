@@ -88,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d120048f_f8a2d0ee",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-23T10:16:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "47770503_2b92fcea",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "46f233af_7941afad",
@@ -184,6 +202,24 @@
       "side": 1,
       "message": "Being locked (as shared_ptr) is the only thing a weak_ptr can do.\nFrom a semantic point of view, it would make sense to return shared_ptr.",
       "parentUuid": "9fdfe577_32bda585",
+      "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ce789e3_d05b4f0f",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-05-23T10:16:11Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ababcce8_bb84b2ac",
       "revId": "e8db2a46295e7d908d444b0d00fd4e04e0dc8853",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
