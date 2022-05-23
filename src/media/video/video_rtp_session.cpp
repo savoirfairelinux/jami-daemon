@@ -497,14 +497,6 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
     }
 }
 
-std::shared_ptr<VideoFrameActiveWriter>
-VideoRtpSession::getReceiveVideoFrameActiveWriter()
-{
-    if (isReceiving() && receiveThread_ && conference_)
-        return std::static_pointer_cast<VideoFrameActiveWriter>(receiveThread_);
-    return {};
-}
-
 void
 VideoRtpSession::enterConference(Conference& conference)
 {
