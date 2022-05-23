@@ -84,6 +84,8 @@ public:
     const IpAddr& getSendAddr() const { return send_.addr; };
     const IpAddr& getRecvAddr() const { return receive_.addr; };
 
+    inline std::string streamId() const { return streamId_; }
+
 protected:
     std::recursive_mutex mutex_;
     const std::string callId_;
