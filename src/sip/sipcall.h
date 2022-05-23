@@ -147,8 +147,6 @@ public:
     void enterConference(std::shared_ptr<Conference> conference) override;
     void exitConference() override;
 #ifdef ENABLE_VIDEO
-    std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> getReceiveVideoFrameActiveWriter()
-        override;
     std::mutex sinksMtx_;
     void createSinks(const ConfInfo& infos) override;
     std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
@@ -267,14 +265,10 @@ public:
 
     std::shared_ptr<AudioRtpSession> getAudioRtp() const;
 #ifdef ENABLE_VIDEO
-    /**
-     * Returns a pointer to the VideoRtp object
-     */
-    std::shared_ptr<video::VideoRtpSession> getVideoRtp() const;
     void setRotation(int rotation);
 #endif
     // Get the list of current RTP sessions
-    std::vector<std::shared_ptr<RtpSession>> getRtpSessionList() const;
+    std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(MediaType type = MediaType::MEDIA_ALL) const;
     static size_t getActiveMediaStreamCount(const std::vector<MediaAttribute>& mediaAttrList);
 
     void setPeerRegisteredName(const std::string& name) { peerRegisteredName_ = name; }

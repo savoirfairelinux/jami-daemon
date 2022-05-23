@@ -815,7 +815,7 @@ public:
      */
     void createSinkClients(const std::string& callId,
                            const ConfInfo& infos,
-                           const std::shared_ptr<video::VideoFrameActiveWriter>& videoStream,
+                           const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
                            std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap);
 
     /**

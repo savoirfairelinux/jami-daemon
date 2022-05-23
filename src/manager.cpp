@@ -3033,7 +3033,7 @@ Manager::createSinkClient(const std::string& id, bool mixer)
 void
 Manager::createSinkClients(const std::string& callId,
                            const ConfInfo& infos,
-                           const std::shared_ptr<video::VideoFrameActiveWriter>& videoStream,
+                           const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
                            std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
 {
     std::lock_guard<std::mutex> lk(pimpl_->sinksMutex_);
@@ -3058,7 +3058,8 @@ Manager::createSinkClients(const std::string& callId,
             newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
             newSink->setFrameSize(participant.w, participant.h);
 
-            videoStream->attach(newSink.get());
+            for (auto& videoStream: videoStreams)
+                videoStream->attach(newSink.get());
 
             sinksMap.emplace(sinkId, newSink);
             sinkIdsList.emplace(sinkId);
@@ -3070,7 +3071,8 @@ Manager::createSinkClients(const std::string& callId,
     // remove any non used video sink
     for (auto it = sinksMap.begin(); it != sinksMap.end();) {
         if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
-            videoStream->detach(it->second.get());
+            for (auto& videoStream: videoStreams)
+                videoStream->detach(it->second.get());
             it->second->stop();
             it = sinksMap.erase(it);
         } else {
