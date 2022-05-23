@@ -108,8 +108,6 @@ public:
 
     std::shared_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
 
-    std::shared_ptr<VideoFrameActiveWriter> getReceiveVideoFrameActiveWriter();
-
 private:
     void setupConferenceVideoPipeline(Conference& conference, Direction dir);
     void setupVideoPipeline();

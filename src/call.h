@@ -357,8 +357,6 @@ public:
     virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
 
 #ifdef ENABLE_VIDEO
-    virtual std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
-    getReceiveVideoFrameActiveWriter() = 0;
     virtual void createSinks(const ConfInfo& infos) = 0;
 #endif
 
