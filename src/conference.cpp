@@ -813,8 +813,7 @@ Conference::createSinks(const ConfInfo& infos)
     auto& sink = videoMixer_->getSink();
     Manager::instance().createSinkClients(getConfId(),
                                           infos,
-                                          std::static_pointer_cast<video::VideoFrameActiveWriter>(
-                                              sink),
+                                          {std::static_pointer_cast<video::VideoFrameActiveWriter>(sink)},
                                           confSinksMap_);
 }
 #endif
@@ -1553,9 +1552,11 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
         // if the one from confInfo is empty
         if (auto call = std::dynamic_pointer_cast<SIPCall>(
                 getCallFromPeerID(string_remove_suffix(peerURI, '@')))) {
-            if (auto const& videoRtp = call->getVideoRtp()) {
-                remoteFrameHeight = videoRtp->getVideoReceive()->getHeight();
-                remoteFrameWidth = videoRtp->getVideoReceive()->getWidth();
+            for (auto const& videoRtp: call->getRtpSessionList(MediaType::MEDIA_VIDEO)) {
+                auto recv = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->getVideoReceive();
+                remoteFrameHeight = recv->getHeight();
+                remoteFrameWidth = recv->getWidth();
+                break;
             }
         }
     }
