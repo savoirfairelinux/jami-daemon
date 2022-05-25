@@ -2791,8 +2791,14 @@ Manager::loadAccountMap(const YAML::Node& node)
         pluginPreferences.unserialize(node);
 #endif
     } catch (const YAML::Exception& e) {
-        JAMI_ERR("%s: Preferences node unserialize error: ", e.what());
+        JAMI_ERR("Preferences node unserialize YAML exception: %s", e.what());
         ++errorCount;
+    } catch (const std::exception& e) {
+        JAMI_ERR("Preferences node unserialize standard exception: %s", e.what());
+         ++errorCount;
+    } catch (...) {
+        JAMI_ERR("Preferences node unserialize unknown exception");
+         ++errorCount;
     }
 
     const std::string accountOrder = preferences.getAccountOrder();
