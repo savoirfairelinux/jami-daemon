@@ -1028,10 +1028,9 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession)
     }
 
     std::vector<MediaAttribute> mediaList;
+    unsigned audioIdx = 0;
+    unsigned videoIdx = 0;
     for (unsigned idx = 0; idx < sdpSession->media_count; idx++) {
-        unsigned audioIdx = 0;
-        unsigned videoIdx = 0;
-
         mediaList.emplace_back(MediaAttribute {});
         auto& mediaAttr = mediaList.back();
 
