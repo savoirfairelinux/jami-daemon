@@ -35,11 +35,11 @@ index 000000000..7b8ea2561
 +#define PJ_ICE_ST_MAX_CAND                      32
 +#define PJ_ICE_MAX_STUN                         6
 +#define PJ_ICE_MAX_TURN                         4
-+#define PJ_ICE_COMP_BITS                        2
++#define PJ_ICE_COMP_BITS                        5
 +#define PJ_ICE_MAX_CHECKS                       1024
 +/* Set permanent permissions on the TURN
 +   server for all peer candidates */
 +#define PJ_ICE_ST_USE_TURN_PERMANENT_PERM       PJ_TRUE
--- 
+--
 2.25.1
 
