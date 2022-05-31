@@ -744,20 +744,18 @@ std::string
 IceTransport::Impl::link() const
 {
     std::ostringstream out;
-    for (unsigned strm = 0; strm < streamsCount_; strm++) {
-        for (unsigned i = 1; i <= compCountPerStream_; i++) {
-            auto absIdx = strm * streamsCount_ + i;
-            auto laddr = getLocalAddress(absIdx);
-            auto raddr = getRemoteAddress(absIdx);
+    for (unsigned strm = 1; strm <= streamsCount_ * compCountPerStream_; strm++) {
+        auto absIdx = strm;
+        auto laddr = getLocalAddress(absIdx);
+        auto raddr = getRemoteAddress(absIdx);
 
-            if (laddr and laddr.getPort() != 0 and raddr and raddr.getPort() != 0) {
-                out << " [" << i << "] " << laddr.toString(true, true) << " ["
-                    << getCandidateType(getSelectedCandidate(absIdx, false)) << "] "
-                    << " <-> " << raddr.toString(true, true) << " ["
-                    << getCandidateType(getSelectedCandidate(absIdx, true)) << "] " << '\n';
-            } else {
-                out << " [" << i << "] disabled\n";
-            }
+        if (laddr and laddr.getPort() != 0 and raddr and raddr.getPort() != 0) {
+            out << " [" << strm << "] " << laddr.toString(true, true) << " ["
+                << getCandidateType(getSelectedCandidate(absIdx, false)) << "] "
+                << " <-> " << raddr.toString(true, true) << " ["
+                << getCandidateType(getSelectedCandidate(absIdx, true)) << "] " << '\n';
+        } else {
+            out << " [" << strm << "] disabled\n";
         }
     }
     return out.str();
@@ -970,6 +968,10 @@ IceTransport::Impl::addServerReflexiveCandidates(
                   compCount_);
         return;
     }
+    if (compCount_ > PJ_ICE_MAX_COMP) {
+        JAMI_ERR("[ice:%p] Too many components", this);
+        return;
+    }
 
     // Add config for server reflexive candidates (UPNP or from DHT).
     if (not addStunConfig(pj_AF_INET()))
@@ -1004,7 +1006,6 @@ IceTransport::Impl::addServerReflexiveCandidates(
     }
 
     stun.cfg.user_mapping_cnt = compCount_;
-    assert(stun.cfg.user_mapping_cnt <= PJ_ICE_MAX_COMP);
 }
 
 std::vector<std::pair<IpAddr, IpAddr>>
