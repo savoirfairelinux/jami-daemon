@@ -967,7 +967,8 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
                  newMediaAttr.toString(true).c_str());
     }
 
-    updateAllMediaStreams(remoteMediaAttrList);
+    if (!updateAllMediaStreams(remoteMediaAttrList))
+        return;
 
     if (not sdp_->processIncomingOffer(remoteMediaAttrList)) {
         JAMI_WARN("[call:%s] Could not process the new offer, ignoring", getCallId().c_str());
@@ -2285,10 +2286,15 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 #endif
 }
 
-void
+bool
 SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 {
     JAMI_DBG("[call:%s] New local media", getCallId().c_str());
+
+    if (mediaAttrList.size() > PJ_ICE_MAX_COMP / 2) {
+        JAMI_DBG("[call:%s] Too many medias, limit it (%lu vs %u)", getCallId().c_str(), mediaAttrList.size(), PJ_ICE_MAX_COMP);
+        return false;
+    }
 
     unsigned idx = 0;
     for (auto const& newMediaAttr : mediaAttrList) {
@@ -2316,6 +2322,10 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
             updateMediaStream(newAttr, streamIdx);
         }
     }
+
+    if (mediaAttrList.size() < rtpStreams_.size())
+        rtpStreams_.resize(mediaAttrList.size());
+    return true;
 }
 
 bool
@@ -2429,7 +2439,8 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
     auto needReinvite = isReinviteRequired(mediaAttrList);
     auto needNewIce = isNewIceMediaRequired(mediaAttrList);
 
-    updateAllMediaStreams(mediaAttrList);
+    if (!updateAllMediaStreams(mediaAttrList))
+        return false;
 
     if (needReinvite) {
         JAMI_DBG("[call:%s] Media change requires a new negotiation (re-invite)",
