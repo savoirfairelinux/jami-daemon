@@ -370,7 +370,7 @@ private:
 
     // Update the attributes of a media stream
     void updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx);
-    void updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
+    bool updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
     // Check if a SIP re-invite must be sent to negotiate the new media
     bool isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList);
     // Check if a new ICE media session is needed when performing a re-invite
