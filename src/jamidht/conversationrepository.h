@@ -214,10 +214,11 @@ public:
     /**
      * Merge another branch into the main branch
      * @param merge_id      The reference to merge
+     * @param force         Should be false, skip validateDevice() ; used for test purpose
      * @return a pair containing if the merge was successful and the merge commit id
      * generated if one (can be a fast forward merge without commit)
      */
-    std::pair<bool, std::string> merge(const std::string& merge_id);
+    std::pair<bool, std::string> merge(const std::string& merge_id, bool force = false);
 
     /**
      * Get current diff stats between two commits
@@ -350,6 +351,13 @@ public:
     std::map<std::string, std::string> infos() const;
     static std::map<std::string, std::string> infosFromVCard(
         const std::map<std::string, std::string>& details);
+
+    /**
+     * Retrieve account's URI from deviceId
+     * @param deviceId
+     * @return account's URI
+     */
+    std::string uriFromDevice(const std::string& deviceId) const;
 
 private:
     ConversationRepository() = delete;
