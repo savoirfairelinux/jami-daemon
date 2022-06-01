@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "023b37e6_e34f4dfb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 11
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-01T19:36:06Z",
+      "side": 1,
+      "message": "Ok, just ",
+      "revId": "f63f643300428e2a4d3712a5e79cbc4d0be36a75",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2251da80_53f84ed6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1082,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-01T19:36:06Z",
+      "side": 1,
+      "message": "Store the StreamId in the RtpStream, to avoid computing it over and over.\n* If we re-compute the StreamId from its components all the time, it\u0027s maybe best to just pass the individual components around...\n* Otherwise, compute it just once and pass it around. It should ideally never be parsed (if it\u0027s parsed to access individual components, just pass these individual components around directly).",
+      "range": {
+        "startLine": 1078,
+        "startChar": 16,
+        "endLine": 1082,
+        "endChar": 17
+      },
+      "revId": "f63f643300428e2a4d3712a5e79cbc4d0be36a75",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
