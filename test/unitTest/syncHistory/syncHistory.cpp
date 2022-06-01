@@ -1184,30 +1184,20 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
                     requestReceived = true;
                 cv.notify_one();
             }));
-    auto messageDisplayed = false;
+    auto messageDisplayed = false, messageDisplayedAlice2 = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-            [&](const std::string& /* accountId */,
+            [&](const std::string& accountId,
                 const std::string& /* conversationId */,
                 const std::string& /* username */,
-                const std::string& /* msgId */,
+                const std::string& msgId,
                 int status) {
-                if (status == 3)
-                    messageDisplayed = true;
-                cv.notify_one();
-            }));
-    auto alice2Ready = false, alice2Stopped = false;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
-                if (alice2Id != accountId) {
-                    return;
+                if (status == 3) {
+                    if (accountId == aliceId)
+                        messageDisplayed = true;
+                    else if (accountId == alice2Id)
+                        messageDisplayedAlice2 = true;
                 }
-                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
-                              == "true";
-                auto daemonStatus = details.at(DRing::Account::ConfProperties::Registration::STATUS);
-                if (daemonStatus == "UNREGISTERED")
-                    alice2Stopped = true;
                 cv.notify_one();
             }));
     DRing::registerSignalHandlers(confHandlers);
@@ -1234,10 +1224,6 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReady && conversationAlice2Ready; }));
 
-    // Disable alice 2
-    Manager::instance().sendRegister(aliceId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return alice2Stopped; }));
-
     // Start conversation
     messageReceived = false;
     DRing::sendMessage(bobId, convId, std::string("Message 1"), "");
@@ -1250,14 +1236,11 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
 
     messageDisplayed = false;
+    messageDisplayedAlice2 = false;
     auto displayedId = msgId;
     DRing::setMessageDisplayed(aliceId, "swarm:" + convId, displayedId, 3);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageDisplayed; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return messageDisplayed && messageDisplayedAlice2; }));
 
-    // Now restart alice2
-    messageDisplayed = false;
-    Manager::instance().sendRegister(aliceId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return messageDisplayed; }));
     auto membersInfos = DRing::getConversationMembers(alice2Id, convId);
     CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
                                 membersInfos.end(),
