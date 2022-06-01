@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16bad7c7_af57658b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-01T11:24:15Z",
+      "side": 1,
+      "message": "For jenkins\u0027 CI:\n\nhttps://jenkins.jami.net/job/daemon-android-x86_64/18907/console\n\nI see that android is failing with ssl1 :thinking: (not related to this patch, but for all daemon\u0027s patch)",
+      "range": {
+        "startLine": 7,
+        "startChar": 23,
+        "endLine": 7,
+        "endChar": 29
+      },
+      "revId": "35955b4fd843a73d8f30921061b6a6a9ff6d0c5c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "888e795f_4380d246",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-01T11:24:15Z",
+      "side": 1,
+      "message": "On a extra note, I see ",
+      "revId": "35955b4fd843a73d8f30921061b6a6a9ff6d0c5c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
