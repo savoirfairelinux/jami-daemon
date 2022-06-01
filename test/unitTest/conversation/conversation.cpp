@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2017-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2017-2022 Savoir-faire Linux Inc.
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -80,21 +80,13 @@ private:
     void testReplaceWithBadCertificate();
     void testSendMessageTriggerMessageReceived();
     void testMergeTwoDifferentHeads();
+    void testMergeAfterMigration();
     void testSendMessageToMultipleParticipants();
     void testPingPongMessages();
     void testIsComposing();
     void testSetMessageDisplayed();
     void testSetMessageDisplayedPreference();
     void testVoteNonEmpty();
-
-    // LATER void testBanDevice();
-    // LATER void testBannedDeviceCannotSendMessageButMemberCan();
-    // LATER void testRevokedDeviceCannotSendMessage();
-    // LATER void test2AdminsCannotBanEachOthers();
-    // LATER void test2AdminsBanMembers();
-    // LATER void test2AdminsBanOtherAdmin();
-    // LATER void testAdminRemoveConversationShouldPromoteOther();
-
     void testNoBadFileInInitialCommit();
     void testNoBadCertInInitialCommit();
     void testPlainTextNoBadFile();
@@ -125,6 +117,8 @@ private:
     CPPUNIT_TEST(testSendMessage);
     CPPUNIT_TEST(testReplaceWithBadCertificate);
     CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
+    CPPUNIT_TEST(testMergeTwoDifferentHeads);
+    CPPUNIT_TEST(testMergeAfterMigration);
     CPPUNIT_TEST(testSendMessageToMultipleParticipants);
     CPPUNIT_TEST(testPingPongMessages);
     CPPUNIT_TEST(testIsComposing);
@@ -542,6 +536,7 @@ ConversationTest::testMergeTwoDifferentHeads()
                        + DIR_SEPARATOR_STR + "convInfo";
     auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
                        + DIR_SEPARATOR_STR + "convInfo";
+    std::filesystem::remove_all(ciPathCarla);
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
     // Accept for alice and makes different heads
@@ -556,6 +551,81 @@ ConversationTest::testMergeTwoDifferentHeads()
     Manager::instance().sendRegister(carlaId, true);
     carlaGotMessage = false;
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaGotMessage; }));
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testMergeAfterMigration()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+    auto convId = DRing::startConversation(aliceId);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == carlaId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    std::string carlaGotMessage, aliceGotMessage;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == carlaId && conversationId == convId) {
+                carlaGotMessage = message["id"];
+            } else if (accountId == aliceId && conversationId == convId) {
+                aliceGotMessage = message["id"];
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    aliceAccount->convModule()->addConversationMember(convId, carlaUri, false);
+
+    // Cp conversations & convInfo
+    auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                         + aliceAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                         + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
+    auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                       + DIR_SEPARATOR_STR + "convInfo";
+    auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
+                       + DIR_SEPARATOR_STR + "convInfo";
+    std::filesystem::remove_all(ciPathCarla);
+    std::filesystem::copy(ciPathAlice, ciPathCarla);
+
+    // Accept for carla
+    ConversationRepository repo(carlaAccount, convId);
+    repo.join();
+
+    std::filesystem::remove_all(repoPathAlice);
+    std::filesystem::copy(repoPathCarla, repoPathAlice, std::filesystem::copy_options::recursive);
+
+    // Makes different heads
+    DRing::sendMessage(carlaId, convId, "hi"s, "");
+    DRing::sendMessage(aliceId, convId, "hi"s, "");
+
+    // Migrate carla
+    CPPUNIT_ASSERT(carlaAccount->setValidity("", {}, 10));
+    auto now = std::chrono::system_clock::now();
+    std::this_thread::sleep_until(now + 20s);
+    carlaAccount->forceReloadAccount();
+
+    // Start Carla, should merge and all messages should be there
+    Manager::instance().sendRegister(carlaId, true);
+    carlaGotMessage = "";
+    aliceGotMessage = "";
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return !carlaGotMessage.empty() && !aliceGotMessage.empty(); }));
     DRing::unregisterSignalHandlers();
 }
 
@@ -1018,117 +1088,6 @@ ConversationTest::testSetMessageDisplayedPreference()
                    != membersInfos.end());
     DRing::unregisterSignalHandlers();
 }
-
-/*void
-ConversationTest::testBanDevice()
-{
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto aliceUri = aliceAccount->getUsername();
-    auto bobUri = bobAccount->getUsername();
-    auto bobDeviceId = std::string(bobAccount->currentDeviceId());
-    auto convId = DRing::startConversation(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         voteMessageGenerated = false, bob2GetMessage = false, bobGetMessage = false;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string&,
-                const std::string&,
-                std::map<std::string, std::string>) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if ((accountId == bobId || accountId == bob2Id) && conversationId == convId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "vote") {
-                voteMessageGenerated = true;
-            } else if (accountId == aliceId && conversationId == convId
-                       && message["type"] == "member") {
-                memberMessageGenerated = true;
-            } else if (accountId == bobId) {
-                bobGetMessage = true;
-            } else if (accountId == bob2Id) {
-                bob2GetMessage = true;
-            }
-            cv.notify_one();
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-    DRing::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return requestReceived && memberMessageGenerated;
-    }));
-    memberMessageGenerated = false;
-    DRing::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
-
-    // Add second device for Bob
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
-    std::remove(bobArchive.c_str());
-    bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB2";
-    details[ConfProperties::ALIAS] = "BOB2";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
-    bob2Id = Manager::instance().addAccount(details);
-
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
-                if (!bob2Account)
-                    return;
-                auto details = bob2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED")
-                    cv.notify_one();
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    conversationReady = false;
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady; }));
-
-    // Now check that alice, has the only admin, can remove bob
-    memberMessageGenerated = false;
-    voteMessageGenerated = false;
-    bobGetMessage = false;
-    auto members = DRing::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(members.size() == 2);
-    DRing::removeConversationMember(aliceId, convId, bobDeviceId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return memberMessageGenerated && voteMessageGenerated;
-    }));
-
-    auto bannedFile = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId
-                      + DIR_SEPARATOR_STR + "banned" + DIR_SEPARATOR_STR + "devices"
-                      + DIR_SEPARATOR_STR + bobDeviceId + ".crt";
-    CPPUNIT_ASSERT(fileutils::isFile(bannedFile));
-    members = DRing::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(members.size() == 2);
-
-    // Assert that bob2 get the message, not Bob
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobGetMessage; }));
-    CPPUNIT_ASSERT(bob2GetMessage && !bobGetMessage);
-    DRing::unregisterSignalHandlers();
-}*/
 
 std::string
 ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
