@@ -351,6 +351,8 @@ public:
     static std::map<std::string, std::string> infosFromVCard(
         const std::map<std::string, std::string>& details);
 
+    std::string uriFromDevice(const std::string& deviceId) const;
+
 private:
     ConversationRepository() = delete;
     class Impl;

@@ -544,6 +544,10 @@ ConversationRepository::Impl::signature()
 std::string
 ConversationRepository::Impl::createMergeCommit(git_index* index, const std::string& wanted_ref)
 {
+    if (!validateDevice()) {
+        JAMI_ERR() << "Invalid device. Not migrated?";
+        return {};
+    }
     // The merge will occur between current HEAD and wanted_ref
     git_reference* head_ref_ptr = nullptr;
     auto repo = repository();
@@ -2503,7 +2507,20 @@ ConversationRepository::Impl::validCommits(
                 return false;
             }
         } else {
-            // Merge commit, for now, nothing to validate
+            // Merge commit, for now, check user
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
+                JAMI_WARN(
+                    "Malformed merge commit %s. Please check you use the latest version of Jami, or "
+                    "that your contact is not doing unwanted stuff.",
+                    validUserAtCommit.c_str());
+                if (auto shared = account_.lock()) {
+                    emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                                                                               id_,
+                                                                               EVALIDFETCH,
+                                                                               "Malformed commit");
+                }
+                return false;
+            }
         }
         JAMI_DBG("Validate commit %s", commit.id.c_str());
     }
@@ -2798,6 +2815,10 @@ ConversationRepository::getCommit(const std::string& commitId, bool logIfNotFoun
 std::pair<bool, std::string>
 ConversationRepository::merge(const std::string& merge_id)
 {
+    if (!validateDevice()) {
+        JAMI_ERR() << "Invalid device. Not migrated?";
+        return {false, ""};
+    }
     // First, the repository must be in a clean state
     auto repo = pimpl_->repository();
     if (!repo) {
@@ -2898,7 +2919,6 @@ ConversationRepository::merge(const std::string& merge_id)
             return {false, ""};
         }
     }
-
     auto result = pimpl_->createMergeCommit(index.get(), merge_id);
     JAMI_INFO("Merge done between %s and main", merge_id.c_str());
 
@@ -3552,6 +3572,12 @@ ConversationRepository::infosFromVCard(const std::map<std::string, std::string>&
         }
     }
     return result;
+}
+
+std::string
+ConversationRepository::uriFromDevice(const std::string& deviceId) const
+{
+    return pimpl_->uriFromDevice(deviceId);
 }
 
 } // namespace jami
