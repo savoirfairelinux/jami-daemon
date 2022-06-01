@@ -544,26 +544,13 @@ Conversation::Impl::repoPath() const
 std::optional<std::map<std::string, std::string>>
 Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
 {
+    if (!repository_)
+        return std::nullopt;
     auto authorDevice = commit.author.email;
-    auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
-    if (!cert || !cert->issuer) {
-        JAMI_WARN("No author found for commit %s, reload certificates", commit.id.c_str());
-        if (repository_)
-            repository_->pinCertificates(true);
-        // Get certificate from repo
-        try {
-            cert = tls::CertificateStore::instance().getCertificate(authorDevice);
-            if (!cert || !cert->issuer) {
-                JAMI_ERR("No author found for commit %s (device: %s)",
-                         commit.id.c_str(),
-                         authorDevice.c_str());
-                return std::nullopt;
-            }
-        } catch (...) {
-            return std::nullopt;
-        }
-    }
-    auto authorId = cert->issuer->getId().toString();
+    auto authorId = repository_->uriFromDevice(authorDevice);
+    if (authorId == "")
+        return std::nullopt;
+
     std::string parents;
     auto parentsSize = commit.parents.size();
     for (std::size_t i = 0; i < parentsSize; ++i) {
@@ -571,10 +558,9 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
         if (i != parentsSize - 1)
             parents += ",";
     }
-    std::string type {};
-    if (parentsSize > 1) {
+    std::string type;
+    if (parentsSize > 1)
         type = "merge";
-    }
     std::string body {};
     std::map<std::string, std::string> message;
     if (type.empty()) {
