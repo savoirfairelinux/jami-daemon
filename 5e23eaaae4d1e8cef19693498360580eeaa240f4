@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "420b686f_1a3f6130",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 18
+      },
+      "lineNbr": 410,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-01T19:23:02Z",
+      "side": 1,
+      "message": "should be merged with hangupParticipant? (deviceId could be empty to kick add devices from a participant)\n\nIf we keep both, the name should be homogenized",
+      "range": {
+        "startLine": 397,
+        "startChar": 8,
+        "endLine": 410,
+        "endChar": 17
+      },
+      "revId": "5e23eaaae4d1e8cef19693498360580eeaa240f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
