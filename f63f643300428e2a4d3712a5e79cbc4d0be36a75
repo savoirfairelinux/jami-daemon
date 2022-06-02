@@ -39,6 +39,30 @@
       },
       "revId": "f63f643300428e2a4d3712a5e79cbc4d0be36a75",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d0fdfbb_7b4126e4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1082,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-02T11:04:30Z",
+      "side": 1,
+      "message": "True\n\nNote: This loop is rewritten in https://review.jami.net/c/jami-daemon/+/21552 and uses stream-\u003estreamId() to avoid this.\n\nI did some changes in latest patchset for this.",
+      "parentUuid": "2251da80_53f84ed6",
+      "range": {
+        "startLine": 1078,
+        "startChar": 16,
+        "endLine": 1082,
+        "endChar": 17
+      },
+      "revId": "f63f643300428e2a4d3712a5e79cbc4d0be36a75",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
