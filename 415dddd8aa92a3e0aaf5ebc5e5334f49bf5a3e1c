@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3cf0f043_39e67c97",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-02T18:59:51Z",
+      "side": 1,
+      "message": "auto subject \u003d std::make_shared\u003cMediaStreamSubject\u003e(isVideo ? videoMap : audioMap);",
+      "range": {
+        "startLine": 301,
+        "startChar": 8,
+        "endLine": 305,
+        "endChar": 69
+      },
+      "revId": "415dddd8aa92a3e0aaf5ebc5e5334f49bf5a3e1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
