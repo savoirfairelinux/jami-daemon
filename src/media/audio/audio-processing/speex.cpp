@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "speex_echo_canceller.h"
+#include "speex.h"
 
 #include "audio/audiolayer.h"
 
@@ -29,44 +29,19 @@ extern "C" {
 
 namespace jami {
 
-struct SpeexEchoCanceller::SpeexEchoStateImpl
+SpeexAudioProcessor::SpeexAudioProcessor(AudioFormat format, unsigned frameSize)
+    : AudioProcessor(format, frameSize)
+    , state(speex_echo_state_init_mc(frameSize,
+                                        frameSize * 16,
+                                        format.nb_channels,
+                                        format.nb_channels),
+            &speex_echo_state_destroy)
 {
-    using SpeexEchoStatePtr = std::unique_ptr<SpeexEchoState, void (*)(SpeexEchoState*)>;
-    SpeexEchoStatePtr state;
-
-    SpeexEchoStateImpl(AudioFormat format, unsigned frameSize)
-        : state(speex_echo_state_init_mc(frameSize,
-                                         frameSize * 16,
-                                         format.nb_channels,
-                                         format.nb_channels),
-                &speex_echo_state_destroy)
-    {
-        int sr = format.sample_rate;
-        speex_echo_ctl(state.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &sr);
-    }
-};
-
-SpeexEchoCanceller::SpeexEchoCanceller(AudioFormat format, unsigned frameSize)
-    : EchoCanceller(format, frameSize)
-    , pimpl_(std::make_unique<SpeexEchoStateImpl>(format, frameSize))
-{
-    speex_echo_ctl(pimpl_->state.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &format_.sample_rate);
-}
-
-void
-SpeexEchoCanceller::putRecorded(std::shared_ptr<AudioFrame>&& buf)
-{
-    EchoCanceller::putRecorded(std::move(buf));
-}
-
-void
-SpeexEchoCanceller::putPlayback(const std::shared_ptr<AudioFrame>& buf)
-{
-    EchoCanceller::putPlayback(buf);
+    speex_echo_ctl(state.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &format_.sample_rate);
 }
 
 std::shared_ptr<AudioFrame>
-SpeexEchoCanceller::getProcessed()
+SpeexAudioProcessor::getProcessed()
 {
     if (playbackQueue_.samples() < playbackQueue_.frameSize()
         or recordQueue_.samples() < recordQueue_.frameSize()) {
@@ -93,7 +68,7 @@ SpeexEchoCanceller::getProcessed()
     auto record = recordQueue_.dequeue();
     if (playback and record) {
         auto ret = std::make_shared<AudioFrame>(record->getFormat(), record->getFrameSize());
-        speex_echo_cancellation(pimpl_->state.get(),
+        speex_echo_cancellation(state.get(),
                                 (const int16_t*) record->pointer()->data[0],
                                 (const int16_t*) playback->pointer()->data[0],
                                 (int16_t*) ret->pointer()->data[0]);
@@ -101,9 +76,5 @@ SpeexEchoCanceller::getProcessed()
     }
     return {};
 }
-
-void
-SpeexEchoCanceller::done()
-{}
 
 } // namespace jami

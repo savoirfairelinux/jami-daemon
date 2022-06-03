@@ -24,24 +24,12 @@
 
 namespace jami {
 
-NullEchoCanceller::NullEchoCanceller(AudioFormat format, unsigned frameSize)
-    : EchoCanceller(format, frameSize)
+NullAudioProcessor::NullAudioProcessor(AudioFormat format, unsigned frameSize)
+    : AudioProcessor(format, frameSize)
 {}
 
-void
-NullEchoCanceller::putRecorded(std::shared_ptr<AudioFrame>&& buf)
-{
-    EchoCanceller::putRecorded(std::move(buf));
-};
-
-void
-NullEchoCanceller::putPlayback(const std::shared_ptr<AudioFrame>& buf)
-{
-    EchoCanceller::putPlayback(buf);
-};
-
 std::shared_ptr<AudioFrame>
-NullEchoCanceller::getProcessed()
+NullAudioProcessor::getProcessed()
 {
     while (recordQueue_.samples() > recordQueue_.frameSize() * 10) {
         JAMI_DBG("record overflow %d / %d", recordQueue_.samples(), frameSize_);
@@ -67,7 +55,5 @@ NullEchoCanceller::getProcessed()
     playbackQueue_.dequeue();
     return recordQueue_.dequeue();
 };
-
-void NullEchoCanceller::done() {};
 
 } // namespace jami

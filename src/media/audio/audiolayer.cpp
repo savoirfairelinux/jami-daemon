@@ -30,9 +30,9 @@
 
 // aec
 #if HAVE_WEBRTC_AP
-#include "echo-cancel/webrtc_echo_canceller.h"
+#include "audio-processing/webrtc.h"
 #else
-#include "echo-cancel/null_echo_canceller.h"
+#include "audio-processing/null.h"
 #endif
 
 #include <ctime>
@@ -142,9 +142,9 @@ AudioLayer::checkAEC()
                   frame_size);
 
 #if HAVE_WEBRTC_AP
-        echoCanceller_.reset(new WebRTCEchoCanceller(format, frame_size));
+        echoCanceller_.reset(new WebRTCAudioProcessor(format, frame_size));
 #else
-        echoCanceller_.reset(new NullEchoCanceller(format, frame_size));
+        echoCanceller_.reset(new NullAudioProcessor(format, frame_size));
 #endif
     } else if (echoCanceller_ and not shouldSoftAEC and not playbackStarted_
                and not recordStarted_) {
