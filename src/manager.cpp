@@ -2983,17 +2983,21 @@ Manager::getMessageStatus(const std::string& accountID, uint64_t id) const
 }
 
 void
-Manager::setAccountActive(const std::string& accountID, bool active)
+Manager::setAccountActive(const std::string& accountID, bool active, bool shutdownConnections)
 {
     const auto acc = getAccount(accountID);
     if (!acc || acc->isActive() == active)
         return;
     acc->setActive(active);
     if (acc->isEnabled()) {
-        if (active)
+        if (active) {
             acc->doRegister();
-        else
+        } else {
             acc->doUnregister();
+            if (shutdownConnections) {
+                acc->shutdownConnections();
+            }
+        }
     }
     emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID,
                                                                    acc->getVolatileAccountDetails());

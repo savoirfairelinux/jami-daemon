@@ -58,7 +58,7 @@ DRING_PUBLIC std::map<std::string, std::string> getVolatileAccountDetails(
     const std::string& accountID);
 DRING_PUBLIC void setAccountDetails(const std::string& accountID,
                                     const std::map<std::string, std::string>& details);
-DRING_PUBLIC void setAccountActive(const std::string& accountID, bool active);
+DRING_PUBLIC void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections = false);
 DRING_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details,
                                     const std::string& accountID = {});
