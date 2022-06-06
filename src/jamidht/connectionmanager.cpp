@@ -705,6 +705,14 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                                 return;
                             dht::InfoHash peer_h;
                             if (AccountManager::foundPeerDevice(cert, peer_h)) {
+#if TARGET_OS_IOS
+                                if ((req.connType == "videoCall" || req.connType == "audioCall") && jami::Manager::instance().isIOSExtension) {
+                                    bool hasVideo = req.connType == "videoCall";
+                                    emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
+                                        shared->account.getAccountID(), peer_h.toString(), hasVideo);
+                                        return;
+                                }
+#endif
                                 shared->onDhtPeerRequest(req, cert);
                             } else {
                                 JAMI_WARN() << shared->account

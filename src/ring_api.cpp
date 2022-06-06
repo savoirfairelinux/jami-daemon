@@ -64,6 +64,12 @@ init(enum InitFlag flags) noexcept
         // current implementation use static variable
         auto& manager = jami::Manager::instance();
         manager.setAutoAnswer(flags & DRING_FLAG_AUTOANSWER);
+
+#if TARGET_OS_IOS
+        if (flags & DRING_FLAG_IOS_EXTENSION)
+            manager.isIOSExtension = true;
+#endif
+
         return true;
     } catch (...) {
         return false;
@@ -79,6 +85,12 @@ start(const std::string& config_file) noexcept
         return false;
     }
     return true;
+}
+
+bool
+initialized() noexcept
+{
+    return jami::Manager::initialized;
 }
 
 void
