@@ -125,6 +125,21 @@ struct DRING_PUBLIC ConversationSignal
                              const std::string& /* memberUri */,
                              int /* event 0 = add, 1 = joins, 2 = leave, 3 = banned */);
     };
+
+    struct DRING_PUBLIC ConversationSyncFinished
+    {
+        constexpr static const char* name = "ConversationSyncFinished";
+        using cb_type = void(const std::string& /*accountId*/);
+    };
+
+    struct DRING_PUBLIC CallConnectionRequest
+    {
+        constexpr static const char* name = "CallConnectionRequest";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /*peerId*/,
+                             bool hasVideo);
+    };
+
     struct DRING_PUBLIC OnConversationError
     {
         constexpr static const char* name = "OnConversationError";

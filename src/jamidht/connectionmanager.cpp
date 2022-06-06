@@ -705,7 +705,13 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                                 return;
                             dht::InfoHash peer_h;
                             if (AccountManager::foundPeerDevice(cert, peer_h)) {
-                                shared->onDhtPeerRequest(req, cert);
+                                if (req.connType == "videoCall" || req.connType == "audioCall") {
+                                    bool hasVideo = req.connType == "videoCall";
+                                    emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
+                                        shared->account.getAccountID(), peer_h.toString(), hasVideo);
+                                } else {
+                                    shared->onDhtPeerRequest(req, cert);
+                                }
                             } else {
                                 JAMI_WARN() << shared->account
                                             << "Rejected untrusted connection request from "
