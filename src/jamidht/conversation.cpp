@@ -940,8 +940,12 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
             decltype(sthis_->pimpl_->fetchingRemotes_.begin()) it;
             {
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
-                if (sthis_->pimpl_->pullcbs_.empty())
+                if (sthis_->pimpl_->pullcbs_.empty()) {
+                    if (auto account = sthis_->pimpl_->account_.lock())
+                        emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(
+                            account->getAccountID().c_str());
                     return;
+                }
                 auto elem = sthis_->pimpl_->pullcbs_.front();
                 deviceId = std::get<0>(elem);
                 commitId = std::get<1>(elem);

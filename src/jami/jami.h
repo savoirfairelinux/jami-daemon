@@ -39,6 +39,7 @@ enum InitFlag {
     DRING_FLAG_DEBUG = 1 << 0,
     DRING_FLAG_CONSOLE_LOG = 1 << 1,
     DRING_FLAG_AUTOANSWER = 1 << 2,
+    DRING_FLAG_IOS_EXTENSION = 1 << 4,
 };
 
 /**
@@ -69,6 +70,8 @@ DRING_PUBLIC bool start(const std::string& config_file = {}) noexcept;
  * Stop and freeing any resource allocated by daemon
  */
 DRING_PUBLIC void fini() noexcept;
+
+DRING_PUBLIC bool initialized() noexcept;
 
 /**
  * Control log handlers.
@@ -125,9 +128,9 @@ public:
 
     // Create and initialize a wrapper to given callback.
     CallbackWrapper(TFunc&& func, const char* filename, uint32_t linum) noexcept
-        : cb_(std::forward<TFunc>(func)),
-          file_(filename),
-          linum_(linum)
+        : cb_(std::forward<TFunc>(func))
+        , file_(filename)
+        , linum_(linum)
     {}
 
     // Create and initialize a wrapper from a generic CallbackWrapperBase
@@ -136,10 +139,10 @@ public:
     CallbackWrapper(const std::shared_ptr<CallbackWrapperBase>& p) noexcept
     {
         if (p) {
-            auto other = (CallbackWrapper<TProto>*)p.get();
+            auto other = (CallbackWrapper<TProto>*) p.get();
 
-            cb_    = other->cb_;
-            file_  = other->file_;
+            cb_ = other->cb_;
+            file_ = other->file_;
             linum_ = other->linum_;
         }
     }
@@ -162,13 +165,12 @@ public:
 template<typename Ts>
 std::pair<std::string, std::shared_ptr<CallbackWrapperBase>>
 exportable_callback(std::function<typename Ts::cb_type>&& func,
-                    const char* file=CURRENT_FILENAME(),
-                    uint32_t linum=CURRENT_LINE())
+                    const char* file = CURRENT_FILENAME(),
+                    uint32_t linum = CURRENT_LINE())
 {
     return std::make_pair((const std::string&) Ts::name,
                           std::make_shared<CallbackWrapper<typename Ts::cb_type>>(
-                              std::forward<std::function<typename Ts::cb_type>>(func),
-                              file, linum));
+                              std::forward<std::function<typename Ts::cb_type>>(func), file, linum));
 }
 
 DRING_PUBLIC void registerSignalHandlers(
