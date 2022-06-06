@@ -678,8 +678,8 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                 // Message already treated. Just ignore
                 return true;
             }
-            if (!req.connType.empty()) {
-                // TODO => Determine if apple extension, kill jami and relaunch
+            if (req.connType == "videoCall" || req.connType == "audioCall") {
+                emitSignal<DRing::ConversationSignal::CallConnectionRequest>("");
             }
             if (req.isAnswer) {
                 JAMI_DBG() << "Received request answer from " << req.owner->getLongId();

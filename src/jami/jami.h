@@ -68,6 +68,8 @@ DRING_PUBLIC bool start(const std::string& config_file = {}) noexcept;
  */
 DRING_PUBLIC void fini() noexcept;
 
+DRING_PUBLIC bool initialized() noexcept;
+
 /**
  * Control log handlers.
  *
