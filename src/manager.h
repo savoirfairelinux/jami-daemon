@@ -429,7 +429,7 @@ public:
     void setAccountDetails(const std::string& accountID,
                            const std::map<std::string, ::std::string>& details);
 
-    void setAccountActive(const std::string& accountID, bool active);
+    void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections);
 
     /**
      * Return a new random accountid that is not present in the list
@@ -788,18 +788,18 @@ public:
     std::shared_ptr<asio::io_context> ioContext() const;
 
     void addTask(std::function<bool()>&& task,
-                 const char *filename=CURRENT_FILENAME(),
-                 uint32_t linum=CURRENT_LINE());
+                 const char* filename = CURRENT_FILENAME(),
+                 uint32_t linum = CURRENT_LINE());
 
     std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
                                        std::chrono::steady_clock::time_point when,
-                                       const char* filename=CURRENT_FILENAME(),
-                                       uint32_t linum=CURRENT_LINE());
+                                       const char* filename = CURRENT_FILENAME(),
+                                       uint32_t linum = CURRENT_LINE());
 
     std::shared_ptr<Task> scheduleTaskIn(std::function<void()>&& task,
                                          std::chrono::steady_clock::duration timeout,
-                                         const char* filename=CURRENT_FILENAME(),
-                                         uint32_t linum=CURRENT_LINE());
+                                         const char* filename = CURRENT_FILENAME(),
+                                         uint32_t linum = CURRENT_LINE());
 
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
@@ -895,11 +895,12 @@ private:
 template<typename Callback>
 static void
 runOnMainThread(Callback&& cb,
-                const char *filename=CURRENT_FILENAME(),
-                uint32_t linum=CURRENT_LINE())
+                const char* filename = CURRENT_FILENAME(),
+                uint32_t linum = CURRENT_LINE())
 {
     Manager::instance().scheduler().run([cb = std::forward<Callback>(cb)]() mutable { cb(); },
-                                        filename, linum);
+                                        filename,
+                                        linum);
 }
 
 } // namespace jami

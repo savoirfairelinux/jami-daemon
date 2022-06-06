@@ -38,7 +38,7 @@ namespace DRing {
 enum InitFlag {
     DRING_FLAG_DEBUG = 1 << 0,
     DRING_FLAG_CONSOLE_LOG = 1 << 1,
-    DRING_FLAG_AUTOANSWER = 1 << 2,
+    DRING_FLAG_AUTOANSWER = 1 << 2
 };
 
 /**
@@ -69,6 +69,11 @@ DRING_PUBLIC bool start(const std::string& config_file = {}) noexcept;
  * Stop and freeing any resource allocated by daemon
  */
 DRING_PUBLIC void fini() noexcept;
+
+DRING_PUBLIC bool initialized() noexcept;
+#if TARGET_OS_IOS
+DRING_PUBLIC static bool isiOSExtention = false;
+#endif
 
 /**
  * Control log handlers.
