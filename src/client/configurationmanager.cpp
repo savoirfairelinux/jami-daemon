@@ -218,9 +218,9 @@ setAccountDetails(const std::string& accountID, const std::map<std::string, std:
 }
 
 void
-setAccountActive(const std::string& accountID, bool enable)
+setAccountActive(const std::string& accountID, bool enable, bool shutdownConnections)
 {
-    jami::Manager::instance().setAccountActive(accountID, enable);
+    jami::Manager::instance().setAccountActive(accountID, enable, shutdownConnections);
 }
 
 void

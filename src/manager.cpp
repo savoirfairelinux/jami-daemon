@@ -1659,23 +1659,28 @@ Manager::ioContext() const
 void
 Manager::addTask(std::function<bool()>&& task, const char* filename, uint32_t linum)
 {
-    pimpl_->scheduler_.scheduleAtFixedRate(std::move(task), std::chrono::milliseconds(30),
-                                           filename, linum);
+    pimpl_->scheduler_.scheduleAtFixedRate(std::move(task),
+                                           std::chrono::milliseconds(30),
+                                           filename,
+                                           linum);
 }
 
 std::shared_ptr<Task>
-Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::time_point when,
-                      const char* filename, uint32_t linum)
+Manager::scheduleTask(std::function<void()>&& task,
+                      std::chrono::steady_clock::time_point when,
+                      const char* filename,
+                      uint32_t linum)
 {
     return pimpl_->scheduler_.schedule(std::move(task), when, filename, linum);
 }
 
 std::shared_ptr<Task>
-Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout,
-                        const char* filename, uint32_t linum)
+Manager::scheduleTaskIn(std::function<void()>&& task,
+                        std::chrono::steady_clock::duration timeout,
+                        const char* filename,
+                        uint32_t linum)
 {
-    return pimpl_->scheduler_.scheduleIn(std::move(task), timeout,
-                                         filename, linum);
+    return pimpl_->scheduler_.scheduleIn(std::move(task), timeout, filename, linum);
 }
 
 // Must be invoked periodically by a timer from the main event loop
@@ -2799,10 +2804,10 @@ Manager::loadAccountMap(const YAML::Node& node)
         ++errorCount;
     } catch (const std::exception& e) {
         JAMI_ERR("Preferences node unserialize standard exception: %s", e.what());
-         ++errorCount;
+        ++errorCount;
     } catch (...) {
         JAMI_ERR("Preferences node unserialize unknown exception");
-         ++errorCount;
+        ++errorCount;
     }
 
     const std::string accountOrder = preferences.getAccountOrder();
@@ -2983,17 +2988,23 @@ Manager::getMessageStatus(const std::string& accountID, uint64_t id) const
 }
 
 void
-Manager::setAccountActive(const std::string& accountID, bool active)
+Manager::setAccountActive(const std::string& accountID, bool active, bool shutdownConnections)
 {
     const auto acc = getAccount(accountID);
     if (!acc || acc->isActive() == active)
         return;
     acc->setActive(active);
     if (acc->isEnabled()) {
-        if (active)
+        if (active) {
             acc->doRegister();
-        else
+        } else {
             acc->doUnregister();
+            if (shutdownConnections) {
+                if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(acc)) {
+                    jamiAcc->shutdownConnections();
+                }
+            }
+        }
     }
     emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID,
                                                                    acc->getVolatileAccountDetails());
