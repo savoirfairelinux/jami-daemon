@@ -133,6 +133,8 @@ getSignalHandlers()
         exported_callback<DRing::ConversationSignal::ConversationReady>(),
         exported_callback<DRing::ConversationSignal::ConversationRemoved>(),
         exported_callback<DRing::ConversationSignal::ConversationMemberEvent>(),
+        exported_callback<DRing::ConversationSignal::ConversationSyncEvent>(),
+        exported_callback<DRing::ConversationSignal::CallConnectionRequest>(),
         exported_callback<DRing::ConversationSignal::OnConversationError>(),
     };
 
