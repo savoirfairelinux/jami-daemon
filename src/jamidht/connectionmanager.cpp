@@ -677,9 +677,6 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                 // Message already treated. Just ignore
                 return true;
             }
-            if (!req.connType.empty()) {
-                // TODO => Determine if apple extension, kill jami and relaunch
-            }
             if (req.isAnswer) {
                 JAMI_DBG() << "Received request answer from " << req.owner->getLongId();
             } else {
@@ -708,7 +705,13 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                                 return;
                             dht::InfoHash peer_h;
                             if (AccountManager::foundPeerDevice(cert, peer_h)) {
-                                shared->onDhtPeerRequest(req, cert);
+                                if (req.connType == "videoCall" || req.connType == "audioCall") {
+                                    bool hasVideo = req.connType == "videoCall";
+                                    emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
+                                        shared->account.getAccountID(), peer_h.toString(), hasVideo);
+                                } else {
+                                    shared->onDhtPeerRequest(req, cert);
+                                }
                             } else {
                                 JAMI_WARN() << shared->account
                                             << "Rejected untrusted connection request from "
