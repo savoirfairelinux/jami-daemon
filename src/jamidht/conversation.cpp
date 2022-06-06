@@ -198,6 +198,7 @@ public:
 
     void announce(const std::vector<std::map<std::string, std::string>>& commits) const
     {
+        JAMI_DBG() << "&&&&&&announce";
         auto shared = account_.lock();
         if (!shared or !repository_) {
             return;
@@ -244,6 +245,7 @@ public:
                     pluginChatManager.publishMessage(std::move(cm));
                 }
 #endif
+                JAMI_DBG() << "&&&&&&daemon MessageReceived";
                 // announce message
                 emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
                                                                        convId,
@@ -954,8 +956,10 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
             decltype(sthis_->pimpl_->fetchingRemotes_.begin()) it;
             {
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
-                if (sthis_->pimpl_->pullcbs_.empty())
+                if (sthis_->pimpl_->pullcbs_.empty()) {
+                    emitSignal<DRing::ConversationSignal::ConversationSyncEvent>("");
                     return;
+                }
                 auto elem = sthis_->pimpl_->pullcbs_.front();
                 deviceId = std::get<0>(elem);
                 commitId = std::get<1>(elem);
@@ -1018,8 +1022,10 @@ Conversation::sync(const std::string& member,
     JAMI_INFO() << "Sync " << id() << " with " << deviceId;
     pull(deviceId, std::move(cb), commitId);
     // For waiting request, downloadFile
-    for (const auto& wr : dataTransfer()->waitingRequests())
+    for (const auto& wr : dataTransfer()->waitingRequests()) {
+        JAMI_DBG() << "&&&&&&&&&& downloading file";
         downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId);
+    }
     // VCard sync for member
     if (auto account = pimpl_->account_.lock()) {
         if (not account->needToSendProfile(deviceId)) {

@@ -81,6 +81,12 @@ start(const std::string& config_file) noexcept
     return true;
 }
 
+bool
+initialized() noexcept
+{
+    return jami::Manager::initialized;
+}
+
 void
 fini() noexcept
 {
