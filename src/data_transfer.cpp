@@ -609,7 +609,11 @@ IncomingFileTransfer::requestFilename(const std::function<void(const std::string
     emit(DRing::DataTransferEventCode::wait_host_acceptance);
 
     if (internalCompletionCb_) {
-        std::string filename = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + std::to_string(id);
+        std::string path = fmt::format("{}/{}/profiles",
+                                       fileutils::get_cache_dir(),
+                                       info_.accountId);
+        fileutils::recursive_mkdir(path);
+        auto filename = fmt::format("{}/{}", path, id);
         fileutils::ofstream(filename);
         if (not fileutils::isFile(filename))
             throw std::system_error(errno, std::generic_category());
