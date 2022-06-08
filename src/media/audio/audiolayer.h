@@ -26,7 +26,7 @@
 #include "dcblocker.h"
 #include "noncopyable.h"
 #include "audio_frame_resizer.h"
-#include "echo-cancel/echo_canceller.h"
+#include "audio-processing/audio_processor.h"
 
 #include <chrono>
 #include <mutex>
@@ -296,7 +296,7 @@ protected:
     std::unique_ptr<Resampler> resampler_;
 
     std::mutex ecMutex_ {};
-    std::unique_ptr<EchoCanceller> echoCanceller_;
+    std::unique_ptr<AudioProcessor> echoCanceller_;
 
 private:
     void checkAEC();

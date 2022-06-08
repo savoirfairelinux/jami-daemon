@@ -20,32 +20,20 @@
 
 #pragma once
 
-#include "audio/echo-cancel/echo_canceller.h"
-#include "audio/audio_frame_resizer.h"
-
-extern "C" {
-struct SpeexEchoState_;
-typedef struct SpeexEchoState_ SpeexEchoState;
-}
-
-#include <memory>
+#include "audio_processor.h"
 
 namespace jami {
 
-class SpeexEchoCanceller final : public EchoCanceller
+class NullAudioProcessor final : public AudioProcessor
 {
 public:
-    SpeexEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~SpeexEchoCanceller() = default;
+    NullAudioProcessor(AudioFormat format, unsigned frameSize);
+    ~NullAudioProcessor() = default;
 
-    // Inherited via EchoCanceller
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
+    //void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
+    //void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
     std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
-
-private:
-    struct SpeexEchoStateImpl;
-    std::unique_ptr<SpeexEchoStateImpl> pimpl_;
+    //void done() override;
 };
+
 } // namespace jami

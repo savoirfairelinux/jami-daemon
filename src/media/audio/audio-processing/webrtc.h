@@ -20,28 +20,30 @@
 
 #pragma once
 
-#include "audio/echo-cancel/echo_canceller.h"
+#include "audio_processor.h"
 #include "audio/audio_frame_resizer.h"
 
 #include <memory>
 
+namespace webrtc {
+class AudioProcessing;
+}
+
 namespace jami {
 
-class WebRTCEchoCanceller final : public EchoCanceller
+class WebRTCAudioProcessor final : public AudioProcessor
 {
 public:
-    WebRTCEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~WebRTCEchoCanceller() = default;
+    WebRTCAudioProcessor(AudioFormat format, unsigned frameSize);
+    ~WebRTCAudioProcessor() = default;
 
-    // Inherited via EchoCanceller
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
+    // Inherited via AudioProcessor
     std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
+
+    void enableAEC(bool enabled) override;
 
 private:
-    struct WebRTCAPMImpl;
-    std::unique_ptr<WebRTCAPMImpl> pimpl_;
+    std::unique_ptr<webrtc::AudioProcessing> apm;
 
     using fChannelBuffer = std::vector<std::vector<float>>;
     fChannelBuffer fRecordBuffer_;
