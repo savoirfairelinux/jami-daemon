@@ -57,12 +57,16 @@ public:
     void restartSender() override;
     void stop() override;
     void setMuted(bool muted, Direction dir = Direction::SEND) override;
+    void setVoice(bool voice,
+                  Direction dir = Direction::SEND); // audio only, not implemented for video
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
     std::shared_ptr<AudioInput>& getAudioLocal() { return audioInput_; }
     std::unique_ptr<AudioReceiveThread>& getAudioReceive() { return receiveThread_; }
+
+    void setVoiceCallback(std::function<void(bool)> cb);
 
 private:
     void startSender();
@@ -79,6 +83,7 @@ private:
     std::shared_ptr<RingBuffer> ringbuffer_;
     uint16_t initSeqVal_ {0};
     bool muteState_ {false};
+    bool voiceState_ {false};
     unsigned packetLoss_ {10};
     DeviceParams localAudioParams_;
 
@@ -87,6 +92,8 @@ private:
 
     // Interval in seconds between RTCP checking
     std::chrono::seconds rtcp_checking_interval {4};
+
+    std::function<void(bool)> voiceCallback_;
 };
 
 } // namespace jami
