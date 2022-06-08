@@ -109,6 +109,9 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
         return; // return if frame was just passed through
     }
 
+    // voice activity
+    hasVoice_ = frame->has_voice;
+
     // queue reallocates itself if need be
     if ((ret = av_audio_fifo_write(queue_, reinterpret_cast<void**>(f->data), f->nb_samples)) < 0) {
         JAMI_ERR() << "Audio resizer error: " << libav_utils::getError(ret);
@@ -139,6 +142,7 @@ AudioFrameResizer::dequeue()
         return {};
     }
     frame->pointer()->pts = nextOutputPts_;
+    frame->has_voice = hasVoice_;
     nextOutputPts_ += frameSize_;
     return frame;
 }

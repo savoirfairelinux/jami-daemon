@@ -116,8 +116,10 @@ AudioRtpSession::startSender()
     try {
         sender_.reset();
         socketPair_->stopSendOp(false);
-        sender_.reset(
-            new AudioSender(getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, mtu_));
+        sender_.reset(new AudioSender(getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, mtu_));
+        if (voiceCallback_) {
+            sender_->setVoiceCallback(voiceCallback_);
+        }
     } catch (const MediaEncoderException& e) {
         JAMI_ERR("%s", e.what());
         send_.enabled = false;
@@ -246,6 +248,15 @@ AudioRtpSession::setMuted(bool muted, Direction)
     muteState_ = muted;
     if (audioInput_)
         audioInput_->setMuted(muted);
+}
+
+void
+AudioRtpSession::setVoiceCallback(std::function<void(bool)> cb)
+{
+    voiceCallback_ = std::move(cb);
+    if (sender_) {
+        sender_->setVoiceCallback(voiceCallback_);
+    }
 }
 
 bool
