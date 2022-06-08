@@ -28,11 +28,13 @@
 #include "tonecontrol.h"
 #include "client/ring_signal.h"
 
-// aec
+// TODO: decide which library to use/how to decide (compile time? runtime?)
 #if HAVE_WEBRTC_AP
-#include "echo-cancel/webrtc_echo_canceller.h"
+#include "audio-processing/webrtc.h"
+#elif HAVE_SPEEXDSP
+#include "audio-processing/speex.h"
 #else
-#include "echo-cancel/null_echo_canceller.h"
+#include "audio-processing/null_audio_processor.h"
 #endif
 
 #include <ctime>
@@ -102,55 +104,89 @@ void
 AudioLayer::playbackChanged(bool started)
 {
     playbackStarted_ = started;
-    checkAEC();
 }
 
 void
 AudioLayer::recordChanged(bool started)
 {
+    std::lock_guard<std::mutex> lock(audioProcessorMutex);
+    if (started) {
+        // create audio processor
+        createAudioProcessor();
+    } else {
+        // destroy audio processor
+        destroyAudioProcessor();
+    }
     recordStarted_ = started;
-    checkAEC();
 }
 
 void
 AudioLayer::setHasNativeAEC(bool hasEAC)
 {
+    std::lock_guard<std::mutex> lock(audioProcessorMutex);
     hasNativeAEC_ = hasEAC;
-    checkAEC();
+    // if we have a current audio processor, tell it to enable/disable its own AEC
+    if (audioProcessor) {
+        audioProcessor->enableEchoCancel(!hasEAC);
+    }
 }
 
+// must acquire lock beforehand
 void
-AudioLayer::checkAEC()
+AudioLayer::createAudioProcessor()
 {
-    std::lock_guard<std::mutex> lk(ecMutex_);
-    bool shouldSoftAEC = not hasNativeAEC_ and playbackStarted_ and recordStarted_;
-    if (not echoCanceller_ and shouldSoftAEC) {
-        auto nb_channels = std::min(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
-        auto sample_rate = std::min(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
-        if (sample_rate % 16000u != 0)
-            sample_rate = 16000u * ((sample_rate / 16000u) + 1u);
-        sample_rate = std::clamp(sample_rate, 16000u, 96000u);
-        AudioFormat format {sample_rate, nb_channels};
-        auto frame_size = sample_rate / 100u;
-        JAMI_WARN("Input {%d Hz, %d channels}",
-                  audioInputFormat_.sample_rate,
-                  audioInputFormat_.nb_channels);
-        JAMI_WARN("Output {%d Hz, %d channels}", audioFormat_.sample_rate, audioFormat_.nb_channels);
-        JAMI_WARN("Starting AEC {%d Hz, %d channels, %d samples/frame}",
-                  sample_rate,
-                  nb_channels,
-                  frame_size);
+    auto nb_channels = std::min(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
+    auto sample_rate = std::min(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
+
+    // TODO: explain/rework this math??
+    if (sample_rate % 16000u != 0)
+        sample_rate = 16000u * ((sample_rate / 16000u) + 1u);
+    sample_rate = std::clamp(sample_rate, 16000u, 96000u);
+
+    AudioFormat formatForProcessor {sample_rate, nb_channels};
+
+#if HAVE_SPEEXDSP && !HAVE_WEBRTC_AP
+    // we are using speex
+    // TODO: maybe force this to be equivalent to 20ms? as expected by speex
+    auto frame_size = sample_rate / 50u;
+#else
+    // we are using either webrtc-ap or null
+    auto frame_size = sample_rate / 100u;
+#endif
+    JAMI_WARN("Input {%d Hz, %d channels}",
+              audioInputFormat_.sample_rate,
+              audioInputFormat_.nb_channels);
+    JAMI_WARN("Output {%d Hz, %d channels}", audioFormat_.sample_rate, audioFormat_.nb_channels);
+    JAMI_WARN("Starting audio processor with: {%d Hz, %d channels, %d samples/frame}",
+              sample_rate,
+              nb_channels,
+              frame_size);
 
 #if HAVE_WEBRTC_AP
-        echoCanceller_.reset(new WebRTCEchoCanceller(format, frame_size));
+    JAMI_INFO("[audiolayer] using webrtc audio processor");
+    audioProcessor.reset(new WebRTCAudioProcessor(formatForProcessor, frame_size));
+#elif HAVE_SPEEXDSP
+    JAMI_INFO("[audiolayer] using speex audio processor");
+    audioProcessor.reset(new SpeexAudioProcessor(formatForProcessor, frame_size));
 #else
-        echoCanceller_.reset(new NullEchoCanceller(format, frame_size));
+    JAMI_INFO("[audiolayer] using null audio processor");
+    audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
 #endif
-    } else if (echoCanceller_ and not shouldSoftAEC and not playbackStarted_
-               and not recordStarted_) {
-        JAMI_WARN("Stopping AEC");
-        echoCanceller_.reset();
-    }
+
+    audioProcessor->enableNoiseSuppression(true);
+    // TODO: enable AGC?
+    audioProcessor->enableAutomaticGainControl(false);
+
+    // can also be updated after creation via setHasNativeAEC
+    audioProcessor->enableEchoCancel(!hasNativeAEC_);
+}
+
+// must acquire lock beforehand
+void
+AudioLayer::destroyAudioProcessor()
+{
+    // delete it
+    audioProcessor.reset();
 }
 
 void
@@ -228,19 +264,19 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
         } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
             resampled = resampler_->resample(std::move(buf), format);
         } else {
-            if (echoCanceller_) {
+            std::lock_guard<std::mutex> lock(audioProcessorMutex);
+            if (audioProcessor) {
                 auto silence = std::make_shared<AudioFrame>(format, writableSamples);
                 libav_utils::fillWithSilence(silence->pointer());
-                std::lock_guard<std::mutex> lk(ecMutex_);
-                echoCanceller_->putPlayback(silence);
+                audioProcessor->putPlayback(silence);
             }
             break;
         }
 
         if (resampled) {
-            if (echoCanceller_) {
-                std::lock_guard<std::mutex> lk(ecMutex_);
-                echoCanceller_->putPlayback(resampled);
+            std::lock_guard<std::mutex> lock(audioProcessorMutex);
+            if (audioProcessor) {
+                audioProcessor->putPlayback(resampled);
             }
             playbackQueue_->enqueue(std::move(resampled));
         } else
@@ -253,12 +289,13 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
 void
 AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
 {
-    if (echoCanceller_) {
-        std::lock_guard<std::mutex> lk(ecMutex_);
-        echoCanceller_->putRecorded(std::move(frame));
-        while (auto rec = echoCanceller_->getProcessed()) {
+    std::lock_guard<std::mutex> lock(audioProcessorMutex);
+    if (audioProcessor && playbackStarted_ && recordStarted_) {
+        audioProcessor->putRecorded(std::move(frame));
+        while (auto rec = audioProcessor->getProcessed()) {
             mainRingBuffer_->put(std::move(rec));
         }
+
     } else {
         mainRingBuffer_->put(std::move(frame));
     }

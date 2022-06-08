@@ -20,20 +20,26 @@
 
 #pragma once
 
-#include "echo_canceller.h"
+#include "audio_processor.h"
 
 namespace jami {
 
-class NullEchoCanceller final : public EchoCanceller
+class NullAudioProcessor final : public AudioProcessor
 {
 public:
-    NullEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~NullEchoCanceller() = default;
+    NullAudioProcessor(AudioFormat format, unsigned frameSize);
+    ~NullAudioProcessor() = default;
 
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
+    // void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
+    // void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
     std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
+    // void done() override;
+
+    void enableEchoCancel(bool enabled) override {};
+
+    void enableNoiseSuppression(bool enabled) override {};
+
+    void enableAutomaticGainControl(bool enabled) override {};
 };
 
 } // namespace jami

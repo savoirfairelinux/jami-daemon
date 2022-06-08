@@ -92,8 +92,26 @@ AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
     auto frame = framePtr->pointer();
     frame->pts = sent_samples;
     sent_samples += frame->nb_samples;
+
+    // check for change in voice activity, if so, call callback
+    // downcast MediaFrame to AudioFrame
+    bool hasVoice = std::dynamic_pointer_cast<AudioFrame>(framePtr)->has_voice;
+    if (hasVoice != voice_) {
+        voice_ = hasVoice;
+        if (voiceCallback_) {
+            voiceCallback_(voice_);
+        }
+    }
+
     if (audioEncoder_->encodeAudio(*std::static_pointer_cast<AudioFrame>(framePtr)) < 0)
         JAMI_ERR("encoding failed");
+}
+
+void
+AudioSender::setVoiceCallback(std::function<void(bool)> cb)
+{
+    JAMI_DBG("audio sender set voice callback");
+    voiceCallback_ = std::move(cb);
 }
 
 uint16_t
