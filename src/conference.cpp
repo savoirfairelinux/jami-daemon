@@ -1385,6 +1385,13 @@ Conference::updateMuted()
     sendConferenceInfos();
 }
 
+void
+Conference::updateVoiceActivity()
+{
+    // TODO
+    JAMI_WARN("TODO: update conference voice activity");
+}
+
 ConfInfo
 Conference::getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI)
 {
