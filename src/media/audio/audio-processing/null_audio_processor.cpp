@@ -18,30 +18,18 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "null_echo_canceller.h"
+#include "null_audio_processor.h"
 
 #include <cassert>
 
 namespace jami {
 
-NullEchoCanceller::NullEchoCanceller(AudioFormat format, unsigned frameSize)
-    : EchoCanceller(format, frameSize)
+NullAudioProcessor::NullAudioProcessor(AudioFormat format, unsigned frameSize)
+    : AudioProcessor(format, frameSize)
 {}
 
-void
-NullEchoCanceller::putRecorded(std::shared_ptr<AudioFrame>&& buf)
-{
-    EchoCanceller::putRecorded(std::move(buf));
-};
-
-void
-NullEchoCanceller::putPlayback(const std::shared_ptr<AudioFrame>& buf)
-{
-    EchoCanceller::putPlayback(buf);
-};
-
 std::shared_ptr<AudioFrame>
-NullEchoCanceller::getProcessed()
+NullAudioProcessor::getProcessed()
 {
     while (recordQueue_.samples() > recordQueue_.frameSize() * 10) {
         JAMI_DBG("record overflow %d / %d", recordQueue_.samples(), frameSize_);
@@ -53,21 +41,19 @@ NullEchoCanceller::getProcessed()
     }
     if (recordQueue_.samples() < recordQueue_.frameSize()
         || playbackQueue_.samples() < playbackQueue_.frameSize()) {
-        JAMI_DBG("underflow rec: %d, play: %d fs: %d",
-                 recordQueue_.samples(),
-                 playbackQueue_.samples(),
-                 frameSize_);
+        // JAMI_DBG("underflow rec: %d, play: %d fs: %d",
+        //          recordQueue_.samples(),
+        //          playbackQueue_.samples(),
+        //          frameSize_);
         return {};
     }
 
-    JAMI_WARN("Processing %d samples, rec: %d, play: %d ",
-              frameSize_,
-              recordQueue_.samples(),
-              playbackQueue_.samples());
+    // JAMI_WARN("Processing %d samples, rec: %d, play: %d ",
+    //           frameSize_,
+    //           recordQueue_.samples(),
+    //           playbackQueue_.samples());
     playbackQueue_.dequeue();
     return recordQueue_.dequeue();
 };
-
-void NullEchoCanceller::done() {};
 
 } // namespace jami

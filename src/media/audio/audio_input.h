@@ -56,6 +56,7 @@ public:
     bool isCapturing() const { return loop_.isRunning(); }
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
+    void setVoice(bool hasVoice);
     MediaStream getInfo() const;
     MediaStream getInfo(const std::string& name) const;
     void updateStartTime(int64_t start);
@@ -67,7 +68,9 @@ public:
     void setSeekTime(int64_t time);
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-        { onSuccessfulSetup_ = cb; }
+    {
+        onSuccessfulSetup_ = cb;
+    }
 
 private:
     void readFromDevice();
@@ -80,6 +83,7 @@ private:
 
     std::string id_;
     bool muteState_ = false;
+    bool voiceState_ = false;
     uint64_t sent_samples = 0;
     mutable std::mutex fmtMutex_ {};
     AudioFormat format_;

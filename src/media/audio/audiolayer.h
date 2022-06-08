@@ -26,7 +26,7 @@
 #include "dcblocker.h"
 #include "noncopyable.h"
 #include "audio_frame_resizer.h"
-#include "echo-cancel/echo_canceller.h"
+#include "audio-processing/audio_processor.h"
 
 #include <chrono>
 #include <mutex>
@@ -295,11 +295,12 @@ protected:
      */
     std::unique_ptr<Resampler> resampler_;
 
-    std::mutex ecMutex_ {};
-    std::unique_ptr<EchoCanceller> echoCanceller_;
-
 private:
-    void checkAEC();
+    std::mutex audioProcessorMutex {};
+    std::unique_ptr<AudioProcessor> audioProcessor;
+
+    void createAudioProcessor();
+    void destroyAudioProcessor();
 
     // Set to "true" to play the incoming call notification (beep)
     // when the playback is on (typically when there is already an
