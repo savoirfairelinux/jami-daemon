@@ -31,20 +31,20 @@
 
 namespace jami {
 
-class EchoCanceller
+class AudioProcessor
 {
 private:
-    NON_COPYABLE(EchoCanceller);
+    NON_COPYABLE(AudioProcessor);
 
 public:
-    EchoCanceller(AudioFormat format, unsigned frameSize)
+    AudioProcessor(AudioFormat format, unsigned frameSize)
         : playbackQueue_(format, frameSize)
         , recordQueue_(format, frameSize)
         , resampler_(new Resampler)
         , format_(format)
         , frameSize_(frameSize)
     {}
-    virtual ~EchoCanceller() = default;
+    virtual ~AudioProcessor() = default;
 
     virtual void putRecorded(std::shared_ptr<AudioFrame>&& buf)
     {
@@ -62,7 +62,9 @@ public:
         enqueue(playbackQueue_, std::move(copy));
     };
     virtual std::shared_ptr<AudioFrame> getProcessed() = 0;
-    virtual void done() = 0;
+    virtual void done() {};
+
+    virtual void enableAEC(bool enabled) {};
 
 protected:
     AudioFrameResizer playbackQueue_;
