@@ -24,6 +24,7 @@
  */
 
 #include "call_factory.h"
+#include "media_codec.h"
 #include "sipcall.h"
 #include "sipaccount.h"
 #include "sipaccountbase.h"
@@ -42,6 +43,7 @@
 #include "client/ring_signal.h"
 #include "ice_transport.h"
 #include "pjsip-ua/sip_inv.h"
+#include <memory>
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
@@ -233,6 +235,22 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
         if (auto thisPtr = w.lock())
             thisPtr->rtpSetupSuccess(type, isRemote);
     });
+
+    if (localMedia.type == MediaType::MEDIA_AUDIO) {
+        auto audioRtp = std::dynamic_pointer_cast<AudioRtpSession>(rtpSession);
+        assert(audioRtp && mediaAttr);
+        audioRtp->setVoice(mediaAttr->voice_);
+
+        auto streamIdx = findRtpStreamIndex(mediaAttr->label_);
+        audioRtp->setVoiceCallback([w = weak(), streamIdx](bool voice) {
+            runOnMainThread([w, voice, streamIdx] {
+                if (auto thisPtr = w.lock()) {
+                    // do something with the voice status
+                    thisPtr->sendVoiceActivity(voice);
+                }
+            });
+        });
+    }
 
 #ifdef ENABLE_VIDEO
     if (localMedia.type == MediaType::MEDIA_VIDEO) {
@@ -638,6 +656,26 @@ SIPCall::sendMuteState(bool state)
         sendSIPInfo(BODY, "media_control+xml");
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending mute state: %s", e.what());
+    }
+}
+
+void
+SIPCall::sendVoiceActivity(bool state)
+{
+    std::string BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                       "<media_control><vc_primitive><to_encoder>"
+                       "<voice_activity="
+                       + std::to_string(state)
+                       + "/>"
+                         "</to_encoder></vc_primitive></media_control>";
+    // see https://tools.ietf.org/html/rfc5168 for XML Schema for Media Control details
+
+    JAMI_DBG("Sending voice activity state via SIP INFO");
+
+    try {
+        sendSIPInfo(BODY, "media_control+xml");
+    } catch (const std::exception& e) {
+        JAMI_ERR("Error sending voice activity state: %s", e.what());
     }
 }
 
@@ -2249,7 +2287,8 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
     auto const& mediaAttr = rtpStream.mediaAttribute_;
     assert(mediaAttr);
 
-    bool notify = false;
+    bool notifyMute = false;
+    bool notifyVoice = false;
 
     if (newMediaAttr.muted_ == mediaAttr->muted_) {
         // Nothing to do. Already in the desired state.
@@ -2261,10 +2300,20 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
     } else {
         // Update
         mediaAttr->muted_ = newMediaAttr.muted_;
-        notify = true;
+        notifyMute = true;
         JAMI_DBG("[call:%s] %s [%s]",
                  getCallId().c_str(),
                  mediaAttr->muted_ ? "muting" : "un-muting",
+                 mediaAttr->label_.c_str());
+    }
+
+    if (newMediaAttr.voice_ != mediaAttr->voice_) {
+        // change in voice activity state
+        mediaAttr->voice_ = newMediaAttr.voice_;
+        notifyVoice = true;
+        JAMI_DBG("[call:%s] %s [%s]",
+                 getCallId().c_str(),
+                 mediaAttr->voice_ ? "voice active" : "voice inactive",
                  mediaAttr->label_.c_str());
     }
 
@@ -2272,7 +2321,22 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
     if (not newMediaAttr.sourceUri_.empty())
         mediaAttr->sourceUri_ = newMediaAttr.sourceUri_;
 
-    if (notify and mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
+    // handle change in voice activity
+    if (notifyVoice and mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
+        // need to cast for setVoice
+        auto audioRtp = std::dynamic_pointer_cast<AudioRtpSession>(rtpStream.rtpSession_);
+        audioRtp->setMediaSource(mediaAttr->sourceUri_);
+        audioRtp->setVoice(mediaAttr->voice_); // only implemented for audio, not video
+        sendVoiceActivity(mediaAttr->voice_);
+        if (not isSubcall()) {
+            // TODO: emit signal
+            // emitSignal<typename Ts>(Args args...)
+            JAMI_WARN("sipcall TODO EMIT SIGNAL voice activity: %s",
+                      mediaAttr->voice_ ? "true" : "false");
+        }
+    }
+
+    if (notifyMute and mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
         rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
         rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
         sendMuteState(mediaAttr->muted_);
@@ -2282,7 +2346,7 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
     }
 
 #ifdef ENABLE_VIDEO
-    if (notify and mediaAttr->type_ == MediaType::MEDIA_VIDEO) {
+    if (notifyMute and mediaAttr->type_ == MediaType::MEDIA_VIDEO) {
         rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
         rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
 
@@ -3425,6 +3489,16 @@ SIPCall::peerMuted(bool muted)
     peerMuted_ = muted;
     if (auto conf = conf_.lock())
         conf->updateMuted();
+}
+
+void
+SIPCall::peerVoice(bool voice)
+{
+    JAMI_WARN("peer voice activity is now %s", voice ? "true" : "false");
+    peerVoice_ = voice;
+    if (auto conf = conf_.lock()) {
+        // TODO: implement conference voice activity
+    }
 }
 
 void
