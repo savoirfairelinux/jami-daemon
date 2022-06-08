@@ -53,7 +53,7 @@ noinst_HEADERS += $(RING_SPEEXDSP_HEAD) \
 
 
 include ./media/audio/sound/Makefile.am
-include ./media/audio/echo-cancel/Makefile.am
+include ./media/audio/audio-processing/Makefile.am
 
 if BUILD_OPENSL
 include ./media/audio/opensl/Makefile.am

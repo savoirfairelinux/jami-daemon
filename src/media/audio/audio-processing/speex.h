@@ -20,32 +20,49 @@
 
 #pragma once
 
-#include "audio/echo-cancel/echo_canceller.h"
-#include "audio/audio_frame_resizer.h"
+#include "audio_processor.h"
 
 extern "C" {
 struct SpeexEchoState_;
 typedef struct SpeexEchoState_ SpeexEchoState;
+struct SpeexPreprocessState_;
+typedef struct SpeexPreprocessState_ SpeexPreprocessState;
 }
 
 #include <memory>
 
 namespace jami {
 
-class SpeexEchoCanceller final : public EchoCanceller
+class SpeexAudioProcessor final : public AudioProcessor
 {
 public:
-    SpeexEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~SpeexEchoCanceller() = default;
+    SpeexAudioProcessor(AudioFormat format, unsigned frameSize);
+    ~SpeexAudioProcessor() = default;
 
-    // Inherited via EchoCanceller
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
     std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
+
+    void enableEchoCancel(bool enabled) override;
+    void enableNoiseSuppression(bool enabled) override;
+    void enableAutomaticGainControl(bool enabled) override;
 
 private:
-    struct SpeexEchoStateImpl;
-    std::unique_ptr<SpeexEchoStateImpl> pimpl_;
+    using SpeexEchoStatePtr = std::unique_ptr<SpeexEchoState, void (*)(SpeexEchoState*)>;
+    using SpeexPreprocessStatePtr
+        = std::unique_ptr<SpeexPreprocessState, void (*)(SpeexPreprocessState*)>;
+
+    // multichannel, one for the entire audio processor
+    SpeexEchoStatePtr echoState;
+
+    // one for each channel
+    std::vector<SpeexPreprocessStatePtr> preprocessorStates;
+
+    AudioBuffer iProcBuffer;
+
+    // if we should do echo cancellation
+    bool shouldAEC {false};
+
+    // TODO: cleanup
+    bool lastVoiceState {false};
+    int debugCount {0};
 };
 } // namespace jami

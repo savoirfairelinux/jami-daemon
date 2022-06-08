@@ -51,13 +51,7 @@ struct AudioFormat
     unsigned nb_channels;
     AVSampleFormat sampleFormat;
 
-    constexpr AudioFormat(unsigned sr, unsigned c)
-        : sample_rate(sr)
-        , nb_channels(c)
-        , sampleFormat(AV_SAMPLE_FMT_S16)
-    {}
-
-    constexpr AudioFormat(unsigned sr, unsigned c, AVSampleFormat f)
+    constexpr AudioFormat(unsigned sr, unsigned c, AVSampleFormat f = AV_SAMPLE_FMT_S16)
         : sample_rate(sr)
         , nb_channels(c)
         , sampleFormat(f)

@@ -67,6 +67,7 @@ PulseLayer::PulseLayer(AudioPreference& pref)
     , mainloop_(pa_threaded_mainloop_new(), pa_threaded_mainloop_free)
     , preference_(pref)
 {
+    JAMI_INFO("[audiolayer] created pulseaudio layer");
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
 
@@ -99,6 +100,7 @@ PulseLayer::PulseLayer(AudioPreference& pref)
             break;
         pa_threaded_mainloop_wait(mainloop_.get());
     }
+    setHasNativeAEC(false);
 }
 
 PulseLayer::~PulseLayer()
@@ -118,6 +120,9 @@ PulseLayer::~PulseLayer()
 
     if (subscribeOp_)
         pa_operation_unref(subscribeOp_);
+
+    playbackChanged(false);
+    recordChanged(false);
 }
 
 void
@@ -131,8 +136,8 @@ PulseLayer::context_state_callback(pa_context* c, void* user_data)
 void
 PulseLayer::contextStateChanged(pa_context* c)
 {
-    const pa_subscription_mask_t mask = (pa_subscription_mask_t)(PA_SUBSCRIPTION_MASK_SINK
-                                                                 | PA_SUBSCRIPTION_MASK_SOURCE);
+    const pa_subscription_mask_t mask = (pa_subscription_mask_t) (PA_SUBSCRIPTION_MASK_SINK
+                                                                  | PA_SUBSCRIPTION_MASK_SOURCE);
 
     switch (pa_context_get_state(c)) {
     case PA_CONTEXT_CONNECTING:
@@ -367,12 +372,17 @@ PulseLayer::onStreamReady()
         // called is to notify a new event
         flushUrgent();
         flushMain();
-        if (playback_)
+        if (playback_) {
             playback_->start();
-        if (ringtone_)
+            playbackChanged(true);
+        }
+        if (ringtone_) {
             ringtone_->start();
-        if (record_)
+        }
+        if (record_) {
             record_->start();
+            recordChanged(true);
+        }
     }
 }
 
@@ -411,6 +421,8 @@ PulseLayer::disconnectAudioStream()
     playback_.reset();
     ringtone_.reset();
     record_.reset();
+    playbackChanged(false);
+    recordChanged(false);
     pendingStreams = 0;
     status_ = Status::Idle;
     startedCv_.notify_all();

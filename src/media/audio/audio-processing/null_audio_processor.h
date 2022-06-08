@@ -20,34 +20,26 @@
 
 #pragma once
 
-#include "audio/echo-cancel/echo_canceller.h"
-#include "audio/audio_frame_resizer.h"
-
-#include <memory>
+#include "audio_processor.h"
 
 namespace jami {
 
-class WebRTCEchoCanceller final : public EchoCanceller
+class NullAudioProcessor final : public AudioProcessor
 {
 public:
-    WebRTCEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~WebRTCEchoCanceller() = default;
+    NullAudioProcessor(AudioFormat format, unsigned frameSize);
+    ~NullAudioProcessor() = default;
 
-    // Inherited via EchoCanceller
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
+    // void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
+    // void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
     std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
+    // void done() override;
 
-private:
-    struct WebRTCAPMImpl;
-    std::unique_ptr<WebRTCAPMImpl> pimpl_;
+    void enableEchoCancel(bool enabled) override {};
 
-    using fChannelBuffer = std::vector<std::vector<float>>;
-    fChannelBuffer fRecordBuffer_;
-    fChannelBuffer fPlaybackBuffer_;
-    AudioBuffer iRecordBuffer_;
-    AudioBuffer iPlaybackBuffer_;
-    int analogLevel_ {0};
+    void enableNoiseSuppression(bool enabled) override {};
+
+    void enableAutomaticGainControl(bool enabled) override {};
 };
+
 } // namespace jami
