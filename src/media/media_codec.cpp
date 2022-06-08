@@ -35,6 +35,7 @@ namespace jami {
  */
 SystemCodecInfo::SystemCodecInfo(unsigned codecId,
                                  unsigned avcodecId,
+                                 const std::string& longName,
                                  const std::string& name,
                                  const std::string& libName,
                                  MediaType mediaType,
@@ -45,6 +46,7 @@ SystemCodecInfo::SystemCodecInfo(unsigned codecId,
                                  unsigned maxQuality)
     : id(codecId)
     , avcodecId(avcodecId)
+    , longName(longName)
     , name(name)
     , libName(libName)
     , codecType(codecType)
@@ -62,6 +64,7 @@ SystemCodecInfo::~SystemCodecInfo() {}
  */
 SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
                                            unsigned m_avcodecId,
+                                           const std::string& longName,
                                            const std::string& m_name,
                                            const std::string& m_libName,
                                            CodecType m_type,
@@ -71,6 +74,7 @@ SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
                                            unsigned m_payloadType)
     : SystemCodecInfo(codecId,
                       m_avcodecId,
+                      longName,
                       m_name,
                       m_libName,
                       MEDIA_AUDIO,
@@ -100,6 +104,7 @@ SystemAudioCodecInfo::getCodecSpecifications()
  */
 SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned codecId,
                                            unsigned m_avcodecId,
+                                           const std::string& longName,
                                            const std::string& m_name,
                                            const std::string& m_libName,
                                            CodecType m_type,
@@ -111,6 +116,7 @@ SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned codecId,
                                            unsigned m_profileId)
     : SystemCodecInfo(codecId,
                       m_avcodecId,
+                      longName,
                       m_name,
                       m_libName,
                       MEDIA_VIDEO,
@@ -171,7 +177,7 @@ AccountAudioCodecInfo::AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCode
 std::map<std::string, std::string>
 AccountAudioCodecInfo::getCodecSpecifications()
 {
-    return {{DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
+    return {{DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.longName},
             {DRing::Account::ConfProperties::CodecInfo::TYPE,
              (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
             {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},

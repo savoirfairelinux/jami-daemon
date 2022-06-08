@@ -86,6 +86,7 @@ struct SystemCodecInfo
 
     SystemCodecInfo(unsigned codecId,
                     unsigned avcodecId,
+                    const std::string& longName,
                     const std::string& name,
                     const std::string& libName,
                     MediaType mediaType,
@@ -100,8 +101,10 @@ struct SystemCodecInfo
     /* generic codec information */
     unsigned id;        /* id of the codec used with dbus */
     unsigned avcodecId; /* read as AVCodecID libav codec identifier */
-    std::string name;
+    std::string longName;   /* User-friendly codec name */
+    std::string name;       /* RTP codec name as specified by http://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml */
     std::string libName;
+    //std::string rtpName;
     CodecType codecType;
     MediaType mediaType;
 
@@ -123,6 +126,7 @@ struct SystemAudioCodecInfo : SystemCodecInfo
 {
     SystemAudioCodecInfo(unsigned codecId,
                          unsigned avcodecId,
+                         const std::string& longName,
                          const std::string& name,
                          const std::string& libName,
                          CodecType type,
@@ -147,6 +151,7 @@ struct SystemVideoCodecInfo : SystemCodecInfo
 {
     SystemVideoCodecInfo(unsigned codecId,
                          unsigned avcodecId,
+                         const std::string& longName,
                          const std::string& name,
                          const std::string& libName,
                          CodecType type = CODEC_NONE,
