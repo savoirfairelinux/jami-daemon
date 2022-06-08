@@ -23,6 +23,7 @@
 #include "audio_input.h"
 #include "jami/media_const.h"
 #include "fileutils.h" // access
+#include "logger.h"
 #include "manager.h"
 #include "media_decoder.h"
 #include "resampler.h"
@@ -122,18 +123,20 @@ AudioInput::readFromDevice()
     std::this_thread::sleep_until(wakeUp_);
     wakeUp_ += MS_PER_PACKET;
 
-    auto& mainBuffer = Manager::instance().getRingBufferPool();
-    auto samples = mainBuffer.getData(id_);
-    if (not samples)
+    auto& bufferPool = Manager::instance().getRingBufferPool();
+    auto audioFrame = bufferPool.getData(id_);
+    if (not audioFrame)
         return;
 
-    if (muteState_)
-        libav_utils::fillWithSilence(samples->pointer());
+    if (muteState_) {
+        libav_utils::fillWithSilence(audioFrame->pointer());
+        audioFrame->has_voice = false; // force no voice activity when muted
+    }
 
     std::lock_guard<std::mutex> lk(fmtMutex_);
-    if (mainBuffer.getInternalAudioFormat() != format_)
-        samples = resampler_->resample(std::move(samples), format_);
-    resizer_->enqueue(std::move(samples));
+    if (bufferPool.getInternalAudioFormat() != format_)
+        audioFrame = resampler_->resample(std::move(audioFrame), format_);
+    resizer_->enqueue(std::move(audioFrame));
 }
 
 void
