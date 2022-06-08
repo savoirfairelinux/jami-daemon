@@ -67,7 +67,9 @@ public:
     void setSeekTime(int64_t time);
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-        { onSuccessfulSetup_ = cb; }
+    {
+        onSuccessfulSetup_ = cb;
+    }
 
 private:
     void readFromDevice();
