@@ -72,6 +72,7 @@ struct ParticipantInfo
     bool videoMuted {false};
     bool audioLocalMuted {false};
     bool audioModeratorMuted {false};
+    bool voiceActivity {false};
     bool isModerator {false};
     bool handRaised {false};
 
@@ -90,6 +91,7 @@ struct ParticipantInfo
         audioModeratorMuted = v["audioModeratorMuted"].asBool();
         isModerator = v["isModerator"].asBool();
         handRaised = v["handRaised"].asBool();
+        voiceActivity = v["voiceActivity"].asBool();
     }
 
     Json::Value toJson() const
@@ -108,6 +110,7 @@ struct ParticipantInfo
         val["audioModeratorMuted"] = audioModeratorMuted;
         val["isModerator"] = isModerator;
         val["handRaised"] = handRaised;
+        val["voiceActivity"] = voiceActivity;
         return val;
     }
 
@@ -125,7 +128,8 @@ struct ParticipantInfo
                 {"audioLocalMuted", audioLocalMuted ? "true" : "false"},
                 {"audioModeratorMuted", audioModeratorMuted ? "true" : "false"},
                 {"isModerator", isModerator ? "true" : "false"},
-                {"handRaised", handRaised ? "true" : "false"}};
+                {"handRaised", handRaised ? "true" : "false"},
+                {"voiceActivity", voiceActivity ? "true" : "false"}};
     }
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -135,7 +139,8 @@ struct ParticipantInfo
                and p1.h == p2.h and p1.videoMuted == p2.videoMuted
                and p1.audioLocalMuted == p2.audioLocalMuted
                and p1.audioModeratorMuted == p2.audioModeratorMuted
-               and p1.isModerator == p2.isModerator and p1.handRaised == p2.handRaised;
+               and p1.isModerator == p2.isModerator and p1.handRaised == p2.handRaised
+               and p1.voiceActivity == p2.voiceActivity;
     }
 
     friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -368,6 +373,8 @@ public:
                     const bool& state);
     void updateMuted();
 
+    void updateVoiceActivity();
+
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerId);
 
     /**
@@ -419,11 +426,13 @@ private:
     std::set<std::string, std::less<>> moderators_ {};
     std::set<std::string, std::less<>> participantsMuted_ {};
     std::set<std::string, std::less<>> handsRaised_;
+    std::set<std::string, std::less<>> participantsVoiceActivity_ {};
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
 
     bool isMuted(std::string_view uri) const;
+    bool hasVoiceActivity(std::string_view uri) const;
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
