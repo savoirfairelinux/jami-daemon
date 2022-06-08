@@ -41,7 +41,7 @@ libjami_sources = files(
     'jamidht/sync_channel_handler.cpp',
     'jamidht/sync_module.cpp',
     'jamidht/transfer_channel_handler.cpp',
-    'media/audio/echo-cancel/null_echo_canceller.cpp',
+    'media/audio/audio-processing/null_audio_processor.cpp',
     'media/audio/sound/audiofile.cpp',
     'media/audio/sound/dtmf.cpp',
     'media/audio/sound/dtmfgenerator.cpp',
@@ -227,9 +227,16 @@ endif
 
 if conf.get('HAVE_WEBRTC_AP') == 1
     libjami_sources += files(
-        'media/audio/echo-cancel/webrtc_echo_canceller.cpp'
+        'media/audio/audio-processing/webrtc.cpp'
     )
     libjami_dependencies += depwebrtcap
+endif
+
+if conf.get('HAVE_SPEEXDSP') == 1
+    libjami_sources += files(
+        'media/audio/audio-processing/speex.cpp'
+    )
+    libjami_dependencies += depspeexdsp
 endif
 
 if conf.get('ENABLE_VIDEO')
