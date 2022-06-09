@@ -535,7 +535,7 @@ registerSinkTarget(const std::string& sinkId, SinkTarget target)
     return false;
 }
 
-#if HAVE_SHM
+#if ENABLE_SHM
 void
 startShmSink(const std::string& sinkId, bool value)
 {

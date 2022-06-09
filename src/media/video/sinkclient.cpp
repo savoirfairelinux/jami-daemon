@@ -26,9 +26,9 @@
 
 #include "sinkclient.h"
 
-#if HAVE_SHM
+#ifdef ENABLE_SHM
 #include "shm_header.h"
-#endif // HAVE_SHM
+#endif // ENABLE_SHM
 
 #include "media_buffer.h"
 #include "logger.h"
@@ -63,7 +63,7 @@ namespace video {
 
 const constexpr char FILTER_INPUT_NAME[] = "in";
 
-#if HAVE_SHM
+#ifdef ENABLE_SHM
 // RAII class helper on sem_wait/sem_post sempahore operations
 class SemGuardLock
 {
@@ -300,7 +300,7 @@ SinkClient::stop() noexcept
     return true;
 }
 
-#else // HAVE_SHM
+#else // ENABLE_SHM
 
 std::string
 SinkClient::openedName() const noexcept
@@ -322,7 +322,7 @@ SinkClient::stop() noexcept
     return true;
 }
 
-#endif // !HAVE_SHM
+#endif // !ENABLE_SHM
 
 SinkClient::SinkClient(const std::string& id, bool mixer)
     : id_ {id}
@@ -439,7 +439,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     }
 
     bool doTransfer = hasTransformedListener or hasObservers;
-#if HAVE_SHM
+#ifdef ENABLE_SHM
     doTransfer |= (shm_ && doShmTransfer_);
 #endif
 
@@ -455,7 +455,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             setFrameSize(frame->width(), frame->height());
             return;
         }
-#if HAVE_SHM
+#ifdef ENABLE_SHM
         if (shm_ && doShmTransfer_)
             shm_->renderFrame(*frame);
 #endif
