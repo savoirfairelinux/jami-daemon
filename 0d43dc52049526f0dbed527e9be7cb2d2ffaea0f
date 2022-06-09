@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4551982e_ab607d76",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-09T13:32:52Z",
+      "side": 1,
+      "message": "also a good test can be to generate a plugin with a locale translated (just translate some strings and load it in the client)",
+      "range": {
+        "startLine": 9,
+        "startChar": 12,
+        "endLine": 9,
+        "endChar": 15
+      },
+      "revId": "0d43dc52049526f0dbed527e9be7cb2d2ffaea0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "bd88925a_438b511c",
         "filename": "src/plugin/pluginpreferencesutils.cpp",
         "patchSetId": 7
