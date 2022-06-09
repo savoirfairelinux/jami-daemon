@@ -576,7 +576,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
                       call->getCallId().c_str());
             // Else, ask for a channel (for future calls/text messages)
-            requestSIPConnection(toUri, deviceId);
+            auto type = call->hasVideo() ? "videoCall" : "audioCall";
+            requestSIPConnection(toUri, deviceId, type, true);
         };
 
     std::vector<std::shared_ptr<ChannelSocket>> channels;
@@ -1834,7 +1835,8 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                                                                       pk->getLongId().toString()))
                                 sthis->requestSIPConnection(
                                     h.toString(),
-                                    pk->getLongId()); // Both sides will sync conversations
+                                    pk->getLongId(),
+                                    "sync"); // Both sides will sync conversations
                         }
                     });
             }
@@ -2083,7 +2085,8 @@ JamiAccount::doRegister_()
                     lk.unlock();
                     requestSIPConnection(
                         getUsername(),
-                        crt->getLongId()); // For git notifications, will use the same socket as sync
+                        crt->getLongId(),
+                        "sync"); // For git notifications, will use the same socket as sync
                 },
                 [this] {
                     deviceAnnounced_ = true;
@@ -3270,10 +3273,16 @@ JamiAccount::sendTextMessage(const std::string& to,
             }
 
             // Else, ask for a channel and send a DHT message
-            requestSIPConnection(to, deviceId);
+            auto payload_type = payloads.cbegin()->first;
+            requestSIPConnection(to, deviceId, payload_type);
             {
                 std::lock_guard<std::mutex> lock(messageMutex_);
                 sentMessages_[token].to.emplace(deviceId);
+            }
+
+            if (payload_type == MIME_TYPE_GIT) {
+                // It's a swarm compatible device, so no need for a DHT message
+                return;
             }
 
             auto h = dht::InfoHash::get("inbox:" + dev->getId().toString());
@@ -3862,7 +3871,10 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
 }
 
 void
-JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& deviceId)
+JamiAccount::requestSIPConnection(const std::string& peerId,
+                                  const DeviceId& deviceId,
+                                  const std::string& connectionType,
+                                  bool forceNewConnection)
 {
     JAMI_DBG("[Account %s] Request SIP connection to peer %s on device %s",
              getAccountID().c_str(),
@@ -3886,7 +3898,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     // Note, Even if we send 50 "sip" request, the connectionManager_ will only use one socket.
     // however, this will still ask for multiple channels, so only ask
     // if there is no pending request
-    if (connectionManager_->isConnecting(deviceId, "sip")) {
+    if (!forceNewConnection && connectionManager_->isConnecting(deviceId, "sip")) {
         JAMI_INFO("[Account %s] Already connecting to %s",
                   getAccountID().c_str(),
                   deviceId.to_c_str());
@@ -3895,23 +3907,24 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
               getAccountID().c_str(),
               deviceId.to_c_str());
-    connectionManager_->connectDevice(deviceId,
-                                      "sip",
-                                      [w = weak(), id](std::shared_ptr<ChannelSocket> socket,
-                                                       const DeviceId&) {
-                                          if (socket)
-                                              return;
-                                          auto shared = w.lock();
-                                          if (!shared)
-                                              return;
-                                          // If this is triggered, this means that the
-                                          // connectDevice didn't get any response from the DHT.
-                                          // Stop searching pending call.
-                                          shared->callConnectionClosed(id.second, true);
-                                          shared->forEachPendingCall(id.second, [](const auto& pc) {
-                                              pc->onFailure();
-                                          });
-                                      });
+    connectionManager_->connectDevice(
+        deviceId,
+        "sip",
+        [w = weak(), id](std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
+            if (socket)
+                return;
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            // If this is triggered, this means that the
+            // connectDevice didn't get any response from the DHT.
+            // Stop searching pending call.
+            shared->callConnectionClosed(id.second, true);
+            shared->forEachPendingCall(id.second, [](const auto& pc) { pc->onFailure(); });
+        },
+        false,
+        forceNewConnection,
+        connectionType);
 }
 
 bool
