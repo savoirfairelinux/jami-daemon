@@ -116,7 +116,8 @@ public:
     };
 
     bool connectDeviceStartIce(const std::shared_ptr<dht::crypto::PublicKey>& devicePk,
-                               const dht::Value::Id& vid);
+                               const dht::Value::Id& vid,
+                               const std::string& connType);
     bool connectDeviceOnNegoDone(const DeviceId& deviceId,
                                  const std::string& name,
                                  const dht::Value::Id& vid,
@@ -124,11 +125,15 @@ public:
     void connectDevice(const DeviceId& deviceId,
                        const std::string& uri,
                        ConnectCallback cb,
-                       bool noNewSocket = false);
+                       bool noNewSocket = false,
+                       bool forceNewSocket = false,
+                       const std::string& connType = "");
     void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                        const std::string& name,
                        ConnectCallback cb,
-                       bool noNewSocket = false);
+                       bool noNewSocket = false,
+                       bool forceNewSocket = false,
+                       const std::string& connType = "");
     /**
      * Send a ChannelRequest on the TLS socket. Triggers cb when ready
      * @param sock      socket used to send the request
@@ -174,8 +179,7 @@ public:
     // each device can have multiple multiplexed sockets.
     std::map<CallbackId, std::shared_ptr<ConnectionInfo>> infos_ {};
 
-    std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId,
-                                            const dht::Value::Id& id)
+    std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId, const dht::Value::Id& id)
     {
         std::lock_guard<std::mutex> lk(infosMtx_);
         auto it = infos_.find({deviceId, id});
@@ -275,7 +279,9 @@ public:
 
 bool
 ConnectionManager::Impl::connectDeviceStartIce(
-    const std::shared_ptr<dht::crypto::PublicKey>& devicePk, const dht::Value::Id& vid)
+    const std::shared_ptr<dht::crypto::PublicKey>& devicePk,
+    const dht::Value::Id& vid,
+    const std::string& connType)
 {
     auto deviceId = devicePk->getLongId();
     auto info = getInfo(deviceId, vid);
@@ -304,6 +310,8 @@ ConnectionManager::Impl::connectDeviceStartIce(
 
     val.id = vid; /* Random id for the message unicity */
     val.ice_msg = icemsg.str();
+    val.connType = connType;
+
     auto value = std::make_shared<dht::Value>(std::move(val));
     value->user_type = "peer_request";
 
@@ -386,7 +394,9 @@ void
 ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                                        const std::string& name,
                                        ConnectCallback cb,
-                                       bool noNewSocket)
+                                       bool noNewSocket,
+                                       bool forceNewSocket,
+                                       const std::string& connType)
 {
     if (!account.dht()) {
         cb(nullptr, deviceId);
@@ -397,8 +407,13 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
         return;
     }
     account.findCertificate(deviceId,
-                            [w = weak(), deviceId, name, cb = std::move(cb), noNewSocket](
-                                const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                            [w = weak(),
+                             deviceId,
+                             name,
+                             cb = std::move(cb),
+                             noNewSocket,
+                             forceNewSocket,
+                             connType](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                                 if (!cert) {
                                     JAMI_ERR("No valid certificate found for device %s",
                                              deviceId.to_c_str());
@@ -406,7 +421,12 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                                     return;
                                 }
                                 if (auto shared = w.lock()) {
-                                    shared->connectDevice(cert, name, std::move(cb), noNewSocket);
+                                    shared->connectDevice(cert,
+                                                          name,
+                                                          std::move(cb),
+                                                          noNewSocket,
+                                                          forceNewSocket,
+                                                          connType);
                                 }
                             });
 }
@@ -415,14 +435,18 @@ void
 ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                                        const std::string& name,
                                        ConnectCallback cb,
-                                       bool noNewSocket)
+                                       bool noNewSocket,
+                                       bool forceNewSocket,
+                                       const std::string& connType)
 {
     // Avoid dht operation in a DHT callback to avoid deadlocks
     runOnMainThread([w = weak(),
                      name = std::move(name),
                      cert = std::move(cert),
                      cb = std::move(cb),
-                     noNewSocket] {
+                     noNewSocket,
+                     forceNewSocket,
+                     connType] {
         auto devicePk = std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey());
         auto deviceId = devicePk->getLongId();
         auto sthis = w.lock();
@@ -470,7 +494,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             }
         }
 
-        if (isConnectingToDevice) {
+        if (isConnectingToDevice && !forceNewSocket) {
             JAMI_DBG("Already connecting to %s, wait for the ICE negotiation", deviceId.to_c_str());
             return;
         }
@@ -500,6 +524,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                       name = std::move(name),
                                       cert = std::move(cert),
                                       vid,
+                                      connType,
                                       eraseInfo](auto&& ice_config) {
             auto sthis = w.lock();
             if (!sthis)
@@ -511,6 +536,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                      name = std::move(name),
                                      cert = std::move(cert),
                                      vid,
+                                     connType,
                                      eraseInfo](bool ok) {
                 auto sthis = w.lock();
                 if (!sthis)
@@ -521,12 +547,15 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                     return;
                 }
 
-                dht::ThreadPool::io().run(
-                    [w = std::move(w), devicePk = std::move(devicePk), vid = std::move(vid), eraseInfo] {
-                        if (auto sthis = w.lock())
-                            if (!sthis->connectDeviceStartIce(devicePk, vid))
-                                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-                    });
+                dht::ThreadPool::io().run([w = std::move(w),
+                                           devicePk = std::move(devicePk),
+                                           vid = std::move(vid),
+                                           eraseInfo,
+                                           connType] {
+                    if (auto sthis = w.lock())
+                        if (!sthis->connectDeviceStartIce(devicePk, vid, connType))
+                            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                });
             };
             ice_config.onNegoDone = [w,
                                      deviceId = std::move(deviceId),
@@ -641,6 +670,9 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
             if (shared->account.isMessageTreated(to_hex_string(req.id))) {
                 // Message already treated. Just ignore
                 return true;
+            }
+            if (!req.connType.empty()) {
+                // TODO => Determine if apple extension, kill jami and relaunch
             }
             if (req.isAnswer) {
                 JAMI_DBG() << "Received request answer from " << req.owner->getLongId();
@@ -884,13 +916,14 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 return;
             }
 
-            dht::ThreadPool::io().run([w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
-                auto shared = w.lock();
-                if (!shared)
-                    return;
-                if (!shared->onRequestStartIce(req))
-                    runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-            });
+            dht::ThreadPool::io().run(
+                [w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
+                    auto shared = w.lock();
+                    if (!shared)
+                        return;
+                    if (!shared->onRequestStartIce(req))
+                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                });
         };
 
         ice_config.onNegoDone = [w, req, eraseInfo, deviceId](bool ok) {
@@ -903,11 +936,12 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 return;
             }
 
-            dht::ThreadPool::io().run([w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
-                if (auto shared = w.lock())
-                    if (!shared->onRequestOnNegoDone(req))
-                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-            });
+            dht::ThreadPool::io().run(
+                [w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
+                    if (auto shared = w.lock())
+                        if (!shared->onRequestOnNegoDone(req))
+                            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                });
         };
 
         // Negotiate a new ICE socket
@@ -996,18 +1030,22 @@ void
 ConnectionManager::connectDevice(const DeviceId& deviceId,
                                  const std::string& name,
                                  ConnectCallback cb,
-                                 bool noNewSocket)
+                                 bool noNewSocket,
+                                 bool forceNewSocket,
+                                 const std::string& connType)
 {
-    pimpl_->connectDevice(deviceId, name, std::move(cb), noNewSocket);
+    pimpl_->connectDevice(deviceId, name, std::move(cb), noNewSocket, forceNewSocket, connType);
 }
 
 void
 ConnectionManager::connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                                  const std::string& name,
                                  ConnectCallback cb,
-                                 bool noNewSocket)
+                                 bool noNewSocket,
+                                 bool forceNewSocket,
+                                 const std::string& connType)
 {
-    pimpl_->connectDevice(cert, name, std::move(cb), noNewSocket);
+    pimpl_->connectDevice(cert, name, std::move(cb), noNewSocket, forceNewSocket, connType);
 }
 
 bool
