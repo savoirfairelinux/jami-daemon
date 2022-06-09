@@ -705,21 +705,14 @@ VideoRtpSession::setupVideoBitrateInfo()
 {
     auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
     if (codecVideo) {
+        auto& info = codecVideo->systemCodecInfo;
         videoBitrateInfo_ = {
-            (unsigned) (jami::stoi(
-                codecVideo
-                    ->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::BITRATE])),
-            (unsigned) (jami::stoi(codecVideo->getCodecSpecifications()
-                                       [DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE])),
-            (unsigned) (jami::stoi(codecVideo->getCodecSpecifications()
-                                       [DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE])),
-            (unsigned) (jami::stoi(
-                codecVideo
-                    ->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::QUALITY])),
-            (unsigned) (jami::stoi(codecVideo->getCodecSpecifications()
-                                       [DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY])),
-            (unsigned) (jami::stoi(codecVideo->getCodecSpecifications()
-                                       [DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY])),
+            codecVideo->bitrate,
+            info.minBitrate,
+            info.maxBitrate,
+            codecVideo->quality,
+            info.minQuality,
+            info.maxQuality,
             videoBitrateInfo_.cptBitrateChecking,
             videoBitrateInfo_.maxBitrateChecking,
             videoBitrateInfo_.packetLostThreshold,
@@ -734,18 +727,8 @@ void
 VideoRtpSession::storeVideoBitrateInfo()
 {
     if (auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec)) {
-        codecVideo->setCodecSpecifications({{DRing::Account::ConfProperties::CodecInfo::BITRATE,
-                                             std::to_string(videoBitrateInfo_.videoBitrateCurrent)},
-                                            {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE,
-                                             std::to_string(videoBitrateInfo_.videoBitrateMin)},
-                                            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE,
-                                             std::to_string(videoBitrateInfo_.videoBitrateMax)},
-                                            {DRing::Account::ConfProperties::CodecInfo::QUALITY,
-                                             std::to_string(videoBitrateInfo_.videoQualityCurrent)},
-                                            {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY,
-                                             std::to_string(videoBitrateInfo_.videoQualityMin)},
-                                            {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY,
-                                             std::to_string(videoBitrateInfo_.videoQualityMax)}});
+        codecVideo->bitrate = videoBitrateInfo_.videoBitrateCurrent;
+        codecVideo->quality = videoBitrateInfo_.videoQualityCurrent;
     }
 }
 
