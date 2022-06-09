@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cbdc34f0_4ca77d5a",
+        "filename": "src/media/system_codec_container.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-09T13:56:06Z",
+      "side": 1,
+      "message": "weird, not shown",
+      "range": {
+        "startLine": 77,
+        "startChar": 38,
+        "endLine": 77,
+        "endChar": 59
+      },
+      "revId": "5bf260095c9aae117718461b72e8f62dfea07123",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99a7cbd2_bd20692a",
+        "filename": "src/media/system_codec_container.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-09T13:56:06Z",
+      "side": 1,
+      "message": "[rtp @ 0x7f41c8116a00] Unsupported codec g723_1\n[1654782851.326|30924|media_encoder.cpp :405  ] Could not write header for output file... check codec parameters\n[1654782851.327|30924|threadloop.cpp    :46   ] [threadloop:0x7f41c8209df8] Unwaited exception: Failed to write output file header",
+      "range": {
+        "startLine": 141,
+        "startChar": 51,
+        "endLine": 141,
+        "endChar": 55
+      },
+      "revId": "5bf260095c9aae117718461b72e8f62dfea07123",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5562bb2_d7b2ab73",
+        "filename": "src/media/system_codec_container.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-09T13:56:06Z",
+      "side": 1,
+      "message": "[1654782917.370|31122|media_decoder.cpp :583  ] Unsupported codec\n[1654782917.370|31122|audio_receive_thread.cpp:86   ] decoder IO startup failed\n[1654782917.370|31122|threadloop.cpp    :41   ] setup failed",
+      "range": {
+        "startLine": 152,
+        "startChar": 46,
+        "endLine": 152,
+        "endChar": 54
+      },
+      "revId": "5bf260095c9aae117718461b72e8f62dfea07123",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
