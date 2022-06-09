@@ -35,6 +35,7 @@ namespace jami {
  */
 SystemCodecInfo::SystemCodecInfo(unsigned codecId,
                                  unsigned avcodecId,
+                                 const std::string& longName,
                                  const std::string& name,
                                  const std::string& libName,
                                  MediaType mediaType,
@@ -45,6 +46,7 @@ SystemCodecInfo::SystemCodecInfo(unsigned codecId,
                                  unsigned maxQuality)
     : id(codecId)
     , avcodecId(avcodecId)
+    , longName(longName)
     , name(name)
     , libName(libName)
     , codecType(codecType)
@@ -62,6 +64,7 @@ SystemCodecInfo::~SystemCodecInfo() {}
  */
 SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
                                            unsigned m_avcodecId,
+                                           const std::string& longName,
                                            const std::string& m_name,
                                            const std::string& m_libName,
                                            CodecType m_type,
@@ -71,6 +74,7 @@ SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
                                            unsigned m_payloadType)
     : SystemCodecInfo(codecId,
                       m_avcodecId,
+                      longName,
                       m_name,
                       m_libName,
                       MEDIA_AUDIO,
@@ -83,9 +87,9 @@ SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
 SystemAudioCodecInfo::~SystemAudioCodecInfo() {}
 
 std::map<std::string, std::string>
-SystemAudioCodecInfo::getCodecSpecifications()
+SystemAudioCodecInfo::getCodecSpecifications() const
 {
-    return {{DRing::Account::ConfProperties::CodecInfo::NAME, name},
+    return {{DRing::Account::ConfProperties::CodecInfo::NAME, longName},
             {DRing::Account::ConfProperties::CodecInfo::TYPE,
              (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
             {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
@@ -100,6 +104,7 @@ SystemAudioCodecInfo::getCodecSpecifications()
  */
 SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned codecId,
                                            unsigned m_avcodecId,
+                                           const std::string& longName,
                                            const std::string& m_name,
                                            const std::string& m_libName,
                                            CodecType m_type,
@@ -111,6 +116,7 @@ SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned codecId,
                                            unsigned m_profileId)
     : SystemCodecInfo(codecId,
                       m_avcodecId,
+                      longName,
                       m_name,
                       m_libName,
                       MEDIA_VIDEO,
@@ -126,10 +132,10 @@ SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned codecId,
 SystemVideoCodecInfo::~SystemVideoCodecInfo() {}
 
 std::map<std::string, std::string>
-SystemVideoCodecInfo::getCodecSpecifications()
+SystemVideoCodecInfo::getCodecSpecifications() const
 {
     return {
-        {DRing::Account::ConfProperties::CodecInfo::NAME, name},
+        {DRing::Account::ConfProperties::CodecInfo::NAME, longName},
         {DRing::Account::ConfProperties::CodecInfo::TYPE,
          (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
         {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
@@ -169,9 +175,9 @@ AccountAudioCodecInfo::AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCode
 {}
 
 std::map<std::string, std::string>
-AccountAudioCodecInfo::getCodecSpecifications()
+AccountAudioCodecInfo::getCodecSpecifications() const
 {
-    return {{DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
+    return {{DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.longName},
             {DRing::Account::ConfProperties::CodecInfo::TYPE,
              (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
             {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
@@ -208,9 +214,9 @@ AccountVideoCodecInfo::AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCode
 {}
 
 std::map<std::string, std::string>
-AccountVideoCodecInfo::getCodecSpecifications()
+AccountVideoCodecInfo::getCodecSpecifications() const
 {
-    return {{DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
+    return {{DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.longName},
             {DRing::Account::ConfProperties::CodecInfo::TYPE,
              (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
             {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},

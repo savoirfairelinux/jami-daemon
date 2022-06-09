@@ -265,7 +265,7 @@ private:
     void addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port);
 
     std::shared_ptr<AccountCodecInfo> findCodecByPayload(const unsigned payloadType);
-    std::shared_ptr<AccountCodecInfo> findCodecBySpec(const std::string& codecName,
+    std::shared_ptr<AccountCodecInfo> findCodecBySpec(std::string_view codecName,
                                                       const unsigned clockrate = 0) const;
 
     // Data members
