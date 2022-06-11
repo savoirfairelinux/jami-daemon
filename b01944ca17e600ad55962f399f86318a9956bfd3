@@ -16,6 +16,57 @@
       "message": "please wrap these lines at 70 chars",
       "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d50b028_1d57ab8b",
+        "filename": "test/agent/pre-inst-env.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-06-11T03:24:58Z",
+      "side": 1,
+      "message": "It could be cleaner to hide this file from the view; in GNU Guix it lives in a build-aux subdirectory.  This would keep tab-completion from including this template in the results, which could be annoying.",
+      "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2470a45c_b1353970",
+        "filename": "test/agent/pre-inst-env.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-06-11T03:24:58Z",
+      "side": 1,
+      "message": "The license notice should be standardized to what is used in the other Jami source files.",
+      "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1427014a_9078511b",
+        "filename": "test/agent/pre-inst-env.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-06-11T03:24:58Z",
+      "side": 1,
+      "message": "This command usage should be adjusted.",
+      "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
