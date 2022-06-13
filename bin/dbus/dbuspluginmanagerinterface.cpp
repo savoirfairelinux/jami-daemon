@@ -109,6 +109,12 @@ DBusPluginManagerInterface::getChatHandlers() -> decltype(DRing::getChatHandlers
     return DRing::getChatHandlers();
 }
 
+auto
+DBusPluginManagerInterface::getWebViewHandlers() -> decltype(DRing::getWebViewHandlers())
+{
+    return DRing::getWebViewHandlers();
+}
+
 void
 DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& mediaHandlerId,
                                                    const std::string& callId,
@@ -151,6 +157,12 @@ DBusPluginManagerInterface::getChatHandlerStatus(const std::string& accountId,
     return DRing::getChatHandlerStatus(accountId, peerId);
 }
 
+std::map<std::string, std::string>
+DBusPluginManagerInterface::getWebViewHandlerDetails(const std::string& handlerAddress)
+{
+    return DRing::getWebViewHandlerDetails(handlerAddress);
+}
+
 bool
 DBusPluginManagerInterface::getPluginsEnabled()
 {
@@ -161,4 +173,30 @@ void
 DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
 {
     DRing::setPluginsEnabled(state);
+}
+
+void
+DBusPluginManagerInterface::sendWebViewMessage(const std::string& pluginId,
+                                               const std::string& webViewId,
+                                               const std::string& messageId,
+                                               const std::string& payload)
+{
+    DRing::sendWebViewAttach(pluginId, webViewId, messageId, payload);
+}
+
+std::string
+DBusPluginManagerInterface::sendWebViewAttach(const std::string& pluginId,
+                                              const std::string& accountId,
+                                              const std::string& webViewId,
+                                              const std::string& action)
+{
+    return DRing::sendWebViewAttach(pluginId, accountId, webViewId, action);
+}
+
+void
+DBusPluginManagerInterface::sendWebViewDetach(const std::string& pluginId,
+                                              const std::string& accountId,
+                                              const std::string& webViewId)
+{
+    DRing::sendWebViewDetach(pluginId, accountId, webViewId);
 }
