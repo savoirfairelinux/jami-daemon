@@ -939,6 +939,14 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
             }
         }
     }
+    // Mute newly created medias
+    for (auto i = currentMediaList().size(); i < remoteMediaAttrList.size(); ++i) {
+        // This allow to have in a conference:
+        // sendrecv video
+        // sendrecv audio
+        // recvonly video (and avoid to send the video twice)
+        remoteMediaAttrList[i].muted_ = true;
+    }
 
     if (remoteMediaAttrList.empty()) {
         JAMI_WARN("[call:%s] Media list is empty. Ignoring the media change request",

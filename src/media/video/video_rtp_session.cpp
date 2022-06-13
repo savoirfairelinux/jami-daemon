@@ -98,6 +98,7 @@ VideoRtpSession::startSender()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
+    JAMI_ERR() << "@@@ START SENDER FOR " << streamId_ << " " << send_.enabled;
     JAMI_DBG("[%p] Start video RTP sender: input [%s] - muted [%s]",
              this,
              conference_ ? "Video Mixer" : input_.c_str(),
