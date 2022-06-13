@@ -21,6 +21,7 @@
 #pragma once
 
 #include "noncopyable.h"
+#include "plugin/webviewservicesmanager.h"
 #include "pluginmanager.h"
 #include "pluginpreferencesutils.h"
 
@@ -48,6 +49,7 @@ public:
     JamiPluginManager()
         : callsm_ {pm_}
         , chatsm_ {pm_}
+        , webviewsm_ {pm_}
         , preferencesm_ {pm_}
     {
         registerServices();
@@ -142,9 +144,25 @@ public:
      */
     bool resetPluginPreferencesValuesMap(const std::string& rootPath, const std::string& accountId);
 
+    void sendWebViewMessage(const std::string& pluginId,
+                            const std::string& webViewId,
+                            const std::string& messageId,
+                            const std::string& payload);
+
+    std::string sendWebViewAttach(const std::string& pluginId,
+                                  const std::string& accountId,
+                                  const std::string& webViewId,
+                                  const std::string& action);
+
+    void sendWebViewDetach(const std::string& pluginId,
+                           const std::string& accountId,
+                           const std::string& webViewId);
+
     CallServicesManager& getCallServicesManager() { return callsm_; }
 
     ChatServicesManager& getChatServicesManager() { return chatsm_; }
+
+    WebViewServicesManager& getWebViewServicesManager() { return webviewsm_; }
 
     PreferenceServicesManager& getPreferenceServicesManager() { return preferencesm_; }
 
@@ -165,6 +183,7 @@ private:
     // Services instances
     CallServicesManager callsm_;
     ChatServicesManager chatsm_;
+    WebViewServicesManager webviewsm_;
     PreferenceServicesManager preferencesm_;
 };
 } // namespace jami
