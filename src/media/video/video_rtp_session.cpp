@@ -98,6 +98,7 @@ VideoRtpSession::startSender()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
+    JAMI_ERR() << "@@@ START SENDER FOR " << streamId_ << " " << send_.enabled;
     JAMI_DBG("[%p] Start video RTP sender: input [%s] - muted [%s]",
              this,
              conference_ ? "Video Mixer" : input_.c_str(),
@@ -249,7 +250,7 @@ VideoRtpSession::startReceiver()
         if (receiveThread_)
             JAMI_WARN("[%p] Already has a receiver, restarting", this);
         receiveThread_.reset(
-            new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
+            new VideoReceiveThread(streamId_, !conference_, receive_.receiving_sdp, mtu_));
 
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
@@ -421,6 +422,7 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
     }
 
     if ((receive_.onHold = mute)) {
+        JAMI_ERR() << "@@@ RECEIVE " << streamId_ << " " << mute;
         stopReceiver();
     } else {
         startReceiver();

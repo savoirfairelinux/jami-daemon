@@ -60,15 +60,10 @@ public:
 
     virtual void updateMedia(const MediaDescription& send, const MediaDescription& receive)
     {
+        JAMI_ERR() << "@@@ SET " << streamId_ << " " << send_.enabled << " " << receive_.enabled;
+
         send_ = send;
         receive_ = receive;
-    }
-
-    bool isReceiving() const noexcept
-    {
-        return receive_.enabled
-               && (receive_.direction_ == MediaDirection::RECVONLY
-                   || receive_.direction_ == MediaDirection::SENDRECV);
     }
 
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
