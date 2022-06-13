@@ -1060,6 +1060,9 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ig
         auto direction = getMediaDirection(media);
         mediaAttr.muted_ = direction != MediaDirection::SENDRECV
                            and direction != MediaDirection::SENDONLY;
+        if (mediaAttr.muted_) {
+            JAMI_ERR() << "@@@ MUTED";
+        }
 
         // Get transport.
         auto transp = getMediaTransport(media);
