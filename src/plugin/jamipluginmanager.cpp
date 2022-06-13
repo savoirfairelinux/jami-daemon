@@ -364,4 +364,5 @@ JamiPluginManager::registerServices()
 
     pm_.registerService("getPluginAccPreferences", getPluginAccPreferences);
 }
+
 } // namespace jami

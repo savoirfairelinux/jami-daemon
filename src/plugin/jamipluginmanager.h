@@ -21,6 +21,7 @@
 #pragma once
 
 #include "noncopyable.h"
+#include "plugin/webviewservicesmanager.h"
 #include "pluginmanager.h"
 #include "pluginpreferencesutils.h"
 
@@ -48,6 +49,7 @@ public:
     JamiPluginManager()
         : callsm_ {pm_}
         , chatsm_ {pm_}
+        , webviewsm_ {pm_}
         , preferencesm_ {pm_}
     {
         registerServices();
@@ -146,6 +148,8 @@ public:
 
     ChatServicesManager& getChatServicesManager() { return chatsm_; }
 
+    WebViewServicesManager& getWebViewServicesManager() { return webviewsm_; }
+
     PreferenceServicesManager& getPreferenceServicesManager() { return preferencesm_; }
 
 private:
@@ -165,6 +169,7 @@ private:
     // Services instances
     CallServicesManager callsm_;
     ChatServicesManager chatsm_;
+    WebViewServicesManager webviewsm_;
     PreferenceServicesManager preferencesm_;
 };
 } // namespace jami
