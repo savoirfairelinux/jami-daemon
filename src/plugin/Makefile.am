@@ -8,6 +8,8 @@ noinst_HEADERS += \
 	./plugin/preferencehandler.h \
 	./plugin/chathandler.h \
 	./plugin/chatservicesmanager.h \
+	./plugin/webviewservicesmanager.h \
+	./plugin/webviewhandler.h \
 	./plugin/jamiplugin.h \
 	./plugin/jamipluginmanager.h \
 	./plugin/mediahandler.h \
@@ -24,6 +26,7 @@ libplugin_la_SOURCES = \
 	./plugin/pluginpreferencesutils.cpp \
 	./plugin/pluginsutils.cpp \
 	./plugin/chatservicesmanager.cpp \
+	./plugin/webviewservicesmanager.cpp \
 	./plugin/callservicesmanager.cpp \
 	./plugin/preferenceservicesmanager.cpp
 

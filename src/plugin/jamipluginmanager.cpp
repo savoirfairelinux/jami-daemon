@@ -364,4 +364,30 @@ JamiPluginManager::registerServices()
 
     pm_.registerService("getPluginAccPreferences", getPluginAccPreferences);
 }
+
+void
+JamiPluginManager::sendWebViewMessage(const std::string& pluginId,
+                                      const std::string& webViewId,
+                                      const std::string& messageId,
+                                      const std::string& payload)
+{
+    webviewsm_.sendWebViewMessage(pluginId, webViewId, messageId, payload);
+}
+
+std::string
+JamiPluginManager::sendWebViewAttach(const std::string& pluginId,
+                                     const std::string& accountId,
+                                     const std::string& webViewId,
+                                     const std::string& action)
+{
+    return webviewsm_.sendWebViewAttach(pluginId, accountId, webViewId, action);
+}
+
+void
+JamiPluginManager::sendWebViewDetach(const std::string& pluginId,
+                                     const std::string& accountId,
+                                     const std::string& webViewId)
+{
+    webviewsm_.sendWebViewDetach(pluginId, accountId, webViewId);
+}
 } // namespace jami
