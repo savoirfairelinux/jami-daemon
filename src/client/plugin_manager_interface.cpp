@@ -128,6 +128,15 @@ getChatHandlers()
         .getChatHandlers();
 }
 
+std::vector<std::string>
+getWebViewHandlers()
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getWebViewServicesManager()
+        .getWebViewHandlers();
+}
+
 void
 toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& callId, bool toggle)
 {
@@ -185,6 +194,15 @@ getChatHandlerStatus(const std::string& accountId, const std::string& peerId)
         .getChatHandlerStatus(accountId, peerId);
 }
 
+std::map<std::string, std::string>
+getWebViewHandlerDetails(const std::string& handlerAddress)
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getWebViewServicesManager()
+        .getWebViewHandlerDetails(handlerAddress);
+}
+
 bool
 getPluginsEnabled()
 {
@@ -202,5 +220,38 @@ setPluginsEnabled(bool state)
             jami::Manager::instance().getJamiPluginManager().unloadPlugin(item);
     }
     jami::Manager::instance().saveConfig();
+}
+
+void
+sendWebViewMessage(const std::string& pluginId,
+                   const std::string& webViewId,
+                   const std::string& messageId,
+                   const std::string& payload)
+{
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getWebViewServicesManager()
+        .sendWebViewMessage(pluginId, webViewId, messageId, payload);
+}
+
+std::string
+sendWebViewAttach(const std::string& pluginId,
+                  const std::string& accountId,
+                  const std::string& webViewId,
+                  const std::string& action)
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getWebViewServicesManager()
+        .sendWebViewAttach(pluginId, accountId, webViewId, action);
+}
+
+void
+sendWebViewDetach(const std::string& pluginId, const std::string& webViewId)
+{
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getWebViewServicesManager()
+        .sendWebViewDetach(pluginId, webViewId);
 }
 } // namespace DRing

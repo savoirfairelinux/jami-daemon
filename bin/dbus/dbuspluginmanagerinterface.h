@@ -70,6 +70,7 @@ public:
     int uninstallPlugin(const std::string& pluginRootPath);
     std::vector<std::string> getCallMediaHandlers();
     std::vector<std::string> getChatHandlers();
+    std::vector<std::string> getWebViewHandlers();
     void toggleCallMediaHandler(const std::string& mediaHandlerId,
                                 const std::string& callId,
                                 const bool& toggle);
@@ -82,7 +83,25 @@ public:
     std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHandlerId);
     std::vector<std::string> getChatHandlerStatus(const std::string& accontId,
                                                   const std::string& peerId);
+    std::map<std::string, std::string> getWebViewHandlerDetails(const std::string& handlerAddress);
 
     bool getPluginsEnabled();
     void setPluginsEnabled(const bool& state);
+
+    // this is a signal
+    void webViewMessageReceived(const std::string& pluginId,
+                                const std::string& webViewId,
+                                const std::string& payload);
+
+    void sendWebViewMessage(const std::string& pluginId,
+                            const std::string& webViewId,
+                            const std::string& messageId,
+                            const std::string& payload);
+
+    std::string sendWebViewAttach(const std::string& pluginId,
+                                  const std::string& accountId,
+                                  const std::string& webViewId,
+                                  const std::string& action);
+
+    void sendWebViewDetach(const std::string& pluginId, const std::string& webViewId);
 };

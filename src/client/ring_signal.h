@@ -34,6 +34,10 @@
 #include "videomanager_interface.h"
 #endif
 
+#ifdef ENABLE_PLUGIN
+#include "plugin_manager_interface.h"
+#endif
+
 #include "jami.h"
 #include "logger.h"
 
