@@ -198,5 +198,60 @@
             </arg>
         </method>
 
+         <signal name="webViewMessageReceived" tp:name-for-bindings="webViewMessageReceived">
+            <tp:docstring>
+              This signal is emitted when a plugin sends a message up to a webview
+            </tp:docstring>
+            <arg type="s" name="pluginId">
+            </arg>
+            <arg type="s" name="webViewId">
+            </arg>
+            <arg type="s" name="payload">
+            </arg>
+        </signal>
+
+        <method name="sendWebViewMessage" tp:name-for-bindings="sendWebViewMessage">
+            <tp:docstring>
+              Called by the a client's webview to send a message to the plugin
+            </tp:docstring>
+            <arg type="s" name="pluginId" direction="in">
+            </arg>
+            <arg type="s" name="webViewId" direction="in">
+            </arg>
+            <arg type="s" name="messageId" direction="in">
+            </arg>
+            <arg type="s" name="payload" direction="in">
+            </arg>
+        </method>
+
+        <method name="sendWebViewAttach" tp:name-for-bindings="sendWebViewAttach">
+            <tp:docstring>
+              Called by the a client's webview to notify the plugin that a webview has been created
+            </tp:docstring>
+            <arg type="s" name="pluginId" direction="in">
+            </arg>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="s" name="webViewId" direction="in">
+            </arg>
+            <arg type="s" name="action" direction="in">
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QString"/>
+            <arg type="s" name="response" direction="out">
+            </arg>
+        </method>
+
+        <method name="sendWebViewDetach" tp:name-for-bindings="sendWebViewDetach">
+            <tp:docstring>
+              Called by the a client's webview to notify the plugin that a webview has been destroyed
+            </tp:docstring>
+            <arg type="s" name="pluginId" direction="in">
+            </arg>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="s" name="webViewId" direction="in">
+            </arg>
+        </method>
+
     </interface>
 </node>
