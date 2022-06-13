@@ -153,6 +153,10 @@ DBusClient::initLibrary(int flags)
     auto videoM = videoManager_.get();
 #endif
 
+#ifdef ENABLE_PLUGIN
+    auto pluginM = pluginManagerInterface_.get();
+#endif
+
     // Call event handlers
     const std::map<std::string, SharedCallback> callEvHandlers
         = {exportable_callback<CallSignal::StateChange>(
@@ -322,6 +326,14 @@ DBusClient::initLibrary(int flags)
     };
 #endif
 
+#ifdef ENABLE_PLUGIN
+    // Plugin event handlers
+    const std::map<std::string, SharedCallback> pluginEvHandlers = {
+        exportable_callback<DRing::PluginSignal::WebViewMessageReceived>(
+            bind(&DBusPluginManagerInterface::webViewMessageReceived, pluginM, _1, _2, _3, _4)),
+    };
+#endif
+
     if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
         return -1;
 
@@ -333,6 +345,9 @@ DBusClient::initLibrary(int flags)
     DRing::registerSignalHandlers(convEvHandlers);
 #ifdef ENABLE_VIDEO
     DRing::registerSignalHandlers(videoEvHandlers);
+#endif
+#ifdef ENABLE_PLUGIN
+    DRing::registerSignalHandlers(pluginEvHandlers);
 #endif
 
     if (!DRing::start())
