@@ -295,6 +295,7 @@ if conf.get('ENABLE_PLUGIN')
         'plugin/preferenceservicesmanager.cpp',
         'plugin/callservicesmanager.cpp',
         'plugin/chatservicesmanager.cpp',
+        'plugin/webviewservicesmanager.cpp',
         'plugin/jamipluginmanager.cpp',
         'plugin/pluginloader.cpp',
         'plugin/pluginmanager.cpp',
