@@ -1005,7 +1005,7 @@ std::string
 Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
                       const std::vector<DRing::MediaMap>& mediaList,
-                      std::shared_ptr<Conference> conference)
+                      std::shared_ptr<Conference>)
 {
     JAMI_DBG() << "try outgoing call to '" << to << "'"
                << " with account '" << account_id << "'";
@@ -1562,7 +1562,8 @@ Manager::joinConference(const std::string& accountId,
                         const std::string& confId2)
 {
     auto account = getAccount(accountId);
-    if (not account) {
+    auto account2 = getAccount(accountId);
+    if (not account || not account2) {
         JAMI_ERR("Can't find account: %s", accountId.c_str());
         return false;
     }
@@ -1573,7 +1574,7 @@ Manager::joinConference(const std::string& accountId,
         return false;
     }
 
-    auto conf2 = account->getConference(confId2);
+    auto conf2 = account2->getConference(confId2);
     if (not conf2) {
         JAMI_ERR("Not a valid conference ID: %s", confId2.c_str());
         return false;
@@ -3033,13 +3034,17 @@ Manager::newOutgoingCall(std::string_view toUrl,
 std::shared_ptr<video::SinkClient>
 Manager::createSinkClient(const std::string& id, bool mixer)
 {
+    JAMI_ERR() << "@@@@ CREATE SINK? " << id;
     const auto& iter = pimpl_->sinkMap_.find(id);
     if (iter != std::end(pimpl_->sinkMap_)) {
-        if (auto sink = iter->second.lock())
+        if (auto sink = iter->second.lock()) {
+            JAMI_ERR() << "@@@@ RETURN SINK " << id;
             return sink;
+        }
         pimpl_->sinkMap_.erase(iter); // remove expired weak_ptr
     }
 
+    JAMI_ERR() << "@@@@ CREATE SINK " << id;
     auto sink = std::make_shared<video::SinkClient>(id, mixer);
     pimpl_->sinkMap_.emplace(id, sink);
     return sink;
@@ -3063,13 +3068,15 @@ Manager::createSinkClients(const std::string& callId,
         }
         if (participant.w && participant.h && !participant.videoMuted) {
             auto currentSink = getSinkClient(sinkId);
-            if (currentSink) {
-                currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
-                sinkIdsList.emplace(sinkId);
-                continue;
-            }
+            //if (currentSink) {
+            //    JAMI_ERR() << "@@@ PARTICIPANT FOUND " << sinkId;
+            //    currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
+            //    sinkIdsList.emplace(sinkId);
+            //    continue;
+            //}
             auto newSink = createSinkClient(sinkId);
-            newSink->start();
+            if (!currentSink)
+                newSink->start();
             newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
             newSink->setFrameSize(participant.w, participant.h);
 
