@@ -203,4 +203,37 @@ setPluginsEnabled(bool state)
     }
     jami::Manager::instance().saveConfig();
 }
+
+void
+sendWebViewMessage(const std::string& pluginId,
+                   const std::string& webViewId,
+                   const std::string& messageId,
+                   const std::string& payload)
+{
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getWebViewServicesManager()
+        .sendWebViewMessage(pluginId, webViewId, messageId, payload);
+}
+
+std::string
+sendWebViewAttach(const std::string& pluginId,
+                  const std::string& accountId,
+                  const std::string& webViewId,
+                  const std::string& action)
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getWebViewServicesManager()
+        .sendWebViewAttach(pluginId, accountId, webViewId, action);
+}
+
+void
+sendWebViewDetach(const std::string& pluginId, const std::string& webViewId)
+{
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getWebViewServicesManager()
+        .sendWebViewDetach(pluginId, webViewId);
+}
 } // namespace DRing
