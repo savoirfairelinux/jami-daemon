@@ -69,4 +69,28 @@ DRING_PUBLIC std::vector<std::string> getChatHandlerStatus(const std::string& ac
                                                            const std::string& peerId);
 DRING_PUBLIC bool getPluginsEnabled();
 DRING_PUBLIC void setPluginsEnabled(bool state);
+
+DRING_PUBLIC void sendWebViewMessage(const std::string& pluginId,
+                                     const std::string& webViewId,
+                                     const std::string& messageId,
+                                     const std::string& payload);
+
+DRING_PUBLIC std::string sendWebViewAttach(const std::string& pluginId,
+                                           const std::string& accountId,
+                                           const std::string& webViewId,
+                                           const std::string& action);
+
+DRING_PUBLIC void sendWebViewDetach(const std::string& pluginId, const std::string& webViewId);
+
+namespace PluginSignal {
+struct DRING_PUBLIC WebViewMessageReceived
+{
+    constexpr static const char* name = "WebViewMessageReceived";
+    using cb_type = void(const std::string& /*pluginId*/,
+                         const std::string& /*webViewId*/,
+                         const std::string& /*messageId*/,
+                         const std::string& /*payload*/);
+};
+} // namespace PluginSignal
+
 } // namespace DRing
