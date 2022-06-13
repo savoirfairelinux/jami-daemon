@@ -85,4 +85,16 @@ public:
 
     bool getPluginsEnabled();
     void setPluginsEnabled(const bool& state);
+
+    void sendWebViewMessage(const std::string& pluginId,
+                            const std::string& webViewId,
+                            const std::string& messageId,
+                            const std::string& payload);
+
+    std::string sendWebViewAttach(const std::string& pluginId,
+                                  const std::string& accountId,
+                                  const std::string& webViewId,
+                                  const std::string& action);
+
+    void sendWebViewDetach(const std::string& pluginId, const std::string& webViewId);
 };
