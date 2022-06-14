@@ -1008,8 +1008,7 @@ Manager::unregisterAccounts()
 std::string
 Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
-                      const std::vector<DRing::MediaMap>& mediaList,
-                      std::shared_ptr<Conference> conference)
+                      const std::vector<DRing::MediaMap>& mediaList)
 {
     JAMI_DBG() << "try outgoing call to '" << to << "'"
                << " with account '" << account_id << "'";
@@ -1485,7 +1484,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
         pimpl_->unsetCurrentCall();
 
         // Create call
-        auto callId = outgoingCall(account, tostr, {}, conf);
+        auto callId = outgoingCall(account, tostr, {});
         if (callId.empty())
             continue;
 
@@ -1564,8 +1563,13 @@ Manager::joinConference(const std::string& accountId,
                         const std::string& confId2)
 {
     auto account = getAccount(accountId);
+    auto account2 = getAccount(account2Id);
     if (not account) {
         JAMI_ERR("Can't find account: %s", accountId.c_str());
+        return false;
+    }
+    if (not account2) {
+        JAMI_ERR("Can't find account: %s", account2Id.c_str());
         return false;
     }
 
@@ -1575,7 +1579,7 @@ Manager::joinConference(const std::string& accountId,
         return false;
     }
 
-    auto conf2 = account->getConference(confId2);
+    auto conf2 = account2->getConference(confId2);
     if (not conf2) {
         JAMI_ERR("Not a valid conference ID: %s", confId2.c_str());
         return false;
