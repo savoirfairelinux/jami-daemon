@@ -33,6 +33,42 @@
       "message": "MINOR SonarQube violation:\n\n\nthe parameter #4 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
       "revId": "6097dfb242d446192a779645c64684cc008ced6e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "30941993_a67a13e3",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1008,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-14T19:04:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f8103063_141aeb9a",
+      "revId": "6097dfb242d446192a779645c64684cc008ced6e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "599a6970_ce88fc34",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1008,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-14T19:04:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ecaf1f41_05d21317",
+      "revId": "6097dfb242d446192a779645c64684cc008ced6e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
