@@ -143,13 +143,11 @@ public:
      * @param callee the callee's ID/URI. Depends on the account type.
      * Refer to placeCall/placeCallWithMedia documentations.
      * @param mediaList a list of medias to include
-     * @param confId the conference ID if any
      * @return the call ID on success, empty string otherwise
      */
     std::string outgoingCall(const std::string& accountId,
                              const std::string& callee,
-                             const std::vector<DRing::MediaMap>& mediaList = {},
-                             std::shared_ptr<Conference> conference = {});
+                             const std::vector<DRing::MediaMap>& mediaList = {});
 
     /**
      * Functions which occur with a user's action
