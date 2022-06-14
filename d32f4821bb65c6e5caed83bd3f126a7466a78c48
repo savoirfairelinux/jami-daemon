@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9afacf1c_ffc2c300",
+        "filename": "src/plugin/webviewmessage.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-14T15:32:47Z",
+      "side": 1,
+      "message": "Maybe replace this entire struct with a std::tuple with 4 strings? Though I think having a struct makes it clear what the argument order is.",
+      "range": {
+        "startLine": 26,
+        "startChar": 71,
+        "endLine": 27,
+        "endChar": 15
+      },
+      "revId": "d32f4821bb65c6e5caed83bd3f126a7466a78c48",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

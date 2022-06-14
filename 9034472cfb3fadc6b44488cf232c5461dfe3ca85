@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e60410ec_c4ad08c8",
+        "filename": "src/client/ring_signal.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-14T15:32:47Z",
+      "side": 1,
+      "message": "maybe this should be something like DRing::WebViewSignal::WebViewMessageReceived?",
+      "range": {
+        "startLine": 139,
+        "startChar": 26,
+        "endLine": 139,
+        "endChar": 55
+      },
+      "revId": "9034472cfb3fadc6b44488cf232c5461dfe3ca85",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
