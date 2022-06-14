@@ -64,13 +64,6 @@ public:
         receive_ = receive;
     }
 
-    bool isReceiving() const noexcept
-    {
-        return receive_.enabled
-               && (receive_.direction_ == MediaDirection::RECVONLY
-                   || receive_.direction_ == MediaDirection::SENDRECV);
-    }
-
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
