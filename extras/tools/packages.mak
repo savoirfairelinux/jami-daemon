@@ -37,5 +37,5 @@ GAS_URL=https://raw.githubusercontent.com/FFmpeg/gas-preprocessor/$(GAS_VERSION)
 SED_VERSION=4.2.2
 SED_URL=$(GNU)/sed/sed-$(SED_VERSION).tar.bz2
 
-GETTEXT_VERSION=0.19.6
+GETTEXT_VERSION=0.21
 GETTEXT_URL=$(GNU)/gettext/gettext-$(GETTEXT_VERSION).tar.gz
