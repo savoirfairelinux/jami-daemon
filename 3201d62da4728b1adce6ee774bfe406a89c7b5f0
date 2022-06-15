@@ -1,0 +1,129 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e3261da_b91533b4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:02:35Z",
+      "side": 1,
+      "message": "just few questions\n-1 is for the break (2nd comment)",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93d60741_0b40d0e5",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1531,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:02:35Z",
+      "side": 1,
+      "message": "we might need to check recv before use",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c660a2e7_fc6f48a8",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1533,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:02:35Z",
+      "side": 1,
+      "message": "we iterate on all rtp streams, but we break on the first one ?\nis that what we want ?",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "859b7a8a_1e3e611f",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:02:35Z",
+      "side": 1,
+      "message": "we are assuming that rtp session ptr is not null. It was the case with mono-stream, are we still sure for multi-stream. \nWe could just add an assert for sanity.",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "688a813f_31671bce",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1066,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:02:35Z",
+      "side": 1,
+      "message": "I dont know if you removed the space before the colon (:), but usually there is one\nhttps://en.cppreference.com/w/cpp/language/range-for",
+      "range": {
+        "startLine": 1066,
+        "startChar": 23,
+        "endLine": 1066,
+        "endChar": 31
+      },
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5488bfd4_75bf6a9b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1864,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:02:35Z",
+      "side": 1,
+      "message": "I have a concern regarding the codec type. Is it a call attribute or stream attribute ?\nPer SIP/SDP/RTP specs, it\u0027s a stream attribute. I understand that we do not want to support that (at least for now). May be we could be more explicit (by checking that all the streams use the same code for instance). But no big deal.",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d7e7bb9_9026dcfb",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2926,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:02:35Z",
+      "side": 1,
+      "message": "If the second source is a file, the orientation won\u0027t be good.",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
