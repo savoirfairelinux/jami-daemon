@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "530ec28a_d8f3c4c0",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 27
+      },
+      "lineNbr": 1093,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "True",
+      "parentUuid": "60262c16_b544a2cd",
+      "range": {
+        "startLine": 1093,
+        "startChar": 34,
+        "endLine": 1093,
+        "endChar": 40
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f5f03afe_7e126d4b",
@@ -54,6 +78,30 @@
       "writtenOn": "2022-06-15T19:42:59Z",
       "side": 1,
       "message": "BTW, we have this typedef:\nDRing::MediaMap",
+      "range": {
+        "startLine": 123,
+        "startChar": 16,
+        "endLine": 123,
+        "endChar": 50
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e5e7810_b5626ca4",
+        "filename": "bin/dbus/dbuscallmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f5f03afe_7e126d4b",
       "range": {
         "startLine": 123,
         "startChar": 16,
@@ -87,6 +135,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "07861db5_4afd05cd",
+        "filename": "src/call.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 387,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6e569554_34b3be12",
+      "range": {
+        "startLine": 387,
+        "startChar": 23,
+        "endLine": 387,
+        "endChar": 29
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c0bacbaa_cc258756",
@@ -104,6 +176,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "699abc6f_e5ce7d76",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c0bacbaa_cc258756",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ae8dd2d8_20f2fd44",
@@ -117,6 +207,30 @@
       "writtenOn": "2022-06-15T19:42:59Z",
       "side": 1,
       "message": "is the comment still relevant ?",
+      "range": {
+        "startLine": 560,
+        "startChar": 8,
+        "endLine": 561,
+        "endChar": 45
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05e8d590_b14ced6e",
+        "filename": "src/conference.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 561,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Yes, because we only touch video status, and I\u0027m not sure we correctly handle the case we add several audios (I never tried, as I know there is already some issues with mixing audios when adding screen sharing)",
+      "parentUuid": "ae8dd2d8_20f2fd44",
       "range": {
         "startLine": 560,
         "startChar": 8,
@@ -150,6 +264,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9b516a28_1c174e91",
+        "filename": "src/conference.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "662f8249_f752baef",
+      "range": {
+        "startLine": 380,
+        "startChar": 23,
+        "endLine": 380,
+        "endChar": 29
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "42b85e5e_9b1e97a2",
@@ -163,6 +301,24 @@
       "writtenOn": "2022-06-15T19:42:59Z",
       "side": 1,
       "message": "extra line",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "292c0255_9fc60bf4",
+        "filename": "src/conference.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "42b85e5e_9b1e97a2",
       "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -213,6 +369,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f978a0f0_3436f7c4",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "update would be better if we do not replace all inputs but only change some, but yeah it\u0027s clearly a PTSD",
+      "parentUuid": "1086fa14_94d39414",
+      "range": {
+        "startLine": 113,
+        "startChar": 12,
+        "endLine": 113,
+        "endChar": 24
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "de4570ff_9254374f",
@@ -226,6 +406,30 @@
       "writtenOn": "2022-06-15T19:42:59Z",
       "side": 1,
       "message": "may just scope the line above using { }. More readable",
+      "range": {
+        "startLine": 187,
+        "startChar": 2,
+        "endLine": 187,
+        "endChar": 16
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cb0cb6dc_812fb163",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "de4570ff_9254374f",
       "range": {
         "startLine": 187,
         "startChar": 2,
@@ -282,6 +486,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "38519d6f_7940e061",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2309,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "we can\u0027t add more components than PJ_ICE_MAX_COMP in pjsip (else assert will fails anyway). so it\u0027s an hard limit (that\u0027s why it was increased before)",
+      "parentUuid": "9cb66b52_86034dfc",
+      "range": {
+        "startLine": 2309,
+        "startChar": 31,
+        "endLine": 2309,
+        "endChar": 46
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4648c8e0_30b73bc2",
@@ -301,6 +529,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4e5644f6_ec23eb42",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2334,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Because if it didn\u0027t exists from our side at this point, it\u0027s just unused and there is no audio/video to send. Without this, if in a conference, we will attach to the videoMixer to all video streams of the peer, sending the video conference twice to a same peer. With muted_ \u003d true, send.onHold_ will be true for unused streams.",
+      "parentUuid": "4648c8e0_30b73bc2",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "af4cf1fe_c4cf95fa",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 27
@@ -312,6 +558,30 @@
       "writtenOn": "2022-06-15T19:42:59Z",
       "side": 1,
       "message": "conference",
+      "range": {
+        "startLine": 2347,
+        "startChar": 95,
+        "endLine": 2347,
+        "endChar": 105
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d4924bf_d9ce4f13",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2347,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "af4cf1fe_c4cf95fa",
       "range": {
         "startLine": 2347,
         "startChar": 95,
@@ -415,6 +685,24 @@
       "writtenOn": "2022-06-15T19:42:59Z",
       "side": 1,
       "message": "beautiful, you did not even have to change the helper to support multiple video media.",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f5bf82e8_2f2ffdde",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1190,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:12:20Z",
+      "side": 1,
+      "message": "no indeed",
+      "parentUuid": "3f8809ad_b11d119b",
       "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
