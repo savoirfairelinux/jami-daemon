@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2bf61998_9dc565f0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:17:38Z",
+      "side": 1,
+      "message": "the -1 only for the last comment (reducing the size of the rtpStream_ vector",
+      "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b6f2b87_f49bf57c",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 730,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:17:38Z",
+      "side": 1,
+      "message": "it\u0027s ok for me, but just remember that the ice components must be numbered per media:\naudio_0 : 1 2\nvideo_0 : 1 2\nvideo_1 : 1 2\n...",
+      "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d6960dba_a88cc58c",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1032,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:17:38Z",
+      "side": 1,
+      "message": "crap ... never tested\nnice catch",
+      "range": {
+        "startLine": 1031,
+        "startChar": 0,
+        "endLine": 1032,
+        "endChar": 26
+      },
+      "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1fad47b0_a9638762",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2326,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T16:17:38Z",
+      "side": 1,
+      "message": "do have an actual use case where the number of new media is less than the current ones?\nAFAIK, we never remove media during a call, we either add new one or mute if do not need it.",
+      "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
