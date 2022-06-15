@@ -182,7 +182,7 @@ public:
         if (id == dht::Value::INVALID_ID) {
             it = std::find_if(infos_.begin(), infos_.end(), [&](const auto& item) {
                 auto& [key, value] = item;
-                return key.first == deviceId;
+                return key.first == deviceId && value->socket_ != nullptr;
             });
         } else {
             it = infos_.find({deviceId, id});
