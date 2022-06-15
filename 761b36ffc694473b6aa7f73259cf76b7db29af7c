@@ -662,6 +662,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "fd254ab8_9b9862a6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2774,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:57:42Z",
+      "side": 1,
+      "message": "the only noticeable difference is that instead of having 6 sockets with 2 unused, we only negotiate 4",
+      "parentUuid": "4eb253f5_ad57a1bc",
+      "range": {
+        "startLine": 2768,
+        "startChar": 0,
+        "endLine": 2774,
+        "endChar": 64
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "bcf5ba4c_febcc437",
