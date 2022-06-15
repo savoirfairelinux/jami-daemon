@@ -46,6 +46,30 @@
       },
       "revId": "5e1c9be30e34b98022be49ad8bfbb7025f570e2c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f82dd5b_3f00812c",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:29:31Z",
+      "side": 0,
+      "message": "Here I think it\u0027s not necessary indeed, IceLock is only done on methods used by users of the class, and they use the shared_ptr, so the destructor should not happen while waiting on the cv",
+      "parentUuid": "85a62110_d1015084",
+      "range": {
+        "startLine": 319,
+        "startChar": 4,
+        "endLine": 319,
+        "endChar": 24
+      },
+      "revId": "5e1c9be30e34b98022be49ad8bfbb7025f570e2c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
