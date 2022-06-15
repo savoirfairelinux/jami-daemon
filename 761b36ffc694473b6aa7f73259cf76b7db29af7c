@@ -638,6 +638,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "4eb253f5_ad57a1bc",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2774,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T20:55:22Z",
+      "side": 1,
+      "message": "it\u0027s indeed a really good point, and as far as I checked, it\u0027s still respected:\n\nIf we check https://datatracker.ietf.org/doc/html/rfc3264#section-8.2, to remove a media, we should set the port to 0\n\n\nThis is what we have in the log for the answer (both locale/remote have m\u003dvideo 0):\n\n\n[1655326358.605|44587|sdp.cpp           :504  ] [SDP ANSWER] Local active session:\nv\u003d0\no\u003datlas 3864315006 2 IN IP4 192.168.48.183\ns\u003dCall ID 421389760411311\nc\u003dIN IP4 192.168.48.183\nt\u003d0 0\na\u003dice-ufrag:45f0315a\na\u003dice-pwd:2be92a3a2ce4c4eb6d3a0147\nm\u003daudio 19748 RTP/SAVP 104 101\na\u003drtpmap:104 opus/48000/2\na\u003drtpmap:101 telephone-event/8000\na\u003dfmtp:101 0-15\na\u003drtcp:19749 IN IP4 192.168.48.183\na\u003dsendrecv\na\u003dcandidate:Hc0a830b7 1 UDP 2130706431 192.168.48.183 35130 typ host\na\u003dcandidate:Hc0a800a8 1 UDP 2130706175 192.168.0.168 35130 typ host\na\u003dcandidate:Hc0a800cb 1 UDP 2130705919 192.168.0.203 35130 typ host\na\u003dcandidate:H1acfcc58 1 UDP 2130706431 2607:fad8:4:6:76ef:2d15:8042:dfc7 47733 typ host\na\u003dcandidate:Sc0a830b7 1 UDP 1694498303 192.168.48.183 20067 typ srflx\na\u003dcandidate:Hc0a830b7 1 UDP 2130706431 192.168.48.183 20067 typ host\na\u003dcandidate:Rc0fc8cec 1 UDP 16777215 192.252.140.236 16236 typ relay\na\u003dcandidate:Hc0a830b7 2 UDP 2130706430 192.168.48.183 49439 typ host\na\u003dcandidate:Hc0a800a8 2 UDP 2130706174 192.168.0.168 49439 typ host\na\u003dcandidate:Hc0a800cb 2 UDP 2130705918 192.168.0.203 49439 typ host\na\u003dcandidate:H1acfcc58 2 UDP 2130706430 2607:fad8:4:6:76ef:2d15:8042:dfc7 52976 typ host\na\u003dcandidate:Sc0a830b7 2 UDP 1694498302 192.168.48.183 24759 typ srflx\na\u003dcandidate:Hc0a830b7 2 UDP 2130706430 192.168.48.183 24759 typ host\na\u003dcandidate:Rc0fc8cec 2 UDP 16777214 192.252.140.236 13830 typ relay\nm\u003dvideo 58744 RTP/SAVP 96\na\u003drtpmap:96 H264/90000\na\u003dfmtp:96 profile-level-id\u003d428029\na\u003drtcp:58745 IN IP4 192.168.48.183\na\u003dsendrecv\na\u003dcandidate:Hc0a830b7 3 UDP 2130706429 192.168.48.183 50156 typ host\na\u003dcandidate:Hc0a800a8 3 UDP 2130706173 192.168.0.168 50156 typ host\na\u003dcandidate:Hc0a800cb 3 UDP 2130705917 192.168.0.203 50156 typ host\na\u003dcandidate:H1acfcc58 3 UDP 2130706429 2607:fad8:4:6:76ef:2d15:8042:dfc7 35321 typ host\na\u003dcandidate:Sc0a830b7 3 UDP 1694498301 192.168.48.183 23649 typ srflx\na\u003dcandidate:Hc0a830b7 3 UDP 2130706429 192.168.48.183 23649 typ host\na\u003dcandidate:Rc0fc8cec 3 UDP 16777213 192.252.140.236 13864 typ relay\na\u003dcandidate:Hc0a830b7 4 UDP 2130706428 192.168.48.183 55945 typ host\na\u003dcandidate:Hc0a800a8 4 UDP 2130706172 192.168.0.168 55945 typ host\na\u003dcandidate:Hc0a800cb 4 UDP 2130705916 192.168.0.203 55945 typ host\na\u003dcandidate:H1acfcc58 4 UDP 2130706428 2607:fad8:4:6:76ef:2d15:8042:dfc7 53544 typ host\na\u003dcandidate:Sc0a830b7 4 UDP 1694498300 192.168.48.183 21683 typ srflx\na\u003dcandidate:Hc0a830b7 4 UDP 2130706428 192.168.48.183 21683 typ host\na\u003dcandidate:Rc0fc8cec 4 UDP 16777212 192.252.140.236 13794 typ relay\nm\u003dvideo 0 RTP/SAVP 96\n\n[1655326358.605|44587|sdp.cpp           :148  ] Set active remote session to [0x7f775403f0c8]. Was [0x7f7754264bd8]\n[1655326358.605|44587|sdp.cpp           :504  ] [SDP ANSWER] Remote active session:\nv\u003d0\no\u003dsblin-ThinkPad-P51 3864315006 3 IN IP4 192.168.0.157\ns\u003dCall ID 7724290524733758\nc\u003dIN IP4 192.168.0.157\nt\u003d0 0\na\u003dice-ufrag:661be04e\na\u003dice-pwd:14311ad96ce84d4220cd0190\nm\u003daudio 17112 RTP/SAVP 104 101\na\u003drtpmap:104 opus/48000/2\na\u003drtpmap:101 telephone-event/8000\na\u003dfmtp:101 0-15\na\u003drtcp:17113 IN IP4 192.168.0.157\na\u003dsendrecv\na\u003dcandidate:Hc0a8009d 1 UDP 2130706431 192.168.0.157 46503 typ host\na\u003dcandidate:H4a82fb8d 1 UDP 2130706431 fe80::8991:354c:2a52:d543 47498 typ host\na\u003dcandidate:Rc0fc8cec 1 UDP 16777215 192.252.140.236 21612 typ relay\na\u003dcandidate:Hc0a8009d 2 UDP 2130706430 192.168.0.157 39905 typ host\na\u003dcandidate:H4a82fb8d 2 UDP 2130706430 fe80::8991:354c:2a52:d543 55336 typ host\na\u003dcandidate:Rc0fc8cec 2 UDP 16777214 192.252.140.236 28529 typ relay\nm\u003dvideo 56146 RTP/SAVP 96 97\na\u003drtpmap:96 H264/90000\na\u003dfmtp:96 profile-level-id\u003d428029\na\u003drtpmap:97 VP8/90000\na\u003drtcp:56147 IN IP4 192.168.0.157\na\u003dsendrecv\na\u003dcandidate:Hc0a8009d 3 UDP 2130706429 192.168.0.157 32908 typ host\na\u003dcandidate:H4a82fb8d 3 UDP 2130706429 fe80::8991:354c:2a52:d543 35945 typ host\na\u003dcandidate:Rc0fc8cec 3 UDP 16777213 192.252.140.236 10966 typ relay\na\u003dcandidate:Hc0a8009d 4 UDP 2130706428 192.168.0.157 37325 typ host\na\u003dcandidate:H4a82fb8d 4 UDP 2130706428 fe80::8991:354c:2a52:d543 45587 typ host\na\u003dcandidate:Rc0fc8cec 4 UDP 16777212 192.252.140.236 25419 typ relay\nm\u003dvideo 0 RTP/SAVP 96",
+      "parentUuid": "e197c15f_2a599303",
+      "range": {
+        "startLine": 2768,
+        "startChar": 0,
+        "endLine": 2774,
+        "endChar": 64
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "bcf5ba4c_febcc437",
