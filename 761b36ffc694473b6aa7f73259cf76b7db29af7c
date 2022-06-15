@@ -1,0 +1,422 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5262d66b_8e581f23",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 27
+      },
+      "lineNbr": 1090,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "ok",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60262c16_b544a2cd",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 27
+      },
+      "lineNbr": 1093,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "dont need to specify, it\u0027s even more confusing since we do not have a definition of \"active\"",
+      "range": {
+        "startLine": 1093,
+        "startChar": 34,
+        "endLine": 1093,
+        "endChar": 40
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5f03afe_7e126d4b",
+        "filename": "bin/dbus/dbuscallmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "BTW, we have this typedef:\nDRing::MediaMap",
+      "range": {
+        "startLine": 123,
+        "startChar": 16,
+        "endLine": 123,
+        "endChar": 50
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e569554_34b3be12",
+        "filename": "src/call.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 387,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "same, no need to specify.",
+      "range": {
+        "startLine": 387,
+        "startChar": 23,
+        "endLine": 387,
+        "endChar": 29
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c0bacbaa_cc258756",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "we may log a warning/error if no call/conf is found.",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae8dd2d8_20f2fd44",
+        "filename": "src/conference.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 561,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "is the comment still relevant ?",
+      "range": {
+        "startLine": 560,
+        "startChar": 8,
+        "endLine": 561,
+        "endChar": 45
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "662f8249_f752baef",
+        "filename": "src/conference.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 380,
+        "startChar": 23,
+        "endLine": 380,
+        "endChar": 29
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "42b85e5e_9b1e97a2",
+        "filename": "src/conference.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 432,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "extra line",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1655da87_03b9f991",
+        "filename": "src/jami/callmanager_interface.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "DRing::MediaMap",
+      "range": {
+        "startLine": 120,
+        "startChar": 26,
+        "endLine": 120,
+        "endChar": 59
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1086fa14_94d39414",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "technically we do not switch inputs but update inputs ...\nwell my comment is biased because I badly want to get rid of switchInput ... 😄",
+      "range": {
+        "startLine": 113,
+        "startChar": 12,
+        "endLine": 113,
+        "endChar": 24
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de4570ff_9254374f",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "may just scope the line above using { }. More readable",
+      "range": {
+        "startLine": 187,
+        "startChar": 2,
+        "endLine": 187,
+        "endChar": 16
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c479a2e_cbb8170e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "Out of scope:\nif we set a min version to support, we might start drop the backward compatibility like this one.",
+      "range": {
+        "startLine": 88,
+        "startChar": 0,
+        "endLine": 88,
+        "endChar": 67
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cb66b52_86034dfc",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2309,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "is it arbitrary or is there a limitation in pjsip ?",
+      "range": {
+        "startLine": 2309,
+        "startChar": 31,
+        "endLine": 2309,
+        "endChar": 46
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4648c8e0_30b73bc2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2334,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "why muted ?",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af4cf1fe_c4cf95fa",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2347,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "conference",
+      "range": {
+        "startLine": 2347,
+        "startChar": 95,
+        "endLine": 2347,
+        "endChar": 105
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2f39275b_ce08e837",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2458,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "ok, but must be clearly documented in the client too",
+      "range": {
+        "startLine": 2457,
+        "startChar": 4,
+        "endLine": 2458,
+        "endChar": 103
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e197c15f_2a599303",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2774,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "make sense, but make sure that the number of media in the answer does not change, otherwise we are violating the SDP spec. \ne.g. if we have in incoming offer 1 audio + 2 video, the answer must have 1 audio + 2 video (even if the second is disabled),",
+      "range": {
+        "startLine": 2768,
+        "startChar": 0,
+        "endLine": 2774,
+        "endChar": 64
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bcf5ba4c_febcc437",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 729,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "nice",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "332d87ef_a18ff948",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1148,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "nice",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f8809ad_b11d119b",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1190,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 1,
+      "message": "beautiful, you did not even have to change the helper to support multiple video media.",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49727eff_8d345102",
+        "filename": "src/conference.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 618,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T19:42:59Z",
+      "side": 0,
+      "message": "I dont know why you removed this, but just make sure that the supported use cases are not broken. This one in particular:\nhttps://review.jami.net/c/jami-daemon/+/20186",
+      "range": {
+        "startLine": 589,
+        "startChar": 1,
+        "endLine": 618,
+        "endChar": 5
+      },
+      "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
