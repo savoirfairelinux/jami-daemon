@@ -155,6 +155,9 @@ public:
     int flushTimerHeapAndIoQueue();
     int checkEventQueue(int maxEventToPoll);
 
+    mutable std::mutex iceMutex_ {};
+    std::condition_variable_any iceCV_ {};
+
     std::string sessionName_ {};
     std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_ {};
     bool isTcp_ {false};
@@ -168,7 +171,6 @@ public:
     std::string local_ufrag_ {};
     std::string local_pwd_ {};
     pj_sockaddr remoteAddr_ {};
-    std::condition_variable_any iceCV_ {};
     pj_ice_strans_cfg config_ {};
     std::string last_errmsg_ {};
 
@@ -233,7 +235,7 @@ public:
     mutable std::mutex sendDataMutex_ {};
     std::condition_variable waitDataCv_ = {};
     pj_size_t lastSentLen_ {0};
-    std::atomic_bool destroying_ {false};
+    bool destroying_ {false};
     onShutdownCb scb {};
 };
 
@@ -1707,7 +1709,7 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
         // bytes length).
         pimpl_->waitDataCv_.wait(dlk, [&] {
             return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len)
-                   or pimpl_->destroying_.load();
+                   or pimpl_->destroying_;
         });
         pimpl_->lastSentLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
