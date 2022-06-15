@@ -1,0 +1,365 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fec006cb_8e6ef204",
+        "filename": "src/call.h",
+        "patchSetId": 56
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "why would you return a reference ? \nare we confident that this reference is never used once the call instance is destroyed?",
+      "range": {
+        "startLine": 177,
+        "startChar": 4,
+        "endLine": 177,
+        "endChar": 22
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "67b3b73e_1e33418c",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 56
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "if I understand well, we may have more than one account (user) from the same endpoint can participate in a conversation?",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "782b9b8f_ec425b7d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "why this mutex, should not be hostedCallsMtx_ ?\n\nactiveCallsMtx_ is also needed around line 205",
+      "range": {
+        "startLine": 190,
+        "startChar": 41,
+        "endLine": 190,
+        "endChar": 56
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "930fda4a_186ebc3c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "may be \"N/A\" is more suitable to indicate that the value is meaningless",
+      "range": {
+        "startLine": 203,
+        "startChar": 32,
+        "endLine": 203,
+        "endChar": 38
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6abfe7e6_da4fce1c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 216,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "aha ....\nlock inversion",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "821f1fdb_eea411dc",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "it would be best if we document the mutexes to help review/validate and for future modifications.\nIt\u0027s not obvious which data members is protecting",
+      "range": {
+        "startLine": 227,
+        "startChar": 4,
+        "endLine": 227,
+        "endChar": 28
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4fde43b_94cd46f1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "should be put closer to activeCalls_ (line 272, 288, 290), and IMHO, it\u0027s ok to duplicate in order to limit the scope of the lock.",
+      "range": {
+        "startLine": 264,
+        "startChar": 12,
+        "endLine": 264,
+        "endChar": 60
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e87e4684_04175c0a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 1467,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "no nee to lock hostedCallsMtx_ ?\nDoes not seem to be locked by the caller",
+      "range": {
+        "startLine": 1467,
+        "startChar": 12,
+        "endLine": 1467,
+        "endChar": 24
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3813e41d_5c9b2b6a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 1482,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "same, lock ?",
+      "range": {
+        "startLine": 1482,
+        "startChar": 19,
+        "endLine": 1482,
+        "endChar": 31
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b76bf991_cb28d19c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 1497,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "here we unlock before invoking the methods, but we dont when we invoke the callback cb. I believe calling cb while locking is more dangerous as we dont have control overt it.",
+      "range": {
+        "startLine": 1496,
+        "startChar": 8,
+        "endLine": 1497,
+        "endChar": 59
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "468fb1b1_5e1e2e49",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "why do we need to access SIPCall ? \nthis class is supposed to be an implementation (specific to SIP) and should completely abstracted by Call class/interface, and accessible within the SIP module.\nThis file/class is not part of the SIP module.\nthe need to access this file is an indication of a design issues and/or short cuts",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "34e2335a_4ed06504",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 3507,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "use const expression",
+      "range": {
+        "startLine": 3507,
+        "startChar": 44,
+        "endLine": 3507,
+        "endChar": 51
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "77ad946c_a2190e04",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 3508,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 3508,
+        "startChar": 42,
+        "endLine": 3508,
+        "endChar": 53
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26ed7f63_5686e1f2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "cant we move this code in the helper ?",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7167fc3f_ebe08a54",
+        "filename": "src/manager.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 2482,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "I am still convinced that we should not spawn SIP events on different threads. Due to race condition, we may process SIP events in reverse order. Unlikely I agree, but possible.",
+      "range": {
+        "startLine": 2479,
+        "startChar": 0,
+        "endLine": 2482,
+        "endChar": 11
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2c6acdc9_101a13b8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 2526,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "you should keep the brackets.",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08027cc9_5a6ac65a",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 56
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T23:29:17Z",
+      "side": 1,
+      "message": "the API says reporting status, but we only report if successful.\ndont we need to report in case of failure, if not, cant we more precise on the name of this API?",
+      "range": {
+        "startLine": 298,
+        "startChar": 9,
+        "endLine": 298,
+        "endChar": 37
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
