@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fef93749_43498043",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:19:07Z",
+      "side": 1,
+      "message": "if video is disabled, the first part will be false and abort ; if we do not have any video host, the second part will be false and will fail so it\u0027s ok?",
+      "parentUuid": "fa935567_cbf433ec",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fbb753c9_1612bc99",
         "filename": "src/conference.cpp",
         "patchSetId": 8
@@ -48,6 +66,30 @@
       "writtenOn": "2022-06-15T15:22:45Z",
       "side": 1,
       "message": "still hard-coded, but it\u0027s ok for now I guess.",
+      "range": {
+        "startLine": 319,
+        "startChar": 70,
+        "endLine": 319,
+        "endChar": 77
+      },
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a77cfd6e_734ba9d9",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:19:07Z",
+      "side": 1,
+      "message": "yeah, I guess in the future, we will take medias in the first calls we add to the conference... but by default we add a video and audio.",
+      "parentUuid": "fbb753c9_1612bc99",
       "range": {
         "startLine": 319,
         "startChar": 70,
@@ -92,6 +134,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6e9b72f1_0ccb5a97",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 567,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:19:07Z",
+      "side": 1,
+      "message": "PTSD I know, but technically for the videoMixer, it\u0027s really an input change",
+      "parentUuid": "b95d0363_d8e29657",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5ef4a3a8_bf8708d4",
@@ -117,6 +177,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "981b6c5d_8c2b1d11",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1017,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:19:07Z",
+      "side": 1,
+      "message": "DRing::switchInput is still available, but imho we can do a cleanup of the API soon I guess as we do not use it in clients",
+      "parentUuid": "5ef4a3a8_bf8708d4",
+      "range": {
+        "startLine": 1017,
+        "startChar": 4,
+        "endLine": 1017,
+        "endChar": 52
+      },
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "927b8962_72c49015",
         "filename": "src/conference.cpp",
         "patchSetId": 8
@@ -128,6 +212,24 @@
       "writtenOn": "2022-06-15T15:22:45Z",
       "side": 1,
       "message": "wait a second ...\nwill return the video media ... should we return a vector of all video instead ?\nif we mean the video from the camera, we could filter out by source type then ?",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0d747c02_2a3afe3c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1068,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:19:07Z",
+      "side": 1,
+      "message": "I think we can even remove it.\n\nDRing::getConferenceDetails() use it to do a MapStringString ( {\"VIDEO_SOURCE\", conf-\u003egetVideoInput()},), which should be unused by clients, we now have \"Conference::currentMediaList()\" which is way better and support multistreams",
+      "parentUuid": "927b8962_72c49015",
       "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
