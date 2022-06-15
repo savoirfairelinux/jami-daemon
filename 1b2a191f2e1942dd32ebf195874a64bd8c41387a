@@ -1,0 +1,135 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "22b7bce6_b026f320",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T15:22:45Z",
+      "side": 1,
+      "message": "mostly, ok, have few questions though.\nThe -1 is mostly for the comment (check on disabled video).\n",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa935567_cbf433ec",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T15:22:45Z",
+      "side": 1,
+      "message": "hmmm ...\n\nJust to be sure, should not we abort if video is disabled or the hostSources does not contain a video source? if so, this check is not good.",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fbb753c9_1612bc99",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T15:22:45Z",
+      "side": 1,
+      "message": "still hard-coded, but it\u0027s ok for now I guess.",
+      "range": {
+        "startLine": 319,
+        "startChar": 70,
+        "endLine": 319,
+        "endChar": 77
+      },
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a11b1807_1125df26",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 441,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T15:22:45Z",
+      "side": 1,
+      "message": "may be we should also assume muted if the media is disable? \nor may be it\u0027s up to the caller to do the validation.",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b95d0363_d8e29657",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 567,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T15:22:45Z",
+      "side": 1,
+      "message": "switchInputs 😢 ... never mind.",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ef4a3a8_bf8708d4",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1017,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T15:22:45Z",
+      "side": 1,
+      "message": "why do we keep it then ?",
+      "range": {
+        "startLine": 1017,
+        "startChar": 4,
+        "endLine": 1017,
+        "endChar": 52
+      },
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "927b8962_72c49015",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1068,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-15T15:22:45Z",
+      "side": 1,
+      "message": "wait a second ...\nwill return the video media ... should we return a vector of all video instead ?\nif we mean the video from the camera, we could filter out by source type then ?",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
