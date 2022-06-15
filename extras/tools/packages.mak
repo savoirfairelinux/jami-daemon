@@ -12,7 +12,7 @@ CMAKE_URL=https://github.com/Kitware/CMake/releases/download/v$(CMAKE_VERSION)/c
 LIBTOOL_VERSION=2.4.7
 LIBTOOL_URL=$(GNU)/libtool/libtool-$(LIBTOOL_VERSION).tar.xz
 
-AUTOCONF_VERSION=2.71
+AUTOCONF_VERSION=2.72e
 AUTOCONF_URL=$(GNU)/autoconf/autoconf-$(AUTOCONF_VERSION).tar.gz
 
 AUTOMAKE_VERSION=1.16.5
@@ -37,5 +37,5 @@ GAS_URL=https://raw.githubusercontent.com/FFmpeg/gas-preprocessor/$(GAS_VERSION)
 SED_VERSION=4.2.2
 SED_URL=$(GNU)/sed/sed-$(SED_VERSION).tar.bz2
 
-GETTEXT_VERSION=0.19.6
+GETTEXT_VERSION=0.21
 GETTEXT_URL=$(GNU)/gettext/gettext-$(GETTEXT_VERSION).tar.gz
