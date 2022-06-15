@@ -35,6 +35,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f85c6a3b_e5d2e947",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1531,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:07:52Z",
+      "side": 1,
+      "message": "This couldn\u0027t be false as getRtpSessionList doesn\u0027t return a nullptr and we only filter on video. If the case fails it\u0027s a bug before",
+      "parentUuid": "93d60741_0b40d0e5",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c660a2e7_fc6f48a8",
@@ -48,6 +66,24 @@
       "writtenOn": "2022-06-15T16:02:35Z",
       "side": 1,
       "message": "we iterate on all rtp streams, but we break on the first one ?\nis that what we want ?",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d877565f_ef5a3a5e",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1533,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:07:52Z",
+      "side": 1,
+      "message": "Yes and no. Because resizeRemoteParticipants is called on confInfo from the call, this is only called in the case or we have a video conference inside another video conference.\nFor now, in this case, and because the peer is a conference, we can only have one media stream anw. With or without the break it will not change anything, and to be honest, I\u0027m not sure we will ever support that a peer is a conference with other video streams because they already have a video mixer.",
+      "parentUuid": "c660a2e7_fc6f48a8",
       "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -71,6 +107,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f3ad143d_7e1e087a",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:07:52Z",
+      "side": 1,
+      "message": "if we do not have any video, the list will be empty and the line after this will not be called.",
+      "parentUuid": "859b7a8a_1e3e611f",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "688a813f_31671bce",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 10
@@ -82,6 +136,30 @@
       "writtenOn": "2022-06-15T16:02:35Z",
       "side": 1,
       "message": "I dont know if you removed the space before the colon (:), but usually there is one\nhttps://en.cppreference.com/w/cpp/language/range-for",
+      "range": {
+        "startLine": 1066,
+        "startChar": 23,
+        "endLine": 1066,
+        "endChar": 31
+      },
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "314614cc_daa35a03",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1066,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:07:52Z",
+      "side": 1,
+      "message": "hmm weird, clang should do this. but this is changed higher in the stack (https://review.jami.net/c/jami-daemon/+/21517/27), so I guess I will let this for now",
+      "parentUuid": "688a813f_31671bce",
       "range": {
         "startLine": 1066,
         "startChar": 23,
@@ -111,6 +189,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "26674b8e_366bbcf9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1864,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:07:52Z",
+      "side": 1,
+      "message": "For me, it\u0027s also a per stream info, because we can negotiate it per stream. However the current API is per call for DRing, and I think I do not need to break it for now and we do not negotiate different codecs per stream (at least for now), so I think we can keep it as it is for now, but you are right.",
+      "parentUuid": "5488bfd4_75bf6a9b",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8d7e7bb9_9026dcfb",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 10
@@ -122,6 +218,24 @@
       "writtenOn": "2022-06-15T16:02:35Z",
       "side": 1,
       "message": "If the second source is a file, the orientation won\u0027t be good.",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35f5a0dc_706b3763",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2926,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T18:07:52Z",
+      "side": 1,
+      "message": "Yes, but the rotation management must get some changes to be able to rotate only one stream, which is out-of-scope",
+      "parentUuid": "8d7e7bb9_9026dcfb",
       "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
