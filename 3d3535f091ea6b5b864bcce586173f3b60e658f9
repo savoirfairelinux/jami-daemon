@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6bf2b8f3_e3c09b04",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T13:42:28Z",
+      "side": 1,
+      "message": "I think we should split this method in two:\ngetInfo(deviceId, id) where id do not have any default value.\ngetConnectedInfo(deviceId) for the first if\n\ngetConnectedInfo is only used once (where we check if it\u0027s connecting)\n\nIt just for clarity, as it\u0027s a bit two different actions we want (find any connected socket or the corresponding connection info/request).",
+      "range": {
+        "startLine": 177,
+        "startChar": 0,
+        "endLine": 189,
+        "endChar": 9
+      },
+      "revId": "3d3535f091ea6b5b864bcce586173f3b60e658f9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d09ce176_23baf7f9",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-15T13:42:28Z",
+      "side": 1,
+      "message": "Ideally a test should be added, but tbh I have no clue on how to properly setup this (maybe inject a connection info and then sned a request and see if the peer receives it - but it\u0027s a bit ugly), so we can forget that for now",
+      "range": {
+        "startLine": 191,
+        "startChar": 20,
+        "endLine": 193,
+        "endChar": 18
+      },
+      "revId": "3d3535f091ea6b5b864bcce586173f3b60e658f9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
