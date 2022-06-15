@@ -9,7 +9,7 @@ YASM_URL=https://www.tortall.net/projects/yasm/releases/yasm-$(YASM_VERSION).tar
 CMAKE_VERSION=3.22.1
 CMAKE_URL=https://github.com/Kitware/CMake/releases/download/v$(CMAKE_VERSION)/cmake-$(CMAKE_VERSION).tar.gz
 
-LIBTOOL_VERSION=2.4.6
+LIBTOOL_VERSION=2.4.7
 LIBTOOL_URL=$(GNU)/libtool/libtool-$(LIBTOOL_VERSION).tar.xz
 
 AUTOCONF_VERSION=2.69
@@ -37,5 +37,5 @@ GAS_URL=https://raw.githubusercontent.com/FFmpeg/gas-preprocessor/$(GAS_VERSION)
 SED_VERSION=4.2.2
 SED_URL=$(GNU)/sed/sed-$(SED_VERSION).tar.bz2
 
-GETTEXT_VERSION=0.19.6
+GETTEXT_VERSION=0.21
 GETTEXT_URL=$(GNU)/gettext/gettext-$(GETTEXT_VERSION).tar.gz
