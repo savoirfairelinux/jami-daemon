@@ -198,6 +198,7 @@ FFMPEGCONF += \
 	--target-os=android \
 	--enable-jni \
 	--enable-mediacodec \
+	--disable-vulkan \
 	--enable-decoder=vp8_mediacodec \
 	--enable-decoder=h264_mediacodec \
 	--enable-decoder=mpeg4_mediacodec \
