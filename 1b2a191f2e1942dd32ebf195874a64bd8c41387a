@@ -119,6 +119,24 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "833f92d0_4049381f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 441,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-16T13:19:17Z",
+      "side": 1,
+      "message": "not sure we have disabled medias attached for the host, but here I just transformed the previous code in a loop, and didn\u0027t touch the previous logic",
+      "parentUuid": "a11b1807_1125df26",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "b95d0363_d8e29657",
         "filename": "src/conference.cpp",
         "patchSetId": 8
