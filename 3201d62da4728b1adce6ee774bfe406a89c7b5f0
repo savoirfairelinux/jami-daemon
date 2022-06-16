@@ -90,6 +90,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "034ef3cd_d29f87eb",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1533,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T19:40:48Z",
+      "side": 1,
+      "message": "to be honest, it\u0027s very hard to follow the logic. It\u0027s already complicated with a one conf.\nAnyway, at least can you add a comment and explain why we break here.",
+      "parentUuid": "d877565f_ef5a3a5e",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "859b7a8a_1e3e611f",
         "filename": "src/plugin/callservicesmanager.cpp",
         "patchSetId": 10
@@ -119,6 +137,24 @@
       "side": 1,
       "message": "if we do not have any video, the list will be empty and the line after this will not be called.",
       "parentUuid": "859b7a8a_1e3e611f",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8a264fb9_445946b9",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T19:40:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "f3ad143d_7e1e087a",
       "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -207,6 +243,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "76f2e410_aebf3dd1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1864,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T19:40:48Z",
+      "side": 1,
+      "message": "may be just be more specific in the comment (for those who not familiar with the specs) that the specs allows it but we chose no to.",
+      "parentUuid": "26674b8e_366bbcf9",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8d7e7bb9_9026dcfb",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 10
@@ -236,6 +290,24 @@
       "side": 1,
       "message": "Yes, but the rotation management must get some changes to be able to rotate only one stream, which is out-of-scope",
       "parentUuid": "8d7e7bb9_9026dcfb",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee195d19_754a3c45",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2926,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T19:40:48Z",
+      "side": 1,
+      "message": "this means that the MS feature can not be enabled for devices that changes the orientations of the video (mobile devices in particular) until the rotation is fixed.\nIMHO, this is a blocker for mobile devices.",
+      "parentUuid": "35f5a0dc_706b3763",
       "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
