@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7735674a_8627c657",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1156,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T20:00:00Z",
+      "side": 1,
+      "message": "IMO, the lock should in _isInitialized() method as the lock is meant for icest_ not pimpl_.\nFurthermore, to be consistent, since we use the PIMPL pattern (which I don\u0027t like at all), implementation details should be put in the pimpl\n\nsame thing for the other methods",
+      "revId": "5aa167be3629eadb570f74e0f98c05971b91ce15",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

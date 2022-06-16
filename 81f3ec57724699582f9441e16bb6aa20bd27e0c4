@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e51d13cd_1fa0425b",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 730,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T20:00:00Z",
+      "side": 1,
+      "message": "clearly it\u0027s bugged, but can\u0027t you just fix it to display the intended values ?\nIt\u0027s not a major thing, but I believe it\u0027s better to display the component IDs as the specs define them for consistency.",
+      "parentUuid": "362189b6_f55554d1",
+      "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d6960dba_a88cc58c",
         "filename": "src/sip/sdp.cpp",
         "patchSetId": 7
@@ -131,6 +149,24 @@
       "side": 1,
       "message": "In fact we do now. If both sides are not using the medias, there is no need to negotiate sockets for unused medias.",
       "parentUuid": "1fad47b0_a9638762",
+      "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a048d221_f58c5fd7",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2326,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T20:00:00Z",
+      "side": 1,
+      "message": "so you are telling me that now a media can be removed, not just disabled/muted?\nI do not know the implication of that, I believe it\u0027s ok.\nHowever, we might need to add test case for it in media_negotiation unit test.",
+      "parentUuid": "5118932f_4723115c",
       "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
