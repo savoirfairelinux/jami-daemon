@@ -97,6 +97,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c4b566f0_50e1372c",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-16T19:22:54Z",
+      "side": 1,
+      "message": "In the Qt client, *we have this UI in* PluginHandlerListModel",
+      "parentUuid": "90e52603_2de95e44",
+      "range": {
+        "startLine": 86,
+        "startChar": 0,
+        "endLine": 86,
+        "endChar": 99
+      },
+      "revId": "dfb6098534b085c47813620554a67cb488d3b0ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ac3ab17e_ea6d91ca",
         "filename": "bin/dbus/dbuspluginmanagerinterface.h",
         "patchSetId": 14
