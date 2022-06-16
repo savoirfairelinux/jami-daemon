@@ -241,6 +241,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "caca58be_94d175c1",
+        "filename": "src/conference.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 561,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T20:03:30Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "05e8d590_b14ced6e",
+      "range": {
+        "startLine": 560,
+        "startChar": 8,
+        "endLine": 561,
+        "endChar": 45
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "662f8249_f752baef",
@@ -569,6 +593,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3744fbbd_6780b9d5",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2334,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T20:03:30Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "4e5644f6_ec23eb42",
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "af4cf1fe_c4cf95fa",
@@ -724,6 +766,30 @@
       "side": 1,
       "message": "the only noticeable difference is that instead of having 6 sockets with 2 unused, we only negotiate 4",
       "parentUuid": "4eb253f5_ad57a1bc",
+      "range": {
+        "startLine": 2768,
+        "startChar": 0,
+        "endLine": 2774,
+        "endChar": 64
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "53b7b32c_30f202ba",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2774,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T20:03:30Z",
+      "side": 1,
+      "message": "the SDP is good, pjsip is taking care of it.",
+      "parentUuid": "fd254ab8_9b9862a6",
       "range": {
         "startLine": 2768,
         "startChar": 0,
