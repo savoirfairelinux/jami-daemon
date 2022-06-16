@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "135d47b9_6641a11d",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-16T20:33:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6b8ac2b3_0faa07cf",
+      "range": {
+        "startLine": 73,
+        "startChar": 0,
+        "endLine": 73,
+        "endChar": 50
+      },
+      "revId": "dfb6098534b085c47813620554a67cb488d3b0ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "49921946_27873c5b",
@@ -109,6 +133,30 @@
       "side": 1,
       "message": "In the Qt client, *we have this UI in* PluginHandlerListModel",
       "parentUuid": "90e52603_2de95e44",
+      "range": {
+        "startLine": 86,
+        "startChar": 0,
+        "endLine": 86,
+        "endChar": 99
+      },
+      "revId": "dfb6098534b085c47813620554a67cb488d3b0ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "37bfa0a0_2985d969",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-16T20:33:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c4b566f0_50e1372c",
       "range": {
         "startLine": 86,
         "startChar": 0,
