@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e460b061_6fd400ad",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 30
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-16T14:04:44Z",
+      "side": 1,
+      "message": "I found one bug with this patch, but the rest is pretty ok",
+      "revId": "af71258ccb65be056271b62f63d36e81c0d95ea5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
