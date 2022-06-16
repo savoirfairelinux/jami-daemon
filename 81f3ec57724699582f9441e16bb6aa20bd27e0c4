@@ -22,6 +22,30 @@
       },
       "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bb31acc0_0e1d6cfb",
+        "filename": "src/conference.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 618,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-16T17:55:37Z",
+      "side": 0,
+      "message": "Indeed there was some bad things.\n\nHowever the detach/attach is not necessary at the end and a bit ugly (like i++; i--)\n\nNow I think everything should work",
+      "parentUuid": "49727eff_8d345102",
+      "range": {
+        "startLine": 589,
+        "startChar": 1,
+        "endLine": 618,
+        "endChar": 5
+      },
+      "revId": "81f3ec57724699582f9441e16bb6aa20bd27e0c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

@@ -639,6 +639,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "24be1f94_656f7d0f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 2458,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-16T17:55:37Z",
+      "side": 1,
+      "message": "Yes, the same comment is in the client patch. But yeah basically, if peer doesn\u0027t support multistream we can\u0027t do multistream, there is no magic",
+      "parentUuid": "2f39275b_ce08e837",
+      "range": {
+        "startLine": 2457,
+        "startChar": 4,
+        "endLine": 2458,
+        "endChar": 103
+      },
+      "revId": "761b36ffc694473b6aa7f73259cf76b7db29af7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e197c15f_2a599303",
