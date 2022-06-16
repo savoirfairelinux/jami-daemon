@@ -22,6 +22,30 @@
       },
       "revId": "32162d67aa45b43f8b07c0fcfe3f60f530ad5cd5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf7e634b_cfb8b048",
+        "filename": "contrib/src/asio/SHA512SUMS",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-16T17:29:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "534c07e8_ffd2e700",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 1,
+        "endChar": 100
+      },
+      "revId": "32162d67aa45b43f8b07c0fcfe3f60f530ad5cd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
