@@ -55,6 +55,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "12e05828_25a8db4b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T19:24:14Z",
+      "side": 1,
+      "message": "then, it should be like this:\n\nif (not videoEnabled_ || itVideo \u003d\u003d hostSources_.end())",
+      "parentUuid": "fef93749_43498043",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fbb753c9_1612bc99",
         "filename": "src/conference.cpp",
         "patchSetId": 8
@@ -90,6 +108,30 @@
       "side": 1,
       "message": "yeah, I guess in the future, we will take medias in the first calls we add to the conference... but by default we add a video and audio.",
       "parentUuid": "fbb753c9_1612bc99",
+      "range": {
+        "startLine": 319,
+        "startChar": 70,
+        "endLine": 319,
+        "endChar": 77
+      },
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d0c5aec3_1c6aa94b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2022-06-16T19:24:14Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "a77cfd6e_734ba9d9",
       "range": {
         "startLine": 319,
         "startChar": 70,
