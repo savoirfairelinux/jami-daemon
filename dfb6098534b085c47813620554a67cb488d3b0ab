@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6b8ac2b3_0faa07cf",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-16T19:21:51Z",
+      "side": 1,
+      "message": "needed for same reason as getWebViewHandlerDetails. see other comment reply",
+      "parentUuid": "ee8dd9ac_ac7de80f",
+      "range": {
+        "startLine": 73,
+        "startChar": 0,
+        "endLine": 73,
+        "endChar": 50
+      },
+      "revId": "dfb6098534b085c47813620554a67cb488d3b0ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "49921946_27873c5b",
         "filename": "bin/dbus/dbuspluginmanagerinterface.h",
         "patchSetId": 14
@@ -37,6 +61,30 @@
       "writtenOn": "2022-06-16T18:01:46Z",
       "side": 1,
       "message": "is it necessary ? what are the details returned ?",
+      "range": {
+        "startLine": 86,
+        "startChar": 0,
+        "endLine": 86,
+        "endChar": 99
+      },
+      "revId": "dfb6098534b085c47813620554a67cb488d3b0ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90e52603_2de95e44",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-16T19:21:51Z",
+      "side": 1,
+      "message": "It returns the same details as every other get*HandlerDetails function: a map\u003cstring, string\u003e. The implementation is up to the plugin, but all of them return \"handler\u0027s name, iconPath, and pluginId\"\n\nIf we ever want to have a UI where we select a certain webview handler from a dropdown or list (like we already do with media handlers and chat handlers), we need this function. In the Qt client, this is in PluginHandlerListModel",
+      "parentUuid": "49921946_27873c5b",
       "range": {
         "startLine": 86,
         "startChar": 0,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9ed730f4_7f85a96c",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-16T19:21:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ac3ab17e_ea6d91ca",
+      "range": {
+        "startLine": 90,
+        "startChar": 0,
+        "endLine": 94,
+        "endChar": 60
+      },
+      "revId": "dfb6098534b085c47813620554a67cb488d3b0ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8a7bbbd2_21800c06",
@@ -83,6 +155,30 @@
       "writtenOn": "2022-06-16T18:01:46Z",
       "side": 1,
       "message": "duplicate error message with the one in getWebViewHandlerPointer.\n\nCould be something like:\n\n  if (auto handler \u003d getWebViewHandlerPointer(pluginId))\n      handler-\u003epluginWebViewMessage(webViewId, messageId, payload);",
+      "range": {
+        "startLine": 172,
+        "startChar": 8,
+        "endLine": 172,
+        "endChar": 80
+      },
+      "revId": "dfb6098534b085c47813620554a67cb488d3b0ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bab494e7_3fc71b98",
+        "filename": "src/plugin/webviewservicesmanager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-16T19:21:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8a7bbbd2_21800c06",
       "range": {
         "startLine": 172,
         "startChar": 8,
