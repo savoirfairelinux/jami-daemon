@@ -1171,12 +1171,22 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
         /* Apply and answer the INFO request */
         static constexpr auto PICT_FAST_UPDATE = "picture_fast_update"sv;
+        static constexpr auto STREAM_ID = "streamId"sv;
         static constexpr auto DEVICE_ORIENTATION = "device_orientation"sv;
         static constexpr auto RECORDING_STATE = "recording_state"sv;
         static constexpr auto MUTE_STATE = "mute_state"sv;
 
+        std::string streamId;
+        if (body_msg.find(STREAM_ID) != std::string_view::npos) {
+            static const std::regex STREAMID_REGEX("stream_id=([A-z0-9_-]+)");
+            std::svmatch matched_pattern;
+            std::regex_search(body_msg, matched_pattern, STREAMID_REGEX);
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched)
+                streamId = matched_pattern[1];
+        }
+
         if (body_msg.find(PICT_FAST_UPDATE) != std::string_view::npos) {
-            call.sendKeyframe();
+            call.sendKeyframe(streamId);
             return true;
         } else if (body_msg.find(DEVICE_ORIENTATION) != std::string_view::npos) {
             static const std::regex ORIENTATION_REGEX("device_orientation=([-+]?[0-9]+)");
@@ -1193,7 +1203,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                         rotation -= 360;
                     JAMI_WARN("Rotate video %d deg.", rotation);
 #ifdef ENABLE_VIDEO
-                    call.setRotation(rotation);
+                    call.setRotation(streamId, rotation);
 #endif
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing angle: %s", e.what());
