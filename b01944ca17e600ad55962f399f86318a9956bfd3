@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cfbedb95_eb55b4ba",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-06-17T14:23:36Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "7f30867a_5beb8429",
+      "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8d50b028_1d57ab8b",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-06-11T03:24:58Z",
       "side": 1,
       "message": "It could be cleaner to hide this file from the view; in GNU Guix it lives in a build-aux subdirectory.  This would keep tab-completion from including this template in the results, which could be annoying.",
+      "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "33d11b14_eaba1189",
+        "filename": "test/agent/pre-inst-env.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-06-17T14:23:36Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "8d50b028_1d57ab8b",
       "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "17ca896d_8a9f3b37",
+        "filename": "test/agent/pre-inst-env.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-06-17T14:23:36Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "2470a45c_b1353970",
+      "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1427014a_9078511b",
@@ -65,6 +119,24 @@
       "writtenOn": "2022-06-11T03:24:58Z",
       "side": 1,
       "message": "This command usage should be adjusted.",
+      "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "063171bd_16507820",
+        "filename": "test/agent/pre-inst-env.in",
+        "patchSetId": 3
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-06-17T14:23:36Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "1427014a_9078511b",
       "revId": "b01944ca17e600ad55962f399f86318a9956bfd3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
