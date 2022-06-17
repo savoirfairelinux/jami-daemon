@@ -142,7 +142,7 @@ public:
     void restartMediaSender() override;
     std::shared_ptr<AccountCodecInfo> getAudioCodec() const override;
     std::shared_ptr<AccountCodecInfo> getVideoCodec() const override;
-    void sendKeyframe() override;
+    void sendKeyframe(const std::string& streamId = "") override;
     bool isIceEnabled() const override;
     std::map<std::string, std::string> getDetails() const override;
     void enterConference(std::shared_ptr<Conference> conference) override;
@@ -236,7 +236,7 @@ public:
 
     void sendSIPInfo(std::string_view body, std::string_view subtype);
 
-    void requestKeyframe();
+    void requestKeyframe(const std::string& streamId);
 
     void updateRecState(bool state) override;
 
@@ -275,7 +275,7 @@ public:
 
     std::shared_ptr<AudioRtpSession> getAudioRtp() const;
 #ifdef ENABLE_VIDEO
-    void setRotation(int rotation);
+    void setRotation(const std::string& streamId, int rotation);
 #endif
     // Get the list of current RTP sessions
     std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(
@@ -334,7 +334,7 @@ private:
      * Send device orientation through SIP INFO
      * @param rotation Device orientation (0/90/180/270) (counterclockwise)
      */
-    void setVideoOrientation(int rotation);
+    void setVideoOrientation(const std::string& streamId, int rotation);
 
     mutable std::mutex transportMtx_ {};
 
