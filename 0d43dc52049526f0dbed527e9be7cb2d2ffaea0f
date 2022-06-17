@@ -70,6 +70,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3904b28d_537d5464",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-06-17T14:56:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aef3d114_b3745cd1",
+      "range": {
+        "startLine": 77,
+        "startChar": 17,
+        "endLine": 78,
+        "endChar": 17
+      },
+      "revId": "0d43dc52049526f0dbed527e9be7cb2d2ffaea0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "492b6d5f_8f91411b",
@@ -83,6 +107,30 @@
       "writtenOn": "2022-06-09T13:31:55Z",
       "side": 1,
       "message": "fmt::format({}/data/locale/{}_",
+      "range": {
+        "startLine": 93,
+        "startChar": 34,
+        "endLine": 94,
+        "endChar": 35
+      },
+      "revId": "0d43dc52049526f0dbed527e9be7cb2d2ffaea0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "13de64eb_8aa82d6b",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-06-17T14:56:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "492b6d5f_8f91411b",
       "range": {
         "startLine": 93,
         "startChar": 34,
