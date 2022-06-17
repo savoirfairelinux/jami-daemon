@@ -1169,12 +1169,29 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
         /* Apply and answer the INFO request */
         static constexpr auto PICT_FAST_UPDATE = "picture_fast_update"sv;
+        static constexpr auto STREAM_ID = "stream_id"sv;
         static constexpr auto DEVICE_ORIENTATION = "device_orientation"sv;
         static constexpr auto RECORDING_STATE = "recording_state"sv;
         static constexpr auto MUTE_STATE = "mute_state"sv;
 
+        int streamIdx = -1;
+        if (body_msg.find(STREAM_ID) != std::string_view::npos) {
+            // Note: here we use the index of the RTP stream, not it's label!
+            // Indeed, both side will have different labels as they have different call ids
+            static const std::regex STREAMID_REGEX("<stream_id>([0-9]+)</stream_id>");
+            std::svmatch matched_pattern;
+            std::regex_search(body_msg, matched_pattern, STREAMID_REGEX);
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                try {
+                    streamIdx = std::stoi(matched_pattern[1]);
+                } catch (const std::exception& e) {
+                    JAMI_WARN("Error parsing stream index: %s", e.what());
+                }
+            }
+        }
+
         if (body_msg.find(PICT_FAST_UPDATE) != std::string_view::npos) {
-            call.sendKeyframe();
+            call.sendKeyframe(streamIdx);
             return true;
         } else if (body_msg.find(DEVICE_ORIENTATION) != std::string_view::npos) {
             static const std::regex ORIENTATION_REGEX("device_orientation=([-+]?[0-9]+)");
@@ -1191,7 +1208,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                         rotation -= 360;
                     JAMI_WARN("Rotate video %d deg.", rotation);
 #ifdef ENABLE_VIDEO
-                    call.setRotation(rotation);
+                    call.setRotation(streamIdx, rotation);
 #endif
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing angle: %s", e.what());

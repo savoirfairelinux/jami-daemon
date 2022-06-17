@@ -250,17 +250,18 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
 #ifdef ENABLE_VIDEO
     if (localMedia.type == MediaType::MEDIA_VIDEO) {
         auto videoRtp = std::dynamic_pointer_cast<video::VideoRtpSession>(rtpSession);
-        assert(videoRtp);
-        videoRtp->setRequestKeyFrameCallback([w = weak()] {
-            runOnMainThread([w] {
+        assert(videoRtp && mediaAttr);
+        auto streamIdx = findRtpStreamIndex(mediaAttr->label_);
+        videoRtp->setRequestKeyFrameCallback([w = weak(), streamIdx] {
+            runOnMainThread([w = std::move(w), streamIdx] {
                 if (auto thisPtr = w.lock())
-                    thisPtr->requestKeyframe();
+                    thisPtr->requestKeyframe(streamIdx);
             });
         });
-        videoRtp->setChangeOrientationCallback([w = weak()](int angle) {
-            runOnMainThread([w, angle] {
+        videoRtp->setChangeOrientationCallback([w = weak(), streamIdx](int angle) {
+            runOnMainThread([w, angle, streamIdx] {
                 if (auto thisPtr = w.lock())
-                    thisPtr->setVideoOrientation(angle);
+                    thisPtr->setVideoOrientation(streamIdx, angle);
             });
         });
     }
@@ -602,17 +603,21 @@ SIPCall::updateRecState(bool state)
 }
 
 void
-SIPCall::requestKeyframe()
+SIPCall::requestKeyframe(int streamIdx)
 {
     auto now = clock::now();
     if ((now - lastKeyFrameReq_) < MS_BETWEEN_2_KEYFRAME_REQUEST
         and lastKeyFrameReq_ != time_point::min())
         return;
 
-    constexpr auto BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                          "<media_control><vc_primitive><to_encoder>"
-                          "<picture_fast_update/>"
-                          "</to_encoder></vc_primitive></media_control>"sv;
+    std::string streamIdPart;
+    if (streamIdx != -1)
+        streamIdPart = fmt::format("<stream_id>{}</stream_id>", streamIdx);
+    std::string BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                       "<media_control><vc_primitive> "
+                       + streamIdPart + "<to_encoder>"
+                       + "<picture_fast_update/>"
+                         "</to_encoder></vc_primitive></media_control>";
     JAMI_DBG("Sending video keyframe request via SIP INFO");
     try {
         sendSIPInfo(BODY, "media_control+xml");
@@ -1441,16 +1446,18 @@ SIPCall::carryingDTMFdigits(char code)
 }
 
 void
-SIPCall::setVideoOrientation(int rotation)
+SIPCall::setVideoOrientation(int streamIdx, int rotation)
 {
+    std::string streamIdPart;
+    if (streamIdx != -1)
+        streamIdPart = fmt::format("<stream_id>{}</stream_id>", streamIdx);
     std::string sip_body = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                            "<media_control><vc_primitive><to_encoder>"
                            "<device_orientation="
-                           + std::to_string(-rotation)
-                           + "/>"
-                             "</to_encoder></vc_primitive></media_control>";
+                           + std::to_string(-rotation) + "/>" + "</to_encoder>" + streamIdPart
+                           + "</vc_primitive></media_control>";
 
-    JAMI_DBG("Sending device orientation via SIP INFO %d", rotation);
+    JAMI_DBG("Sending device orientation via SIP INFO %d for stream %u", rotation, streamIdx);
 
     sendSIPInfo(sip_body, "media_control+xml");
 }
@@ -1586,14 +1593,23 @@ SIPCall::onAnswered()
 }
 
 void
-SIPCall::sendKeyframe()
+SIPCall::sendKeyframe(int streamIdx)
 {
 #ifdef ENABLE_VIDEO
-    dht::ThreadPool::computation().run([w = weak()] {
+    dht::ThreadPool::computation().run([w = weak(), streamIdx] {
         if (auto sthis = w.lock()) {
             JAMI_DBG("handling picture fast update request");
-            for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
-                std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
+            if (streamIdx == -1) {
+                for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
+                    std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
+            } else if (streamIdx > -1 && streamIdx < rtpStreams_.size()) {
+                // Apply request for wanted stream
+                auto& stream = sthis->rtpStreams_[streamIdx];
+                if (stream.rtpSession_
+                    && stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
+                    std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)
+                        ->forceKeyFrame();
+            }
         }
     });
 #endif
@@ -2196,9 +2212,8 @@ SIPCall::updateRemoteMedia()
                      remoteMedia->toString().c_str());
             rtpStream.rtpSession_->setMuted(remoteMedia->muted_, RtpSession::Direction::RECV);
             // Request a key-frame if we are un-muting the video
-            if (not remoteMedia->muted_) {
-                requestKeyframe();
-            }
+            if (not remoteMedia->muted_)
+                requestKeyframe(findRtpStreamIndex(remoteMedia->label_));
         }
     }
 }
@@ -2993,12 +3008,19 @@ SIPCall::exitConference()
 
 #ifdef ENABLE_VIDEO
 void
-SIPCall::setRotation(int rotation)
+SIPCall::setRotation(int streamIdx, int rotation)
 {
     rotation_ = rotation;
-    // For now, only apply rotation on all videos
-    for (auto const& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
-        std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->setRotation(rotation);
+    if (streamIdx == -1) {
+        for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
+            std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->setRotation(rotation);
+    } else if (streamIdx > -1 && streamIdx < rtpStreams_.size()) {
+        // Apply request for wanted stream
+        auto& stream = rtpStreams_[streamIdx];
+        if (stream.rtpSession_ && stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
+            std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)
+                ->setRotation(rotation);
+    }
 }
 
 void
