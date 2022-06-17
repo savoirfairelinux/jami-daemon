@@ -106,6 +106,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3fae2ed3_d05aee7e",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1533,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-17T16:02:37Z",
+      "side": 1,
+      "message": "Sure let\u0027s clarify",
+      "parentUuid": "034ef3cd_d29f87eb",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "859b7a8a_1e3e611f",
@@ -255,6 +273,24 @@
       "side": 1,
       "message": "may be just be more specific in the comment (for those who not familiar with the specs) that the specs allows it but we chose no to.",
       "parentUuid": "26674b8e_366bbcf9",
+      "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5adae0ff_b0819a0e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1864,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-17T16:02:37Z",
+      "side": 1,
+      "message": "Sure let\u0027s clarify",
+      "parentUuid": "76f2e410_aebf3dd1",
       "revId": "3201d62da4728b1adce6ee774bfe406a89c7b5f0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
