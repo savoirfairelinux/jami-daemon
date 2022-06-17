@@ -174,8 +174,7 @@ public:
     // each device can have multiple multiplexed sockets.
     std::map<CallbackId, std::shared_ptr<ConnectionInfo>> infos_ {};
 
-    std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId,
-                                            const dht::Value::Id& id)
+    std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId, const dht::Value::Id& id)
     {
         std::lock_guard<std::mutex> lk(infosMtx_);
         auto it = infos_.find({deviceId, id});
@@ -521,12 +520,14 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                     return;
                 }
 
-                dht::ThreadPool::io().run(
-                    [w = std::move(w), devicePk = std::move(devicePk), vid = std::move(vid), eraseInfo] {
-                        if (auto sthis = w.lock())
-                            if (!sthis->connectDeviceStartIce(devicePk, vid))
-                                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-                    });
+                dht::ThreadPool::io().run([w = std::move(w),
+                                           devicePk = std::move(devicePk),
+                                           vid = std::move(vid),
+                                           eraseInfo] {
+                    if (auto sthis = w.lock())
+                        if (!sthis->connectDeviceStartIce(devicePk, vid))
+                            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                });
             };
             ice_config.onNegoDone = [w,
                                      deviceId = std::move(deviceId),
@@ -585,11 +586,17 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
                                             const dht::Value::Id& vid)
 {
     auto channelSock = sock->addChannel(name);
+    channelSock->onShutdown([name, deviceId, vid, w = weak()] {
+        auto shared = w.lock();
+        if (shared)
+            for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
+                pending.cb(nullptr, deviceId);
+    });
     channelSock->onReady(
         [wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
             auto shared = w.lock();
             auto channelSock = wSock.lock();
-            if (shared && channelSock)
+            if (shared)
                 for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
                     pending.cb(channelSock, deviceId);
         });
@@ -884,13 +891,14 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 return;
             }
 
-            dht::ThreadPool::io().run([w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
-                auto shared = w.lock();
-                if (!shared)
-                    return;
-                if (!shared->onRequestStartIce(req))
-                    runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-            });
+            dht::ThreadPool::io().run(
+                [w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
+                    auto shared = w.lock();
+                    if (!shared)
+                        return;
+                    if (!shared->onRequestStartIce(req))
+                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                });
         };
 
         ice_config.onNegoDone = [w, req, eraseInfo, deviceId](bool ok) {
@@ -903,11 +911,12 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 return;
             }
 
-            dht::ThreadPool::io().run([w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
-                if (auto shared = w.lock())
-                    if (!shared->onRequestOnNegoDone(req))
-                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-            });
+            dht::ThreadPool::io().run(
+                [w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
+                    if (auto shared = w.lock())
+                        if (!shared->onRequestOnNegoDone(req))
+                            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                });
         };
 
         // Negotiate a new ICE socket

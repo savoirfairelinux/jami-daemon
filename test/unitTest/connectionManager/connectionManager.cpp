@@ -279,20 +279,18 @@ ConnectionManagerTest::testMultipleChannelsOneDeclined()
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&receiverConnected](const DeviceId&,
-                             const std::string&,
-                             std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
             if (socket)
                 receiverConnected += 1;
+            cv.notify_one();
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
-                                                        if (!socket) {
+                                                        if (!socket)
                                                             successfullyNotConnected = true;
-                                                        }
                                                         cv.notify_one();
                                                     });
 
@@ -300,9 +298,8 @@ ConnectionManagerTest::testMultipleChannelsOneDeclined()
                                                     "sip://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
-                                                        if (socket) {
+                                                        if (socket)
                                                             successfullyConnected2 = true;
-                                                        }
                                                         cv.notify_one();
                                                     });
 
