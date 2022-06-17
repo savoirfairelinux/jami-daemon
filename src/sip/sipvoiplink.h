@@ -165,10 +165,6 @@ private:
     std::atomic_bool running_ {true};
     std::thread sipThread_;
 
-#ifdef ENABLE_VIDEO
-    void requestKeyframe(const std::string& callID);
-#endif
-
     friend class SIPTest;
 };
 
