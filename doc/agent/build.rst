@@ -21,7 +21,7 @@ To build Guile locally, you first need to enable it when building contrib, then
 recompile contrib::
 
   cd daemon/contrib/native
-  ../bootstrap --enable-guile
+  ../bootstrap --enable-debug --enable-guile --enable-libunistring --enable-libffi --enable-libgc
   make list
   make fetch
   make -j
