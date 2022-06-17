@@ -299,7 +299,7 @@ public:
      */
     virtual bool offhold(OnReadyCb&& cb) = 0;
 
-    virtual void sendKeyframe() = 0;
+    virtual void sendKeyframe(int streamIdx = -1) = 0;
 
     /**
      * Check wether ICE is enabled for media
