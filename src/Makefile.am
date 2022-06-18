@@ -132,8 +132,7 @@ libring_la_SOURCES = \
 		transport/peer_channel.h \
 		uri.h \
 		uri.cpp \
-		vcard.h \
-		jami/trace-tools.h
+		vcard.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \
@@ -153,7 +152,8 @@ nobase_include_HEADERS += \
 	./jami/media_const.h \
 	./jami/presence_const.h \
 	./jami/presencemanager_interface.h \
-	./jami/security_const.h
+	./jami/security_const.h \
+	./jami/trace-tools.h
 
 if ENABLE_PLUGIN
 nobase_include_HEADERS += \
