@@ -148,6 +148,7 @@ public:
         }
 
         if (not cont) {
+            cancel_.store(true);
             job_.reset();
         }
 

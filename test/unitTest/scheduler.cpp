@@ -46,7 +46,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SchedulerTest, SchedulerTest::name());
 void
 SchedulerTest::schedulerTest()
 {
-    jami::ScheduledExecutor executor;
+    jami::ScheduledExecutor executor("test");
 
     constexpr unsigned N = 1024;
     std::mutex mtx;
