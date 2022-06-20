@@ -1,0 +1,125 @@
+From 894082160fa079dc89f6132e4b2186bc680b692f Mon Sep 17 00:00:00 2001
+From: Olivier Dion <olivier.dion@savoirfairelinux.com>
+Date: Fri, 17 Jun 2022 16:56:07 -0400
+Subject: [PATCH] pjnath/turn_sock: Fix destruction of TURN sockets
+
+When destroying a TURN socket on failure -- e.g. failed allocation of
+socket -- the underlying session does not change its last status.
+
+Change this by passing a `pj_status_t' value to `pj_turn_sock_destroy2'
+and calling `pj_turn_session_destroy' instead of
+`pj_turn_session_shutdown'.
+
+The old `pj_turn_sock_destroy' remains for ABI compatibility and call
+the new version `pj_turn_sock_destroy2' with status `PJ_SUCCESS'.
+
+Gitlab: #682
+Change-Id: I7f902b0a5bb44fd403bd147676d655dc775f2156
+---
+ pjnath/include/pjnath/turn_sock.h |  1 +
+ pjnath/src/pjnath/turn_sock.c     | 21 +++++++++++++--------
+ 2 files changed, 14 insertions(+), 8 deletions(-)
+
+diff --git a/pjnath/include/pjnath/turn_sock.h b/pjnath/include/pjnath/turn_sock.h
+index 05b5cafbe..424c06120 100644
+--- a/pjnath/include/pjnath/turn_sock.h
++++ b/pjnath/include/pjnath/turn_sock.h
+@@ -412,6 +412,7 @@ PJ_DECL(pj_status_t) pj_turn_sock_create(pj_stun_config *cfg,
+  * @param turn_sock	The TURN transport instance.
+  */
+ PJ_DECL(void) pj_turn_sock_destroy(pj_turn_sock *turn_sock);
++PJ_DECL(void) pj_turn_sock_destroy2(pj_turn_sock *turn_sock, pj_status_t status);
+
+
+ /**
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index 7a88494c6..24a1515a0 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -424,6 +424,11 @@ static void destroy(pj_turn_sock *turn_sock)
+ }
+
+ PJ_DEF(void) pj_turn_sock_destroy(pj_turn_sock *turn_sock)
++{
++	pj_turn_sock_destroy2(turn_sock, PJ_SUCCESS);
++}
++
++PJ_DEF(void) pj_turn_sock_destroy2(pj_turn_sock *turn_sock, pj_status_t status)
+ {
+     pj_grp_lock_acquire(turn_sock->grp_lock);
+     if (turn_sock->is_destroying) {
+@@ -432,7 +437,7 @@ PJ_DEF(void) pj_turn_sock_destroy(pj_turn_sock *turn_sock)
+     }
+
+     if (turn_sock->sess) {
+-	pj_turn_session_shutdown(turn_sock->sess);
++	pj_turn_session_destroy(turn_sock->sess, status);
+ 	/* This will ultimately call our state callback, and when
+ 	 * session state is DESTROYING we will schedule a timer to
+ 	 * destroy ourselves.
+@@ -1277,7 +1282,7 @@ static void turn_on_state(pj_turn_session *sess,
+ 	    /* Init socket */
+ 	    status = pj_sock_socket(turn_sock->af, sock_type, 0, &sock);
+ 	    if (status != PJ_SUCCESS) {
+-		pj_turn_sock_destroy(turn_sock);
++		pj_turn_sock_destroy2(turn_sock, status);
+ 		return;
+ 	    }
+
+@@ -1287,7 +1292,7 @@ static void turn_on_state(pj_turn_session *sess,
+ 					 max_bind_retry);
+ 	    if (status != PJ_SUCCESS) {
+ 		pj_sock_close(sock);
+-		pj_turn_sock_destroy(turn_sock);
++		pj_turn_sock_destroy2(turn_sock, status);
+ 		return;
+ 	    }
+ 	    /* Apply QoS, if specified */
+@@ -1298,7 +1303,7 @@ static void turn_on_state(pj_turn_session *sess,
+ 	    if (status != PJ_SUCCESS && !turn_sock->setting.qos_ignore_error)
+ 	    {
+ 		pj_sock_close(sock);
+-		pj_turn_sock_destroy(turn_sock);
++		pj_turn_sock_destroy2(turn_sock, status);
+ 		return;
+ 	    }
+
+@@ -1417,7 +1422,7 @@ static void turn_on_state(pj_turn_session *sess,
+ 		    &turn_sock->cert);
+ 	    }
+ 	    if (status != PJ_SUCCESS) {
+-		pj_turn_sock_destroy(turn_sock);
++		pj_turn_sock_destroy2(turn_sock, status);
+ 		return;
+ 	    }
+ 	    if (turn_sock->cert) {
+@@ -1428,7 +1433,7 @@ static void turn_on_state(pj_turn_session *sess,
+ 					&turn_sock->ssl_sock);
+
+ 	    if (status != PJ_SUCCESS) {
+-		pj_turn_sock_destroy(turn_sock);
++		pj_turn_sock_destroy2(turn_sock, status);
+ 		return;
+ 	    }
+
+@@ -1445,7 +1450,7 @@ static void turn_on_state(pj_turn_session *sess,
+ #endif
+
+ 	if (status != PJ_SUCCESS) {
+-	    pj_turn_sock_destroy(turn_sock);
++	    pj_turn_sock_destroy2(turn_sock, status);
+ 	    return;
+ 	}
+
+@@ -1487,7 +1492,7 @@ static void turn_on_state(pj_turn_session *sess,
+ 			  "Failed to connect to %s",
+ 			  pj_sockaddr_print(&info.server, addrtxt,
+ 					    sizeof(addrtxt), 3)));
+-	    pj_turn_sock_destroy(turn_sock);
++	    pj_turn_sock_destroy2(turn_sock, status);
+ 	    return;
+ 	}
+
+--
+2.36.1
+
