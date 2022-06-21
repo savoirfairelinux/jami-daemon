@@ -86,6 +86,7 @@ struct SystemCodecInfo
 
     SystemCodecInfo(unsigned codecId,
                     unsigned avcodecId,
+                    const std::string& longName,
                     const std::string& name,
                     const std::string& libName,
                     MediaType mediaType,
@@ -100,8 +101,10 @@ struct SystemCodecInfo
     /* generic codec information */
     unsigned id;        /* id of the codec used with dbus */
     unsigned avcodecId; /* read as AVCodecID libav codec identifier */
-    std::string name;
+    std::string longName;   /* User-friendly codec name */
+    std::string name;       /* RTP codec name as specified by http://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml */
     std::string libName;
+    //std::string rtpName;
     CodecType codecType;
     MediaType mediaType;
 
@@ -123,6 +126,7 @@ struct SystemAudioCodecInfo : SystemCodecInfo
 {
     SystemAudioCodecInfo(unsigned codecId,
                          unsigned avcodecId,
+                         const std::string& longName,
                          const std::string& name,
                          const std::string& libName,
                          CodecType type,
@@ -133,7 +137,7 @@ struct SystemAudioCodecInfo : SystemCodecInfo
 
     ~SystemAudioCodecInfo();
 
-    std::map<std::string, std::string> getCodecSpecifications();
+    std::map<std::string, std::string> getCodecSpecifications() const;
 
     AudioFormat audioformat {AudioFormat::NONE()};
 };
@@ -147,6 +151,7 @@ struct SystemVideoCodecInfo : SystemCodecInfo
 {
     SystemVideoCodecInfo(unsigned codecId,
                          unsigned avcodecId,
+                         const std::string& longName,
                          const std::string& name,
                          const std::string& libName,
                          CodecType type = CODEC_NONE,
@@ -159,7 +164,7 @@ struct SystemVideoCodecInfo : SystemCodecInfo
 
     ~SystemVideoCodecInfo();
 
-    std::map<std::string, std::string> getCodecSpecifications();
+    std::map<std::string, std::string> getCodecSpecifications() const;
 
     unsigned frameRate;
     unsigned profileId;
@@ -186,14 +191,14 @@ struct AccountCodecInfo
     unsigned payloadType;
     unsigned bitrate;
     unsigned quality;
-    std::map<std::string, std::string> getCodecSpecifications();
+    std::map<std::string, std::string> getCodecSpecifications() const;
 };
 
 struct AccountAudioCodecInfo : AccountCodecInfo
 {
     AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo);
 
-    std::map<std::string, std::string> getCodecSpecifications();
+    std::map<std::string, std::string> getCodecSpecifications() const;
     void setCodecSpecifications(const std::map<std::string, std::string>& details);
 
     /* account custom values */
@@ -206,7 +211,7 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo);
 
     void setCodecSpecifications(const std::map<std::string, std::string>& details);
-    std::map<std::string, std::string> getCodecSpecifications();
+    std::map<std::string, std::string> getCodecSpecifications() const;
 
     /* account custom values */
     unsigned frameRate;
