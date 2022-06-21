@@ -32,7 +32,7 @@
 #  define CURRENT_LINE()     0
 #endif
 
-#if HAVE_CXXABI_H
+#ifdef HAVE_CXXABI_H
 #include <cxxabi.h>
 
 template<typename T>
