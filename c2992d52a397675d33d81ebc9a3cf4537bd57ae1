@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "36a29370_087a9bf7",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-06-21T20:05:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e8cb0fd3_0b049c09",
+      "range": {
+        "startLine": 74,
+        "startChar": 4,
+        "endLine": 74,
+        "endChar": 31
+      },
+      "revId": "c2992d52a397675d33d81ebc9a3cf4537bd57ae1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "32214a5d_473fd467",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-06-21T19:53:07Z",
       "side": 1,
       "message": "can be simplified\n            for (const auto\u0026 key : root.getMemberNames())\n                locales[key] \u003d root.get(key, \"\").asString();",
+      "range": {
+        "startLine": 79,
+        "startChar": 12,
+        "endLine": 83,
+        "endChar": 13
+      },
+      "revId": "c2992d52a397675d33d81ebc9a3cf4537bd57ae1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7954bfbc_a60a4e03",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-06-21T20:05:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "32214a5d_473fd467",
       "range": {
         "startLine": 79,
         "startChar": 12,
