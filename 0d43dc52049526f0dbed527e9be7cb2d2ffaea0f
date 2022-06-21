@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6550467_f40066d7",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-06-21T16:39:44Z",
+      "side": 1,
+      "message": "The fastest one to do it is the AutoAnswer. source files are in transifex already.",
+      "parentUuid": "4551982e_ab607d76",
+      "range": {
+        "startLine": 9,
+        "startChar": 12,
+        "endLine": 9,
+        "endChar": 15
+      },
+      "revId": "0d43dc52049526f0dbed527e9be7cb2d2ffaea0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bd88925a_438b511c",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-06-09T13:31:55Z",
       "side": 1,
       "message": "not sure you need a file lock as you should only read the file and the content must not change (except during an update for jami)",
+      "range": {
+        "startLine": 67,
+        "startChar": 49,
+        "endLine": 68,
+        "endChar": 83
+      },
+      "revId": "0d43dc52049526f0dbed527e9be7cb2d2ffaea0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c2f42fe_1049d2fe",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-06-21T16:39:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bd88925a_438b511c",
       "range": {
         "startLine": 67,
         "startChar": 49,
@@ -154,6 +202,30 @@
       "writtenOn": "2022-06-09T13:31:55Z",
       "side": 1,
       "message": "Note, in the client, we may not use the system locale, but inject one (cf AppSettingsManager::loadTranslations in client-qt for example).\n\nSo ideally, the client must be able to reload the translations for the plugin",
+      "range": {
+        "startLine": 164,
+        "startChar": 24,
+        "endLine": 166,
+        "endChar": 22
+      },
+      "revId": "0d43dc52049526f0dbed527e9be7cb2d2ffaea0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e0ae171c_242bf99b",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-06-21T16:39:44Z",
+      "side": 1,
+      "message": "A per discussed with adrien that case will not be handled now.\nWe might link daemon and client languages in a subsequent iteration.",
+      "parentUuid": "7b333a1e_768ee614",
       "range": {
         "startLine": 164,
         "startChar": 24,
