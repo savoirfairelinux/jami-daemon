@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "21c8ee8b_3a72cb8c",
+        "filename": "src/plugin/streamdata.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-21T18:29:01Z",
+      "side": 1,
+      "message": "I guess the whole constructor can be removed too, but it\u0027s another subject",
+      "range": {
+        "startLine": 34,
+        "startChar": 6,
+        "endLine": 49,
+        "endChar": 21
+      },
+      "revId": "c2992d52a397675d33d81ebc9a3cf4537bd57ae1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
