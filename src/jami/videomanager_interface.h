@@ -195,7 +195,7 @@ DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
 DRING_PUBLIC bool registerSinkTarget(const std::string& sinkId, SinkTarget target);
-#if HAVE_SHM
+#ifdef HAVE_SHM
 DRING_PUBLIC void startShmSink(const std::string& sinkId, bool value);
 #endif
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);

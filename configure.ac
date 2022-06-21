@@ -620,10 +620,8 @@ AM_CONDITIONAL([BUILD_NATPMP], test "x$with_natpmp" = "xyes")
 
 # SHM
 dnl check for shm
-
-AC_DEFINE_UNQUOTED([HAVE_SHM],
-  `if test "x$with_dbus" == xyes; then echo 1; else echo 0; fi`,
-  [Define if you have shared memory support])
+AS_IF([test "x$with_dbus" == xyes],
+  AC_DEFINE([HAVE_SHM], [1], [Define if you have shared memory support]))
 
 # LTTNG
 AM_COND_IF([ENABLE_TRACEPOINTS],

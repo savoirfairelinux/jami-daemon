@@ -26,7 +26,7 @@
 
 #include "sinkclient.h"
 
-#if HAVE_SHM
+#ifdef HAVE_SHM
 #include "shm_header.h"
 #endif // HAVE_SHM
 
@@ -63,7 +63,7 @@ namespace video {
 
 const constexpr char FILTER_INPUT_NAME[] = "in";
 
-#if HAVE_SHM
+#ifdef HAVE_SHM
 // RAII class helper on sem_wait/sem_post sempahore operations
 class SemGuardLock
 {
@@ -439,7 +439,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     }
 
     bool doTransfer = hasTransformedListener or hasObservers;
-#if HAVE_SHM
+#ifdef HAVE_SHM
     doTransfer |= (shm_ && doShmTransfer_);
 #endif
 
@@ -455,7 +455,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             setFrameSize(frame->width(), frame->height());
             return;
         }
-#if HAVE_SHM
+#ifdef HAVE_SHM
         if (shm_ && doShmTransfer_)
             shm_->renderFrame(*frame);
 #endif

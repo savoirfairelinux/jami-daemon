@@ -42,7 +42,7 @@ class MediaFilter;
 namespace jami {
 namespace video {
 
-#if HAVE_SHM
+#ifdef HAVE_SHM
 class ShmHolder;
 #endif // HAVE_SHM
 
@@ -82,7 +82,7 @@ public:
         target_ = std::move(target);
     }
 
-#if HAVE_SHM
+#ifdef HAVE_SHM
     void enableShm(bool value) { doShmTransfer_.store(value); }
 #endif
 
@@ -122,7 +122,7 @@ private:
     std::chrono::steady_clock::time_point lastFrameDebug_;
 #endif
 
-#if HAVE_SHM
+#ifdef HAVE_SHM
     // using shared_ptr and not unique_ptr as ShmHolder is forwared only
     std::shared_ptr<ShmHolder> shm_;
     std::atomic_bool doShmTransfer_ {false};
