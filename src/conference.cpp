@@ -328,7 +328,6 @@ Conference::setLocalHostDefaultMediaSource()
     if (confState_ == State::ACTIVE_ATTACHED) {
         audioAttr
             = {MediaType::MEDIA_AUDIO, false, false, true, {}, sip_utils::DEFAULT_AUDIO_STREAMID};
-        audioAttr.sourceType_ = MediaSourceType::CAPTURE_DEVICE;
     }
 
     JAMI_DBG("[conf %s] Setting local host audio source to [%s]",
@@ -348,7 +347,6 @@ Conference::setLocalHostDefaultMediaSource()
                    true,
                    Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice(),
                    sip_utils::DEFAULT_VIDEO_STREAMID};
-            videoAttr.sourceType_ = MediaSourceType::CAPTURE_DEVICE;
         }
         JAMI_DBG("[conf %s] Setting local host video source to [%s]",
                  id_.c_str(),
@@ -495,7 +493,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
     for (auto mediaType : mediaTypeList) {
         // Try to find a media with a valid source type
         auto check = [mediaType](auto const& mediaAttr) {
-            return (mediaAttr.type_ == mediaType and mediaAttr.sourceType_ != MediaSourceType::NONE);
+            return (mediaAttr.type_ == mediaType);
         };
 
         auto iter = std::find_if(mediaList.begin(), mediaList.end(), check);
@@ -704,7 +702,7 @@ Conference::addParticipant(const std::string& participant_id)
             call->toggleRecording();
             if (not this->isRecording()) {
                 JAMI_DBG("One participant was recording, start recording for conference %s",
-                        getConfId().c_str());
+                         getConfId().c_str());
                 this->toggleRecording();
             }
         }
