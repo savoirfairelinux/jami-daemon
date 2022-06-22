@@ -22,6 +22,30 @@
       },
       "revId": "faed9270c5727af90b03f6e539740dbd7f0a2ad7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b763dff_5048c4c5",
+        "filename": "src/jami/videomanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-22T15:03:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d1c49c52_cfbb0bdf",
+      "range": {
+        "startLine": 198,
+        "startChar": 0,
+        "endLine": 198,
+        "endChar": 15
+      },
+      "revId": "faed9270c5727af90b03f6e539740dbd7f0a2ad7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
