@@ -153,6 +153,8 @@ public:
     std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
 #endif
     bool hasVideo() const override;
+
+    // TODO: cleanup this (used by conference + Call::getDetails() (and clients can use this))
     bool isCaptureDeviceMuted(const MediaType& mediaType) const override;
     bool isSrtpEnabled() const
     {
