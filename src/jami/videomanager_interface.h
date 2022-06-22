@@ -43,7 +43,7 @@ void av_frame_free(AVFrame** frame);
 #include <cstdint>
 #include <cstdlib>
 
-#if __APPLE__
+#ifdef __APPLE__
 #import "TargetConditionals.h"
 #endif
 
@@ -195,7 +195,7 @@ DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
 DRING_PUBLIC bool registerSinkTarget(const std::string& sinkId, SinkTarget target);
-#if HAVE_SHM
+#ifdef ENABLE_SHM
 DRING_PUBLIC void startShmSink(const std::string& sinkId, bool value);
 #endif
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
@@ -252,7 +252,7 @@ struct DRING_PUBLIC VideoSignal
                              const std::string& /*shm_path*/,
                              bool /*is_mixer*/);
     };
-#if __ANDROID__
+#ifdef __ANDROID__
     struct DRING_PUBLIC SetParameters
     {
         constexpr static const char* name = "SetParameters";

@@ -156,8 +156,7 @@ else
 endif
 
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')
-conf.set10('HAVE_SHM', get_option('interfaces').contains('dbus'))
-
+conf.set('ENABLE_SHM', get_option('interfaces').contains('dbus'))
 configure_file(
     output: 'config.h',
     configuration: conf
