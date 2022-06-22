@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13cec775_aa52780a",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 682,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-22T14:04:37Z",
+      "side": 1,
+      "message": "This can be removed",
+      "range": {
+        "startLine": 679,
+        "startChar": 13,
+        "endLine": 682,
+        "endChar": 13
+      },
+      "revId": "bd4186a6f3aaab3b4830cd8a4e273fb18ac224de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
