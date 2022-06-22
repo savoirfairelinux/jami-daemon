@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d1c49c52_cfbb0bdf",
+        "filename": "src/jami/videomanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-06-22T08:45:20Z",
+      "side": 1,
+      "message": "According to the current style `#if HAVE_SHM` should be renamed to `#ifdef ENABLE_SHM`.\nAnd I think all other `HAVE_*` defines can also be renamed.",
+      "range": {
+        "startLine": 198,
+        "startChar": 0,
+        "endLine": 198,
+        "endChar": 15
+      },
+      "revId": "faed9270c5727af90b03f6e539740dbd7f0a2ad7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
