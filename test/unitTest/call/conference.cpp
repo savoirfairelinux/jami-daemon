@@ -736,32 +736,22 @@ ConferenceTest::testHostAddRmSecondVideo()
 
     // Alice adds new media
     pInfos_.clear();
-    std::vector<std::map<std::string, std::string>> mediaList = {
-        {
-            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
+    std::vector<std::map<std::string, std::string>> mediaList
+        = {{{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
             {DRing::Media::MediaAttributeKey::ENABLED, "true"},
             {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
             {DRing::Media::MediaAttributeKey::SOURCE, ""},
-            {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}
-        },
-        {
-            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+            {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}},
+           {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
             {DRing::Media::MediaAttributeKey::ENABLED, "true"},
             {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
             {DRing::Media::MediaAttributeKey::SOURCE, "bar"},
-            {DRing::Media::MediaAttributeKey::LABEL, "video_0"}
-        },
-        {
-            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+            {DRing::Media::MediaAttributeKey::LABEL, "video_0"}},
+           {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
             {DRing::Media::MediaAttributeKey::ENABLED, "true"},
             {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
             {DRing::Media::MediaAttributeKey::SOURCE, "foo"},
-            {DRing::Media::MediaAttributeKey::LABEL, "video_1"}
-        }
-    };
+            {DRing::Media::MediaAttributeKey::LABEL, "video_1"}}};
     DRing::requestMediaChange(aliceId, confId, mediaList);
 
     // Check that alice has two videos attached to the conference
@@ -798,32 +788,22 @@ ConferenceTest::testParticipantAddRmSecondVideo()
 
     // Bob adds new media
     pInfos_.clear();
-    std::vector<std::map<std::string, std::string>> mediaList = {
-        {
-            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
+    std::vector<std::map<std::string, std::string>> mediaList
+        = {{{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
             {DRing::Media::MediaAttributeKey::ENABLED, "true"},
             {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
             {DRing::Media::MediaAttributeKey::SOURCE, ""},
-            {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}
-        },
-        {
-            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+            {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}},
+           {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
             {DRing::Media::MediaAttributeKey::ENABLED, "true"},
             {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
             {DRing::Media::MediaAttributeKey::SOURCE, "bar"},
-            {DRing::Media::MediaAttributeKey::LABEL, "video_0"}
-        },
-        {
-            {DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+            {DRing::Media::MediaAttributeKey::LABEL, "video_0"}},
+           {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
             {DRing::Media::MediaAttributeKey::ENABLED, "true"},
             {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE_TYPE, DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE},
             {DRing::Media::MediaAttributeKey::SOURCE, "foo"},
-            {DRing::Media::MediaAttributeKey::LABEL, "video_1"}
-        }
-    };
+            {DRing::Media::MediaAttributeKey::LABEL, "video_1"}}};
     DRing::requestMediaChange(bobId, bobCall.callId, mediaList);
 
     // Check that bob has two videos attached to the conference
