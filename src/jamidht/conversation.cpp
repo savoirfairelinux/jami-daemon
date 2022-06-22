@@ -1278,7 +1278,8 @@ Conversation::preferences() const
 {
     try {
         std::map<std::string, std::string> preferences;
-        auto file = fileutils::loadFile(fmt::format("{}/preferences", pimpl_->conversationDataPath_));
+        auto file = fileutils::loadFile(
+            fmt::format("{}/preferences", pimpl_->conversationDataPath_));
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(preferences);
         return preferences;
@@ -1499,8 +1500,11 @@ Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
 
     auto now = std::chrono::system_clock::now();
     auto nowSecs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
-    pimpl_->hostedCalls_[message["confId"].asString()] = nowSecs;
-    pimpl_->saveHostedCalls();
+    {
+        std::unique_lock<std::mutex> lk(pimpl_->hostedCallsMtx_);
+        pimpl_->hostedCalls_[message["confId"].asString()] = nowSecs;
+        pimpl_->saveHostedCalls();
+    }
 
     sendMessage(std::move(message), "", std::move(cb));
 }
@@ -1514,6 +1518,7 @@ Conversation::isHosting(const std::string& confId) const
     auto info = infos();
     if (info["rdvDevice"] == shared->currentDeviceId() && info["rdvHost"] == shared->getUsername())
         return true; // We are the current device Host
+    std::unique_lock<std::mutex> lk(pimpl_->hostedCallsMtx_);
     return pimpl_->hostedCalls_.find(confId) != pimpl_->hostedCalls_.end();
 }
 
