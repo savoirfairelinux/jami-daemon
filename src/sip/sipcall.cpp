@@ -1914,10 +1914,6 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
     }
 #endif
 
-    if (stream.mediaAttribute_->sourceType_ == MediaSourceType::NONE) {
-        stream.mediaAttribute_->sourceType_ = MediaSourceType::CAPTURE_DEVICE;
-    }
-
     rtpStreams_.emplace_back(std::move(stream));
 }
 
@@ -1968,9 +1964,7 @@ SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
     // Return true only if all media of type 'mediaType' that use capture devices
     // source, are muted.
     std::function<bool(const RtpStream& stream)> mutedCheck = [&mediaType](auto const& stream) {
-        return (stream.mediaAttribute_->type_ == mediaType
-                and stream.mediaAttribute_->sourceType_ == MediaSourceType::CAPTURE_DEVICE
-                and not stream.mediaAttribute_->muted_);
+        return (stream.mediaAttribute_->type_ == mediaType and not stream.mediaAttribute_->muted_);
     };
     const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), mutedCheck);
     return iter == rtpStreams_.end();
@@ -2284,8 +2278,6 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
     // Only update source and type if actually set.
     if (not newMediaAttr.sourceUri_.empty())
         mediaAttr->sourceUri_ = newMediaAttr.sourceUri_;
-    if (newMediaAttr.sourceType_ != MediaSourceType::NONE)
-        mediaAttr->sourceType_ = newMediaAttr.sourceType_;
 
     if (notify and mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
         rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
@@ -2416,8 +2408,7 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
             return true;
         }
         auto const& currAttr = rtpStreams_[streamIdx].mediaAttribute_;
-        if (newAttr.sourceType_ != currAttr->sourceType_
-            or newAttr.sourceUri_ != currAttr->sourceUri_) {
+        if (newAttr.sourceUri_ != currAttr->sourceUri_) {
             // For now, media will be restarted if the source changes.
             // TODO. This should not be needed if the decoder/receiver
             // correctly handles dynamic media properties changes.
@@ -2530,8 +2521,9 @@ SIPCall::getMediaAttributeList() const
 {
     std::vector<MediaAttribute> mediaList;
     mediaList.reserve(rtpStreams_.size());
-    for (auto const& stream : rtpStreams_)
+    for (auto const& stream : rtpStreams_) {
         mediaList.emplace_back(*stream.mediaAttribute_);
+    }
     return mediaList;
 }
 
