@@ -55,11 +55,9 @@ ScheduledExecutor::~ScheduledExecutor()
 void
 ScheduledExecutor::stop()
 {
-    {
-        std::lock_guard<std::mutex> lock(jobLock_);
-        *running_ = false;
-        jobs_.clear();
-    }
+    std::lock_guard<std::mutex> lock(jobLock_);
+    *running_ = false;
+    jobs_.clear();
     cv_.notify_all();
 }
 
@@ -67,11 +65,9 @@ void
 ScheduledExecutor::run(std::function<void()>&& job,
                        const char* filename, uint32_t linum)
 {
-    {
-        std::lock_guard<std::mutex> lock(jobLock_);
-        auto now = clock::now();
-        jobs_[now].emplace_back(std::move(job), filename, linum);
-    }
+    std::lock_guard<std::mutex> lock(jobLock_);
+    auto now = clock::now();
+    jobs_[now].emplace_back(std::move(job), filename, linum);
     cv_.notify_all();
 }
 
@@ -115,11 +111,11 @@ ScheduledExecutor::reschedule(std::shared_ptr<RepeatedTask> task, time_point t, 
 void
 ScheduledExecutor::schedule(std::shared_ptr<Task> task, time_point t)
 {
-    {
-        std::lock_guard<std::mutex> lock(jobLock_);
-        jobs_[t].emplace_back([task = std::move(task), this] { task->run(name_.c_str()); },
-                              task->job().filename, task->job().linum);
-    }
+    const char* filename =  task->job().filename;
+    uint32_t linenum = task->job().linum;
+    std::lock_guard<std::mutex> lock(jobLock_);
+    jobs_[t].emplace_back([task = std::move(task), this] { task->run(name_.c_str()); },
+                            filename, linenum);
     cv_.notify_all();
 }
 
