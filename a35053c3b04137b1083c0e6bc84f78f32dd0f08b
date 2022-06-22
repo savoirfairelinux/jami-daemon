@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8feecedd_89cc0ff4",
+        "filename": "meson.build",
+        "patchSetId": 2
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-06-22T18:21:05Z",
+      "side": 1,
+      "message": "Should be just\n  conf.set(\u0027ENABLE_SHM\u0027, get_option(\u0027interfaces\u0027).contains(\u0027dbus\u0027))\n\nMeson will convert it to #define or #undef.",
+      "range": {
+        "startLine": 159,
+        "startChar": 0,
+        "endLine": 161,
+        "endChar": 5
+      },
+      "revId": "a35053c3b04137b1083c0e6bc84f78f32dd0f08b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "805ccc63_3cf819ed",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 538,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-06-22T18:21:05Z",
+      "side": 1,
+      "message": "#ifdef",
+      "range": {
+        "startLine": 538,
+        "startChar": 0,
+        "endLine": 538,
+        "endChar": 14
+      },
+      "revId": "a35053c3b04137b1083c0e6bc84f78f32dd0f08b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
