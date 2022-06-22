@@ -55,29 +55,24 @@ ScheduledExecutor::~ScheduledExecutor()
 void
 ScheduledExecutor::stop()
 {
-    {
-        std::lock_guard<std::mutex> lock(jobLock_);
-        *running_ = false;
-        jobs_.clear();
-    }
+    std::lock_guard<std::mutex> lock(jobLock_);
+    *running_ = false;
+    jobs_.clear();
     cv_.notify_all();
 }
 
 void
-ScheduledExecutor::run(std::function<void()>&& job,
-                       const char* filename, uint32_t linum)
+ScheduledExecutor::run(Job&& job, const char* filename, uint32_t linum)
 {
-    {
-        std::lock_guard<std::mutex> lock(jobLock_);
-        auto now = clock::now();
-        jobs_[now].emplace_back(std::move(job), filename, linum);
-    }
+    auto task = std::make_shared<Task>(std::move(job), filename, linum);
+    std::lock_guard<std::mutex> lock(jobLock_);
+    auto now = clock::now();
+    jobs_[now].emplace_back(std::move(task));
     cv_.notify_all();
 }
 
 std::shared_ptr<Task>
-ScheduledExecutor::schedule(std::function<void()>&& job, time_point t,
-                            const char* filename, uint32_t linum)
+ScheduledExecutor::schedule(Job&& job, time_point t, const char* filename, uint32_t linum)
 {
     auto ret = std::make_shared<Task>(std::move(job), filename, linum);
     schedule(ret, t);
@@ -85,48 +80,51 @@ ScheduledExecutor::schedule(std::function<void()>&& job, time_point t,
 }
 
 std::shared_ptr<Task>
-ScheduledExecutor::scheduleIn(std::function<void()>&& job, duration dt,
-                              const char* filename, uint32_t linum)
+ScheduledExecutor::scheduleIn(Job&& job, duration dt, const char* filename, uint32_t linum)
 {
-    return schedule(std::move(job), clock::now() + dt,
-                    filename, linum);
+    return schedule(std::move(job), clock::now() + dt, filename, linum);
 }
 
 std::shared_ptr<RepeatedTask>
-ScheduledExecutor::scheduleAtFixedRate(std::function<bool()>&& job,
+ScheduledExecutor::scheduleAtFixedRate(RepeatedJob&& job,
                                        duration dt,
-                                       const char* filename, uint32_t linum)
+                                       const char* filename,
+                                       uint32_t linum)
 {
-    auto ret = std::make_shared<RepeatedTask>(std::move(job), filename, linum);
-    reschedule(ret, clock::now(), dt);
+    auto ret = std::make_shared<RepeatedTask>(std::move(job));
+    reschedule(ret, clock::now(), dt, filename, linum);
     return ret;
 }
 
 void
-ScheduledExecutor::reschedule(std::shared_ptr<RepeatedTask> task, time_point t, duration dt)
+ScheduledExecutor::reschedule(std::shared_ptr<RepeatedTask> task,
+                              time_point t,
+                              duration dt,
+                              const char* filename,
+                              uint32_t linum)
 {
-    schedule(std::make_shared<Task>([this, task = std::move(task), t, dt]() mutable {
-             if (task->run(name_.c_str()))
-                     reschedule(std::move(task), t + dt, dt);
-    }, task->job().filename, task->job().linum),
+    schedule(std::make_shared<Task>(
+                 [this, task = std::move(task), t, dt, filename, linum]() mutable {
+                     if (task->run())
+                         reschedule(std::move(task), t + dt, dt, filename, linum);
+                 },
+                 filename,
+                 linum),
              t);
 }
 
 void
 ScheduledExecutor::schedule(std::shared_ptr<Task> task, time_point t)
 {
-    {
-        std::lock_guard<std::mutex> lock(jobLock_);
-        jobs_[t].emplace_back([task = std::move(task), this] { task->run(name_.c_str()); },
-                              task->job().filename, task->job().linum);
-    }
+    std::lock_guard<std::mutex> lock(jobLock_);
+    jobs_[t].emplace_back(std::move(task));
     cv_.notify_all();
 }
 
 void
 ScheduledExecutor::loop()
 {
-    std::vector<Job> jobs;
+    std::vector<std::shared_ptr<Task>> jobs;
     {
         std::unique_lock<std::mutex> lock(jobLock_);
         while (*running_ and (jobs_.empty() or jobs_.begin()->first > clock::now())) {
@@ -144,7 +142,7 @@ ScheduledExecutor::loop()
     }
     for (auto& job : jobs) {
         try {
-            job.fn();
+            job->run(name_.c_str());
         } catch (const std::exception& e) {
             JAMI_ERR("Exception running job: %s", e.what());
         }
