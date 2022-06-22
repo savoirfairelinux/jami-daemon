@@ -22,6 +22,30 @@
       },
       "revId": "bd4186a6f3aaab3b4830cd8a4e273fb18ac224de",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eaaf8cee_a97ef657",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 682,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2022-06-22T14:50:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "13cec775_aa52780a",
+      "range": {
+        "startLine": 679,
+        "startChar": 13,
+        "endLine": 682,
+        "endChar": 13
+      },
+      "revId": "bd4186a6f3aaab3b4830cd8a4e273fb18ac224de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
