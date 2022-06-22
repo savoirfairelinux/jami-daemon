@@ -29,7 +29,7 @@
 #include <map>
 #include <list>
 
-#if __APPLE__
+#ifdef __APPLE__
 #import "TargetConditionals.h"
 #endif
 

@@ -89,7 +89,7 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_PULSE 0
 
 /* Define if you have shared memory support */
-#define HAVE_SHM 0
+#undef ENABLE_SHM
 
 /* Define if you have libspeex */
 #define HAVE_SPEEX 0
