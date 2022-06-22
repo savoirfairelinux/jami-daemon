@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6d7a2c7c_d327bc77",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 291,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-22T19:57:14Z",
+      "side": 1,
+      "message": "cast should not be needed, could have a single lambda",
+      "range": {
+        "startLine": 291,
+        "startChar": 15,
+        "endLine": 291,
+        "endChar": 66
+      },
+      "revId": "415dddd8aa92a3e0aaf5ebc5e5334f49bf5a3e1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3cf0f043_39e67c97",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 7
