@@ -43,6 +43,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "29819385_e69efcf8",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 56
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-22T13:54:44Z",
+      "side": 1,
+      "message": "Conversations are per account. But sure, you can have the same conversation with 2 accounts on the same daemon",
+      "parentUuid": "67b3b73e_1e33418c",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "782b9b8f_ec425b7d",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 56
@@ -54,6 +72,30 @@
       "writtenOn": "2022-06-15T23:29:17Z",
       "side": 1,
       "message": "why this mutex, should not be hostedCallsMtx_ ?\n\nactiveCallsMtx_ is also needed around line 205",
+      "range": {
+        "startLine": 190,
+        "startChar": 41,
+        "endLine": 190,
+        "endChar": 56
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43b45f9a_977d7120",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-22T13:54:44Z",
+      "side": 1,
+      "message": "active calls are all calls in the conversation. hosted is only here for calls where we are the hosts",
+      "parentUuid": "782b9b8f_ec425b7d",
       "range": {
         "startLine": 190,
         "startChar": 41,
@@ -87,6 +129,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "552a7fdc_43779615",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-22T13:54:44Z",
+      "side": 1,
+      "message": "In fact we know the duration from the structure now.",
+      "parentUuid": "930fda4a_186ebc3c",
+      "range": {
+        "startLine": 203,
+        "startChar": 32,
+        "endLine": 203,
+        "endChar": 38
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6abfe7e6_da4fce1c",
@@ -100,6 +166,24 @@
       "writtenOn": "2022-06-15T23:29:17Z",
       "side": 1,
       "message": "aha ....\nlock inversion",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cfc0b147_1624cf22",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 216,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-22T13:54:44Z",
+      "side": 1,
+      "message": "classic",
+      "parentUuid": "6abfe7e6_da4fce1c",
       "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -322,6 +406,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "420cd17c_dfdc2802",
+        "filename": "src/manager.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 2482,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-22T13:54:44Z",
+      "side": 1,
+      "message": "if the call is not dropped this will do nothing anw",
+      "parentUuid": "7167fc3f_ebe08a54",
+      "range": {
+        "startLine": 2479,
+        "startChar": 0,
+        "endLine": 2482,
+        "endChar": 11
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2c6acdc9_101a13b8",
@@ -352,6 +460,30 @@
       "writtenOn": "2022-06-15T23:29:17Z",
       "side": 1,
       "message": "the API says reporting status, but we only report if successful.\ndont we need to report in case of failure, if not, cant we more precise on the name of this API?",
+      "range": {
+        "startLine": 298,
+        "startChar": 9,
+        "endLine": 298,
+        "endChar": 37
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f34f6835_c05a48f0",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 56
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-22T13:54:44Z",
+      "side": 1,
+      "message": "I kept the previous API but indeed for now we only report success to update the client. If it fails, the call drop anw",
+      "parentUuid": "08027cc9_5a6ac65a",
       "range": {
         "startLine": 298,
         "startChar": 9,
