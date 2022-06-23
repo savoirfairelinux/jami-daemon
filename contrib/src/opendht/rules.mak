@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := 2.4.3
+OPENDHT_VERSION := 08f9b424de7ee33753eaf6f91e0635b5515b7048
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -30,6 +30,15 @@ endif
 # fmt 5.3.0 fix: https://github.com/fmtlib/fmt/issues/1267
 OPENDHT_CONF = FMT_USE_USER_DEFINED_LITERALS=0
 
+OPENDHT_CMAKECONF = -DOPENDHT_STATIC=On \
+					-DOPENDHT_SHARED=Off \
+					-DOPENDHT_TOOLS=Off \
+					-DOPENDHT_INDEXATION=Off \
+					-DOPENDHT_PYTHON=Off \
+					-DOPENDHT_PROXY_SERVER=On \
+					-DOPENDHT_PROXY_CLIENT=On \
+					-DOPENDHT_PUSH_NOTIFICATIONs=On
+
 $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 	$(call download,$(OPENDHT_URL))
 
@@ -37,11 +46,10 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
+	cd $(UNPACK_DIR)
 	$(MOVE)
 
 .opendht: opendht .sum-opendht
-	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) $(OPENDHT_CONF) ./configure --enable-static --disable-shared --disable-tools --disable-indexation --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --enable-push-notifications $(HOSTCONF)
+	cd $< && $(HOSTVARS) $(OPENDHT_CONF) $(CMAKE) $(OPENDHT_CMAKECONF) .
 	cd $< && $(MAKE) install
 	touch $@
