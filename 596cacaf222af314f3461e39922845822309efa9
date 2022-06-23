@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b43077ae_1e769fbe",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 39
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-23T15:29:56Z",
+      "side": 1,
+      "message": "Can wait the next release as it needs to be tested on clients. This avoid potential regression that we missed. The rest can be merged",
+      "revId": "596cacaf222af314f3461e39922845822309efa9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
