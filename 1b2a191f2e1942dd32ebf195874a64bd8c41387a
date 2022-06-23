@@ -89,6 +89,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ba9f5082_f4b72c0b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-23T15:59:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dd68f572_73fcc233",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fbb753c9_1612bc99",
@@ -277,6 +295,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "66643b6d_b293e9aa",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1017,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-23T15:59:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "981b6c5d_8c2b1d11",
+      "range": {
+        "startLine": 1017,
+        "startChar": 4,
+        "endLine": 1017,
+        "endChar": 52
+      },
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "927b8962_72c49015",
@@ -308,6 +350,24 @@
       "side": 1,
       "message": "I think we can even remove it.\n\nDRing::getConferenceDetails() use it to do a MapStringString ( {\"VIDEO_SOURCE\", conf-\u003egetVideoInput()},), which should be unused by clients, we now have \"Conference::currentMediaList()\" which is way better and support multistreams",
       "parentUuid": "927b8962_72c49015",
+      "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0133f3b6_9e617d16",
+        "filename": "src/conference.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1068,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-06-23T15:59:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0d747c02_2a3afe3c",
       "revId": "1b2a191f2e1942dd32ebf195874a64bd8c41387a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
