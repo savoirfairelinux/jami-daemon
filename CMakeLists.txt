@@ -192,6 +192,7 @@ if(MSVC)
            "WEBRTC_WIN;"
            "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
            "WEBRTC_NS_FLOAT;"
+           "MSGPACK_NO_BOOST;"
        )
    endif()
 
