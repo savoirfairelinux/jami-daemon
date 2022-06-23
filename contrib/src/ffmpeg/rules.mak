@@ -42,6 +42,7 @@ FFMPEGCONF += \
 	--disable-demuxers \
 	--disable-muxers \
 	--enable-muxer=rtp \
+	--enable-muxer=gsm \
 	--enable-muxer=g722 \
 	--enable-muxer=g723_1 \
 	--enable-muxer=g726 \
@@ -55,6 +56,7 @@ FFMPEGCONF += \
 	--enable-muxer=pcm_s16be \
 	--enable-muxer=pcm_s16le \
 	--enable-demuxer=rtp \
+	--enable-demuxer=gsm \
 	--enable-demuxer=mjpeg \
 	--enable-demuxer=mjpeg_2000 \
 	--enable-demuxer=mpegvideo \
@@ -93,6 +95,8 @@ FFMPEGCONF += \
 
 #encoders/decoders
 FFMPEGCONF += \
+	--enable-encoder=libgsm \
+	--enable-decoder=libgsm \
 	--enable-encoder=adpcm_g722 \
 	--enable-decoder=adpcm_g722 \
 	--enable-encoder=adpcm_g726 \
@@ -125,6 +129,7 @@ FFMPEGCONF += \
 	--enable-libopus \
 	--enable-libvpx \
 	--enable-libx264 \
+	--enable-libgsm \
 	--enable-encoder=libspeex \
 	--enable-decoder=libspeex \
 	--enable-encoder=libopus \
