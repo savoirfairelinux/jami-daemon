@@ -199,6 +199,17 @@ SystemCodecContainer::initCodecConfig()
                                                8000,
                                                1,
                                                0),
+
+        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_GSM,
+                                               AV_CODEC_ID_GSM,
+                                               "GSM",
+                                               "gsm",
+                                               "libgsm",
+                                               CODEC_ENCODER_DECODER,
+                                               64,
+                                               8000,
+                                               1,
+                                               0),
     };
     setActiveH265();
     checkInstalledCodecs();
