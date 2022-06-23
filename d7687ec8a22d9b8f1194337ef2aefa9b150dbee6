@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f833198b_f966bf96",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 711,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-23T14:49:39Z",
+      "side": 1,
+      "message": "hmm I guess this is breaking requests for clients not answering to your signal. If it\u0027s a videoCall we only emit the signal and not handle the request. It should be only for the extension right?",
+      "range": {
+        "startLine": 708,
+        "startChar": 31,
+        "endLine": 711,
+        "endChar": 101
+      },
+      "revId": "d7687ec8a22d9b8f1194337ef2aefa9b150dbee6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
