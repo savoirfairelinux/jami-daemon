@@ -1,5 +1,5 @@
 # MSGPACK
-MSGPACK_VERSION := cpp-3.2.0
+MSGPACK_VERSION := cpp-3.3.0
 MSGPACK_URL := https://github.com/msgpack/msgpack-c/archive/$(MSGPACK_VERSION).tar.gz
 
 PKGS += msgpack
@@ -8,6 +8,7 @@ PKGS_FOUND += msgpack
 endif
 
 MSGPACK_CMAKECONF := -DMSGPACK_CXX17=ON \
+		-DMSGPACK_CXX_ONLY=ON \
 		-DMSGPACK_BUILD_EXAMPLES=OFF \
 		-DMSGPACK_ENABLE_SHARED=OFF \
 		-DCMAKE_INSTALL_LIBDIR=lib
