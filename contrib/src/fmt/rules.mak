@@ -19,7 +19,7 @@ $(TARBALLS)/fmt-$(FMT_VERSION).tar.gz:
 
 fmt: fmt-$(FMT_VERSION).tar.gz
 	$(UNPACK)
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
+	cd $(UNPACK_DIR)
 	$(MOVE)
 
 .fmt: fmt toolchain.cmake .sum-fmt
