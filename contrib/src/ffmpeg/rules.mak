@@ -9,7 +9,9 @@ PKGS_FOUND += ffmpeg
 endif
 endif
 
-DEPS_ffmpeg = iconv zlib vpx opus speex x264
+ifndef HAVE_LINUX
+DEPS_ffmpeg += gsm
+endif
 
 FFMPEGCONF = \
 	--cc="$(CC)" \
