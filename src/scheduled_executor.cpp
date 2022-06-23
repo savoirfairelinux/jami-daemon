@@ -101,10 +101,12 @@ ScheduledExecutor::scheduleAtFixedRate(std::function<bool()>&& job,
 void
 ScheduledExecutor::reschedule(std::shared_ptr<RepeatedTask> task, time_point t, duration dt)
 {
+    const char* filename =  task->job().filename;
+    uint32_t linenum = task->job().linum;
     schedule(std::make_shared<Task>([this, task = std::move(task), t, dt]() mutable {
-             if (task->run(name_.c_str()))
-                     reschedule(std::move(task), t + dt, dt);
-    }, task->job().filename, task->job().linum),
+        if (task->run(name_.c_str()))
+                reschedule(std::move(task), t + dt, dt);
+    }, filename, linenum),
              t);
 }
 
