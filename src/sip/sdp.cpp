@@ -86,14 +86,13 @@ Sdp::~Sdp()
 }
 
 std::shared_ptr<AccountCodecInfo>
-Sdp::findCodecBySpec(const std::string& codec, const unsigned clockrate) const
+Sdp::findCodecBySpec(std::string_view codec, const unsigned clockrate) const
 {
     // TODO : only manage a list?
     for (const auto& accountCodec : audio_codec_list_) {
         auto audioCodecInfo = std::static_pointer_cast<AccountAudioCodecInfo>(accountCodec);
-        auto& sysCodecInfo = *static_cast<const SystemAudioCodecInfo*>(
-            &audioCodecInfo->systemCodecInfo);
-        if (sysCodecInfo.name.compare(codec) == 0
+        auto& sysCodecInfo = *static_cast<const SystemAudioCodecInfo*>(&audioCodecInfo->systemCodecInfo);
+        if (sysCodecInfo.name == codec
             and (audioCodecInfo->isPCMG722() ? (clockrate == 8000)
                                              : (sysCodecInfo.audioformat.sample_rate == clockrate)))
             return accountCodec;
@@ -101,7 +100,7 @@ Sdp::findCodecBySpec(const std::string& codec, const unsigned clockrate) const
 
     for (const auto& accountCodec : video_codec_list_) {
         auto sysCodecInfo = accountCodec->systemCodecInfo;
-        if (sysCodecInfo.name.compare(codec) == 0)
+        if (sysCodecInfo.name == codec)
             return accountCodec;
     }
     return nullptr;
@@ -112,13 +111,13 @@ Sdp::findCodecByPayload(const unsigned payloadType)
 {
     // TODO : only manage a list?
     for (const auto& accountCodec : audio_codec_list_) {
-        auto sysCodecInfo = accountCodec->systemCodecInfo;
+        auto& sysCodecInfo = accountCodec->systemCodecInfo;
         if (sysCodecInfo.payloadType == payloadType)
             return accountCodec;
     }
 
     for (const auto& accountCodec : video_codec_list_) {
-        auto sysCodecInfo = accountCodec->systemCodecInfo;
+        auto& sysCodecInfo = accountCodec->systemCodecInfo;
         if (sysCodecInfo.payloadType == payloadType)
             return accountCodec;
     }
@@ -847,11 +846,11 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
                 descr.enabled = false;
                 continue;
             }
-            const std::string codec_raw(rtpmap.enc_name.ptr, rtpmap.enc_name.slen);
+            auto codec_raw = sip_utils::as_view(rtpmap.enc_name);
             descr.rtp_clockrate = rtpmap.clock_rate;
             descr.codec = findCodecBySpec(codec_raw, rtpmap.clock_rate);
             if (not descr.codec) {
-                JAMI_ERR("Could not find codec %s", codec_raw.c_str());
+                JAMI_ERR("Could not find codec %.*s", (int)codec_raw.size(), codec_raw.data());
                 descr.enabled = false;
                 continue;
             }
