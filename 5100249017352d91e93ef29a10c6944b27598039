@@ -204,6 +204,30 @@
       },
       "revId": "5100249017352d91e93ef29a10c6944b27598039",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6cc2b86_0ab8cd38",
+        "filename": "src/plugin/webviewservicesmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-27T19:11:15Z",
+      "side": 1,
+      "message": "To be honest I don\u0027t think it\u0027s necessary. The only case I see is if the user unload and uses the plugin at the same time.\n\nThis can be avoided and should not be the case.",
+      "parentUuid": "4e8c3dd2_e665a3d9",
+      "range": {
+        "startLine": 48,
+        "startChar": 14,
+        "endLine": 48,
+        "endChar": 27
+      },
+      "revId": "5100249017352d91e93ef29a10c6944b27598039",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
