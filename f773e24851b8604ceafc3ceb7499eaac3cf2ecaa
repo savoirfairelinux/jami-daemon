@@ -46,6 +46,30 @@
       },
       "revId": "f773e24851b8604ceafc3ceb7499eaac3cf2ecaa",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0eafd0ba_3d1ed740",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 22
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T14:43:30Z",
+      "side": 1,
+      "message": "There is none, but ideally, we should always add tickets while working on something to keep track. Will be done in the future",
+      "parentUuid": "89dd48f4_3d2182fc",
+      "range": {
+        "startLine": 8,
+        "startChar": 0,
+        "endLine": 9,
+        "endChar": 19
+      },
+      "revId": "f773e24851b8604ceafc3ceb7499eaac3cf2ecaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
