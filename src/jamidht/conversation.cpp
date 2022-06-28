@@ -608,6 +608,8 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
     message["parents"] = parents;
     message["linearizedParent"] = commit.linearized_parent;
     message["author"] = authorId;
+    if (type.empty())
+        return std::nullopt;
     message["type"] = type;
     message["timestamp"] = std::to_string(commit.timestamp);
 
@@ -622,7 +624,7 @@ Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commi
     for (const auto& commit : commits) {
         auto message = convCommitToMap(commit);
         if (message == std::nullopt)
-            continue;
+            break;
         result.emplace_back(*message);
     }
     return result;
