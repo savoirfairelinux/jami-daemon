@@ -22,6 +22,30 @@
       },
       "revId": "f773e24851b8604ceafc3ceb7499eaac3cf2ecaa",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89dd48f4_3d2182fc",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 22
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-06-28T13:49:33Z",
+      "side": 1,
+      "message": "Okay, I\u0027m not sure that there is one for webview support. At least, I can\u0027t find one. Please let me know if you do.",
+      "parentUuid": "a7969bde_8ad65eae",
+      "range": {
+        "startLine": 8,
+        "startChar": 0,
+        "endLine": 9,
+        "endChar": 19
+      },
+      "revId": "f773e24851b8604ceafc3ceb7499eaac3cf2ecaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
