@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b9e4b170_f0ab4a0b",
+        "filename": "src/call.h",
+        "patchSetId": 56
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fec006cb_8e6ef204",
+      "range": {
+        "startLine": 177,
+        "startChar": 4,
+        "endLine": 177,
+        "endChar": 22
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "67b3b73e_1e33418c",
@@ -55,6 +79,24 @@
       "side": 1,
       "message": "Conversations are per account. But sure, you can have the same conversation with 2 accounts on the same daemon",
       "parentUuid": "67b3b73e_1e33418c",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1a39a35_fce9018e",
+        "filename": "src/jami/conversation_interface.h",
+        "patchSetId": 56
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "29819385_e69efcf8",
       "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -96,6 +138,30 @@
       "side": 1,
       "message": "active calls are all calls in the conversation. hosted is only here for calls where we are the hosts",
       "parentUuid": "782b9b8f_ec425b7d",
+      "range": {
+        "startLine": 190,
+        "startChar": 41,
+        "endLine": 190,
+        "endChar": 56
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bf2ba617_c94a7643",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "43b45f9a_977d7120",
       "range": {
         "startLine": 190,
         "startChar": 41,
@@ -211,6 +277,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc90a994_d40675ab",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "821f1fdb_eea411dc",
+      "range": {
+        "startLine": 227,
+        "startChar": 4,
+        "endLine": 227,
+        "endChar": 28
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d4fde43b_94cd46f1",
@@ -224,6 +314,30 @@
       "writtenOn": "2022-06-15T23:29:17Z",
       "side": 1,
       "message": "should be put closer to activeCalls_ (line 272, 288, 290), and IMHO, it\u0027s ok to duplicate in order to limit the scope of the lock.",
+      "range": {
+        "startLine": 264,
+        "startChar": 12,
+        "endLine": 264,
+        "endChar": 60
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1f6bde4b_782fe84f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "yeah I agree",
+      "parentUuid": "d4fde43b_94cd46f1",
       "range": {
         "startLine": 264,
         "startChar": 12,
@@ -257,6 +371,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3bc13fc5_005a6d2b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 1467,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e87e4684_04175c0a",
+      "range": {
+        "startLine": 1467,
+        "startChar": 12,
+        "endLine": 1467,
+        "endChar": 24
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3813e41d_5c9b2b6a",
@@ -270,6 +408,30 @@
       "writtenOn": "2022-06-15T23:29:17Z",
       "side": 1,
       "message": "same, lock ?",
+      "range": {
+        "startLine": 1482,
+        "startChar": 19,
+        "endLine": 1482,
+        "endChar": 31
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "abd6694b_4c159f1c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 1482,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3813e41d_5c9b2b6a",
       "range": {
         "startLine": 1482,
         "startChar": 19,
@@ -303,6 +465,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9abaa56b_e32437aa",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 1497,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "true, nice catch",
+      "parentUuid": "b76bf991_cb28d19c",
+      "range": {
+        "startLine": 1496,
+        "startChar": 8,
+        "endLine": 1497,
+        "endChar": 59
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "468fb1b1_5e1e2e49",
@@ -320,6 +506,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c9e56ae0_cb0af131",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "we want a peerUri which is in sipcall, I think it\u0027s misplaced but I didn\u0027t want to change this yet as it\u0027s a larger problem",
+      "parentUuid": "468fb1b1_5e1e2e49",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "34e2335a_4ed06504",
@@ -333,6 +537,30 @@
       "writtenOn": "2022-06-15T23:29:17Z",
       "side": 1,
       "message": "use const expression",
+      "range": {
+        "startLine": 3507,
+        "startChar": 44,
+        "endLine": 3507,
+        "endChar": 51
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "806e2029_6fb802cb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 3507,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "34e2335a_4ed06504",
       "range": {
         "startLine": 3507,
         "startChar": 44,
@@ -366,6 +594,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3c23e395_069726e7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 3508,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "77ad946c_a2190e04",
+      "range": {
+        "startLine": 3508,
+        "startChar": 42,
+        "endLine": 3508,
+        "endChar": 53
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "26ed7f63_5686e1f2",
@@ -379,6 +631,24 @@
       "writtenOn": "2022-06-15T23:29:17Z",
       "side": 1,
       "message": "cant we move this code in the helper ?",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "40658114_59ee613a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "yes definitely, that was my original plan, just didn\u0027t do it before.",
+      "parentUuid": "26ed7f63_5686e1f2",
       "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -447,6 +717,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a4107c99_8ddadbf3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 56
+      },
+      "lineNbr": 2526,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2c6acdc9_101a13b8",
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "08027cc9_5a6ac65a",
@@ -484,6 +772,30 @@
       "side": 1,
       "message": "I kept the previous API but indeed for now we only report success to update the client. If it fails, the call drop anw",
       "parentUuid": "08027cc9_5a6ac65a",
+      "range": {
+        "startLine": 298,
+        "startChar": 9,
+        "endLine": 298,
+        "endChar": 37
+      },
+      "revId": "da4cb4d50fa5975461f471d803db3d7df6f69c54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b39b7d98_8672f3ea",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 56
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-06-28T16:00:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f34f6835_c05a48f0",
       "range": {
         "startLine": 298,
         "startChar": 9,
