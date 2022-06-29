@@ -209,6 +209,19 @@ Conference::Conference(const std::shared_ptr<Account>& account)
             shared->updateConferenceInfo(std::move(newInfo));
         });
     });
+
+    auto conf_res = split_string_to_unsigned(jami::Manager::instance()
+                                                 .videoPreferences.getConferenceResolution(),
+                                             'x');
+    if (conf_res.size() == 2u) {
+#if defined(__APPLE__) && TARGET_OS_MAC
+        videoMixer_->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
+#else
+        videoMixer_->setParameters(conf_res[0], conf_res[1]);
+#endif
+    } else {
+        JAMI_ERR("Conference resolution is invalid");
+    }
 #endif
 
     parser_.onVersion([&](uint32_t) {}); // TODO
@@ -448,7 +461,7 @@ Conference::isMediaSourceMuted(MediaType type) const
     }
 
     for (const auto& source : hostSources_) {
-        if (source.muted_)
+        if (source.muted_ && source.type_ == type)
             return true;
         if (source.type_ == MediaType::MEDIA_NONE) {
             JAMI_WARN("The host source for %s is not set. The mute state is meaningless",
@@ -556,7 +569,7 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
     for (auto const& mediaAttr : mediaAttrList) {
         // Find media
         auto oldIdx = std::find_if(hostSources_.begin(), hostSources_.end(), [&](auto oldAttr) {
-            return oldAttr.sourceUri_ == mediaAttr.sourceUri_;
+            return oldAttr.sourceUri_ == mediaAttr.sourceUri_ && oldAttr.type_ == mediaAttr.type_;
         });
         // If video, add to newVideoInputs
         // NOTE: For now, only supports video
