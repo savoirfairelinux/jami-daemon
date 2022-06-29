@@ -92,6 +92,7 @@ private:
     void testDevices();
     void testUnauthorizedSetActive();
     void testHangup();
+    void testIsConferenceParticipant();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -107,6 +108,7 @@ private:
     CPPUNIT_TEST(testDevices);
     CPPUNIT_TEST(testUnauthorizedSetActive);
     CPPUNIT_TEST(testHangup);
+    CPPUNIT_TEST(testIsConferenceParticipant);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -715,6 +717,34 @@ ConferenceTest::testHangup()
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
 
     hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testIsConferenceParticipant()
+{
+    registerSignalHandlers();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    startConference();
+
+    // is Conference participant should be true for Carla
+    auto participants = aliceAccount->getConference(confId)->getParticipantList();
+    CPPUNIT_ASSERT(participants.size() == 2);
+    auto call1 = *participants.begin();
+    auto call2 = *participants.rbegin();
+    CPPUNIT_ASSERT(aliceAccount->getCall(call1)->isConferenceParticipant());
+    CPPUNIT_ASSERT(aliceAccount->getCall(call2)->isConferenceParticipant());
+
+    // hangup bob will stop the conference
+    Manager::instance().hangupCall(aliceId, call1);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty(); }));
+    CPPUNIT_ASSERT(!aliceAccount->getCall(call2)->isConferenceParticipant());
+    Manager::instance().hangupCall(aliceId, call2);
 
     DRing::unregisterSignalHandlers();
 }

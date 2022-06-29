@@ -2920,6 +2920,7 @@ SIPCall::exitConference()
 #ifdef ENABLE_PLUGIN
     createCallAVStreams();
 #endif
+    conf_.reset();
 }
 
 #ifdef ENABLE_VIDEO
