@@ -94,6 +94,7 @@ private:
     void testHangup();
     void testHostAddRmSecondVideo();
     void testParticipantAddRmSecondVideo();
+    void testAudioConferenceConfInfo();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -111,6 +112,7 @@ private:
     CPPUNIT_TEST(testHangup);
     CPPUNIT_TEST(testHostAddRmSecondVideo);
     CPPUNIT_TEST(testParticipantAddRmSecondVideo);
+    CPPUNIT_TEST(testAudioConferenceConfInfo);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -131,7 +133,7 @@ private:
     std::condition_variable cv;
 
     void registerSignalHandlers();
-    void startConference();
+    void startConference(bool audioOnly = false);
     void hangupConference();
 };
 
@@ -257,7 +259,7 @@ ConferenceTest::registerSignalHandlers()
 }
 
 void
-ConferenceTest::startConference()
+ConferenceTest::startConference(bool audioOnly)
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -265,14 +267,26 @@ ConferenceTest::startConference()
     auto bobUri = bobAccount->getUsername();
     auto carlaUri = carlaAccount->getUsername();
 
+    std::vector<std::map<std::string, std::string>> mediaList;
+    if (audioOnly) {
+        std::map<std::string, std::string> mediaAttribute
+            = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE,
+                DRing::Media::MediaAttributeValue::AUDIO},
+               {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+               {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
+               {DRing::Media::MediaAttributeKey::SOURCE, ""},
+               {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}};
+        mediaList.emplace_back(mediaAttribute);
+    }
+
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1 = DRing::placeCallWithMedia(aliceId, bobUri, {});
+    auto call1 = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2 = DRing::placeCallWithMedia(aliceId, carlaUri, {});
+    auto call2 = DRing::placeCallWithMedia(aliceId, carlaUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
@@ -845,6 +859,16 @@ ConferenceTest::testParticipantAddRmSecondVideo()
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 1; }));
 
     hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testAudioConferenceConfInfo()
+{
+    registerSignalHandlers();
+
+    startConference(true);
 
     DRing::unregisterSignalHandlers();
 }
