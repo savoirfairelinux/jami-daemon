@@ -435,7 +435,35 @@ convert-static:
 	for p in $(PREFIX)/lib/pkgconfig/*.pc; do $(SRC)/pkg-static.sh $$p; done
 fetch: $(PKGS:%=.sum-%)
 fetch-all: $(PKGS_ALL:%=.sum-%)
+
+ifdef CACHE
+
+ENTRY=$(CACHE)/$(shell cat $(MAKEFILE_LIST) | sha256sum | cut -d ' ' -f 1)
+CACHE_PREFIX=$(ENTRY)/$(shell basename $(PREFIX))
+
+install: $(PREFIX)
+
+ifneq ($(PREFIX),$(CACHE_PREFIX))
+$(PREFIX): $(CACHE_PREFIX)
+	ln --symbolic $^ $@
+endif
+
+$(CACHE_PREFIX): $(ENTRY)/.build
+
+ifeq ($(MAKELEVEL), 0)
+$(ENTRY)/.build:
+	mkdir --parents $(CACHE_PREFIX)
+	$(FLOCK) $(ENTRY) $(MAKE) PREFIX=$(CACHE_PREFIX)
+	touch $@
+
+else
+$(ENTRY)/.build: $(PKGS:%=.%) convert-static
+endif
+
+else
 install: $(PKGS:%=.%) convert-static
+endif
+
 
 mostlyclean:
 	-$(RM) $(foreach p,$(PKGS_ALL),.$(p) .sum-$(p) .dep-$(p))
