@@ -1788,28 +1788,22 @@ ConversationModule::call(const std::string& url,
         call->setState(Call::ConnectionState::TRYING);
         call->setPeerNumber(callUri);
         call->setPeerUri("swarm:" + callUri);
-        JAMI_ERR() << "@@@@SEND CALL";
-        call->addStateListener(
-            [&](Call::CallState call_state, Call::ConnectionState cnx_state, int) {
-                JAMI_ERR() << "@@@@ HOST CALL?" << (int) cnx_state << " - " << (int) call_state;
-                if (cnx_state == Call::ConnectionState::DISCONNECTED
-                    && call_state == Call::CallState::MERROR) {
-                    // Detect failed call.
-                    JAMI_ERR() << "@@@@ HOST CALL!";
-
-                    // How to do this properly?
-                    return true;
-                    // Else, we are the host.
-                    std::string confId = Manager::instance().callFactory.getNewCallID();
-                    call->setState(Call::ConnectionState::CONNECTED);
-                    // In this case, the call is the only one in the conference
-                    // and there is no peer, so media succeeded and are shown to
-                    // the client.
-                    call->reportMediaNegotiationStatus();
-                    hostConference(conversationId, confId, call->getCallId());
-                }
+        call->addStateListener([w = pimpl_->weak(), conversationId](Call::CallState call_state,
+                                                                    Call::ConnectionState cnx_state,
+                                                                    int) {
+            if (cnx_state == Call::ConnectionState::DISCONNECTED
+                && call_state == Call::CallState::MERROR) {
+                JAMI_WARN("Call failed, need a new host");
+                auto shared = w.lock();
+                if (!shared)
+                    return false;
+                if (auto acc = shared->account_.lock())
+                    emitSignal<DRing::ConfigurationSignal::NeedsHoster>(acc->getAccountID(),
+                                                                        conversationId);
                 return true;
-            });
+            }
+            return true;
+        });
         cb(callUri, DeviceId(deviceId));
     };
 
@@ -1823,6 +1817,7 @@ ConversationModule::call(const std::string& url,
     auto activeCalls = conv->currentCalls();
     if (confId != "") {
         callUri = fmt::format("{}/{}/{}/{}", conversationId, uri, deviceId, confId);
+        JAMI_DBG("Calling: %s", callUri.c_str());
         sendCall();
         return;
     }
@@ -1835,6 +1830,7 @@ ConversationModule::call(const std::string& url,
                               std::get<1>(ac),
                               deviceId,
                               std::get<0>(ac));
+        JAMI_DBG("Calling last active call: %s", callUri.c_str());
         sendCall();
         return;
     }
@@ -1844,9 +1840,13 @@ ConversationModule::call(const std::string& url,
     auto itRdvAccount = infos.find("rdvAccount");
     auto itRdvDevice = infos.find("rdvDevice");
     if (itRdvAccount != infos.end() && itRdvDevice != infos.end()) {
-        if (itRdvAccount->second != pimpl_->username_ || itRdvDevice->second != pimpl_->deviceId_) {
-            // TODO ask wanted device to host the conference before starting the call
-            JAMI_ERR("Not implemented.");
+        auto accountUri = itRdvAccount->second;
+        auto did = itRdvDevice->second;
+        if (accountUri != pimpl_->username_ || did != pimpl_->deviceId_) {
+            JAMI_DBG("Remote host detected. Calling %s on device %s", accountUri.c_str(), did.c_str());
+            deviceId = did;
+            callUri = fmt::format("{}/{}/{}/{}", conversationId, accountUri, deviceId, call->getCallId());
+            sendCall();
             return;
         }
     }
