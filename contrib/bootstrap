@@ -37,6 +37,7 @@ HOST=
 PREFIX=
 PKGS_ENABLE=
 PKGS_DISABLE=
+CACHE_BUILD=
 CONF_TARBALLS=
 
 if test ! -f "../src/main.mak"
@@ -61,8 +62,12 @@ do
 		--disable-downloads)
 			DISABLE_CONTRIB_DOWNLOADS="TRUE"
 			;;
-                --cache-dir=*)
-			CONF_TARBALLS="${1#--cache-dir=}"
+		--cache-dir=*)
+			CACHE_DIR="${1#--cache-dir=}"
+			CONF_TARBALLS="${CACHE}"
+			;;
+		--cache-builds)
+			CACHE_BUILD=1
 			;;
 		--enable-debug)
 			ENABLE_DEBUG=1
@@ -128,6 +133,8 @@ PKGS_ENABLE := $PKGS_ENABLE
 DISABLE_CONTRIB_DOWNLOADS := $DISABLE_CONTRIB_DOWNLOADS
 DISABLE_CONTRIB_CHECKSUMS := $DISABLE_CONTRIB_CHECKSUMS
 CONF_TARBALLS := $CONF_TARBALLS
+CACHE_DIR := $CACHE_DIR
+CACHE_BUILD := $CACHE_BUILD
 ENABLE_DEBUG := $ENABLE_DEBUG
 EOF
 
