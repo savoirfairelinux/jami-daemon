@@ -280,22 +280,23 @@ public:
                     saveActiveCalls();
                 }
             } else {
-                if (eraseOnly) {
-                    JAMI_WARN(
-                        "previous swarm:%s call finished detected: %s on device %s, account %s",
-                        convId.c_str(),
-                        confId.c_str(),
-                        device.c_str(),
-                        uri.c_str());
-                } else {
-                    JAMI_DBG("swarm:%s call finished: %s on device %s, account %s",
-                             convId.c_str(),
-                             confId.c_str(),
-                             device.c_str(),
-                             uri.c_str());
-                }
                 std::lock_guard<std::mutex> lk(activeCallsMtx_);
-                activeCalls_.erase({confId, uri, device});
+                if (activeCalls_.erase({confId, uri, device})) {
+                    if (eraseOnly) {
+                        JAMI_WARN(
+                            "previous swarm:%s call finished detected: %s on device %s, account %s",
+                            convId.c_str(),
+                            confId.c_str(),
+                            device.c_str(),
+                            uri.c_str());
+                    } else {
+                        JAMI_DBG("swarm:%s call finished: %s on device %s, account %s",
+                                 convId.c_str(),
+                                 confId.c_str(),
+                                 device.c_str(),
+                                 uri.c_str());
+                    }
+                }
                 saveActiveCalls();
             }
         }

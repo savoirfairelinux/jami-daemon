@@ -596,6 +596,15 @@
            </arg>
        </signal>
 
+       <signal name="needsHoster" tp:name-for-bindings="needsHoster">
+           <tp:added version="13.3.0"/>
+           <tp:docstring>
+               Notify client that a conversation needs a hoster for calls
+           </tp:docstring>
+           <arg type="s" name="accountId"/>
+           <arg type="s" name="conversationId"/>
+       </signal>
+
        <signal name="profileReceived" tp:name-for-bindings="profileReceived">
            <tp:added version="9.2.0"/>
            <tp:docstring>
