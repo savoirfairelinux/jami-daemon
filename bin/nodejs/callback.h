@@ -15,6 +15,7 @@ Persistent<Function> registrationStateChangedCb;
 Persistent<Function> volatileDetailsChangedCb;
 Persistent<Function> incomingAccountMessageCb;
 Persistent<Function> accountMessageStatusChangedCb;
+Persistent<Function> needsHosterCb;
 Persistent<Function> incomingTrustRequestCb;
 Persistent<Function> contactAddedCb;
 Persistent<Function> contactRemovedCb;
@@ -60,6 +61,8 @@ getPresistentCb(std::string_view signal)
         return &incomingAccountMessageCb;
     else if (signal == "AccountMessageStatusChanged")
         return &accountMessageStatusChangedCb;
+    else if (signal == "NeedsHoster")
+        return &needsHosterCb;
     else if (signal == "IncomingTrustRequest")
         return &incomingTrustRequestCb;
     else if (signal == "ContactAdded")
@@ -383,6 +386,22 @@ accountMessageStatusChanged(const std::string& account_id,
 }
 
 void
+needsHoster(const std::string& account_id, const std::string& conversationId)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([account_id, conversationId]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), needsHosterCb);
+        if (!func.IsEmpty()) {
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id),
+                                            V8_STRING_NEW_LOCAL(conversationId)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
+        }
+    });
+
+    uv_async_send(&signalAsync);
+}
+
+void
 incomingAccountMessage(const std::string& accountId,
                        const std::string& messageId,
                        const std::string& from,
@@ -450,12 +469,10 @@ callStateChanged(const std::string& accountId,
     pendingSignals.emplace([accountId, callId, state, detail_code]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), callStateChangedCb);
         if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {
-                V8_STRING_NEW_LOCAL(accountId),
-                V8_STRING_NEW_LOCAL(callId),
-                V8_STRING_NEW_LOCAL(state),
-                SWIGV8_INTEGER_NEW(detail_code)
-            };
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(callId),
+                                            V8_STRING_NEW_LOCAL(state),
+                                            SWIGV8_INTEGER_NEW(detail_code)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
@@ -472,11 +489,9 @@ mediaChangeRequested(const std::string& accountId,
     pendingSignals.emplace([accountId, callId, mediaList]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), mediaChangeRequestedCb);
         if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {
-                V8_STRING_NEW_LOCAL(accountId),
-                V8_STRING_NEW_LOCAL(callId),
-                stringMapVecToJsMapArray(mediaList)
-            };
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(callId),
+                                            stringMapVecToJsMapArray(mediaList)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
