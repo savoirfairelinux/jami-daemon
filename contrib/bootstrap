@@ -64,6 +64,9 @@ do
                 --cache-dir=*)
 			CONF_TARBALLS="${1#--cache-dir=}"
 			;;
+		--cache=*)
+			CACHE="${1#--cache=}"
+			;;
 		--enable-debug)
 			ENABLE_DEBUG=1
 			;;
@@ -128,6 +131,7 @@ PKGS_ENABLE := $PKGS_ENABLE
 DISABLE_CONTRIB_DOWNLOADS := $DISABLE_CONTRIB_DOWNLOADS
 DISABLE_CONTRIB_CHECKSUMS := $DISABLE_CONTRIB_CHECKSUMS
 CONF_TARBALLS := $CONF_TARBALLS
+CACHE := $CACHE
 ENABLE_DEBUG := $ENABLE_DEBUG
 EOF
 
