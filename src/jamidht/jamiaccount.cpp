@@ -499,7 +499,9 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, Uri uri
 void
 JamiAccount::newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, Uri uri)
 {
-    JAMI_DBG() << this << "Calling conversation " << uri.authority();
+    JAMI_DBG("[Account %s] Calling conversation %s",
+             getAccountID().c_str(),
+             uri.authority().c_str());
     convModule()->call(
         uri.authority(),
         call,
@@ -594,6 +596,8 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
     if (isNotHosting) {
         // Create conference and host it.
         convModule()->hostConference(conversationId, confId, callId);
+        if (auto conf = getConference(confId))
+            conf->detachLocalParticipant();
     } else {
         auto conf = getConference(confId);
         if (!conf) {
@@ -602,9 +606,10 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         }
 
         conf->addParticipant(callId);
-        emitSignal<DRing::CallSignal::ConferenceChanged>(getAccountID(), conf->getConfId(), conf->getStateStr());
+        emitSignal<DRing::CallSignal::ConferenceChanged>(getAccountID(),
+                                                         conf->getConfId(),
+                                                         conf->getStateStr());
     }
-
 }
 
 std::shared_ptr<SIPCall>
