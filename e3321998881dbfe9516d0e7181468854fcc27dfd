@@ -16,6 +16,29 @@
       "message": "You can experiment with https://jenkins.jami.net/view/daemon/job/daemon-gnulinux-contrib-cache/.\n\nSee build #3 vs #9 and #12.  Average of 57% faster build.\n\nThere\u0027s some problem with some nodes like builds #13 and #14.",
       "revId": "e3321998881dbfe9516d0e7181468854fcc27dfd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "130dbcf4_059bfdae",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 461,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-04T19:57:29Z",
+      "side": 1,
+      "message": "mmh just tested.\n\nMy diff:\n\n```\ndiff --git a/scripts/install.sh b/scripts/install.sh\nindex d75ea6c..f21f61e 100755\n--- a/scripts/install.sh\n+++ b/scripts/install.sh\n@@ -96,7 +96,7 @@ cd \"$DAEMON\"\n mkdir -p contrib/native\n (\n     cd contrib/native\n-    ../bootstrap ${prefix:+\"--prefix\u003d$prefix\"}\n+    ../bootstrap ${prefix:+\"--prefix\u003d$prefix\"} --cache\u003d/home/amarok/Projects/jami/daemon/contrib/cache\n     make -j\"${proc}\"\n )\n \n\n```\n\nI build with `./build.py --install --debug --qt /usr/lib64/qt-jami`\n\nIf I do a change in contrib, the second make is failing with \n\n```\n/home/amarok/Projects/jami/daemon/contrib/src/pkg-static.sh: line 11: /home/amarok/Projects/jami/daemon/contrib/cache/0cf068a09199dfc16acff047c421c36b406cc864ec739e7949b24cd64cf9ac92/x86_64-redhat-linux/lib/pkgconfig/*.pc: No such file or directory\n```\n\nDid I miss something?",
+      "range": {
+        "startLine": 453,
+        "startChar": 0,
+        "endLine": 461,
+        "endChar": 5
+      },
+      "revId": "e3321998881dbfe9516d0e7181468854fcc27dfd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
