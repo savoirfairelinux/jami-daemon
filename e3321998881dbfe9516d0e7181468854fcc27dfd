@@ -39,6 +39,30 @@
       },
       "revId": "e3321998881dbfe9516d0e7181468854fcc27dfd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e3d30d12_073dd01c",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 461,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-07-06T17:22:09Z",
+      "side": 1,
+      "message": "I remember having some similar problems.  I think it has to do with the dot files, e.g. .pjproject, .opendht, that tell contrib the package is already built.  And so the installation process go on searching for the pkgconfig files in the cache, however the cache has been bypassed!  The solution would be to clean the whole contrib and start from a clean state.\n\nOtherwise, will have to search more.",
+      "parentUuid": "130dbcf4_059bfdae",
+      "range": {
+        "startLine": 453,
+        "startChar": 0,
+        "endLine": 461,
+        "endChar": 5
+      },
+      "revId": "e3321998881dbfe9516d0e7181468854fcc27dfd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

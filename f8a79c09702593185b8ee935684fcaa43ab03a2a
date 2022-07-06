@@ -16,6 +16,24 @@
       "message": "I\u0027d name this --cache-builds and when provided without argument, default to use the directory provided via --cache-dir.",
       "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c3e9302_314de93f",
+        "filename": "contrib/bootstrap",
+        "patchSetId": 2
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-07-06T17:22:09Z",
+      "side": 1,
+      "message": "I\u0027m okay by renaming to cache-builds.  However, I believe it would be best to keep the default as the empty string.  That way, the default behavior is to build locally without cache.  Just to avoid any issue for those who don\u0027t need it.",
+      "parentUuid": "809928da_9d1e045f",
+      "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
