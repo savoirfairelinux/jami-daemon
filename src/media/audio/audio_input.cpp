@@ -105,8 +105,7 @@ AudioInput::readFromDevice()
 {
     {
         std::lock_guard<std::mutex> lk(resourceMutex_);
-        if (decodingFile_)
-            while (fileBuf_->isEmpty())
+        while (decodingFile_ && fileBuf_->isEmpty())
                 readFromFile();
         if (playingFile_) {
             readFromQueue();
@@ -151,8 +150,14 @@ AudioInput::readFromQueue()
 void
 AudioInput::readFromFile()
 {
-    if (!decoder_)
-        return;
+    if (!decoder_) {
+        if (!createDecoder()) {
+            decodingFile_ = false; // Avoid inifinite while and switch back to the default device
+            JAMI_WARN() << "Cannot decode audio from file, switching back to default device";
+            initDevice("");
+            return;
+        }
+    }
     const auto ret = decoder_->decode();
     switch (ret) {
     case MediaDemuxer::Status::Success:
@@ -167,6 +172,7 @@ AudioInput::readFromFile()
         JAMI_ERR() << "Read buffer overflow detected";
         break;
     case MediaDemuxer::Status::FallBack:
+    case MediaDemuxer::Status::RestartRequired:
         break;
     }
 }
@@ -242,11 +248,6 @@ AudioInput::initFile(const std::string& path)
     devOpts_.input = path;
     devOpts_.name = path;
     devOpts_.loop = "1";
-    // sets devOpts_'s sample rate and number of channels
-    if (!createDecoder()) {
-        JAMI_WARN() << "Cannot decode audio from file, switching back to default device";
-        return initDevice("");
-    }
     fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
     // have file audio mixed into the call buffer so it gets sent to the peer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
@@ -339,7 +340,6 @@ AudioInput::createDecoder()
     });
 
     // NOTE don't emulate rate, file is read as frames are needed
-
     decoder->setInterruptCallback(
         [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
 
