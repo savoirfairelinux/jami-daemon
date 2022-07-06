@@ -2477,7 +2477,8 @@ SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
         }
         mediaAttrList.clear();
         // Note: use the order VIDEO/AUDIO to avoid reinvite.
-        mediaAttrList.emplace_back(audioAttr);
+        if (hasAudio)
+            mediaAttrList.emplace_back(audioAttr);
         if (hasVideo)
             mediaAttrList.emplace_back(videoAttr);
     }
