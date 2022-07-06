@@ -340,8 +340,6 @@ AudioInput::createDecoder()
 
     // NOTE don't emulate rate, file is read as frames are needed
 
-    decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
 
     if (decoder->openInput(devOpts_) < 0) {
         JAMI_ERR() << "Could not open input '" << devOpts_.input << "'";
@@ -355,6 +353,8 @@ AudioInput::createDecoder()
         return false;
     }
 
+    decoder->setInterruptCallback(
+        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
     auto ms = decoder->getStream(devOpts_.input);
     devOpts_.channel = ms.nbChannels;
     devOpts_.framerate = ms.sampleRate;
