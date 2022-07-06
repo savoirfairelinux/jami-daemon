@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "809928da_9d1e045f",
+        "filename": "contrib/bootstrap",
+        "patchSetId": 2
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-07-06T16:10:38Z",
+      "side": 1,
+      "message": "I\u0027d name this --cache-builds and when provided without argument, default to use the directory provided via --cache-dir.",
+      "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
