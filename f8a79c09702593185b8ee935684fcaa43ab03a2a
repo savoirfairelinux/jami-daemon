@@ -69,6 +69,24 @@
       "parentUuid": "9c3e9302_314de93f",
       "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90f16229_18b783a6",
+        "filename": "contrib/bootstrap",
+        "patchSetId": 2
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-07-06T18:57:26Z",
+      "side": 1,
+      "message": "Sounds great to me.",
+      "parentUuid": "2933740e_e38ecf8f",
+      "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
