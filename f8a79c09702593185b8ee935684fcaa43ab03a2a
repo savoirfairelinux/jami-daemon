@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a3655bad_0dee1355",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-07-06T17:50:31Z",
+      "side": 1,
+      "message": "It\u0027s an interesting idea, but I\u0027d like to compare the result to simply using ccache.  If you look into how Buildroot enables its use, it\u0027s very simple, if I recall correctly.  ccache would also be robust in the face of changed compilers or host tools.  The ccache cache could live on NFS and be shared across build nodes.",
+      "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "809928da_9d1e045f",
@@ -32,6 +49,24 @@
       "side": 1,
       "message": "I\u0027m okay by renaming to cache-builds.  However, I believe it would be best to keep the default as the empty string.  That way, the default behavior is to build locally without cache.  Just to avoid any issue for those who don\u0027t need it.",
       "parentUuid": "809928da_9d1e045f",
+      "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2933740e_e38ecf8f",
+        "filename": "contrib/bootstrap",
+        "patchSetId": 2
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-07-06T17:50:31Z",
+      "side": 1,
+      "message": "I think having the option not accept any argument would work well:\n\n--cache-builds --\u003e Enable cached builds (using the cache directory specified via \u0027--cache-dir\u0027)\n\n--cache-builds --cache-dir\u003d$PWD/cache  --\u003e use some nonstandard cache directory\n\nNot providing \u0027--cache-builds\u0027 would mean to not build via the cache.",
+      "parentUuid": "9c3e9302_314de93f",
       "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
