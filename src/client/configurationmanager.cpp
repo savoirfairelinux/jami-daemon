@@ -1027,6 +1027,13 @@ setPushNotificationToken(const std::string& token)
         account->setPushNotificationToken(token);
     }
 }
+void
+setPushNotificationTopic(const std::string& topic)
+{
+    for (const auto& account : jami::Manager::instance().getAllAccounts()) {
+        account->setPushNotificationTopic(topic);
+    }
+}
 
 void
 pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)

@@ -198,6 +198,11 @@ public:
         deviceKey_ = pushDeviceToken;
     }
 
+    virtual void setPushNotificationTopic(const std::string& topic = "")
+    {
+        notificationTopic_ = topic;
+    }
+
     /**
      * Tell if the account is enable or not.
      * @return true if enabled, false otherwise
@@ -461,6 +466,7 @@ protected:
     static const char* const PROXY_ENABLED_KEY;
     static const char* const PROXY_SERVER_KEY;
     static const char* const PROXY_PUSH_TOKEN_KEY;
+    static const char* const PROXY_PUSH_IOS_TOPIC_KEY;
     static const char* const ACTIVE_CODEC_KEY;
     static const char* const DEFAULT_MODERATORS_KEY;
     static const char* const LOCAL_MODERATORS_ENABLED_KEY;
@@ -603,6 +609,11 @@ protected:
      * Device push notification token.
      */
     std::string deviceKey_ {};
+
+    /**
+     * Push notification topic.
+     */
+    std::string notificationTopic_ {};
 
     /**
      * private account codec searching functions

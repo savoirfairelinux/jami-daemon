@@ -1964,6 +1964,7 @@ JamiAccount::doRegister_()
         config.dht_config.cert_cache_all = true;
         config.push_node_id = getAccountID();
         config.push_token = deviceKey_;
+        config.push_topic = notificationTopic_;
         config.threaded = true;
         config.peer_discovery = dhtPeerDiscovery_;
         config.peer_publish = dhtPeerDiscovery_;
@@ -3501,6 +3502,13 @@ JamiAccount::setPushNotificationToken(const std::string& token)
     JAMI_WARN("[Account %s] setPushNotificationToken: %s", getAccountID().c_str(), token.c_str());
     deviceKey_ = token;
     dht_->setPushNotificationToken(deviceKey_);
+}
+
+void
+JamiAccount::setPushNotificationTopic(const std::string& topic)
+{
+    notificationTopic_ = topic;
+    dht_->setPushNotificationTopic(notificationTopic_);
 }
 
 /**
