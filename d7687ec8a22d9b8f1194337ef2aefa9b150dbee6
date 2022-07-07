@@ -22,6 +22,30 @@
       },
       "revId": "d7687ec8a22d9b8f1194337ef2aefa9b150dbee6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e9f14c7_0a19f403",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 711,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2022-07-07T23:50:33Z",
+      "side": 1,
+      "message": "yes, it is only for extension",
+      "parentUuid": "f833198b_f966bf96",
+      "range": {
+        "startLine": 708,
+        "startChar": 31,
+        "endLine": 711,
+        "endChar": 101
+      },
+      "revId": "d7687ec8a22d9b8f1194337ef2aefa9b150dbee6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
