@@ -96,6 +96,7 @@ const char* const Account::DEFAULT_MODERATORS_KEY = "defaultModerators";
 const char* const Account::LOCAL_MODERATORS_ENABLED_KEY = "localModeratorsEnabled";
 const char* const Account::ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 const char* const Account::PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
+const char* const Account::PROXY_PUSH_IOS_TOPIC_KEY = "proxyPushiOSTopic";
 
 // For portability, do not specify the absolute file name of the ring
 // tone.  Instead, specify its base name to be looked in
@@ -236,6 +237,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << LOCAL_MODERATORS_ENABLED_KEY << YAML::Value << localModeratorsEnabled_;
     out << YAML::Key << ALL_MODERATORS_ENABLED_KEY << YAML::Value << allModeratorsEnabled_;
     out << YAML::Key << PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
+    out << YAML::Key << PROXY_PUSH_IOS_TOPIC_KEY << YAML::Value << notificationTopic_;
 }
 
 void
@@ -294,6 +296,7 @@ Account::unserialize(const YAML::Node& node)
     parseValueOptional(node, LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled_);
     parseValueOptional(node, ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled_);
     parseValueOptional(node, PROXY_PUSH_TOKEN_KEY, deviceKey_);
+    parseValueOptional(node, PROXY_PUSH_IOS_TOPIC_KEY, notificationTopic_);
 }
 
 void
