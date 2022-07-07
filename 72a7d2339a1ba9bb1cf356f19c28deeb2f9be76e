@@ -22,6 +22,30 @@
       },
       "revId": "72a7d2339a1ba9bb1cf356f19c28deeb2f9be76e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "278df89f_8093af3d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1854,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-07T13:58:18Z",
+      "side": 0,
+      "message": "duplicate log with https://review.jami.net/c/jami-daemon/+/19801/3/src/jamidht/jamiaccount.cpp#1779",
+      "parentUuid": "cfa2596d_4905ea9a",
+      "range": {
+        "startLine": 1854,
+        "startChar": 27,
+        "endLine": 1854,
+        "endChar": 40
+      },
+      "revId": "72a7d2339a1ba9bb1cf356f19c28deeb2f9be76e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
