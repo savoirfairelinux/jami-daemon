@@ -401,11 +401,20 @@ public:
     /// further calls
     bool isMessageTreated(std::string_view id);
 
-    std::shared_ptr<dht::DhtRunner> dht() { return dht_; }
+    std::shared_ptr<dht::DhtRunner> dht()
+    {
+        return dht_;
+    }
 
-    const dht::crypto::Identity& identity() const { return id_; }
+    const dht::crypto::Identity& identity() const
+    {
+        return id_;
+    }
 
-    const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
+    const std::shared_future<tls::DhParams> dhParams() const
+    {
+        return dhParams_;
+    }
 
     void forEachDevice(const dht::InfoHash& to,
                        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
@@ -419,6 +428,8 @@ public:
     void enableProxyClient(bool enable);
 
     void setPushNotificationToken(const std::string& pushDeviceToken = "") override;
+
+    void setPushNotificationTopic(const std::string& topic) override;
 
     /**
      * To be called by clients with relevant data when a push notification is received.
@@ -462,13 +473,19 @@ public:
     void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
 
 #ifdef DRING_TESTABLE
-    ConnectionManager& connectionManager() { return *connectionManager_; }
+    ConnectionManager& connectionManager()
+    {
+        return *connectionManager_;
+    }
 
     /**
      * Only used for tests, disable sha3sum verification for transfers.
      * @param newValue
      */
-    void noSha3sumVerification(bool newValue) { noSha3sumVerification_ = newValue; }
+    void noSha3sumVerification(bool newValue)
+    {
+        noSha3sumVerification_ = newValue;
+    }
 #endif
 
     /**
@@ -581,9 +598,15 @@ public:
 
     std::string profilePath() const;
 
-    AccountManager* accountManager() { return accountManager_.get(); }
+    AccountManager* accountManager()
+    {
+        return accountManager_.get();
+    }
 
-    bool sha3SumVerify() const { return !noSha3sumVerification_; }
+    bool sha3SumVerify() const
+    {
+        return !noSha3sumVerification_;
+    }
 
     /**
      * Change certificate's validity period
