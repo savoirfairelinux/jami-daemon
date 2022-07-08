@@ -92,6 +92,7 @@ private:
     void testDevices();
     void testUnauthorizedSetActive();
     void testHangup();
+    void testIsConferenceParticipant();
     void testAudioConferenceConfInfo();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
@@ -108,6 +109,7 @@ private:
     CPPUNIT_TEST(testDevices);
     CPPUNIT_TEST(testUnauthorizedSetActive);
     CPPUNIT_TEST(testHangup);
+    CPPUNIT_TEST(testIsConferenceParticipant);
     CPPUNIT_TEST(testAudioConferenceConfInfo);
     CPPUNIT_TEST_SUITE_END();
 
