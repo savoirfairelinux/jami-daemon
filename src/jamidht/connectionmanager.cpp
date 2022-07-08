@@ -381,14 +381,18 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
     info->tls_ = std::make_unique<TlsSocketEndpoint>(std::move(endpoint),
                                                      account.identity(),
                                                      account.dhParams(),
-                                                     *cert);
-
-    info->tls_->setOnReady(
-        [w = weak(), deviceId = std::move(deviceId), vid = std::move(vid), name = std::move(name)](
-            bool ok) {
-            if (auto shared = w.lock())
-                shared->onTlsNegotiationDone(ok, deviceId, vid, name);
-        });
+                                                     *cert,
+                                                     [w = weak(),
+                                                      deviceId = std::move(deviceId),
+                                                      vid = std::move(vid),
+                                                      name = std::move(name)](bool ok) {
+                                                         if (auto shared = w.lock())
+                                                             shared->onTlsNegotiationDone(ok,
+                                                                                          deviceId,
+                                                                                          vid,
+                                                                                          name);
+                                                     });
+    info->tls_->start();
     return true;
 }
 
@@ -871,13 +875,13 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
             if (!crt)
                 return false;
             return crt->getPacked() == cert.getPacked();
-        });
-
-    info->tls_->setOnReady(
+        },
         [w = weak(), deviceId = std::move(deviceId), vid = std::move(req.id)](bool ok) {
             if (auto shared = w.lock())
                 shared->onTlsNegotiationDone(ok, deviceId, vid);
         });
+    info->tls_->start();
+
     return true;
 }
 

@@ -120,12 +120,15 @@ public:
     TlsSocketEndpoint(std::unique_ptr<IceSocketEndpoint>&& tr,
                       const Identity& local_identity,
                       const std::shared_future<tls::DhParams>& dh_params,
-                      const dht::crypto::Certificate& peer_cert);
+                      const dht::crypto::Certificate& peer_cert,
+                      OnReadyCb&& cb);
     TlsSocketEndpoint(std::unique_ptr<IceSocketEndpoint>&& tr,
                       const Identity& local_identity,
                       const std::shared_future<tls::DhParams>& dh_params,
-                      std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
+                      std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
+                      OnReadyCb&& cb);
     ~TlsSocketEndpoint();
+    void start();
 
     bool isReliable() const override { return true; }
     bool isInitiator() const override;
@@ -142,10 +145,7 @@ public:
     }
     int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
 
-    void waitForReady(const std::chrono::milliseconds& timeout = {});
-
     void setOnStateChange(OnStateChangeCb&& cb);
-    void setOnReady(OnReadyCb&& cb);
 
     IpAddr getLocalAddress() const;
     IpAddr getRemoteAddress() const;
