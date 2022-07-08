@@ -379,14 +379,18 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
     info->tls_ = std::make_unique<TlsSocketEndpoint>(std::move(endpoint),
                                                      account.identity(),
                                                      account.dhParams(),
-                                                     *cert);
-
-    info->tls_->setOnReady(
-        [w = weak(), deviceId = std::move(deviceId), vid = std::move(vid), name = std::move(name)](
-            bool ok) {
-            if (auto shared = w.lock())
-                shared->onTlsNegotiationDone(ok, deviceId, vid, name);
-        });
+                                                     *cert,
+                                                     [w = weak(),
+                                                      deviceId = std::move(deviceId),
+                                                      vid = std::move(vid),
+                                                      name = std::move(name)](bool ok) {
+                                                         if (auto shared = w.lock())
+                                                             shared->onTlsNegotiationDone(ok,
+                                                                                          deviceId,
+                                                                                          vid,
+                                                                                          name);
+                                                     });
+    info->tls_->start();
     return true;
 }
 
@@ -706,11 +710,12 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                             dht::InfoHash peer_h;
                             if (AccountManager::foundPeerDevice(cert, peer_h)) {
 #if TARGET_OS_IOS
-                                if ((req.connType == "videoCall" || req.connType == "audioCall") && jami::Manager::instance().isIOSExtension) {
+                                if ((req.connType == "videoCall" || req.connType == "audioCall")
+                                    && jami::Manager::instance().isIOSExtension) {
                                     bool hasVideo = req.connType == "videoCall";
                                     emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
                                         shared->account.getAccountID(), peer_h.toString(), hasVideo);
-                                        return;
+                                    return;
                                 }
 #endif
                                 shared->onDhtPeerRequest(req, cert);
@@ -877,13 +882,13 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
             if (!crt)
                 return false;
             return crt->getPacked() == cert.getPacked();
-        });
-
-    info->tls_->setOnReady(
+        },
         [w = weak(), deviceId = std::move(deviceId), vid = std::move(req.id)](bool ok) {
             if (auto shared = w.lock())
                 shared->onTlsNegotiationDone(ok, deviceId, vid);
         });
+    info->tls_->start();
+
     return true;
 }
 

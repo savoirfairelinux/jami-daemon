@@ -113,6 +113,7 @@ public:
                const TlsParams& params,
                const TlsSessionCallbacks& cbs,
                bool anonymous = true);
+    void start();
     ~TlsSession();
 
     /// Request TLS thread to stop and quit.
@@ -131,8 +132,6 @@ public:
     bool isReliable() const override;
 
     int maxPayload() const override;
-
-    void waitForReady(const duration& timeout = {});
 
     /// Synchronous writing.
     /// Return a positive number for number of bytes write, or 0 and \a ec set in case of error.

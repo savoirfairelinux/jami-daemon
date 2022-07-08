@@ -170,9 +170,11 @@ public:
     Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
          const dht::crypto::Certificate& peer_cert,
          const Identity& local_identity,
-         const std::shared_future<tls::DhParams>& dh_params)
+         const std::shared_future<tls::DhParams>& dh_params,
+         OnReadyCb&& cb)
         : peerCertificate {peer_cert}
         , ep_ {ep.get()}
+        , onReadyCb_(std::move(cb))
     {
         tls::TlsSession::TlsSessionCallbacks tls_cbs
             = {/*.onStateChange = */ [this](tls::TlsSessionState state) { onTlsStateChange(state); },
@@ -206,10 +208,12 @@ public:
     Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
          std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
          const Identity& local_identity,
-         const std::shared_future<tls::DhParams>& dh_params)
+         const std::shared_future<tls::DhParams>& dh_params,
+         OnReadyCb&& cb)
         : peerCertificateCheckFunc {std::move(cert_check)}
         , peerCertificate {null_cert}
         , ep_ {ep.get()}
+        , onReadyCb_(std::move(cb))
     {
         tls::TlsSession::TlsSessionCallbacks tls_cbs
             = {/*.onStateChange = */ [this](tls::TlsSessionState state) { onTlsStateChange(state); },
@@ -264,9 +268,9 @@ public:
     std::function<bool(const dht::crypto::Certificate&)> peerCertificateCheckFunc;
     const dht::crypto::Certificate& peerCertificate;
     std::atomic_bool isReady_ {false};
-    OnReadyCb onReadyCb_;
     std::unique_ptr<tls::TlsSession> tls;
     const IceSocketEndpoint* ep_;
+    OnReadyCb onReadyCb_;
 };
 
 int
@@ -320,17 +324,23 @@ TlsSocketEndpoint::Impl::onTlsCertificatesUpdate(UNUSED const gnutls_datum_t* lo
 TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<IceSocketEndpoint>&& tr,
                                      const Identity& local_identity,
                                      const std::shared_future<tls::DhParams>& dh_params,
-                                     const dht::crypto::Certificate& peer_cert)
-    : pimpl_ {std::make_unique<Impl>(std::move(tr), peer_cert, local_identity, dh_params)}
+                                     const dht::crypto::Certificate& peer_cert,
+                                     OnReadyCb&& cb)
+    : pimpl_ {
+        std::make_unique<Impl>(std::move(tr), peer_cert, local_identity, dh_params, std::move(cb))}
 {}
 
 TlsSocketEndpoint::TlsSocketEndpoint(
     std::unique_ptr<IceSocketEndpoint>&& tr,
     const Identity& local_identity,
     const std::shared_future<tls::DhParams>& dh_params,
-    std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
-    : pimpl_ {
-        std::make_unique<Impl>(std::move(tr), std::move(cert_check), local_identity, dh_params)}
+    std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
+    OnReadyCb&& cb)
+    : pimpl_ {std::make_unique<Impl>(std::move(tr),
+                                     std::move(cert_check),
+                                     local_identity,
+                                     dh_params,
+                                     std::move(cb))}
 {}
 
 TlsSocketEndpoint::~TlsSocketEndpoint() {}
@@ -381,15 +391,6 @@ TlsSocketEndpoint::peerCertificate() const
     return pimpl_->tls->peerCertificate();
 }
 
-void
-TlsSocketEndpoint::waitForReady(const std::chrono::milliseconds& timeout)
-{
-    if (!pimpl_->tls) {
-        return;
-    }
-    pimpl_->tls->waitForReady(timeout);
-}
-
 int
 TlsSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
@@ -408,13 +409,6 @@ TlsSocketEndpoint::setOnStateChange(std::function<bool(tls::TlsSessionState stat
 }
 
 void
-TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
-{
-    std::lock_guard<std::mutex> lk(pimpl_->cbMtx_);
-    pimpl_->onReadyCb_ = std::move(cb);
-}
-
-void
 TlsSocketEndpoint::shutdown()
 {
     if (pimpl_->ep_) {
@@ -422,7 +416,15 @@ TlsSocketEndpoint::shutdown()
         if (iceSocket && iceSocket->underlyingICE())
             iceSocket->underlyingICE()->cancelOperations();
     }
-    pimpl_->tls->shutdown();
+    if (pimpl_->tls)
+        pimpl_->tls->shutdown();
+}
+
+void
+TlsSocketEndpoint::start()
+{
+    if (pimpl_->tls)
+        pimpl_->tls->start();
 }
 
 std::shared_ptr<IceTransport>
