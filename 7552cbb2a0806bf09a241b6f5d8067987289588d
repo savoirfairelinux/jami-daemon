@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96d1eed5_0bb20998",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-07-08T18:00:19Z",
+      "side": 1,
+      "message": "capture-by-value?",
+      "range": {
+        "startLine": 256,
+        "startChar": 47,
+        "endLine": 256,
+        "endChar": 79
+      },
+      "revId": "7552cbb2a0806bf09a241b6f5d8067987289588d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
