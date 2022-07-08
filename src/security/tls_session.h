@@ -113,6 +113,7 @@ public:
                const TlsParams& params,
                const TlsSessionCallbacks& cbs,
                bool anonymous = true);
+    void start();
     ~TlsSession();
 
     /// Request TLS thread to stop and quit.
