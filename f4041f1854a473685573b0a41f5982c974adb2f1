@@ -16,6 +16,24 @@
       "message": "Many machines might not be able to handle mixing and encoding Full HD video in real-time ?",
       "revId": "f4041f1854a473685573b0a41f5982c974adb2f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13b5c303_f9883f8a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 23
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-11T15:02:11Z",
+      "side": 1,
+      "message": "Probably. But since we use the grid for video-split, and we can have dirty resize, it\u0027s easy to get pixelated conference now.\n\nI guess we can stay with the current quality for now, and re-evaluate if too much people talk about pixelated video.\n\nAlso, I guess another approach can be to use 1080x720 or the biggest resolution (if there is a 4k screen sharing, it can be useful)",
+      "parentUuid": "a6eb3c97_f96394f4",
+      "revId": "f4041f1854a473685573b0a41f5982c974adb2f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
