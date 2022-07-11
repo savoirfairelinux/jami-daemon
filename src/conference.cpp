@@ -702,7 +702,7 @@ Conference::addParticipant(const std::string& participant_id)
             call->toggleRecording();
             if (not this->isRecording()) {
                 JAMI_DBG("One participant was recording, start recording for conference %s",
-                        getConfId().c_str());
+                         getConfId().c_str());
                 this->toggleRecording();
             }
         }
@@ -1012,7 +1012,7 @@ Conference::toggleRecording()
     bool newState = not isRecording();
     if (newState)
         initRecorder(recorder_);
-    else
+    else if (recorder_)
         deinitRecorder(recorder_);
 
     // Notify each participant

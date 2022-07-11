@@ -177,20 +177,7 @@ SIPCall::createRtpSession(RtpStream& stream)
     if (not stream.mediaAttribute_)
         throw std::runtime_error("Missing media attribute");
 
-    // Find idx of this stream as we can share several audio/videos
-    auto streamIdx = [&]() {
-        auto idx = 0;
-        for (const auto& st : rtpStreams_) {
-            if (st.mediaAttribute_->label_ == stream.mediaAttribute_->label_)
-                return idx;
-            if (st.mediaAttribute_->type_ == stream.mediaAttribute_->type_)
-                idx++;
-        }
-        return -1;
-    };
-
     // To get audio_0 ; video_0
-    auto idx = streamIdx();
     auto streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
         stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId);
@@ -3397,11 +3384,9 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
             mediaReady_.at("v:local") = true;
     }
 
+    isAudioOnly_ = !hasVideo();
 #ifdef ENABLE_VIDEO
-    if (mediaReady_.at("a:local") and mediaReady_.at("a:remote") and mediaReady_.at("v:remote")) {
-        if (Manager::instance().videoPreferences.getRecordPreview() or mediaReady_.at("v:local"))
-            readyToRecord_ = true;
-    }
+    readyToRecord_ = true; // We're ready to record whenever a stream is ready
 #endif
 
     if (pendingRecord_ && readyToRecord_)

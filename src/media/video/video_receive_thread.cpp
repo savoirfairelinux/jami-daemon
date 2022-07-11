@@ -297,13 +297,17 @@ VideoReceiveThread::getHeight() const
 AVPixelFormat
 VideoReceiveThread::getPixelFormat() const
 {
-    return videoDecoder_->getPixelFormat();
+    if (videoDecoder_)
+        return videoDecoder_->getPixelFormat();
+    return {};
 }
 
 MediaStream
 VideoReceiveThread::getInfo() const
 {
-    return videoDecoder_->getStream("v:remote");
+    if (videoDecoder_)
+        return videoDecoder_->getStream("v:remote");
+    return {};
 }
 
 void
