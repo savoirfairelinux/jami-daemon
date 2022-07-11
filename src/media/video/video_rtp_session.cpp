@@ -746,6 +746,8 @@ VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 void
 VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
+    if (!rec)
+        return;
     if (receiveThread_) {
         if (auto ob = rec->getStream(receiveThread_->getInfo().name)) {
             receiveThread_->detach(ob);
