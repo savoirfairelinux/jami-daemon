@@ -120,6 +120,16 @@ test('conference', ut_conference,
 )
 
 
+ut_recorder = executable('ut_recorder',
+    sources: files('unitTest/call/recorder.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('conference', ut_recorder,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
+
 ut_connection_manager = executable('ut_connection_manager',
     sources: files('unitTest/connectionManager/connectionManager.cpp'),
     include_directories: ut_includedirs,

@@ -1019,7 +1019,7 @@ Conference::toggleRecording()
     bool newState = not isRecording();
     if (newState)
         initRecorder(recorder_);
-    else
+    else if (recorder_)
         deinitRecorder(recorder_);
 
     // Notify each participant

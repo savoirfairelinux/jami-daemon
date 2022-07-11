@@ -131,6 +131,12 @@ check_PROGRAMS += ut_call
 ut_call_SOURCES = call/call.cpp common.cpp
 
 #
+# recorder
+#
+check_PROGRAMS += ut_recorder
+ut_recorder_SOURCES = call/recorder.cpp common.cpp
+
+#
 # conference
 #
 check_PROGRAMS += ut_conference
