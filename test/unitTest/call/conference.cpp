@@ -769,6 +769,7 @@ ConferenceTest::testIsConferenceParticipant()
     DRing::unregisterSignalHandlers();
 }
 
+void
 ConferenceTest::testHostAddRmSecondVideo()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
