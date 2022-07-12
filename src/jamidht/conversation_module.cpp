@@ -1229,8 +1229,13 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
             auto itConv = pimpl_->convInfos_.find(convId);
-            if (itConv != pimpl_->convInfos_.end() && itConv->second.removed)
-                continue;
+            if (itConv != pimpl_->convInfos_.end() && itConv->second.removed) {
+                if (itConv->second.removed > convInfo.created) {
+                    // Only reclone if re-added, else the peer is not synced yet (could be offline before)
+                    continue;
+                }
+                JAMI_DBG("Re-add previously removed conversation %s", convId.c_str());
+            }
             pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
         } else {
             {
