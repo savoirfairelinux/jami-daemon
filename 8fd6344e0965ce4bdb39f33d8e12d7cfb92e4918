@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e0cb2162_4c3fdf8b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1228,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-12T20:56:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7160f0e3_78de719c",
+      "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2e39be53_a14db328",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f398f572_624b859a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-12T20:56:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2e39be53_a14db328",
+      "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "40d574d1_e047cb40",
@@ -48,6 +84,24 @@
       "writtenOn": "2022-07-12T20:48:03Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "55f08b0b_86c8c298",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1240,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-12T20:56:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "40d574d1_e047cb40",
       "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
