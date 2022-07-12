@@ -64,7 +64,17 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
         if (info->contacts)
             msg.ds = info->contacts->getSyncData();
     msg.c = ConversationModule::convInfos(acc->getAccountID());
+    for (const auto& [k_, ci] : msg.c) {
+        JAMI_ERR("@@@@ CONVINFO %s %u %u %u", ci.id.c_str(), ci.created, ci.removed, ci.erased);
+    }
     msg.cr = ConversationModule::convRequests(acc->getAccountID());
+    for (const auto& [k_, cr] : msg.cr) {
+        JAMI_ERR("@@@@ CONVREQ  %s %u %u %u",
+                 cr.conversationId.c_str(),
+                 cr.from.c_str(),
+                 cr.received,
+                 cr.declined);
+    }
     msgpack::pack(buffer, msg);
     socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
     if (ec)
@@ -156,8 +166,11 @@ SyncModule::syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSock
 void
 SyncModule::syncWithConnected()
 {
+    JAMI_ERR("@@@ SyncModule::syncWithConnected()");
     std::lock_guard<std::mutex> lk(pimpl_->syncConnectionsMtx_);
+    JAMI_ERR("@@@ SyncModule::syncWithConnected()!");
     for (auto& [_deviceId, sockets] : pimpl_->syncConnections_) {
+        JAMI_ERR("@@@ sync? %u", not sockets.empty());
         if (not sockets.empty())
             pimpl_->syncInfos(sockets[0]);
     }

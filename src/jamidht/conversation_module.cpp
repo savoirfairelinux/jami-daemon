@@ -526,6 +526,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             sendMessageNotification(conversationId, commitId, false);
         // Inform user that the conversation is ready
         emitSignal<DRing::ConversationSignal::ConversationReady>(accountId_, conversationId);
+        JAMI_ERR("@@@@ NEEDS SYNCING CB");
         needsSyncingCb_();
         std::vector<Json::Value> values;
         values.reserve(messages.size());
@@ -1224,15 +1225,34 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     for (const auto& [key, convInfo] : msg.c) {
         auto convId = convInfo.id;
         auto removed = convInfo.removed;
+        JAMI_ERR("@@@ SYNC %s %u", convId.c_str(), removed);
         pimpl_->rmConversationRequest(convId);
         if (not removed) {
+            JAMI_ERR("@@@@ NOT REMOVED %s", convId.c_str());
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
             auto itConv = pimpl_->convInfos_.find(convId);
-            if (itConv != pimpl_->convInfos_.end() && itConv->second.removed)
+            if (itConv != pimpl_->convInfos_.end() && itConv->second.removed) {
+                // Here we need to check if we have to re-add the conversation via the contact' status
+                auto members = itConv->second.members;
+                auto members2 = convInfo.members;
+                JAMI_ERR("@@@@ NOT REMOVED m %u", members.size());
+                JAMI_ERR("@@@@ NOT REMOVED m2 %u", members2.size());
+                if (members2.size() <= 2) {
+                    for (const auto& member : members2) {
+                        JAMI_ERR("@@@@ member %s", member.c_str());
+                        if (member != pimpl_->username_) {
+                            JAMI_ERR("@@@@ REMOVED CONV %s",
+                                     getOneToOneConversation(member).c_str());
+                        }
+                    }
+                }
                 continue;
+                JAMI_DBG("Re-add previously removed conversation %s", convId.c_str());
+            }
             pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
         } else {
+            JAMI_ERR("@@@@ REMOVED %s", convId.c_str());
             {
                 std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
                 auto itConv = pimpl_->conversations_.find(convId);
@@ -1260,6 +1280,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     for (const auto& [convId, req] : msg.cr) {
         if (pimpl_->isConversation(convId)) {
             // Already accepted request
+            JAMI_ERR("@@@ ALREADY %s", convId.c_str());
             pimpl_->rmConversationRequest(convId);
             continue;
         }
