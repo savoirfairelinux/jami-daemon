@@ -1148,8 +1148,11 @@ JamiAccount::loadAccount(const std::string& archive_password,
             }
             // Here account can be initializing
             if (auto cm = convModule()) {
+                JAMI_ERR("@@@@ ON INCOMING?");
                 auto activeConv = cm->getOneToOneConversation(uri);
+                JAMI_ERR("@@@@ ON INCOMING? %s vs %s", activeConv.c_str(), conversationId.c_str());
                 if (activeConv != conversationId) {
+                    JAMI_ERR("@@@2!!!!");
                     cm->onTrustRequest(uri, conversationId, payload, received);
                 }
             }
@@ -1166,6 +1169,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             });
         },
         [this](const std::string& conversationId) {
+            JAMI_ERR("@@@ CONV ID ACCEPT");
             // Note: Do not retrigger on another thread. This as to be done
             // at the same time of acceptTrustRequest a synced state between TrustRequest
             // and convRequests.
@@ -2325,9 +2329,13 @@ JamiAccount::convModule()
         convModule_ = std::make_unique<ConversationModule>(
             weak(),
             [this] {
+                JAMI_ERR("@@@@ SYNC WITH CONNECTED");
                 runOnMainThread([w = weak()] {
-                    if (auto shared = w.lock())
+                    if (auto shared = w.lock()) {
+                        JAMI_ERR("@@@@ SYNC WITH CONNECTED!");
+
                         shared->syncModule()->syncWithConnected();
+                    }
                 });
             },
             [this](auto&& uri, auto&& msg) {
@@ -2968,6 +2976,7 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
     auto conversation = convModule()->getOneToOneConversation(uri);
     if (!confirmed && conversation.empty())
         conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, uri);
+    JAMI_ERR("@@@ ADD %s %s %u", uri.c_str(), conversation.c_str(), confirmed);
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->addContact(uri, confirmed, conversation);
@@ -3057,6 +3066,7 @@ JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversatio
         if (!accountManager_->acceptTrustRequest(from, includeConversation)) {
             // Note: unused for swarm
             // Typically the case where the trust request doesn't exists, only incoming DHT messages
+            JAMI_ERR("@@@ ACCEPT %s ", from.c_str());
             return accountManager_->addContact(from, true);
         }
         return true;
@@ -3111,9 +3121,9 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, to);
     if (not conversation.empty()) {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-        if (accountManager_)
+        if (accountManager_) {
             accountManager_->sendTrustRequest(to, conversation, payload);
-        else
+        } else
             JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
     } else
         JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());

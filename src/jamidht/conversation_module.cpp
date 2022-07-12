@@ -526,6 +526,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             sendMessageNotification(conversationId, commitId, false);
         // Inform user that the conversation is ready
         emitSignal<DRing::ConversationSignal::ConversationReady>(accountId_, conversationId);
+        JAMI_ERR("@@@@ NEEDS SYNCING CB");
         needsSyncingCb_();
         std::vector<Json::Value> values;
         values.reserve(messages.size());
@@ -1224,13 +1225,26 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     for (const auto& [key, convInfo] : msg.c) {
         auto convId = convInfo.id;
         auto removed = convInfo.removed;
+        JAMI_ERR("@@@ SYNC %s %u", convId.c_str(), removed);
         pimpl_->rmConversationRequest(convId);
         if (not removed) {
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
             auto itConv = pimpl_->convInfos_.find(convId);
-            if (itConv != pimpl_->convInfos_.end() && itConv->second.removed)
+            if (itConv != pimpl_->convInfos_.end() && itConv->second.removed) {
+                // Here we need to check if we have to re-add the conversation via the contact' status
+                auto members = itConv->second.members;
+                if (members.size() == 2) {
+                    for (const auto& member : members) {
+                        if (member != pimpl_->username_) {
+                            JAMI_ERR("@@@@ REMOVED CONV %s",
+                                     getOneToOneConversation(member).c_str());
+                        }
+                    }
+                }
                 continue;
+                JAMI_DBG("Re-add previously removed conversation %s", convId.c_str());
+            }
             pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
         } else {
             {
@@ -1260,6 +1274,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     for (const auto& [convId, req] : msg.cr) {
         if (pimpl_->isConversation(convId)) {
             // Already accepted request
+            JAMI_ERR("@@@ ALREADY %s", convId.c_str());
             pimpl_->rmConversationRequest(convId);
             continue;
         }
