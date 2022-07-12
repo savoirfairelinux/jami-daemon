@@ -123,6 +123,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "71d88114_ad591bb4",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-12T20:57:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1456b0c0_12b3413a",
+      "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eadd420c_235435f7",
@@ -136,6 +154,24 @@
       "writtenOn": "2022-07-12T20:48:03Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027const char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8ba1cfb_20325833",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-12T20:57:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eadd420c_235435f7",
       "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -157,6 +193,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5df2d911_c89f6b34",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-12T20:57:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a3208bfb_fcb15743",
+      "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2d58de2a_0881f078",
@@ -170,6 +224,24 @@
       "writtenOn": "2022-07-12T20:48:03Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027time_t\u0027 (aka \u0027long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f87c6f6f_17b48b0b",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-12T20:57:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2d58de2a_0881f078",
       "revId": "8fd6344e0965ce4bdb39f33d8e12d7cfb92e4918",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
