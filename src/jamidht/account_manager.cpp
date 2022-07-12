@@ -555,6 +555,7 @@ AccountManager::getTrustRequests() const
 bool
 AccountManager::acceptTrustRequest(const std::string& from, bool includeConversation)
 {
+    JAMI_ERR("@@@ ACCEPT TRUST");
     dht::InfoHash f(from);
     if (info_) {
         auto req = info_->contacts->getTrustRequest(dht::InfoHash(from));
