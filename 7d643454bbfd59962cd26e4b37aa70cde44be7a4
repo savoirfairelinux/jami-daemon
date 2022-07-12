@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c3ffbe9_9bc570c7",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1228,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-07-12T21:01:09Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027long\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "7d643454bbfd59962cd26e4b37aa70cde44be7a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fc38f301_749af78d",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1238,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-07-12T21:01:09Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "7d643454bbfd59962cd26e4b37aa70cde44be7a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "daeaae8a_8b94e1a8",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-07-12T21:01:09Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027time_t\u0027 (aka \u0027long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "7d643454bbfd59962cd26e4b37aa70cde44be7a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b08dcda9_523ec0e7",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-07-12T21:01:09Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027const char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "7d643454bbfd59962cd26e4b37aa70cde44be7a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ff0a290_4ea55c0a",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-07-12T21:01:09Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027time_t\u0027 (aka \u0027long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "7d643454bbfd59962cd26e4b37aa70cde44be7a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f04c4ac7_b9f24972",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-07-12T21:01:09Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027time_t\u0027 (aka \u0027long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "7d643454bbfd59962cd26e4b37aa70cde44be7a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
