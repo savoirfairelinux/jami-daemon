@@ -74,12 +74,16 @@ ContactList::setCertificateStatus(const std::string& cert_id,
 bool
 ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::string& conversationId)
 {
-    JAMI_WARN("[Contacts] addContact: %s, conversation: %s", h.to_c_str(), conversationId.c_str());
+    JAMI_WARN("@@@[Contacts] addContact: %s, conversation: %s",
+              h.to_c_str(),
+              conversationId.c_str());
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact {}).first;
-    else if (c->second.isActive() and c->second.confirmed == confirmed)
+    else if (c->second.isActive() and c->second.confirmed == confirmed) {
+        JAMI_ERR("@@@@ RET FALSE");
         return false;
+    }
     c->second.added = std::time(nullptr);
     // NOTE: because we can re-add a contact after removing it
     // we should reset removed (as not removed anymore). This fix isActive()
@@ -368,6 +372,7 @@ ContactList::getTrustRequest(const dht::InfoHash& from) const
 bool
 ContactList::acceptTrustRequest(const dht::InfoHash& from)
 {
+    JAMI_ERR("@@@@ ERASE %s", from.to_c_str());
     // The contact sent us a TR so we are in its contact list
     auto i = trustRequests_.find(from);
     if (i == trustRequests_.end())
@@ -376,6 +381,7 @@ ContactList::acceptTrustRequest(const dht::InfoHash& from)
     addContact(from, true, i->second.conversationId);
     // Clear trust request
     trustRequests_.erase(i);
+    JAMI_ERR("@@@@ ERASED %s", i->second.conversationId.c_str());
     saveTrustRequests();
     return true;
 }
