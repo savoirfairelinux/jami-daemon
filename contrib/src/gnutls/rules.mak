@@ -21,6 +21,7 @@ ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
 	$(call pkg_static,"lib/gnutls.pc.in")
+	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 GNUTLS_CONF := \
@@ -28,10 +29,8 @@ GNUTLS_CONF := \
 	--without-p11-kit \
 	--disable-cxx \
 	--disable-srp-authentication \
-	--disable-psk-authentication-FIXME \
 	--with-included-libtasn1 \
 	--with-included-unistring \
-	--disable-openpgp-authentication \
 	--disable-openssl-compatibility \
 	--disable-guile \
 	--disable-nls \
@@ -53,6 +52,7 @@ CFLAGS="-D_POSIX_C_SOURCE"
 endif
 
 .gnutls: gnutls
+	$(RECONF)
 ifdef HAVE_ANDROID
 	cd $< && $(HOSTVARS) ./configure $(GNUTLS_CONF)
 else
