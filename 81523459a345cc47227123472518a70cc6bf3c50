@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21b944e3_0e3b5bdb",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-13T18:18:52Z",
+      "side": 0,
+      "message": "remove original file as unused (and check if still useful? gtkdoc/ASN1 macos)",
+      "range": {
+        "startLine": 20,
+        "startChar": 24,
+        "endLine": 20,
+        "endChar": 41
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "066213e0_9a49bc62",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-13T18:18:52Z",
+      "side": 0,
+      "message": "remove original file as unused",
+      "range": {
+        "startLine": 24,
+        "startChar": 23,
+        "endLine": 24,
+        "endChar": 59
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8b8ccba_5a462407",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-13T18:18:52Z",
+      "side": 0,
+      "message": "remove original file as unused",
+      "range": {
+        "startLine": 27,
+        "startChar": 24,
+        "endLine": 27,
+        "endChar": 46
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0279e082_ac0bf409",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-13T18:18:52Z",
+      "side": 0,
+      "message": "To confirm it\u0027s working on macos",
+      "range": {
+        "startLine": 29,
+        "startChar": 5,
+        "endLine": 31,
+        "endChar": 5
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "520c1255_85a532c6",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-13T18:18:52Z",
+      "side": 0,
+      "message": "remove original file as unused",
+      "range": {
+        "startLine": 33,
+        "startChar": 24,
+        "endLine": 33,
+        "endChar": 59
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ef7dab5_2a1b0951",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-13T18:18:52Z",
+      "side": 0,
+      "message": "remove original file as unused",
+      "range": {
+        "startLine": 35,
+        "startChar": 25,
+        "endLine": 35,
+        "endChar": 48
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
