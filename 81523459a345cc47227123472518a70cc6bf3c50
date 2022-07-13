@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e35250c_943f9e50",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-13T18:58:59Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "21b944e3_0e3b5bdb",
+      "range": {
+        "startLine": 20,
+        "startChar": 24,
+        "endLine": 20,
+        "endChar": 41
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "066213e0_9a49bc62",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c61c0d6_ab74a8bc",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-13T18:58:59Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "066213e0_9a49bc62",
+      "range": {
+        "startLine": 24,
+        "startChar": 23,
+        "endLine": 24,
+        "endChar": 59
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d8b8ccba_5a462407",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-07-13T18:18:52Z",
       "side": 0,
       "message": "remove original file as unused",
+      "range": {
+        "startLine": 27,
+        "startChar": 24,
+        "endLine": 27,
+        "endChar": 46
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cb211485_d67029a4",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-13T18:58:59Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "d8b8ccba_5a462407",
       "range": {
         "startLine": 27,
         "startChar": 24,
