@@ -120,8 +120,6 @@ class TrustStore
 {
 public:
     TrustStore() = default;
-    TrustStore(TrustStore&& o) = default;
-    TrustStore& operator=(TrustStore&& o) = default;
 
     enum class PermissionStatus { UNDEFINED = 0, ALLOWED, BANNED };
 
@@ -156,6 +154,8 @@ public:
 
 private:
     NON_COPYABLE(TrustStore);
+    TrustStore(TrustStore&& o) = delete;
+    TrustStore& operator=(TrustStore&& o) = delete;
 
     void updateKnownCerts();
     bool setCertificateStatus(std::shared_ptr<crypto::Certificate> cert,
