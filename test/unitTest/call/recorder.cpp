@@ -75,6 +75,8 @@ public:
 
     std::string aliceId;
     std::string bobId;
+    std::string recordDir;
+    std::string recordedFile;
     CallData bobCall {};
 
     std::mutex mtx;
@@ -101,19 +103,24 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RecorderTest, RecorderTest::name());
 void
 RecorderTest::setUp()
 {
+    // Generate a temporary directory with a file inside
+    recordDir = "records";
+    fileutils::recursive_mkdir(recordDir.c_str());
+    CPPUNIT_ASSERT(fileutils::isDirectory(recordDir));
+
     auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     bobCall.reset();
 
-    fileutils::recursive_mkdir("records");
-    DRing::setRecordPath("records");
+    DRing::setRecordPath(recordDir);
 }
 
 void
 RecorderTest::tearDown()
 {
-    fileutils::removeAll("records");
+    DRing::setIsAlwaysRecording(false);
+    fileutils::removeAll(recordDir);
 
     wait_for_removal_of({aliceId, bobId});
 }
@@ -159,7 +166,11 @@ RecorderTest::registerSignalHandlers()
                 bobCall.mediaStatus = event;
             cv.notify_one();
         }));
-
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::RecordPlaybackStopped>(
+        [&](const std::string& path) {
+            recordedFile = path;
+            cv.notify_one();
+        }));
     DRing::registerSignalHandlers(confHandlers);
 }
 
@@ -183,18 +194,16 @@ RecorderTest::testRecordCall()
 
     // Start recorder
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
-    auto files = fileutils::readDirectory("records");
-    CPPUNIT_ASSERT(files.size() == 0);
     DRing::toggleRecording(aliceId, callId);
 
     // Stop recorder after a few seconds
     std::this_thread::sleep_for(5s);
     CPPUNIT_ASSERT(DRing::getIsRecording(aliceId, callId));
+    recordedFile.clear();
     DRing::toggleRecording(aliceId, callId);
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
 
-    files = fileutils::readDirectory("records");
-    CPPUNIT_ASSERT(files.size() == 1);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !recordedFile.empty(); }));
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
@@ -226,18 +235,18 @@ RecorderTest::testRecordAudioOnlyCall()
     }));
 
     // Start recorder
-    auto files = fileutils::readDirectory("records");
-    CPPUNIT_ASSERT(files.size() == 0);
     DRing::toggleRecording(aliceId, callId);
 
     // Stop recorder
     std::this_thread::sleep_for(5s);
     CPPUNIT_ASSERT(DRing::getIsRecording(aliceId, callId));
+    recordedFile.clear();
     DRing::toggleRecording(aliceId, callId);
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
 
-    files = fileutils::readDirectory("records");
-    CPPUNIT_ASSERT(files.size() == 1);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
+        return !recordedFile.empty() && recordedFile.find(".ogg") != std::string::npos;
+    }));
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
@@ -262,17 +271,14 @@ RecorderTest::testStopCallWhileRecording()
     }));
 
     // Start recorder
-    auto files = fileutils::readDirectory("records");
-    CPPUNIT_ASSERT(files.size() == 0);
     DRing::toggleRecording(aliceId, callId);
 
     // Hangup call
     std::this_thread::sleep_for(5s);
+    recordedFile.clear();
     Manager::instance().hangupCall(aliceId, callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
-
-    files = fileutils::readDirectory("records");
-    CPPUNIT_ASSERT(files.size() == 1);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && !recordedFile.empty(); }));
 }
 
 void
@@ -298,10 +304,10 @@ RecorderTest::testDaemonPreference()
     // Let record some seconds
     std::this_thread::sleep_for(5s);
 
+    recordedFile.clear();
     Manager::instance().hangupCall(aliceId, callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
-    auto files = fileutils::readDirectory("records");
-    CPPUNIT_ASSERT(files.size() == 1);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && !recordedFile.empty(); }));
 }
 
 } // namespace test

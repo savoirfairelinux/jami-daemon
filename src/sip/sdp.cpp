@@ -91,7 +91,8 @@ Sdp::findCodecBySpec(std::string_view codec, const unsigned clockrate) const
     // TODO : only manage a list?
     for (const auto& accountCodec : audio_codec_list_) {
         auto audioCodecInfo = std::static_pointer_cast<AccountAudioCodecInfo>(accountCodec);
-        auto& sysCodecInfo = *static_cast<const SystemAudioCodecInfo*>(&audioCodecInfo->systemCodecInfo);
+        auto& sysCodecInfo = *static_cast<const SystemAudioCodecInfo*>(
+            &audioCodecInfo->systemCodecInfo);
         if (sysCodecInfo.name == codec
             and (audioCodecInfo->isPCMG722() ? (clockrate == 8000)
                                              : (sysCodecInfo.audioformat.sample_rate == clockrate)))
@@ -850,7 +851,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             descr.rtp_clockrate = rtpmap.clock_rate;
             descr.codec = findCodecBySpec(codec_raw, rtpmap.clock_rate);
             if (not descr.codec) {
-                JAMI_ERR("Could not find codec %.*s", (int)codec_raw.size(), codec_raw.data());
+                JAMI_ERR("Could not find codec %.*s", (int) codec_raw.size(), codec_raw.data());
                 descr.enabled = false;
                 continue;
             }
