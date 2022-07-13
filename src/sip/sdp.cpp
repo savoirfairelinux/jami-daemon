@@ -91,7 +91,8 @@ Sdp::findCodecBySpec(std::string_view codec, const unsigned clockrate) const
     // TODO : only manage a list?
     for (const auto& accountCodec : audio_codec_list_) {
         auto audioCodecInfo = std::static_pointer_cast<AccountAudioCodecInfo>(accountCodec);
-        auto& sysCodecInfo = *static_cast<const SystemAudioCodecInfo*>(&audioCodecInfo->systemCodecInfo);
+        auto& sysCodecInfo = *static_cast<const SystemAudioCodecInfo*>(
+            &audioCodecInfo->systemCodecInfo);
         if (sysCodecInfo.name == codec
             and (audioCodecInfo->isPCMG722() ? (clockrate == 8000)
                                              : (sysCodecInfo.audioformat.sample_rate == clockrate)))
@@ -777,6 +778,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
     static constexpr pj_str_t STR_FMTP {sip_utils::CONST_PJ_STR("fmtp")};
 
     std::vector<MediaDescription> ret;
+    JAMI_ERR() << "@@@ " << session->media_count;
     for (unsigned i = 0; i < session->media_count; i++) {
         auto media = session->media[i];
         ret.emplace_back(MediaDescription());
@@ -789,8 +791,10 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             continue;
 
         descr.enabled = media->desc.port;
-        if (!descr.enabled)
+        if (!descr.enabled) {
+            JAMI_ERR("@@@@");
             continue;
+        }
 
         // get connection info
         pjmedia_sdp_conn* conn = media->conn ? media->conn : session->conn;
@@ -826,6 +830,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         if (descr.direction_ == MediaDirection::UNKNOWN) {
             JAMI_ERR("Did not find media direction attribute in remote SDP");
         }
+        JAMI_ERR("@@@@ %u", (int) descr.direction_);
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
@@ -850,7 +855,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             descr.rtp_clockrate = rtpmap.clock_rate;
             descr.codec = findCodecBySpec(codec_raw, rtpmap.clock_rate);
             if (not descr.codec) {
-                JAMI_ERR("Could not find codec %.*s", (int)codec_raw.size(), codec_raw.data());
+                JAMI_ERR("Could not find codec %.*s", (int) codec_raw.size(), codec_raw.data());
                 descr.enabled = false;
                 continue;
             }

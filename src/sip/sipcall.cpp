@@ -899,7 +899,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
 }
 
 void
-SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList)
+SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList, bool isRemote)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
 
@@ -909,20 +909,19 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
         return;
     }
 
-    auto remoteMediaAttrList = MediaAttribute::buildMediaAttributesList(remoteMediaList,
-                                                                        isSrtpEnabled());
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     // TODO. is the right place?
     // Disable video if disabled in the account.
     if (not account->isVideoEnabled()) {
-        for (auto& mediaAttr : remoteMediaAttrList) {
+        for (auto& mediaAttr : mediaAttrList) {
             if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
                 mediaAttr.enabled_ = false;
             }
         }
     }
 
-    if (remoteMediaAttrList.empty()) {
+    if (mediaAttrList.empty()) {
         JAMI_WARN("[call:%s] Media list is empty. Ignoring the media change request",
                   getCallId().c_str());
         return;
@@ -944,17 +943,17 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
 
     JAMI_DBG("[call:%s] Answering to media change request with new media", getCallId().c_str());
     idx = 0;
-    for (auto const& newMediaAttr : remoteMediaAttrList) {
+    for (auto const& newMediaAttr : mediaAttrList) {
         JAMI_DBG("[call:%s] Media @%u: %s",
                  getCallId().c_str(),
                  idx++,
                  newMediaAttr.toString(true).c_str());
     }
 
-    if (!updateAllMediaStreams(remoteMediaAttrList, true))
+    if (!updateAllMediaStreams(mediaAttrList, isRemote))
         return;
 
-    if (not sdp_->processIncomingOffer(remoteMediaAttrList)) {
+    if (not sdp_->processIncomingOffer(mediaAttrList)) {
         JAMI_WARN("[call:%s] Could not process the new offer, ignoring", getCallId().c_str());
         return;
     }
@@ -2689,8 +2688,8 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
     // If the offered media does not differ from the current local media, the
     // request is answered using the current local media.
     if (not checkMediaChangeRequest(remoteMediaList)) {
-        answerMediaChangeRequest(
-            MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
+        answerMediaChangeRequest(MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()),
+                                 true);
         return;
     }
 
@@ -2714,7 +2713,7 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
                 newMediaList.emplace_back(remoteMediaList[idx]);
             }
         }
-        answerMediaChangeRequest(newMediaList);
+        answerMediaChangeRequest(newMediaList, true);
         return;
     }
 
