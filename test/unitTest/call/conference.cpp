@@ -873,7 +873,7 @@ ConferenceTest::testParticipantAddRmSecondVideo()
     // Bob removes his second video
     pInfos_.clear();
     mediaList.pop_back();
-    DRing::requestMediaChange(bobId, confId, mediaList);
+    DRing::requestMediaChange(bobId, bobCall.callId, mediaList);
 
     // Check that bob has ont video attached to the conference
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 1; }));

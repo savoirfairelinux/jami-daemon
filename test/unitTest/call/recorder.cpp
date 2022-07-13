@@ -106,14 +106,15 @@ RecorderTest::setUp()
     bobId = actors["bob"];
     bobCall.reset();
 
-    fileutils::recursive_mkdir("records");
-    DRing::setRecordPath("records");
+    fileutils::recursive_mkdir("./records");
+    DRing::setRecordPath("./records");
 }
 
 void
 RecorderTest::tearDown()
 {
-    fileutils::removeAll("records");
+    DRing::setIsAlwaysRecording(false);
+    fileutils::removeAll("./records");
 
     wait_for_removal_of({aliceId, bobId});
 }
@@ -183,7 +184,7 @@ RecorderTest::testRecordCall()
 
     // Start recorder
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
-    auto files = fileutils::readDirectory("records");
+    auto files = fileutils::readDirectory("./records");
     CPPUNIT_ASSERT(files.size() == 0);
     DRing::toggleRecording(aliceId, callId);
 
@@ -193,7 +194,12 @@ RecorderTest::testRecordCall()
     DRing::toggleRecording(aliceId, callId);
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
 
-    files = fileutils::readDirectory("records");
+    std::this_thread::sleep_for(5s);
+    JAMI_ERR("@@@@@@@@@@ CHECK");
+    files = fileutils::readDirectory("./records");
+    std::string path = "./records";
+    for (const auto& entry : std::filesystem::directory_iterator(path))
+        std::cout << entry.path() << std::endl;
     CPPUNIT_ASSERT(files.size() == 1);
 
     Manager::instance().hangupCall(aliceId, callId);
@@ -226,7 +232,7 @@ RecorderTest::testRecordAudioOnlyCall()
     }));
 
     // Start recorder
-    auto files = fileutils::readDirectory("records");
+    auto files = fileutils::readDirectory("./records");
     CPPUNIT_ASSERT(files.size() == 0);
     DRing::toggleRecording(aliceId, callId);
 
@@ -236,7 +242,9 @@ RecorderTest::testRecordAudioOnlyCall()
     DRing::toggleRecording(aliceId, callId);
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
 
-    files = fileutils::readDirectory("records");
+    std::this_thread::sleep_for(5s);
+    JAMI_ERR("@@@@@@@@@@ CHECK");
+    files = fileutils::readDirectory("./records");
     CPPUNIT_ASSERT(files.size() == 1);
 
     Manager::instance().hangupCall(aliceId, callId);
@@ -262,7 +270,7 @@ RecorderTest::testStopCallWhileRecording()
     }));
 
     // Start recorder
-    auto files = fileutils::readDirectory("records");
+    auto files = fileutils::readDirectory("./records");
     CPPUNIT_ASSERT(files.size() == 0);
     DRing::toggleRecording(aliceId, callId);
 
@@ -271,7 +279,9 @@ RecorderTest::testStopCallWhileRecording()
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
 
-    files = fileutils::readDirectory("records");
+    std::this_thread::sleep_for(5s);
+    JAMI_ERR("@@@@@@@@@@ CHECK");
+    files = fileutils::readDirectory("./records");
     CPPUNIT_ASSERT(files.size() == 1);
 }
 
@@ -300,7 +310,9 @@ RecorderTest::testDaemonPreference()
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
-    auto files = fileutils::readDirectory("records");
+    std::this_thread::sleep_for(5s);
+    JAMI_ERR("@@@@@@@@@@ CHECK");
+    auto files = fileutils::readDirectory("./records");
     CPPUNIT_ASSERT(files.size() == 1);
 }
 
