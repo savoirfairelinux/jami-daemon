@@ -259,8 +259,11 @@ public:
      * list means the media update request was not accepted, meaning the
      * call continue with the current media. It's up to the implementation
      * to determine wether an answer will be sent to the peer.
+     * @param isRemote      True if the media list is from the remote peer
      */
-    virtual void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList) = 0;
+    virtual void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList,
+                                          bool isRemote = false)
+        = 0;
     /**
      * Hang up the call
      * @param reason
