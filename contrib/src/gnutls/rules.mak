@@ -1,7 +1,6 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.7.1
-
+GNUTLS_VERSION := 3.7.6
 GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
@@ -17,27 +16,11 @@ $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 
 gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 	$(UNPACK)
-	$(APPLY) $(SRC)/gnutls/gnutls_tasn.patch
-ifdef HAVE_WIN32
-	$(APPLY) $(SRC)/gnutls/gnutls-win32.patch
-else
-	$(APPLY) $(SRC)/gnutls/downgrade-gettext-requirement.patch
-endif
-ifdef HAVE_ANDROID
-	$(APPLY) $(SRC)/gnutls/no-create-time-h.patch
-endif
-ifdef HAVE_DARWIN_OS
-	$(APPLY) $(SRC)/gnutls/0001-use-system-isdigit.patch
-endif
-ifdef HAVE_MACOSX
-	$(APPLY) $(SRC)/gnutls/gnutls-disable-getentropy-osx.patch
-endif
-	$(APPLY) $(SRC)/gnutls/read-file-limits.h.patch
+	$(APPLY) $(SRC)/gnutls/0001-m4-remove-malloc-realloc.patch
 ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
 	$(call pkg_static,"lib/gnutls.pc.in")
-	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 GNUTLS_CONF := \
@@ -70,9 +53,8 @@ CFLAGS="-D_POSIX_C_SOURCE"
 endif
 
 .gnutls: gnutls
-	$(RECONF)
 ifdef HAVE_ANDROID
-	cd $< && $(HOSTVARS) gl_cv_header_working_stdint_h=yes ./configure $(GNUTLS_CONF)
+	cd $< && $(HOSTVARS) ./configure $(GNUTLS_CONF)
 else
 ifdef HAVE_IOS
 	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no ./configure $(GNUTLS_CONF)
