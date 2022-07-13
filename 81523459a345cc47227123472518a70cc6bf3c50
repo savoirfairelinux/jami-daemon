@@ -209,6 +209,30 @@
       },
       "revId": "81523459a345cc47227123472518a70cc6bf3c50",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cda4d75_a3f33831",
+        "filename": "contrib/src/gnutls/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-13T19:06:45Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "5ef7dab5_2a1b0951",
+      "range": {
+        "startLine": 35,
+        "startChar": 25,
+        "endLine": 35,
+        "endChar": 48
+      },
+      "revId": "81523459a345cc47227123472518a70cc6bf3c50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
