@@ -925,7 +925,6 @@ AutoAnswerMediaNegoTest::audio_only_then_caller_add_video()
     scenario.offerUpdate_.emplace_back(video);
     scenario.answerUpdate_.emplace_back(audio);
     scenario.answerUpdate_.emplace_back(video);
-    scenario.expectMediaRenegotiation_ = true;
 
     testWithScenario(aliceData_, bobData_, scenario);
 
