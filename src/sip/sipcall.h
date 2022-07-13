@@ -122,7 +122,8 @@ public:
     void answer(const std::vector<DRing::MediaMap>& mediaList) override;
     bool checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) override;
     void handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) override;
-    void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList) override;
+    void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList,
+                                  bool isRemote = false) override;
     void hangup(int reason) override;
     void refuse() override;
     void transfer(const std::string& to) override;

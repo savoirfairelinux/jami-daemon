@@ -2702,7 +2702,6 @@ ConversationTest::testRemoveReaddMultipleDevice()
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 std::map<std::string, std::string> /*metadatas*/) {
-                JAMI_ERR("@@@@ INCOMING: %s %s", accountId.c_str(), conversationId.c_str());
                 if (accountId == bobId)
                     requestReceived = true;
                 else if (accountId == bob2Id)
