@@ -89,7 +89,12 @@
 #include <pj/ctype.h>
 #include <pjlib-util/md5.h>
 
-#define USE_STD_FILESYSTEM (defined __ANDROID__ || defined _WIN32)
+#if (defined __ANDROID__ || defined _WIN32)
+#define USE_STD_FILESYSTEM 1
+#else
+#define USE_STD_FILESYSTEM 0
+#endif
+
 #if USE_STD_FILESYSTEM
 #include <filesystem>
 #endif
@@ -361,12 +366,12 @@ createFileLink(const std::string& linkFile, const std::string& target, bool hard
         createSymlink(linkFile, target);
 }
 
-std::string
-getFileExtension(const std::string& filename)
+std::string_view
+getFileExtension(std::string_view filename)
 {
-    std::string result = "";
+    std::string_view result;
     auto sep = filename.find_last_of('.');
-    if (sep != std::string::npos && sep != filename.size() - 1)
+    if (sep != std::string_view::npos && sep != filename.size() - 1)
         result = filename.substr(sep + 1);
     if (result.size() >= 8)
         return {};

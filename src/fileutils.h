@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef FILEUTILS_H_
-#define FILEUTILS_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -87,7 +86,7 @@ std::chrono::system_clock::time_point writeTime(const std::string& path);
 
 void createFileLink(const std::string& src, const std::string& dest, bool hard = false);
 
-std::string getFileExtension(const std::string& filename);
+std::string_view getFileExtension(std::string_view filename);
 
 /**
  * Read content of the directory.
@@ -158,5 +157,3 @@ int accessFile(const std::string& file, int mode);
 
 } // namespace fileutils
 } // namespace jami
-
-#endif // FILEUTILS_H_
