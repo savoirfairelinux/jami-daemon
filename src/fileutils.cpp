@@ -325,7 +325,9 @@ writeTime(const std::string& path)
 #endif
 }
 
-bool createSymlink(const std::string& linkFile, const std::string& target) {
+bool
+createSymlink(const std::string& linkFile, const std::string& target)
+{
 #if !USE_STD_FILESYSTEM
     if (symlink(target.c_str(), linkFile.c_str())) {
         JAMI_ERR("Couldn't create soft link: %s", strerror(errno));
@@ -342,7 +344,9 @@ bool createSymlink(const std::string& linkFile, const std::string& target) {
     return true;
 }
 
-bool createHardlink(const std::string& linkFile, const std::string& target) {
+bool
+createHardlink(const std::string& linkFile, const std::string& target)
+{
 #if !USE_STD_FILESYSTEM
     if (link(target.c_str(), linkFile.c_str())) {
         JAMI_ERR("Couldn't create hard link: %s", strerror(errno));
@@ -511,8 +515,10 @@ std::vector<std::string>
 readDirectory(const std::string& dir)
 {
     DIR* dp = opendir(dir.c_str());
-    if (!dp)
+    if (!dp) {
+        JAMI_ERR("@@@ cannot open %s", dir.c_str());
         return {};
+    }
 
     size_t size = dirent_buf_size(dp);
     if (size == (size_t) (-1))
@@ -566,7 +572,6 @@ readArchive(const std::string& path, const std::string& pwd)
         JAMI_ERR("Error loading archive: %s", e.what());
         throw e;
     }
-
 
     if (isUnencryptedGzip(data)) {
         if (!pwd.empty())
