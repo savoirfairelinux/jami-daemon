@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef REGISTRATION_STATES_H_
-#define REGISTRATION_STATES_H_
+#pragma once
 
 #ifdef REGISTERED
 #undef REGISTERED
@@ -43,5 +42,3 @@ enum class RegistrationState {
 };
 
 } // namespace jami
-
-#endif // REGISTRATION_STATES_H_
