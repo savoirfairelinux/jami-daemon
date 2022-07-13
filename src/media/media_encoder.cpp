@@ -168,10 +168,12 @@ void
 MediaEncoder::openOutput(const std::string& filename, const std::string& format)
 {
     avformat_free_context(outputCtx_);
-    if (format.empty())
-        avformat_alloc_output_context2(&outputCtx_, nullptr, nullptr, filename.c_str());
-    else
-        avformat_alloc_output_context2(&outputCtx_, nullptr, format.c_str(), filename.c_str());
+    int result = avformat_alloc_output_context2(&outputCtx_,
+                                                nullptr,
+                                                format.empty() ? nullptr : format.c_str(),
+                                                filename.c_str());
+    if (result < 0)
+        JAMI_ERR() << "Cannot open " << filename << ": " << libav_utils::getError(-result);
 }
 
 int
