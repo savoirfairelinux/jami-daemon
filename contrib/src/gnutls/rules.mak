@@ -21,6 +21,7 @@ ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
 	$(call pkg_static,"lib/gnutls.pc.in")
+	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 GNUTLS_CONF := \
@@ -53,6 +54,7 @@ CFLAGS="-D_POSIX_C_SOURCE"
 endif
 
 .gnutls: gnutls
+	$(RECONF)
 ifdef HAVE_ANDROID
 	cd $< && $(HOSTVARS) ./configure $(GNUTLS_CONF)
 else
