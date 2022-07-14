@@ -63,6 +63,7 @@ class Value;
 
 namespace jami {
 static constexpr uint64_t JAMI_ID_MAX_VAL = 9007199254740992;
+constexpr static const char RINGDIR[] = "ringtones";
 
 namespace upnp {
 class Controller;

@@ -2111,7 +2111,6 @@ Manager::playRingtone(const std::string& accountID)
     if (ringtone.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // A base file name was provided (such as the default); try to
         // resolve it from Jami's data installation prefix.
-        static const char* const RINGDIR = "ringtones";
         ringtone = std::string(JAMI_DATADIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR
                    + ringtone;
     }
@@ -3060,10 +3059,11 @@ Manager::createSinkClient(const std::string& id, bool mixer)
 }
 
 void
-Manager::createSinkClients(const std::string& callId,
-                           const ConfInfo& infos,
-                           const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
-                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
+Manager::createSinkClients(
+    const std::string& callId,
+    const ConfInfo& infos,
+    const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
+    std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
 {
     std::lock_guard<std::mutex> lk(pimpl_->sinksMutex_);
     std::set<std::string> sinkIdsList {};
@@ -3087,7 +3087,7 @@ Manager::createSinkClients(const std::string& callId,
             newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
             newSink->setFrameSize(participant.w, participant.h);
 
-            for (auto& videoStream: videoStreams)
+            for (auto& videoStream : videoStreams)
                 videoStream->attach(newSink.get());
 
             sinksMap.emplace(sinkId, newSink);
@@ -3100,7 +3100,7 @@ Manager::createSinkClients(const std::string& callId,
     // remove any non used video sink
     for (auto it = sinksMap.begin(); it != sinksMap.end();) {
         if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
-            for (auto& videoStream: videoStreams)
+            for (auto& videoStream : videoStreams)
                 videoStream->detach(it->second.get());
             it->second->stop();
             it = sinksMap.erase(it);
