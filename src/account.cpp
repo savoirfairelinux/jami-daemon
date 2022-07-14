@@ -285,6 +285,16 @@ Account::unserialize(const YAML::Node& node)
     parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
     if (ringtonePath_.empty()) {
         ringtonePath_ = DEFAULT_RINGTONE_PATH;
+    } else {
+        // If the user defined a custom ringtone, the file may not exists
+        // In this case, fallback on the default ringtone path (this will be set during the next
+        // setAccountDetails)
+        auto pathRingtone = std::string(JAMI_DATADIR) + DIR_SEPARATOR_STR + RINGDIR
+                            + DIR_SEPARATOR_STR + ringtonePath_;
+        if (!fileutils::isFile(pathRingtone)) {
+            JAMI_WARN("Ringtone %s is not a valid file", pathRingtone.c_str());
+            ringtonePath_ = DEFAULT_RINGTONE_PATH;
+        }
     }
 
     parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
