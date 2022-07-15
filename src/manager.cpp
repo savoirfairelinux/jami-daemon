@@ -1088,9 +1088,6 @@ Manager::answerCall(Call& call, const std::vector<DRing::MediaMap>& mediaList)
 bool
 Manager::hangupCall(const std::string&, const std::string& callId)
 {
-    // store the current call id
-    const auto& currentCallId(getCurrentCallId());
-
     stopTone();
     pimpl_->removeWaitingCall(callId);
 

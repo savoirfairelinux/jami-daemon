@@ -65,6 +65,8 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/uri.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/uri.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/vcard.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/vcard.cpp"
 )
 
 if(MSVC)

@@ -1595,7 +1595,7 @@ SIPCall::sendKeyframe(int streamIdx)
             if (streamIdx == -1) {
                 for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
                     std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
-            } else if (streamIdx > -1 && streamIdx < sthis->rtpStreams_.size()) {
+            } else if (streamIdx > -1 && streamIdx < static_cast<int>(sthis->rtpStreams_.size())) {
                 // Apply request for wanted stream
                 auto& stream = sthis->rtpStreams_[streamIdx];
                 if (stream.rtpSession_
@@ -2998,7 +2998,7 @@ SIPCall::setRotation(int streamIdx, int rotation)
     if (streamIdx == -1) {
         for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
             std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->setRotation(rotation);
-    } else if (streamIdx > -1 && streamIdx < rtpStreams_.size()) {
+    } else if (streamIdx > -1 && streamIdx < static_cast<int>(rtpStreams_.size())) {
         // Apply request for wanted stream
         auto& stream = rtpStreams_[streamIdx];
         if (stream.rtpSession_ && stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
