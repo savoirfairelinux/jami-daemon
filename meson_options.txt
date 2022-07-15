@@ -15,3 +15,4 @@ option('aec', type: 'feature', value: 'auto', description: 'Enable Acoustic Echo
 
 option('natpmp_prefix', type: 'string', value: '', description: 'Override a system directory to search for the library "natpmp"')
 option('tests', type: 'boolean', value: false, description: 'Build tests')
+option('tracepoints', type: 'boolean', value: false, description: 'Enable tracepoints')
