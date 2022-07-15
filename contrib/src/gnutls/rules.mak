@@ -39,8 +39,14 @@ GNUTLS_CONF := \
 	--without-idn \
 	$(HOSTCONF)
 
+ifdef HAVE_MACOSX
+	GNUTLS_CONF += --without-brotli
+endif
+
 ifdef HAVE_IOS
-	GNUTLS_CONF += --disable-hardware-acceleration
+	GNUTLS_CONF += \
+	--disable-hardware-acceleration \
+	--without-brotli
 endif
 
 DEPS_gnutls = gmp nettle iconv
