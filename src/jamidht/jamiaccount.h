@@ -420,13 +420,6 @@ public:
                        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                        std::function<void(bool)>&& end = {});
 
-    /**
-     * Start or stop to use the proxy client
-     * @param address of the proxy
-     * @param deviceKey the device key for push notifications (empty to not use it)
-     */
-    void enableProxyClient(bool enable);
-
     void setPushNotificationToken(const std::string& pushDeviceToken = "") override;
 
     void setPushNotificationTopic(const std::string& topic) override;

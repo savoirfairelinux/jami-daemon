@@ -3493,15 +3493,6 @@ JamiAccount::closePeerConnection(const DRing::DataTransferId& tid)
 }
 
 void
-JamiAccount::enableProxyClient(bool enable)
-{
-    JAMI_WARN("[Account %s] DHT proxy client: %s",
-              getAccountID().c_str(),
-              enable ? "enable" : "disable");
-    dht_->enableProxy(enable);
-}
-
-void
 JamiAccount::setPushNotificationToken(const std::string& token)
 {
     JAMI_WARN("[Account %s] setPushNotificationToken: %s", getAccountID().c_str(), token.c_str());
