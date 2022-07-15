@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b4e193f0_7c5ffec7",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 769,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-15T14:40:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5b4fc28a_274267d3",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "16535067_9ce8393b",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-12-14T14:20:47Z",
       "side": 1,
       "message": "may be const\u0026",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "60238793_9f14d5ac",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1044,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-15T14:40:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "16535067_9ce8393b",
       "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ff7ec781_0cb03a02",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1051,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-15T14:40:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b6e14d0a_9312f8f5",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5b6a9c05_6dd95d68",
@@ -65,6 +119,24 @@
       "writtenOn": "2021-12-14T14:20:47Z",
       "side": 1,
       "message": "already checked cert in previous line",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5836bb88_3cb80cdd",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1532,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-15T14:40:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5b6a9c05_6dd95d68",
       "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -86,6 +158,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "52bc8274_35705fe7",
+        "filename": "src/sip/siptransport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-15T14:40:57Z",
+      "side": 1,
+      "message": "It should be ok as modified in one callback and only called if the transport is connected so the certificate already received.",
+      "parentUuid": "987d91be_b5b61dcb",
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c0aca729_27df6dcf",
@@ -99,6 +189,30 @@
       "writtenOn": "2021-12-14T14:20:47Z",
       "side": 1,
       "message": "lower case",
+      "range": {
+        "startLine": 96,
+        "startChar": 7,
+        "endLine": 96,
+        "endChar": 8
+      },
+      "revId": "374600f7e2b577b57cd3ab1d27c22e39efe5f8b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ec0ea3ff_57534ecf",
+        "filename": "src/sip/siptransport.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-15T14:40:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c0aca729_27df6dcf",
       "range": {
         "startLine": 96,
         "startChar": 7,
