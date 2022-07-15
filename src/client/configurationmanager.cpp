@@ -1014,13 +1014,6 @@ registerName(const std::string& account, const std::string& password, const std:
 }
 
 void
-enableProxyClient(const std::string& accountID, bool enable)
-{
-    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID))
-        account->enableProxyClient(enable);
-}
-
-void
 setPushNotificationToken(const std::string& token)
 {
     for (const auto& account : jami::Manager::instance().getAllAccounts()) {

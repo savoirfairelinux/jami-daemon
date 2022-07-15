@@ -245,11 +245,6 @@ DRING_PUBLIC void connectivityChanged();
 /* Dht proxy */
 
 /**
- * Start or stop to use the proxy for account
- */
-DRING_PUBLIC void enableProxyClient(const std::string& accountID, bool enable);
-
-/**
  * Set the device push notification token (for all accounts).
  * If set, proxy clients will use push notifications.
  * Set to empty to disable push notifications.
