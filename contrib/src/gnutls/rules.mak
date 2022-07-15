@@ -46,7 +46,8 @@ endif
 ifdef HAVE_IOS
 	GNUTLS_CONF += \
 	--disable-hardware-acceleration \
-	--without-brotli
+	--without-brotli \
+	--without-zstd
 endif
 
 DEPS_gnutls = gmp nettle iconv
