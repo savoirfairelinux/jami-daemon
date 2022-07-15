@@ -90,6 +90,7 @@ libring_la_SOURCES = \
 		ip_utils.h \
 		ip_utils.cpp \
 		utf8_utils.cpp \
+		vcard.cpp \
 		ice_transport.cpp \
 		ice_transport.h \
 		threadloop.h \

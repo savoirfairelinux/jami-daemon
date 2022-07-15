@@ -1,5 +1,5 @@
 /****************************************************************************
- *    Copyright (C) 2017-2020 Savoir-faire Linux Inc.                             *
+ *    Copyright (C) 2017-2022 Savoir-faire Linux Inc.                       *
  *   Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>           *
  *   Author : Alexandre Lision <alexandre.lision@savoirfairelinux.com>      *
  *                                                                          *
@@ -21,8 +21,6 @@
 #include <string>
 #include <string_view>
 #include <map>
-
-#include "string_utils.h"
 
 namespace vCard {
 
@@ -82,22 +80,7 @@ namespace utils {
  * @param content payload
  * @return the vCard representation
  */
-static std::map<std::string, std::string>
-toMap(std::string_view content)
-{
-    std::map<std::string, std::string> vCard;
-
-    std::string_view line;
-    while (jami::getline(content, line)) {
-        if (line.size()) {
-            const auto dblptPos = line.find(':');
-            if (dblptPos == std::string::npos)
-                continue;
-            vCard.emplace(line.substr(0, dblptPos), line.substr(dblptPos + 1));
-        }
-    }
-    return vCard;
-}
+std::map<std::string, std::string> toMap(std::string_view content);
 } // namespace utils
 
 } // namespace vCard
