@@ -41,6 +41,7 @@ struct PendingConversationFetch
     bool ready {false};
     bool cloning {false};
     std::string deviceId {};
+    std::string removeId {};
     std::set<std::string> connectingTo {};
 };
 
@@ -88,12 +89,25 @@ public:
 
     // Conversations
     /**
+     * Get members
+     * @param conversationId
+     * @return a map of members with their role and details
+     */
+    std::vector<std::map<std::string, std::string>> getConversationMembers(
+        const std::string& conversationId) const;
+
+    /**
      * Remove a repository and all files
      * @param convId
      * @param sync      If we send an update to other account's devices
      * @param force     True if ignore the removing flag
      */
     void removeRepository(const std::string& convId, bool sync, bool force = false);
+    /**
+     * Remove a conversation
+     * @param conversationId
+     */
+    bool removeConversation(const std::string& conversationId);
 
     /**
      * Send a message notification to all members
@@ -144,6 +158,8 @@ public:
             lastId,
             static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
     }
+
+    std::string getOneToOneConversation(const std::string& uri) const noexcept;
 
     std::weak_ptr<JamiAccount> account_;
     NeedsSyncingCb needsSyncingCb_;
@@ -482,6 +498,10 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
 {
     auto erasePending = [&] {
         std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+        auto oldFetch = pendingConversationsFetch_.find(conversationId);
+        if (oldFetch != pendingConversationsFetch_.end() && !oldFetch->second.removeId.empty()) {
+            removeConversation(oldFetch->second.removeId);
+        }
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
@@ -596,25 +616,64 @@ ConversationModule::Impl::getRequest(const std::string& id) const
     return std::nullopt;
 }
 
+std::string
+ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const noexcept
+{
+    auto acc = account_.lock();
+    if (!acc)
+        return {};
+    auto details = acc->getContactDetails(uri);
+    auto it = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
+    if (it != details.end())
+        return it->second;
+    return {};
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationModule::Impl::getConversationMembers(const std::string& conversationId) const
+{
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto conversation = conversations_.find(conversationId);
+    if (conversation != conversations_.end() && conversation->second)
+        return conversation->second->getMembers(true, true);
+
+    lk.unlock();
+    std::lock_guard<std::mutex> lkCI(convInfosMtx_);
+    auto convIt = convInfos_.find(conversationId);
+    if (convIt != convInfos_.end()) {
+        std::vector<std::map<std::string, std::string>> result;
+        result.reserve(convIt->second.members.size());
+        for (const auto& uri : convIt->second.members) {
+            result.emplace_back(std::map<std::string, std::string> {{"uri", uri}});
+        }
+        return result;
+    }
+    return {};
+}
+
 void
 ConversationModule::Impl::removeRepository(const std::string& conversationId, bool sync, bool force)
 {
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto it = conversations_.find(conversationId);
     if (it != conversations_.end() && it->second && (force || it->second->isRemoving())) {
+        JAMI_DBG() << "Remove conversation: " << conversationId;
         try {
             if (it->second->mode() == ConversationMode::ONE_TO_ONE) {
                 auto account = account_.lock();
                 for (const auto& member : it->second->getInitialMembers()) {
                     if (member != account->getUsername()) {
-                        account->accountManager()->removeContactConversation(member);
+                        // Note: this can happen while re-adding a contact.
+                        // In this case, check that we are removing the linked conversation.
+                        if (conversationId == getOneToOneConversation(member)) {
+                            account->accountManager()->removeContactConversation(member);
+                        }
                     }
                 }
             }
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
-        JAMI_DBG() << "Remove conversation: " << conversationId;
         it->second->erase();
         conversations_.erase(it);
         lk.unlock();
@@ -629,6 +688,63 @@ ConversationModule::Impl::removeRepository(const std::string& conversationId, bo
         }
         saveConvInfos();
     }
+}
+
+bool
+ConversationModule::Impl::removeConversation(const std::string& conversationId)
+{
+    auto members = getConversationMembers(conversationId);
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    // Update convInfos
+    std::unique_lock<std::mutex> lockCi(convInfosMtx_);
+    auto itConv = convInfos_.find(conversationId);
+    if (itConv == convInfos_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return false;
+    }
+    auto it = conversations_.find(conversationId);
+    auto isSyncing = it == conversations_.end();
+    auto hasMembers = !isSyncing && !(members.size() == 1 && username_ == members[0]["uri"]);
+    itConv->second.removed = std::time(nullptr);
+    if (isSyncing)
+        itConv->second.erased = std::time(nullptr);
+    // Sync now, because it can take some time to really removes the datas
+    if (hasMembers)
+        needsSyncingCb_();
+    saveConvInfos();
+    lockCi.unlock();
+    emitSignal<DRing::ConversationSignal::ConversationRemoved>(accountId_, conversationId);
+    if (isSyncing)
+        return true;
+    if (it->second->mode() != ConversationMode::ONE_TO_ONE) {
+        // For one to one, we do not notify the leave. The other can still generate request
+        // and this is managed by the banned part. If we re-accept, the old conversation will be
+        // retrieven
+        auto commitId = it->second->leave();
+        if (hasMembers) {
+            JAMI_DBG() << "Wait that someone sync that user left conversation " << conversationId;
+            // Commit that we left
+            if (!commitId.empty()) {
+                // Do not sync as it's synched by convInfos
+                sendMessageNotification(*it->second, commitId, false);
+            } else {
+                JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
+            }
+            // In this case, we wait that another peer sync the conversation
+            // to definitely remove it from the device. This is to inform the
+            // peer that we left the conversation and never want to receive
+            // any messages
+            return true;
+        }
+    } else {
+        for (const auto& m : members)
+            if (username_ != m.at("uri") && updateConvReqCb_)
+                updateConvReqCb_(conversationId, m.at("uri"), false);
+    }
+    lk.unlock();
+    // Else we are the last member, so we can remove
+    removeRepository(conversationId, true);
+    return true;
 }
 
 void
@@ -835,14 +951,7 @@ ConversationModule::getConversations() const
 std::string
 ConversationModule::getOneToOneConversation(const std::string& uri) const noexcept
 {
-    auto acc = pimpl_->account_.lock();
-    if (!acc)
-        return {};
-    auto details = acc->getContactDetails(uri);
-    auto it = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
-    if (it != details.end())
-        return it->second;
-    return {};
+    return pimpl_->getOneToOneConversation(uri);
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -1026,7 +1135,9 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
 }
 
 void
-ConversationModule::cloneConversationFrom(const std::string& conversationId, const std::string& uri)
+ConversationModule::cloneConversationFrom(const std::string& conversationId,
+                                          const std::string& uri,
+                                          const std::string& oldConvId)
 {
     auto acc = pimpl_->account_.lock();
     auto memberHash = dht::InfoHash(uri);
@@ -1036,7 +1147,8 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId, con
     }
     acc->forEachDevice(
         memberHash,
-        [w = pimpl_->weak(), conversationId](const std::shared_ptr<dht::crypto::PublicKey>& pk) {
+        [w = pimpl_->weak(), conversationId, oldConvId](
+            const std::shared_ptr<dht::crypto::PublicKey>& pk) {
             auto sthis = w.lock();
             auto deviceId = pk->getLongId().toString();
             if (!sthis or deviceId == sthis->deviceId_)
@@ -1053,6 +1165,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId, con
                 std::unique_lock<std::mutex> lk(sthis->pendingConversationsFetchMtx_);
                 auto& pending = sthis->pendingConversationsFetch_[conversationId];
                 if (!pending.ready) {
+                    pending.removeId = oldConvId;
                     if (channel) {
                         pending.ready = true;
                         pending.deviceId = channel->deviceId().toString();
@@ -1431,23 +1544,7 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
 std::vector<std::map<std::string, std::string>>
 ConversationModule::getConversationMembers(const std::string& conversationId) const
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    auto conversation = pimpl_->conversations_.find(conversationId);
-    if (conversation != pimpl_->conversations_.end() && conversation->second)
-        return conversation->second->getMembers(true, true);
-
-    lk.unlock();
-    std::lock_guard<std::mutex> lkCI(pimpl_->convInfosMtx_);
-    auto convIt = pimpl_->convInfos_.find(conversationId);
-    if (convIt != pimpl_->convInfos_.end()) {
-        std::vector<std::map<std::string, std::string>> result;
-        result.reserve(convIt->second.members.size());
-        for (const auto& uri : convIt->second.members) {
-            result.emplace_back(std::map<std::string, std::string> {{"uri", uri}});
-        }
-        return result;
-    }
-    return {};
+    return pimpl_->getConversationMembers(conversationId);
 }
 
 uint32_t
@@ -1608,59 +1705,7 @@ ConversationModule::removeContact(const std::string& uri, bool)
 bool
 ConversationModule::removeConversation(const std::string& conversationId)
 {
-    auto members = getConversationMembers(conversationId);
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    // Update convInfos
-    std::unique_lock<std::mutex> lockCi(pimpl_->convInfosMtx_);
-    auto itConv = pimpl_->convInfos_.find(conversationId);
-    if (itConv == pimpl_->convInfos_.end()) {
-        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
-        return false;
-    }
-    auto it = pimpl_->conversations_.find(conversationId);
-    auto isSyncing = it == pimpl_->conversations_.end();
-    auto hasMembers = !isSyncing
-                      && !(members.size() == 1 && pimpl_->username_ == members[0]["uri"]);
-    itConv->second.removed = std::time(nullptr);
-    if (isSyncing)
-        itConv->second.erased = std::time(nullptr);
-    // Sync now, because it can take some time to really removes the datas
-    if (hasMembers)
-        pimpl_->needsSyncingCb_();
-    pimpl_->saveConvInfos();
-    lockCi.unlock();
-    emitSignal<DRing::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, conversationId);
-    if (isSyncing)
-        return true;
-    if (it->second->mode() != ConversationMode::ONE_TO_ONE) {
-        // For one to one, we do not notify the leave. The other can still generate request
-        // and this is managed by the banned part. If we re-accept, the old conversation will be
-        // retrieven
-        auto commitId = it->second->leave();
-        if (hasMembers) {
-            JAMI_DBG() << "Wait that someone sync that user left conversation " << conversationId;
-            // Commit that we left
-            if (!commitId.empty()) {
-                // Do not sync as it's synched by convInfos
-                pimpl_->sendMessageNotification(*it->second, commitId, false);
-            } else {
-                JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
-            }
-            // In this case, we wait that another peer sync the conversation
-            // to definitely remove it from the device. This is to inform the
-            // peer that we left the conversation and never want to receive
-            // any messages
-            return true;
-        }
-    } else {
-        for (const auto& m : members)
-            if (pimpl_->username_ != m.at("uri") && pimpl_->updateConvReqCb_)
-                pimpl_->updateConvReqCb_(conversationId, m.at("uri"), false);
-    }
-    lk.unlock();
-    // Else we are the last member, so we can remove
-    pimpl_->removeRepository(conversationId, true);
-    return true;
+    return pimpl_->removeConversation(conversationId);
 }
 
 void
