@@ -1194,7 +1194,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 if (updateConvForContact(uri, oldConv, convFromReq)) {
                     convModule()->initReplay(oldConv, convFromReq);
                     convModule()->removeConversation(oldConv);
-                    convModule()->cloneConversationFrom(convFromReq, uri);
+                    convModule()->cloneConversationFrom(convFromReq, uri, oldConv);
                 }
             }
         }};
@@ -2376,10 +2376,11 @@ JamiAccount::convModule()
             [this](auto&& convId, auto&& contactUri, bool accept) {
                 // NOTE: do not reschedule as the conversation's requests
                 // should be synched with trust requests
-                if (accept)
+                if (accept) {
                     accountManager_->acceptTrustRequest(contactUri, true);
-                else
+                } else {
                     updateConvForContact(contactUri, convId, "");
+                }
             });
     }
     return convModule_.get();
