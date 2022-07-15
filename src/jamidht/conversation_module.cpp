@@ -145,6 +145,8 @@ public:
             static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
     }
 
+    std::string getOneToOneConversation(const std::string& uri) const noexcept;
+
     std::weak_ptr<JamiAccount> account_;
     NeedsSyncingCb needsSyncingCb_;
     SengMsgCb sendMsgCb_;
@@ -596,25 +598,42 @@ ConversationModule::Impl::getRequest(const std::string& id) const
     return std::nullopt;
 }
 
+std::string
+ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const noexcept
+{
+    auto acc = account_.lock();
+    if (!acc)
+        return {};
+    auto details = acc->getContactDetails(uri);
+    auto it = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
+    if (it != details.end())
+        return it->second;
+    return {};
+}
+
 void
 ConversationModule::Impl::removeRepository(const std::string& conversationId, bool sync, bool force)
 {
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto it = conversations_.find(conversationId);
     if (it != conversations_.end() && it->second && (force || it->second->isRemoving())) {
+        JAMI_DBG() << "Remove conversation: " << conversationId;
         try {
             if (it->second->mode() == ConversationMode::ONE_TO_ONE) {
                 auto account = account_.lock();
                 for (const auto& member : it->second->getInitialMembers()) {
                     if (member != account->getUsername()) {
-                        account->accountManager()->removeContactConversation(member);
+                        JAMI_ERR("@@@@ rm removeRepository");
+                        // Note: this can happen while re-adding a contact.
+                        // In this case, check that we are removing the linked conversation.
+                        if (conversationId == getOneToOneConversation(member))
+                            account->accountManager()->removeContactConversation(member);
                     }
                 }
             }
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
-        JAMI_DBG() << "Remove conversation: " << conversationId;
         it->second->erase();
         conversations_.erase(it);
         lk.unlock();
@@ -835,14 +854,7 @@ ConversationModule::getConversations() const
 std::string
 ConversationModule::getOneToOneConversation(const std::string& uri) const noexcept
 {
-    auto acc = pimpl_->account_.lock();
-    if (!acc)
-        return {};
-    auto details = acc->getContactDetails(uri);
-    auto it = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
-    if (it != details.end())
-        return it->second;
-    return {};
+    return pimpl_->getOneToOneConversation(uri);
 }
 
 std::vector<std::map<std::string, std::string>>

@@ -1191,9 +1191,12 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 // one (given by convFromReq).
                 // TODO: In the future, we may want to re-commit the messages we
                 // may have send in the request we sent.
+                JAMI_ERR("@@@ %s vs %s", oldConv.c_str(), convFromReq.c_str());
                 if (updateConvForContact(uri, oldConv, convFromReq)) {
                     convModule()->initReplay(oldConv, convFromReq);
+                    JAMI_ERR("@@@ REMOVE OLD");
                     convModule()->removeConversation(oldConv);
+                    JAMI_ERR("@@@ cloneConversationFrom");
                     convModule()->cloneConversationFrom(convFromReq, uri);
                 }
             }
@@ -2376,10 +2379,18 @@ JamiAccount::convModule()
             [this](auto&& convId, auto&& contactUri, bool accept) {
                 // NOTE: do not reschedule as the conversation's requests
                 // should be synched with trust requests
-                if (accept)
+                if (accept) {
+                    JAMI_ERR("@@@ acceptTrustRequest %s", contactUri.c_str());
+
                     accountManager_->acceptTrustRequest(contactUri, true);
-                else
+                } else {
+                    JAMI_ERR("@@@ updateConvForContact %s", contactUri.c_str());
+
                     updateConvForContact(contactUri, convId, "");
+                    JAMI_ERR("@@@ updateConvForContact END %s %s",
+                             contactUri.c_str(),
+                             convId.c_str());
+                }
             });
     }
     return convModule_.get();
@@ -2987,6 +2998,7 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     }
     lock.unlock();
 
+    JAMI_ERR("@@@@ rm removeContact");
     convModule()->removeContact(uri, ban);
 
     // Remove current connections with contact
