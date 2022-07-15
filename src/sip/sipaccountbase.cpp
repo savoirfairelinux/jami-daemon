@@ -434,15 +434,13 @@ SIPAccountBase::getIceOptions() const noexcept
                                               .setPassword(turnServerPwd_)
                                               .setRealm(turnServerRealm_));
         }
-        // NOTE: first test with ipv6 turn was not concluant and resulted in multiple
-        // co issues. So this needs some debug. for now just disable
-        // if (cacheTurnV6_ && *cacheTurnV6_) {
-        //    opts.turnServers.emplace_back(TurnServerInfo()
-        //                                      .setUri(cacheTurnV6_->toString(true))
-        //                                      .setUsername(turnServerUserName_)
-        //                                      .setPassword(turnServerPwd_)
-        //                                      .setRealm(turnServerRealm_));
-        //}
+        if (cacheTurnV6_ && *cacheTurnV6_) {
+            opts.turnServers.emplace_back(TurnServerInfo()
+                                              .setUri(cacheTurnV6_->toString(true))
+                                              .setUsername(turnServerUserName_)
+                                              .setPassword(turnServerPwd_)
+                                              .setRealm(turnServerRealm_));
+        }
         // Nothing cached, so do the resolution
         if (!cached) {
             opts.turnServers.emplace_back(TurnServerInfo()
