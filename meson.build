@@ -155,6 +155,14 @@ else
     conf.set('ENABLE_PLUGIN', false)
 endif
 
+if get_option('tracepoints')
+    conf.set('ENABLE_TRACEPOINTS', true)
+    deplttngust = dependency('lttng-ust', version: '>= 2.13')
+    #depliburcu = dependency('liburcu', version: '>= 0.13.1')
+else
+    conf.set('ENABLE_TRACEPOINTS', false)
+endif
+
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')
 conf.set('ENABLE_SHM', get_option('interfaces').contains('dbus'))
 configure_file(

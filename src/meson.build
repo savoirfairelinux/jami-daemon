@@ -47,14 +47,14 @@ libjami_sources = files(
     'media/audio/sound/dtmfgenerator.cpp',
     'media/audio/sound/tone.cpp',
     'media/audio/sound/tonelist.cpp',
-    'media/audio/audiobuffer.cpp',
     'media/audio/audio_frame_resizer.cpp',
     'media/audio/audio_input.cpp',
-    'media/audio/audiolayer.cpp',
-    'media/audio/audioloop.cpp',
     'media/audio/audio_receive_thread.cpp',
     'media/audio/audio_rtp_session.cpp',
     'media/audio/audio_sender.cpp',
+    'media/audio/audiobuffer.cpp',
+    'media/audio/audiolayer.cpp',
+    'media/audio/audioloop.cpp',
     'media/audio/dcblocker.cpp',
     'media/audio/dsp.cpp',
     'media/audio/resampler.cpp',
@@ -293,15 +293,15 @@ endif
 if conf.get('ENABLE_PLUGIN')
     libjami_sources += files(
         'client/plugin_manager_interface.cpp',
-        'plugin/preferenceservicesmanager.cpp',
         'plugin/callservicesmanager.cpp',
         'plugin/chatservicesmanager.cpp',
-        'plugin/webviewservicesmanager.cpp',
         'plugin/jamipluginmanager.cpp',
         'plugin/pluginloader.cpp',
         'plugin/pluginmanager.cpp',
         'plugin/pluginpreferencesutils.cpp',
-        'plugin/pluginsutils.cpp'
+        'plugin/pluginsutils.cpp',
+        'plugin/preferenceservicesmanager.cpp',
+        'plugin/webviewservicesmanager.cpp'
     )
     if host_machine.system() == 'darwin'
         libjami_dependencies += depminizip
@@ -309,6 +309,13 @@ if conf.get('ENABLE_PLUGIN')
         libjami_dependencies += deplibarchive
     endif
     libjami_dependencies += depdl
+endif
+
+if conf.get('ENABLE_TRACEPOINTS')
+    libjami_sources += files(
+        'jami/tracepoint.c'
+    )
+    libjami_dependencies += deplttngust
 endif
 
 # https://ffmpeg.org/platform.html#Advanced-linking-configuration
@@ -348,6 +355,7 @@ if get_option('interfaces').contains('library')
         'jami/presence_const.h',
         'jami/presencemanager_interface.h',
         'jami/security_const.h',
+        'jami/trace-tools.h',
         subdir: 'jami'
     )
     if conf.get('ENABLE_VIDEO')
