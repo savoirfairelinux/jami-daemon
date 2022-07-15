@@ -1088,9 +1088,6 @@ Manager::answerCall(Call& call, const std::vector<DRing::MediaMap>& mediaList)
 bool
 Manager::hangupCall(const std::string&, const std::string& callId)
 {
-    // store the current call id
-    const auto& currentCallId(getCurrentCallId());
-
     stopTone();
     pimpl_->removeWaitingCall(callId);
 
@@ -3060,10 +3057,11 @@ Manager::createSinkClient(const std::string& id, bool mixer)
 }
 
 void
-Manager::createSinkClients(const std::string& callId,
-                           const ConfInfo& infos,
-                           const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
-                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
+Manager::createSinkClients(
+    const std::string& callId,
+    const ConfInfo& infos,
+    const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
+    std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
 {
     std::lock_guard<std::mutex> lk(pimpl_->sinksMutex_);
     std::set<std::string> sinkIdsList {};
@@ -3087,7 +3085,7 @@ Manager::createSinkClients(const std::string& callId,
             newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
             newSink->setFrameSize(participant.w, participant.h);
 
-            for (auto& videoStream: videoStreams)
+            for (auto& videoStream : videoStreams)
                 videoStream->attach(newSink.get());
 
             sinksMap.emplace(sinkId, newSink);
@@ -3100,7 +3098,7 @@ Manager::createSinkClients(const std::string& callId,
     // remove any non used video sink
     for (auto it = sinksMap.begin(); it != sinksMap.end();) {
         if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
-            for (auto& videoStream: videoStreams)
+            for (auto& videoStream : videoStreams)
                 videoStream->detach(it->second.get());
             it->second->stop();
             it = sinksMap.erase(it);
