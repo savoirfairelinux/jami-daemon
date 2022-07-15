@@ -123,7 +123,8 @@ libjami_sources = files(
     'string_utils.cpp',
     'threadloop.cpp',
     'uri.cpp',
-    'utf8_utils.cpp'
+    'utf8_utils.cpp',
+    'vcard.cpp'
 )
 if host_machine.system() == 'windows'
     libjami_sources += files('winsyslog.c')
