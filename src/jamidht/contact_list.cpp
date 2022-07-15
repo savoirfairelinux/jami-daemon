@@ -327,8 +327,10 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                                 conversationId,
                                 std::move(payload),
                                 received);
-    else
+    else if (active) {
+        // Only notify if confirmed + not removed
         callbacks_.onConfirmation(peer_account.toString(), conversationId);
+    }
     return accept;
 }
 

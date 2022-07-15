@@ -120,8 +120,11 @@ public:
      * @note used to clone an old conversation after deleting/re-adding a contact
      * @param conversationId
      * @param uri
+     * @param oldConvId
      */
-    void cloneConversationFrom(const std::string& conversationId, const std::string& uri);
+    void cloneConversationFrom(const std::string& conversationId,
+                               const std::string& uri,
+                               const std::string& oldConvId = "");
 
     /**
      * Starts a new conversation

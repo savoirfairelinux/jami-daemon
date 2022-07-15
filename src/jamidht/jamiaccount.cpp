@@ -1191,10 +1191,9 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 // one (given by convFromReq).
                 // TODO: In the future, we may want to re-commit the messages we
                 // may have send in the request we sent.
-                if (updateConvForContact(uri, oldConv, convFromReq)) {
+                if (oldConv != convFromReq && updateConvForContact(uri, oldConv, convFromReq)) {
                     convModule()->initReplay(oldConv, convFromReq);
-                    convModule()->removeConversation(oldConv);
-                    convModule()->cloneConversationFrom(convFromReq, uri);
+                    convModule()->cloneConversationFrom(convFromReq, uri, oldConv);
                 }
             }
         }};
@@ -2376,10 +2375,11 @@ JamiAccount::convModule()
             [this](auto&& convId, auto&& contactUri, bool accept) {
                 // NOTE: do not reschedule as the conversation's requests
                 // should be synched with trust requests
-                if (accept)
+                if (accept) {
                     accountManager_->acceptTrustRequest(contactUri, true);
-                else
+                } else {
                     updateConvForContact(contactUri, convId, "");
+                }
             });
     }
     return convModule_.get();
@@ -3009,6 +3009,12 @@ JamiAccount::updateConvForContact(const std::string& uri,
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (auto info = accountManager_->getInfo()) {
             auto urih = dht::InfoHash(uri);
+            auto details = getContactDetails(uri);
+            auto itDetails = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
+            if (itDetails != details.end() && itDetails->second != oldConv) {
+                JAMI_DBG("Old conversation is not found in details %s", oldConv.c_str());
+                return false;
+            }
             info->contacts->updateConversation(urih, newConv);
             // Also decline trust request if there is one
             auto req = info->contacts->getTrustRequest(urih);
