@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0d53c68b_dd7cf353",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-07-16T13:32:43Z",
+      "side": 1,
+      "message": "Some questions.\n1. Why you declare `liburcu` as a dependency? I don\u0027t see any references to it in the code.\n2. Why you declare LTTNG_UST_TRACEPOINT_PROVIDER in tracepoint-def.h, but don\u0027t use it?",
+      "revId": "0ae19a6cd91d24a441e40e0e5fbca5c77c8a7bb2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
