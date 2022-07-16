@@ -39,7 +39,7 @@ To enable tracepoints in Jami, you should configure the project using the
 How to define a tracepoint
 --------------------------
 
-To define a new tracepoints, you need to add the definition in src/tracepoint.h
+To define a new tracepoints, you need to add the definition in src/jami/tracepoint.h
 
 It's recommended to use the ``LTTNG_UST_TRACEPOINT_EVENT`` macro and avoid using
 the others except if you know what you're doing.
@@ -56,7 +56,7 @@ NOTE!  As the documentation of LTTng says, the concatenation of provider name +
 tracepoint name must **not exceed 254 characters** or you will get bite.
 
 For example, here's the definition of a tracepoint for the scheduled executor in
-src/tracepoint.h::
+src/jami/tracepoint.h::
 
   LTTNG_UST_TRACEPOINT_EVENT(
     jami,
@@ -99,12 +99,10 @@ How to use a tracepoint
 -----------------------
 
 Now that you have defined a tracepoint, you perhaps want to use it in Jami or
-reuse an existing one.  The first thing to do is to import src/tracepoint.h in
+reuse an existing one.  The first thing to do is to import src/jami/tracepoint.h in
 your compilation unit.  Then you need to use the ``jami_tracepoint()``
-macro.  It takes at least two arguments followed by a variable number of
-arguments.  The first argument is the provider name which is always ``jami`` in
-our case.  The second argument is the tracepoint name.  The rest of the
-arguments are the arguments defined by the tracepoint.
+macro.  It takes the tracepoint name followed by a variable number of
+arguments defined by the tracepoint.
 
 For example, here's how the tracepoint ``secheduled_executor_task_begin`` is
 used in src/scheduled_executor.h::
