@@ -78,7 +78,7 @@ namespace DRing {
     std::string mimetype;
   };
 
-  void sendFile(const std::string& accountId, const std::string& conversationId, const std::string& path, const std::string& displayName, const std::string& parent);
+  void sendFile(const std::string& accountId, const std::string& conversationId, const std::string& path, const std::string& displayName, const std::string& replyTo);
 
   DRing::DataTransferError sendFileLegacy(const DRing::DataTransferInfo info, DRing::DataTransferId& id);
   DRing::DataTransferError acceptFileTransfer(const std::string& accountId, const std::string& fileId, const std::string& file_path);

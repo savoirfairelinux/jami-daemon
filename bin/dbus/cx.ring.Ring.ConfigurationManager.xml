@@ -1576,7 +1576,7 @@
            <arg type="s" name="conversationId" direction="in"/>
            <arg type="s" name="filePath" direction="in"/>
            <arg type="s" name="fileDisplayName" direction="in"/>
-           <arg type="s" name="parent" direction="in"/>
+           <arg type="s" name="replyTo" direction="in"/>
        </method>
 
        <method name="sendFileLegacy" tp:name-for-bindings="sendFileLegacy">
@@ -1759,7 +1759,7 @@
            <arg type="s" name="accountId" direction="in"/>
            <arg type="s" name="conversationId" direction="in"/>
            <arg type="s" name="message" direction="in"/>
-           <arg type="s" name="parent" direction="in"/>
+           <arg type="s" name="replyTo" direction="in"/>
        </method>
 
        <method name="loadConversationMessages" tp:name-for-bindings="loadConversationMessages">

@@ -141,11 +141,11 @@ void
 sendMessage(const std::string& accountId,
             const std::string& conversationId,
             const std::string& message,
-            const std::string& parent)
+            const std::string& replyTo)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto convModule = acc->convModule())
-            convModule->sendMessage(conversationId, message, parent);
+            convModule->sendMessage(conversationId, message, replyTo);
 }
 
 uint32_t

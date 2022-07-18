@@ -215,13 +215,13 @@ public:
     // Message send/load
     void sendMessage(const std::string& conversationId,
                      Json::Value&& value,
-                     const std::string& parent = "",
+                     const std::string& replyTo = "",
                      bool announce = true,
                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
                      std::string message,
-                     const std::string& parent = "",
+                     const std::string& replyTo = "",
                      const std::string& type = "text/plain",
                      bool announce = true,
                      OnDoneCb&& cb = {});
@@ -561,7 +561,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         }
         if (!values.empty())
             conversation->sendMessages(std::move(values),
-                                       "",
                                        [w = weak(), conversationId](const auto& commits) {
                                            auto shared = w.lock();
                                            if (shared and not commits.empty())
@@ -780,7 +779,7 @@ ConversationModule::Impl::sendMessageNotification(const Conversation& conversati
 void
 ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       std::string message,
-                                      const std::string& parent,
+                                      const std::string& replyTo,
                                       const std::string& type,
                                       bool announce,
                                       OnDoneCb&& cb)
@@ -788,13 +787,13 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
     Json::Value json;
     json["body"] = std::move(message);
     json["type"] = type;
-    sendMessage(conversationId, std::move(json), parent, announce, std::move(cb));
+    sendMessage(conversationId, std::move(json), replyTo, announce, std::move(cb));
 }
 
 void
 ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       Json::Value&& value,
-                                      const std::string& parent,
+                                      const std::string& replyTo,
                                       bool announce,
                                       OnDoneCb&& cb)
 {
@@ -803,7 +802,7 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
     if (conversation != conversations_.end() && conversation->second) {
         conversation->second->sendMessage(
             std::move(value),
-            parent,
+            replyTo,
             [this, conversationId, announce, cb = std::move(cb)](bool ok,
                                                                  const std::string& commitId) {
                 if (cb)
@@ -1193,22 +1192,22 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
 void
 ConversationModule::sendMessage(const std::string& conversationId,
                                 std::string message,
-                                const std::string& parent,
+                                const std::string& replyTo,
                                 const std::string& type,
                                 bool announce,
                                 OnDoneCb&& cb)
 {
-    pimpl_->sendMessage(conversationId, std::move(message), parent, type, announce, std::move(cb));
+    pimpl_->sendMessage(conversationId, std::move(message), replyTo, type, announce, std::move(cb));
 }
 
 void
 ConversationModule::sendMessage(const std::string& conversationId,
                                 Json::Value&& value,
-                                const std::string& parent,
+                                const std::string& replyTo,
                                 bool announce,
                                 OnDoneCb&& cb)
 {
-    pimpl_->sendMessage(conversationId, std::move(value), parent, announce, std::move(cb));
+    pimpl_->sendMessage(conversationId, std::move(value), replyTo, announce, std::move(cb));
 }
 
 void

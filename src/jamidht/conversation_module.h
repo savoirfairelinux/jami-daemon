@@ -138,13 +138,13 @@ public:
     // Message send/load
     void sendMessage(const std::string& conversationId,
                      Json::Value&& value,
-                     const std::string& parent = "",
+                     const std::string& replyTo = "",
                      bool announce = true,
                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
                      std::string message,
-                     const std::string& parent = "",
+                     const std::string& replyTo = "",
                      const std::string& type = "text/plain",
                      bool announce = true,
                      OnDoneCb&& cb = {});

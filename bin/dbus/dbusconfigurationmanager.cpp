@@ -544,8 +544,8 @@ DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
                                                   const std::string& privateKey,
                                                   const std::string& privateKeyPass,
                                                   const std::string& caList)
-    -> decltype(
-        DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
+    -> decltype(DRing::validateCertificatePath(
+        accountId, certificate, privateKey, privateKeyPass, caList))
 {
     return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
 }
@@ -757,9 +757,9 @@ DBusConfigurationManager::sendFile(const std::string& accountId,
                                    const std::string& conversationId,
                                    const std::string& path,
                                    const std::string& displayName,
-                                   const std::string& parent)
+                                   const std::string& replyTo)
 {
-    DRing::sendFile(accountId, conversationId, path, displayName, parent);
+    DRing::sendFile(accountId, conversationId, path, displayName, replyTo);
 }
 
 void
@@ -906,9 +906,9 @@ void
 DBusConfigurationManager::sendMessage(const std::string& accountId,
                                       const std::string& conversationId,
                                       const std::string& message,
-                                      const std::string& parent)
+                                      const std::string& replyTo)
 {
-    DRing::sendMessage(accountId, conversationId, message, parent);
+    DRing::sendMessage(accountId, conversationId, message, replyTo);
 }
 
 uint32_t
