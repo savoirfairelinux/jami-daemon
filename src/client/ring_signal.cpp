@@ -128,6 +128,7 @@ getSignalHandlers()
         /* Conversation */
         exported_callback<DRing::ConversationSignal::ConversationLoaded>(),
         exported_callback<DRing::ConversationSignal::MessageReceived>(),
+        exported_callback<DRing::ConversationSignal::ConversationProfileUpdated>(),
         exported_callback<DRing::ConversationSignal::ConversationRequestReceived>(),
         exported_callback<DRing::ConversationSignal::ConversationRequestDeclined>(),
         exported_callback<DRing::ConversationSignal::ConversationReady>(),

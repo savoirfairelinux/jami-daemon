@@ -770,7 +770,7 @@ Conversation::sendMessage(std::string&& message,
 }
 
 void
-Conversation::sendMessage(Json::Value&& value, const std::string& /*parent*/, OnDoneCb&& cb)
+Conversation::sendMessage(Json::Value&& value, const std::string& parent, OnDoneCb&& cb)
 {
     dht::ThreadPool::io().run([w = weak(), value = std::move(value), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
@@ -934,6 +934,7 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
         auto sthis_ = w.lock();
         if (!sthis_)
             return;
+        auto& repo = sthis_->pimpl_->repository_;
 
         std::string deviceId, commitId;
         OnPullCb cb;
@@ -973,8 +974,7 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
                 it = itr.first;
             }
             // If recently fetched, the commit can already be there, so no need to do complex operations
-            if (commitId != ""
-                && sthis_->pimpl_->repository_->getCommit(commitId, false) != std::nullopt) {
+            if (commitId != "" && repo->getCommit(commitId, false) != std::nullopt) {
                 cb(true);
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
                 sthis_->pimpl_->fetchingRemotes_.erase(it);
@@ -991,12 +991,25 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
                 cb(false);
                 continue;
             }
+            auto oldId = repo->getHead();
             std::unique_lock<std::mutex> lk(sthis_->pimpl_->writeMtx_);
             auto newCommits = sthis_->mergeHistory(deviceId);
             sthis_->pimpl_->announce(newCommits);
             lk.unlock();
             if (cb)
                 cb(true);
+            // Announce if profile changed
+            auto newId = repo->getHead();
+            if (oldId != newId) {
+                auto diffStats = repo->diffStats(newId, oldId);
+                auto changedFiles = repo->changedFiles(diffStats);
+                if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf")
+                    != changedFiles.end()) {
+                    if (auto account = sthis_->pimpl_->account_.lock())
+                        emitSignal<DRing::ConversationSignal::ConversationProfileUpdated>(
+                            account->getAccountID(), repo->id(), repo->infos());
+                }
+            }
         }
     });
 }
@@ -1095,12 +1108,16 @@ Conversation::updateInfos(const std::map<std::string, std::string>& map, const O
 {
     dht::ThreadPool::io().run([w = weak(), map = std::move(map), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
+            auto& repo = sthis->pimpl_->repository_;
             std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
-            auto commit = sthis->pimpl_->repository_->updateInfos(map);
+            auto commit = repo->updateInfos(map);
             sthis->pimpl_->announce(commit);
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);
+            if (auto account = sthis->pimpl_->account_.lock())
+                emitSignal<DRing::ConversationSignal::ConversationProfileUpdated>(
+                    account->getAccountID(), repo->id(), repo->infos());
         }
     });
 }

@@ -27,6 +27,7 @@ public:
     virtual ~ConversationCallback(){}
     virtual void conversationLoaded(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/){}
     virtual void messageReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*message*/){}
+    virtual void conversationProfileUpdated(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*profile*/){}
     virtual void conversationRequestReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/){}
     virtual void conversationRequestDeclined(const std::string& /*accountId*/, const std::string& /* conversationId */){}
     virtual void conversationReady(const std::string& /*accountId*/, const std::string& /* conversationId */){}
@@ -66,6 +67,7 @@ public:
     virtual ~ConversationCallback(){}
     virtual void conversationLoaded(uint32_t /* id */, const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/){}
     virtual void messageReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*message*/){}
+    virtual void conversationProfileUpdated(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*profile*/){}
     virtual void conversationRequestReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/){}
     virtual void conversationRequestDeclined(const std::string& /*accountId*/, const std::string& /* conversationId */){}
     virtual void conversationReady(const std::string& /*accountId*/, const std::string& /* conversationId */){}
