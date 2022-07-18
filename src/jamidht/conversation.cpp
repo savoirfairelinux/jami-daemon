@@ -760,18 +760,26 @@ Conversation::isBanned(const std::string& uri) const
 void
 Conversation::sendMessage(std::string&& message,
                           const std::string& type,
-                          const std::string& parent,
+                          const std::string& replyTo,
                           OnDoneCb&& cb)
 {
     Json::Value json;
     json["body"] = std::move(message);
     json["type"] = type;
-    sendMessage(std::move(json), parent, std::move(cb));
+    sendMessage(std::move(json), replyTo, std::move(cb));
 }
 
 void
-Conversation::sendMessage(Json::Value&& value, const std::string& parent, OnDoneCb&& cb)
+Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnDoneCb&& cb)
 {
+    if (!replyTo.empty()) {
+        auto commit = pimpl_->repository_->getCommit(replyTo);
+        if (commit == std::nullopt) {
+            JAMI_ERR("Replying to invalid commit %s", replyTo.c_str());
+            return;
+        }
+        value["reply-to"] = replyTo;
+    }
     dht::ThreadPool::io().run([w = weak(), value = std::move(value), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
             auto shared = sthis->pimpl_->account_.lock();
@@ -793,9 +801,7 @@ Conversation::sendMessage(Json::Value&& value, const std::string& parent, OnDone
 }
 
 void
-Conversation::sendMessages(std::vector<Json::Value>&& messages,
-                           const std::string& /*parent*/,
-                           OnMultiDoneCb&& cb)
+Conversation::sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb)
 {
     dht::ThreadPool::io().run([w = weak(), messages = std::move(messages), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
