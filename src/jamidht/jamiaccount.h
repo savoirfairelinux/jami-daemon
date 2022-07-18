@@ -541,7 +541,7 @@ public:
     void sendFile(const std::string& conversationId,
                   const std::string& path,
                   const std::string& name,
-                  const std::string& parent);
+                  const std::string& replyTo);
 
     // non-swarm version
     DRing::DataTransferId sendFile(const std::string& peer,
