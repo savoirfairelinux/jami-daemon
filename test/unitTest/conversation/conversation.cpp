@@ -108,6 +108,7 @@ private:
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
     void testRemoveReaddMultipleDevice();
+    void testSendReply();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -146,6 +147,7 @@ private:
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST(testRemoveReaddMultipleDevice);
+    CPPUNIT_TEST(testSendReply);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2799,6 +2801,78 @@ ConversationTest::testRemoveReaddMultipleDevice()
     DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReadyBob && conversationReadyBob2; }));
+}
+
+void
+ConversationTest::testSendReply()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::vector<std::map<std::string, std::string>> messageBobReceived = {},
+                                                    messageAliceReceived = {};
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> message) {
+            if (accountId == bobId) {
+                messageBobReceived.emplace_back(message);
+            } else {
+                messageAliceReceived.emplace_back(message);
+            }
+            cv.notify_one();
+        }));
+    bool requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    auto convId = DRing::startConversation(aliceId);
+
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    // Wait that alice sees Bob
+    cv.wait_for(lk, 30s, [&]() { return messageAliceReceived.size() == 2; });
+
+    messageBobReceived.clear();
+    DRing::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageBobReceived.size() == 1; }));
+
+    auto validId = messageBobReceived.at(0).at("id");
+    DRing::sendMessage(aliceId, convId, "foo"s, validId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return messageBobReceived.size() == 2; }));
+    CPPUNIT_ASSERT(messageBobReceived.rbegin()->at("reply-to") == validId);
+
+    // Check if parent doesn't exists, no message is generated
+    DRing::sendMessage(aliceId, convId, "foo"s, "invalid");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return messageBobReceived.size() == 3; }));
 }
 
 } // namespace test

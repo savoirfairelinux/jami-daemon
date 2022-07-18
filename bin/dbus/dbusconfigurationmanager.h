@@ -220,7 +220,7 @@ public:
                   const std::string& conversationId,
                   const std::string& path,
                   const std::string& displayName,
-                  const std::string& parent);
+                  const std::string& replyTo);
     void dataTransferInfo(const std::string& accountId,
                           const std::string& fileId,
                           uint32_t& error,
@@ -276,7 +276,7 @@ public:
     void sendMessage(const std::string& accountId,
                      const std::string& conversationId,
                      const std::string& message,
-                     const std::string& parent);
+                     const std::string& replyTo);
     uint32_t loadConversationMessages(const std::string& accountId,
                                       const std::string& conversationId,
                                       const std::string& fromMessage,

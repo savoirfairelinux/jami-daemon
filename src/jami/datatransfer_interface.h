@@ -115,7 +115,7 @@ DRING_PUBLIC void sendFile(const std::string& accountId,
                            const std::string& conversationId,
                            const std::string& path,
                            const std::string& displayName,
-                           const std::string& parent) noexcept;
+                           const std::string& replyTo) noexcept;
 
 /// Accept an incoming file transfer.
 ///

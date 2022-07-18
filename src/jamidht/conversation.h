@@ -179,13 +179,11 @@ public:
     // Message send
     void sendMessage(std::string&& message,
                      const std::string& type = "text/plain",
-                     const std::string& parent = "",
+                     const std::string& replyTo = "",
                      OnDoneCb&& cb = {});
-    void sendMessage(Json::Value&& message, const std::string& parent = "", OnDoneCb&& cb = {});
+    void sendMessage(Json::Value&& message, const std::string& replyTo = "", OnDoneCb&& cb = {});
     // Note: used for replay. Should not be used by clients
-    void sendMessages(std::vector<Json::Value>&& messages,
-                      const std::string& parent = "",
-                      OnMultiDoneCb&& cb = {});
+    void sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb = {});
     /**
      * Get a range of messages
      * @param cb        The callback when loaded

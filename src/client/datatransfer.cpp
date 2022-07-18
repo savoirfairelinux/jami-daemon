@@ -49,10 +49,10 @@ sendFile(const std::string& accountId,
          const std::string& conversationId,
          const std::string& path,
          const std::string& displayName,
-         const std::string& parent) noexcept
+         const std::string& replyTo) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        acc->sendFile(conversationId, path, displayName, parent);
+        acc->sendFile(conversationId, path, displayName, replyTo);
     }
 }
 

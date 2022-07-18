@@ -4205,7 +4205,7 @@ void
 JamiAccount::sendFile(const std::string& conversationId,
                       const std::string& path,
                       const std::string& name,
-                      const std::string& parent)
+                      const std::string& replyTo)
 {
     if (!fileutils::isFile(path)) {
         JAMI_ERR() << "invalid filename '" << path << "'";
@@ -4214,7 +4214,7 @@ JamiAccount::sendFile(const std::string& conversationId,
     // NOTE: this sendMessage is in a computation thread because
     // sha3sum can take quite some time to computer if the user decide
     // to send a big file
-    dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, parent]() {
+    dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, replyTo]() {
         if (auto shared = w.lock()) {
             Json::Value value;
             auto tid = jami::generateUID();
@@ -4228,7 +4228,7 @@ JamiAccount::sendFile(const std::string& conversationId,
             shared->convModule()
                 ->sendMessage(conversationId,
                               std::move(value),
-                              parent,
+                              replyTo,
                               true,
                               [accId = shared->getAccountID(),
                                conversationId,
