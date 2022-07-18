@@ -301,6 +301,8 @@ DBusClient::initLibrary(int flags)
             bind(&DBusConfigurationManager::conversationLoaded, confM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::MessageReceived>(
             bind(&DBusConfigurationManager::messageReceived, confM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::ConversationProfileUpdated>(
+            bind(&DBusConfigurationManager::conversationProfileUpdated, confM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationRequestReceived>(
             bind(&DBusConfigurationManager::conversationRequestReceived, confM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationRequestDeclined>(

@@ -359,6 +359,11 @@ public:
      */
     std::string uriFromDevice(const std::string& deviceId) const;
 
+    /**
+     * Get current HEAD hash
+     */
+    std::string getHead() const;
+
 private:
     ConversationRepository() = delete;
     class Impl;

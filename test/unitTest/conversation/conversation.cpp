@@ -1920,8 +1920,6 @@ ConversationTest::testUpdateProfile()
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
-    bool requestReceived = false;
-    bool conversationReady = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -1933,6 +1931,7 @@ ConversationTest::testUpdateProfile()
             }
             cv.notify_one();
         }));
+    bool requestReceived = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
@@ -1941,6 +1940,7 @@ ConversationTest::testUpdateProfile()
                 requestReceived = true;
                 cv.notify_one();
             }));
+    bool conversationReady = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
@@ -1948,6 +1948,17 @@ ConversationTest::testUpdateProfile()
                 cv.notify_one();
             }
         }));
+    std::map<std::string, std::string> profileAlice, profileBob;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationProfileUpdated>(
+            [&](const auto& accountId, const auto& /* conversationId */, const auto& profile) {
+                if (accountId == aliceId) {
+                    profileAlice = profile;
+                } else if (accountId == bobId) {
+                    profileBob = profile;
+                }
+                cv.notify_one();
+            }));
     DRing::registerSignalHandlers(confHandlers);
 
     auto convId = DRing::startConversation(aliceId);
@@ -1962,11 +1973,18 @@ ConversationTest::testUpdateProfile()
 
     messageBobReceived = 0;
     aliceAccount->convModule()->updateConversationInfos(convId, {{"title", "My awesome swarm"}});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageBobReceived == 1; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return messageBobReceived == 1 && !profileAlice.empty() && !profileBob.empty();
+    }));
 
     auto infos = DRing::conversationInfos(bobId, convId);
+    // Verify that we have the same profile everywhere
     CPPUNIT_ASSERT(infos["title"] == "My awesome swarm");
+    CPPUNIT_ASSERT(profileAlice["title"] == "My awesome swarm");
+    CPPUNIT_ASSERT(profileBob["title"] == "My awesome swarm");
     CPPUNIT_ASSERT(infos["description"].empty());
+    CPPUNIT_ASSERT(profileAlice["description"].empty());
+    CPPUNIT_ASSERT(profileBob["description"].empty());
 
     DRing::unregisterSignalHandlers();
 }

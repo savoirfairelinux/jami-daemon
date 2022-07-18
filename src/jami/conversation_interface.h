@@ -92,6 +92,13 @@ struct DRING_PUBLIC ConversationSignal
                              const std::string& /* conversationId */,
                              std::map<std::string, std::string> /*message*/);
     };
+    struct DRING_PUBLIC ConversationProfileUpdated
+    {
+        constexpr static const char* name = "ConversationProfileUpdated";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             std::map<std::string, std::string> /*profile*/);
+    };
     struct DRING_PUBLIC ConversationRequestReceived
     {
         constexpr static const char* name = "ConversationRequestReceived";

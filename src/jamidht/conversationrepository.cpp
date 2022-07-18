@@ -3573,4 +3573,19 @@ ConversationRepository::uriFromDevice(const std::string& deviceId) const
     return pimpl_->uriFromDevice(deviceId);
 }
 
+std::string
+ConversationRepository::getHead() const
+{
+    if (auto repo = pimpl_->repository()) {
+        git_oid commit_id;
+        if (git_reference_name_to_id(&commit_id, repo.get(), "HEAD") < 0) {
+            JAMI_ERR("Cannot get reference for HEAD");
+            return {};
+        }
+        if (auto commit_str = git_oid_tostr_s(&commit_id))
+            return commit_str;
+    }
+    return {};
+}
+
 } // namespace jami
