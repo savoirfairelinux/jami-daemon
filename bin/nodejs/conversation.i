@@ -57,7 +57,7 @@ namespace DRing {
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
 
   // Message send/load
-  void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& parent);
+  void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& replyTo);
   uint32_t loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
   uint32_t countInteractions(const std::string& accountId, const std::string& conversationId, const std::string& toId, const std::string& fromId, const std::string& authorUri);
 
