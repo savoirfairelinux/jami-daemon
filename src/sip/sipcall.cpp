@@ -282,7 +282,6 @@ SIPCall::createCallAVStreams()
     for (const auto& rtpSession : getRtpSessionList()) {
         auto isVideo = rtpSession->getMediaType() == MediaType::MEDIA_VIDEO;
         auto streamType = isVideo ? StreamType::video : StreamType::audio;
-        std::shared_ptr<MediaStreamSubject> subject = std::make_shared<MediaStreamSubject>(mediaMap);
         StreamData previewStreamData {baseId, false, streamType, getPeerNumber(), getAccountId()};
         StreamData receiveStreamData {baseId, true, streamType, getPeerNumber(), getAccountId()};
 #ifdef ENABLE_VIDEO
@@ -290,19 +289,27 @@ SIPCall::createCallAVStreams()
             // Preview
             auto videoRtp = std::static_pointer_cast<video::VideoRtpSession>(rtpSession);
             if (auto& videoPreview = videoRtp->getVideoLocal())
-                createCallAVStream(previewStreamData, *videoPreview, subject);
+                createCallAVStream(previewStreamData,
+                                   *videoPreview,
+                                   std::make_shared<MediaStreamSubject>(mediaMap));
             // Receive
             if (auto& videoReceive = videoRtp->getVideoReceive())
-                createCallAVStream(receiveStreamData, *videoReceive, subject);
+                createCallAVStream(receiveStreamData,
+                                   *videoReceive,
+                                   std::make_shared<MediaStreamSubject>(mediaMap));
         } else {
 #endif
             auto audioRtp = std::static_pointer_cast<AudioRtpSession>(rtpSession);
             // Preview
             if (auto& localAudio = audioRtp->getAudioLocal())
-                createCallAVStream(previewStreamData, *localAudio, subject);
+                createCallAVStream(previewStreamData,
+                                   *localAudio,
+                                   std::make_shared<MediaStreamSubject>(mediaMap));
             // Receive
             if (auto& audioReceive = audioRtp->getAudioReceive())
-                createCallAVStream(receiveStreamData, (AVMediaStream&) *audioReceive, subject);
+                createCallAVStream(receiveStreamData,
+                                   (AVMediaStream&) *audioReceive,
+                                   std::make_shared<MediaStreamSubject>(mediaMap));
 #ifdef ENABLE_VIDEO
         }
 #endif
