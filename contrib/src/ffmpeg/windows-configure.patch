@@ -1,15 +1,17 @@
-From 1d10f0603d85336efef694036c884b1743572e1e Mon Sep 17 00:00:00 2001
-From: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
-Date: Fri, 29 Jan 2021 16:08:55 -0500
+From 31afebe5d5659e7aa2a5919b6f163bf970e44578 Mon Sep 17 00:00:00 2001
+From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Date: Tue, 19 Jul 2022 15:08:45 -0300
 Subject: [PATCH] windows configure patch
 
 ---
  configure | 35 +----------------------------------
  1 file changed, 1 insertion(+), 34 deletions(-)
 
+diff --git a/configure b/configure
+index 6b5ef6332e..d0fb8a1fc3 100755
 --- a/configure
 +++ b/configure
-@@ -1578,7 +1578,7 @@ require_cpp_condition(){
+@@ -1621,7 +1621,7 @@ require_cpp_condition(){
  require_pkg_config(){
      log require_pkg_config "$@"
      pkg_version="$2"
@@ -17,8 +19,8 @@ Subject: [PATCH] windows configure patch
 +    #check_pkg_config "$@" || die "ERROR: $pkg_version not found using pkg-config$pkg_config_fail_message"
  }
  
- test_host_cc(){
-@@ -6436,28 +6436,6 @@ enabled libvo_amrwbenc    && require libvo_amrwbenc vo-amrwbenc/enc_if.h E_IF_in
+ require_pkg_config_cpp(){
+@@ -6620,28 +6620,6 @@ enabled libvo_amrwbenc    && require libvo_amrwbenc vo-amrwbenc/enc_if.h E_IF_in
  enabled libvorbis         && require_pkg_config libvorbis vorbis vorbis/codec.h vorbis_info_init &&
                               require_pkg_config libvorbisenc vorbisenc vorbis/vorbisenc.h vorbis_encode_init
  
@@ -47,7 +49,7 @@ Subject: [PATCH] windows configure patch
  enabled libwebp           && {
      enabled libwebp_encoder      && require_pkg_config libwebp "libwebp >= 0.2.0" webp/encode.h WebPGetEncoderVersion
      enabled libwebp_anim_encoder && check_pkg_config libwebp_anim_encoder "libwebpmux >= 0.4.0" webp/mux.h WebPAnimEncoderOptionsInit; }
-@@ -7140,17 +7118,6 @@ flatten_extralibs_wrapper(){
+@@ -7325,17 +7303,6 @@ flatten_extralibs_wrapper(){
      eval printf \''%s'\' \""\$$list_name"\"
  }
  
@@ -66,4 +68,5 @@ Subject: [PATCH] windows configure patch
      eval ${linkunit}_extralibs=\$\(flatten_extralibs_wrapper ${linkunit}_extralibs\)
  done
 -- 
-2.27.0
+2.30.2.windows.1
+
