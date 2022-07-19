@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b6596891_bcc8492e",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-07-19T13:59:06Z",
+      "side": 1,
+      "message": "leftovers",
+      "parentUuid": "5c9cb955_4d5b8f9a",
+      "range": {
+        "startLine": 167,
+        "startChar": 17,
+        "endLine": 167,
+        "endChar": 21
+      },
+      "revId": "15074d576137bf5a0411d9f3c2910ee5d22a737c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8bb83397_789a9a92",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-07-19T13:45:35Z",
       "side": 1,
       "message": "on windows, it\u0027s en-GB instead en_GB?",
+      "range": {
+        "startLine": 177,
+        "startChar": 30,
+        "endLine": 177,
+        "endChar": 43
+      },
+      "revId": "15074d576137bf5a0411d9f3c2910ee5d22a737c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1a62304_aaf39a57",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-07-19T13:59:06Z",
+      "side": 1,
+      "message": "yes: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-lcid/70feba9f-294e-491e-b6eb-56532684c37f",
+      "parentUuid": "8bb83397_789a9a92",
       "range": {
         "startLine": 177,
         "startChar": 30,
