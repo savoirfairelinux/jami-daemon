@@ -159,7 +159,26 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
     std::vector<std::map<std::string, std::string>> preferences;
     if (file) {
         // Get preferences locale
+#ifdef WIN32
+        std::string lang;
+        WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
+        if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
+            char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
+            auto siwe = WideCharToMultiByte(CP_UTF8,
+                                            0,
+                                            localeBuffer,
+                                            LOCALE_NAME_MAX_LENGTH,
+                                            utf8Buffer,
+                                            LOCALE_NAME_MAX_LENGTH,
+                                            nullptr,
+                                            nullptr);
+
+            lang.append(utf8Buffer);
+            string_replace(lang, "-", "_");
+        }
+#else
         std::string lang = std::locale("").name();
+#endif //
         auto locales = getLocales(rootPath, std::string(string_remove_suffix(lang, '.')));
 
         // Read the file to a json format
