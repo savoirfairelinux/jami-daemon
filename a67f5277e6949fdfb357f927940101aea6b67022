@@ -16,6 +16,24 @@
       "message": "So here we use the system locale. Is there also a way to respond to the client language override in the settings?",
       "revId": "a67f5277e6949fdfb357f927940101aea6b67022",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b8c5a933_73f74e70",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-19T14:35:40Z",
+      "side": 1,
+      "message": "For plugins for now we don\u0027t",
+      "parentUuid": "b2cf4f16_5826a846",
+      "revId": "a67f5277e6949fdfb357f927940101aea6b67022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
