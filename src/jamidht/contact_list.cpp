@@ -78,7 +78,7 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact {}).first;
-    else if (c->second.isActive() and c->second.confirmed == confirmed)
+    else if (c->second.isActive() and c->second.confirmed == confirmed && c->second.conversationId == conversationId)
         return false;
     c->second.added = std::time(nullptr);
     // NOTE: because we can re-add a contact after removing it
