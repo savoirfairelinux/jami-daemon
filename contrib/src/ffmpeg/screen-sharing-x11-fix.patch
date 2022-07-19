@@ -1,6 +1,6 @@
-From f498c487a24bd39f1adfaa51b415e93456d36612 Mon Sep 17 00:00:00 2001
-From: agsantos <aline.gondimsantos@savoirfairelinux.com>
-Date: Wed, 17 Nov 2021 12:37:32 -0500
+From c1b210534b15188c964b31dc47e172f8ed4aca55 Mon Sep 17 00:00:00 2001
+From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Date: Tue, 19 Jul 2022 13:35:19 -0300
 Subject: [PATCH] Screen sharing x11 fixes
 
 + We can now have a single stream in the x11grab, which can be updated to follow window resizing
@@ -13,7 +13,7 @@ note: This is a custom patch for later rebase
  1 file changed, 45 insertions(+), 141 deletions(-)
 
 diff --git a/libavdevice/xcbgrab.c b/libavdevice/xcbgrab.c
-index 8e3292e577..406716682f 100644
+index 64a68ba497..76e654b424 100644
 --- a/libavdevice/xcbgrab.c
 +++ b/libavdevice/xcbgrab.c
 @@ -29,11 +29,6 @@
@@ -82,7 +82,7 @@ index 8e3292e577..406716682f 100644
 -    shmdt(data);
 -}
 -
--static AVBufferRef *allocate_shm_buffer(void *opaque, buffer_size_t size)
+-static AVBufferRef *allocate_shm_buffer(void *opaque, size_t size)
 -{
 -    xcb_connection_t *conn = opaque;
 -    xcb_shm_seg_t segment;
@@ -123,7 +123,7 @@ index 8e3292e577..406716682f 100644
 -        av_log(s, AV_LOG_ERROR, "Could not get shared memory buffer.\n");
 -        return AVERROR(ENOMEM);
 -    }
--    segment = (xcb_shm_seg_t)av_buffer_pool_buffer_get_opaque(buf);
+-    segment = (xcb_shm_seg_t)(uintptr_t)av_buffer_pool_buffer_get_opaque(buf);
 -
 -    iq = xcb_shm_get_image(c->conn, drawable,
 -                           c->x, c->y, c->width, c->height, ~0,
@@ -268,7 +268,7 @@ index 8e3292e577..406716682f 100644
 +        }
  
 -    setup = xcb_get_setup(c->conn);
-+        setup = xcb_get_setup(c->conn);
++       setup = xcb_get_setup(c->conn);
  
 -    c->screen = get_screen(setup, screen_num);
 -    if (!c->screen) {
@@ -298,5 +298,5 @@ index 8e3292e577..406716682f 100644
      if (c->draw_mouse) {
          if (!(c->draw_mouse = check_xfixes(c->conn))) {
 -- 
-2.30.2
+2.34.1
 

@@ -1,21 +1,20 @@
-From b5afccbddc5877cc383b5b000d83071c3afb3318 Mon Sep 17 00:00:00 2001
-From: kkostiuk <kateryna.kostiuk@savoirfairelinux.com>
-Date: Tue, 27 Apr 2021 15:11:31 -0400
-Subject: [PATCH] changes
+From 81b86c3688049ca15352ba4ee66a5989928b8861 Mon Sep 17 00:00:00 2001
+From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Date: Tue, 19 Jul 2022 13:18:20 -0300
+Subject: [PATCH] ios disable b frames
 
 ---
- libavcodec/videotoolboxenc.c | 19 +++++++++++++++++--
- 1 file changed, 17 insertions(+), 2 deletions(-)
+ libavcodec/videotoolboxenc.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
 diff --git a/libavcodec/videotoolboxenc.c b/libavcodec/videotoolboxenc.c
-index 9b7ee67..86b562e 100644
+index 418ff00b8d..9fab30fd69 100644
 --- a/libavcodec/videotoolboxenc.c
 +++ b/libavcodec/videotoolboxenc.c
-@@ -1389,7 +1389,19 @@ static int vtenc_configure_encoder(AVCodecContext *avctx)
-     }
+@@ -1434,6 +1434,20 @@ static int vtenc_configure_encoder(AVCodecContext *avctx)
  
      vtctx->codec_id = avctx->codec_id;
--    avctx->max_b_frames = 16;
+ 
 +    CFBooleanRef   has_b_frames_cfbool;
 +
 +    int error = VTSessionCopyProperty(vtctx->session,
@@ -29,21 +28,10 @@ index 9b7ee67..86b562e 100644
 +        }
 +        CFRelease(has_b_frames_cfbool);
 +    }
- 
++
      if (vtctx->codec_id == AV_CODEC_ID_H264) {
          vtctx->get_param_set_func = CMVideoFormatDescriptionGetH264ParameterSetAtIndex;
-@@ -1508,7 +1520,10 @@ static av_cold int vtenc_init(AVCodecContext *avctx)
-     if (!status && has_b_frames_cfbool) {
-         //Some devices don't output B-frames for main profile, even if requested.
-         // HEVC has b-pyramid
--        vtctx->has_b_frames = (CFBooleanGetValue(has_b_frames_cfbool) && avctx->codec_id == AV_CODEC_ID_HEVC) ? 2 : 1;
-+        vtctx->has_b_frames = CFBooleanGetValue(has_b_frames_cfbool); 
-+        if (vtctx->has_b_frames && avctx->codec_id == AV_CODEC_ID_HEVC) {
-+            vtctx->has_b_frames = 2;
-+        }
-         CFRelease(has_b_frames_cfbool);
-     }
-     avctx->has_b_frames = vtctx->has_b_frames;
+ 
 -- 
-2.24.3 (Apple Git-128)
+2.34.1
 
