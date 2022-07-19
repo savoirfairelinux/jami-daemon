@@ -1,15 +1,17 @@
-From d8378480c349c5c4e30ca89fa68695661103c309 Mon Sep 17 00:00:00 2001
-From: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
-Date: Fri, 29 Jan 2021 16:56:48 -0500
+From 7e3dd8d95bd8b0364bad194c180d1ccf24b88a05 Mon Sep 17 00:00:00 2001
+From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Date: Tue, 19 Jul 2022 15:17:29 -0300
 Subject: [PATCH] windows libmfx patch
 
 ---
- configure | 2 --
- 1 file changed, 2 deletions(-)
+ configure | 5 -----
+ 1 file changed, 5 deletions(-)
 
+diff --git a/configure b/configure
+index 4a6defcc78..955db827fb 100755
 --- a/configure
 +++ b/configure
-@@ -6374,12 +6374,6 @@ enabled liblensfun        && require_pkg_config liblensfun lensfun lensfun.h lf_
+@@ -6547,11 +6547,6 @@ enabled liblensfun        && require_pkg_config liblensfun lensfun lensfun.h lf_
  # Media SDK or Intel Media Server Studio, these don't come with
  # pkg-config support.  Instead, users should make sure that the build
  # can find the libraries and headers through other means.
@@ -18,10 +20,9 @@ Subject: [PATCH] windows libmfx patch
 -if enabled libmfx; then
 -   check_cc MFX_CODEC_VP9 "mfx/mfxvp9.h mfx/mfxstructures.h" "MFX_CODEC_VP9"
 -fi
--
+ 
  enabled libmodplug        && require_pkg_config libmodplug libmodplug libmodplug/modplug.h ModPlug_Load
  enabled libmp3lame        && require "libmp3lame >= 3.98.3" lame/lame.h lame_set_VBR_quality -lmp3lame $libm_extralibs
- enabled libmysofa         && { check_pkg_config libmysofa libmysofa mysofa.h mysofa_neighborhood_init_withstepdefine ||
 -- 
-2.27.0
+2.30.2.windows.1
 
