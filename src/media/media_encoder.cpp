@@ -335,11 +335,8 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
             throw MediaEncoderException("Could not open encoder");
     }
 
-#ifndef _WIN32
     avcodec_parameters_from_context(stream->codecpar, encoderCtx);
-#else
-    stream->codec = encoderCtx;
-#endif
+
     // framerate is not copied from encoderCtx to stream
     stream->avg_frame_rate = encoderCtx->framerate;
 #ifdef ENABLE_VIDEO
@@ -578,11 +575,7 @@ std::string
 MediaEncoder::print_sdp()
 {
     /* theora sdp can be huge */
-#ifndef _WIN32
     const auto sdp_size = outputCtx_->streams[currentStreamIdx_]->codecpar->extradata_size + 2048;
-#else
-    const auto sdp_size = outputCtx_->streams[currentStreamIdx_]->codec->extradata_size + 2048;
-#endif
     std::string sdp(sdp_size, '\0');
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
 

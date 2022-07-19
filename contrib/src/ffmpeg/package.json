@@ -1,7 +1,7 @@
 {
     "name": "ffmpeg",
-    "version": "n4.4.2",
-    "url": "https://github.com/FFmpeg/FFmpeg/archive/__VERSION__.tar.gz",
+    "version": "n5.0",
+    "url": "https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/__VERSION__.tar.gz",
     "deps": [
         "vpx",
         "x264",
@@ -13,12 +13,12 @@
         "change-RTCP-ratio.patch",
         "rtp_ext_abs_send_time.patch",
         "libopusenc-reload-packet-loss-at-encode.patch",
-        "libopusdec-enable-FEC.patch"
-    ],
-    "win_patches": [
+        "libopusdec-enable-FEC.patch",
         "windows-configure.patch",
         "windows-configure-ffnvcodec.patch",
         "windows-configure-libmfx.patch"
+    ],
+    "win_patches": [
     ],
     "project_paths": [],
     "with_env" : "10.0.16299.0",
