@@ -443,7 +443,7 @@ def apply(pkg_name, patches, win_patches):
     os.chdir(tmp_dir)
 
 
-def get_pkg_file(pkg_name, isPlugin):
+def get_pkg_file(pkg_name, isPlugin = False):
     if pkg_name == 'daemon':
         pkg_location = daemon_msvc_dir
     elif (isPlugin):
