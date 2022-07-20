@@ -921,6 +921,15 @@ DBusConfigurationManager::loadConversationMessages(const std::string& accountId,
 }
 
 uint32_t
+DBusConfigurationManager::loadConversationUntil(const std::string& accountId,
+                                                const std::string& conversationId,
+                                                const std::string& fromMessage,
+                                                const std::string& to)
+{
+    return DRing::loadConversationUntil(accountId, conversationId, fromMessage, to);
+}
+
+uint32_t
 DBusConfigurationManager::countInteractions(const std::string& accountId,
                                             const std::string& conversationId,
                                             const std::string& toId,

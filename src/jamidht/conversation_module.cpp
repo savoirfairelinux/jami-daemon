@@ -1261,6 +1261,30 @@ ConversationModule::loadConversationMessages(const std::string& conversationId,
     return 0;
 }
 
+uint32_t
+ConversationModule::loadConversationUntil(const std::string& conversationId,
+                                          const std::string& fromMessage,
+                                          const std::string& toMessage)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto acc = pimpl_->account_.lock();
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (acc && conversation != pimpl_->conversations_.end() && conversation->second) {
+        const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+        conversation->second->loadMessages(
+            [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
+                emitSignal<DRing::ConversationSignal::ConversationLoaded>(id,
+                                                                          accountId,
+                                                                          conversationId,
+                                                                          messages);
+            },
+            fromMessage,
+            toMessage);
+        return id;
+    }
+    return 0;
+}
+
 std::shared_ptr<TransferManager>
 ConversationModule::dataTransfer(const std::string& id) const
 {
