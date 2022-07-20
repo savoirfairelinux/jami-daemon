@@ -1,5 +1,5 @@
 # ONNX
-ONNX_VERSION := v1.6.0
+ONNX_VERSION := v1.12.0
 ONNX_URL := https://github.com/microsoft/onnxruntime.git
 
 $(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:
