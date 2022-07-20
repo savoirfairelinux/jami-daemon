@@ -2685,10 +2685,13 @@ JamiAccount::loadCachedUrl(const std::string& url,
                            const std::chrono::seconds& cacheDuration,
                            std::function<void(const dht::http::Response& response)> cb)
 {
-    auto lock = std::make_shared<std::lock_guard<std::mutex>>(fileutils::getFileLock(cachePath));
-    dht::ThreadPool::io().run([lock, cb, url, cachePath, cacheDuration, w = weak()]() {
+    dht::ThreadPool::io().run([cb, url, cachePath, cacheDuration, w = weak()]() {
         try {
-            auto data = fileutils::loadCacheFile(cachePath, cacheDuration);
+            std::vector<uint8_t> data;
+            {
+                std::lock_guard<std::mutex> lk(fileutils::getFileLock(cachePath));
+                data = fileutils::loadCacheFile(cachePath, cacheDuration);
+            }
             dht::http::Response ret;
             ret.body = {data.begin(), data.end()};
             ret.status_code = 200;
@@ -2705,9 +2708,10 @@ JamiAccount::loadCachedUrl(const std::string& url,
                 auto req = std::make_shared<dht::http::Request>(
                     *Manager::instance().ioContext(),
                     url,
-                    [lock, cb, cachePath, w](const dht::http::Response& response) {
+                    [cb, cachePath, w](const dht::http::Response& response) {
                         if (response.status_code == 200) {
                             try {
+                                std::lock_guard<std::mutex> lk(fileutils::getFileLock(cachePath));
                                 fileutils::saveFile(cachePath,
                                                     (const uint8_t*) response.body.data(),
                                                     response.body.size(),
