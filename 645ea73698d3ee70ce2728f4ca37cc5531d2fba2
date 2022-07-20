@@ -16,6 +16,23 @@
       "message": "-1 because of the removed x11 screen sharing patch",
       "revId": "645ea73698d3ee70ce2728f4ca37cc5531d2fba2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "85d58eda_0001b492",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-07-20T13:38:19Z",
+      "side": 1,
+      "message": "reference patch: https://review.jami.net/c/jami-daemon/+/21816",
+      "revId": "645ea73698d3ee70ce2728f4ca37cc5531d2fba2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
