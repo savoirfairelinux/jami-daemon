@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf275786_5c48daff",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-20T18:46:47Z",
+      "side": 1,
+      "message": "this will work and correctly update the conversationId and seems to break nothing on my side (I ran daemon-tests to cehck)\n\nBut I guess for going from 1:1 to swarm, the client should still call removeContact, to cleanup the database",
+      "range": {
+        "startLine": 81,
+        "startChar": 73,
+        "endLine": 81,
+        "endChar": 116
+      },
+      "revId": "015c5214125e9cfc6c24301bf2129166fdb807e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
