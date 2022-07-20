@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71fbbeed_f7f336a6",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 4
+      },
+      "lineNbr": 369,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-07-20T13:26:52Z",
+      "side": 0,
+      "message": "is the `screen-sharing-x11-fix.patch\u0027 no longer needed? Sébastien mentioned it wasn upstreamed.",
+      "revId": "d082435ae7f69a19dc65fe06f54c94169e085c39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
