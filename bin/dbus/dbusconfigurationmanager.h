@@ -281,6 +281,10 @@ public:
                                       const std::string& conversationId,
                                       const std::string& fromMessage,
                                       const uint32_t& n);
+    uint32_t loadConversationUntil(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& fromMessage,
+                                   const std::string& to);
     uint32_t countInteractions(const std::string& accountId,
                                const std::string& conversationId,
                                const std::string& toId,

@@ -69,6 +69,10 @@ DRING_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
                                                const std::string& conversationId,
                                                const std::string& fromMessage,
                                                size_t n);
+DRING_PUBLIC uint32_t loadConversationUntil(const std::string& accountId,
+                                            const std::string& conversationId,
+                                            const std::string& fromMessage,
+                                            const std::string& toMessage);
 DRING_PUBLIC uint32_t countInteractions(const std::string& accountId,
                                         const std::string& conversationId,
                                         const std::string& toId,
