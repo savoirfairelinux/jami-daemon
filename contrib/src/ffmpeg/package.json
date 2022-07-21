@@ -25,7 +25,8 @@
     "custom_scripts": {
         "pre_build": [],
         "build": [
-            "call \"%CONTRIB_SRC_DIR%\\ffmpeg\\build_ffmpeg.bat\""
+            "call \"%CONTRIB_SRC_DIR%\\ffmpeg\\build_ffmpeg.bat\"",
+            "cd Build/win32/x64/lib & ren *.a *.lib"
         ],
         "post_build": []
     }
