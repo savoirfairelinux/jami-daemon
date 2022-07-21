@@ -98,23 +98,23 @@ private:
     void testParticipantAddRmSecondVideo();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
-    CPPUNIT_TEST(testGetConference);
-    CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
-    CPPUNIT_TEST(testUnauthorizedMute);
-    CPPUNIT_TEST(testAudioVideoMutedStates);
-    CPPUNIT_TEST(testCreateParticipantsSinks);
-    CPPUNIT_TEST(testMuteStatusAfterRemove);
-    CPPUNIT_TEST(testActiveStatusAfterRemove);
-    CPPUNIT_TEST(testHandsUp);
-    CPPUNIT_TEST(testPeerLeaveConference);
-    CPPUNIT_TEST(testJoinCallFromOtherAccount);
-    CPPUNIT_TEST(testDevices);
-    CPPUNIT_TEST(testUnauthorizedSetActive);
-    CPPUNIT_TEST(testHangup);
-    CPPUNIT_TEST(testIsConferenceParticipant);
+    // CPPUNIT_TEST(testGetConference);
+    // CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
+    // CPPUNIT_TEST(testUnauthorizedMute);
+    // CPPUNIT_TEST(testAudioVideoMutedStates);
+    // CPPUNIT_TEST(testCreateParticipantsSinks);
+    // CPPUNIT_TEST(testMuteStatusAfterRemove);
+    // CPPUNIT_TEST(testActiveStatusAfterRemove);
+    // CPPUNIT_TEST(testHandsUp);
+    // CPPUNIT_TEST(testPeerLeaveConference);
+    // CPPUNIT_TEST(testJoinCallFromOtherAccount);
+    // CPPUNIT_TEST(testDevices);
+    // CPPUNIT_TEST(testUnauthorizedSetActive);
+    // CPPUNIT_TEST(testHangup);
+    // CPPUNIT_TEST(testIsConferenceParticipant);
     CPPUNIT_TEST(testAudioConferenceConfInfo);
-    CPPUNIT_TEST(testHostAddRmSecondVideo);
-    CPPUNIT_TEST(testParticipantAddRmSecondVideo);
+    // CPPUNIT_TEST(testHostAddRmSecondVideo);
+    // CPPUNIT_TEST(testParticipantAddRmSecondVideo);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -183,10 +183,13 @@ ConferenceTest::registerSignalHandlers()
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
             if (accountId == bobId) {
+                JAMI_ERR("@@@ INCOMING BOB");
                 bobCall.callId = callId;
             } else if (accountId == carlaId) {
+                JAMI_ERR("@@@ INCOMING carlaId");
                 carlaCall.callId = callId;
             } else if (accountId == daviId) {
+                JAMI_ERR("@@@ INCOMING daviId");
                 daviCall.callId = callId;
             }
             cv.notify_one();
@@ -196,6 +199,7 @@ ConferenceTest::registerSignalHandlers()
                                                                        const std::string& callId,
                                                                        const std::string& state,
                                                                        signed) {
+            JAMI_ERR("@@@ INCOMING %s %s", accountId.c_str(), callId.c_str());
             if (accountId == aliceId) {
                 auto details = DRing::getCallDetails(aliceId, callId);
                 if (details["PEER_NUMBER"].find(bobUri) != std::string::npos)
@@ -214,17 +218,20 @@ ConferenceTest::registerSignalHandlers()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceCreated>(
         [=](const std::string&, const std::string& conferenceId) {
+            JAMI_ERR("@@@ CONF STARTED");
             confId = conferenceId;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceRemoved>(
         [=](const std::string&, const std::string& conferenceId) {
+            JAMI_ERR("@@@ CONF FINISHED");
             if (confId == conferenceId)
                 confId = "";
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceChanged>(
         [=](const std::string&, const std::string& conferenceId, const std::string&) {
+            JAMI_ERR("@@@ CONF ConferenceChanged");
             if (confId == conferenceId)
                 confChanged = true;
             cv.notify_one();
@@ -233,24 +240,28 @@ ConferenceTest::registerSignalHandlers()
         [=](const std::string&,
             const std::vector<std::map<std::string, std::string>> participantsInfos) {
             pInfos_ = participantsInfos;
+            JAMI_ERR("@@@ CONF OnConferenceInfosUpdated");
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
                     bobCall.active = infos.at("active") == "true";
                     bobCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     bobCall.raisedHand = infos.at("handRaised") == "true";
                     bobCall.device = infos.at("device");
+                    JAMI_ERR("@@@ BOB DEVICE");
                     bobCall.streamId = infos.at("sinkId");
                 } else if (infos.at("uri").find(carlaUri) != std::string::npos) {
                     carlaCall.active = infos.at("active") == "true";
                     carlaCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     carlaCall.raisedHand = infos.at("handRaised") == "true";
                     carlaCall.device = infos.at("device");
+                    JAMI_ERR("@@@ CARLA DEVICE");
                     carlaCall.streamId = infos.at("sinkId");
                 } else if (infos.at("uri").find(daviUri) != std::string::npos) {
                     daviCall.active = infos.at("active") == "true";
                     daviCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     daviCall.raisedHand = infos.at("handRaised") == "true";
                     daviCall.device = infos.at("device");
+                    JAMI_ERR("@@@ DAVID DEVICE");
                     daviCall.streamId = infos.at("sinkId");
                 }
             }
@@ -299,6 +310,10 @@ ConferenceTest::startConference(bool audioOnly)
     // ConfChanged is the signal emitted when the 2 calls will be added to the conference
     // Also, wait that participants appears in conf info to get all good informations
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
+        JAMI_ERR("@@@ ConfId %s", confId.c_str());
+        JAMI_ERR("@@@ confChanged %u", confChanged);
+        JAMI_ERR("@@@ carlaCall.device %s", carlaCall.device.c_str());
+        JAMI_ERR("@@@ bobCall.device %s", bobCall.device.c_str());
         return !confId.empty() && confChanged && !carlaCall.device.empty()
                && !bobCall.device.empty();
     }));
