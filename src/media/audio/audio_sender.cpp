@@ -43,11 +43,13 @@ AudioSender::AudioSender(const std::string& dest,
     , seqVal_(seqVal)
     , mtu_(mtu)
 {
+    JAMI_INFO("AudioSender constructor");
     setup(socketPair);
 }
 
 AudioSender::~AudioSender()
 {
+    JAMI_INFO("AudioSender destructor");
     audioEncoder_.reset();
     muxContext_.reset();
     micData_.clear();
@@ -100,6 +102,8 @@ AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
         voice_ = hasVoice;
         if (voiceCallback_) {
             voiceCallback_(voice_);
+        } else {
+            JAMI_ERR("AudioSender no voice callback!");
         }
     }
 
@@ -110,8 +114,12 @@ AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
 void
 AudioSender::setVoiceCallback(std::function<void(bool)> cb)
 {
-    JAMI_DBG("audio sender set voice callback");
-    voiceCallback_ = std::move(cb);
+    if (cb) {
+        voiceCallback_ = std::move(cb);
+        JAMI_DBG("AudioSender set voice callback");
+    } else {
+        JAMI_ERR("AudioSender trying to set invalid voice callback");
+    }
 }
 
 uint16_t
