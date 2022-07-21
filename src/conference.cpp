@@ -248,6 +248,11 @@ Conference::Conference(const std::shared_ptr<Account>& account)
             if (auto* transport = call->getTransport())
                 setHandRaised(std::string(transport->deviceId()), state);
     });
+    parser_.onVoiceActivity([&](const auto& uri, bool state) {
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(getCallFromPeerID(uri)))
+            if (auto* transport = call->getTransport())
+                setVoiceActivity(std::string(transport->deviceId()), state);
+    });
 }
 
 Conference::~Conference()
@@ -1226,6 +1231,65 @@ Conference::setHandRaised(const std::string& deviceId, const bool& state)
     }
 }
 
+bool
+Conference::isVoiceActive(std::string_view deviceId) const
+{
+    return isHostDevice(deviceId)
+               ? participantsVoiceActive.find("host"sv) != participantsVoiceActive.end()
+               : participantsVoiceActive.find(deviceId) != participantsVoiceActive.end();
+}
+
+void
+Conference::setVoiceActivity(const std::string& deviceId, const bool& newState)
+{
+    JAMI_DBG("setVoiceActivity(%s, %d)", deviceId.c_str(), newState);
+    if (isHostDevice(deviceId)) {
+        // device is the host
+        auto previousState = isVoiceActive("host"sv);
+        if (newState and not previousState) {
+            // voice going from inactive to active
+            JAMI_DBG("voice now active for host");
+            participantsVoiceActive.emplace("host"sv);
+            updateVoiceActivity();
+        } else if (not newState and previousState) {
+            // voice going from active to inactive
+            JAMI_DBG("voice now inactive for host");
+            participantsVoiceActive.erase("host");
+            updateVoiceActivity();
+        } else {
+            JAMI_DBG("voice state hasn't changed for host");
+        }
+    } else {
+        // device is not the host
+
+        for (const auto& participant : getParticipantList()) {
+            if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(participant))) {
+                auto* transport = call->getTransport();
+                if (transport and deviceId == transport->deviceId()) {
+                    // we have found the device
+                    auto previousState = isVoiceActive(deviceId);
+                    if (newState and not previousState) {
+                        // voice going from inactive to active
+                        JAMI_DBG("voice now active for device: %s", deviceId.c_str());
+                        participantsVoiceActive.emplace(deviceId);
+                        updateVoiceActivity();
+                    } else if (not newState and previousState) {
+                        // voice going from active to inactive
+                        JAMI_DBG("voice now inactive for device: %s", deviceId.c_str());
+                        participantsVoiceActive.erase(deviceId);
+                        updateVoiceActivity();
+                    } else {
+                        JAMI_DBG("voice state hasn't changed for device: %s", deviceId.c_str());
+                    }
+                    return;
+                }
+            }
+        }
+        JAMI_WARN("unable to change voice activity, participant not found for deviceId: %s",
+                  deviceId.c_str());
+    }
+}
+
 void
 Conference::setModerator(const std::string& participant_id, const bool& state)
 {
@@ -1266,6 +1330,16 @@ Conference::updateHandsRaised()
     for (auto& info : confInfo_)
         info.handRaised = isHandRaised(info.device);
     sendConferenceInfos();
+}
+
+void
+Conference::updateVoiceActivity()
+{
+    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    for (auto& participantInfo : confInfo_) {
+        participantInfo.voiceActivity = isHandRaised(participantInfo.device);
+    }
+    sendConferenceInfos(); // also emits signal to client
 }
 
 void
