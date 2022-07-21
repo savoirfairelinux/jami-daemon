@@ -81,14 +81,14 @@ private:
 static constexpr const auto MIXER_FRAMERATE = 30;
 static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / MIXER_FRAMERATE);
 
-VideoMixer::VideoMixer(const std::string& id, const std::string& localInput)
+VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, bool attachHost)
     : VideoGenerator::VideoGenerator()
     , id_(id)
     , sink_(Manager::instance().createSinkClient(id, true))
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
 {
     // Local video camera is the main participant
-    if (not localInput.empty()) {
+    if (not localInput.empty() && attachHost) {
         auto videoInput = getVideoInput(localInput);
         localInputs_.emplace_back(videoInput);
         attachVideo(videoInput.get(),
@@ -300,7 +300,7 @@ VideoMixer::process()
         int i = 0;
         bool activeFound = false;
         bool needsUpdate = layoutUpdated_ > 0;
-        bool successfullyRendered = false;
+        bool successfullyRendered = audioOnlySources_.size() != 0 && sources_.size() == 0;
         std::vector<SourceInfo> sourcesInfo;
         sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
         // add all audioonlysources

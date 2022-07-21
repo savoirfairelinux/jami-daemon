@@ -91,10 +91,9 @@ Conference::Conference(const std::shared_ptr<Account>& account)
         return attr.type_ == MediaType::MEDIA_VIDEO;
     });
     // We are done if the video is disabled.
-    if (not videoEnabled_ || itVideo == hostSources_.end())
-        return;
-
-    videoMixer_ = std::make_shared<video::VideoMixer>(id_, itVideo->sourceUri_);
+    auto hasVideo = videoEnabled_ && itVideo != hostSources_.end();
+    auto source = hasVideo ? itVideo->sourceUri_ : "";
+    videoMixer_ = std::make_shared<video::VideoMixer>(id_, source, hasVideo);
     videoMixer_->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
