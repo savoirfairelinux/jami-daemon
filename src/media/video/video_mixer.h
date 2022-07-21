@@ -37,7 +37,8 @@ namespace video {
 
 class SinkClient;
 
-struct StreamInfo {
+struct StreamInfo
+{
     std::string callId;
     std::string streamId;
 };
@@ -60,7 +61,7 @@ enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
 class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
 {
 public:
-    VideoMixer(const std::string& id, const std::string& localInput = {});
+    VideoMixer(const std::string& id, const std::string& localInput = {}, bool attachHost = true);
     ~VideoMixer();
 
     void setParameters(int width, int height, AVPixelFormat format = AV_PIX_FMT_YUV422P);
@@ -93,10 +94,7 @@ public:
         updateLayout();
     }
 
-    bool verifyActive(const std::string& id)
-    {
-        return activeStream_ == id;
-    }
+    bool verifyActive(const std::string& id) { return activeStream_ == id; }
 
     void setVideoLayout(Layout newLayout)
     {
@@ -112,7 +110,8 @@ public:
 
     MediaStream getStream(const std::string& name) const;
 
-    std::shared_ptr<VideoFrameActiveWriter> getVideoLocal() const {
+    std::shared_ptr<VideoFrameActiveWriter> getVideoLocal() const
+    {
         if (!localInputs_.empty())
             return *localInputs_.begin();
         return {};
@@ -139,7 +138,9 @@ public:
         }
     }
 
-    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId, const std::string& streamId);
+    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
+                     const std::string& callId,
+                     const std::string& streamId);
     void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
 
     StreamInfo streamInfo(Observable<std::shared_ptr<MediaFrame>>* frame) const
