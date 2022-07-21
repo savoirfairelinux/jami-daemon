@@ -680,6 +680,16 @@ Call::setConferenceInfo(const std::string& msg)
         if (not isConferenceParticipant()) {
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
+
+            // TODO: remove debug
+            for (auto& participant : confInfo_) {
+                JAMI_INFO("participant %s, sinkId: %s, localMuted: %s, voice: %s",
+                          participant.uri.c_str(),
+                          participant.sinkId.c_str(),
+                          participant.audioLocalMuted ? "yes" : "no",
+                          participant.voiceActivity ? "yes" : "no");
+            }
+
             // Create sink for each participant
 #ifdef ENABLE_VIDEO
             createSinks(confInfo_);

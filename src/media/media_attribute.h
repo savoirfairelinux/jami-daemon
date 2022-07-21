@@ -37,8 +37,7 @@ public:
                    bool enabled = false,
                    std::string_view source = {},
                    std::string_view label = {},
-                   bool onHold = false,
-                   bool voice = false)
+                   bool onHold = false)
         : type_(type)
         , muted_(muted)
         , secure_(secure)
@@ -46,7 +45,6 @@ public:
         , sourceUri_(source)
         , label_(label)
         , onHold_(onHold)
-        , voice_(voice)
     {}
 
     MediaAttribute(const DRing::MediaMap& mediaMap, bool secure);
@@ -89,7 +87,6 @@ public:
     std::string sourceUri_ {};
     std::string label_ {};
     bool onHold_ {false};
-    bool voice_ {false}; // voice activity
 
     // NOTE: the hold and mute attributes are related but not
     // tightly coupled. A hold/un-hold operation should always
