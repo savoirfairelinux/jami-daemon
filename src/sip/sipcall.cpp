@@ -107,6 +107,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , enableIce_(account->isIceForMediaEnabled())
     , srtpEnabled_(account->isSrtpEnabled())
 {
+    JAMI_WARN("SIPCall constructor, ID: %s", callId.c_str());
     if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller());
 
@@ -149,6 +150,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
 SIPCall::~SIPCall()
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    JAMI_WARN("SIPCall destructor, ID: %s", id_.c_str());
 
     setSipTransport({});
     setInviteSession(); // prevents callback usage
@@ -234,27 +236,8 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
             thisPtr->rtpSetupSuccess(type, isRemote);
     });
 
-    // check if voice activity has changed
     if (localMedia.type == MediaType::MEDIA_AUDIO) {
-        // need to downcast to access setVoiceCallback
-        auto audioRtp = std::dynamic_pointer_cast<AudioRtpSession>(rtpSession);
-        assert(audioRtp && mediaAttr);
-
-        auto streamIdx = findRtpStreamIndex(mediaAttr->label_);
-        audioRtp->setVoiceCallback([w = weak(), streamIdx](bool voice) {
-            runOnMainThread([w, voice, streamIdx] {
-                if (auto thisPtr = w.lock()) {
-                    // do something with the new local voice state
-                    JAMI_WARN("local voice activity is now: %s", voice ? "active" : "inactive");
-
-                    // TODO: emit signal to client with local voice activity state
-                    // emitSignal<>();
-
-                    // send our local voice activity state over SIP
-                    thisPtr->sendVoiceActivity(voice);
-                }
-            });
-        });
+        setupVoiceCallback(rtpSession);
     }
 
 #ifdef ENABLE_VIDEO
@@ -276,6 +259,52 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
         });
     }
 #endif
+}
+
+void
+SIPCall::setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession)
+{
+    JAMI_INFO("SIP Call setting voice callback, call id: %s", id_.c_str());
+    // need to downcast to access setVoiceCallback
+    auto audioRtp = std::dynamic_pointer_cast<AudioRtpSession>(rtpSession);
+
+    audioRtp->setVoiceCallback([w = weak()](bool voice) {
+        // this is called whenever voice is detected on the local audio
+
+        runOnMainThread([w, voice] {
+            if (auto thisPtr = w.lock()) {
+                // TODO: once we support multiple streams, change this to the right one
+                std::string streamId = sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID);
+
+                JAMI_WARN("(call id: %s, streamId: %s): local voice activity is now: %s",
+                          thisPtr->id_.c_str(),
+                          streamId.c_str(),
+                          voice ? "active" : "inactive");
+
+                // send our local voice activity
+                if (auto conference = thisPtr->conf_.lock()) {
+                    // we are in a conference
+                    JAMI_INFO("sending voice activity in conference");
+
+                    // updates conference info and sends it to others via ConfInfo
+                    // (only if there was a change)
+                    // also emits signal with updated conference info
+                    conference->setVoiceActivity(streamId, voice);
+                } else {
+                    // we are in a one-to-one call
+                    JAMI_INFO("sending voice activity directly to peer (not in conference)");
+
+                    // send voice activity over SIP
+                    // TODO: change the streamID once multiple streams are supported
+                    thisPtr->sendVoiceActivity("-1", voice);
+
+                    // TODO: maybe emit signal here for local voice activity
+                }
+            } else {
+                JAMI_ERR("voice activity callback unable to lock weak ptr to SIPCall!");
+            }
+        });
+    });
 }
 
 std::shared_ptr<SIPAccountBase>
@@ -665,17 +694,26 @@ SIPCall::sendMuteState(bool state)
 }
 
 void
-SIPCall::sendVoiceActivity(bool state)
+SIPCall::sendVoiceActivity(std::string streamId, bool state)
 {
+    // dont send streamId if it's -1
+    std::string streamIdPart = "";
+    if (streamId != "-1") {
+        streamIdPart = fmt::format("<stream_id>{}</stream_id>", streamId);
+    }
+
     std::string BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                       "<media_control><vc_primitive><to_encoder>"
-                       "<voice_activity="
+                       "<media_control><vc_primitive>"
+                       + streamIdPart
+                       + "<to_encoder>"
+                         "<voice_activity="
                        + std::to_string(state)
                        + "/>"
                          "</to_encoder></vc_primitive></media_control>";
     // see https://tools.ietf.org/html/rfc5168 for XML Schema for Media Control details
 
-    JAMI_DBG("Sending new local voice activity state via SIP INFO: %s",
+    JAMI_DBG("Sending new local voice activity state (stream %s) via SIP INFO: %s",
+             streamId.c_str(),
              state ? "active" : "inactive");
 
     try {
@@ -3475,12 +3513,14 @@ void
 SIPCall::peerVoice(bool voice)
 {
     JAMI_WARN("peer voice activity is now %s", voice ? "active" : "inactive");
-    peerVoice_ = voice; // for peerrecorder
+    peerVoice_ = voice;
 
-    // TODO: integrate into one-to-one calls
-    // emitSignal<>()
-
-    // TODO: integrate into conference info
+    if (auto conference = conf_.lock()) {
+        conference->updateVoiceActivity();
+    } else {
+        // one-to-one call
+        // maybe emit signal with partner voice activity
+    }
 }
 
 void

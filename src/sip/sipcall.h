@@ -284,6 +284,7 @@ public:
 #ifdef ENABLE_VIDEO
     void setRotation(int streamIdx, int rotation);
 #endif
+
     // Get the list of current RTP sessions
     std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(
         MediaType type = MediaType::MEDIA_ALL) const;
@@ -328,8 +329,10 @@ private:
 
     void rtpSetupSuccess(MediaType type, bool isRemote);
 
+    void setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession);
+
     void sendMuteState(bool state);
-    void sendVoiceActivity(bool state);
+    void sendVoiceActivity(std::string streamId, bool state);
 
     void resetTransport(std::shared_ptr<IceTransport>&& transport);
 
