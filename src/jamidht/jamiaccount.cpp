@@ -1127,8 +1127,26 @@ JamiAccount::loadAccount(const std::string& archive_password,
         [this](const std::string& uri, bool banned) {
             if (!id_.first)
                 return;
-            runOnMainThread([id = getAccountID(), uri, banned] {
-                emitSignal<DRing::ConfigurationSignal::ContactRemoved>(id, uri, banned);
+
+            dht::ThreadPool::io().run([w = weak(), uri, banned] {
+                if (auto shared = w.lock()) {
+                    // Erase linked conversation's requests
+                    shared->convModule()->removeContact(uri, banned);
+
+                    // Remove current connections with contact
+                    std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
+                    for (auto it = shared->sipConns_.begin(); it != shared->sipConns_.end();) {
+                        const auto& [key, value] = *it;
+                        if (key.first == uri)
+                            it = shared->sipConns_.erase(it);
+                        else
+                            ++it;
+                    }
+                    // Update client.
+                    emitSignal<DRing::ConfigurationSignal::ContactRemoved>(shared->getAccountID(),
+                                                                           uri,
+                                                                           banned);
+                }
             });
         },
         [this](const std::string& uri,
@@ -2982,25 +3000,12 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
 void
 JamiAccount::removeContact(const std::string& uri, bool ban)
 {
-    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     if (accountManager_) {
         accountManager_->removeContact(uri, ban);
     } else {
         JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
         return;
-    }
-    lock.unlock();
-
-    convModule()->removeContact(uri, ban);
-
-    // Remove current connections with contact
-    std::unique_lock<std::mutex> lk(sipConnsMtx_);
-    for (auto it = sipConns_.begin(); it != sipConns_.end();) {
-        const auto& [key, value] = *it;
-        if (key.first == uri)
-            it = sipConns_.erase(it);
-        else
-            ++it;
     }
 }
 
