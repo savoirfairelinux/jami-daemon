@@ -68,6 +68,7 @@ AudioRtpSession::~AudioRtpSession()
 void
 AudioRtpSession::startSender()
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     JAMI_DBG("Start audio RTP sender: input [%s] - muted [%s]",
              input_.c_str(),
              muteState_ ? "YES" : "NO");
@@ -117,12 +118,17 @@ AudioRtpSession::startSender()
         sender_.reset();
         socketPair_->stopSendOp(false);
         sender_.reset(new AudioSender(getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, mtu_));
-        if (voiceCallback_) {
-            sender_->setVoiceCallback(voiceCallback_);
-        }
     } catch (const MediaEncoderException& e) {
         JAMI_ERR("%s", e.what());
         send_.enabled = false;
+    }
+
+    if (voiceCallback_) {
+        sender_->setVoiceCallback(voiceCallback_);
+        JAMI_INFO("Audio RTP session set sender voice callback, call id: %s", callId_.c_str());
+    } else {
+        JAMI_WARN("Audio RTP session created sender before having a voice callback, call id: %s",
+                  callId_.c_str());
     }
 
     // NOTE do after sender/encoder are ready
@@ -140,8 +146,10 @@ AudioRtpSession::restartSender()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     // ensure that start has been called before restart
-    if (not socketPair_)
+    if (not socketPair_) {
+        JAMI_WARN("not restarting sender since it was never started in the first place");
         return;
+    }
 
     startSender();
 }
@@ -253,9 +261,14 @@ AudioRtpSession::setMuted(bool muted, Direction)
 void
 AudioRtpSession::setVoiceCallback(std::function<void(bool)> cb)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     voiceCallback_ = std::move(cb);
     if (sender_) {
         sender_->setVoiceCallback(voiceCallback_);
+        JAMI_INFO("Audio RTP session done setting voice callback, call %s", callId_.c_str());
+    } else {
+        JAMI_WARN("Audio RTP session doesn't yet have a sender, cannot set voice callback! call %s",
+                  callId_.c_str());
     }
 }
 
