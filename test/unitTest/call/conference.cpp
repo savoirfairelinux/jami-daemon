@@ -98,23 +98,23 @@ private:
     void testParticipantAddRmSecondVideo();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
-    CPPUNIT_TEST(testGetConference);
-    CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
-    CPPUNIT_TEST(testUnauthorizedMute);
-    CPPUNIT_TEST(testAudioVideoMutedStates);
-    CPPUNIT_TEST(testCreateParticipantsSinks);
-    CPPUNIT_TEST(testMuteStatusAfterRemove);
-    CPPUNIT_TEST(testActiveStatusAfterRemove);
-    CPPUNIT_TEST(testHandsUp);
-    CPPUNIT_TEST(testPeerLeaveConference);
-    CPPUNIT_TEST(testJoinCallFromOtherAccount);
-    CPPUNIT_TEST(testDevices);
-    CPPUNIT_TEST(testUnauthorizedSetActive);
-    CPPUNIT_TEST(testHangup);
-    CPPUNIT_TEST(testIsConferenceParticipant);
+    // CPPUNIT_TEST(testGetConference);
+    // CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
+    // CPPUNIT_TEST(testUnauthorizedMute);
+    // CPPUNIT_TEST(testAudioVideoMutedStates);
+    // CPPUNIT_TEST(testCreateParticipantsSinks);
+    // CPPUNIT_TEST(testMuteStatusAfterRemove);
+    // CPPUNIT_TEST(testActiveStatusAfterRemove);
+    // CPPUNIT_TEST(testHandsUp);
+    // CPPUNIT_TEST(testPeerLeaveConference);
+    // CPPUNIT_TEST(testJoinCallFromOtherAccount);
+    // CPPUNIT_TEST(testDevices);
+    // CPPUNIT_TEST(testUnauthorizedSetActive);
+    // CPPUNIT_TEST(testHangup);
+    // CPPUNIT_TEST(testIsConferenceParticipant);
     CPPUNIT_TEST(testAudioConferenceConfInfo);
-    CPPUNIT_TEST(testHostAddRmSecondVideo);
-    CPPUNIT_TEST(testParticipantAddRmSecondVideo);
+    // CPPUNIT_TEST(testHostAddRmSecondVideo);
+    // CPPUNIT_TEST(testParticipantAddRmSecondVideo);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
