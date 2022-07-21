@@ -4377,7 +4377,10 @@ JamiAccount::askForProfile(const std::string& conversationId,
     if (!connectionManager_)
         return;
 
-    auto channelName = DATA_TRANSFER_URI + conversationId + "/profile/" + memberUri + ".vcf";
+    auto channelName = fmt::format("{}{}/profile/{}.vcf",
+                                   DATA_TRANSFER_URI,
+                                   conversationId,
+                                   memberUri);
     // We can avoid to negotiate new sessions, as the file notif
     // probably come from an online device or last connected device.
     connectionManager_->connectDevice(
