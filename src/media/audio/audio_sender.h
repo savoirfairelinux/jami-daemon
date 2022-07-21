@@ -21,6 +21,7 @@
 #pragma once
 
 #include "audiobuffer.h"
+#include "logger.h"
 #include "media_buffer.h"
 #include "media_codec.h"
 #include "noncopyable.h"
@@ -51,6 +52,14 @@ public:
 
     void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
                 const std::shared_ptr<jami::MediaFrame>&) override;
+    void attached(Observable<std::shared_ptr<jami::MediaFrame>>*) override
+    {
+        JAMI_DBG("AudioSender %p attached", this);
+    }
+    void detached(Observable<std::shared_ptr<jami::MediaFrame>>*) override
+    {
+        JAMI_DBG("AudioSender %p detached", this);
+    }
 
 private:
     NON_COPYABLE(AudioSender);
