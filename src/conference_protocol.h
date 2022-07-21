@@ -35,19 +35,17 @@ namespace jami {
  * Used to parse confOrder objects
  * @note the user of this class must initialize the different lambdas.
  */
-class ConfProtocolParser {
-
+class ConfProtocolParser
+{
 public:
     ConfProtocolParser() {};
 
-    void onVersion(std::function<void(uint32_t)>&& cb)
-    {
-        version_ = std::move(cb);
-    }
+    void onVersion(std::function<void(uint32_t)>&& cb) { version_ = std::move(cb); }
     /**
      * Ask the caller to check if a peer is authorized (moderator of the conference)
      */
-    void onCheckAuthorization(std::function<bool(std::string_view)>&& cb) {
+    void onCheckAuthorization(std::function<bool(std::string_view)>&& cb)
+    {
         checkAuthorization_ = std::move(cb);
     }
 
@@ -73,10 +71,7 @@ public:
     {
         muteStreamVideo_ = std::move(cb);
     }
-    void onSetLayout(std::function<void(int)>&& cb)
-    {
-        setLayout_ = std::move(cb);
-    }
+    void onSetLayout(std::function<void(int)>&& cb) { setLayout_ = std::move(cb); }
 
     // Version 0, deprecated
     void onKickParticipant(std::function<void(const std::string&)>&& cb)
@@ -94,6 +89,10 @@ public:
     void onRaiseHandUri(std::function<void(const std::string&, bool)>&& cb)
     {
         raiseHandUri_ = std::move(cb);
+    }
+    void onVoiceActivity(std::function<void(const std::string&, bool)>&& cb)
+    {
+        voiceActivity_ = std::move(cb);
     }
 
     /**
@@ -133,6 +132,7 @@ private:
     std::function<void(const std::string&)> kickParticipant_;
     std::function<void(const std::string&)> setActiveParticipant_;
     std::function<void(const std::string&, bool)> muteParticipant_;
+    std::function<void(const std::string&, bool)> voiceActivity_;
 };
 
 } // namespace jami

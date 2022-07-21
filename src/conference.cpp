@@ -248,6 +248,10 @@ Conference::Conference(const std::shared_ptr<Account>& account)
             if (auto* transport = call->getTransport())
                 setHandRaised(std::string(transport->deviceId()), state);
     });
+    parser_.onVoiceActivity([&](const auto& streamId, bool state) {
+        JAMI_INFO("parser_.onVoiceActivity(streamId=%s, state=%d", streamId.c_str(), state);
+        setVoiceActivity(streamId, state);
+    });
 }
 
 Conference::~Conference()
@@ -1226,6 +1230,42 @@ Conference::setHandRaised(const std::string& deviceId, const bool& state)
     }
 }
 
+bool
+Conference::isVoiceActive(std::string_view streamId) const
+{
+    return streamsVoiceActive.find(streamId) != streamsVoiceActive.end();
+}
+
+void
+Conference::setVoiceActivity(const std::string& streamId, const bool& newState)
+{
+    JAMI_DBG("setVoiceActivity(%s, %d)", streamId.c_str(), newState);
+
+    // TODO: verify that stream exists??
+    auto previousState = isVoiceActive(streamId);
+
+    if (previousState == newState) {
+        JAMI_INFO("no change in voice activity for stream: %s", streamId.c_str());
+        return;
+    }
+
+    if (newState and not previousState) {
+        // voice going from inactive to active
+        JAMI_DBG("voice now active for streamId: %s", streamId.c_str());
+        streamsVoiceActive.emplace(streamId);
+        updateVoiceActivity();
+        return;
+    }
+
+    if (not newState and previousState) {
+        // voice going from active to inactive
+        JAMI_DBG("voice now inactive for streamId: %s", streamId.c_str());
+        streamsVoiceActive.erase(streamId);
+        updateVoiceActivity();
+        return;
+    }
+}
+
 void
 Conference::setModerator(const std::string& participant_id, const bool& state)
 {
@@ -1266,6 +1306,33 @@ Conference::updateHandsRaised()
     for (auto& info : confInfo_)
         info.handRaised = isHandRaised(info.device);
     sendConferenceInfos();
+}
+
+void
+Conference::updateVoiceActivity()
+{
+    JAMI_INFO("updateVoiceActivity()");
+    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    bool change = false;
+
+    // streamId is actually sinkId
+    for (ParticipantInfo& participantInfo : confInfo_) {
+        auto newActivity = isVoiceActive(participantInfo.sinkId);
+        if (participantInfo.voiceActivity != newActivity) {
+            participantInfo.voiceActivity = newActivity;
+
+            // TODO: remove debug
+            change = true;
+            JAMI_WARN("new voice activity for stream %s: %s",
+                      participantInfo.sinkId.c_str(),
+                      newActivity ? "active" : "inactive");
+        }
+    }
+
+    if (not change) {
+        JAMI_WARN("no change in voice activity state");
+    }
+    sendConferenceInfos(); // also emits signal to client
 }
 
 void
