@@ -17,7 +17,8 @@ FFMPEGCONF+='
             --disable-filters'
 
 FFMPEGCONF+='
-            --enable-shared
+            --enable-static
+			--disable-shared
             --enable-cross-compile
             --enable-gpl
             --enable-swscale
