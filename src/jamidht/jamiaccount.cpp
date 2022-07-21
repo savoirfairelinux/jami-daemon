@@ -1131,7 +1131,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
             dht::ThreadPool::io().run([w = weak(), uri, banned] {
                 if (auto shared = w.lock()) {
                     // Erase linked conversation's requests
-                    shared->convModule()->removeContact(uri, banned);
+                    if (auto convModule = shared->convModule())
+                        convModule->removeContact(uri, banned);
 
                     // Remove current connections with contact
                     std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
@@ -4376,7 +4377,10 @@ JamiAccount::askForProfile(const std::string& conversationId,
     if (!connectionManager_)
         return;
 
-    auto channelName = DATA_TRANSFER_URI + conversationId + "/profile/" + memberUri + ".vcf";
+    auto channelName = fmt::format("{}{}/profile/{}.vcf",
+                                   DATA_TRANSFER_URI,
+                                   conversationId,
+                                   memberUri);
     // We can avoid to negotiate new sessions, as the file notif
     // probably come from an online device or last connected device.
     connectionManager_->connectDevice(

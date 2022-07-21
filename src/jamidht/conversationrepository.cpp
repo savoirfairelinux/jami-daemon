@@ -948,11 +948,13 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
             JAMI_ERR("Detected vote for self: %s", votedUri.c_str());
             return false;
         }
-        // file in members or admin or invited
-        auto invitedFile = fmt::format("invited/{}", votedUri);
-        if (!memberCertificate(votedUri, treeOld) && !fileAtTree(invitedFile, treeOld)) {
-            JAMI_ERR("No member file found for vote: %s", votedUri.c_str());
-            return false;
+        if (voteType == "ban") {
+            // file in members or admin or invited
+            auto invitedFile = fmt::format("invited/{}", votedUri);
+            if (!memberCertificate(votedUri, treeOld) && !fileAtTree(invitedFile, treeOld)) {
+                JAMI_ERR("No member file found for vote: %s", votedUri.c_str());
+                return false;
+            }
         }
     } else {
         // Check not current device
@@ -1067,13 +1069,16 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
         return false;
     // Check no other files changed
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
-    std::size_t wantedChanged = 3;
-    if (changedFiles.size() != wantedChanged)
-        return false;
-
     auto invitedFile = fmt::format("invited/{}", uriMember);
     auto membersFile = fmt::format("members/{}.crt", uriMember);
     auto deviceFile = fmt::format("devices/{}.crt", userDevice);
+
+    for (auto& file : changedFiles) {
+        if (file != invitedFile && file != membersFile && file != deviceFile) {
+            JAMI_ERR("Unwanted file %s found", file.c_str());
+            return false;
+        }
+    }
 
     // Retrieve tree for commits
     auto repo = repository();
@@ -1106,10 +1111,6 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
     // Check /devices added
     if (!fileAtTree(deviceFile, treeNew)) {
         JAMI_ERR("%s devices not found", userUri.c_str());
-        return false;
-    }
-    if (fileAtTree(deviceFile, treeOld)) {
-        JAMI_ERR("%s devices found too soon", userUri.c_str());
         return false;
     }
 

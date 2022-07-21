@@ -84,6 +84,7 @@ public:
     void testAvoidTwoOneToOne();
     void testAvoidTwoOneToOneMultiDevices();
     void testRemoveRequestBannedMultiDevices();
+    void testBanUnbanMultiDevice();
 
     std::string aliceId;
     std::string bobId;
@@ -121,6 +122,7 @@ private:
     CPPUNIT_TEST(testAvoidTwoOneToOne);
     CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
     CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
+    CPPUNIT_TEST(testBanUnbanMultiDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2268,6 +2270,123 @@ ConversationMembersEventTest::testRemoveRequestBannedMultiDevices()
     bobAccount->removeContact(aliceUri, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2ContactRemoved; }));
     CPPUNIT_ASSERT(DRing::getConversationRequests(bob2Id).size() == 0);
+}
+
+void
+ConversationMembersEventTest::testBanUnbanMultiDevice()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    auto convId = DRing::startConversation(aliceId);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto requestReceived = false, requestReceivedBob2 = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == bobId)
+                    requestReceived = true;
+                else if (accountId == bob2Id)
+                    requestReceivedBob2 = true;
+                cv.notify_one();
+            }));
+    auto bob2Started = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                if (accountId == bob2Id) {
+                    auto daemonStatus = details.at(
+                        DRing::Account::VolatileProperties::DEVICE_ANNOUNCED);
+                    if (daemonStatus == "true")
+                        bob2Started = true;
+                }
+                cv.notify_one();
+            }));
+    auto bob2ContactRemoved = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ContactRemoved>(
+        [&](const std::string& accountId, const std::string& uri, bool banned) {
+            if (accountId == bob2Id && uri == aliceUri && banned) {
+                bob2ContactRemoved = true;
+            }
+            cv.notify_one();
+        }));
+    auto memberMessageGenerated = false, voteMessageGenerated = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            auto itFind = message.find("type");
+            if (itFind == message.end())
+                return;
+            if (accountId == aliceId && conversationId == convId) {
+                if (itFind->second == "member")
+                    memberMessageGenerated = true;
+                if (itFind->second == "vote")
+                    voteMessageGenerated = true;
+            }
+            cv.notify_one();
+        }));
+    auto conversationReadyBob = false, conversationReadyBob2 = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId && conversationId == convId) {
+                conversationReadyBob = true;
+            } else if (accountId == bob2Id && conversationId == convId) {
+                conversationReadyBob2 = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Bob creates a second device
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+    bob2Id = Manager::instance().addAccount(details);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Started; }));
+
+    // Alice adds bob
+    requestReceived = false;
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return memberMessageGenerated && requestReceived && requestReceivedBob2;
+    }));
+
+    // Alice kick Bob while invited
+    memberMessageGenerated = false;
+    voteMessageGenerated = false;
+    DRing::removeConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
+
+    // Alice re-add Bob while invited
+    memberMessageGenerated = false;
+    voteMessageGenerated = false;
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
+
+    // bob accepts
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReadyBob && conversationReadyBob2; }));
 }
 
 } // namespace test
