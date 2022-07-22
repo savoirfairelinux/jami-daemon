@@ -923,7 +923,7 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
     uint64_t maxBitrate = 1000 * br;
     // 200 Kbit/s    -> CRF40
     // 6 Mbit/s      -> CRF23
-    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + LOGREG_PARAM_B * log(maxBitrate));
+    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + LOGREG_PARAM_B * std::log(maxBitrate));
     // bufsize parameter impact the variation of the bitrate, reduce to half the maxrate to limit
     // peak and congestion
     // https://trac.ffmpeg.org/wiki/Limiting%20the%20output%20bitrate
@@ -960,7 +960,7 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
         // 200 Kbit/s    -> CRF35
         // 6 Mbit/s      -> CRF18
         uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A_HEVC
-                                           + LOGREG_PARAM_B_HEVC * log(maxBitrate));
+                                           + LOGREG_PARAM_B_HEVC * std::log(maxBitrate));
         uint64_t bufSize = maxBitrate / 2;
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
@@ -1002,7 +1002,7 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         uint64_t maxBitrate = 1000 * br;
         // 200 Kbit/s    -> CRF40
         // 6 Mbit/s      -> CRF23
-        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + LOGREG_PARAM_B * log(maxBitrate));
+        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + LOGREG_PARAM_B * std::log(maxBitrate));
         uint64_t bufSize = maxBitrate / 2;
 
         av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
