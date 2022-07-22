@@ -87,6 +87,24 @@
       "parentUuid": "2933740e_e38ecf8f",
       "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6a886cab_bb4e1429",
+        "filename": "contrib/bootstrap",
+        "patchSetId": 2
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-07-22T16:42:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "90f16229_18b783a6",
+      "revId": "f8a79c09702593185b8ee935684fcaa43ab03a2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
