@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b994d42_f58ffd51",
+        "filename": "src/im/message_engine.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 325,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-07-23T18:12:16Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027size_t\u0027 (aka \u0027unsigned long\u0027) but the argument has type \u0027Json::Value::ArrayIndex\u0027 (aka \u0027unsigned int\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "e3e512bfc098d5a2e6ad70e7480d2f0e9384258e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
