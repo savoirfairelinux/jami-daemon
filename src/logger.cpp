@@ -27,6 +27,8 @@
 
 #include "client/ring_signal.h"
 
+#include <fmt/compile.h>
+
 #ifdef _MSC_VER
 #include <sys_time.h>
 #else
@@ -58,6 +60,7 @@
 #ifndef APP_NAME
 #define APP_NAME "libjami"
 #endif /* APP_NAME */
+#define JAMI_LOG_HEADER_FILENAME_ONLY
 #endif
 
 #define BLACK         "\033[22;30m"
@@ -88,89 +91,6 @@
 #endif // _WIN32
 
 #define LOGFILE "jami"
-
-static constexpr auto ENDL = '\n';
-
-// extract the last component of a pathname (extract a filename from its dirname)
-static const char*
-stripDirName(const char* path)
-{
-    const char* occur = strrchr(path, DIR_SEPARATOR_CH);
-
-    return occur ? occur + 1 : path;
-}
-
-static std::string
-contextHeader(const char* const file, int line)
-{
-    static char* timestamp_fmt = getenv("JAMI_TIMESTAMP_FMT");
-
-#ifdef __linux__
-    auto tid = syscall(__NR_gettid) & 0xffff;
-#else
-    auto tid = std::this_thread::get_id();
-#endif // __linux__
-
-    std::ostringstream out;
-
-    out << '[';
-
-    // Timestamp
-    if (timestamp_fmt) {
-        time_t t;
-        struct tm tm;
-        char buf[128];
-
-        time(&t);
-
-#ifdef _WIN32
-        /* NOTE!  localtime(3) is MT-Safe on win32 */
-        tm = *localtime(&t);
-#else
-        localtime_r(&t, &tm);
-#endif
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-        strftime(buf, sizeof(buf), timestamp_fmt, &tm);
-#pragma GCC diagnostic pop
-
-        out << buf;
-
-    } else {
-        unsigned int secs, milli;
-        struct timeval tv;
-
-        if (!gettimeofday(&tv, NULL)) {
-            secs = tv.tv_sec;
-            milli = tv.tv_usec / 1000; // suppose that milli < 1000
-        } else {
-            secs = time(NULL);
-            milli = 0;
-        }
-
-        const auto prev_fill = out.fill();
-
-        out << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli << std::left;
-        out.fill(prev_fill);
-    }
-
-    out << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
-
-    // Context
-    if (file) {
-#ifdef RING_UWP
-        constexpr auto width = 26;
-#else
-        constexpr auto width = 18;
-#endif
-        out << "|" << std::setw(width) << stripDirName(file) << ":" << std::setw(5)
-            << std::setfill(' ') << line;
-    }
-
-    out << "] ";
-    return out.str();
-}
 
 static const char*
 check_error(int result, char* buffer)
@@ -206,6 +126,46 @@ strErr(void)
 
 namespace jami {
 
+static constexpr auto ENDL = '\n';
+
+// extract the last component of a pathname (extract a filename from its dirname)
+static const char*
+stripDirName(const char* path)
+{
+    const char* occur = strrchr(path, DIR_SEPARATOR_CH);
+    return occur ? occur + 1 : path;
+}
+
+static std::string
+contextHeader(const char* const file, int line, std::string_view msg = {})
+{
+#ifdef JAMI_LOG_HEADER_FILENAME_ONLY
+    return fmt::format("[{: <18s}:{: <4d}] {:s}", stripDirName(file), line, msg);
+#else
+#ifdef __linux__
+    auto tid = syscall(__NR_gettid) & 0xffff;
+#else
+    auto tid = std::this_thread::get_id();
+#endif // __linux__
+
+    unsigned int secs, milli;
+    struct timeval tv;
+    if (!gettimeofday(&tv, NULL)) {
+        secs = tv.tv_sec;
+        milli = tv.tv_usec / 1000; // suppose that milli < 1000
+    } else {
+        secs = time(NULL);
+        milli = 0;
+    }
+
+    if (file) {
+        return fmt::format("[{: >3d}.{:0<3d}|{: >5d}|{: <18s}:{: <4d}] {:s}", secs, milli, tid, stripDirName(file), line, msg);
+    } else {
+        return fmt::format("[{: >3d}.{:0<3d}|{: >4d}] {:s}", secs, milli, tid, msg);
+    }
+#endif
+}
+
 struct BufDeleter
 {
     void operator()(char* ptr)
@@ -220,45 +180,54 @@ struct Logger::Msg
 {
     Msg() = delete;
 
-    Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
-        : header_(contextHeader(file, line))
+    Msg(int level, const char* file, int line, bool linefeed, std::string&& message)
+        //: header_()
+        : tag_(stripDirName(file))
         , level_(level)
         , linefeed_(linefeed)
+        , payload_(std::move(message)/*contextHeader(file, line, message)*/)
+    {}
+
+    Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
+        //: header_()
+        : tag_(stripDirName(file))
+        , level_(level)
+        , linefeed_(linefeed)
+        , payload_()
     {
         /* A good guess of what we might encounter. */
         static constexpr size_t default_buf_size = 80;
 
-        char* buf = (char*) malloc(default_buf_size);
-        int buf_size = default_buf_size;
-        va_list cp;
+        payload_.resize(default_buf_size);
 
         /* Necessary if we don't have enough space in buf. */
+        va_list cp;
         va_copy(cp, ap);
 
-        int size = vsnprintf(buf, buf_size, fmt, ap);
+        int size = vsnprintf(payload_.data(), payload_.size(), fmt, ap);
 
         /* Not enough space?  Well try again. */
-        if (size >= buf_size) {
-            buf_size = size + 1;
-            buf = (char*) realloc(buf, buf_size);
-            vsnprintf(buf, buf_size, fmt, cp);
+        if (size >= payload_.size()) {
+            payload_.resize(size + 1);
+            vsnprintf((char*)payload_.data(), payload_.size(), fmt, cp);
         }
 
-        payload_.reset(buf);
-
         va_end(cp);
+
+        //payload_ = contextHeader(file, line, payload_);
     }
 
     Msg(Msg&& other)
     {
         payload_ = std::move(other.payload_);
-        header_ = std::move(other.header_);
+        //header_ = std::move(other.header_);
         level_ = other.level_;
         linefeed_ = other.linefeed_;
     }
 
-    std::unique_ptr<char, BufDeleter> payload_;
-    std::string header_;
+    std::string payload_;
+    //std::string header_;
+    const char* tag_;
     int level_;
     bool linefeed_;
 };
@@ -274,10 +243,10 @@ public:
     bool isEnable() { return enabled_.load(); }
 
 private:
-    std::atomic<bool> enabled_;
+    std::atomic<bool> enabled_ {false};
 };
 
-class ConsoleLog : public jami::Logger::Handler
+class ConsoleLog : public Logger::Handler
 {
 public:
     static ConsoleLog& instance()
@@ -293,11 +262,11 @@ public:
     }
 
 #ifdef _WIN32
-    void printLogImpl(jami::Logger::Msg& msg, bool with_color)
+    void printLogImpl(Logger::Msg& msg, bool with_color)
     {
         WORD saved_attributes;
         static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        if (with_color) {
+        /*if (with_color) {
             static WORD color_header = CYAN;
             WORD color_prefix = LIGHT_GREEN;
             CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
@@ -322,7 +291,7 @@ public:
             SetConsoleTextAttribute(hConsole, color_prefix);
         } else {
             fputs(msg.header_.c_str(), stderr);
-        }
+        }*/
 
         fputs(msg.payload_.get(), stderr);
 
@@ -335,9 +304,9 @@ public:
         }
     }
 #else
-    void printLogImpl(jami::Logger::Msg& msg, bool with_color)
+    void printLogImpl(Logger::Msg& msg, bool with_color)
     {
-        if (with_color) {
+        /*if (with_color) {
             const char* color_header = CYAN;
             const char* color_prefix = "";
 
@@ -357,9 +326,9 @@ public:
             fputs(color_prefix, stderr);
         } else {
             fputs(msg.header_.c_str(), stderr);
-        }
+        }*/
 
-        fputs(msg.payload_.get(), stderr);
+        fputs(msg.payload_.c_str(), stderr);
 
         if (msg.linefeed_) {
             putc(ENDL, stderr);
@@ -371,7 +340,7 @@ public:
     }
 #endif /* _WIN32 */
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    virtual void consume(Logger::Msg& msg) override
     {
         static bool with_color = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR")
                                    || getenv("NO_COLOURS"));
@@ -407,7 +376,7 @@ Logger::setConsoleLog(bool en)
 #endif
 }
 
-class SysLog : public jami::Logger::Handler
+class SysLog : public Logger::Handler
 {
 public:
     static SysLog& instance()
@@ -424,27 +393,23 @@ public:
 
     SysLog()
     {
+#ifndef __ANDROID__
 #ifdef _WIN32
         ::openlog(LOGFILE, WINLOG_PID, WINLOG_MAIL);
 #else
         ::openlog(LOGFILE, LOG_NDELAY, LOG_USER);
 #endif /* _WIN32 */
+#endif
     }
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    virtual void consume(Logger::Msg& msg) override
     {
-        // syslog is supposed to thread-safe, but not all implementations (Android?)
-        // follow strictly POSIX rules... so we lock our mutex in any cases.
-        std::lock_guard<std::mutex> lk {mtx_};
 #ifdef __ANDROID__
-        __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.get());
+        __android_log_write(msg.level_, msg.tag_, msg.payload_.c_str());
 #else
         ::syslog(msg.level_, "%s", msg.payload_.get());
 #endif
     }
-
-private:
-    std::mutex mtx_;
 };
 
 void
@@ -453,7 +418,7 @@ Logger::setSysLog(bool en)
     SysLog::instance().enable(en);
 }
 
-class MonitorLog : public jami::Logger::Handler
+class MonitorLog : public Logger::Handler
 {
 public:
     static MonitorLog& instance()
@@ -468,15 +433,15 @@ public:
         return *self;
     }
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    virtual void consume(Logger::Msg& msg) override
     {
         /*
          * TODO - Maybe change the MessageSend sigature to avoid copying
          * of message payload?
          */
-        auto tmp = msg.header_ + std::string(msg.payload_.get());
+        //auto tmp = msg.header_ + msg.payload_;
 
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(tmp);
+        emitSignal<DRing::ConfigurationSignal::MessageSend>(msg.payload_);
     }
 };
 
@@ -486,7 +451,7 @@ Logger::setMonitorLog(bool en)
     MonitorLog::instance().enable(en);
 }
 
-class FileLog : public jami::Logger::Handler
+class FileLog : public Logger::Handler
 {
 public:
     static FileLog& instance()
@@ -549,9 +514,9 @@ public:
         }
     }
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    virtual void consume(Logger::Msg& msg) override
     {
-        notify([&, this] { currentQ_.push_back(std::move(msg)); });
+        notify([&, this] { currentQ_.emplace_back(std::move(msg)); });
     }
 
 private:
@@ -563,10 +528,10 @@ private:
         cv_.notify_one();
     }
 
-    void do_consume(const std::vector<jami::Logger::Msg>& messages)
+    void do_consume(const std::vector<Logger::Msg>& messages)
     {
         for (const auto& msg : messages) {
-            file_ << msg.header_ << msg.payload_.get();
+            file_ /*<< msg.header_*/ << msg.payload_;
 
             if (msg.linefeed_) {
                 file_ << ENDL;
@@ -576,8 +541,8 @@ private:
         file_.flush();
     }
 
-    std::vector<jami::Logger::Msg> currentQ_;
-    std::vector<jami::Logger::Msg> pendingQ_;
+    std::vector<Logger::Msg> currentQ_;
+    std::vector<Logger::Msg> pendingQ_;
     std::mutex mtx_;
     std::condition_variable cv_;
 
@@ -640,6 +605,22 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
     log_to_if_enabled(MonitorLog::instance(), msg);
     log_to_if_enabled(FileLog::instance(), msg); // Takes ownership of msg if enabled
 }
+
+void
+Logger::write(int level, const char* file, int line, std::string&& message) {
+    if (not debugEnabled.load() and level < LOG_WARNING) {
+        return;
+    }
+
+    /* Timestamp is generated here. */
+    Msg msg(level, file, line, true, std::move(message));
+
+    log_to_if_enabled(ConsoleLog::instance(), msg);
+    log_to_if_enabled(SysLog::instance(), msg);
+    log_to_if_enabled(MonitorLog::instance(), msg);
+    log_to_if_enabled(FileLog::instance(), msg); // Takes ownership of msg if enabled
+}
+
 
 void
 Logger::fini()
