@@ -417,24 +417,20 @@ public:
 #ifdef _WIN32
         ::openlog(LOGFILE, WINLOG_PID, WINLOG_MAIL);
 #else
+#ifndef __ANDROID__
         ::openlog(LOGFILE, LOG_NDELAY, LOG_USER);
+#endif
 #endif /* _WIN32 */
     }
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    virtual void consume(Logger::Msg& msg) override
     {
-        // syslog is supposed to thread-safe, but not all implementations (Android?)
-        // follow strictly POSIX rules... so we lock our mutex in any cases.
-        std::lock_guard<std::mutex> lk {mtx_};
 #ifdef __ANDROID__
         __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.get());
 #else
         ::syslog(msg.level_, "%s", msg.payload_.get());
 #endif
     }
-
-private:
-    std::mutex mtx_;
 };
 
 void
