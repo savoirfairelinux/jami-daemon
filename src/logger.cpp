@@ -89,6 +89,40 @@
 
 #define LOGFILE "jami"
 
+static const char*
+check_error(int result, char* buffer)
+{
+    switch (result) {
+    case 0:
+        return buffer;
+
+    case ERANGE: /* should never happen */
+        return "unknown (too big to display)";
+
+    default:
+        return "unknown (invalid error number)";
+    }
+}
+
+static const char*
+check_error(char* result, char*)
+{
+    return result;
+}
+
+void
+strErr(void)
+{
+#ifdef __GLIBC__
+    JAMI_ERR("%m");
+#else
+    char buf[1000];
+    JAMI_ERR("%s", check_error(strerror_r(errno, buf, sizeof(buf)), buf));
+#endif
+}
+
+namespace jami {
+
 static constexpr auto ENDL = '\n';
 
 // extract the last component of a pathname (extract a filename from its dirname)
@@ -171,40 +205,6 @@ contextHeader(const char* const file, int line)
     out << "] ";
     return out.str();
 }
-
-static const char*
-check_error(int result, char* buffer)
-{
-    switch (result) {
-    case 0:
-        return buffer;
-
-    case ERANGE: /* should never happen */
-        return "unknown (too big to display)";
-
-    default:
-        return "unknown (invalid error number)";
-    }
-}
-
-static const char*
-check_error(char* result, char*)
-{
-    return result;
-}
-
-void
-strErr(void)
-{
-#ifdef __GLIBC__
-    JAMI_ERR("%m");
-#else
-    char buf[1000];
-    JAMI_ERR("%s", check_error(strerror_r(errno, buf, sizeof(buf)), buf));
-#endif
-}
-
-namespace jami {
 
 struct BufDeleter
 {
