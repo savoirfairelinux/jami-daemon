@@ -124,6 +124,7 @@ public:
     static void setFileLog(const std::string& path);
 
     static void setDebugMode(bool enable);
+    static bool debugEnabled();
 
     static void fini();
 
