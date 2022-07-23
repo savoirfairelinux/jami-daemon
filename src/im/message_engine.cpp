@@ -284,6 +284,7 @@ MessageEngine::save_() const
     try {
         Json::Value root(Json::objectValue);
         for (auto& c : messages_) {
+            if (c.second.empty()) continue;
             Json::Value peerRoot(Json::objectValue);
             for (auto& m : c.second) {
                 auto& v = m.second;
@@ -305,19 +306,20 @@ MessageEngine::save_() const
                     payloads[p.first] = p.second;
                 peerRoot[to_hex_string(m.first)] = std::move(msg);
             }
+            if (peerRoot.size() == 0) continue;
             root[c.first] = std::move(peerRoot);
         }
+        
         // Save asynchronously
         dht::ThreadPool::computation().run([path = savePath_,
                                             root = std::move(root),
-                                            accountID = account_.getAccountID(),
-                                            messageNum = messages_.size()] {
+                                            accountID = account_.getAccountID()] {
             std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
             try {
                 Json::StreamWriterBuilder wbuilder;
                 wbuilder["commentStyle"] = "None";
                 wbuilder["indentation"] = "";
-                const std::unique_ptr<Json::StreamWriter> writer(wbuilder.newStreamWriter());
+                std::unique_ptr<Json::StreamWriter> writer(wbuilder.newStreamWriter());
                 std::ofstream file;
                 file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
                 fileutils::openStream(file, path, std::ios::trunc);
@@ -331,7 +333,7 @@ MessageEngine::save_() const
             }
             JAMI_DBG("[Account %s] saved %zu messages to %s",
                      accountID.c_str(),
-                     messageNum,
+                     root.size(),
                      path.c_str());
         });
     } catch (const std::exception& e) {
