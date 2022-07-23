@@ -270,11 +270,11 @@ public:
 
     virtual void consume(Msg& msg) = 0;
 
-    void enable(bool en) { enabled_.store(en); }
-    bool isEnable() { return enabled_.load(); }
+    void enable(bool en) { enabled_.store(en, std::memory_order_relaxed); }
+    bool isEnable() { return enabled_.load(std::memory_order_relaxed); }
 
 private:
-    std::atomic<bool> enabled_;
+    std::atomic_bool enabled_ {false};
 };
 
 class ConsoleLog : public Logger::Handler
@@ -580,18 +580,24 @@ log_to_if_enabled(T& handler, Logger::Msg& msg)
     }
 }
 
-static std::atomic_bool debugEnabled {false};
+static std::atomic_bool debugEnabled_ {false};
 
 void
 Logger::setDebugMode(bool enable)
 {
-    debugEnabled.store(enable);
+    debugEnabled_.store(enable, std::memory_order_relaxed);
+}
+
+bool
+Logger::debugEnabled()
+{
+    return debugEnabled_.load(std::memory_order_relaxed);
 }
 
 DRING_PUBLIC void
 Logger::vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
 {
-    if (not debugEnabled.load() and level < LOG_WARNING) {
+    if (not debugEnabled_.load(std::memory_order_relaxed) and level < LOG_WARNING) {
         return;
     }
 
