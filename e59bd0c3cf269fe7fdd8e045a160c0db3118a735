@@ -16,6 +16,23 @@
       "message": "1. Should `voice` activity be changed to `audio` indicator?\n\nA superset which contains voice is audio/sound.\n\nThere are scenarios where there is no voice; however, there is audio/sound.\n\nExamples were there is audio, but no voice are:\na) a music teacher is playing an instrument, eg guitar\nb) streaming animal watchers, eg listening to birds, bird watchers\n\n2. Should variable be changed from a boolean to an integer?\n\nIf the value is zero `0`, then there is no audio activity.\n\nThe range from 1 to 10 indicates the intensity. This can then be used to show an audio intensity indicator around the tile of the stream transmitting the audio/sound.\n\n3. Will each user have a toggle to enable/disable the audio indicator?\n\nThank you",
       "revId": "e59bd0c3cf269fe7fdd8e045a160c0db3118a735",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a065df7_76826713",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2022-07-23T02:35:00Z",
+      "side": 1,
+      "message": "Should https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/741 be added to the commit message?",
+      "revId": "e59bd0c3cf269fe7fdd8e045a160c0db3118a735",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
