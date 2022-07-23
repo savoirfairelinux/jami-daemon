@@ -137,73 +137,27 @@ stripDirName(const char* path)
 static std::string
 contextHeader(const char* const file, int line)
 {
-    static char* timestamp_fmt = getenv("JAMI_TIMESTAMP_FMT");
-
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
 #else
     auto tid = std::this_thread::get_id();
 #endif // __linux__
 
-    std::ostringstream out;
-
-    out << '[';
-
-    // Timestamp
-    if (timestamp_fmt) {
-        time_t t;
-        struct tm tm;
-        char buf[128];
-
-        time(&t);
-
-#ifdef _WIN32
-        /* NOTE!  localtime(3) is MT-Safe on win32 */
-        tm = *localtime(&t);
-#else
-        localtime_r(&t, &tm);
-#endif
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-        strftime(buf, sizeof(buf), timestamp_fmt, &tm);
-#pragma GCC diagnostic pop
-
-        out << buf;
-
+    unsigned int secs, milli;
+    struct timeval tv;
+    if (!gettimeofday(&tv, NULL)) {
+        secs = tv.tv_sec;
+        milli = tv.tv_usec / 1000; // suppose that milli < 1000
     } else {
-        unsigned int secs, milli;
-        struct timeval tv;
-
-        if (!gettimeofday(&tv, NULL)) {
-            secs = tv.tv_sec;
-            milli = tv.tv_usec / 1000; // suppose that milli < 1000
-        } else {
-            secs = time(NULL);
-            milli = 0;
-        }
-
-        const auto prev_fill = out.fill();
-
-        out << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli << std::left;
-        out.fill(prev_fill);
+        secs = time(NULL);
+        milli = 0;
     }
 
-    out << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
-
-    // Context
     if (file) {
-#ifdef RING_UWP
-        constexpr auto width = 26;
-#else
-        constexpr auto width = 18;
-#endif
-        out << "|" << std::setw(width) << stripDirName(file) << ":" << std::setw(5)
-            << std::setfill(' ') << line;
+        return fmt::format("[{: >3d}.{:0<3d}|{: >5d}|{: <18s}:{: <4d}] ", secs, milli, tid, stripDirName(file), line);
+    } else {
+        return fmt::format("[{: >3d}.{:0<3d}|{: >4d}] ", secs, milli, tid);
     }
-
-    out << "] ";
-    return out.str();
 }
 
 struct BufDeleter
