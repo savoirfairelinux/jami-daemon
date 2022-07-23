@@ -490,10 +490,10 @@ TlsSession::TlsSessionImpl::initCredentials()
                                                          params_.ca_list.c_str(),
                                                          GNUTLS_X509_FMT_DER);
         if (ret < 0)
-            throw std::runtime_error("can't load CA " + params_.ca_list + ": "
-                                     + std::string(gnutls_strerror(ret)));
+            throw std::runtime_error(fmt::format("can't load CA {}: {}",
+                                     params_.ca_list, gnutls_strerror(ret)));
 
-        JAMI_DBG("[TLS] CA list %s loadev", params_.ca_list.c_str());
+        JAMI_DEBUG("[TLS] CA list {:s} loaded", params_.ca_list);
     }
     if (params_.peer_ca) {
         auto chain = params_.peer_ca->getChainWithRevocations();
@@ -502,7 +502,7 @@ TlsSession::TlsSessionImpl::initCredentials()
                                                      chain.first.size());
         if (not chain.second.empty())
             gnutls_certificate_set_x509_crl(*xcred_, chain.second.data(), chain.second.size());
-        JAMI_DBG("[TLS] Peer CA list %lu (%lu CRLs): %d",
+        JAMI_DEBUG("[TLS] Peer CA list {:d} ({:d} CRLs): {:d}",
                  chain.first.size(),
                  chain.second.size(),
                  ret);
