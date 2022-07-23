@@ -315,15 +315,15 @@ MessageEngine::save_() const
                 if (file.is_open())
                     writer->write(root, &file);
             } catch (const std::exception& e) {
-                JAMI_ERR("[Account %s] Couldn't save messages to %s: %s",
-                         accountID.c_str(),
-                         path.c_str(),
+                JAMI_ERROR("[Account {:s}] Couldn't save messages to {:s}: {:s}",
+                         accountID,
+                         path,
                          e.what());
             }
-            JAMI_DBG("[Account %s] saved %zu messages to %s",
-                     accountID.c_str(),
-                     root.size(),
-                     path.c_str());
+            JAMI_DEBUG(FMT_STRING("[Account {:s}] saved {:d} messages to {:s}"),
+                    accountID,
+                    root.size(),
+                    path);
         });
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] couldn't save messages to %s: %s",
