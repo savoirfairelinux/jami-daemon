@@ -19,13 +19,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <cstdio>
-#include <cstring>
-#include <cerrno>
-#include <ctime>
-#include <ciso646> // fix windows compiler bug
-
+#include "logger.h"
 #include "client/ring_signal.h"
+#include "fileutils.h"
 
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -36,58 +32,24 @@
 #else
 #include <sys/time.h>
 #endif
-
-#include <atomic>
-#include <condition_variable>
-#include <functional>
-#include <fstream>
-#include <string>
-#include <ios>
-#include <mutex>
-#include <thread>
-#include <array>
-
-#include "fileutils.h"
-#include "logger.h"
-
 #ifdef __linux__
 #include <unistd.h>
 #include <syslog.h>
 #include <sys/syscall.h>
 #endif // __linux__
 
-#ifdef __ANDROID__
-#ifndef APP_NAME
-#define APP_NAME "libjami"
-#endif /* APP_NAME */
-#endif
+#include <atomic>
+#include <condition_variable>
+#include <fstream>
+#include <string>
+#include <mutex>
+#include <thread>
 
-#define BLACK         "\033[22;30m"
-#define GREEN         "\033[22;32m"
-#define BROWN         "\033[22;33m"
-#define BLUE          "\033[22;34m"
-#define MAGENTA       "\033[22;35m"
-#define GREY          "\033[22;37m"
-#define DARK_GREY     "\033[01;30m"
-#define LIGHT_RED     "\033[01;31m"
-#define LIGHT_SCREEN  "\033[01;32m"
-#define LIGHT_BLUE    "\033[01;34m"
-#define LIGHT_MAGENTA "\033[01;35m"
-#define LIGHT_CYAN    "\033[01;36m"
-#define WHITE         "\033[01;37m"
-#define END_COLOR     "\033[0m"
-
-#ifndef _WIN32
-#define RED    "\033[22;31m"
-#define YELLOW "\033[01;33m"
-#define CYAN   "\033[22;36m"
-#else
-#define FOREGROUND_WHITE 0x000f
-#define RED              FOREGROUND_RED + 0x0008
-#define YELLOW           FOREGROUND_RED + FOREGROUND_GREEN + 0x0008
-#define CYAN             FOREGROUND_BLUE + FOREGROUND_GREEN + 0x0008
-#define LIGHT_GREEN      FOREGROUND_GREEN + 0x0008
-#endif // _WIN32
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
+#include <ctime>
+#include <ciso646> // fix windows compiler bug
 
 #define LOGFILE "jami"
 
@@ -132,12 +94,11 @@ static const char*
 stripDirName(const char* path)
 {
     const char* occur = strrchr(path, DIR_SEPARATOR_CH);
-
     return occur ? occur + 1 : path;
 }
 
-static std::string
-contextHeader(const char* const file, int line)
+std::string
+formatHeader(const char* const file, int line, std::string_view msg, bool with_color)
 {
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
@@ -156,9 +117,9 @@ contextHeader(const char* const file, int line)
     }
 
     if (file) {
-        return fmt::format("[{: >3d}.{:0<3d}|{: >4d}|{: <18s}:{: <4d}]", secs, milli, tid, stripDirName(file), line);
+        return fmt::format("[{: >3d}.{:0<3d}|{: >4d}|{: <18s}:{: <4d}] {:s}", secs, milli, tid, stripDirName(file), line, msg);
     } else {
-        return fmt::format("[{: >3d}.{:0<3d}|{: >4d}]", secs, milli, tid);
+        return fmt::format("[{: >3d}.{:0<3d}|{: >4d}] {:s}", secs, milli, tid, msg);
     }
 }
 
@@ -192,14 +153,16 @@ struct Logger::Msg
     Msg() = delete;
 
     Msg(int level, const char* file, int line, bool linefeed, std::string&& message)
-        : header_(contextHeader(file, line))
+        : file_(stripDirName(file))
+        , line_(line)
         , level_(level)
         , linefeed_(linefeed)
         , payload_(std::move(message))
     {}
 
     Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
-        : header_(contextHeader(file, line))
+        : file_(stripDirName(file))
+        , line_(line)
         , level_(level)
         , linefeed_(linefeed)
         , payload_(formatPrintfArgs(fmt, ap))
@@ -207,14 +170,21 @@ struct Logger::Msg
 
     Msg(Msg&& other)
     {
+        file_ = other.file_;
+        line_ = other.line_;
         payload_ = std::move(other.payload_);
-        header_ = std::move(other.header_);
         level_ = other.level_;
         linefeed_ = other.linefeed_;
     }
 
+    inline std::string format(bool with_color) const
+    {
+        return formatHeader(file_, line_, payload_, with_color);
+    }
+
+    const char* file_;
+    unsigned line_;
     std::string payload_;
-    std::string header_;
     int level_;
     bool linefeed_;
 };
@@ -244,8 +214,8 @@ public:
         return *self;
     }
 
-#ifdef _WIN32
-    void printLogImpl(jami::Logger::Msg& msg, bool with_color)
+/*#ifdef _WIN32
+    void printLogImpl(Logger::Msg& msg, bool with_color)
     {
         WORD saved_attributes;
         static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -276,54 +246,24 @@ public:
             fputs(msg.header_.c_str(), stderr);
         }
 
-        fputs(msg.payload_.c_str(), stderr);
-
-        if (msg.linefeed_) {
-            putc(ENDL, stderr);
-        }
+        fputs(msg.payload_.get(), stderr);
 
         if (with_color) {
             SetConsoleTextAttribute(hConsole, saved_attributes);
         }
     }
-#else
-    void printLogImpl(jami::Logger::Msg& msg, bool with_color)
+#else*/
+    void printLogImpl(Logger::Msg& msg, bool with_color)
     {
-        if (with_color) {
-            const char* color_header = CYAN;
-            const char* color_prefix = "";
-
-            switch (msg.level_) {
-            case LOG_ERR:
-                color_prefix = RED;
-                break;
-
-            case LOG_WARNING:
-                color_prefix = YELLOW;
-                break;
-            }
-
-            fputs(color_header, stderr);
-            fputs(msg.header_.c_str(), stderr);
-            fputs(END_COLOR, stderr);
-            fputs(color_prefix, stderr);
-        } else {
-            fputs(msg.header_.c_str(), stderr);
-        }
-
-        fputs(msg.payload_.c_str(), stderr);
-
+        auto m = msg.format(with_color);
+        fwrite(m.data(), m.size(), 1, stderr);
         if (msg.linefeed_) {
             putc(ENDL, stderr);
         }
-
-        if (with_color) {
-            fputs(END_COLOR, stderr);
-        }
     }
-#endif /* _WIN32 */
+//#endif /* _WIN32 */
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    virtual void consume(Logger::Msg& msg) override
     {
         static bool with_color = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR")
                                    || getenv("NO_COLOURS"));
@@ -384,9 +324,11 @@ public:
     virtual void consume(Logger::Msg& msg) override
     {
 #ifdef __ANDROID__
-        __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.c_str());
+        // __android_log_write already logs time, thread and process id
+        __android_log_write(msg.level_, msg.file_, msg.payload_.c_str());
 #else
-        ::syslog(msg.level_, "%s", msg.payload_.c_str());
+        auto m = msg.format(false);
+        ::syslog(msg.level_, "%.*s", m.size(), m.data());
 #endif
     }
 };
@@ -408,15 +350,10 @@ public:
         return *self;
     }
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    virtual void consume(Logger::Msg& msg) override
     {
-        /*
-         * TODO - Maybe change the MessageSend sigature to avoid copying
-         * of message payload?
-         */
-        auto tmp = msg.header_ + msg.payload_;
-
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(tmp);
+        auto tmp = msg.format(false);
+        emitSignal<DRing::ConfigurationSignal::MessageSend>(tmp);
     }
 };
 
@@ -495,8 +432,7 @@ private:
     void do_consume(std::ofstream& file, const std::vector<Logger::Msg>& messages)
     {
         for (const auto& msg : messages) {
-            file << msg.header_ << msg.payload_;
-
+            file << msg.format(false);
             if (msg.linefeed_)
                 file << ENDL;
         }
@@ -572,7 +508,8 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
 }
 
 void
-Logger::write(int level, const char* file, int line, std::string&& message) {
+Logger::write(int level, const char* file, int line, std::string&& message)
+{
     /* Timestamp is generated here. */
     Msg msg(level, file, line, true, std::move(message));
 
