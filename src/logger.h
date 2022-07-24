@@ -24,6 +24,9 @@
 #include "jami/def.h"
 
 //#define __STDC_FORMAT_MACROS 1
+#include <fmt/core.h>
+#include <fmt/format.h>
+
 #include <cinttypes> // for PRIx64
 #include <cstdarg>
 
@@ -107,6 +110,9 @@ public:
         return *this;
     }
 
+    DRING_PUBLIC
+    static void write(int level, const char* file, int line, std::string&& message);
+
     ///
     /// Printf fashion logging.
     ///
@@ -152,6 +158,25 @@ private:
     std::ostringstream os_; ///< string stream used with C++ stream style (stream operator<<)
 };
 
+namespace log {
+
+template<typename S, typename... Args>
+void dbg(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_DEBUG, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+}
+
+template<typename S, typename... Args>
+void warn(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_WARNING, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+}
+
+template<typename S, typename... Args>
+void error(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_ERR, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+}
+
+}
+
 // We need to use macros for contextual information
 #define JAMI_INFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
 #define JAMI_DBG(...)  ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, true, ##__VA_ARGS__)
@@ -162,5 +187,9 @@ private:
 #define JAMI_XDBG(...)  ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, false, ##__VA_ARGS__)
 #define JAMI_XWARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ##__VA_ARGS__)
 #define JAMI_XERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ##__VA_ARGS__)
+
+#define JAMI_DEBUG(...) if(::jami::Logger::debugEnabled()) { ::jami::log::dbg(__FILE__, __LINE__, ##__VA_ARGS__); }
+#define JAMI_WARNING(...) ::jami::log::warn(__FILE__, __LINE__, ##__VA_ARGS__)
+#define JAMI_ERROR(...) ::jami::log::error(__FILE__, __LINE__, ##__VA_ARGS__)
 
 } // namespace jami
