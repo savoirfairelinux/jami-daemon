@@ -160,48 +160,48 @@ contextHeader(const char* const file, int line)
     }
 }
 
-struct BufDeleter
+std::string
+formatPrintfArgs(const char* format, va_list ap)
 {
-    void operator()(char* ptr)
-    {
-        if (ptr) {
-            free(ptr);
-        }
+    std::string ret;
+    /* A good guess of what we might encounter. */
+    static constexpr size_t default_buf_size = 80;
+
+    ret.resize(default_buf_size);
+
+    /* Necessary if we don't have enough space in buf. */
+    va_list cp;
+    va_copy(cp, ap);
+
+    int size = vsnprintf(ret.data(), ret.size(), format, ap);
+
+    /* Not enough space?  Well try again. */
+    if (size >= ret.size()) {
+        ret.resize(size + 1);
+        vsnprintf((char*) ret.data(), ret.size(), format, cp);
     }
-};
+
+    va_end(cp);
+    return ret;
+}
 
 struct Logger::Msg
 {
     Msg() = delete;
 
+    Msg(int level, const char* file, int line, bool linefeed, std::string&& message)
+        : header_(contextHeader(file, line))
+        , level_(level)
+        , linefeed_(linefeed)
+        , payload_(std::move(message))
+    {}
+
     Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
         : header_(contextHeader(file, line))
         , level_(level)
         , linefeed_(linefeed)
-    {
-        /* A good guess of what we might encounter. */
-        static constexpr size_t default_buf_size = 80;
-
-        char* buf = (char*) malloc(default_buf_size);
-        int buf_size = default_buf_size;
-        va_list cp;
-
-        /* Necessary if we don't have enough space in buf. */
-        va_copy(cp, ap);
-
-        int size = vsnprintf(buf, buf_size, fmt, ap);
-
-        /* Not enough space?  Well try again. */
-        if (size >= buf_size) {
-            buf_size = size + 1;
-            buf = (char*) realloc(buf, buf_size);
-            vsnprintf(buf, buf_size, fmt, cp);
-        }
-
-        payload_.reset(buf);
-
-        va_end(cp);
-    }
+        , payload_(formatPrintfArgs(fmt, ap))
+    {}
 
     Msg(Msg&& other)
     {
@@ -211,7 +211,7 @@ struct Logger::Msg
         linefeed_ = other.linefeed_;
     }
 
-    std::unique_ptr<char, BufDeleter> payload_;
+    std::string payload_;
     std::string header_;
     int level_;
     bool linefeed_;
@@ -274,7 +274,7 @@ public:
             fputs(msg.header_.c_str(), stderr);
         }
 
-        fputs(msg.payload_.get(), stderr);
+        fputs(msg.payload_.c_str(), stderr);
 
         if (msg.linefeed_) {
             putc(ENDL, stderr);
@@ -309,7 +309,7 @@ public:
             fputs(msg.header_.c_str(), stderr);
         }
 
-        fputs(msg.payload_.get(), stderr);
+        fputs(msg.payload_.c_str(), stderr);
 
         if (msg.linefeed_) {
             putc(ENDL, stderr);
@@ -382,9 +382,9 @@ public:
     virtual void consume(Logger::Msg& msg) override
     {
 #ifdef __ANDROID__
-        __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.get());
+        __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.c_str());
 #else
-        ::syslog(msg.level_, "%s", msg.payload_.get());
+        ::syslog(msg.level_, "%s", msg.payload_.c_str());
 #endif
     }
 };
@@ -412,7 +412,7 @@ public:
          * TODO - Maybe change the MessageSend sigature to avoid copying
          * of message payload?
          */
-        auto tmp = msg.header_ + std::string(msg.payload_.get());
+        auto tmp = msg.header_ + msg.payload_;
 
         jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(tmp);
     }
@@ -493,7 +493,7 @@ private:
     void do_consume(std::ofstream& file, const std::vector<Logger::Msg>& messages)
     {
         for (const auto& msg : messages) {
-            file << msg.header_ << msg.payload_.get();
+            file << msg.header_ << msg.payload_;
 
             if (msg.linefeed_)
                 file << ENDL;
@@ -562,6 +562,17 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
 
     /* Timestamp is generated here. */
     Msg msg(level, file, line, linefeed, fmt, ap);
+
+    log_to_if_enabled(ConsoleLog::instance(), msg);
+    log_to_if_enabled(SysLog::instance(), msg);
+    log_to_if_enabled(MonitorLog::instance(), msg);
+    log_to_if_enabled(FileLog::instance(), msg); // Takes ownership of msg if enabled
+}
+
+void
+Logger::write(int level, const char* file, int line, std::string&& message) {
+    /* Timestamp is generated here. */
+    Msg msg(level, file, line, true, std::move(message));
 
     log_to_if_enabled(ConsoleLog::instance(), msg);
     log_to_if_enabled(SysLog::instance(), msg);
