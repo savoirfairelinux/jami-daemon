@@ -42,11 +42,15 @@ constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
 
 namespace jami {
 
-inline std::string_view as_view(const git_blob* blob) {
+inline std::string_view
+as_view(const git_blob* blob)
+{
     return std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
-                                       git_blob_rawsize(blob));
+                            git_blob_rawsize(blob));
 }
-inline std::string_view as_view(const GitObject& blob) {
+inline std::string_view
+as_view(const GitObject& blob)
+{
     return as_view(reinterpret_cast<git_blob*>(blob.get()));
 }
 
@@ -228,7 +232,8 @@ public:
                            const std::string& userUri,
                            std::string_view oldCert = ""sv) const
     {
-        auto cert = dht::crypto::Certificate((const uint8_t*)certContent.data(), certContent.size());
+        auto cert = dht::crypto::Certificate((const uint8_t*) certContent.data(),
+                                             certContent.size());
         auto isDeviceCertificate = cert.getId().toString() != userUri;
         auto issuerUid = cert.getIssuerUID();
         if (isDeviceCertificate && issuerUid.empty()) {
@@ -236,7 +241,8 @@ public:
             JAMI_ERR("Empty issuer for %s", cert.getId().to_c_str());
         }
         if (!oldCert.empty()) {
-            auto deviceCert = dht::crypto::Certificate((const uint8_t*)oldCert.data(), oldCert.size());
+            auto deviceCert = dht::crypto::Certificate((const uint8_t*) oldCert.data(),
+                                                       oldCert.size());
             if (isDeviceCertificate) {
                 if (issuerUid != deviceCert.getIssuerUID()) {
                     // NOTE: Here, because JAMS certificate can be incorrectly formatted, there is
@@ -495,7 +501,8 @@ initial_commit(GitRepository& repo,
         return {};
     }
 
-    std::string signed_str = base64::encode(account->identity().first->sign((const uint8_t*)to_sign.ptr, to_sign.size));
+    std::string signed_str = base64::encode(
+        account->identity().first->sign((const uint8_t*) to_sign.ptr, to_sign.size));
 
     // git commit -S
     if (git_commit_create_with_signature(&commit_id,
@@ -898,7 +905,8 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     }
 
     // Check votedFile path
-    static const std::regex regex_votes("votes.(\\w+).(members|devices|admins|invited).(\\w+).(\\w+)");
+    static const std::regex regex_votes(
+        "votes.(\\w+).(members|devices|admins|invited).(\\w+).(\\w+)");
     std::svmatch base_match;
     if (!std::regex_match(votedFile, base_match, regex_votes) or base_match.size() != 5) {
         JAMI_WARN("Invalid votes path: %s", votedFile.c_str());
@@ -2908,6 +2916,20 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     JAMI_INFO("Merge done between %s and main", merge_id.c_str());
 
     return {!result.empty(), result};
+}
+
+std::string
+ConversationRepository::mergeBase(const std::string& from, const std::string& to) const
+{
+    if (auto repo = pimpl_->repository()) {
+        git_oid oid, oidFrom, oidMerge;
+        git_oid_fromstr(&oidFrom, from.c_str());
+        git_oid_fromstr(&oid, to.c_str());
+        git_merge_base(&oidMerge, repo.get(), &oid, &oidFrom);
+        if (auto* commit_str = git_oid_tostr_s(&oidMerge))
+            return commit_str;
+    }
+    return {};
 }
 
 std::string

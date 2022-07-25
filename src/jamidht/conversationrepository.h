@@ -221,6 +221,14 @@ public:
     std::pair<bool, std::string> merge(const std::string& merge_id, bool force = false);
 
     /**
+     * Get the common parent between two branches
+     * @param from  The first branch
+     * @param to    The second branch
+     * @return the common parent
+     */
+    std::string mergeBase(const std::string& from, const std::string& to) const;
+
+    /**
      * Get current diff stats between two commits
      * @param oldId     Old commit
      * @param newId     Recent commit (empty value will compare to the empty repository)
