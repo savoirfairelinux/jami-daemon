@@ -33,6 +33,42 @@
       "message": "Should https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/741 be added to the commit message?",
       "revId": "e59bd0c3cf269fe7fdd8e045a160c0db3118a735",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6efd3ac_edab4b42",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-07-25T20:01:16Z",
+      "side": 1,
+      "message": "Yes, thanks for pointing that out",
+      "parentUuid": "1a065df7_76826713",
+      "revId": "e59bd0c3cf269fe7fdd8e045a160c0db3118a735",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8fe130ff_a4afe6e0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-07-25T20:01:16Z",
+      "side": 1,
+      "message": "Hello,\n\n1. This change is specifically to add voice activity detection, using WebRTC Audio Processing and Speex DSP. They specifically detect voice activity, not just audio activity. They do some signal processing and try to match it to characteristics of human speech. So, it\u0027s possible that the libraries won\u0027t detect bird calls, guitar, etc. It\u0027s not an audio level meter, but that could be a good feature to add. It could be implemented via a plugin or in the daemon itself.\n\n2. Both libraries return boolean values for voice activity. Internally, both libraries use probabilities, but they aren\u0027t publicly exposed.\n\n3. Specifics are yet to be decided. We will definitely allow people to disable voice activity detection. How the voice activity interacts with the conference video layout has also not yet been decided.\n\nThanks for the feedback",
+      "parentUuid": "33f1486d_c77866c5",
+      "revId": "e59bd0c3cf269fe7fdd8e045a160c0db3118a735",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
