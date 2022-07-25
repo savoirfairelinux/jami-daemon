@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "827e8438_c24ee04a",
+        "filename": "src/logger.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 479,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-25T20:58:17Z",
+      "side": 1,
+      "message": "why removing the explanation?",
+      "range": {
+        "startLine": 479,
+        "startChar": 11,
+        "endLine": 479,
+        "endChar": 34
+      },
+      "revId": "f0af081592abdd17dbfdf3452466ba754e0ac2fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
