@@ -39,6 +39,23 @@
       "message": "Works on GNU/linux!",
       "revId": "7996ebbe256a1f8849ef473fa9ca5fde88d7383e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "49b3ccfa_b8b440d0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-07-25T21:24:53Z",
+      "side": 1,
+      "message": "Breaks build on android",
+      "revId": "7996ebbe256a1f8849ef473fa9ca5fde88d7383e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
