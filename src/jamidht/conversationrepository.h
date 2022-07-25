@@ -220,6 +220,8 @@ public:
      */
     std::pair<bool, std::string> merge(const std::string& merge_id, bool force = false);
 
+    std::string mergeBase(const std::string& from, const std::string& to) const;
+
     /**
      * Get current diff stats between two commits
      * @param oldId     Old commit

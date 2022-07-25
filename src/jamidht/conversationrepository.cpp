@@ -1876,6 +1876,21 @@ ConversationRepository::Impl::behind(const std::string& from) const
     return log(from, to, 0);
 }
 
+std::string
+ConversationRepository::mergeBase(const std::string& from, const std::string& to) const
+{
+    if (auto repo = pimpl_->repository()) {
+        git_oid oid, oidFrom, oidMerge;
+        git_oid_fromstr(&oidFrom, from.c_str());
+        git_oid_fromstr(&oid, to.c_str());
+        git_merge_base(&oidMerge, repo.get(), &oid, &oidFrom);
+        if (auto* commit_str = git_oid_tostr_s(&oidMerge))
+            return commit_str; 
+    }
+    return {};
+}
+
+
 std::vector<ConversationCommit>
 ConversationRepository::Impl::log(const std::string& from,
                                   const std::string& to,

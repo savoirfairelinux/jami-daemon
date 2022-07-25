@@ -993,13 +993,15 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
             }
             auto oldId = repo->getHead();
             std::unique_lock<std::mutex> lk(sthis_->pimpl_->writeMtx_);
-            auto newCommits = sthis_->mergeHistory(deviceId);
-            sthis_->pimpl_->announce(newCommits);
+            sthis_->mergeHistory(deviceId);
+            auto newId = repo->getHead();
+            auto updatedCommits = sthis_->pimpl_->loadMessages(newId, repo->mergeBase(newId, oldId));
+            std::reverse(std::begin(updatedCommits), std::end(updatedCommits));
+            sthis_->pimpl_->announce(updatedCommits);
             lk.unlock();
             if (cb)
                 cb(true);
             // Announce if profile changed
-            auto newId = repo->getHead();
             if (oldId != newId) {
                 auto diffStats = repo->diffStats(newId, oldId);
                 auto changedFiles = repo->changedFiles(diffStats);
