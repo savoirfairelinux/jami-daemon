@@ -999,13 +999,22 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
             }
             auto oldId = repo->getHead();
             std::unique_lock<std::mutex> lk(sthis_->pimpl_->writeMtx_);
-            auto newCommits = sthis_->mergeHistory(deviceId);
-            sthis_->pimpl_->announce(newCommits);
+            sthis_->mergeHistory(deviceId);
+            auto newId = repo->getHead();
+            // Note: Because clients needs to linearize the history, they need to know all commits
+            // that can be updated.
+            // In this case, all commits until the common merge base should be announced.
+            // The client ill need to update it's model after this.
+            auto mergeBase = repo->mergeBase(newId, oldId);
+            auto updatedCommits = sthis_->pimpl_->loadMessages(newId, mergeBase);
+            // We announce commits from oldest to update to newest. This generally avoid
+            // to get detached commits until they are all announced.
+            std::reverse(std::begin(updatedCommits), std::end(updatedCommits));
+            sthis_->pimpl_->announce(updatedCommits);
             lk.unlock();
             if (cb)
                 cb(true);
             // Announce if profile changed
-            auto newId = repo->getHead();
             if (oldId != newId) {
                 auto diffStats = repo->diffStats(newId, oldId);
                 auto changedFiles = repo->changedFiles(diffStats);
