@@ -17,7 +17,7 @@ endif
 ifneq ($(and $(call need_pkg,"openssl >= 1.1.0"),$(call need_pkg,"libressl >= 1.12.2")),)
 DEPS_opendht += libressl
 endif
-ifneq ($(call need_pkg,"restinio >= v.0.5.1"),)
+ifneq ($(call need_pkg,"restinio >= v.0.6.16"),)
 DEPS_opendht += restinio
 endif
 ifneq ($(call need_pkg,"jsoncpp >= 1.7.2"),)
