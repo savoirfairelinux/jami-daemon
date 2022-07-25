@@ -1,5 +1,5 @@
 # LIBGIT2
-LIBGIT2_VERSION := 1.1.0
+LIBGIT2_VERSION := 1.5.0
 LIBGIT2_URL := https://github.com/libgit2/libgit2/archive/v${LIBGIT2_VERSION}.tar.gz
 
 PKGS += libgit2

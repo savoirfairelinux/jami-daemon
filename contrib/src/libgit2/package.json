@@ -1,6 +1,6 @@
 {
     "name": "libgit2",
-    "version": "v1.1.0",
+    "version": "v1.5.0",
     "url": "https://github.com/libgit2/libgit2/archive/__VERSION__.tar.gz",
     "deps": ["zlib"],
     "patches": [],
