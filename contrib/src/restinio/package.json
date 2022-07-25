@@ -1,6 +1,6 @@
 {
     "name": "restinio",
-    "version": "a7a10e419d9089c5b8ee63f5e3098c892f22fae4",
+    "version": "e0a261dd8488246a3cb8bbb3ea781ea5139c3c94",
     "url": "https://github.com/aberaud/restinio/archive/__VERSION__.tar.gz",
     "deps": [
         "fmt",
