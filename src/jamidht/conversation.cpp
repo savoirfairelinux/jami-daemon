@@ -997,17 +997,32 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
                 cb(false);
                 continue;
             }
-            auto oldId = repo->getHead();
+            auto oldHead = repo->getHead();
+            std::string newHead = oldHead;
             std::unique_lock<std::mutex> lk(sthis_->pimpl_->writeMtx_);
-            auto newCommits = sthis_->mergeHistory(deviceId);
-            sthis_->pimpl_->announce(newCommits);
+            auto commits = sthis_->mergeHistory(deviceId);
+            if (!commits.empty()) {
+                newHead = commits.rbegin()->at("id");
+                // Note: Because clients needs to linearize the history, they need to know all commits
+                // that can be updated.
+                // In this case, all commits until the common merge base should be announced.
+                // The client ill need to update it's model after this.
+                std::string mergeBase = oldHead; // If fast-forward, the merge base is the previous head
+                auto newHeadCommit = repo->getCommit(newHead);
+                if (newHeadCommit != std::nullopt && newHeadCommit->parents.size() > 1)
+                    mergeBase = repo->mergeBase(newHeadCommit->parents[0], newHeadCommit->parents[1]);
+                auto updatedCommits = sthis_->pimpl_->loadMessages("", mergeBase);
+                // We announce commits from oldest to update to newest. This generally avoid
+                // to get detached commits until they are all announced.
+                std::reverse(std::begin(updatedCommits), std::end(updatedCommits));
+                sthis_->pimpl_->announce(updatedCommits);
+            }
             lk.unlock();
             if (cb)
                 cb(true);
             // Announce if profile changed
-            auto newId = repo->getHead();
-            if (oldId != newId) {
-                auto diffStats = repo->diffStats(newId, oldId);
+            if (oldHead != newHead) {
+                auto diffStats = repo->diffStats(newHead, oldHead);
                 auto changedFiles = repo->changedFiles(diffStats);
                 if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf")
                     != changedFiles.end()) {
