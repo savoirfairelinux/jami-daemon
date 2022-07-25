@@ -1,5 +1,5 @@
 # RESTINIO
-RESTINIO_VERSION := 2224ffedef52cb2b74645d63d871d61dbd0f165e
+RESTINIO_VERSION := bbaa034dbcc7555ce67df0f8a1475591a7441733
 RESTINIO_URL := https://github.com/aberaud/restinio/archive/$(RESTINIO_VERSION).tar.gz
 
 PKGS += restinio
