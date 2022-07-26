@@ -80,6 +80,24 @@
       "message": "Breaks build on android",
       "revId": "7996ebbe256a1f8849ef473fa9ca5fde88d7383e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "208a9251_cc940936",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-07-26T12:28:05Z",
+      "side": 1,
+      "message": "rebase https://review.jami.net/c/jami-daemon/+/21623",
+      "parentUuid": "49b3ccfa_b8b440d0",
+      "revId": "7996ebbe256a1f8849ef473fa9ca5fde88d7383e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
