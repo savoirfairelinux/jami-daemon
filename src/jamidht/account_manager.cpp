@@ -598,12 +598,20 @@ AccountManager::sendTrustRequest(const std::string& to,
     }
     forEachDevice(toH,
                   [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-                      JAMI_WARN("sending trust request to: %s / %s",
-                                toH.toString().c_str(),
-                                dev->getLongId().toString().c_str());
+                      auto to = toH.toString();
+                      JAMI_WARNING("sending trust request to: {:s} / {:s}",
+                                   to,
+                                   dev->getLongId().toString());
                       dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
                                          dev,
-                                         dht::TrustRequest(DHT_TYPE_NS, convId, payload));
+                                         dht::TrustRequest(DHT_TYPE_NS, convId, payload),
+                                         [to, size = payload.size()](bool ok) {
+                                             if (!ok)
+                                                 JAMI_ERROR("Tried to send request {:s} (size: "
+                                                            "{:d}), but put failed",
+                                                            to,
+                                                            size);
+                                         });
                   });
 }
 
