@@ -299,6 +299,9 @@ RingBufferPool::getData(const std::string& call_id)
         if (auto b = rbuf->get(call_id)) {
             mixed = true;
             mixBuffer->mix(*b);
+
+            // voice is true if any of mixed frames has voice
+            mixBuffer->has_voice |= b->has_voice;
         }
     }
 
@@ -352,8 +355,12 @@ RingBufferPool::getAvailableData(const std::string& call_id)
 
     auto buf = std::make_shared<AudioFrame>(internalAudioFormat_);
     for (const auto& rbuf : *bindings) {
-        if (auto b = rbuf->get(call_id))
+        if (auto b = rbuf->get(call_id)) {
             buf->mix(*b);
+
+            // voice is true if any of mixed frames has voice
+            buf->has_voice |= b->has_voice;
+        }
     }
 
     return buf;
