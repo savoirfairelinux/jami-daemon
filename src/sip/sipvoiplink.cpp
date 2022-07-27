@@ -1173,6 +1173,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
         static constexpr auto DEVICE_ORIENTATION = "device_orientation"sv;
         static constexpr auto RECORDING_STATE = "recording_state"sv;
         static constexpr auto MUTE_STATE = "mute_state"sv;
+        static constexpr auto VOICE_ACTIVITY = "voice_activity"sv;
 
         int streamIdx = -1;
         if (body_msg.find(STREAM_ID) != std::string_view::npos) {
@@ -1240,6 +1241,20 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                     call.peerMuted(state);
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing state remote mute: %s", e.what());
+                }
+                return true;
+            }
+        } else if (body_msg.find(VOICE_ACTIVITY) != std::string_view::npos) {
+            static const std::regex REC_REGEX("voice_activity=([0-1])");
+            std::svmatch matched_pattern;
+            std::regex_search(body_msg, matched_pattern, REC_REGEX);
+
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                try {
+                    bool state = std::stoi(matched_pattern[1]);
+                    call.peerVoice(state);
+                } catch (const std::exception& e) {
+                    JAMI_WARN("Error parsing state remote voice: %s", e.what());
                 }
                 return true;
             }

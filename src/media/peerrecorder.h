@@ -41,9 +41,14 @@ public:
 
     virtual bool isPeerMuted() const { return peerMuted_; }
 
+    virtual void peerVoice(bool voice) = 0;
+
+    virtual bool hasPeerVoice() const { return peerVoice_; }
+
 protected:
     bool peerRecording_ {false};
     bool peerMuted_ {false};
+    bool peerVoice_ {false};
 };
 
 } // namespace jami

@@ -165,9 +165,13 @@ public:
 
     // Override of Recordable class
     bool toggleRecording() override;
+    // End of override of Recordable class
+
+    // Override PeerRecorder
     void peerRecording(bool state) override;
     void peerMuted(bool state) override;
-    // End of override of Recordable class
+    void peerVoice(bool state) override;
+    // end override PeerRecorder
 
     void monitor() const override;
 
@@ -324,7 +328,10 @@ private:
 
     void rtpSetupSuccess(MediaType type, bool isRemote);
 
+    void setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession);
+
     void sendMuteState(bool state);
+    void sendVoiceActivity(std::string streamId, bool state);
 
     void resetTransport(std::shared_ptr<IceTransport>&& transport);
 
