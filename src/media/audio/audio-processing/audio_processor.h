@@ -82,6 +82,11 @@ public:
      */
     virtual void enableAutomaticGainControl(bool enabled) = 0;
 
+    /**
+     * @brief Set the status of voice activity detection
+     */
+    virtual void enableVoiceActivityDetection(bool enabled) = 0;
+
 protected:
     AudioFrameResizer playbackQueue_;
     AudioFrameResizer recordQueue_;

@@ -236,9 +236,17 @@ public:
 
     void setPlaybackMuted(bool muted) { playbackMuted_ = muted; }
 
+    const std::string& getAudioProcessor() const { return audioProcessor_; }
+
+    void setAudioProcessor(const std::string& ap) { audioProcessor_ = ap; }
+
+    bool getVadEnabled() const { return vadEnabled_; }
+
+    void setVad(bool enable) { vadEnabled_ = enable; }
+
     const std::string& getEchoCanceller() const { return echoCanceller_; }
 
-    void setEchoCanceller(const std::string& ec) { echoCanceller_ = ec; }
+    void setEchoCancel(std::string& canceller) { echoCanceller_ = canceller; }
 
 private:
     std::string audioApi_;
@@ -265,10 +273,14 @@ private:
     bool alwaysRecording_;
     double volumemic_;
     double volumespkr_;
-    std::string echoCanceller_;
 
+    // audio processor preferences
+    std::string audioProcessor_;
     bool denoise_;
     bool agcEnabled_;
+    bool vadEnabled_;
+    std::string echoCanceller_;
+
     bool captureMuted_;
     bool playbackMuted_;
     constexpr static const char* const CONFIG_LABEL = "audio";
