@@ -43,6 +43,7 @@ public:
     void enableEchoCancel(bool enabled) override;
     void enableNoiseSuppression(bool enabled) override;
     void enableAutomaticGainControl(bool enabled) override;
+    void enableVoiceActivityDetection(bool enabled) override;
 
 private:
     using SpeexEchoStatePtr = std::unique_ptr<SpeexEchoState, void (*)(SpeexEchoState*)>;
@@ -59,5 +60,9 @@ private:
 
     // if we should do echo cancellation
     bool shouldAEC {false};
+
+    // if we should do voice activity detection
+    // preprocess_run returns 1 if vad is disabled, so we have to know whether or not to ignore it
+    bool shouldDetectVoice {false};
 };
 } // namespace jami
