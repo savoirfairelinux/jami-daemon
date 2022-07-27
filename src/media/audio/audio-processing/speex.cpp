@@ -152,6 +152,21 @@ SpeexAudioProcessor::enableAutomaticGainControl(bool enabled)
     }
 }
 
+void
+SpeexAudioProcessor::enableVoiceActivityDetection(bool enabled)
+{
+    JAMI_DBG("[speex-dsp] enableVoiceActivityDetection %d", enabled);
+
+    shouldDetectVoice = enabled;
+
+    spx_int32_t speexSetValue = (spx_int32_t) enabled;
+    for (auto& channelPreprocessorState : preprocessorStates) {
+        speex_preprocess_ctl(channelPreprocessorState.get(),
+                             SPEEX_PREPROCESS_SET_VAD,
+                             &speexSetValue);
+    }
+}
+
 std::shared_ptr<AudioFrame>
 SpeexAudioProcessor::getProcessed()
 {
@@ -212,7 +227,7 @@ SpeexAudioProcessor::getProcessed()
     iProcBuffer.interleave((AudioSample*) processed->pointer()->data[0]);
 
     // add stabilized voice activity to the AudioFrame
-    processed->has_voice = getStabilizedVoiceActivity(overallVad);
+    processed->has_voice = shouldDetectVoice && getStabilizedVoiceActivity(overallVad);
 
     return processed;
 }
