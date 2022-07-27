@@ -35,11 +35,13 @@ public:
     std::shared_ptr<AudioFrame> getProcessed() override;
     // void done() override;
 
-    void enableEchoCancel(bool enabled) override {};
+    void enableEchoCancel(bool) override {};
 
-    void enableNoiseSuppression(bool enabled) override {};
+    void enableNoiseSuppression(bool) override {};
 
-    void enableAutomaticGainControl(bool enabled) override {};
+    void enableAutomaticGainControl(bool) override {};
+
+    void enableVoiceActivityDetection(bool) override {};
 };
 
 } // namespace jami

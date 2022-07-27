@@ -250,6 +250,13 @@ protected:
      */
     double playbackGain_;
 
+    // audio processor preferences
+    bool enableAGC;
+    bool enableNoiseReduction;
+    bool enableVAD;
+    const std::string& echoCanceller;
+    const std::string& preferredAudioProcessor;
+
     /**
      * Buffers for audio processing
      */
