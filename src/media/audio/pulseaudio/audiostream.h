@@ -52,7 +52,8 @@ public:
                 unsigned,
                 const PaDeviceInfos&,
                 bool,
-                OnReady onReady, OnData onData);
+                OnReady onReady,
+                OnData onData);
 
     ~AudioStream();
 
@@ -88,6 +89,8 @@ public:
 
     bool isReady();
 
+    void setEchoCancelCb(std::function<void(bool)>&& cb) { echoCancelCb = cb; }
+
 private:
     NON_COPYABLE(AudioStream);
 
@@ -109,6 +112,16 @@ private:
      * A pointer to the opaque threaded main loop object
      */
     pa_threaded_mainloop* mainloop_;
+
+    /**
+     * The type of this audio stream
+     */
+    AudioDeviceType audioType_;
+
+    /**
+     * Function called whenever the stream is moved and we check for an echo canceller
+     */
+    std::function<void(bool)> echoCancelCb;
 };
 
 } // namespace jami

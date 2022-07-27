@@ -250,6 +250,9 @@ protected:
      */
     double playbackGain_;
 
+    // audio processor preferences
+    const AudioPreference& pref_;
+
     /**
      * Buffers for audio processing
      */
