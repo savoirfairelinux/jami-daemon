@@ -104,6 +104,7 @@ private:
      */
     AVAudioFifo* queue_;
     int64_t nextOutputPts_ {0};
+    bool hasVoice_ {false};
 };
 
 } // namespace jami

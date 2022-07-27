@@ -175,6 +175,7 @@ Resampler::resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& format)
     }
     auto output = std::make_unique<AudioFrame>(format);
     resample(in->pointer(), output->pointer());
+    output->has_voice = in->has_voice;
     return output;
 }
 
@@ -198,6 +199,7 @@ Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
     auto output = std::make_shared<AudioFrame>(format);
     if (auto outPtr = output->pointer()) {
         resample(inPtr, outPtr);
+        output->has_voice = in->has_voice;
         return output;
     }
     return {};

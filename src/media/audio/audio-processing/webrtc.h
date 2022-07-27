@@ -20,28 +20,29 @@
 
 #pragma once
 
-#include "audio/echo-cancel/echo_canceller.h"
-#include "audio/audio_frame_resizer.h"
+#include "audio_processor.h"
 
-#include <memory>
+namespace webrtc {
+class AudioProcessing;
+}
 
 namespace jami {
 
-class WebRTCEchoCanceller final : public EchoCanceller
+class WebRTCAudioProcessor final : public AudioProcessor
 {
 public:
-    WebRTCEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~WebRTCEchoCanceller() = default;
+    WebRTCAudioProcessor(AudioFormat format, unsigned frameSize);
+    ~WebRTCAudioProcessor() = default;
 
-    // Inherited via EchoCanceller
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
+    // Inherited via AudioProcessor
     std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
+
+    void enableEchoCancel(bool enabled) override;
+    void enableNoiseSuppression(bool enabled) override;
+    void enableAutomaticGainControl(bool enabled) override;
 
 private:
-    struct WebRTCAPMImpl;
-    std::unique_ptr<WebRTCAPMImpl> pimpl_;
+    std::unique_ptr<webrtc::AudioProcessing> apm;
 
     using fChannelBuffer = std::vector<std::vector<float>>;
     fChannelBuffer fRecordBuffer_;
@@ -49,5 +50,18 @@ private:
     AudioBuffer iRecordBuffer_;
     AudioBuffer iPlaybackBuffer_;
     int analogLevel_ {0};
+
+    // artificially extend voice activity by this long, milliseconds
+    unsigned int forceMinimumVoiceActivityMs;
+
+    // current number of frames to force the voice activity to be true
+    unsigned int forceVoiceActiveFramesLeft {0};
+
+    // voice activity must be active for this long _before_ it is considered legitimate
+    // milliseconds
+    unsigned int minimumConsequtiveDurationMs;
+
+    // current number of frames that the voice activity has been true
+    unsigned int consecutiveActiveFrames {0};
 };
 } // namespace jami
