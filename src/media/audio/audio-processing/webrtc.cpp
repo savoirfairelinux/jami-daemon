@@ -19,6 +19,7 @@
  */
 
 #include "webrtc.h"
+#include "logger.h"
 
 #include <webrtc/modules/audio_processing/include/audio_processing.h>
 
@@ -55,20 +56,6 @@ WebRTCAudioProcessor::WebRTCAudioProcessor(AudioFormat format, unsigned frameSiz
 
     if (apm->Initialize(pconfig) != webrtcNoError) {
         JAMI_ERR("[webrtc-ap] Error initialising audio processing module");
-    }
-
-    // voice activity
-    if (apm->voice_detection()->Enable(true) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] Error enabling voice detection");
-    }
-    // TODO: change likelihood?
-    if (apm->voice_detection()->set_likelihood(webrtc::VoiceDetection::kVeryLowLikelihood)
-        != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] Error setting voice detection likelihood");
-    }
-    // TODO: change? asserted to be 10 in voice_detection_impl.cc???
-    if (apm->voice_detection()->set_frame_size_ms(10) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] Error setting voice detection frame size");
     }
 
     JAMI_INFO("[webrtc-ap] Done initializing");
@@ -119,6 +106,24 @@ WebRTCAudioProcessor::enableEchoCancel(bool enabled)
     }
     if (apm->echo_cancellation()->enable_drift_compensation(true) != webrtcNoError) {
         JAMI_ERR("[webrtc-ap] Error enabling echo cancellation drift compensation");
+    }
+}
+
+void
+WebRTCAudioProcessor::enableVoiceActivityDetection(bool enabled)
+{
+    JAMI_DBG("[webrtc-ap] enableVoiceActivityDetection %d", enabled);
+    if (apm->voice_detection()->Enable(enabled) != webrtcNoError) {
+        JAMI_ERR("[webrtc-ap] Error enabling voice activation detection");
+    }
+    // TODO: change likelihood?
+    if (apm->voice_detection()->set_likelihood(webrtc::VoiceDetection::kVeryLowLikelihood)
+        != webrtcNoError) {
+        JAMI_ERR("[webrtc-ap] Error setting voice detection likelihood");
+    }
+    // TODO: change? asserted to be 10 in voice_detection_impl.cc???
+    if (apm->voice_detection()->set_frame_size_ms(10) != webrtcNoError) {
+        JAMI_ERR("[webrtc-ap] Error setting voice detection frame size");
     }
 }
 
@@ -212,28 +217,30 @@ WebRTCAudioProcessor::getProcessed()
     // frame duration in milliseconds, assume 10 since that's what webrtc uses
     unsigned int frameDurationMs = 10;
 
-    if (apm->voice_detection()->stream_has_voice()) {
-        // we detected activity
-        consecutiveActiveFrames += 1;
+    if (apm->voice_detection()->is_enabled()) {
+        if (apm->voice_detection()->stream_has_voice()) {
+            // we detected activity
+            consecutiveActiveFrames += 1;
 
-        // make sure that we have been active for necessary time
-        if (consecutiveActiveFrames > minimumConsequtiveDurationMs / frameDurationMs) {
+            // make sure that we have been active for necessary time
+            if (consecutiveActiveFrames > minimumConsequtiveDurationMs / frameDurationMs) {
+                processed->has_voice = true;
+
+                // set number of frames that will be forced positive
+                forceVoiceActiveFramesLeft = (int) forceMinimumVoiceActivityMs / frameDurationMs;
+            }
+        } else if (forceVoiceActiveFramesLeft > 0) {
+            // if we didn't detect voice, but we haven't elapsed the minimum duration,
+            // force voice to be true
             processed->has_voice = true;
+            forceVoiceActiveFramesLeft -= 1;
 
-            // set number of frames that will be forced positive
-            forceVoiceActiveFramesLeft = (int) forceMinimumVoiceActivityMs / frameDurationMs;
+            consecutiveActiveFrames += 1;
+        } else {
+            // else no voice and no need to force
+            processed->has_voice = false;
+            consecutiveActiveFrames = 0;
         }
-    } else if (forceVoiceActiveFramesLeft > 0) {
-        // if we didn't detect voice, but we haven't elapsed the minimum duration,
-        // force voice to be true
-        processed->has_voice = true;
-        forceVoiceActiveFramesLeft -= 1;
-
-        consecutiveActiveFrames += 1;
-    } else {
-        // else no voice and no need to force
-        processed->has_voice = false;
-        consecutiveActiveFrames = 0;
     }
 
     return processed;
