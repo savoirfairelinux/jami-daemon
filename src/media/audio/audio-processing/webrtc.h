@@ -38,6 +38,7 @@ public:
     void enableEchoCancel(bool enabled) override;
     void enableNoiseSuppression(bool enabled) override;
     void enableAutomaticGainControl(bool enabled) override;
+    void enableVoiceActivityDetection(bool enabled) override;
 
 private:
     std::unique_ptr<webrtc::AudioProcessing> apm;
