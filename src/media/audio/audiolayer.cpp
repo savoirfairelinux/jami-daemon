@@ -28,13 +28,12 @@
 #include "tonecontrol.h"
 #include "client/ring_signal.h"
 
-// TODO: decide which library to use/how to decide (compile time? runtime?)
+#include "audio-processing/null_audio_processor.h"
 #if HAVE_WEBRTC_AP
 #include "audio-processing/webrtc.h"
-#elif HAVE_SPEEXDSP
+#endif
+#if HAVE_SPEEXDSP
 #include "audio-processing/speex.h"
-#else
-#include "audio-processing/null_audio_processor.h"
 #endif
 
 #include <ctime>
@@ -54,8 +53,16 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
     , resampler_(new Resampler)
     , lastNotificationTime_()
+    , pref_(pref)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
+
+    JAMI_INFO("[audiolayer] AGC: %d, noiseReduce: %d, VAD: %d, echoCancel: %s, audioProcessor: %s",
+              pref_.isAGCEnabled(),
+              pref.getNoiseReduce(),
+              pref.getVadEnabled(),
+              pref.getEchoCanceller().c_str(),
+              pref.getAudioProcessor().c_str());
 }
 
 AudioLayer::~AudioLayer() {}
@@ -120,14 +127,27 @@ AudioLayer::recordChanged(bool started)
     recordStarted_ = started;
 }
 
-void
-AudioLayer::setHasNativeAEC(bool hasEAC)
+// helper function
+static inline bool
+shouldUseAudioProcessorEchoCancel(bool hasNativeAEC, const std::string& echoCancellerPref)
 {
+    return
+        // user doesn't care which and there is a system AEC
+        (echoCancellerPref == "auto" && !hasNativeAEC)
+        // use specifically wants audioProcessor
+        or (echoCancellerPref == "audioProcessor");
+}
+
+void
+AudioLayer::setHasNativeAEC(bool hasNativeAEC)
+{
+    JAMI_INFO("[audiolayer] setHasNativeAEC: %d", hasNativeAEC);
     std::lock_guard<std::mutex> lock(audioProcessorMutex);
-    hasNativeAEC_ = hasEAC;
+    hasNativeAEC_ = hasNativeAEC;
     // if we have a current audio processor, tell it to enable/disable its own AEC
     if (audioProcessor) {
-        audioProcessor->enableEchoCancel(!hasEAC);
+        audioProcessor->enableEchoCancel(
+            shouldUseAudioProcessorEchoCancel(hasNativeAEC, pref_.getEchoCanceller()));
     }
 }
 
@@ -145,14 +165,14 @@ AudioLayer::createAudioProcessor()
 
     AudioFormat formatForProcessor {sample_rate, nb_channels};
 
-#if HAVE_SPEEXDSP && !HAVE_WEBRTC_AP
-    // we are using speex
-    // TODO: maybe force this to be equivalent to 20ms? as expected by speex
-    auto frame_size = sample_rate / 50u;
-#else
-    // we are using either webrtc-ap or null
-    auto frame_size = sample_rate / 100u;
-#endif
+    unsigned int frame_size;
+    if (pref_.getAudioProcessor() == "speex") {
+        // TODO: maybe force this to be equivalent to 20ms? as expected by speex
+        frame_size = sample_rate / 50u;
+    } else {
+        frame_size = sample_rate / 100u;
+    }
+
     JAMI_WARN("Input {%d Hz, %d channels}",
               audioInputFormat_.sample_rate,
               audioInputFormat_.nb_channels);
@@ -162,23 +182,41 @@ AudioLayer::createAudioProcessor()
               nb_channels,
               frame_size);
 
+    if (pref_.getAudioProcessor() == "webrtc") {
 #if HAVE_WEBRTC_AP
-    JAMI_INFO("[audiolayer] using webrtc audio processor");
-    audioProcessor.reset(new WebRTCAudioProcessor(formatForProcessor, frame_size));
-#elif HAVE_SPEEXDSP
-    JAMI_INFO("[audiolayer] using speex audio processor");
-    audioProcessor.reset(new SpeexAudioProcessor(formatForProcessor, frame_size));
+        JAMI_WARN("[audiolayer] using WebRTCAudioProcessor");
+        audioProcessor.reset(new WebRTCAudioProcessor(formatForProcessor, frame_size));
 #else
-    JAMI_INFO("[audiolayer] using null audio processor");
-    audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
+        JAMI_ERR("[audiolayer] audioProcessor preference is webrtc, but library not linked! "
+                 "using NullAudioProcessor instead");
+        audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
 #endif
+    } else if (pref_.getAudioProcessor() == "speex") {
+#if HAVE_SPEEXDSP
+        JAMI_WARN("[audiolayer] using SpeexAudioProcessor");
+        audioProcessor.reset(new SpeexAudioProcessor(formatForProcessor, frame_size));
+#else
+        JAMI_ERR("[audiolayer] audioProcessor preference is speex, but library not linked! "
+                 "using NullAudioProcessor instead");
+        audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
+#endif
+    } else if (pref_.getAudioProcessor() == "null") {
+        JAMI_WARN("[audiolayer] using NullAudioProcessor");
+        audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
+    } else {
+        JAMI_ERR("[audiolayer] audioProcessor preference not recognized, using NullAudioProcessor "
+                 "instead");
+        audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
+    }
 
-    audioProcessor->enableNoiseSuppression(true);
-    // TODO: enable AGC?
-    audioProcessor->enableAutomaticGainControl(false);
+    audioProcessor->enableNoiseSuppression(pref_.getNoiseReduce());
 
-    // can also be updated after creation via setHasNativeAEC
-    audioProcessor->enableEchoCancel(!hasNativeAEC_);
+    audioProcessor->enableAutomaticGainControl(pref_.isAGCEnabled());
+
+    audioProcessor->enableEchoCancel(
+        shouldUseAudioProcessorEchoCancel(hasNativeAEC_, pref_.getEchoCanceller()));
+
+    audioProcessor->enableVoiceActivityDetection(pref_.getVadEnabled());
 }
 
 // must acquire lock beforehand
