@@ -64,6 +64,8 @@ public:
     std::shared_ptr<AudioInput>& getAudioLocal() { return audioInput_; }
     std::unique_ptr<AudioReceiveThread>& getAudioReceive() { return receiveThread_; }
 
+    void setVoiceCallback(std::function<void(bool)> cb);
+
 private:
     void startSender();
     void startReceiver();
@@ -87,6 +89,8 @@ private:
 
     // Interval in seconds between RTCP checking
     std::chrono::seconds rtcp_checking_interval {4};
+
+    std::function<void(bool)> voiceCallback_;
 };
 
 } // namespace jami

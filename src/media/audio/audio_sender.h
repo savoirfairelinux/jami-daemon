@@ -47,6 +47,8 @@ public:
     uint16_t getLastSeqValue();
     int setPacketLoss(uint64_t pl);
 
+    void setVoiceCallback(std::function<void(bool)> cb);
+
     void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
                 const std::shared_ptr<jami::MediaFrame>&) override;
 
@@ -67,6 +69,10 @@ private:
     AudioBuffer resampledData_;
     const uint16_t seqVal_;
     uint16_t mtu_;
+
+    // last voice activity state
+    bool voice_ {false};
+    std::function<void(bool)> voiceCallback_;
 };
 
 } // namespace jami
