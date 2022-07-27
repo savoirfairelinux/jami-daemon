@@ -105,6 +105,7 @@ public:
     float calcRMS() const;
     jami::AudioFormat getFormat() const;
     size_t getFrameSize() const;
+    bool has_voice {false};
 
 private:
     void setFormat(const jami::AudioFormat& format);

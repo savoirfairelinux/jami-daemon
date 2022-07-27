@@ -29,7 +29,7 @@ deplibavformat = dependency('libavformat', version: '>= 56.40.101')
 deplibswscale = dependency('libswscale', version: '>= 3.1.101')
 deplibswresample = dependency('libswresample', version: '>= 1.2.101')
 deplibavutil = dependency('libavutil', version: '>= 55.75.100')
-depspeexdsp = dependency('speexdsp')
+
 depfmt = dependency('fmt', version: '>= 5.3')
 
 depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1', required: false)
@@ -112,6 +112,9 @@ conf.set10('HAVE_RINGNS', depopenssl.found())
 
 depwebrtcap = dependency('webrtc-audio-processing', required: get_option('aec'))
 conf.set10('HAVE_WEBRTC_AP', depwebrtcap.found())
+
+depspeexdsp = dependency('speexdsp')
+conf.set10('HAVE_SPEEXDSP', depspeexdsp.found())
 
 if get_option('video')
     conf.set('ENABLE_VIDEO', true)
