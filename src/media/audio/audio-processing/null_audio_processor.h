@@ -35,6 +35,8 @@ public:
     void enableNoiseSuppression(bool) override {};
 
     void enableAutomaticGainControl(bool) override {};
+
+    void enableVoiceActivityDetection(bool) override {};
 };
 
 } // namespace jami
