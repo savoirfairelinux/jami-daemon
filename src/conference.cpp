@@ -128,6 +128,7 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                     auto isModerator = shared->isModerator(peerId);
                     auto isHandRaised = shared->isHandRaised(deviceId);
                     auto isModeratorMuted = shared->isMuted(callId);
+                    auto isVoiceActive = shared->isVoiceActive(info.streamId);
                     if (auto videoMixer = shared->videoMixer_)
                         active = videoMixer->verifyActive(info.streamId);
                     newInfo.emplace_back(ParticipantInfo {std::move(uri),
@@ -142,7 +143,8 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                                                           isLocalMuted,
                                                           isModeratorMuted,
                                                           isModerator,
-                                                          isHandRaised});
+                                                          isHandRaised,
+                                                          isVoiceActive});
                 } else {
                     auto isModeratorMuted = false;
                     // If not local
@@ -178,6 +180,7 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                         isLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
                     }
                     auto isHandRaised = shared->isHandRaised(deviceId);
+                    auto isVoiceActive = shared->isVoiceActive(streamId);
                     newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                           deviceId,
                                                           std::move(streamId),
@@ -190,7 +193,8 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                                                           isLocalMuted,
                                                           isModeratorMuted,
                                                           isModerator,
-                                                          isHandRaised});
+                                                          isHandRaised,
+                                                          isVoiceActive});
                 }
             }
             if (auto videoMixer = shared->videoMixer_) {
@@ -248,6 +252,9 @@ Conference::Conference(const std::shared_ptr<Account>& account)
             if (auto* transport = call->getTransport())
                 setHandRaised(std::string(transport->deviceId()), state);
     });
+
+    parser_.onVoiceActivity(
+        [&](const auto& streamId, bool state) { setVoiceActivity(streamId, state); });
 }
 
 Conference::~Conference()
@@ -1226,6 +1233,51 @@ Conference::setHandRaised(const std::string& deviceId, const bool& state)
     }
 }
 
+bool
+Conference::isVoiceActive(std::string_view streamId) const
+{
+    return streamsVoiceActive.find(streamId) != streamsVoiceActive.end();
+}
+
+void
+Conference::setVoiceActivity(const std::string& streamId, const bool& newState)
+{
+    // verify that streamID exists in our confInfo
+    bool exists = false;
+    for (auto& participant : confInfo_) {
+        if (participant.sinkId == streamId) {
+            exists = true;
+            break;
+        }
+    }
+
+    if (!exists) {
+        JAMI_ERR("participant not found with streamId: %s", streamId.c_str());
+        return;
+    }
+
+    auto previousState = isVoiceActive(streamId);
+
+    if (previousState == newState) {
+        // no change, do not send out updates
+        return;
+    }
+
+    if (newState and not previousState) {
+        // voice going from inactive to active
+        streamsVoiceActive.emplace(streamId);
+        updateVoiceActivity();
+        return;
+    }
+
+    if (not newState and previousState) {
+        // voice going from active to inactive
+        streamsVoiceActive.erase(streamId);
+        updateVoiceActivity();
+        return;
+    }
+}
+
 void
 Conference::setModerator(const std::string& participant_id, const bool& state)
 {
@@ -1266,6 +1318,38 @@ Conference::updateHandsRaised()
     for (auto& info : confInfo_)
         info.handRaised = isHandRaised(info.device);
     sendConferenceInfos();
+}
+
+void
+Conference::updateVoiceActivity()
+{
+    std::lock_guard<std::mutex> lk(confInfoMutex_);
+
+    // streamId is actually sinkId
+    for (ParticipantInfo& participantInfo : confInfo_) {
+        bool newActivity;
+
+        if (auto call = getCallWith(std::string(string_remove_suffix(participantInfo.uri, '@')),
+                                    participantInfo.device)) {
+            // if this participant is in a direct call with us
+            // grab voice activity info directly from the call
+            newActivity = call->hasPeerVoice();
+        } else {
+            // check for it
+            newActivity = isVoiceActive(participantInfo.sinkId);
+        }
+
+        if (participantInfo.voiceActivity != newActivity) {
+            participantInfo.voiceActivity = newActivity;
+        }
+
+        // JAMI_INFO("participant uri: %s, sinkId: %s, localMuted: %s, voice: %s",
+        //           participantInfo.uri.c_str(),
+        //           participantInfo.sinkId.c_str(),
+        //           participantInfo.audioLocalMuted ? "yes" : "no",
+        //           participantInfo.voiceActivity ? "yes" : "no");
+    }
+    sendConferenceInfos(); // also emits signal to client
 }
 
 void
