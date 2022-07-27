@@ -1,8 +1,6 @@
 /*
  *  Copyright (C) 2021-2022 Savoir-faire Linux Inc.
  *
- *  Author: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -20,28 +18,29 @@
 
 #pragma once
 
-#include "audio/echo-cancel/echo_canceller.h"
-#include "audio/audio_frame_resizer.h"
+#include "audio_processor.h"
 
-#include <memory>
+namespace webrtc {
+class AudioProcessing;
+}
 
 namespace jami {
 
-class WebRTCEchoCanceller final : public EchoCanceller
+class WebRTCAudioProcessor final : public AudioProcessor
 {
 public:
-    WebRTCEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~WebRTCEchoCanceller() = default;
+    WebRTCAudioProcessor(AudioFormat format, unsigned frameSize);
+    ~WebRTCAudioProcessor() = default;
 
-    // Inherited via EchoCanceller
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
+    // Inherited via AudioProcessor
     std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
+
+    void enableEchoCancel(bool enabled) override;
+    void enableNoiseSuppression(bool enabled) override;
+    void enableAutomaticGainControl(bool enabled) override;
 
 private:
-    struct WebRTCAPMImpl;
-    std::unique_ptr<WebRTCAPMImpl> pimpl_;
+    std::unique_ptr<webrtc::AudioProcessing> apm;
 
     using fChannelBuffer = std::vector<std::vector<float>>;
     fChannelBuffer fRecordBuffer_;
