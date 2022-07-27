@@ -680,6 +680,7 @@ Call::setConferenceInfo(const std::string& msg)
         if (not isConferenceParticipant()) {
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
+
             // Create sink for each participant
 #ifdef ENABLE_VIDEO
             createSinks(confInfo_);

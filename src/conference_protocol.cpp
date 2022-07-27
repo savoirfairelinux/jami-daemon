@@ -44,6 +44,7 @@ constexpr static const char* ACTIVE = "active";
 constexpr static const char* MUTEAUDIO = "muteAudio";
 // Future
 constexpr static const char* MUTEVIDEO = "muteVideo";
+constexpr static const char* VOICEACTIVITY = "voiceActivity";
 
 } // namespace ProtocolKeys
 
@@ -52,7 +53,8 @@ ConfProtocolParser::parse()
 {
     if (data_.isMember(ProtocolKeys::PROTOVERSION)) {
         uint32_t version = data_[ProtocolKeys::PROTOVERSION].asUInt();
-        if (version_) version_(version);
+        if (version_)
+            version_(version);
         if (version == 1) {
             parseV1();
         } else {
@@ -98,7 +100,7 @@ ConfProtocolParser::parseV0()
     }
     if (data_.isMember(ProtocolKeys::MUTEPART) && data_.isMember(ProtocolKeys::MUTESTATE)) {
         muteParticipant_(data_[ProtocolKeys::MUTEPART].asString(),
-                        data_[ProtocolKeys::MUTESTATE].asString() == TRUE_STR);
+                         data_[ProtocolKeys::MUTESTATE].asString() == TRUE_STR);
     }
     if (data_.isMember(ProtocolKeys::HANGUPPART)) {
         kickParticipant_(data_[ProtocolKeys::HANGUPPART].asString());
@@ -108,8 +110,8 @@ ConfProtocolParser::parseV0()
 void
 ConfProtocolParser::parseV1()
 {
-    if (!checkAuthorization_ || !setLayout_ || !raiseHand_ || !hangupParticipant_ || !muteStreamAudio_
-        || !setActiveStream_) {
+    if (!checkAuthorization_ || !setLayout_ || !raiseHand_ || !hangupParticipant_
+        || !muteStreamAudio_ || !setActiveStream_) {
         JAMI_ERR() << "Missing methods for ConfProtocolParser";
         return;
     }
@@ -138,28 +140,34 @@ ConfProtocolParser::parseV1()
                         hangupParticipant_(accountUri, deviceId);
                     }
                     if (deviceValue.isMember(ProtocolKeys::MEDIAS)) {
-                        for (Json::Value::const_iterator itrm = accValue[ProtocolKeys::MEDIAS].begin();
+                        for (Json::Value::const_iterator itrm = accValue[ProtocolKeys::MEDIAS]
+                                                                    .begin();
                              itrm != accValue[ProtocolKeys::MEDIAS].end();
                              itrm++) {
                             auto streamId = itrm.key().asString();
                             auto mediaVal = *itrm;
+                            if (mediaVal.isMember(ProtocolKeys::VOICEACTIVITY)) {
+                                voiceActivity_(streamId,
+                                               mediaVal[ProtocolKeys::VOICEACTIVITY].asBool());
+                            }
                             if (isPeerModerator) {
-                                if (mediaVal.isMember(ProtocolKeys::MUTEVIDEO) && !muteStreamVideo_) {
+                                if (mediaVal.isMember(ProtocolKeys::MUTEVIDEO)
+                                    && !muteStreamVideo_) {
                                     // Note: For now, it's not implemented so not set
                                     muteStreamVideo_(accountUri,
-                                                deviceId,
-                                                streamId,
-                                                mediaVal[ProtocolKeys::MUTEVIDEO].asBool());
+                                                     deviceId,
+                                                     streamId,
+                                                     mediaVal[ProtocolKeys::MUTEVIDEO].asBool());
                                 }
                                 if (mediaVal.isMember(ProtocolKeys::MUTEAUDIO)) {
                                     muteStreamAudio_(accountUri,
-                                            deviceId,
-                                            streamId,
-                                            mediaVal[ProtocolKeys::MUTEAUDIO].asBool());
+                                                     deviceId,
+                                                     streamId,
+                                                     mediaVal[ProtocolKeys::MUTEAUDIO].asBool());
                                 }
                                 if (mediaVal.isMember(ProtocolKeys::ACTIVE)) {
                                     setActiveStream_(streamId,
-                                                    mediaVal[ProtocolKeys::ACTIVE].asBool());
+                                                     mediaVal[ProtocolKeys::ACTIVE].asBool());
                                 }
                             }
                         }
