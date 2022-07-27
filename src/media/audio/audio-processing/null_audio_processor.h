@@ -1,8 +1,6 @@
 /*
  *  Copyright (C) 2021-2022 Savoir-faire Linux Inc.
  *
- *  Author: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -20,20 +18,23 @@
 
 #pragma once
 
-#include "echo_canceller.h"
+#include "audio_processor.h"
 
 namespace jami {
 
-class NullEchoCanceller final : public EchoCanceller
+class NullAudioProcessor final : public AudioProcessor
 {
 public:
-    NullEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~NullEchoCanceller() = default;
+    NullAudioProcessor(AudioFormat format, unsigned frameSize);
+    ~NullAudioProcessor() = default;
 
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
     std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
+
+    void enableEchoCancel(bool) override {};
+
+    void enableNoiseSuppression(bool) override {};
+
+    void enableAutomaticGainControl(bool) override {};
 };
 
 } // namespace jami
