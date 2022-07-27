@@ -117,11 +117,13 @@ static constexpr const char* RECORDPATH_KEY {"recordPath"};
 static constexpr const char* ALWAYS_RECORDING_KEY {"alwaysRecording"};
 static constexpr const char* VOLUMEMIC_KEY {"volumeMic"};
 static constexpr const char* VOLUMESPKR_KEY {"volumeSpkr"};
-static constexpr const char* ECHO_CANCELLER {"echoCanceller"};
+static constexpr const char* AUDIO_PROCESSOR_KEY {"audioProcessor"};
 static constexpr const char* NOISE_REDUCE_KEY {"noiseReduce"};
 static constexpr const char* AGC_KEY {"automaticGainControl"};
 static constexpr const char* CAPTURE_MUTED_KEY {"captureMuted"};
 static constexpr const char* PLAYBACK_MUTED_KEY {"playbackMuted"};
+static constexpr const char* VAD_KEY {"voiceActivityDetection"};
+static constexpr const char* ECHO_CANCEL_KEY {"echoCancel"};
 
 #ifdef ENABLE_VIDEO
 // video preferences
@@ -284,9 +286,11 @@ AudioPreference::AudioPreference()
     , alwaysRecording_(false)
     , volumemic_(1.0)
     , volumespkr_(1.0)
-    , echoCanceller_("system")
+    , audioProcessor_("webrtc")
     , denoise_(false)
     , agcEnabled_(false)
+    , vadEnabled_(true)
+    , echoCancelEnabled_(true)
     , captureMuted_(false)
     , playbackMuted_(false)
 {}
@@ -424,9 +428,7 @@ AudioPreference::serialize(YAML::Emitter& out) const
     // common options
     out << YAML::Key << ALWAYS_RECORDING_KEY << YAML::Value << alwaysRecording_;
     out << YAML::Key << AUDIO_API_KEY << YAML::Value << audioApi_;
-    out << YAML::Key << AGC_KEY << YAML::Value << agcEnabled_;
     out << YAML::Key << CAPTURE_MUTED_KEY << YAML::Value << captureMuted_;
-    out << YAML::Key << NOISE_REDUCE_KEY << YAML::Value << denoise_;
     out << YAML::Key << PLAYBACK_MUTED_KEY << YAML::Value << playbackMuted_;
 
     // pulse submap
@@ -447,7 +449,13 @@ AudioPreference::serialize(YAML::Emitter& out) const
     out << YAML::Key << RECORDPATH_KEY << YAML::Value << recordpath_;
     out << YAML::Key << VOLUMEMIC_KEY << YAML::Value << volumemic_;
     out << YAML::Key << VOLUMESPKR_KEY << YAML::Value << volumespkr_;
-    out << YAML::Key << ECHO_CANCELLER << YAML::Value << echoCanceller_;
+
+    // audio processor options, not in a submap
+    out << YAML::Key << AUDIO_PROCESSOR_KEY << YAML::Value << audioProcessor_;
+    out << YAML::Key << AGC_KEY << YAML::Value << agcEnabled_;
+    out << YAML::Key << VAD_KEY << YAML::Value << vadEnabled_;
+    out << YAML::Key << NOISE_REDUCE_KEY << YAML::Value << denoise_;
+    out << YAML::Key << ECHO_CANCEL_KEY << YAML::Value << echoCancelEnabled_;
     out << YAML::EndMap;
 }
 
@@ -502,7 +510,9 @@ AudioPreference::unserialize(const YAML::Node& in)
     parseValue(node, RECORDPATH_KEY, recordpath_);
     parseValue(node, VOLUMEMIC_KEY, volumemic_);
     parseValue(node, VOLUMESPKR_KEY, volumespkr_);
-    parseValue(node, ECHO_CANCELLER, echoCanceller_);
+    parseValue(node, AUDIO_PROCESSOR_KEY, audioProcessor_);
+    parseValue(node, VAD_KEY, vadEnabled_);
+    parseValue(node, ECHO_CANCEL_KEY, echoCancelEnabled_);
 }
 
 #ifdef ENABLE_VIDEO

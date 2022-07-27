@@ -437,7 +437,7 @@ PulseLayer::startStream(AudioDeviceType type)
     // Create Streams
     if (type == AudioDeviceType::PLAYBACK) {
         if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
-            bool ec = preference_.getEchoCanceller() == "system";
+            bool ec = preference_.getAudioProcessor() == "system";
             createStream(playback_,
                          type,
                          *dev_infos,
