@@ -432,11 +432,12 @@ PulseLayer::startStream(AudioDeviceType type)
 {
     waitForDevices();
     PulseMainLoopLock lock(mainloop_.get());
+    bool ec = preference_.getEchoCanceller() == "system"
+              || preference_.getEchoCanceller() == "auto";
 
     // Create Streams
     if (type == AudioDeviceType::PLAYBACK) {
         if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
-            bool ec = preference_.getEchoCanceller() == "system";
             createStream(playback_,
                          type,
                          *dev_infos,
@@ -451,8 +452,12 @@ PulseLayer::startStream(AudioDeviceType type)
                          false,
                          std::bind(&PulseLayer::ringtoneToSpeaker, this));
     } else if (type == AudioDeviceType::CAPTURE) {
-        if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice()))
-            createStream(record_, type, *dev_infos, true, std::bind(&PulseLayer::readFromMic, this));
+        if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice())) {
+            createStream(record_, type, *dev_infos, ec, std::bind(&PulseLayer::readFromMic, this));
+
+            // whenever the stream is moved, it will call this cb
+            record_->setEchoCancelCb([this](bool echoCancel) { setHasNativeAEC(echoCancel); });
+        }
     }
     pa_threaded_mainloop_signal(mainloop_.get(), 0);
 

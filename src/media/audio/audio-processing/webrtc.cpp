@@ -53,20 +53,6 @@ WebRTCAudioProcessor::WebRTCAudioProcessor(AudioFormat format, unsigned frameSiz
         JAMI_ERR("[webrtc-ap] Error initialising audio processing module");
     }
 
-    // voice activity
-    if (apm->voice_detection()->Enable(true) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] Error enabling voice detection");
-    }
-    // TODO: change likelihood?
-    if (apm->voice_detection()->set_likelihood(webrtc::VoiceDetection::kVeryLowLikelihood)
-        != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] Error setting voice detection likelihood");
-    }
-    // asserted to be 10 in voice_detection_impl.cc
-    if (apm->voice_detection()->set_frame_size_ms(10) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] Error setting voice detection frame size");
-    }
-
     JAMI_INFO("[webrtc-ap] Done initializing");
 }
 
@@ -115,6 +101,24 @@ WebRTCAudioProcessor::enableEchoCancel(bool enabled)
     }
     if (apm->echo_cancellation()->enable_drift_compensation(true) != webrtcNoError) {
         JAMI_ERR("[webrtc-ap] Error enabling echo cancellation drift compensation");
+    }
+}
+
+void
+WebRTCAudioProcessor::enableVoiceActivityDetection(bool enabled)
+{
+    JAMI_DBG("[webrtc-ap] enableVoiceActivityDetection %d", enabled);
+    if (apm->voice_detection()->Enable(enabled) != webrtcNoError) {
+        JAMI_ERR("[webrtc-ap] Error enabling voice activation detection");
+    }
+    // TODO: change likelihood?
+    if (apm->voice_detection()->set_likelihood(webrtc::VoiceDetection::kVeryLowLikelihood)
+        != webrtcNoError) {
+        JAMI_ERR("[webrtc-ap] Error setting voice detection likelihood");
+    }
+    // TODO: change? asserted to be 10 in voice_detection_impl.cc???
+    if (apm->voice_detection()->set_frame_size_ms(10) != webrtcNoError) {
+        JAMI_ERR("[webrtc-ap] Error setting voice detection frame size");
     }
 }
 
@@ -193,7 +197,8 @@ WebRTCAudioProcessor::getProcessed()
                                                 format_.nb_channels);
     iRecordBuffer_.interleave((AudioSample*) processed->pointer()->data[0]);
 
-    processed->has_voice = getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
+    processed->has_voice = apm->echo_cancellation()->is_enabled()
+                           && getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
 
     return processed;
 }
