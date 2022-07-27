@@ -59,11 +59,12 @@ class VideoMixer;
 }
 #endif
 
+// info for a stream
 struct ParticipantInfo
 {
     std::string uri;
     std::string device;
-    std::string sinkId;
+    std::string sinkId; // stream ID
     bool active {false};
     int x {0};
     int y {0};
@@ -74,6 +75,7 @@ struct ParticipantInfo
     bool audioModeratorMuted {false};
     bool isModerator {false};
     bool handRaised {false};
+    bool voiceActivity {false};
 
     void fromJson(const Json::Value& v)
     {
@@ -90,6 +92,7 @@ struct ParticipantInfo
         audioModeratorMuted = v["audioModeratorMuted"].asBool();
         isModerator = v["isModerator"].asBool();
         handRaised = v["handRaised"].asBool();
+        voiceActivity = v["voiceActivity"].asBool();
     }
 
     Json::Value toJson() const
@@ -108,6 +111,7 @@ struct ParticipantInfo
         val["audioModeratorMuted"] = audioModeratorMuted;
         val["isModerator"] = isModerator;
         val["handRaised"] = handRaised;
+        val["voiceActivity"] = voiceActivity;
         return val;
     }
 
@@ -125,7 +129,8 @@ struct ParticipantInfo
                 {"audioLocalMuted", audioLocalMuted ? "true" : "false"},
                 {"audioModeratorMuted", audioModeratorMuted ? "true" : "false"},
                 {"isModerator", isModerator ? "true" : "false"},
-                {"handRaised", handRaised ? "true" : "false"}};
+                {"handRaised", handRaised ? "true" : "false"},
+                {"voiceActivity", voiceActivity ? "true" : "false"}};
     }
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -135,7 +140,8 @@ struct ParticipantInfo
                and p1.h == p2.h and p1.videoMuted == p2.videoMuted
                and p1.audioLocalMuted == p2.audioLocalMuted
                and p1.audioModeratorMuted == p2.audioModeratorMuted
-               and p1.isModerator == p2.isModerator and p1.handRaised == p2.handRaised;
+               and p1.isModerator == p2.isModerator and p1.handRaised == p2.handRaised
+               and p1.voiceActivity == p2.voiceActivity;
     }
 
     friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -347,6 +353,7 @@ public:
     void setModerator(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& accountUri, const std::string& deviceId = "");
     void setHandRaised(const std::string& uri, const bool& state);
+    void setVoiceActivity(const std::string& streamId, const bool& newState);
 
     void muteParticipant(const std::string& uri, const bool& state);
     void muteLocalHost(bool is_muted, const std::string& mediaType);
@@ -367,6 +374,8 @@ public:
                     const std::string& streamId,
                     const bool& state);
     void updateMuted();
+
+    void updateVoiceActivity();
 
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerId);
 
@@ -390,6 +399,7 @@ private:
     static std::shared_ptr<Call> getCall(const std::string& callId);
     bool isModerator(std::string_view uri) const;
     bool isHandRaised(std::string_view uri) const;
+    bool isVoiceActive(std::string_view uri) const;
     void updateModerators();
     void updateHandsRaised();
     void muteHost(bool state);
@@ -419,6 +429,9 @@ private:
     std::set<std::string, std::less<>> moderators_ {};
     std::set<std::string, std::less<>> participantsMuted_ {};
     std::set<std::string, std::less<>> handsRaised_;
+
+    // stream IDs
+    std::set<std::string, std::less<>> streamsVoiceActive {};
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
