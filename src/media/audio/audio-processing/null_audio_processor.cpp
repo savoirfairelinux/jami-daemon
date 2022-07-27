@@ -1,8 +1,6 @@
 /*
  *  Copyright (C) 2021-2022 Savoir-faire Linux Inc.
  *
- *  Author: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -18,34 +16,30 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#pragma once
+#include "null_audio_processor.h"
 
-#include "audio/echo-cancel/echo_canceller.h"
-#include "audio/audio_frame_resizer.h"
-
-extern "C" {
-struct SpeexEchoState_;
-typedef struct SpeexEchoState_ SpeexEchoState;
-}
-
-#include <memory>
+#include <cassert>
 
 namespace jami {
 
-class SpeexEchoCanceller final : public EchoCanceller
+NullAudioProcessor::NullAudioProcessor(AudioFormat format, unsigned frameSize)
+    : AudioProcessor(format, frameSize)
 {
-public:
-    SpeexEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~SpeexEchoCanceller() = default;
+    JAMI_DBG("[null_audio] NullAudioProcessor, frame size = %d (=%d ms), channels = %d",
+             frameSize,
+             frameDurationMs_,
+             format.nb_channels);
+}
 
-    // Inherited via EchoCanceller
-    void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
-    void putPlayback(const std::shared_ptr<AudioFrame>& buf) override;
-    std::shared_ptr<AudioFrame> getProcessed() override;
-    void done() override;
+std::shared_ptr<AudioFrame>
+NullAudioProcessor::getProcessed()
+{
+    if (tidyQueues()) {
+        return {};
+    }
 
-private:
-    struct SpeexEchoStateImpl;
-    std::unique_ptr<SpeexEchoStateImpl> pimpl_;
+    playbackQueue_.dequeue();
+    return recordQueue_.dequeue();
 };
+
 } // namespace jami
