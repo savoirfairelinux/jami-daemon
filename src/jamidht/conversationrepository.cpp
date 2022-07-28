@@ -487,9 +487,7 @@ initial_commit(GitRepository& repo,
         return {};
     }
 
-    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
-    auto signed_buf = account->identity().first->sign(to_sign_vec);
-    std::string signed_str = base64::encode(signed_buf);
+    std::string signed_str = base64::encode(account->identity().first->sign((const uint8_t*)to_sign.ptr, to_sign.size));
 
     // git commit -S
     if (git_commit_create_with_signature(&commit_id,
@@ -1759,11 +1757,10 @@ ConversationRepository::Impl::mode() const
 std::string
 ConversationRepository::Impl::diffStats(const std::string& newId, const std::string& oldId) const
 {
-    auto repo = repository();
-    if (!repo)
-        return {};
-    if (auto d = diff(repo.get(), newId, oldId))
-        return diffStats(d);
+    if (auto repo = repository()) {
+        if (auto d = diff(repo.get(), newId, oldId))
+            return diffStats(d);
+    }
     return {};
 }
 
@@ -2934,12 +2931,12 @@ ConversationRepository::diffStats(const std::string& newId, const std::string& o
 }
 
 std::vector<std::string>
-ConversationRepository::changedFiles(const std::string_view& diffStats)
+ConversationRepository::changedFiles(std::string_view diffStats)
 {
-    std::string line;
+    static const std::regex re(" +\\| +[0-9]+.*");
     std::vector<std::string> changedFiles;
-    for (auto line : split_string(diffStats, '\n')) {
-        std::regex re(" +\\| +[0-9]+.*");
+    std::string_view line;
+    while (jami::getline(diffStats, line)) {
         std::svmatch match;
         if (!std::regex_search(line, match, re) && match.size() == 0)
             continue;
@@ -2955,7 +2952,7 @@ ConversationRepository::join()
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
-    std::string repoPath = git_repository_workdir(repo.get());
+    std::string_view repoPath = git_repository_workdir(repo.get());
     auto account = pimpl_->account_.lock();
     if (!account)
         return {};
