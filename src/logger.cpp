@@ -277,18 +277,14 @@ private:
     std::atomic<bool> enabled_;
 };
 
-class ConsoleLog : public jami::Logger::Handler
+class ConsoleLog : public Logger::Handler
 {
 public:
     static ConsoleLog& instance()
     {
-        // This is an intentional memory leak!!!
-        //
-        // Some thread can still be logging after DRing::fini and even
-        // during the static destructors called by libstdc++.  Thus, we
-        // allocate the logger on the heap and never free it.
+        // Intentional memory leak:
+        // Some thread can still be logging even during static destructors.
         static ConsoleLog* self = new ConsoleLog();
-
         return *self;
     }
 
@@ -407,18 +403,14 @@ Logger::setConsoleLog(bool en)
 #endif
 }
 
-class SysLog : public jami::Logger::Handler
+class SysLog : public Logger::Handler
 {
 public:
     static SysLog& instance()
     {
-        // This is an intentional memory leak!!!
-        //
-        // Some thread can still be logging after DRing::fini and even
-        // during the static destructors called by libstdc++.  Thus, we
-        // allocate the logger on the heap and never free it.
+        // Intentional memory leak:
+        // Some thread can still be logging even during static destructors.
         static SysLog* self = new SysLog();
-
         return *self;
     }
 
@@ -453,18 +445,14 @@ Logger::setSysLog(bool en)
     SysLog::instance().enable(en);
 }
 
-class MonitorLog : public jami::Logger::Handler
+class MonitorLog : public Logger::Handler
 {
 public:
     static MonitorLog& instance()
     {
-        // This is an intentional memory leak!!!
-        //
-        // Some thread can still be logging after DRing::fini and even
-        // during the static destructors called by libstdc++.  Thus, we
-        // allocate the logger on the heap and never free it.
+        // Intentional memory leak
+        // Some thread can still be logging even during static destructors.
         static MonitorLog* self = new MonitorLog();
-
         return *self;
     }
 
@@ -486,18 +474,14 @@ Logger::setMonitorLog(bool en)
     MonitorLog::instance().enable(en);
 }
 
-class FileLog : public jami::Logger::Handler
+class FileLog : public Logger::Handler
 {
 public:
     static FileLog& instance()
     {
-        // This is an intentional memory leak!!!
-        //
-        // Some thread can still be logging after DRing::fini and even
-        // during the static destructors called by libstdc++.  Thus, we
-        // allocate the logger on the heap and never free it.
+        // Intentional memory leak:
+        // Some thread can still be logging even during static destructors.
         static FileLog* self = new FileLog();
-
         return *self;
     }
 
@@ -508,33 +492,28 @@ public:
             thread_.join();
         }
 
-        if (file_.is_open()) {
-            file_.close();
-        }
-
+        std::ofstream file;
         if (not path.empty()) {
-            file_.open(path, std::ofstream::out | std::ofstream::app);
+            file.open(path, std::ofstream::out | std::ofstream::app);
             enable(true);
         } else {
             enable(false);
             return;
         }
 
-        thread_ = std::thread([this] {
+        thread_ = std::thread([this, file = std::move(file)]() mutable {
+            std::vector<Logger::Msg> pendingQ_;
             while (isEnable()) {
                 {
                     std::unique_lock lk(mtx_);
-
                     cv_.wait(lk, [&] { return not isEnable() or not currentQ_.empty(); });
-
-                    if (not isEnable()) {
+                    if (not isEnable())
                         break;
-                    }
 
                     std::swap(currentQ_, pendingQ_);
                 }
 
-                do_consume(pendingQ_);
+                do_consume(file, pendingQ_);
                 pendingQ_.clear();
             }
         });
@@ -543,45 +522,38 @@ public:
     ~FileLog()
     {
         notify([=] { enable(false); });
-
-        if (thread_.joinable()) {
+        if (thread_.joinable())
             thread_.join();
-        }
     }
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    virtual void consume(Logger::Msg& msg) override
     {
-        notify([&, this] { currentQ_.push_back(std::move(msg)); });
+        notify([&, this] { currentQ_.emplace_back(std::move(msg)); });
     }
 
 private:
     template<typename T>
     void notify(T func)
     {
-        std::unique_lock lk(mtx_);
+        std::lock_guard lk(mtx_);
         func();
         cv_.notify_one();
     }
 
-    void do_consume(const std::vector<jami::Logger::Msg>& messages)
+    void do_consume(std::ofstream& file, const std::vector<Logger::Msg>& messages)
     {
         for (const auto& msg : messages) {
-            file_ << msg.header_ << msg.payload_.get();
+            file << msg.header_ << msg.payload_.get();
 
-            if (msg.linefeed_) {
-                file_ << ENDL;
-            }
+            if (msg.linefeed_)
+                file << ENDL;
         }
-
-        file_.flush();
+        file.flush();
     }
 
-    std::vector<jami::Logger::Msg> currentQ_;
-    std::vector<jami::Logger::Msg> pendingQ_;
+    std::vector<Logger::Msg> currentQ_;
     std::mutex mtx_;
     std::condition_variable cv_;
-
-    std::ofstream file_;
     std::thread thread_;
 };
 
