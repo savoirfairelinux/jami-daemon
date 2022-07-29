@@ -137,7 +137,7 @@ public:
                                         const std::string& authorUri = "") const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
-    GitObject memberCertificate(const std::string& memberUri, const GitTree& tree) const;
+    GitObject memberCertificate(std::string_view memberUri, const GitTree& tree) const;
     // NOTE! GitDiff needs to be deteleted before repo
     GitTree treeAtCommit(git_repository* repo, const std::string& commitId) const;
     std::string getCommitType(const std::string& commitMsg) const;
@@ -898,68 +898,66 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     }
 
     // Check votedFile path
-    const std::regex regex_votes("votes.(\\w+).(members|devices|admins|invited).(\\w+).(\\w+)");
-    std::smatch base_match;
+    static const std::regex regex_votes("votes.(\\w+).(members|devices|admins|invited).(\\w+).(\\w+)");
+    std::svmatch base_match;
     if (!std::regex_match(votedFile, base_match, regex_votes) or base_match.size() != 5) {
         JAMI_WARN("Invalid votes path: %s", votedFile.c_str());
         return false;
     }
 
-    std::string matchedUri = base_match[4];
+    std::string_view matchedUri = svsub_match_view(base_match[4]);
     if (matchedUri != userUri) {
-        JAMI_ERR("Admin voted for other user: %s vs %s", userUri.c_str(), matchedUri.c_str());
+        JAMI_ERROR("Admin voted for other user: {:s} vs {:s}", userUri, matchedUri);
         return false;
     }
-    std::string votedUri = base_match[3];
-    std::string type = base_match[2];
-    std::string voteType = base_match[1];
+    std::string_view votedUri = svsub_match_view(base_match[3]);
+    std::string_view type = svsub_match_view(base_match[2]);
+    std::string_view voteType = svsub_match_view(base_match[1]);
     if (voteType != "ban" && voteType != "unban") {
-        JAMI_ERR("Unrecognized vote %s", voteType.c_str());
+        JAMI_ERROR("Unrecognized vote {:s}", voteType);
         return false;
     }
 
     // Check that vote file is empty and wasn't modified
     if (fileAtTree(votedFile, treeOld)) {
-        JAMI_ERR("Invalid voted file modified: %s", votedFile.c_str());
+        JAMI_ERROR("Invalid voted file modified: {:s}", votedFile);
         return false;
     }
     auto vote = fileAtTree(votedFile, treeNew);
     if (!vote) {
-        JAMI_ERR("No vote file found for: %s", userUri.c_str());
+        JAMI_ERROR("No vote file found for: {:s}", userUri);
         return false;
     }
-    auto* blob = reinterpret_cast<git_blob*>(vote.get());
-    auto voteContent = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
-                                        git_blob_rawsize(blob));
+    auto voteContent = as_view(vote);
     if (!voteContent.empty()) {
-        JAMI_ERR("Vote file not empty: %s", votedFile.c_str());
+        JAMI_ERROR("Vote file not empty: {:s}", votedFile);
         return false;
     }
 
     // Check that peer voted is only other device or other member
     if (type != "devices") {
         if (votedUri == userUri) {
-            JAMI_ERR("Detected vote for self: %s", votedUri.c_str());
+            JAMI_ERROR("Detected vote for self: {:s}", votedUri);
             return false;
         }
         if (voteType == "ban") {
             // file in members or admin or invited
             auto invitedFile = fmt::format("invited/{}", votedUri);
             if (!memberCertificate(votedUri, treeOld) && !fileAtTree(invitedFile, treeOld)) {
-                JAMI_ERR("No member file found for vote: %s", votedUri.c_str());
+                JAMI_ERROR("No member file found for vote: {:s}", votedUri);
                 return false;
             }
         }
     } else {
         // Check not current device
         if (votedUri == userDevice) {
-            JAMI_ERR("Detected vote for self: %s", votedUri.c_str());
+            JAMI_ERROR("Detected vote for self: {:s}", votedUri);
             return false;
         }
         // File in devices
         deviceFile = fmt::format("devices/{}.crt", votedUri);
         if (!fileAtTree(deviceFile, treeOld)) {
-            JAMI_ERR("No device file found for vote: %s", votedUri.c_str());
+            JAMI_ERROR("No device file found for vote: {:s}", votedUri);
             return false;
         }
     }
@@ -1988,7 +1986,7 @@ ConversationRepository::Impl::fileAtTree(const std::string& path, const GitTree&
 }
 
 GitObject
-ConversationRepository::Impl::memberCertificate(const std::string& memberUri,
+ConversationRepository::Impl::memberCertificate(std::string_view memberUri,
                                                 const GitTree& tree) const
 {
     auto blob = fileAtTree(fmt::format("members/{}.crt", memberUri), tree);
