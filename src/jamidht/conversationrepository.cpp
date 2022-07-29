@@ -2647,13 +2647,13 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     auto repo = pimpl_->repository();
     if (!repo)
         return false;
-    std::string channelName = "git://" + remoteDeviceId + '/' + pimpl_->id_;
     auto res = git_remote_lookup(&remote_ptr, repo.get(), remoteDeviceId.c_str());
     if (res != 0) {
         if (res != GIT_ENOTFOUND) {
             JAMI_ERR("Couldn't lookup for remote %s", remoteDeviceId.c_str());
             return false;
         }
+        std::string channelName = fmt::format("git://{}/{}", remoteDeviceId, pimpl_->id_);
         if (git_remote_create(&remote_ptr, repo.get(), remoteDeviceId.c_str(), channelName.c_str())
             < 0) {
             JAMI_ERR("Could not create remote for repository for conversation %s",
