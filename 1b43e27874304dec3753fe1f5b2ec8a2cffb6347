@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d93c1f9d_2774f636",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 1790,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-29T16:02:19Z",
+      "side": 1,
+      "message": "searchConversation ?",
+      "revId": "1b43e27874304dec3753fe1f5b2ec8a2cffb6347",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca10d56d_5527326d",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 1800,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-29T16:02:19Z",
+      "side": 1,
+      "message": "https://en.wikipedia.org/wiki/Year_2038_problem\n\ntimestamps must be 64bits",
+      "revId": "1b43e27874304dec3753fe1f5b2ec8a2cffb6347",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ac71209_8e30381c",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 1803,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-29T16:02:19Z",
+      "side": 1,
+      "message": "searchId ?",
+      "revId": "1b43e27874304dec3753fe1f5b2ec8a2cffb6347",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c73729b9_82ceece7",
+        "filename": "src/client/conversation_interface.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-29T16:02:19Z",
+      "side": 1,
+      "message": "timestamps must be 64bits",
+      "revId": "1b43e27874304dec3753fe1f5b2ec8a2cffb6347",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "54c29bc9_f8b9e184",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2050,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-29T16:02:19Z",
+      "side": 1,
+      "message": "git_time_t is already 64 bits\nhttps://github.com/libgit2/libgit2/blob/v0.17.0/include/git2/types.h#L39",
+      "revId": "1b43e27874304dec3753fe1f5b2ec8a2cffb6347",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "849e9bd0_67a5820d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2335,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-07-29T16:02:19Z",
+      "side": 1,
+      "message": "maybe:\n\n    if (type.empty())\n        return std::nullopt;\n    else if (type \u003d\u003d \"application/data-transfer+json\") {\n        ...\n    }",
+      "revId": "1b43e27874304dec3753fe1f5b2ec8a2cffb6347",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
