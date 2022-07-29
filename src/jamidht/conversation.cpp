@@ -967,14 +967,10 @@ Conversation::Impl::pull()
 
             // Check if already using this remote, if so, no need to pull yet
             // One pull at a time to avoid any early EOF or fetch errors.
-            if (fetchingRemotes_.find(deviceId) != fetchingRemotes_.end()) {
-                pullcbs_.emplace_back(std::move(deviceId), std::move(commitId), std::move(cb));
-                // Go to next pull
-                continue;
-            }
             auto itr = fetchingRemotes_.emplace(deviceId);
             if (!itr.second) {
-                cb(false);
+                // Go to next pull
+                pullcbs_.emplace_back(std::move(deviceId), std::move(commitId), std::move(cb));
                 continue;
             }
             it = itr.first;
@@ -1037,7 +1033,7 @@ Conversation::sync(const std::string& member,
             return;
         }
         // We need a new channel
-        account->transferFile(id(), std::string(account->profilePath()), deviceId, "profile.vcf", "");
+        account->transferFile(id(), account->profilePath(), deviceId, "profile.vcf", "");
     }
 }
 
@@ -1045,17 +1041,18 @@ std::map<std::string, std::string>
 Conversation::generateInvitation() const
 {
     // Invite the new member to the conversation
-    std::map<std::string, std::string> invite;
     Json::Value root;
+    auto& metadata = root[ConversationMapKeys::METADATAS];
     for (const auto& [k, v] : infos()) {
-        root[ConversationMapKeys::METADATAS][k] = v;
+        metadata[k] = v;
     }
     root[ConversationMapKeys::CONVERSATIONID] = id();
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
-    invite["application/invite+json"] = Json::writeString(wbuilder, root);
-    return invite;
+    return {
+        {"application/invite+json", Json::writeString(wbuilder, root)}
+    };
 }
 
 std::string
