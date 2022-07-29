@@ -219,13 +219,6 @@ public:
     bool fetchFrom(const std::string& uri);
 
     /**
-     * Analyze if merge is possible and merge history
-     * @param uri       the peer
-     * @return new commits
-     */
-    std::vector<std::map<std::string, std::string>> mergeHistory(const std::string& uri);
-
-    /**
      * Fetch and merge from peer
      * @param deviceId  Peer device
      * @param cb        On pulled callback
