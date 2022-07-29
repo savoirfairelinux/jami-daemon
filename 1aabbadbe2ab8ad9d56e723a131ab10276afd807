@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "92acaec7_6de41e9c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 694,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-07-29T18:30:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "09e56f8a_5c06c1db",
+      "range": {
+        "startLine": 694,
+        "startChar": 27,
+        "endLine": 694,
+        "endChar": 38
+      },
+      "revId": "1aabbadbe2ab8ad9d56e723a131ab10276afd807",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5db559f0_f7d5a112",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-07-27T20:37:11Z",
       "side": 1,
       "message": "also handle empty streamId ?",
+      "range": {
+        "startLine": 698,
+        "startChar": 8,
+        "endLine": 698,
+        "endChar": 24
+      },
+      "revId": "1aabbadbe2ab8ad9d56e723a131ab10276afd807",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "091bbc7b_776c4291",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 698,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-07-29T18:30:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5db559f0_f7d5a112",
       "range": {
         "startLine": 698,
         "startChar": 8,
