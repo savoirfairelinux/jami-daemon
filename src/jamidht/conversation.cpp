@@ -211,8 +211,8 @@ public:
                 // Announce member events
                 if (c.at("type") == "member") {
                     if (c.find("uri") != c.end() && c.find("action") != c.end()) {
-                        auto uri = c.at("uri");
-                        auto actionStr = c.at("action");
+                        const auto& uri = c.at("uri");
+                        const auto& actionStr = c.at("action");
                         auto action = -1;
                         if (actionStr == "add")
                             action = 0;
@@ -354,6 +354,8 @@ public:
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
+    void pull();
+    std::vector<std::map<std::string, std::string>> mergeHistory(const std::string& uri);
 
     std::mutex pullcbsMtx_ {};
     std::set<std::string> fetchingRemotes_ {}; // store current remote in fetch
@@ -879,47 +881,47 @@ Conversation::fetchFrom(const std::string& uri)
 }
 
 std::vector<std::map<std::string, std::string>>
-Conversation::mergeHistory(const std::string& uri)
+Conversation::Impl::mergeHistory(const std::string& uri)
 {
-    if (not pimpl_ or not pimpl_->repository_) {
+    if (not repository_) {
         JAMI_WARN("Invalid repo. Abort merge");
         return {};
     }
-    auto remoteHead = pimpl_->repository_->remoteHead(uri);
+    auto remoteHead = repository_->remoteHead(uri);
     if (remoteHead.empty()) {
         JAMI_WARN("Could not get HEAD of %s", uri.c_str());
         return {};
     }
 
     // Validate commit
-    auto [newCommits, err] = pimpl_->repository_->validFetch(uri);
+    auto [newCommits, err] = repository_->validFetch(uri);
     if (newCommits.empty()) {
         if (err)
             JAMI_ERR("Could not validate history with %s", uri.c_str());
-        pimpl_->repository_->removeBranchWith(uri);
+        repository_->removeBranchWith(uri);
         return {};
     }
 
     // If validated, merge
-    auto [ok, cid] = pimpl_->repository_->merge(remoteHead);
+    auto [ok, cid] = repository_->merge(remoteHead);
     if (!ok) {
         JAMI_ERR("Could not merge history with %s", uri.c_str());
-        pimpl_->repository_->removeBranchWith(uri);
+        repository_->removeBranchWith(uri);
         return {};
     }
     if (!cid.empty()) {
         // A merge commit was generated, should be added in new commits
-        auto commit = pimpl_->repository_->getCommit(cid);
+        auto commit = repository_->getCommit(cid);
         if (commit != std::nullopt)
             newCommits.emplace_back(*commit);
     }
 
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
-    auto result = pimpl_->convCommitToMap(newCommits);
+    auto result = convCommitToMap(newCommits);
     for (const auto& commit : result) {
         auto it = commit.find("type");
         if (it != commit.end() && it->second == "member") {
-            pimpl_->repository_->refreshMembers();
+            repository_->refreshMembers();
         }
     }
     return result;
@@ -930,94 +932,91 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
 {
     std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
     auto isInProgress = not pimpl_->pullcbs_.empty();
-    pimpl_->pullcbs_.emplace_back(
-        std::make_tuple<std::string, std::string, OnPullCb>(std::string(deviceId),
-                                                            std::move(commitId),
-                                                            std::move(cb)));
+    pimpl_->pullcbs_.emplace_back(deviceId, std::move(commitId), std::move(cb));
     if (isInProgress)
         return;
     dht::ThreadPool::io().run([w = weak()] {
-        auto sthis_ = w.lock();
-        if (!sthis_)
-            return;
-        auto& repo = sthis_->pimpl_->repository_;
+        if (auto sthis_ = w.lock())
+            sthis_->pimpl_->pull();
+    });
+}
 
-        std::string deviceId, commitId;
-        OnPullCb cb;
-        while (true) {
-            decltype(sthis_->pimpl_->pullcbs_)::value_type pullcb;
-            decltype(sthis_->pimpl_->fetchingRemotes_.begin()) it;
-            {
-                std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
-                if (sthis_->pimpl_->pullcbs_.empty()) {
-                    if (auto account = sthis_->pimpl_->account_.lock())
-                        emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(
-                            account->getAccountID().c_str());
-                    return;
-                }
-                auto elem = sthis_->pimpl_->pullcbs_.front();
-                deviceId = std::get<0>(elem);
-                commitId = std::get<1>(elem);
-                cb = std::move(std::get<2>(elem));
-                sthis_->pimpl_->pullcbs_.pop_front();
+void
+Conversation::Impl::pull()
+{
+    auto& repo = repository_;
 
-                // Check if already using this remote, if so, no need to pull yet
-                // One pull at a time to avoid any early EOF or fetch errors.
-                if (sthis_->pimpl_->fetchingRemotes_.find(deviceId)
-                    != sthis_->pimpl_->fetchingRemotes_.end()) {
-                    sthis_->pimpl_->pullcbs_.emplace_back(
-                        std::make_tuple<std::string, std::string, OnPullCb>(std::string(deviceId),
-                                                                            std::move(commitId),
-                                                                            std::move(cb)));
-                    // Go to next pull
-                    continue;
-                }
-                auto itr = sthis_->pimpl_->fetchingRemotes_.emplace(deviceId);
-                if (!itr.second) {
-                    cb(false);
-                    continue;
-                }
-                it = itr.first;
+    std::string deviceId, commitId;
+    OnPullCb cb;
+    while (true) {
+        decltype(pullcbs_)::value_type pullcb;
+        decltype(fetchingRemotes_.begin()) it;
+        {
+            std::lock_guard<std::mutex> lk(pullcbsMtx_);
+            if (pullcbs_.empty()) {
+                if (auto account = account_.lock())
+                    emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(
+                        account->getAccountID().c_str());
+                return;
             }
-            // If recently fetched, the commit can already be there, so no need to do complex operations
-            if (commitId != "" && repo->getCommit(commitId, false) != std::nullopt) {
-                cb(true);
-                std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
-                sthis_->pimpl_->fetchingRemotes_.erase(it);
+            auto& elem = pullcbs_.front();
+            deviceId = std::move(std::get<0>(elem));
+            commitId = std::move(std::get<1>(elem));
+            cb = std::move(std::get<2>(elem));
+            pullcbs_.pop_front();
+
+            // Check if already using this remote, if so, no need to pull yet
+            // One pull at a time to avoid any early EOF or fetch errors.
+            if (fetchingRemotes_.find(deviceId) != fetchingRemotes_.end()) {
+                pullcbs_.emplace_back(std::move(deviceId), std::move(commitId), std::move(cb));
+                // Go to next pull
                 continue;
             }
-            // Pull from remote
-            auto fetched = sthis_->fetchFrom(deviceId);
-            {
-                std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
-                sthis_->pimpl_->fetchingRemotes_.erase(it);
-            }
-
-            if (!fetched) {
+            auto itr = fetchingRemotes_.emplace(deviceId);
+            if (!itr.second) {
                 cb(false);
                 continue;
             }
-            auto oldId = repo->getHead();
-            std::unique_lock<std::mutex> lk(sthis_->pimpl_->writeMtx_);
-            auto newCommits = sthis_->mergeHistory(deviceId);
-            sthis_->pimpl_->announce(newCommits);
-            lk.unlock();
-            if (cb)
-                cb(true);
-            // Announce if profile changed
-            auto newId = repo->getHead();
-            if (oldId != newId) {
-                auto diffStats = repo->diffStats(newId, oldId);
-                auto changedFiles = repo->changedFiles(diffStats);
-                if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf")
-                    != changedFiles.end()) {
-                    if (auto account = sthis_->pimpl_->account_.lock())
-                        emitSignal<DRing::ConversationSignal::ConversationProfileUpdated>(
-                            account->getAccountID(), repo->id(), repo->infos());
-                }
+            it = itr.first;
+        }
+        // If recently fetched, the commit can already be there, so no need to do complex operations
+        if (commitId != "" && repo->getCommit(commitId, false) != std::nullopt) {
+            cb(true);
+            std::lock_guard<std::mutex> lk(pullcbsMtx_);
+            fetchingRemotes_.erase(it);
+            continue;
+        }
+        // Pull from remote
+        auto fetched = repo->fetch(deviceId);
+        {
+            std::lock_guard<std::mutex> lk(pullcbsMtx_);
+            fetchingRemotes_.erase(it);
+        }
+
+        if (!fetched) {
+            cb(false);
+            continue;
+        }
+        auto oldId = repo->getHead();
+        std::unique_lock<std::mutex> lk(writeMtx_);
+        auto newCommits = mergeHistory(deviceId);
+        announce(newCommits);
+        lk.unlock();
+        if (cb)
+            cb(true);
+        // Announce if profile changed
+        auto newId = repo->getHead();
+        if (oldId != newId) {
+            auto diffStats = repo->diffStats(newId, oldId);
+            auto changedFiles = repo->changedFiles(diffStats);
+            if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf")
+                != changedFiles.end()) {
+                if (auto account = account_.lock())
+                    emitSignal<DRing::ConversationSignal::ConversationProfileUpdated>(
+                        account->getAccountID(), repo->id(), repo->infos());
             }
         }
-    });
+    }
 }
 
 void
