@@ -22,6 +22,30 @@
       },
       "revId": "c52a3e71b2099729fea9fcfb83f1f8ccca371a3f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8c36f60d_6373db5f",
+        "filename": "src/media/audio/pulseaudio/pulselayer.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-07-29T18:24:34Z",
+      "side": 1,
+      "message": "Done. Better PulseAudio echo cancel detection is done implemented in https://review.jami.net/c/jami-daemon/+/21976",
+      "parentUuid": "8b85ca77_51f9cf5a",
+      "range": {
+        "startLine": 103,
+        "startChar": 4,
+        "endLine": 103,
+        "endChar": 27
+      },
+      "revId": "c52a3e71b2099729fea9fcfb83f1f8ccca371a3f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
