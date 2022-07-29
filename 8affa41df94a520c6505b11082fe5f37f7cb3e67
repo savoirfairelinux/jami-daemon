@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4090d3b_26bf08cd",
+        "filename": "src/media/audio/audio-processing/webrtc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-07-29T16:06:00Z",
+      "side": 1,
+      "message": "maybe move this logic up into AudioProcessor.h (or something)? so that it is implementation-agnostic, i.e. it could also be used with speex without having copy-paste code duplication",
+      "range": {
+        "startLine": 221,
+        "startChar": 8,
+        "endLine": 242,
+        "endChar": 41
+      },
+      "revId": "8affa41df94a520c6505b11082fe5f37f7cb3e67",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c07898cd_98ebfe1c",
+        "filename": "src/preferences.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-07-29T16:06:00Z",
+      "side": 1,
+      "message": "maybe move these into their own submap + class? would break existing config files if they had anything set for echoCanceller, but I don\u0027t think it was actually used?",
+      "range": {
+        "startLine": 453,
+        "startChar": 4,
+        "endLine": 458,
+        "endChar": 77
+      },
+      "revId": "8affa41df94a520c6505b11082fe5f37f7cb3e67",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
