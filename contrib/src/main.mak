@@ -134,7 +134,7 @@ endif
 endif
 
 ifdef HAVE_MACOSX
-MIN_OSX_VERSION=10.13
+MIN_OSX_VERSION=10.15
 CC=xcrun cc
 CXX=xcrun c++
 AR=xcrun ar
