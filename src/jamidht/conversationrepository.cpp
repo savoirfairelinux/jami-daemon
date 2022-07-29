@@ -3536,16 +3536,16 @@ ConversationRepository::infos() const
 }
 
 std::map<std::string, std::string>
-ConversationRepository::infosFromVCard(const std::map<std::string, std::string>& details)
+ConversationRepository::infosFromVCard(std::map<std::string, std::string>&& details)
 {
     std::map<std::string, std::string> result;
-    for (const auto& [k, v] : details) {
+    for (auto&& [k, v] : details) {
         if (k == vCard::Property::FORMATTED_NAME) {
-            result["title"] = v;
+            result["title"] = std::move(v);
         } else if (k == vCard::Property::DESCRIPTION) {
-            result["description"] = v;
+            result["description"] = std::move(v);
         } else if (k.find(vCard::Property::PHOTO) == 0) {
-            result["avatar"] = v;
+            result["avatar"] = std::move(v);
         }
     }
     return result;
