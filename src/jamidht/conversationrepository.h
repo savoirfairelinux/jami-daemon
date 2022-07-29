@@ -350,7 +350,7 @@ public:
      */
     std::map<std::string, std::string> infos() const;
     static std::map<std::string, std::string> infosFromVCard(
-        const std::map<std::string, std::string>& details);
+        std::map<std::string, std::string>&& details);
 
     /**
      * Retrieve account's URI from deviceId
