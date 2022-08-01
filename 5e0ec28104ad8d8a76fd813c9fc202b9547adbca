@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "40a6aa8d_12b32163",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-08-01T21:30:24Z",
+      "side": 1,
+      "message": "a couple changes, otherwise LGTM",
+      "revId": "5e0ec28104ad8d8a76fd813c9fc202b9547adbca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e28c4bc7_005ada8c",
+        "filename": "src/logger.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-08-01T21:30:24Z",
+      "side": 1,
+      "message": "use FMT_COMPILE, as discussed, for compile-time formatting checks, and conversion to more efficient formatting code",
+      "range": {
+        "startLine": 159,
+        "startChar": 27,
+        "endLine": 159,
+        "endChar": 71
+      },
+      "revId": "5e0ec28104ad8d8a76fd813c9fc202b9547adbca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05ba62bf_bdcbf33f",
+        "filename": "src/logger.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-08-01T21:30:24Z",
+      "side": 1,
+      "message": "remove type specifier here to cover the Windows std::thread::id being non-integer",
+      "range": {
+        "startLine": 159,
+        "startChar": 50,
+        "endLine": 159,
+        "endChar": 51
+      },
+      "revId": "5e0ec28104ad8d8a76fd813c9fc202b9547adbca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
