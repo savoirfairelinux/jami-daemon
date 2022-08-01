@@ -1,0 +1,159 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "effe98cb_3e17b3b6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 23
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:12:32Z",
+      "side": 1,
+      "message": "Some nitpicks",
+      "revId": "332a6b25b5c686669d8d8fc1d11c15ac182863de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6feb3da5_1426b7b7",
+        "filename": "src/media/audio/audio-processing/null_audio_processor.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:12:32Z",
+      "side": 1,
+      "message": "I see this a lot.",
+      "range": {
+        "startLine": 35,
+        "startChar": 24,
+        "endLine": 39,
+        "endChar": 32
+      },
+      "revId": "332a6b25b5c686669d8d8fc1d11c15ac182863de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6424369_3e8f56b5",
+        "filename": "src/media/audio/audio-processing/null_audio_processor.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:12:32Z",
+      "side": 1,
+      "message": "recomment this I guess",
+      "range": {
+        "startLine": 44,
+        "startChar": 31,
+        "endLine": 47,
+        "endChar": 30
+      },
+      "revId": "332a6b25b5c686669d8d8fc1d11c15ac182863de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b6f3440_694e79e9",
+        "filename": "src/media/audio/audio-processing/null_audio_processor.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:12:32Z",
+      "side": 1,
+      "message": "remove commented methods",
+      "range": {
+        "startLine": 33,
+        "startChar": 32,
+        "endLine": 34,
+        "endChar": 30
+      },
+      "revId": "332a6b25b5c686669d8d8fc1d11c15ac182863de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07cc5b5f_a246bd1d",
+        "filename": "src/media/audio/audio-processing/webrtc.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:12:32Z",
+      "side": 1,
+      "message": "check copyrights",
+      "range": {
+        "startLine": 2,
+        "startChar": 52,
+        "endLine": 4,
+        "endChar": 67
+      },
+      "revId": "332a6b25b5c686669d8d8fc1d11c15ac182863de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abbc2f8f_48f7f692",
+        "filename": "src/media/audio/audio-processing/webrtc.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:12:32Z",
+      "side": 1,
+      "message": "Do you want to check this later? Else, to avoid to be lost, a ticket would be better :)",
+      "range": {
+        "startLine": 64,
+        "startChar": 20,
+        "endLine": 64,
+        "endChar": 30
+      },
+      "revId": "332a6b25b5c686669d8d8fc1d11c15ac182863de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94c71c6b_54aeb4c3",
+        "filename": "src/media/audio/audiolayer.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:12:32Z",
+      "side": 1,
+      "message": "I guess we can, should be tested for sure",
+      "range": {
+        "startLine": 178,
+        "startChar": 20,
+        "endLine": 178,
+        "endChar": 46
+      },
+      "revId": "332a6b25b5c686669d8d8fc1d11c15ac182863de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
