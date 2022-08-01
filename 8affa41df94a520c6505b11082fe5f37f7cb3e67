@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e7e4356d_c8b82d99",
+        "filename": "src/media/audio/audio-processing/webrtc.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-08-01T21:27:41Z",
+      "side": 1,
+      "message": "Done (in previous commit, which I now rebased this change on top of)",
+      "parentUuid": "65acab2b_d307ed2d",
+      "range": {
+        "startLine": 221,
+        "startChar": 8,
+        "endLine": 242,
+        "endChar": 41
+      },
+      "revId": "8affa41df94a520c6505b11082fe5f37f7cb3e67",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c07898cd_98ebfe1c",
@@ -85,6 +109,30 @@
       "side": 1,
       "message": "The echoCancel is not used,\nthe plan was to accept: auto/software/native to be able to switch between the different modes.",
       "parentUuid": "c07898cd_98ebfe1c",
+      "range": {
+        "startLine": 453,
+        "startChar": 4,
+        "endLine": 458,
+        "endChar": 77
+      },
+      "revId": "8affa41df94a520c6505b11082fe5f37f7cb3e67",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "525a0f20_c2415b11",
+        "filename": "src/preferences.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 951
+      },
+      "writtenOn": "2022-08-01T21:27:41Z",
+      "side": 1,
+      "message": "see comment on https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/692",
+      "parentUuid": "ea26035d_40f28815",
       "range": {
         "startLine": 453,
         "startChar": 4,
