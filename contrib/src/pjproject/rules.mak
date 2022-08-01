@@ -1,6 +1,6 @@
 # PJPROJECT
-PJPROJECT_VERSION := 4af5d666d18837abaac94c8ec6bfc84984dcf1e2
-PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
+PJPROJECT_VERSION := 2b66f1f348740380ee51685f16f83000688d34b7
+PJPROJECT_URL := https://github.com/AmarOk1412/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
 PJPROJECT_OPTIONS := --disable-sound        \
                      --enable-video         \
