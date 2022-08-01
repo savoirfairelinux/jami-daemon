@@ -76,6 +76,7 @@ vs_where_path = os.path.join(
 host_is_64bit = (False, True)[platform.machine().endswith('64')]
 python_is_64bit = (False, True)[8 * struct.calcsize("P") == 64]
 
+
 def getMd5ForDirectory(path):
     hasher = hashlib.md5()
     for root, _, files in os.walk(path, topdown=True):
@@ -85,6 +86,7 @@ def getMd5ForDirectory(path):
                 buf = aFile.read()
                 hasher.update(buf)
     return hasher.hexdigest()
+
 
 def shellquote(s, windows=False):
     if not windows:
@@ -493,20 +495,20 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
     # pre_build custom step (CMake...)
     pre_build_scripts = custom_scripts.get("pre_build", [])
     if pre_build_scripts:
-        log.debug('Pre_build phase')
-    for script in pre_build_scripts:
-        result = getSHrunner().exec_batch(script)
-        success &= not result[0]
-        build_operations += 1
+        log.debug('Pre-build phase')
+        for script in pre_build_scripts:
+            result = getSHrunner().exec_batch(script)
+            success &= not result[0]
+            build_operations += 1
 
     # build custom step (nmake...)
     build_scripts = custom_scripts.get("build", [])
     if build_scripts:
         log.debug('Custom Build phase')
-    for script in build_scripts:
-        result = getSHrunner().exec_batch(script)
-        success &= not result[0]
-        build_operations += 1
+        for script in build_scripts:
+            result = getSHrunner().exec_batch(script)
+            success &= not result[0]
+            build_operations += 1
 
     # vcxproj files
     if project_paths:
@@ -528,10 +530,21 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
                 log.error("Error building with CMake")
                 exit(1)
 
+    post_build_scripts = custom_scripts.get("post_build", [])
+    if post_build_scripts:
+        log.debug('Post-Build phase')
+        for script in post_build_scripts:
+            result = getSHrunner().exec_batch(script)
+            print("POST", result[0])
+            success &= not result[0]
+            build_operations += 1
+
     os.chdir(tmp_dir)
 
     # should cover header only, no cmake, etc
-    ops = len(build_scripts) + len(project_paths) + len(pre_build_scripts)
+    ops = len(build_scripts) + len(project_paths) + \
+        len(pre_build_scripts) + len(post_build_scripts)
+    print(ops, build_operations, success)
     return success and build_operations == ops
 
 
