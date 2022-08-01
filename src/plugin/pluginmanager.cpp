@@ -88,6 +88,7 @@ PluginManager::unload(const std::string& path)
         std::lock_guard<std::mutex> lk(mtx_);
         exitFunc_[path]();
         dynPluginMap_.erase(it);
+        exitFunc_.erase(path);
     }
 
     return true;
