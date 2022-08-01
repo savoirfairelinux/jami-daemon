@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ed5d7b4_7eed0875",
+        "filename": "src/conference.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1350,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:17:58Z",
+      "side": 1,
+      "message": "can be removed",
+      "range": {
+        "startLine": 1346,
+        "startChar": 36,
+        "endLine": 1350,
+        "endChar": 35
+      },
+      "revId": "24375b77f9071902453412af15e90248e709776f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d1ebc41e_c8fb519a",
+        "filename": "src/conference.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:17:58Z",
+      "side": 1,
+      "message": "can you update the Conference protocol page on top of https://review.jami.net/c/jami-docs/+/22009 (not related to the review)",
+      "range": {
+        "startLine": 95,
+        "startChar": 26,
+        "endLine": 95,
+        "endChar": 36
+      },
+      "revId": "24375b77f9071902453412af15e90248e709776f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da888ac0_31a1d225",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 3514,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-01T14:17:58Z",
+      "side": 1,
+      "message": "I guess we can let this as it is. One thing in the TODO list is to homogeneize features between 1:1 and conference calls, so I guess a confInfo will be sent at one point",
+      "range": {
+        "startLine": 3512,
+        "startChar": 10,
+        "endLine": 3514,
+        "endChar": 5
+      },
+      "revId": "24375b77f9071902453412af15e90248e709776f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
