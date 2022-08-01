@@ -149,7 +149,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/restinio/dev;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/include"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/msgpack-c/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libarchive/libarchive;"
@@ -257,7 +257,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/msvc/Release/libyaml-cppmd.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/msvc/Release/natpmp.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/build/Release/natpmp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/archive_static.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc15-Release.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc15-Release.lib
