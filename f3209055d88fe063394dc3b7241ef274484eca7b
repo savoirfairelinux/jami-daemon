@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8a14c97_d4139802",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 4
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-08-02T17:32:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "efbfec97_95334787",
+      "range": {
+        "startLine": 246,
+        "startChar": 8,
+        "endLine": 249,
+        "endChar": 18
+      },
+      "revId": "f3209055d88fe063394dc3b7241ef274484eca7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "46d09e5f_166f77d0",
@@ -54,6 +78,30 @@
       "writtenOn": "2022-08-02T17:10:31Z",
       "side": 1,
       "message": "formatting",
+      "range": {
+        "startLine": 21,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 3
+      },
+      "revId": "f3209055d88fe063394dc3b7241ef274484eca7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b6ae0807_9843341d",
+        "filename": "contrib/src/ffmpeg/windows-configure-make.sh",
+        "patchSetId": 4
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-08-02T17:32:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "46d09e5f_166f77d0",
       "range": {
         "startLine": 21,
         "startChar": 0,
