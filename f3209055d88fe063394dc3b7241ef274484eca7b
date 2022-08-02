@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "59fd3848_2bbad292",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-08-02T17:10:31Z",
+      "side": 1,
+      "message": "LGTM otherwise",
+      "revId": "f3209055d88fe063394dc3b7241ef274484eca7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "efbfec97_95334787",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 4
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-08-02T17:10:31Z",
+      "side": 1,
+      "message": "the missing symbols should all be in Secur32.lib",
+      "range": {
+        "startLine": 246,
+        "startChar": 8,
+        "endLine": 249,
+        "endChar": 18
+      },
+      "revId": "f3209055d88fe063394dc3b7241ef274484eca7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46d09e5f_166f77d0",
+        "filename": "contrib/src/ffmpeg/windows-configure-make.sh",
+        "patchSetId": 4
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-08-02T17:10:31Z",
+      "side": 1,
+      "message": "formatting",
+      "range": {
+        "startLine": 21,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 3
+      },
+      "revId": "f3209055d88fe063394dc3b7241ef274484eca7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
