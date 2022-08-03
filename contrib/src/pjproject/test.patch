@@ -1,0 +1,49 @@
+ pjnath/src/pjnath/ice_session.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 12b8dad06..070b95ee4 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1462,6 +1462,7 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+ 
+     switch (type) {
+ 	case TIMER_CONTROLLING_TCP_PASSIVE_TIMEOUT:
++	printf("@@@ TIMEOUT WAIT TCP PASSIVE\n");
+ 	LOG4((ice->obj_name, 
+ 	      "Controlling agent timed-out while waiting for incoming TCP checks. Set state to failed!"));
+ 	on_ice_complete(ice, PJNATH_EICEFAILED);
+@@ -1737,6 +1738,8 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 		no_pending_check = (i == ice->clist.count);
+ 	}
+ 
++	printf("@@@@@ check_ice_complete \n");
++
+     if (no_pending_check) {
+ 	/* All checks have completed, but we don't have nominated pair.
+ 	 * If agent's role is controlled, check if all components have
+@@ -1745,6 +1748,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 	 * agent to send checks with USE-CANDIDATE flag set.
+ 	 */
+ 	if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLED) {
++		printf("@@@@@ PJ_ICE_SESS_ROLE_CONTROLLED \n");
+ 	    for (i=0; i < ice->comp_cnt; ++i) {
+ 		if (ice->comp[i].valid_check == NULL)
+ 		    break;
+@@ -1787,6 +1791,8 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 	    /* Unreached */
+ 
+ 	} else if (ice->is_nominating) {
++		printf("@@@@@ NOMINATING CONTROLLING \n");
++
+ #if PJ_HAS_TCP
+ 		if (hasTCP) {
+ 			// STUN server procedure https://tools.ietf.org/html/rfc6544#section-7.2
+@@ -1832,6 +1838,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 	    return PJ_TRUE;
+ 
+ 	} else {
++		printf("@@@@@ NON NOMINATING CONTROLLING \n");
+ 	    /* We are controlling agent and all checks have completed. If
+ 	     * we have valid list for every component, then move on to
+ 	     * sending nominated check, otherwise we have failed.
