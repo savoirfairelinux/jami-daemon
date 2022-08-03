@@ -689,7 +689,7 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                 // Async certificate checking
                 shared->account.findCertificate(
                     req.from,
-                    [w = shared->weak(), req = std::move(req)](
+                    [w, req = std::move(req)](
                         const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
                         auto shared = w.lock();
                         if (!shared)

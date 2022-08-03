@@ -1,0 +1,216 @@
+ pjnath/include/pjnath/config.h      |   2 +-
+ pjnath/include/pjnath/ice_session.h |   2 +-
+ pjnath/src/pjnath/ice_session.c     | 138 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------------------------------
+ 3 files changed, 75 insertions(+), 67 deletions(-)
+
+diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
+index 76a7f7939..37fd8c031 100644
+--- a/pjnath/include/pjnath/config.h
++++ b/pjnath/include/pjnath/config.h
+@@ -417,7 +417,7 @@
+  * Default: 8
+  */
+ #ifndef PJ_ICE_TCP_MAX_RECONNECTION_COUNT
+-#   define PJ_ICE_TCP_MAX_RECONNECTION_COUNT 8
++#   define PJ_ICE_TCP_MAX_RECONNECTION_COUNT 24
+ #endif
+ 
+ /**
+diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
+index 94c55cb8c..0e6aa60bb 100644
+--- a/pjnath/include/pjnath/ice_session.h
++++ b/pjnath/include/pjnath/ice_session.h
+@@ -794,7 +794,7 @@ typedef struct pj_ice_sess_options
+      * in milliseconds for passive candidates and wait for connection
+      * attempts
+      */
+-    int         controlling_agent_passive_timeout;
++    int         agent_passive_timeout;
+ 
+ } pj_ice_sess_options;
+ 
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 12b8dad06..9afc23da7 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -351,7 +351,7 @@ PJ_DEF(void) pj_ice_sess_options_default(pj_ice_sess_options *opt)
+     opt->controlled_agent_want_nom_timeout = 
+ 	ICE_CONTROLLED_AGENT_WAIT_NOMINATION_TIMEOUT;
+     opt->trickle = PJ_ICE_SESS_TRICKLE_DISABLED;
+-	opt->controlling_agent_passive_timeout = ICE_CONTROLLING_PASSIVE_TIMEOUT;
++	opt->agent_passive_timeout = ICE_CONTROLLING_PASSIVE_TIMEOUT;
+ }
+ 
+ /*
+@@ -1462,6 +1462,7 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+ 
+     switch (type) {
+ 	case TIMER_CONTROLLING_TCP_PASSIVE_TIMEOUT:
++	printf("@@@ TIMEOUT WAIT TCP PASSIVE\n");
+ 	LOG4((ice->obj_name, 
+ 	      "Controlling agent timed-out while waiting for incoming TCP checks. Set state to failed!"));
+ 	on_ice_complete(ice, PJNATH_EICEFAILED);
+@@ -1737,7 +1738,45 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 		no_pending_check = (i == ice->clist.count);
+ 	}
+ 
++	printf("@@@@@ check_ice_complete \n");
++
+     if (no_pending_check) {
++
++#if PJ_HAS_TCP
++	if (hasTCP) {
++		// STUN server procedure https://tools.ietf.org/html/rfc6544#section-7.2
++		// An ICE TCP agent, full or lite, MUST be prepared to receive incoming
++		// TCP connection requests on the base of any TCP candidate that is
++		// simultaneous-open or passive.  When the connection request is
++		// received, the agent MUST accept it.
++		// https://tools.ietf.org/html/rfc5245#section-2.6
++		// In that case, allowing ICE to run a little longer might produce
++		// better results.
++		if (ice->timer.id == TIMER_NONE &&
++			ice->opt.agent_passive_timeout >= 0) 
++		{
++			pj_time_val delay;
++
++			delay.sec = 0;
++			delay.msec = ice->opt.agent_passive_timeout;
++			pj_time_val_normalize(&delay);
++
++			pj_timer_heap_schedule_w_grp_lock(
++					ice->stun_cfg.timer_heap,
++								&ice->timer, &delay,
++								TIMER_CONTROLLING_TCP_PASSIVE_TIMEOUT,
++								ice->grp_lock);
++
++			LOG5((ice->obj_name, 
++			"All checks have completed but failed. Just "
++			"wait for passive connections to timeout "
++			"(timeout=%d msec)",
++			ice->opt.agent_passive_timeout));
++			return PJ_FALSE;
++		}
++	}
++#endif
++
+ 	/* All checks have completed, but we don't have nominated pair.
+ 	 * If agent's role is controlled, check if all components have
+ 	 * valid pair. If it does, this means the controlled agent has
+@@ -1745,6 +1784,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 	 * agent to send checks with USE-CANDIDATE flag set.
+ 	 */
+ 	if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLED) {
++		printf("@@@@@ PJ_ICE_SESS_ROLE_CONTROLLED \n");
+ 	    for (i=0; i < ice->comp_cnt; ++i) {
+ 		if (ice->comp[i].valid_check == NULL)
+ 		    break;
+@@ -1786,77 +1826,45 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 
+ 	    /* Unreached */
+ 
+-	} else if (ice->is_nominating) {
+-#if PJ_HAS_TCP
+-		if (hasTCP) {
+-			// STUN server procedure https://tools.ietf.org/html/rfc6544#section-7.2
+-			// An ICE TCP agent, full or lite, MUST be prepared to receive incoming
+-			// TCP connection requests on the base of any TCP candidate that is
+-			// simultaneous-open or passive.  When the connection request is
+-			// received, the agent MUST accept it.
+-			// https://tools.ietf.org/html/rfc5245#section-2.6
+-			// In that case, allowing ICE to run a little longer might produce
+-			// better results.
+-			if (ice->timer.id == TIMER_NONE &&
+-				ice->opt.controlling_agent_passive_timeout >= 0) 
+-			{
+-				pj_time_val delay;
+-
+-				delay.sec = 0;
+-				delay.msec = ice->opt.controlling_agent_passive_timeout;
+-				pj_time_val_normalize(&delay);
+-
+-				pj_timer_heap_schedule_w_grp_lock(
+-						ice->stun_cfg.timer_heap,
+-									&ice->timer, &delay,
+-									TIMER_CONTROLLING_TCP_PASSIVE_TIMEOUT,
+-									ice->grp_lock);
+-
+-				LOG5((ice->obj_name, 
+-				"All checks have completed but failed. Just "
+-				"wait for passive connections to timeout "
+-				"(timeout=%d msec)",
+-				ice->opt.controlling_agent_passive_timeout));
+-			}
+-			return PJ_FALSE;
+-		} else {
+-#endif
++	} else {
++		printf("@@@@@ CONTROLLING \n");
++
++		if (ice->is_nominating) {
++			printf("@@@@@ NOMINATING CONTROLLING \n");
+ 			/* We are controlling agent and all checks have completed but
+ 			* there's at least one component without nominated pair (or
+ 			* more likely we don't have any nominated pairs at all).
+ 			*/
+ 			on_ice_complete(ice, PJNATH_EICEFAILED);
+-#if PJ_HAS_TCP
+-		}
+-#endif
+-	    return PJ_TRUE;
+-
+-	} else {
+-	    /* We are controlling agent and all checks have completed. If
+-	     * we have valid list for every component, then move on to
+-	     * sending nominated check, otherwise we have failed.
+-	     */
+-	    for (i=0; i<ice->comp_cnt; ++i) {
+-		if (ice->comp[i].valid_check == NULL)
+-		    break;
+-	    }
++	    	return PJ_TRUE;
++		} else {
++			printf("@@@@@ NON NOMINATING CONTROLLING \n");
++			/* We are controlling agent and all checks have completed. If
++			* we have valid list for every component, then move on to
++			* sending nominated check, otherwise we have failed.
++			*/
++			for (i=0; i<ice->comp_cnt; ++i) {
++				if (ice->comp[i].valid_check == NULL)
++					break;
++			}
+ 
+-	    if (i < ice->comp_cnt) {
+-		/* At least one component doesn't have a valid check. Mark
+-		 * ICE as failed.
+-		 */
+-		on_ice_complete(ice, PJNATH_EICEFAILED);
+-		return PJ_TRUE;
+-	    }
++			if (i < ice->comp_cnt) {
++				/* At least one component doesn't have a valid check. Mark
++				 * ICE as failed.
++				 */
++				on_ice_complete(ice, PJNATH_EICEFAILED);
++				return PJ_TRUE;
++			}
+ 
+-	    /* Now it's time to send connectivity check with nomination 
+-	     * flag set.
+-	     */
+-	    LOG4((ice->obj_name, 
+-		  "All checks have completed, starting nominated checks now"));
+-	    start_nominated_check(ice);
+-	    return PJ_FALSE;
+-	}
++			/* Now it's time to send connectivity check with nomination 
++			* flag set.
++			*/
++			LOG4((ice->obj_name, 
++			"All checks have completed, starting nominated checks now"));
++			start_nominated_check(ice);
++			return PJ_FALSE;
++		}
++    }
+     }
+ 
+     /* If this connectivity check has been successful, scan all components
