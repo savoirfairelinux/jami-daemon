@@ -3,7 +3,7 @@ FMT_VERSION := 9.0.0
 FMT_URL := https://github.com/fmtlib/fmt/archive/$(FMT_VERSION).tar.gz
 
 PKGS += fmt
-ifeq ($(call need_pkg,'fmt >= 6.0'),)
+ifeq ($(call need_pkg,'fmt >= ${FMT_VERSION}'),)
 PKGS_FOUND += fmt
 endif
 
