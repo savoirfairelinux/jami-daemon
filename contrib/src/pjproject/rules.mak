@@ -45,6 +45,7 @@ $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
 
 pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(UNPACK)
+	$(APPLY) $(SRC)/pjproject/test.patch
 	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch

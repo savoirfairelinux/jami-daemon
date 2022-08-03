@@ -1,0 +1,101 @@
+ pjlib/src/pj/ip_helper_generic.c | 56 +++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 53 insertions(+), 3 deletions(-)
+
+diff --git a/pjlib/src/pj/ip_helper_generic.c b/pjlib/src/pj/ip_helper_generic.c
+index ab441a504..462ab0eff 100644
+--- a/pjlib/src/pj/ip_helper_generic.c
++++ b/pjlib/src/pj/ip_helper_generic.c
+@@ -37,7 +37,7 @@
+ #endif
+ 
+ /* Set to 1 to enable tracing */
+-#if 0
++#if 1
+ #   include <pj/log.h>
+ #   define THIS_FILE	"ip_helper_generic.c"
+ #   define TRACE_(exp)	PJ_LOG(5,exp)
+@@ -134,6 +134,23 @@ static pj_status_t if_enum_by_af(int af,
+ 	    continue;
+ 	}
+ 
++	/* IOS weird non fe80 local address
++	 */
++	if (af==pj_AF_INET6() &&
++	    (pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 97) ==
++	     536937839) /* 0b100000000000010000010101101111 which is
++	                   2001:56f >> 97 */
++	{
++	    TRACE_((THIS_FILE, "  address %s ignored (192.0.0.0/29 class)",
++		    get_addr(ad), ad->sa_family));
++	    continue;
++	}
++
++
++	if (af!=pj_AF_INET())
++	TRACE_((THIS_FILE, "  @@@@ %u",
++		(pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 97));
++
+ 	/* Ignore 0.0.0.0/8 address. This is a special address
+ 	 * which doesn't seem to have practical use.
+ 	 */
+@@ -250,6 +267,24 @@ static pj_status_t if_enum_by_af(int af,
+ 		    get_addr(ad), ad->sa_family));
+ 	    continue;
+ 	}
++	
++
++	/* IOS weird non fe80 local address
++	 */
++	if (af==pj_AF_INET6() &&
++	    (pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 97) ==
++	     536937839) /* 0b100000000000010000010101101111 which is
++	                   2001:56f >> 97 */
++	{
++	    TRACE_((THIS_FILE, "  address %s ignored (192.0.0.0/29 class)",
++		    get_addr(ad), ad->sa_family));
++	    continue;
++	}
++
++
++	if (af!=pj_AF_INET())
++	TRACE_((THIS_FILE, "  @@@@ %u",
++		(pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 97));
+ 
+ 	/* Ignore 0.0.0.0/8 address. This is a special address
+ 	 * which doesn't seem to have practical use.
+@@ -322,11 +357,10 @@ static pj_status_t if_enum_by_af(int af, unsigned *p_cnt, pj_sockaddr ifs[])
+ 	    continue; /* Skip when interface is down */
+ 	}
+ 
+-        if ((ifreq.ifr_flags & IFF_RUNNING)==0) {
++	if ((ifreq.ifr_flags & IFF_RUNNING)==0) {
+ 	    TRACE_((THIS_FILE, "  interface is not running"));
+ 	    continue; /* Skip when interface is not running */
+ 	}
+-
+ #if PJ_IP_HELPER_IGNORE_LOOPBACK_IF
+ 	if (ifreq.ifr_flags & IFF_LOOPBACK) {
+ 	    TRACE_((THIS_FILE, "  loopback interface"));
+@@ -363,6 +397,22 @@ static pj_status_t if_enum_by_af(int af, unsigned *p_cnt, pj_sockaddr ifs[])
+ 	    continue;
+ 	}
+ 
++	/* IOS weird non fe80 local address
++	 */
++	if (af==pj_AF_INET6() &&
++	    (pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 97) ==
++	     536937839) /* 0b100000000000010000010101101111 which is
++	                   2001:56f >> 97 */
++	{
++	    TRACE_((THIS_FILE, "  address %s ignored (192.0.0.0/29 class)",
++		    get_addr(ad), ad->sa_family));
++	    continue;
++	}
++
++	if (af!=pj_AF_INET())
++	TRACE_((THIS_FILE, "  @@@@ %u",
++		(pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 97));
++
+ 	/* Ignore 0.0.0.0/8 address. This is a special address
+ 	 * which doesn't seem to have practical use.
+ 	 */
