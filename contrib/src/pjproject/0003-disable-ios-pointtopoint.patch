@@ -1,0 +1,55 @@
+ pjlib/src/pj/ip_helper_generic.c | 23 ++++++++++++++++++++++-
+ 1 file changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/pjlib/src/pj/ip_helper_generic.c b/pjlib/src/pj/ip_helper_generic.c
+index ab441a504..c818468b3 100644
+--- a/pjlib/src/pj/ip_helper_generic.c
++++ b/pjlib/src/pj/ip_helper_generic.c
+@@ -102,6 +102,13 @@ static pj_status_t if_enum_by_af(int af,
+ 	    continue; /* Skip when interface is not running */
+ 	}
+ 
++#if defined(__APPLE__)
++	if (it->ifa_flags & IFF_POINTOPOINT) {
++	    TRACE_((THIS_FILE, "  point to point interface"));
++	    continue; /* Skip point to point interface */
++	}
++#endif
++
+ #if PJ_IP_HELPER_IGNORE_LOOPBACK_IF
+ 	if (it->ifa_flags & IFF_LOOPBACK) {
+ 	    TRACE_((THIS_FILE, "  loopback interface"));
+@@ -231,6 +238,13 @@ static pj_status_t if_enum_by_af(int af,
+ 	    continue; /* Skip when interface is not running */
+ 	}
+ 
++#if defined(__APPLE__)
++	if (iff.ifr_flags & IFF_POINTOPOINT) {
++	    TRACE_((THIS_FILE, "  point to point interface"));
++	    continue; /* Skip point to point interface */
++	}
++#endif
++
+ #if PJ_IP_HELPER_IGNORE_LOOPBACK_IF
+ 	if (iff.ifr_flags & IFF_LOOPBACK) {
+ 	    TRACE_((THIS_FILE, "  loopback interface"));
+@@ -322,11 +336,18 @@ static pj_status_t if_enum_by_af(int af, unsigned *p_cnt, pj_sockaddr ifs[])
+ 	    continue; /* Skip when interface is down */
+ 	}
+ 
+-        if ((ifreq.ifr_flags & IFF_RUNNING)==0) {
++	if ((ifreq.ifr_flags & IFF_RUNNING)==0) {
+ 	    TRACE_((THIS_FILE, "  interface is not running"));
+ 	    continue; /* Skip when interface is not running */
+ 	}
+ 
++#if defined(__APPLE__)
++	if (ifreq.ifr_flags & IFF_POINTOPOINT) {
++	    TRACE_((THIS_FILE, "  point to point interface"));
++	    continue; /* Skip point to point interface */
++	}
++#endif
++
+ #if PJ_IP_HELPER_IGNORE_LOOPBACK_IF
+ 	if (ifreq.ifr_flags & IFF_LOOPBACK) {
+ 	    TRACE_((THIS_FILE, "  loopback interface"));
