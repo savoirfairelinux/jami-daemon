@@ -49,6 +49,9 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
+ifdef HAVE_IOS
+	$(APPLY) $(SRC)/pjproject/0003-disable-ios-pointtopoint.patch
+endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
