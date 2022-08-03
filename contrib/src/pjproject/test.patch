@@ -1,0 +1,47 @@
+ pjnath/src/pjnath/ice_session.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 12b8dad06..6efb0907f 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1738,6 +1738,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 	}
+ 
+     if (no_pending_check) {
++		printf("@@@@ NO PENDING\n");
+ 	/* All checks have completed, but we don't have nominated pair.
+ 	 * If agent's role is controlled, check if all components have
+ 	 * valid pair. If it does, this means the controlled agent has
+@@ -1745,6 +1746,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 	 * agent to send checks with USE-CANDIDATE flag set.
+ 	 */
+ 	if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLED) {
++		printf("@@@@ PJ_ICE_SESS_ROLE_CONTROLLED\n");
+ 	    for (i=0; i < ice->comp_cnt; ++i) {
+ 		if (ice->comp[i].valid_check == NULL)
+ 		    break;
+@@ -1787,6 +1789,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 	    /* Unreached */
+ 
+ 	} else if (ice->is_nominating) {
++		printf("@@@@ is_nominating\n");
+ #if PJ_HAS_TCP
+ 		if (hasTCP) {
+ 			// STUN server procedure https://tools.ietf.org/html/rfc6544#section-7.2
+@@ -1821,6 +1824,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 			return PJ_FALSE;
+ 		} else {
+ #endif
++		printf("@@@@ else...\n");
+ 			/* We are controlling agent and all checks have completed but
+ 			* there's at least one component without nominated pair (or
+ 			* more likely we don't have any nominated pairs at all).
+@@ -1832,6 +1836,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 	    return PJ_TRUE;
+ 
+ 	} else {
++		printf("@@@@ CONTROLLING..\n");
+ 	    /* We are controlling agent and all checks have completed. If
+ 	     * we have valid list for every component, then move on to
+ 	     * sending nominated check, otherwise we have failed.
