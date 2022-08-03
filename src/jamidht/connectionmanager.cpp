@@ -317,15 +317,16 @@ ConnectionManager::Impl::connectDeviceStartIce(
 
     // Send connection request through DHT
     JAMI_DBG() << account << "Request connection to " << deviceId;
-    account.dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix
-                                                   + devicePk->getId().toString()),
-                                devicePk,
-                                value,
-                                [deviceId](bool ok) {
-                                    if (!ok)
-                                        JAMI_ERR("Tried to send request to %s, but put failed",
-                                                 deviceId.to_c_str());
-                                });
+    account.dht()->putEncrypted(
+        dht::InfoHash::get(PeerConnectionRequest::key_prefix + devicePk->getId().toString()),
+        devicePk,
+        value,
+        [deviceId, accId = account.getAccountID()](bool ok) {
+            JAMI_DEBUG("[Account {:s}] Send connection request to {:s}. Put encrypted {:s}",
+                       accId,
+                       deviceId.toString(),
+                       (ok ? "ok" : "failed"));
+        });
     // Wait for call to onResponse() operated by DHT
     if (isDestroying_)
         return true; // This avoid to wait new negotiation when destroying
@@ -682,46 +683,36 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
             } else {
                 JAMI_DBG() << "Received request from " << req.owner->getLongId();
             }
-            // Hack:
-            // Note: This reschedule on the io pool should not be necessary
-            // however https://git.jami.net/savoirfairelinux/ring-daemon/-/issues/421
-            // is a bit clueless and not reproductible in a debug env for now. However,
-            // the behavior makes me think this callback is blocked (maybe in getInfos())
-            // and this must never happen.
-            dht::ThreadPool::io().run([w, req = std::move(req)] {
-                auto shared = w.lock();
-                if (!shared)
-                    return;
-                if (req.isAnswer) {
-                    shared->onPeerResponse(req);
-                } else {
-                    // Async certificate checking
-                    shared->account.findCertificate(
-                        req.from,
-                        [w, req = std::move(req)](
-                            const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
-                            auto shared = w.lock();
-                            if (!shared)
-                                return;
-                            dht::InfoHash peer_h;
-                            if (AccountManager::foundPeerDevice(cert, peer_h)) {
+            if (req.isAnswer) {
+                shared->onPeerResponse(req);
+            } else {
+                // Async certificate checking
+                shared->account.findCertificate(
+                    req.from,
+                    [w = shared->weak(), req = std::move(req)](
+                        const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
+                        auto shared = w.lock();
+                        if (!shared)
+                            return;
+                        dht::InfoHash peer_h;
+                        if (AccountManager::foundPeerDevice(cert, peer_h)) {
 #if TARGET_OS_IOS
-                                if ((req.connType == "videoCall" || req.connType == "audioCall") && jami::Manager::instance().isIOSExtension) {
-                                    bool hasVideo = req.connType == "videoCall";
-                                    emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
-                                        shared->account.getAccountID(), peer_h.toString(), hasVideo);
-                                        return;
-                                }
-#endif
-                                shared->onDhtPeerRequest(req, cert);
-                            } else {
-                                JAMI_WARN() << shared->account
-                                            << "Rejected untrusted connection request from "
-                                            << req.owner->getLongId();
+                            if ((req.connType == "videoCall" || req.connType == "audioCall")
+                                && jami::Manager::instance().isIOSExtension) {
+                                bool hasVideo = req.connType == "videoCall";
+                                emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
+                                    shared->account.getAccountID(), peer_h.toString(), hasVideo);
+                                return;
                             }
-                        });
-                }
-            });
+#endif
+                            shared->onDhtPeerRequest(req, cert);
+                        } else {
+                            JAMI_WARN()
+                                << shared->account << "Rejected untrusted connection request from "
+                                << req.owner->getLongId();
+                        }
+                    });
+            }
 
             return true;
         },
@@ -805,10 +796,11 @@ ConnectionManager::Impl::answerTo(IceTransport& ice,
         dht::InfoHash::get(PeerConnectionRequest::key_prefix + from->getId().toString()),
         from,
         value,
-        [from](bool ok) {
-            if (!ok)
-                JAMI_ERR("Tried to answer to connection request from %s, but put failed",
-                         from->getLongId().to_c_str());
+        [from, accId = account.getAccountID()](bool ok) {
+            JAMI_DEBUG("[Account {:s}] Answer to connection request from {:s}. Put encrypted {:s}",
+                       accId,
+                       from->getLongId().toString(),
+                       (ok ? "ok" : "failed"));
         });
 }
 
