@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "706c14d7_844270a2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 12
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2022-08-04T15:59:05Z",
+      "side": 1,
+      "message": "the defines need to be worked into the cmake for windows",
+      "revId": "4fe4aca862083775a5ed03ea6bde58c0b066bb37",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
