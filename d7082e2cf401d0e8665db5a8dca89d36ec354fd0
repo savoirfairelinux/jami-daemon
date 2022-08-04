@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a3b706cd_f32714ad",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-08-04T17:40:22Z",
+      "side": 1,
+      "message": "Can be safely ignored, since voice activity is not a critical information and can be safely dropped, especially while the call is being destroyed.",
+      "revId": "d7082e2cf401d0e8665db5a8dca89d36ec354fd0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
