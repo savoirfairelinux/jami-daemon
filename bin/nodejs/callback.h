@@ -583,6 +583,24 @@ messageReceived(const std::string& accountId,
 }
 
 void
+conversationProfileUpdated(const std::string& accountId,
+                            const std::string&  conversationId ,
+                            const std::map<std::string, std::string>& profile)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, profile]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conversationProfileUpdatedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            stringMapToJsMap(profile)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
 conversationRequestReceived(const std::string& accountId,
                             const std::string& conversationId,
                             const std::map<std::string, std::string>& message)
