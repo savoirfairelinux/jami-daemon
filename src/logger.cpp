@@ -157,9 +157,9 @@ contextHeader(const char* const file, int line)
     }
 
     if (file) {
-        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <18s}:{: <4d}]"), secs, milli, tid, stripDirName(file), line);
+        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <24s}:{: <4d}] "), secs, milli, tid, stripDirName(file), line);
     } else {
-        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}]"), secs, milli, tid);
+        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}] "), secs, milli, tid);
     }
 }
 
@@ -184,7 +184,10 @@ formatPrintfArgs(const char* format, va_list ap)
         vsnprintf((char*) ret.data(), ret.size(), format, cp);
     }
 
+    ret.resize(size);
+
     va_end(cp);
+
     return ret;
 }
 
