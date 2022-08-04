@@ -29,10 +29,10 @@
 
 #include <fmt/core.h>
 #include <fmt/format.h>
-#include <fmt/std.h>
 #include <fmt/compile.h>
 
 #ifdef _MSC_VER
+#include <fmt/std.h>
 #include <sys_time.h>
 #else
 #include <sys/time.h>
