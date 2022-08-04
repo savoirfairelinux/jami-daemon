@@ -16,6 +16,24 @@
       "message": "should not be needed if used only for logging",
       "revId": "d2646a3050de55a5dc9da656e7405df9ab522e9f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d2d7602_c2b43499",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-04T16:18:17Z",
+      "side": 1,
+      "message": "yeah I used FMT_STRING in a previous versions and forgot to cleanup",
+      "parentUuid": "6818d000_08c33e93",
+      "revId": "d2646a3050de55a5dc9da656e7405df9ab522e9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
