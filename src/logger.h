@@ -188,8 +188,8 @@ void error(const char* file, int line, S&& format, Args&&... args) {
 #define JAMI_XWARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ##__VA_ARGS__)
 #define JAMI_XERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ##__VA_ARGS__)
 
-#define JAMI_DEBUG(...) if(::jami::Logger::debugEnabled()) { ::jami::log::dbg(__FILE__, __LINE__, ##__VA_ARGS__); }
-#define JAMI_WARNING(...) ::jami::log::warn(__FILE__, __LINE__, ##__VA_ARGS__)
-#define JAMI_ERROR(...) ::jami::log::error(__FILE__, __LINE__, ##__VA_ARGS__)
+#define JAMI_DEBUG(formatstr, ...) if(::jami::Logger::debugEnabled()) { ::jami::log::dbg(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__); }
+#define JAMI_WARNING(formatstr, ...) ::jami::log::warn(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
+#define JAMI_ERROR(formatstr, ...) ::jami::log::error(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
 
 } // namespace jami
