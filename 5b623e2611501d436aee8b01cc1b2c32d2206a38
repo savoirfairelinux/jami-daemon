@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d976c179_d731d127",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 692,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-08-04T17:27:59Z",
+      "side": 1,
+      "message": "just \u0027w\u0027",
+      "revId": "5b623e2611501d436aee8b01cc1b2c32d2206a38",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
