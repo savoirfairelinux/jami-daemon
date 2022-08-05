@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bdf9fe3_aa70a15d",
+        "filename": "src/logger.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-05T15:51:29Z",
+      "side": 1,
+      "message": "Missing 1 warning: logger.cpp:154:14: warning: comparison of integer expressions of different signedness: \u0027int\u0027 and \u0027std::__cxx11::basic_string\u003cchar\u003e::size_type\u0027 {aka \u0027long unsigned int\u0027} [-Wsign-compare]\n  154 |     if (size \u003e\u003d ret.size()) {",
+      "range": {
+        "startLine": 154,
+        "startChar": 4,
+        "endLine": 154,
+        "endChar": 29
+      },
+      "revId": "27e7acc5d7fad5980b957fc634ee75424e4938d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
