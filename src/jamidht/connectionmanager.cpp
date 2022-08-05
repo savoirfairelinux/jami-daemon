@@ -500,6 +500,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         }
         if (noNewSocket) {
             // If no new socket is specified, we don't try to generate a new socket
+            JAMI_ERR() << "@@@ NO SOCKET CONN WITH " << deviceId;
             for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
                 pending.cb(nullptr, deviceId);
             return;
@@ -510,6 +511,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         auto eraseInfo = [w, cbId, deviceId] {
             if (auto shared = w.lock()) {
                 // If no new socket is specified, we don't try to generate a new socket
+                JAMI_ERR() << "@@@ ERASE PENDING WITH " << deviceId;
                 for (const auto& pending : shared->extractPendingCallbacks(deviceId))
                     pending.cb(nullptr, deviceId);
                 std::lock_guard<std::mutex> lk(shared->infosMtx_);
@@ -527,8 +529,11 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                       connType,
                                       eraseInfo](auto&& ice_config) {
             auto sthis = w.lock();
-            if (!sthis)
+            if (!sthis) {
+                JAMI_ERR("@@@@");
+                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                 return;
+            }
             ice_config.tcpEnable = true;
             ice_config.onInitDone = [w,
                                      deviceId = std::move(deviceId),
@@ -539,9 +544,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                      connType,
                                      eraseInfo](bool ok) {
                 auto sthis = w.lock();
-                if (!sthis)
-                    return;
-                if (!ok) {
+                if (!sthis || !ok) {
                     JAMI_ERR("Cannot initialize ICE session.");
                     runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                     return;
@@ -552,9 +555,9 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                            vid = std::move(vid),
                                            eraseInfo,
                                            connType] {
-                    if (auto sthis = w.lock())
-                        if (!sthis->connectDeviceStartIce(devicePk, vid, connType))
-                            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                    auto sthis = w.lock();
+                    if (!sthis || !sthis->connectDeviceStartIce(devicePk, vid, connType))
+                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                 });
             };
             ice_config.onNegoDone = [w,
@@ -564,9 +567,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                      vid,
                                      eraseInfo](bool ok) {
                 auto sthis = w.lock();
-                if (!sthis)
-                    return;
-                if (!ok) {
+                if (!sthis || !ok) {
                     JAMI_ERR("ICE negotiation failed.");
                     runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                     return;
@@ -579,9 +580,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                            vid = std::move(vid),
                                            eraseInfo = std::move(eraseInfo)] {
                     auto sthis = w.lock();
-                    if (!sthis)
-                        return;
-                    if (!sthis->connectDeviceOnNegoDone(deviceId, name, vid, cert))
+                    if (!sthis || !sthis->connectDeviceOnNegoDone(deviceId, name, vid, cert))
                         runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                 });
             };
@@ -597,12 +596,19 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
             info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
                 sthis->account.getAccountID().c_str());
-            info->ice_->initIceInstance(ice_config);
-
             if (!info->ice_) {
                 JAMI_ERR("Cannot initialize ICE session.");
                 eraseInfo();
+                return;
             }
+            // We need to detect any shutdown if the ice session is destroyed before going to the
+            // TLS session;
+            JAMI_ERR("@@@ %p set SHUTDOWN", info->ice_.get());
+            info->ice_->setOnShutdown([eraseInfo]() {
+                JAMI_ERR("@@@ YES!");
+                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+            });
+            info->ice_->initIceInstance(ice_config);
         });
     });
 }
@@ -616,17 +622,25 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     auto channelSock = sock->addChannel(name);
     channelSock->onShutdown([name, deviceId, vid, w = weak()] {
         auto shared = w.lock();
+        JAMI_ERR() << "@@@ SHUTDOWN WITH " << deviceId << " " << vid;
         if (shared)
             for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
                 pending.cb(nullptr, deviceId);
+        else {
+            JAMI_ERR("@@@@!!!!2");
+        }
     });
     channelSock->onReady(
         [wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
             auto shared = w.lock();
             auto channelSock = wSock.lock();
+            JAMI_ERR() << "@@@ READY WITH " << deviceId << " " << vid;
             if (shared)
                 for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
                     pending.cb(channelSock, deviceId);
+            else {
+                JAMI_ERR("@@@@!!!!3");
+            }
         });
 
     ChannelRequest val;
@@ -706,11 +720,12 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                             dht::InfoHash peer_h;
                             if (AccountManager::foundPeerDevice(cert, peer_h)) {
 #if TARGET_OS_IOS
-                                if ((req.connType == "videoCall" || req.connType == "audioCall") && jami::Manager::instance().isIOSExtension) {
+                                if ((req.connType == "videoCall" || req.connType == "audioCall")
+                                    && jami::Manager::instance().isIOSExtension) {
                                     bool hasVideo = req.connType == "videoCall";
                                     emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
                                         shared->account.getAccountID(), peer_h.toString(), hasVideo);
-                                        return;
+                                    return;
                                 }
 #endif
                                 shared->onDhtPeerRequest(req, cert);
@@ -970,12 +985,18 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         ice_config.master = true;
         info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
             shared->account.getAccountID().c_str());
-        info->ice_->initIceInstance(ice_config);
-
         if (not info->ice_) {
             JAMI_ERR("Cannot initialize ICE session.");
             eraseInfo();
+            return;
         }
+        // We need to detect any shutdown if the ice session is destroyed before going to the TLS session;
+        JAMI_ERR("@@@ %p set SHUTDOWN", info->ice_.get());
+        info->ice_->setOnShutdown([eraseInfo]() {
+            JAMI_ERR("@@@ YES!");
+            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+        });
+        info->ice_->initIceInstance(ice_config);
     });
 }
 
@@ -1070,6 +1091,7 @@ ConnectionManager::isConnecting(const DeviceId& deviceId, const std::string& nam
 void
 ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
 {
+    JAMI_ERR() << "@@@ CLOSE CONN WITH " << deviceId;
     for (const auto& pending : pimpl_->extractPendingCallbacks(deviceId))
         pending.cb(nullptr, deviceId);
 
