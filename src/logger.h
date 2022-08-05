@@ -35,19 +35,6 @@
 #include <string>
 #include "string_utils.h" // to_string
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Thread-safe function to print the stringified contents of errno
- */
-void strErr();
-
-#ifdef __cplusplus
-}
-#endif
-
 #ifdef __ANDROID__
 
 #include <android/log.h>
@@ -79,6 +66,11 @@ void strErr();
 #endif
 
 namespace jami {
+
+/**
+ * Thread-safe function to print the stringified contents of errno
+ */
+void strErr();
 
 ///
 /// Level-driven logging class that support printf and C++ stream logging fashions.
