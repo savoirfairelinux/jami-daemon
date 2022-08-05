@@ -203,9 +203,8 @@ public:
     void stopFetch(const std::string& convId, const std::string& deviceId)
     {
         auto it = pendingConversationsFetch_.find(convId);
-        if (it == pendingConversationsFetch_.end()) {
+        if (it == pendingConversationsFetch_.end())
             return;
-        }
         auto& pf = it->second;
         pf.connectingTo.erase(deviceId);
         if (pf.connectingTo.empty())
@@ -499,9 +498,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     auto erasePending = [&] {
         std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
         auto oldFetch = pendingConversationsFetch_.find(conversationId);
-        if (oldFetch != pendingConversationsFetch_.end() && !oldFetch->second.removeId.empty()) {
+        if (oldFetch != pendingConversationsFetch_.end() && !oldFetch->second.removeId.empty())
             removeConversation(oldFetch->second.removeId);
-        }
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
@@ -931,6 +929,22 @@ ConversationModule::loadConversations()
         pimpl_->saveConvInfos();
 
     JAMI_INFO("[Account %s] Conversations loaded!", pimpl_->accountId_.c_str());
+}
+
+void
+ConversationModule::clearPendingFetch()
+{
+    if (!pimpl_->pendingConversationsFetch_.empty()) {
+        // Note: This is a fallback. convModule() is kept if account is disabled/re-enabled.
+        // iOS uses setAccountActive() a lot, and if for some reason the previous pending fetch is
+        // not erased (callback not called), it will block the new messages as it will not sync. The
+        // best way to debug this is to get logs from the last ICE connection for syncing the
+        // conversation. It may have been killed in some un-expected way avoiding to call the
+        // callbacks. This should never happen, but if it's the case, this will allow new messages
+        // to be synced correctly.
+        JAMI_ERR("This is a bug, seems to still fetch to some device on initializing");
+        pimpl_->pendingConversationsFetch_.clear();
+    }
 }
 
 std::vector<std::string>
