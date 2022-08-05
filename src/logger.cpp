@@ -96,6 +96,10 @@
 
 #define LOGFILE "jami"
 
+namespace jami {
+
+static constexpr auto ENDL = '\n';
+
 static const char*
 check_error(int result, char* buffer)
 {
@@ -127,10 +131,6 @@ strErr(void)
     JAMI_ERR("%s", check_error(strerror_r(errno, buf, sizeof(buf)), buf));
 #endif
 }
-
-namespace jami {
-
-static constexpr auto ENDL = '\n';
 
 // extract the last component of a pathname (extract a filename from its dirname)
 static const char*
@@ -183,7 +183,7 @@ formatPrintfArgs(const char* format, va_list ap)
     int size = vsnprintf(ret.data(), ret.size(), format, ap);
 
     /* Not enough space?  Well try again. */
-    if (size >= ret.size()) {
+    if ((size_t)size >= ret.size()) {
         ret.resize(size + 1);
         vsnprintf((char*) ret.data(), ret.size(), format, cp);
     }
@@ -200,17 +200,17 @@ struct Logger::Msg
     Msg() = delete;
 
     Msg(int level, const char* file, int line, bool linefeed, std::string&& message)
-        : header_(contextHeader(file, line))
+        : payload_(std::move(message))
+        , header_(contextHeader(file, line))
         , level_(level)
         , linefeed_(linefeed)
-        , payload_(std::move(message))
     {}
 
     Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
-        : header_(contextHeader(file, line))
+        : payload_(formatPrintfArgs(fmt, ap))
+        , header_(contextHeader(file, line))
         , level_(level)
         , linefeed_(linefeed)
-        , payload_(formatPrintfArgs(fmt, ap))
     {}
 
     Msg(Msg&& other)
@@ -394,7 +394,7 @@ public:
 #ifdef __ANDROID__
         __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.c_str());
 #else
-        ::syslog(msg.level_, "%s", msg.payload_.c_str());
+        ::syslog(msg.level_, "%.*s", (int)msg.payload_.size(), msg.payload_.data());
 #endif
     }
 };
