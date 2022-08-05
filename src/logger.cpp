@@ -96,38 +96,6 @@
 
 #define LOGFILE "jami"
 
-static const char*
-check_error(int result, char* buffer)
-{
-    switch (result) {
-    case 0:
-        return buffer;
-
-    case ERANGE: /* should never happen */
-        return "unknown (too big to display)";
-
-    default:
-        return "unknown (invalid error number)";
-    }
-}
-
-static const char*
-check_error(char* result, char*)
-{
-    return result;
-}
-
-void
-strErr(void)
-{
-#ifdef __GLIBC__
-    JAMI_ERR("%m");
-#else
-    char buf[1000];
-    JAMI_ERR("%s", check_error(strerror_r(errno, buf, sizeof(buf)), buf));
-#endif
-}
-
 namespace jami {
 
 static constexpr auto ENDL = '\n';
@@ -200,17 +168,17 @@ struct Logger::Msg
     Msg() = delete;
 
     Msg(int level, const char* file, int line, bool linefeed, std::string&& message)
-        : header_(contextHeader(file, line))
+        : payload_(std::move(message))
+        , header_(contextHeader(file, line))
         , level_(level)
         , linefeed_(linefeed)
-        , payload_(std::move(message))
     {}
 
     Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
-        : header_(contextHeader(file, line))
+        : payload_(formatPrintfArgs(fmt, ap))
+        , header_(contextHeader(file, line))
         , level_(level)
         , linefeed_(linefeed)
-        , payload_(formatPrintfArgs(fmt, ap))
     {}
 
     Msg(Msg&& other)
