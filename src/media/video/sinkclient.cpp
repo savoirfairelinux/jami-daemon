@@ -373,14 +373,14 @@ SinkClient::applyTransform(VideoFrame& frame_p)
 {
     std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
-    auto desc = av_pix_fmt_desc_get((AVPixelFormat)frame_p.format());
+    auto desc = av_pix_fmt_desc_get((AVPixelFormat) frame_p.format());
     if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
         try {
             frame = HardwareAccel::transferToMainMemory(frame_p, AV_PIX_FMT_NV12);
         } catch (const std::runtime_error& e) {
             JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s",
-                        this,
-                        e.what());
+                     this,
+                     e.what());
             return {};
         }
     } else
@@ -390,23 +390,24 @@ SinkClient::applyTransform(VideoFrame& frame_p)
     int angle = frame->getOrientation();
     if (angle != rotation_) {
         filter_ = getTransposeFilter(angle,
-                                        FILTER_INPUT_NAME,
-                                        frame->width(),
-                                        frame->height(),
-                                        frame->format(),
-                                        false);
+                                     FILTER_INPUT_NAME,
+                                     frame->width(),
+                                     frame->height(),
+                                     frame->format(),
+                                     false);
         rotation_ = angle;
     }
     if (filter_) {
         filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
-        frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
+        frame = std::static_pointer_cast<VideoFrame>(
+            std::shared_ptr<MediaFrame>(filter_->readOutput()));
     }
     if (crop_.w || crop_.h) {
         frame->pointer()->crop_top = crop_.y;
         frame->pointer()->crop_bottom = (size_t) frame->height() - crop_.y - crop_.h;
         frame->pointer()->crop_left = crop_.x;
         frame->pointer()->crop_right = (size_t) frame->width() - crop_.x - crop_.w;
-        av_frame_apply_cropping(frame->pointer(), 0);
+        av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
     }
     return frame;
 }
