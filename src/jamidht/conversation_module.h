@@ -59,6 +59,8 @@ public:
      */
     void loadConversations();
 
+    void resetPending();
+
     /**
      * Return all conversation's id (including syncing ones)
      */

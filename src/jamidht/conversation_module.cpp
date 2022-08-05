@@ -42,6 +42,7 @@ struct PendingConversationFetch
     bool cloning {false};
     std::string deviceId {};
     std::string removeId {};
+    time_t startTime {};
     std::set<std::string> connectingTo {};
 };
 
@@ -192,11 +193,26 @@ public:
             return true;
         }
         auto& pf = it->second;
-        if (pf.ready)
+        if (pf.ready) {
+            JAMI_ERR("@@@ Current pending fetch is ready (with %s/%s) started at %ld",
+                     convId.c_str(),
+                     deviceId.c_str(),
+                     pf.startTime);
             return false; // Already doing stuff
-        if (pf.connectingTo.find(deviceId) != pf.connectingTo.end())
+        }
+        if (pf.connectingTo.find(deviceId) != pf.connectingTo.end()) {
+            JAMI_ERR("@@@ Already got pending fetch (with %s/%s) started at %ld",
+                     convId.c_str(),
+                     deviceId.c_str(),
+                     pf.startTime);
             return false; // Already connecting to this device
+        }
         pf.connectingTo.insert(deviceId);
+        pf.startTime = std::time(nullptr);
+        JAMI_ERR("@@@ Start fetch (with %s/%s) started at %ld",
+                 convId.c_str(),
+                 deviceId.c_str(),
+                 pf.startTime);
         return true;
     }
 
@@ -208,8 +224,20 @@ public:
         }
         auto& pf = it->second;
         pf.connectingTo.erase(deviceId);
-        if (pf.connectingTo.empty())
+        if (pf.connectingTo.empty()) {
             pendingConversationsFetch_.erase(it);
+        } else {
+            for (const auto& c : pf.connectingTo) {
+                JAMI_ERR("@@@ ERASE FETCH WITH %s %s still connecting to %s",
+                         convId.c_str(),
+                         deviceId.c_str(),
+                         c.c_str());
+            }
+        }
+        JAMI_ERR("@@@ ERASE FETCH WITH %s %s still connecting to %u devices",
+                 convId.c_str(),
+                 deviceId.c_str(),
+                 pf.connectingTo.size());
     }
 
     // Message send/load
@@ -439,6 +467,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                                 conversationId.c_str());
                                   }
                                   std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                                  JAMI_ERR("@@@ ERASE FETCH FOR %s", conversationId.c_str());
                                   pendingConversationsFetch_.erase(conversationId);
                               },
                               commitId);
@@ -502,6 +531,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         if (oldFetch != pendingConversationsFetch_.end() && !oldFetch->second.removeId.empty()) {
             removeConversation(oldFetch->second.removeId);
         }
+        JAMI_ERR("@@@ ERASE 2 FETCH FOR %s", conversationId.c_str());
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
@@ -933,6 +963,14 @@ ConversationModule::loadConversations()
     JAMI_INFO("[Account %s] Conversations loaded!", pimpl_->accountId_.c_str());
 }
 
+void
+ConversationModule::resetPending()
+{
+    if (!pimpl_->pendingConversationsFetch_.empty()) {
+        JAMI_ERR("@@@This is a bug, seems to still fetch to some device on initializing");
+        pimpl_->pendingConversationsFetch_.clear();
+    }
+}
 std::vector<std::string>
 ConversationModule::getConversations() const
 {
