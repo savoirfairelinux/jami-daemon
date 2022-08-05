@@ -500,6 +500,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         }
         if (noNewSocket) {
             // If no new socket is specified, we don't try to generate a new socket
+            JAMI_ERR() << "@@@ NO SOCKET CONN WITH " << deviceId;
             for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
                 pending.cb(nullptr, deviceId);
             return;
@@ -510,6 +511,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         auto eraseInfo = [w, cbId, deviceId] {
             if (auto shared = w.lock()) {
                 // If no new socket is specified, we don't try to generate a new socket
+                JAMI_ERR() << "@@@ ERASE PENDING WITH " << deviceId;
                 for (const auto& pending : shared->extractPendingCallbacks(deviceId))
                     pending.cb(nullptr, deviceId);
                 std::lock_guard<std::mutex> lk(shared->infosMtx_);
@@ -616,17 +618,22 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     auto channelSock = sock->addChannel(name);
     channelSock->onShutdown([name, deviceId, vid, w = weak()] {
         auto shared = w.lock();
-        if (shared)
+        if (shared) {
+            JAMI_ERR() << "@@@ SHUTDOWN WITH " << deviceId << " " << vid;
+
             for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
                 pending.cb(nullptr, deviceId);
+        }
     });
     channelSock->onReady(
         [wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
             auto shared = w.lock();
             auto channelSock = wSock.lock();
-            if (shared)
+            if (shared) {
+                JAMI_ERR() << "@@@ SHUTDOWN WITH " << deviceId << " " << vid;
                 for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
                     pending.cb(channelSock, deviceId);
+            }
         });
 
     ChannelRequest val;
@@ -706,11 +713,12 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                             dht::InfoHash peer_h;
                             if (AccountManager::foundPeerDevice(cert, peer_h)) {
 #if TARGET_OS_IOS
-                                if ((req.connType == "videoCall" || req.connType == "audioCall") && jami::Manager::instance().isIOSExtension) {
+                                if ((req.connType == "videoCall" || req.connType == "audioCall")
+                                    && jami::Manager::instance().isIOSExtension) {
                                     bool hasVideo = req.connType == "videoCall";
                                     emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
                                         shared->account.getAccountID(), peer_h.toString(), hasVideo);
-                                        return;
+                                    return;
                                 }
 #endif
                                 shared->onDhtPeerRequest(req, cert);
@@ -764,11 +772,15 @@ ConnectionManager::Impl::onTlsNegotiationDone(bool ok,
                        << " - Initied by connectDevice(). Initied by channel: " << name
                        << " - vid: " << vid;
         }
+        JAMI_ERR() << "@@@ " << deviceId;
         addNewMultiplexedSocket(deviceId, vid);
         // Finally, open the channel and launch pending callbacks
+        JAMI_ERR() << "@@@ " << deviceId;
         if (info->socket_) {
             // Note: do not remove pending there it's done in sendChannelRequest
-            for (const auto& pending : getPendingCallbacks(deviceId)) {
+            auto cbs = getPendingCallbacks(deviceId);
+            JAMI_ERR("@@@ %u", cbs.size());
+            for (const auto& pending : cbs) {
                 JAMI_DBG("Send request on TLS socket for channel %s to %s",
                          pending.name.c_str(),
                          deviceId.to_c_str());
@@ -1070,6 +1082,7 @@ ConnectionManager::isConnecting(const DeviceId& deviceId, const std::string& nam
 void
 ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
 {
+    JAMI_ERR() << "@@@ CLOSE CONN WITH " << deviceId;
     for (const auto& pending : pimpl_->extractPendingCallbacks(deviceId))
         pending.cb(nullptr, deviceId);
 
