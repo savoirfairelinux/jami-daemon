@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eeb2ebec_893c1bea",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-08-05T19:54:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::set\u003cstd::__cxx11::basic_string\u003cchar\u003e, std::less\u003cstd::__cxx11::basic_string\u003cchar\u003e \u003e, std::allocator\u003cstd::__cxx11::basic_string\u003cchar\u003e \u003e \u003e::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "a8de4b67597821578a0924e12e25fed4f2094e5e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
