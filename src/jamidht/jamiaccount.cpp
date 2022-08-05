@@ -1943,6 +1943,8 @@ JamiAccount::doRegister_()
             dht_->join();
         }
 
+        convModule()->clearPendingFetch();
+
 #if HAVE_RINGNS
         // Look for registered name on the blockchain
         accountManager_->lookupAddress(
