@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4393158b_f2df9631",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 782,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-05T19:42:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98b659a3_74cb099f",
+      "revId": "898668eba3c342bca691f6290dc7d64dc2f1a97c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f64d9420_7642da5a",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-08-05T15:47:58Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::set\u003cstd::__cxx11::basic_string\u003cchar\u003e, std::less\u003cstd::__cxx11::basic_string\u003cchar\u003e \u003e, std::allocator\u003cstd::__cxx11::basic_string\u003cchar\u003e \u003e \u003e::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "898668eba3c342bca691f6290dc7d64dc2f1a97c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "336501b0_87672275",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-05T19:42:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f64d9420_7642da5a",
       "revId": "898668eba3c342bca691f6290dc7d64dc2f1a97c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
