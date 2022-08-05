@@ -60,6 +60,11 @@ public:
     void loadConversations();
 
     /**
+     * Clear not removed fetch
+     */
+    void clearPendingFetch();
+
+    /**
      * Return all conversation's id (including syncing ones)
      */
     std::vector<std::string> getConversations() const;
