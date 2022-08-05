@@ -30,9 +30,13 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/compile.h>
+#if __has_include(<fmt/std.h>)
+#include <fmt/std.h>
+#else
+#include <fmt/ostream.h>
+#endif
 
 #ifdef _MSC_VER
-#include <fmt/std.h>
 #include <sys_time.h>
 #else
 #include <sys/time.h>
