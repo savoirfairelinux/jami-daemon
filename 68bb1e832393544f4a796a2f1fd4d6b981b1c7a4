@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f8be263_767309b0",
+        "filename": "src/logger.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-05T15:53:04Z",
+      "side": 0,
+      "message": "used in socket_pair.cpp\n\n/usr/bin/ld: ../src/.libs/libring.so: undefined reference to `strErr\u0027",
+      "range": {
+        "startLine": 121,
+        "startChar": 0,
+        "endLine": 121,
+        "endChar": 6
+      },
+      "revId": "68bb1e832393544f4a796a2f1fd4d6b981b1c7a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
