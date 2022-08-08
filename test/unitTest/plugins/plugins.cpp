@@ -119,6 +119,7 @@ private:
     void testInstallAndLoad();
     void testHandlers();
     void testDetailsAndPreferences();
+    void testTranslations();
     void testCall();
     void testMessage();
 
@@ -127,6 +128,7 @@ private:
     CPPUNIT_TEST(testInstallAndLoad);
     CPPUNIT_TEST(testHandlers);
     CPPUNIT_TEST(testDetailsAndPreferences);
+    CPPUNIT_TEST(testTranslations);
     CPPUNIT_TEST(testCall);
     CPPUNIT_TEST(testMessage);
     CPPUNIT_TEST_SUITE_END();
@@ -388,8 +390,6 @@ PluginsTest::testDetailsAndPreferences()
     CPPUNIT_ASSERT(preferencesValuesOrig[key] == preferencesValuesNew[key]);
     CPPUNIT_ASSERT(preferencesValuesNew[key] != preferenceNewValue);
 
-
-
     // Get-set-reset - alice account
     preferences = Manager::instance().getJamiPluginManager().getPluginPreferences(installationPath_, aliceData.accountId_);
     CPPUNIT_ASSERT(!preferences.empty());
@@ -428,11 +428,30 @@ PluginsTest::testDetailsAndPreferences()
     CPPUNIT_ASSERT(preferencesValuesNew[key] == preferencesValuesBobOrig[key]);
     CPPUNIT_ASSERT(preferencesValuesNew[key] != preferenceNewValue);
 
-    // Test translations
-
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));
 }
 
+void
+PluginsTest::testTranslations()
+{
+    Manager::instance().pluginPreferences.setPluginsEnabled(true);
+    setenv("JAMI_LANG", "en", true);
+    Manager::instance().getJamiPluginManager().installPlugin(jplPath_, true);
+
+    auto preferences = Manager::instance().getJamiPluginManager().getPluginPreferences(installationPath_, "");
+    CPPUNIT_ASSERT(!preferences.empty());
+    auto preferencesValuesEN = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
+
+    setenv("JAMI_LANG", "fr", true);
+
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "") != preferencesValuesEN);
+
+    setenv("JAMI_LANG", "en", true);
+
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "") == preferencesValuesEN);
+
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));
+}
 
 bool
 PluginsTest::waitForSignal(CallData& callData,
