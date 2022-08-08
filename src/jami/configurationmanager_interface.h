@@ -170,6 +170,9 @@ DRING_PUBLIC int32_t getHistoryLimit();
 DRING_PUBLIC void setRingingTimeout(int32_t timeout);
 DRING_PUBLIC int32_t getRingingTimeout();
 
+DRING_PUBLIC void setLanguage(const std::string& language);
+DRING_PUBLIC std::string getLanguage();
+
 DRING_PUBLIC void setAccountsOrder(const std::string& order);
 
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getCredentials(

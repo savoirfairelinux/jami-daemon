@@ -169,6 +169,8 @@ public:
     int32_t getHistoryLimit();
     void setRingingTimeout(const int32_t& timeout);
     int32_t getRingingTimeout();
+    void setLanguage(const std::string& language);
+    std::string getLanguage();
     void setAccountsOrder(const std::string& order);
     std::vector<std::map<std::string, std::string>> getCredentials(const std::string& accountID);
     void setCredentials(const std::string& accountID,

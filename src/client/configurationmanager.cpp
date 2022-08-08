@@ -760,6 +760,18 @@ setRingingTimeout(int32_t timeout)
     jami::Manager::instance().setRingingTimeout(timeout);
 }
 
+std::string
+getLanguage()
+{
+    return jami::Manager::instance().getLanguage();
+}
+
+void
+setLanguage(const std::string& language)
+{
+    jami::Manager::instance().setLanguage(language);
+}
+
 std::vector<std::string>
 getSupportedAudioManagers()
 {

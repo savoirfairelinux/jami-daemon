@@ -1048,6 +1048,24 @@
            </arg>
        </method>
 
+       <method name="getLanguage" tp:name-for-bindings="getLanguage">
+           <tp:added version="13.5.0"/>
+           <tp:docstring>
+                Returns the user prefered language. If none was set, then return empty.
+           </tp:docstring>
+           <arg type="s" name="language" direction="out">
+           </arg>
+       </method>
+
+       <method name="setLanguage" tp:name-for-bindings="setLanguage">
+           <tp:added version="13.5.0"/>
+           <tp:docstring>
+                Sets the user preferred language.
+           </tp:docstring>
+           <arg type="s" name="language" direction="in">
+           </arg>
+       </method>
+
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
        </signal>
 

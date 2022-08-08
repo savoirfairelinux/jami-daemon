@@ -525,6 +525,18 @@ DBusConfigurationManager::getRingingTimeout() -> decltype(DRing::getRingingTimeo
 }
 
 void
+DBusConfigurationManager::setLanguage(const std::string& language)
+{
+    DRing::setLanguage(language);
+}
+
+auto
+DBusConfigurationManager::getLanguage() -> decltype(DRing::getLanguage())
+{
+    return DRing::getLanguage();
+}
+
+void
 DBusConfigurationManager::setAccountsOrder(const std::string& order)
 {
     DRing::setAccountsOrder(order);
