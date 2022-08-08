@@ -159,26 +159,34 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
     std::vector<std::map<std::string, std::string>> preferences;
     if (file) {
         // Get preferences locale
-#ifdef WIN32
         std::string lang;
-        WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
-        if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
-            char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
-            WideCharToMultiByte(CP_UTF8,
-                                0,
-                                localeBuffer,
-                                LOCALE_NAME_MAX_LENGTH,
-                                utf8Buffer,
-                                LOCALE_NAME_MAX_LENGTH,
-                                nullptr,
-                                nullptr);
+        if (auto envLang = std::getenv("JAMI_LANG"))
+            lang = envLang;
+        else
+            JAMI_ERR() << "Error getting JAMI_LANG env, trying to get system language";
+        // If language preference is empty, try to get from the system.
+        if (lang.empty()) {
+#ifdef WIN32
+            WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
+            if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
+                char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
+                WideCharToMultiByte(CP_UTF8,
+                                    0,
+                                    localeBuffer,
+                                    LOCALE_NAME_MAX_LENGTH,
+                                    utf8Buffer,
+                                    LOCALE_NAME_MAX_LENGTH,
+                                    nullptr,
+                                    nullptr);
 
-            lang.append(utf8Buffer);
-            string_replace(lang, "-", "_");
-        }
+                lang.append(utf8Buffer);
+                string_replace(lang, "-", "_");
+            }
 #else
-        std::string lang = std::locale("").name();
-#endif //
+            // For Android this should not work since std::locale is not supported by the NDK.
+            lang = std::locale("").name();
+#endif // WIN32
+        }
         auto locales = getLocales(rootPath, std::string(string_remove_suffix(lang, '.')));
 
         // Read the file to a json format
