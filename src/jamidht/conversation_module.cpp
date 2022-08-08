@@ -269,6 +269,7 @@ public:
     std::mutex replayMtx_;
     std::map<std::string, std::vector<std::map<std::string, std::string>>> replay_;
     std::map<std::string, uint64_t> refreshMessage;
+    std::atomic_int syncCnt {0};
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -418,6 +419,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                               return false;
                           }
                           acc->addGitSocket(channel->deviceId(), conversationId, channel);
+                          syncCnt.fetch_add(1);
                           conversation->second->sync(
                               peer,
                               deviceId,
@@ -438,8 +440,15 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                                 deviceId.c_str(),
                                                 conversationId.c_str());
                                   }
-                                  std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                                  pendingConversationsFetch_.erase(conversationId);
+                                   {
+                                       std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                                       pendingConversationsFetch_.erase(conversationId);
+                                   }
+                                  if (syncCnt.fetch_sub(1) == 1) {
+                                    if (auto account = account_.lock())
+                                        emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(
+                                            account->getAccountID().c_str());
+                                  }
                               },
                               commitId);
                           return true;

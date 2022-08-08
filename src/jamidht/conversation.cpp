@@ -953,12 +953,8 @@ Conversation::Impl::pull()
         decltype(fetchingRemotes_.begin()) it;
         {
             std::lock_guard<std::mutex> lk(pullcbsMtx_);
-            if (pullcbs_.empty()) {
-                if (auto account = account_.lock())
-                    emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(
-                        account->getAccountID().c_str());
+            if (pullcbs_.empty())
                 return;
-            }
             auto& elem = pullcbs_.front();
             deviceId = std::move(std::get<0>(elem));
             commitId = std::move(std::get<1>(elem));
