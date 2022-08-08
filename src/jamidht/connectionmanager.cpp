@@ -103,6 +103,10 @@ public:
         isDestroying_ = true;
         {
             std::lock_guard<std::mutex> lk(connectCbsMtx_);
+            // Call all pending callbacks that channel is not ready
+            for (auto& [deviceId, pcbs] : pendingCbs_)
+                for (auto& pending : pcbs)
+                    pending.cb(nullptr, deviceId);
             pendingCbs_.clear();
         }
         removeUnusedConnections();
