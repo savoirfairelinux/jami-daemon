@@ -42,7 +42,8 @@ public:
     MessageEngine(SIPAccountBase&, const std::string& path);
 
     MessageToken sendMessage(const std::string& to,
-                             const std::map<std::string, std::string>& payloads);
+                             const std::map<std::string, std::string>& payloads,
+                             uint64_t refreshToken);
 
     MessageStatus getStatus(MessageToken t) const;
 

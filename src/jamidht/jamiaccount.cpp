@@ -2350,11 +2350,11 @@ JamiAccount::convModule()
                         shared->syncModule()->syncWithConnected();
                 });
             },
-            [this](auto&& uri, auto&& msg) {
-                runOnMainThread([w = weak(), uri, msg] {
-                    if (auto shared = w.lock())
-                        shared->sendTextMessage(uri, msg);
-                });
+            [this](auto&& uri, auto&& msg, auto token = 0) {
+                // No need to retrigger, sendTextMessage will call
+                // messageEngine_.sendMessage, already retriggering on
+                // main thread.
+                return sendTextMessage(uri, msg, token);
             },
             [this](const auto& convId, const auto& deviceId, auto&& cb) {
                 runOnMainThread([w = weak(), convId, deviceId, cb = std::move(cb)] {
@@ -3147,7 +3147,8 @@ JamiAccount::forEachDevice(const dht::InfoHash& to,
 
 uint64_t
 JamiAccount::sendTextMessage(const std::string& to,
-                             const std::map<std::string, std::string>& payloads)
+                             const std::map<std::string, std::string>& payloads,
+                             uint64_t refreshToken)
 {
     Uri uri(to);
     if (uri.scheme() == Uri::Scheme::SWARM) {
@@ -3166,15 +3167,15 @@ JamiAccount::sendTextMessage(const std::string& to,
         JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
         return 0;
     }
-    return SIPAccountBase::sendTextMessage(toUri, payloads);
+    return SIPAccountBase::sendTextMessage(toUri, payloads, refreshToken);
 }
 
 void
-JamiAccount::sendTextMessage(const std::string& to,
-                             const std::map<std::string, std::string>& payloads,
-                             uint64_t token,
-                             bool retryOnTimeout,
-                             bool onlyConnected)
+JamiAccount::sendMessage(const std::string& to,
+                         const std::map<std::string, std::string>& payloads,
+                         uint64_t token,
+                         bool retryOnTimeout,
+                         bool onlyConnected)
 {
     std::string toUri;
     try {
@@ -3640,7 +3641,7 @@ JamiAccount::sendInstantMessage(const std::string& convId,
         auto uri = m.at("uri");
         auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
         // Announce to all members that a new message is sent
-        sendTextMessage(uri, msg, token, false, true);
+        sendMessage(uri, msg, token, false, true);
     }
 }
 

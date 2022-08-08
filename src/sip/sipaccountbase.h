@@ -233,23 +233,30 @@ public:
      * file, that can be used directly by PJSIP to initialize
      * an alternate UDP transport.
      */
-    std::string getStunServer() const { return stunServer_; }
+    std::string getStunServer() const
+    {
+        return stunServer_;
+    }
 
-    void setStunServer(const std::string& srv) { stunServer_ = srv; }
+    void setStunServer(const std::string& srv)
+    {
+        stunServer_ = srv;
+    }
 
     IceTransportOptions getIceOptions() const noexcept;
 
-    virtual void sendTextMessage(const std::string& to,
-                                 const std::map<std::string, std::string>& payloads,
-                                 uint64_t id,
-                                 bool retryOnTimeout = true,
-                                 bool onlyConnected = false)
+    virtual void sendMessage(const std::string& to,
+                             const std::map<std::string, std::string>& payloads,
+                             uint64_t id,
+                             bool retryOnTimeout = true,
+                             bool onlyConnected = false)
         = 0;
 
     virtual uint64_t sendTextMessage(const std::string& to,
-                                     const std::map<std::string, std::string>& payloads) override
+                                     const std::map<std::string, std::string>& payloads,
+                                     uint64_t refreshToken = 0) override
     {
-        return messageEngine_.sendMessage(to, payloads);
+        return messageEngine_.sendMessage(to, payloads, refreshToken);
     }
 
     im::MessageStatus getMessageStatus(uint64_t id) const override
@@ -257,7 +264,10 @@ public:
         return messageEngine_.getStatus(id);
     }
 
-    bool cancelMessage(uint64_t id) override { return messageEngine_.cancel(id); }
+    bool cancelMessage(uint64_t id) override
+    {
+        return messageEngine_.cancel(id);
+    }
 
     virtual void onTextMessage(const std::string& id,
                                const std::string& from,

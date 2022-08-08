@@ -43,7 +43,9 @@ MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path)
 }
 
 MessageToken
-MessageEngine::sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads)
+MessageEngine::sendMessage(const std::string& to,
+                           const std::map<std::string, std::string>& payloads,
+                           uint64_t refreshToken)
 {
     if (payloads.empty() or to.empty())
         return 0;
@@ -51,12 +53,21 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
     {
         std::lock_guard<std::mutex> lock(messagesMutex_);
         auto& peerMessages = messages_[to];
-        do {
-            token = std::uniform_int_distribution<MessageToken> {1, JAMI_ID_MAX_VAL}(account_.rand);
-        } while (peerMessages.find(token) != peerMessages.end());
-        auto m = peerMessages.emplace(token, Message {});
-        m.first->second.to = to;
-        m.first->second.payloads = payloads;
+        auto previousIt = peerMessages.find(refreshToken);
+        if (previousIt != peerMessages.end() && previousIt->second.status != MessageStatus::SENT) {
+            JAMI_DBG("[message %ld] Replace content", refreshToken);
+            token = refreshToken;
+            previousIt->second.to = to;
+            previousIt->second.payloads = payloads;
+        } else {
+            do {
+                token = std::uniform_int_distribution<MessageToken> {1, JAMI_ID_MAX_VAL}(
+                    account_.rand);
+            } while (peerMessages.find(token) != peerMessages.end());
+            auto m = peerMessages.emplace(token, Message {});
+            m.first->second.to = to;
+            m.first->second.payloads = payloads;
+        }
         save_();
     }
     runOnMainThread([this, to]() { retrySend(to); });
@@ -108,7 +119,7 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
                 p.to,
                 std::to_string(p.token),
                 (int) DRing::Account::MessageStates::SENDING);
-        account_.sendTextMessage(p.to, p.payloads, p.token, retryOnTimeout);
+        account_.sendMessage(p.to, p.payloads, p.token, retryOnTimeout);
     }
 }
 
