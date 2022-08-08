@@ -163,7 +163,8 @@ public:
      * @return a token to query the message status
      */
     virtual uint64_t sendTextMessage(const std::string& /*to*/,
-                                     const std::map<std::string, std::string>& /*payloads*/)
+                                     const std::map<std::string, std::string>& /*payloads*/,
+                                     uint64_t /*refreshToken*/ = 0)
     {
         return 0;
     }

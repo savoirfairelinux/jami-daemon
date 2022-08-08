@@ -332,13 +332,14 @@ public:
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
 
     void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
-    void sendTextMessage(const std::string& to,
-                         const std::map<std::string, std::string>& payloads,
-                         uint64_t id,
-                         bool retryOnTimeout = true,
-                         bool onlyConnected = false) override;
+    void sendMessage(const std::string& to,
+                     const std::map<std::string, std::string>& payloads,
+                     uint64_t id,
+                     bool retryOnTimeout = true,
+                     bool onlyConnected = false) override;
     uint64_t sendTextMessage(const std::string& to,
-                             const std::map<std::string, std::string>& payloads) override;
+                             const std::map<std::string, std::string>& payloads,
+                             uint64_t refreshToken = 0) override;
     void sendInstantMessage(const std::string& convId,
                             const std::map<std::string, std::string>& msg);
     void onIsComposing(const std::string& conversationId, const std::string& peer, bool isWriting);

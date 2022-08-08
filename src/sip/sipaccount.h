@@ -442,11 +442,11 @@ public:
 
     void onRegister(pjsip_regc_cbparam* param);
 
-    virtual void sendTextMessage(const std::string& to,
-                                 const std::map<std::string, std::string>& payloads,
-                                 uint64_t id,
-                                 bool retryOnTimeout = true,
-                                 bool onlyConnected = false) override;
+    virtual void sendMessage(const std::string& to,
+                             const std::map<std::string, std::string>& payloads,
+                             uint64_t id,
+                             bool retryOnTimeout = true,
+                             bool onlyConnected = false) override;
 
     void connectivityChanged() override;
 

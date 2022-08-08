@@ -268,6 +268,7 @@ public:
     // Replay conversations (after erasing/re-adding)
     std::mutex replayMtx_;
     std::map<std::string, std::vector<std::map<std::string, std::string>>> replay_;
+    std::map<std::string, uint64_t> refreshMessage;
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -467,7 +468,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                   accountId_.c_str(),
                   conversationId.c_str());
         sendMsgCb_(peer,
-                   std::map<std::string, std::string> {{"application/invite", conversationId}});
+                   std::map<std::string, std::string> {{"application/invite", conversationId}},
+                   0);
     }
 }
 
@@ -769,8 +771,10 @@ ConversationModule::Impl::sendMessageNotification(const Conversation& conversati
     const auto text = Json::writeString(builder, message);
     for (const auto& member : conversation.memberUris(sync ? "" : username_)) {
         // Announce to all members that a new message is sent
-        sendMsgCb_(member,
-                   std::map<std::string, std::string> {{"application/im-gitmessage-id", text}});
+        refreshMessage[member] = sendMsgCb_(member,
+                                            std::map<std::string, std::string> {
+                                                {"application/im-gitmessage-id", text}},
+                                            refreshMessage[member]);
     }
 }
 
@@ -1076,7 +1080,7 @@ ConversationModule::onNeedConversationRequest(const std::string& from,
         auto invite = itConv->second->generateInvitation();
         lk.unlock();
         JAMI_DBG("%s is asking a new invite for %s", from.c_str(), conversationId.c_str());
-        pimpl_->sendMsgCb_(from, std::move(invite));
+        pimpl_->sendMsgCb_(from, std::move(invite), 0);
     }
 }
 
@@ -1500,7 +1504,8 @@ ConversationModule::onNewCommit(const std::string& peer,
                   conversationId.c_str());
         pimpl_->sendMsgCb_(peer,
                            std::map<std::string, std::string> {
-                               {"application/invite", conversationId}});
+                               {"application/invite", conversationId}},
+                           0);
         return;
     }
     JAMI_DBG("[Account %s] on new commit notification from %s, for %s, commit %s",
@@ -1533,7 +1538,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
         // we should not forbid new invites
         auto invite = it->second->generateInvitation();
         lk.unlock();
-        pimpl_->sendMsgCb_(contactUri, std::move(invite));
+        pimpl_->sendMsgCb_(contactUri, std::move(invite), 0);
         return;
     }
 
@@ -1551,7 +1556,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                                 if (sendRequest) {
                                     auto invite = it->second->generateInvitation();
                                     lk.unlock();
-                                    pimpl_->sendMsgCb_(contactUri, std::move(invite));
+                                    pimpl_->sendMsgCb_(contactUri, std::move(invite), 0);
                                 }
                             }
                         }
