@@ -27,6 +27,7 @@
 #include <fmt/core.h>
 
 #include "logger.h"
+#include "manager.h"
 #include "fileutils.h"
 
 namespace jami {
@@ -159,26 +160,30 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
     std::vector<std::map<std::string, std::string>> preferences;
     if (file) {
         // Get preferences locale
+        std::string lang = Manager::instance().getLanguage();
+        // If language preference is empty, try to get from the system.
+        // For Android this should not work since std::locale is not supported by the NDK.
+        if (lang.empty()) {
 #ifdef WIN32
-        std::string lang;
-        WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
-        if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
-            char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
-            WideCharToMultiByte(CP_UTF8,
-                                0,
-                                localeBuffer,
-                                LOCALE_NAME_MAX_LENGTH,
-                                utf8Buffer,
-                                LOCALE_NAME_MAX_LENGTH,
-                                nullptr,
-                                nullptr);
+            WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
+            if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
+                char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
+                WideCharToMultiByte(CP_UTF8,
+                                    0,
+                                    localeBuffer,
+                                    LOCALE_NAME_MAX_LENGTH,
+                                    utf8Buffer,
+                                    LOCALE_NAME_MAX_LENGTH,
+                                    nullptr,
+                                    nullptr);
 
-            lang.append(utf8Buffer);
-            string_replace(lang, "-", "_");
-        }
+                lang.append(utf8Buffer);
+                string_replace(lang, "-", "_");
+            }
 #else
-        std::string lang = std::locale("").name();
-#endif //
+            std::string lang = std::locale("").name();
+#endif // WIN32
+        }
         auto locales = getLocales(rootPath, std::string(string_remove_suffix(lang, '.')));
 
         // Read the file to a json format
