@@ -29,6 +29,7 @@
 #include "client/ring_signal.h"
 
 #include "audio-processing/null_audio_processor.h"
+#include "tracepoint.h"
 #if HAVE_WEBRTC_AP
 #include "audio-processing/webrtc.h"
 #endif
@@ -132,9 +133,9 @@ static inline bool
 shouldUseAudioProcessorEchoCancel(bool hasNativeAEC, const std::string& echoCancellerPref)
 {
     return
-        // user doesn't care which and there is a system AEC
+        // user doesn't care which and there is not a system AEC
         (echoCancellerPref == "auto" && !hasNativeAEC)
-        // use specifically wants audioProcessor
+        // user specifically wants audioProcessor
         or (echoCancellerPref == "audioProcessor");
 }
 
@@ -158,6 +159,8 @@ AudioLayer::createAudioProcessor()
     auto nb_channels = std::max(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
     auto sample_rate = std::max(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
 
+    // round sample_rate to nearest multiple of 16000 and clamp it.
+    sample_rate = 16000u * ((sample_rate / 16000u) + 1u);
     sample_rate = std::clamp(sample_rate, 16000u, 48000u);
 
     AudioFormat formatForProcessor {sample_rate, nb_channels};
@@ -318,6 +321,8 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
             break;
     }
 
+    jami_tracepoint(audio_layer_get_to_play_end);
+
     return playbackBuf;
 }
 
@@ -334,6 +339,8 @@ AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
     } else {
         mainRingBuffer_->put(std::move(frame));
     }
+
+    jami_tracepoint(audio_layer_put_recorded_end, );
 }
 
 } // namespace jami

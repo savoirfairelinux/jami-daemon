@@ -143,6 +143,92 @@ LTTNG_UST_TRACEPOINT_EVENT(
     )
 )
 
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    audio_input_read_from_device_end,
+    LTTNG_UST_TP_ARGS(
+        const char*, id
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, id, strtoull(id, NULL, 16))
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    audio_layer_put_recorded_end,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    audio_layer_get_to_play_end,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    call_start,
+    LTTNG_UST_TP_ARGS(
+            const char*, id
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, id, strtoull(id, NULL, 16))
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    call_end,
+    LTTNG_UST_TP_ARGS(
+            const char*, id
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, id, strtoull(id, NULL, 16))
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    conference_begin,
+    LTTNG_UST_TP_ARGS(
+            const char*, id
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, id, strtoull(id, NULL, 16))
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    conference_end,
+    LTTNG_UST_TP_ARGS(
+            const char*, id
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, id, strtoull(id, NULL, 16))
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    conference_add_participant,
+    LTTNG_UST_TP_ARGS(
+            const char*, conference_id,
+            const char*, participant_id
+    ),
+    LTTNG_UST_TP_FIELDS(
+            lttng_ust_field_integer(uint64_t, id, strtoull(conference_id, NULL, 16))
+            lttng_ust_field_integer(uint64_t, participant_id, strtoull(participant_id, NULL, 16))
+    )
+)
+
 #endif /* TRACEPOINT_DEF_H */
 
 #include <lttng/tracepoint-event.h>

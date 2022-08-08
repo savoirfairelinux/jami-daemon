@@ -29,6 +29,7 @@
 #include "ringbuffer.h"
 #include "ringbufferpool.h"
 #include "smartools.h"
+#include "tracepoint.h"
 
 #include <future>
 #include <memory>
@@ -136,6 +137,8 @@ AudioInput::readFromDevice()
     if (bufferPool.getInternalAudioFormat() != format_)
         audioFrame = resampler_->resample(std::move(audioFrame), format_);
     resizer_->enqueue(std::move(audioFrame));
+
+    jami_tracepoint(audio_input_read_from_device_end, id_.c_str());
 }
 
 void
