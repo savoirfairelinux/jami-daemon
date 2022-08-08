@@ -2366,6 +2366,24 @@ Manager::getRingingTimeout() const
     return preferences.getRingingTimeout();
 }
 
+void
+Manager::setLanguage(const std::string language)
+{
+    auto oldLang = preferences.getLanguage();
+
+    if (oldLang == language)
+        return;
+
+    preferences.setLanguage(language);
+    saveConfig();
+}
+
+std::string
+Manager::getLanguage() const
+{
+    return preferences.getLanguage();
+}
+
 bool
 Manager::setAudioManager(const std::string& api)
 {

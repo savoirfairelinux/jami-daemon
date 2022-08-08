@@ -90,6 +90,7 @@ static constexpr const char* ZONE_TONE_CHOICE_KEY {"zoneToneChoice"};
 static constexpr const char* PORT_NUM_KEY {"portNum"};
 static constexpr const char* SEARCH_BAR_DISPLAY_KEY {"searchBarDisplay"};
 static constexpr const char* MD5_HASH_KEY {"md5Hash"};
+static constexpr const char* LANGUAGE_KEY {"language"};
 
 // voip preferences
 constexpr const char* const VoipPreference::CONFIG_LABEL;
@@ -157,6 +158,7 @@ Preferences::Preferences()
     , portNum_(sip_utils::DEFAULT_SIP_PORT)
     , searchBarDisplay_(true)
     , md5Hash_(false)
+    , language_("")
 {}
 
 void
@@ -215,6 +217,7 @@ Preferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << RINGING_TIMEOUT << YAML::Value << ringingTimeout_;
     out << YAML::Key << HISTORY_MAX_CALLS_KEY << YAML::Value << historyMaxCalls_;
     out << YAML::Key << MD5_HASH_KEY << YAML::Value << md5Hash_;
+    out << YAML::Key << LANGUAGE_KEY << YAML::Value << language_;
     out << YAML::Key << ORDER_KEY << YAML::Value << accountOrder_;
     out << YAML::Key << PORT_NUM_KEY << YAML::Value << portNum_;
     out << YAML::Key << SEARCH_BAR_DISPLAY_KEY << YAML::Value << searchBarDisplay_;
@@ -235,6 +238,7 @@ Preferences::unserialize(const YAML::Node& in)
     parseValue(node, PORT_NUM_KEY, portNum_);
     parseValue(node, SEARCH_BAR_DISPLAY_KEY, searchBarDisplay_);
     parseValue(node, MD5_HASH_KEY, md5Hash_);
+    parseValue(node, LANGUAGE_KEY, language_);
 }
 
 VoipPreference::VoipPreference()

@@ -91,6 +91,9 @@ public:
     bool getMd5Hash() const { return md5Hash_; }
     void setMd5Hash(bool md5) { md5Hash_ = md5; }
 
+    std::string getLanguage() const { return language_; }
+    void setLanguage(const std::string& lang) { language_ = lang; }
+
 private:
     std::string accountOrder_;
     int historyLimit_;
@@ -100,6 +103,7 @@ private:
     int portNum_;
     bool searchBarDisplay_;
     bool md5Hash_;
+    std::string language_;
     constexpr static const char* const CONFIG_LABEL = "preferences";
 };
 

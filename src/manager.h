@@ -579,6 +579,18 @@ public:
     int getRingingTimeout() const;
 
     /**
+     * Set application language
+     * @param language
+     */
+    void setLanguage(const std::string language);
+
+    /**
+     * Get application language
+     * @return language
+     */
+    std::string getLanguage() const;
+
+    /**
      * Get the audio manager
      * @return int The audio manager
      *          "alsa"
