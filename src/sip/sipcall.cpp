@@ -65,6 +65,8 @@
 #include <opendht/thread_pool.h>
 #include <fmt/ranges.h>
 
+#include "tracepoint.h"
+
 namespace jami {
 
 using sip_utils::CONST_PJ_STR;
@@ -107,6 +109,8 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , enableIce_(account->isIceForMediaEnabled())
     , srtpEnabled_(account->isSrtpEnabled())
 {
+    jami_tracepoint(call_start);
+
     if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller());
 

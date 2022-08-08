@@ -143,6 +143,73 @@ LTTNG_UST_TRACEPOINT_EVENT(
     )
 )
 
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    audio_input_read_from_device_end,
+    LTTNG_UST_TP_ARGS(
+        const char*, id
+    ),
+    LTTNG_UST_TP_FIELDS(
+        lttng_ust_field_string(id, id)
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    audio_layer_put_recorded_end,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    audio_layer_get_to_play_end,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    call_start,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    call_end,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    conference_end,
+    LTTNG_UST_TP_ARGS(
+    ),
+    LTTNG_UST_TP_FIELDS(
+    )
+)
+
+LTTNG_UST_TRACEPOINT_EVENT(
+    jami,
+    conference_add_participant,
+    LTTNG_UST_TP_ARGS(
+        const char*, participant_id
+    ),
+    LTTNG_UST_TP_FIELDS(
+        lttng_ust_field_string(participant_id, participant_id)
+    )
+)
+
 #endif /* TRACEPOINT_DEF_H */
 
 #include <lttng/tracepoint-event.h>
