@@ -30,6 +30,7 @@
 #include "sip/siptransport.h"
 
 #include "client/videomanager.h"
+#include "tracepoint.h"
 #ifdef ENABLE_VIDEO
 #include "call.h"
 #include "video/video_input.h"
@@ -255,6 +256,7 @@ Conference::Conference(const std::shared_ptr<Account>& account)
 
     parser_.onVoiceActivity(
         [&](const auto& streamId, bool state) { setVoiceActivity(streamId, state); });
+    jami_tracepoint(conference_begin, id_.c_str());
 }
 
 Conference::~Conference()
@@ -306,6 +308,7 @@ Conference::~Conference()
         confAVStreams.clear();
     }
 #endif // ENABLE_PLUGIN
+    jami_tracepoint(conference_end, id_.c_str());
 }
 
 Conference::State
@@ -654,6 +657,10 @@ void
 Conference::addParticipant(const std::string& participant_id)
 {
     JAMI_DBG("Adding call %s to conference %s", participant_id.c_str(), id_.c_str());
+
+    jami_tracepoint(conference_add_participant,
+                    id_.c_str(),
+                    participant_id.c_str());
 
     {
         std::lock_guard<std::mutex> lk(participantsMtx_);

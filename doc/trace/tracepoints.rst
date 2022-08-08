@@ -33,13 +33,13 @@ Enabling tracepoints
 --------------------
 
 To enable tracepoints in Jami, you should configure the project using the
-``--enable-tracepoint`` feature.  You also need ``lttng-ust >= 2.13.0`` and
+``--enable-tracepoints`` feature.  You also need ``lttng-ust >= 2.13.0`` and
 ``liburcu >= 0.13.0``.
 
 How to define a tracepoint
 --------------------------
 
-To define a new tracepoints, you need to add the definition in src/jami/tracepoint.h
+To define a new tracepoints, you need to add the definition in src/jami/tracepoint-def.h
 
 It's recommended to use the ``LTTNG_UST_TRACEPOINT_EVENT`` macro and avoid using
 the others except if you know what you're doing.
@@ -56,7 +56,7 @@ NOTE!  As the documentation of LTTng says, the concatenation of provider name +
 tracepoint name must **not exceed 254 characters** or you will get bite.
 
 For example, here's the definition of a tracepoint for the scheduled executor in
-src/jami/tracepoint.h::
+src/jami/tracepoint-def.h::
 
   LTTNG_UST_TRACEPOINT_EVENT(
     jami,
