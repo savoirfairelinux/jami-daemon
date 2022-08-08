@@ -1048,6 +1048,16 @@
            </arg>
        </method>
 
+       <method name="getLanguage" tp:name-for-bindings="getLanguage">
+           <arg type="s" name="language" direction="out">
+           </arg>
+       </method>
+
+       <method name="setLanguage" tp:name-for-bindings="setLanguage">
+           <arg type="s" name="language" direction="in">
+           </arg>
+       </method>
+
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
        </signal>
 
