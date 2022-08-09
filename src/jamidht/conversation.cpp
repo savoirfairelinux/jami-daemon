@@ -1273,16 +1273,21 @@ Conversation::hasFetched(const std::string& deviceId)
     pimpl_->saveFetched();
 }
 
-void
+bool
 Conversation::setMessageDisplayed(const std::string& uri, const std::string& interactionId)
 {
     if (auto acc = pimpl_->account_.lock()) {
+        {
+            std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
+            if (pimpl_->lastDisplayed_[uri] == interactionId)
+                return false;
+            pimpl_->lastDisplayed_[uri] = interactionId;
+            pimpl_->saveLastDisplayed();
+        }
         if (uri == acc->getUsername() && pimpl_->lastDisplayedUpdatedCb_)
             pimpl_->lastDisplayedUpdatedCb_(pimpl_->repository_->id(), interactionId);
-        std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
-        pimpl_->lastDisplayed_[uri] = interactionId;
-        pimpl_->saveLastDisplayed();
     }
+    return true;
 }
 
 void

@@ -2957,9 +2957,10 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri,
     std::string conversationId = {};
     if (uri.scheme() == Uri::Scheme::SWARM)
         conversationId = uri.authority();
+    auto sendMessage = status == (int) DRing::Account::MessageStates::DISPLAYED && isReadReceiptEnabled();
     if (!conversationId.empty())
-        convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
-    if (status == (int) DRing::Account::MessageStates::DISPLAYED && isReadReceiptEnabled())
+        sendMessage &= convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
+    if (sendMessage)
         sendInstantMessage(uri.authority(),
                            {{MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}});
     return true;
@@ -3736,14 +3737,15 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             if (conversationId.empty()) // Old method
                 messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
             else if (isDisplayed) {
-                convModule()->onMessageDisplayed(from, conversationId, messageId);
-                JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-                    accountID_,
-                    conversationId,
-                    from,
-                    messageId,
-                    static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
+                if (convModule()->onMessageDisplayed(from, conversationId, messageId)) {
+                    JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
+                    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                        accountID_,
+                        conversationId,
+                        from,
+                        messageId,
+                        static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
+                }
             }
             return true;
         } catch (const std::exception& e) {

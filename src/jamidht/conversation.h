@@ -350,8 +350,9 @@ public:
      * Store last read commit (returned in getMembers)
      * @param uri               Of the member
      * @param interactionId     Last interaction displayed
+     * @return if updated
      */
-    void setMessageDisplayed(const std::string& uri, const std::string& interactionId);
+    bool setMessageDisplayed(const std::string& uri, const std::string& interactionId);
 
     /**
      * Compute, with multi device support the last message displayed of a conversation

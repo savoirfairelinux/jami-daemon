@@ -1242,16 +1242,16 @@ ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t durat
     }
 }
 
-void
+bool
 ConversationModule::onMessageDisplayed(const std::string& peer,
                                        const std::string& conversationId,
                                        const std::string& interactionId)
 {
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     auto conversation = pimpl_->conversations_.find(conversationId);
-    if (conversation != pimpl_->conversations_.end() && conversation->second) {
-        conversation->second->setMessageDisplayed(peer, interactionId);
-    }
+    if (conversation != pimpl_->conversations_.end() && conversation->second)
+        return conversation->second->setMessageDisplayed(peer, interactionId);
+    return false;
 }
 
 uint32_t
