@@ -163,7 +163,7 @@ public:
     void addCallHistoryMessage(const std::string& uri, uint64_t duration_ms);
 
     // Received that a peer displayed a message
-    void onMessageDisplayed(const std::string& peer,
+    bool onMessageDisplayed(const std::string& peer,
                             const std::string& conversationId,
                             const std::string& interactionId);
 
