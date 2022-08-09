@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "361d4bbe_07dace28",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-09T15:47:47Z",
+      "side": 1,
+      "message": "As it\u0027s an API change, Adrien should validate",
+      "revId": "7b04749e34f8a77e67cb3f0b17f92f17c0ae5ee9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c76aa1c_2a9d31d5",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 1053,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-09T15:47:47Z",
+      "side": 1,
+      "message": "ideally, add \u003ctp:added version\u003d\"5.1.0\"/\u003e and tp:docstring",
+      "range": {
+        "startLine": 1051,
+        "startChar": 33,
+        "endLine": 1053,
+        "endChar": 17
+      },
+      "revId": "7b04749e34f8a77e67cb3f0b17f92f17c0ae5ee9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
