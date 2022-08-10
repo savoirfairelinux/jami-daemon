@@ -771,29 +771,26 @@ TlsSession::TlsSessionImpl::sendOcspRequest(const std::string& uri,
     request->set_header_field(restinio::http_field_t::content_type, "application/ocsp-request");
     request->set_body(std::move(body));
     request->set_connection_type(restinio::http_connection_header_t::close);
-    request->add_on_state_change_callback(
-        [this, cb = std::move(cb), timeout](const http::Request::State state,
-                                            const http::Response response) {
-            JAMI_DBG("HTTP OCSP Request state=%i status_code=%i",
-                     (unsigned int) state,
-                     response.status_code);
-            if (state == http::Request::State::SENDING) {
-                auto request = response.request.lock();
-                request->get_connection()->timeout(timeout, [request](const asio::error_code& ec) {
-                    if (ec and ec != asio::error::operation_aborted)
-                        JAMI_ERR("HTTP OCSP Request timeout with error: %s", ec.message().c_str());
-                    request->cancel();
-                });
-            }
-            if (state != http::Request::State::DONE)
-                return;
-            if (cb)
-                cb(response);
-            if (auto request = response.request.lock()) {
-                std::lock_guard<std::mutex> lock(requestsMtx_);
-                requests_.erase(request);
-            }
-        });
+    request->timeout(timeout, [this, request](const asio::error_code& ec) {
+        if (ec and ec != asio::error::operation_aborted)
+            JAMI_ERR("HTTP OCSP Request timeout with error: %s", ec.message().c_str());
+        request->cancel();
+    });
+    request->add_on_state_change_callback([this,
+                                           cb = std::move(cb)](const http::Request::State state,
+                                                    const http::Response response) {
+        JAMI_DBG("HTTP OCSP Request state=%i status_code=%i",
+                 (unsigned int) state,
+                 response.status_code);
+        if (state != http::Request::State::DONE)
+            return;
+        if (cb)
+            cb(response);
+        if (auto request = response.request.lock()) {
+            std::lock_guard<std::mutex> lock(requestsMtx_);
+            requests_.erase(request);
+        }
+    });
     {
         std::lock_guard<std::mutex> lock(requestsMtx_);
         requests_.emplace(request);
