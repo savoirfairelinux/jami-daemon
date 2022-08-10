@@ -19,15 +19,18 @@
 #include "speex.h"
 
 #include "audio/audiolayer.h"
-#include <cstdint>
-#include <memory>
-#include <speex/speex_config_types.h>
-#include <vector>
 
+#ifndef _MSC_VER
+#include <speex/speex_config_types.h>
+#endif
 extern "C" {
 #include <speex/speex_echo.h>
 #include <speex/speex_preprocess.h>
 }
+
+#include <cstdint>
+#include <memory>
+#include <vector>
 
 namespace jami {
 

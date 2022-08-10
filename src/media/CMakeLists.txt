@@ -56,7 +56,7 @@ if(MSVC)
    set (Source_Files__media__audio__portaudio ${Source_Files__media__audio__portaudio} PARENT_SCOPE)
 endif()
 set (Source_Files__media__audio__sound ${Source_Files__media__audio__sound} PARENT_SCOPE)
-set (Source_Files__media__audio__echo_cancel ${Source_Files__media__audio__echo_cancel} PARENT_SCOPE)
+set (Source_Files__media__audio__audio_processing ${Source_Files__media__audio__audio_processing} PARENT_SCOPE)
 
 set (Source_Files__media__video ${Source_Files__media__video} PARENT_SCOPE)
 if(MSVC)
