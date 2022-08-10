@@ -1,0 +1,121 @@
+ src/http.cpp | 32 ++++++++++++++++++++++++++++----
+ 1 file changed, 28 insertions(+), 4 deletions(-)
+
+diff --git a/src/http.cpp b/src/http.cpp
+index 93d2eb4e..3547c43b 100644
+--- a/src/http.cpp
++++ b/src/http.cpp
+@@ -1108,7 +1108,8 @@ Request::add_on_state_change_callback(OnStateChangeCb cb) {
+ 
+ void
+ Request::add_on_done_callback(OnDoneCb cb) {
+-    add_on_state_change_callback([onDone=std::move(cb)](State state, const Response& response){
++    add_on_state_change_callback([this, onDone=std::move(cb)](State state, const Response& response){
++        printf("@@@ NEW STATE %p %u", this, state);
+         if (state == Request::State::DONE)
+             onDone(response);
+     });
+@@ -1150,26 +1151,32 @@ Request::init_parser()
+ 
+     // http_parser raw c callback (note: no context can be passed into them)
+     parser_s_->on_status = [](http_parser* parser, const char* /*at*/, size_t /*length*/) -> int {
++        printf("@@@ %p on_status %u\n", static_cast<Request*>(parser->data), parser->status_code);
+         static_cast<Request*>(parser->data)->cbs_.on_status(parser->status_code);
+         return 0;
+     };
+     parser_s_->on_header_field = [](http_parser* parser, const char* at, size_t length) -> int {
++        printf("@@@ %p on_header_field\n", static_cast<Request*>(parser->data));
+         static_cast<Request*>(parser->data)->cbs_.on_header_field(at, length);
+         return 0;
+     };
+     parser_s_->on_header_value = [](http_parser* parser, const char* at, size_t length) -> int {
++        printf("@@@ %p on_header_value\n", static_cast<Request*>(parser->data));
+         static_cast<Request*>(parser->data)->cbs_.on_header_value(at, length);
+         return 0;
+     };
+     parser_s_->on_body = [](http_parser* parser, const char* at, size_t length) -> int {
++        printf("@@@ %p on_body\n", static_cast<Request*>(parser->data));
+         static_cast<Request*>(parser->data)->onBody(at, length);
+         return 0;
+     };
+     parser_s_->on_headers_complete = [](http_parser* parser) -> int {
++        printf("@@@ %p on_headers_complete\n", static_cast<Request*>(parser->data));
+         static_cast<Request*>(parser->data)->onHeadersComplete();
+         return 0;
+     };
+     parser_s_->on_message_complete = [](http_parser* parser) -> int {
++        printf("@@@ %p on_message_complete\n", static_cast<Request*>(parser->data));
+         static_cast<Request*>(parser->data)->onComplete();
+         return 0;
+     };
+@@ -1260,24 +1267,36 @@ Request::send()
+                                    std::vector<asio::ip::tcp::endpoint> endpoints) {
+         if (auto sthis = wthis.lock()) {
+             auto& this_ = *sthis;
++            printf("@@@ %p terminate\n", this_);
+             std::lock_guard<std::mutex> lock(this_.mutex_);
+             if (ec){
++                printf("[http:request:%i] resolve error: %s\n", this_.id_, ec.message().c_str());
+                 if (this_.logger_)
+                     this_.logger_->e("[http:request:%i] resolve error: %s", this_.id_, ec.message().c_str());
+                 this_.terminate(asio::error::connection_aborted);
+             }
+             else if (!this_.conn_ or !this_.conn_->is_open()) {
++                printf("@@@ %p connect\n", this_);
+                 this_.connect(std::move(endpoints), [wthis](const asio::error_code &ec) {
+                     if (auto sthis = wthis.lock()) {
+-                        if (ec)
++                        if (ec) {
++                            printf("[http:request:%i] resolve error: %s\n", sthis->id_, ec.message().c_str());
++
+                             sthis->terminate(asio::error::not_connected);
+-                        else
++                        }
++                        else {
++                            printf("[http:request:%i] POST\n", sthis->id_);
++
+                             sthis->post();
++                        }
+                     }
+                 });
+             }
+-            else
++            else {
++                printf("@@@ %p connect!\n", this_);
++
+                 this_.post();
++            }
+         }
+     }, family_);
+ }
+@@ -1286,11 +1305,14 @@ void
+ Request::post()
+ {
+     if (!conn_ or !conn_->is_open()){
++        printf("@@@ %p terminate\n", this);
+         terminate(asio::error::not_connected);
+         return;
+     }
+     build();
++    printf("@@@ %p build\n", this);
+     init_parser();
++    printf("@@@ %p init_parser\n", this);
+ 
+     if (logger_)
+         logger_->d("[http:request:%i] sending %zu bytes", id_, request_.size());
+@@ -1300,6 +1322,7 @@ Request::post()
+     request_stream << request_;
+ 
+     // send the request
++    printf("@@@ %p SENDING\n", this);
+     notify_state_change(State::SENDING);
+ 
+     std::weak_ptr<Request> wthis = shared_from_this();
+@@ -1403,6 +1426,7 @@ void
+ Request::onHeadersComplete() {
+     notify_state_change(State::HEADER_RECEIVED);
+ 
++    printf("@@@ %p Request::onHeadersComplete", this);
+     if (response_.status_code == restinio::status_code::moved_permanently.raw_code() or
+         response_.status_code == restinio::status_code::found.raw_code())
+     {

@@ -107,6 +107,7 @@ IceSocketEndpoint::shutdown()
         // any blocking operation.
         ice_->cancelOperations();
         ice_->stop();
+        JAMI_ERR("@@@ %p reset", ice_.get());
         dht::ThreadPool::io().run([ice = std::move(ice_)] {});
     }
 }
