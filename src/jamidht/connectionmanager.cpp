@@ -1100,6 +1100,7 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
         info->responseCv_.notify_all();
         if (info->ice_) {
             std::unique_lock<std::mutex> lk {info->mutex_};
+            JAMI_ERR("@@@ closeConnectionsWith", deviceId.toString().c_str());
             dht::ThreadPool::io().run(
                 [ice = std::shared_ptr<IceTransport>(std::move(info->ice_))] {});
         }
