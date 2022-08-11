@@ -29,7 +29,6 @@ deplibavformat = dependency('libavformat', version: '>= 56.40.101')
 deplibswscale = dependency('libswscale', version: '>= 3.1.101')
 deplibswresample = dependency('libswresample', version: '>= 1.2.101')
 deplibavutil = dependency('libavutil', version: '>= 55.75.100')
-
 depfmt = dependency('fmt', version: '>= 5.3')
 
 depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1', required: false)
@@ -110,10 +109,10 @@ conf.set10('HAVE_LIBNATPMP', depnatpmp.found())
 depopenssl = dependency('openssl', required: get_option('name_service'))
 conf.set10('HAVE_RINGNS', depopenssl.found())
 
-depwebrtcap = dependency('webrtc-audio-processing', required: get_option('aec'))
+depwebrtcap = dependency('webrtc-audio-processing', required: get_option('webrtc_ap'))
 conf.set10('HAVE_WEBRTC_AP', depwebrtcap.found())
 
-depspeexdsp = dependency('speexdsp')
+depspeexdsp = dependency('speexdsp', required: get_option('speex_ap'))
 conf.set10('HAVE_SPEEXDSP', depspeexdsp.found())
 
 if get_option('video')
@@ -161,7 +160,6 @@ endif
 if get_option('tracepoints')
     conf.set('ENABLE_TRACEPOINTS', true)
     deplttngust = dependency('lttng-ust', version: '>= 2.13')
-    #depliburcu = dependency('liburcu', version: '>= 0.13.1')
 else
     conf.set('ENABLE_TRACEPOINTS', false)
 endif
