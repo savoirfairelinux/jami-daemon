@@ -225,7 +225,8 @@ SipEmptyOfferTest::onIncomingCallWithMedia(const std::string& accountId,
 }
 
 void
-SipEmptyOfferTest::onCallStateChange(const std::string& callId,
+SipEmptyOfferTest::onCallStateChange(const std::string&,
+                                     const std::string& callId,
                                      const std::string& state,
                                      CallData& callData)
 {
@@ -467,7 +468,8 @@ SipEmptyOfferTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     // Validate Alice's media
     {
-        auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
+        auto call = Manager::instance().getCallFromCallID(aliceData_.callId_);
+        auto activeMediaList = call->getMediaAttributeList();
         CPPUNIT_ASSERT_EQUAL(answer.size(), activeMediaList.size());
 
         CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
@@ -476,7 +478,8 @@ SipEmptyOfferTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     // Validate Bob's media
     {
-        auto activeMediaList = Manager::instance().getMediaAttributeList(bobData_.callId_);
+        auto call = Manager::instance().getCallFromCallID(bobData_.callId_);
+        auto activeMediaList = call->getMediaAttributeList();
         CPPUNIT_ASSERT_EQUAL(offer.size(), activeMediaList.size());
 
         CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
@@ -488,7 +491,7 @@ SipEmptyOfferTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    DRing::hangUp(bobData_.callId_);
+    DRing::hangUp(bobData_.accountId_, bobData_.callId_);
 
     CPPUNIT_ASSERT(
         waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
