@@ -228,9 +228,6 @@ ut_ice_media_cand_exchange_SOURCES = ice/ice_media_cand_exchange.cpp common.cpp
 check_PROGRAMS += ut_sip_basic_calls
 ut_sip_basic_calls_SOURCES = sip_account/sip_basic_calls.cpp
 
-check_PROGRAMS += ut_sip_empty_offer
-ut_sip_empty_offer_SOURCES = sip_account/sip_empty_offer.cpp
-
 check_PROGRAMS += ut_sip_srtp
 ut_sip_srtp_SOURCES = sip_account/sip_srtp.cpp
 
