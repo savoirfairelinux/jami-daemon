@@ -79,6 +79,8 @@ public:
     std::string bob2Id;
     std::string carlaId;
 
+    bool setUpOK;
+
 private:
     CPPUNIT_TEST_SUITE(ConversationRequestTest);
     CPPUNIT_TEST(testAcceptTrustRemoveConvReq);
@@ -108,6 +110,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConversationRequestTest, ConversationReque
 void
 ConversationRequestTest::setUp()
 {
+    setUpOK = false;
     // Init daemon
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
@@ -120,11 +123,15 @@ ConversationRequestTest::setUp()
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
+    setUpOK = true;
 }
 
 void
 ConversationRequestTest::tearDown()
 {
+    if (not setUpOK) {
+        return;
+    }
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
 
