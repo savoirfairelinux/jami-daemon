@@ -1,6 +1,40 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "9757c681_430adf57",
+        "filename": "src/jami/tracepoint-def.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-08-12T19:41:20Z",
+      "side": 1,
+      "message": "lttng_ust_field_integer(uint64_t, id, stroll(id))",
+      "revId": "c8bc8833b0446bef84c39b407149ae0b8662f8b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1d86ec08_b4f0078a",
+        "filename": "src/jami/tracepoint-def.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-08-12T19:41:20Z",
+      "side": 1,
+      "message": "I would not serialize the id like that.\n\nSomething like this:\nlttng_ust_field_integer(uint64_t, participant_id, stroll(participant_id))",
+      "revId": "c8bc8833b0446bef84c39b407149ae0b8662f8b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "94df78ad_f9a8f6dd",
