@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "94df78ad_f9a8f6dd",
+        "filename": "tools/trace/audio/lttng-setup.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-12T19:33:10Z",
+      "side": 1,
+      "message": "wow that\u0027s cool, I didn\u0027t know about this",
+      "range": {
+        "startLine": 64,
+        "startChar": 17,
+        "endLine": 64,
+        "endChar": 129
+      },
+      "revId": "c8bc8833b0446bef84c39b407149ae0b8662f8b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
