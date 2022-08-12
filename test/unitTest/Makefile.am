@@ -1,11 +1,14 @@
 # Rules for the test code (use `make check` to execute)
 include $(top_srcdir)/globals.mk
 
+AM_TESTS_ENVIRONMENT =                    \
+	. $(top_srcdir)/test/test-env.sh; \
+	echo RUNNING: "$$f";
+
 # The unit tests require hidden symbols.  Thus, we link the tests
 # against a static version of libjami instead.
 AM_CXXFLAGS += -I$(top_srcdir)/src
-AM_LDFLAGS += $(CPPUNIT_LIBS) -static
-LDADD = $(top_builddir)/src/libring.la
+AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la -static
 check_PROGRAMS =
 
 ####### Unit Test ########
@@ -164,13 +167,16 @@ ut_conversationRepository_SOURCES = conversationRepository/conversationRepositor
 #
 check_PROGRAMS += ut_conversation
 ut_conversation_SOURCES = conversation/conversationcommon.cpp conversation/conversation.cpp common.cpp
+
 #
 # media_negotiation
 #
 check_PROGRAMS += ut_media_negotiation
 ut_media_negotiation_SOURCES = media_negotiation/media_negotiation.cpp common.cpp
+
 check_PROGRAMS += ut_hold_resume
 ut_hold_resume_SOURCES = media_negotiation/hold_resume.cpp common.cpp
+
 check_PROGRAMS += ut_auto_answer
 ut_auto_answer_SOURCES = media_negotiation/auto_answer.cpp common.cpp
 
@@ -221,8 +227,10 @@ ut_ice_media_cand_exchange_SOURCES = ice/ice_media_cand_exchange.cpp common.cpp
 #
 check_PROGRAMS += ut_sip_basic_calls
 ut_sip_basic_calls_SOURCES = sip_account/sip_basic_calls.cpp
+
 check_PROGRAMS += ut_sip_empty_offer
 ut_sip_empty_offer_SOURCES = sip_account/sip_empty_offer.cpp
+
 check_PROGRAMS += ut_sip_srtp
 ut_sip_srtp_SOURCES = sip_account/sip_srtp.cpp
 
