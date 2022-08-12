@@ -62,6 +62,8 @@ public:
     void setUp();
     void tearDown();
 
+    bool setUpOK;
+
     std::string aliceId;
     std::string bobId;
     std::string bob2Id;
@@ -91,18 +93,22 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AccountArchiveTest, AccountArchiveTest::na
 void
 AccountArchiveTest::setUp()
 {
+    setUpOK = false;
     auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-password.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
+    setUpOK = true;
 }
 
 void
 AccountArchiveTest::tearDown()
 {
-    if (!bob2Id.empty())
-        wait_for_removal_of({aliceId, bob2Id, bobId});
-    else
-        wait_for_removal_of({aliceId, bobId});
+    if (setUpOK) {
+        if (!bob2Id.empty())
+            wait_for_removal_of({aliceId, bob2Id, bobId});
+        else
+            wait_for_removal_of({aliceId, bobId});
+    }
 }
 
 void
