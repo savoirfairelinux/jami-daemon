@@ -655,7 +655,6 @@ AC_CONFIG_FILES([Makefile \
                  src/Makefile \
                  ringtones/Makefile \
                  test/Makefile\
-                 test/sip/Makefile
                  test/unitTest/Makefile \
                  man/Makefile \
                  doc/Makefile \
