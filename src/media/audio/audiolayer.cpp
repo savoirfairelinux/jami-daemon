@@ -155,13 +155,13 @@ AudioLayer::setHasNativeAEC(bool hasNativeAEC)
 void
 AudioLayer::createAudioProcessor()
 {
-    auto nb_channels = std::min(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
-    auto sample_rate = std::min(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
+    auto nb_channels = std::max(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
+    auto sample_rate = std::max(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
 
     // TODO: explain/rework this math??
-    if (sample_rate % 16000u != 0)
-        sample_rate = 16000u * ((sample_rate / 16000u) + 1u);
-    sample_rate = std::clamp(sample_rate, 16000u, 96000u);
+    // if (sample_rate % 16000u != 0)
+    //     sample_rate = 16000u * ((sample_rate / 16000u) + 1u);
+    sample_rate = std::clamp(sample_rate, 16000u, 48000u);
 
     AudioFormat formatForProcessor {sample_rate, nb_channels};
 
