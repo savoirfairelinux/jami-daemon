@@ -57,10 +57,11 @@ public:
     DeviceParams getDeviceParams() const;
     void setDeviceParams(const DeviceParams&);
 
+    void setup();
+
 private:
     std::unique_ptr<CaptureGraphInterfaces> cInterface;
 
-    void setup();
     std::vector<VideoSize> sizeList_;
     std::map<VideoSize, std::vector<FrameRate>> rateList_;
     std::map<VideoSize, AM_MEDIA_TYPE*> capMap_;
@@ -80,6 +81,13 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
 void
 VideoDeviceImpl::setup()
 {
+    // Add new size, rate, bitrate, and cap map.
+    sizeList_.clear();
+    rateList_.clear();
+    capMap_.clear();
+
+    cInterface.reset(new CaptureGraphInterfaces());
+
     if (id == DEVICE_DESKTOP) {
         name = DEVICE_DESKTOP;
         VideoSize size {0, 0};
@@ -357,6 +365,7 @@ VideoDevice::VideoDevice(const std::string& path,
 DeviceParams
 VideoDevice::getDeviceParams() const
 {
+    deviceImpl_->setup();
     return deviceImpl_->getDeviceParams();
 }
 
