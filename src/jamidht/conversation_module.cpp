@@ -1489,7 +1489,9 @@ ConversationModule::needsSyncingWith(const std::string& memberUri, const std::st
 }
 
 void
-ConversationModule::setFetched(const std::string& conversationId, const std::string& deviceId)
+ConversationModule::setFetched(const std::string& conversationId,
+                               const std::string& deviceId,
+                               const std::string& commitId)
 {
     auto remove = false;
     {
@@ -1497,7 +1499,7 @@ ConversationModule::setFetched(const std::string& conversationId, const std::str
         auto it = pimpl_->conversations_.find(conversationId);
         if (it != pimpl_->conversations_.end() && it->second) {
             remove = it->second->isRemoving();
-            it->second->hasFetched(deviceId);
+            it->second->hasFetched(deviceId, commitId);
         }
     }
     if (remove)

@@ -2242,10 +2242,13 @@ JamiAccount::doRegister_()
                               deviceId.to_c_str(),
                               channel->channel());
                     auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
-                    gs->setOnFetched([w = weak(), conversationId, deviceId](const std::string&) {
-                        if (auto shared = w.lock())
-                            shared->convModule()->setFetched(conversationId, deviceId.toString());
-                    });
+                    gs->setOnFetched(
+                        [w = weak(), conversationId, deviceId](const std::string& commit) {
+                            if (auto shared = w.lock())
+                                shared->convModule()->setFetched(conversationId,
+                                                                 deviceId.toString(),
+                                                                 commit);
+                        });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
                         std::lock_guard<std::mutex> lk(gitServersMtx_);

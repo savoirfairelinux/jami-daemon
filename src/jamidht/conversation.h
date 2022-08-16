@@ -344,8 +344,9 @@ public:
      * Store informations about who fetch or not. This simplify sync (sync when a device without the
      * last fetch is detected)
      * @param deviceId
+     * @param commitId
      */
-    void hasFetched(const std::string& deviceId);
+    void hasFetched(const std::string& deviceId, const std::string& commitId);
 
     /**
      * Store last read commit (returned in getMembers)
