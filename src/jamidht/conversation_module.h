@@ -242,8 +242,11 @@ public:
      * the information)
      * @param conversationId    Related conv
      * @param deviceId          Device who synced
+     * @param commit            HEAD synced
      */
-    void setFetched(const std::string& conversationId, const std::string& deviceId);
+    void setFetched(const std::string& conversationId,
+                    const std::string& deviceId,
+                    const std::string& commit);
 
     /**
      * Launch fetch on new commit
