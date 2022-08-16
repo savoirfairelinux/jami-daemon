@@ -100,8 +100,6 @@ public:
             ice_->setOnRecv(compId_, cb);
     }
 
-    void setOnShutdown(onShutdownCb&& cb) { ice_->setOnShutdown(std::move(cb)); }
-
 private:
     std::shared_ptr<IceTransport> ice_ {nullptr};
     std::atomic_bool iceStopped {false};
