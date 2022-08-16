@@ -103,17 +103,16 @@ MediaDemuxer::openInput(const DeviceParams& params)
 
     if (params.framerate) {
 #ifdef _WIN32
-        // On windows, certain framerate settings don't reduce to avrational values
+        // On windows, framerate settings don't reduce to avrational values
         // that correspond to valid video device formats.
         // e.g. A the rational<double>(10000000, 333333) or 30.000030000
         //      will be reduced by av_reduce to 999991/33333 or 30.00003000003
         //      which cause the device opening routine to fail.
-        // So we treat special cases in which the reduction is imprecise and adjust
-        // the value, or let dshow choose the framerate, which is, unfortunately,
+        // So we treat this imprecise reduction and adjust the value,
+        // or let dshow choose the framerate, which is, unfortunately,
         // NOT the highest according to our experimentations.
         auto framerate {params.framerate.real()};
-        if (params.framerate.denominator() == 333333)
-            framerate = (int) (params.framerate.real());
+        framerate = params.framerate.numerator() / (params.framerate.denominator() + 0.5);
         if (params.framerate.denominator() != 4999998)
             av_dict_set(&options_, "framerate", jami::to_string(framerate).c_str(), 0);
 #else
