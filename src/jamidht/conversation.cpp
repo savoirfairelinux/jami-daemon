@@ -19,6 +19,7 @@
  */
 #include "conversation.h"
 
+#include "account_const.h"
 #include "fileutils.h"
 #include "jamiaccount.h"
 #include "client/ring_signal.h"
@@ -162,9 +163,11 @@ public:
                                     + shared->getAccountID() + DIR_SEPARATOR_STR
                                     + "conversation_data" + DIR_SEPARATOR_STR + repository_->id();
             fetchedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "fetched";
+            sendingPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "sending";
             lastDisplayedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR
                                  + ConversationMapKeys::LAST_DISPLAYED;
             loadFetched();
+            loadSending();
             loadLastDisplayed();
         }
     }
@@ -302,6 +305,25 @@ public:
         msgpack::pack(file, fetchedDevices_);
     }
 
+    void loadSending()
+    {
+        try {
+            // read file
+            auto file = fileutils::loadFile(sendingPath_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            std::lock_guard<std::mutex> lk {writeMtx_};
+            oh.get().convert(sending_);
+        } catch (const std::exception& e) {
+            return;
+        }
+    }
+    void saveSending()
+    {
+        std::ofstream file(sendingPath_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, sending_);
+    }
+
     void loadLastDisplayed() const
     {
         try {
@@ -361,7 +383,9 @@ public:
     std::string fetchedPath_ {};
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
-    // Manage last message displayed
+    // Manage last message displayed and status
+    std::string sendingPath_ {};
+    std::vector<std::string> sending_ {};
     std::string lastDisplayedPath_ {};
     mutable std::mutex lastDisplayedMtx_ {}; // for lastDisplayed_
     mutable std::map<std::string, std::string> lastDisplayed_ {};
@@ -714,11 +738,19 @@ Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnDon
             wbuilder["indentation"] = "";
             auto commit = sthis->pimpl_->repository_->commitMessage(
                 Json::writeString(wbuilder, value));
+            sthis->pimpl_->sending_.emplace_back(commit);
+            sthis->pimpl_->saveSending();
             sthis->clearFetched();
             lk.unlock();
+            sthis->pimpl_->announce(commit);
+            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                shared->getAccountID(),
+                sthis->id(),
+                shared->getUsername(),
+                commit,
+                static_cast<int>(DRing::Account::MessageStates::SENDING));
             if (cb)
                 cb(!commit.empty(), commit);
-            sthis->pimpl_->announce(commit);
         }
     });
 }
@@ -1183,11 +1215,38 @@ Conversation::needsFetch(const std::string& deviceId) const
 }
 
 void
-Conversation::hasFetched(const std::string& deviceId)
+Conversation::hasFetched(const std::string& deviceId, const std::string& commitId)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
-    pimpl_->fetchedDevices_.emplace(deviceId);
-    pimpl_->saveFetched();
+    dht::ThreadPool::io().run([w = weak(), deviceId, commitId]() {
+        auto sthis = w.lock();
+        if (!sthis)
+            return;
+        {
+            std::lock_guard<std::mutex> lk(sthis->pimpl_->fetchedDevicesMtx_);
+            sthis->pimpl_->fetchedDevices_.emplace(deviceId);
+            sthis->pimpl_->saveFetched();
+        }
+        // Update sent status
+        std::lock_guard<std::mutex> lk(sthis->pimpl_->writeMtx_);
+        auto itCommit = std::find(sthis->pimpl_->sending_.begin(),
+                                  sthis->pimpl_->sending_.end(),
+                                  commitId);
+        if (itCommit != sthis->pimpl_->sending_.end()) {
+            auto acc = sthis->pimpl_->account_.lock();
+            // Clear fetched commits and mark it as announced
+            auto end = std::next(itCommit);
+            for (auto it = sthis->pimpl_->sending_.begin(); it != end; ++it) {
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                    acc->getAccountID(),
+                    sthis->id(),
+                    acc->getUsername(),
+                    *it,
+                    static_cast<int>(DRing::Account::MessageStates::SENT));
+            }
+            sthis->pimpl_->sending_.erase(sthis->pimpl_->sending_.begin(), end);
+            sthis->pimpl_->saveSending();
+        }
+    });
 }
 
 bool
