@@ -46,7 +46,6 @@ using random_device = dht::crypto::random_device;
 #include "fileutils.h"
 #include "config/yamlparser.h"
 #include "system_codec_container.h"
-#include "ice_transport.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"

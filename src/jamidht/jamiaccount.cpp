@@ -48,8 +48,6 @@
 #include "sip/siptransport.h"
 #include "sip/sip_utils.h"
 
-#include "ice_transport.h"
-
 #include "p2p.h"
 #include "uri.h"
 
@@ -225,8 +223,6 @@ struct JamiAccount::DiscoveredPeer
     std::string displayName;
     std::shared_ptr<Task> cleanupTask;
 };
-
-static constexpr int ICE_COMP_ID_SIP_TRANSPORT {1};
 
 static constexpr const char* const RING_URI_PREFIX = "ring:";
 static constexpr const char* const JAMI_URI_PREFIX = "jami:";
@@ -597,8 +593,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
 
         auto transport = sipConn.transport;
-        auto ice = sipConn.channel->underlyingICE();
-        if (!transport or !ice)
+        auto remote_address = sipConn.channel->getRemoteAddress();
+        if (!transport or !remote_address)
             continue;
 
         channels.emplace_back(sipConn.channel);
@@ -633,7 +629,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 return true;
             });
 
-        auto remote_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
         try {
             onConnectedOutgoingCall(dev_call, toUri, remote_address);
         } catch (const VoipLinkException&) {
@@ -3976,14 +3971,13 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     if (!channel)
         throw std::runtime_error(
             "A SIP transport exists without Channel, this is a bug. Please report");
-    auto ice = channel->underlyingICE();
-    if (!ice)
+    auto remote_address = channel->getRemoteAddress();
+    if (!remote_address)
         return false;
 
     // Build SIP Message
     // "deviceID@IP"
-    auto toURI = getToUri(to + "@"
-                          + ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT).toString(true));
+    auto toURI = getToUri(fmt::format("{}@{}", to, remote_address.toString(true)));
     std::string from = getFromUri();
     pjsip_tx_data* tdata;
 
@@ -4146,10 +4140,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
             return;
         pc->setSipTransport(sip_tr, getContactHeader(sip_tr));
         pc->setState(Call::ConnectionState::PROGRESSING);
-        if (auto ice = socket->underlyingICE()) {
-            auto remoted_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
+        if (auto remote_address = socket->getRemoteAddress()) {
             try {
-                onConnectedOutgoingCall(pc, peerId, remoted_address);
+                onConnectedOutgoingCall(pc, peerId, remote_address);
             } catch (const VoipLinkException&) {
                 // In this case, the main scenario is that SIPStartCall failed because
                 // the ICE is dead and the TLS session didn't send any packet on that dead

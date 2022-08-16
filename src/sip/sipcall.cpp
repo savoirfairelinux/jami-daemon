@@ -40,7 +40,6 @@
 #include "jami/call_const.h"
 #include "jami/media_const.h"
 #include "client/ring_signal.h"
-#include "ice_transport.h"
 #include "pjsip-ua/sip_inv.h"
 
 #ifdef ENABLE_PLUGIN

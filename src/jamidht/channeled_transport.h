@@ -49,10 +49,7 @@ class ChanneledSIPTransport : public AbstractSIPTransport
 {
 public:
     ChanneledSIPTransport(pjsip_endpoint* endpt,
-                          int tp_type,
                           const std::shared_ptr<ChannelSocket>& socket,
-                          const IpAddr& local,
-                          const IpAddr& remote,
                           onShutdownCb&& cb);
     ~ChanneledSIPTransport();
 

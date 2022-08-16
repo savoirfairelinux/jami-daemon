@@ -147,7 +147,10 @@ public:
     void setOnStateChange(OnStateChangeCb&& cb);
     void setOnReady(OnReadyCb&& cb);
 
-    std::shared_ptr<IceTransport> underlyingICE() const;
+    IpAddr getLocalAddress() const;
+    IpAddr getRemoteAddress() const;
+
+    void monitor() const;
 
 private:
     class Impl;

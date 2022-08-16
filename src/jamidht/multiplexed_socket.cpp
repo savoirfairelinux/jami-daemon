@@ -640,15 +640,8 @@ void
 MultiplexedSocket::onShutdown(OnShutdownCb&& cb)
 {
     pimpl_->onShutdown_ = std::move(cb);
-    if (pimpl_->isShutdown_) {
+    if (pimpl_->isShutdown_)
         pimpl_->onShutdown_();
-    }
-}
-
-std::shared_ptr<IceTransport>
-MultiplexedSocket::underlyingICE() const
-{
-    return pimpl_->endpoint->underlyingICE();
 }
 
 void
@@ -662,9 +655,7 @@ MultiplexedSocket::monitor() const
     auto now = clock::now();
     JAMI_DBG("- Duration: %lu",
              std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_).count());
-    const auto& ice = underlyingICE();
-    if (ice)
-        JAMI_DBG("\t- Ice connection: %s", ice->link().c_str());
+    pimpl_->endpoint->monitor();
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (const auto& [_, channel] : pimpl_->sockets) {
         if (channel)
@@ -720,6 +711,20 @@ MultiplexedSocket::sendVersion()
 {
     pimpl_->sendVersion();
 }
+
+
+IpAddr
+MultiplexedSocket::getLocalAddress() const
+{
+    return pimpl_->endpoint->getLocalAddress();
+}
+
+IpAddr
+MultiplexedSocket::getRemoteAddress() const
+{
+    return pimpl_->endpoint->getRemoteAddress();
+}
+
 #endif
 
 ////////////////////////////////////////////////////////////////
@@ -837,14 +842,6 @@ ChannelSocket::onRecv(std::vector<uint8_t>&& pkt)
                        std::make_move_iterator(pkt.begin()),
                        std::make_move_iterator(pkt.end()));
     pimpl_->cv.notify_all();
-}
-
-std::shared_ptr<IceTransport>
-ChannelSocket::underlyingICE() const
-{
-    if (auto mtx = pimpl_->endpoint.lock())
-        return mtx->underlyingICE();
-    return {};
 }
 
 #ifdef DRING_TESTABLE
@@ -987,6 +984,22 @@ ChannelSocket::peerCertificate() const
 {
     if (auto ep = pimpl_->endpoint.lock())
         return ep->peerCertificate();
+    return {};
+}
+
+IpAddr
+ChannelSocket::getLocalAddress() const
+{
+    if (auto ep = pimpl_->endpoint.lock())
+        return ep->getLocalAddress();
+    return {};
+}
+
+IpAddr
+ChannelSocket::getRemoteAddress() const
+{
+    if (auto ep = pimpl_->endpoint.lock())
+        return ep->getRemoteAddress();
     return {};
 }
 

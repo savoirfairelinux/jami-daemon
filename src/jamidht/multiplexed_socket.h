@@ -118,8 +118,6 @@ public:
      */
     void onShutdown(OnShutdownCb&& cb);
 
-    std::shared_ptr<IceTransport> underlyingICE() const;
-
     /**
      * Get informations from socket (channels opened)
      */
@@ -135,6 +133,9 @@ public:
      * Get peer's certificate
      */
     std::shared_ptr<dht::crypto::Certificate> peerCertificate() const;
+
+    IpAddr getLocalAddress() const;
+    IpAddr getRemoteAddress() const;
 
 #ifdef DRING_TESTABLE
     /**
@@ -232,8 +233,6 @@ public:
 
     void onRecv(std::vector<uint8_t>&& pkt);
 
-    std::shared_ptr<IceTransport> underlyingICE() const;
-
     /**
      * Send a beacon on the socket and close if no response come
      * @param timeout
@@ -256,6 +255,9 @@ public:
     bool isAnswered() const;
     void removable();
     bool isRemovable() const;
+
+    IpAddr getLocalAddress() const;
+    IpAddr getRemoteAddress() const;
 
 private:
     class Impl;
