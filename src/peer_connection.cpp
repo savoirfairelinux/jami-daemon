@@ -51,6 +51,8 @@
 #include <sys/time.h>
 #endif
 
+static constexpr int ICE_COMP_ID_SIP_TRANSPORT {1};
+
 namespace jami {
 
 int
@@ -238,6 +240,14 @@ public:
         tls.reset();
     }
 
+    std::shared_ptr<IceTransport> underlyingICE() const
+    {
+        if (ep_)
+            if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(ep_))
+                return iceSocket->underlyingICE();
+        return {};
+    }
+
     // TLS callbacks
     int verifyCertificate(gnutls_session_t);
     void onTlsStateChange(tls::TlsSessionState);
@@ -411,12 +421,26 @@ TlsSocketEndpoint::shutdown()
     }
 }
 
-std::shared_ptr<IceTransport>
-TlsSocketEndpoint::underlyingICE() const
+void
+TlsSocketEndpoint::monitor() const
 {
-    if (pimpl_->ep_)
-        if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_))
-            return iceSocket->underlyingICE();
+    if (auto ice = pimpl_->underlyingICE())
+        JAMI_DBG("\t- Ice connection: %s", ice->link().c_str());
+}
+
+IpAddr
+TlsSocketEndpoint::getLocalAddress() const
+{
+    if (auto ice = pimpl_->underlyingICE())
+        return ice->getLocalAddress(ICE_COMP_ID_SIP_TRANSPORT);
+    return {};
+}
+
+IpAddr
+TlsSocketEndpoint::getRemoteAddress() const
+{
+    if (auto ice = pimpl_->underlyingICE())
+        return ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
     return {};
 }
 

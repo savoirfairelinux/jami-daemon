@@ -22,7 +22,6 @@
 #include "siptransport.h"
 #include "sip_utils.h"
 #include "ip_utils.h"
-#include "ice_transport.h"
 #include "security/tls_session.h"
 
 #include "jamidht/abstract_sip_transport.h"
@@ -61,7 +60,6 @@ constexpr const char* TRANSPORT_STATE_STR[] = {"CONNECTED",
                                                "DESTROY",
                                                "UNKNOWN STATE"};
 constexpr const size_t TRANSPORT_STATE_SZ = std::size(TRANSPORT_STATE_STR);
-static constexpr int ICE_COMP_ID_SIP_TRANSP {1};
 
 void
 SipTransport::deleteTransport(pjsip_transport* t)
@@ -405,17 +403,10 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>&
                                           const std::shared_ptr<ChannelSocket>& socket,
                                           onShutdownCb&& cb)
 {
-    auto ice = socket->underlyingICE();
-    if (!ice)
+    if (!socket)
         return {};
-    auto local = ice->getLocalAddress(ICE_COMP_ID_SIP_TRANSP);
-    auto remote = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSP);
-    auto type = local.isIpv6() ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
     auto sips_tr = std::make_unique<tls::ChanneledSIPTransport>(endpt_,
-                                                                type,
                                                                 socket,
-                                                                local,
-                                                                remote,
                                                                 std::move(cb));
     auto tr = sips_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr, socket->peerCertificate());

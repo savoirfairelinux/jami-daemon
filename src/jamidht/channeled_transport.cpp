@@ -33,19 +33,18 @@ namespace jami {
 namespace tls {
 
 ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
-                                             int tp_type,
                                              const std::shared_ptr<ChannelSocket>& socket,
-                                             const IpAddr& local,
-                                             const IpAddr& remote,
                                              onShutdownCb&& cb)
     : socket_(socket)
     , shutdownCb_(std::move(cb))
-    , local_ {local}
-    , remote_ {remote}
     , trData_()
     , pool_ {nullptr, pj_pool_release}
     , rxPool_(nullptr, pj_pool_release)
 {
+    local_ = socket->getLocalAddress();
+    remote_ = socket->getRemoteAddress();
+    int tp_type = local_.isIpv6() ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
+
     JAMI_DBG("ChanneledSIPTransport@%p {tr=%p}", this, &trData_.base);
 
     // Init memory
@@ -70,12 +69,12 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     if (pj_lock_create_recursive_mutex(pool_.get(), "chan", &base.lock) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP mutex.");
 
-    if (not local) {
-        JAMI_ERR("Invalid local address [%s]", local.toString(true).c_str());
+    if (not local_) {
+        JAMI_ERR("Invalid local address");
         throw std::runtime_error("Invalid local address");
     }
-    if (not remote) {
-        JAMI_ERR("Invalid remote address [%s]", remote.toString(true).c_str());
+    if (not remote_) {
+        JAMI_ERR("Invalid remote address");
         throw std::runtime_error("Invalid remote address");
     }
 
