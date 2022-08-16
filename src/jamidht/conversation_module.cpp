@@ -403,56 +403,57 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                       conversationId.c_str());
             return;
         }
-        onNeedSocket_(conversationId,
-                      deviceId,
-                      [this,
-                       conversationId = std::move(conversationId),
-                       peer = std::move(peer),
-                       deviceId = std::move(deviceId),
-                       commitId = std::move(commitId)](const auto& channel) {
-                          auto conversation = conversations_.find(conversationId);
-                          auto acc = account_.lock();
-                          if (!channel || !acc || conversation == conversations_.end()
-                              || !conversation->second) {
-                              std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                              stopFetch(conversationId, deviceId);
-                              return false;
-                          }
-                          acc->addGitSocket(channel->deviceId(), conversationId, channel);
-                          syncCnt.fetch_add(1);
-                          conversation->second->sync(
-                              peer,
-                              deviceId,
-                              [this,
-                               conversationId = std::move(conversationId),
-                               peer = std::move(peer),
-                               deviceId = std::move(deviceId),
-                               commitId = std::move(commitId)](bool ok) {
-                                  if (!ok) {
-                                      JAMI_WARN("[Account %s] Could not fetch new commit from "
-                                                "%s for %s, other "
-                                                "peer may be disconnected",
-                                                accountId_.c_str(),
-                                                deviceId.c_str(),
-                                                conversationId.c_str());
-                                      JAMI_INFO("[Account %s] Relaunch sync with %s for %s",
-                                                accountId_.c_str(),
-                                                deviceId.c_str(),
-                                                conversationId.c_str());
-                                  }
-                                   {
-                                       std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                                       pendingConversationsFetch_.erase(conversationId);
-                                   }
-                                  if (syncCnt.fetch_sub(1) == 1) {
-                                    if (auto account = account_.lock())
-                                        emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(
-                                            account->getAccountID().c_str());
-                                  }
-                              },
-                              commitId);
-                          return true;
-                      });
+        onNeedSocket_(
+            conversationId,
+            deviceId,
+            [this,
+             conversationId = std::move(conversationId),
+             peer = std::move(peer),
+             deviceId = std::move(deviceId),
+             commitId = std::move(commitId)](const auto& channel) {
+                auto conversation = conversations_.find(conversationId);
+                auto acc = account_.lock();
+                if (!channel || !acc || conversation == conversations_.end()
+                    || !conversation->second) {
+                    std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                    stopFetch(conversationId, deviceId);
+                    return false;
+                }
+                acc->addGitSocket(channel->deviceId(), conversationId, channel);
+                syncCnt.fetch_add(1);
+                conversation->second->sync(
+                    peer,
+                    deviceId,
+                    [this,
+                     conversationId = std::move(conversationId),
+                     peer = std::move(peer),
+                     deviceId = std::move(deviceId),
+                     commitId = std::move(commitId)](bool ok) {
+                        if (!ok) {
+                            JAMI_WARN("[Account %s] Could not fetch new commit from "
+                                      "%s for %s, other "
+                                      "peer may be disconnected",
+                                      accountId_.c_str(),
+                                      deviceId.c_str(),
+                                      conversationId.c_str());
+                            JAMI_INFO("[Account %s] Relaunch sync with %s for %s",
+                                      accountId_.c_str(),
+                                      deviceId.c_str(),
+                                      conversationId.c_str());
+                        }
+                        {
+                            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+                            pendingConversationsFetch_.erase(conversationId);
+                        }
+                        if (syncCnt.fetch_sub(1) == 1) {
+                            if (auto account = account_.lock())
+                                emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(
+                                    account->getAccountID().c_str());
+                        }
+                    },
+                    commitId);
+                return true;
+            });
     } else {
         if (getRequest(conversationId) != std::nullopt)
             return;
@@ -1378,7 +1379,8 @@ ConversationModule::syncConversations(const std::string& peer, const std::string
         pimpl_->cloneConversation(deviceId, peer, cid);
     if (pimpl_->syncCnt.load() == 0) {
         if (auto acc = pimpl_->account_.lock())
-            emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(acc->getAccountID().c_str());
+            emitSignal<DRing::ConversationSignal::ConversationSyncFinished>(
+                acc->getAccountID().c_str());
     }
 }
 
@@ -1484,7 +1486,9 @@ ConversationModule::needsSyncingWith(const std::string& memberUri, const std::st
 }
 
 void
-ConversationModule::setFetched(const std::string& conversationId, const std::string& deviceId)
+ConversationModule::setFetched(const std::string& conversationId,
+                               const std::string& deviceId,
+                               const std::string& commitId)
 {
     auto remove = false;
     {
@@ -1492,7 +1496,7 @@ ConversationModule::setFetched(const std::string& conversationId, const std::str
         auto it = pimpl_->conversations_.find(conversationId);
         if (it != pimpl_->conversations_.end() && it->second) {
             remove = it->second->isRemoving();
-            it->second->hasFetched(deviceId);
+            it->second->hasFetched(deviceId, commitId);
         }
     }
     if (remove)
