@@ -195,12 +195,6 @@ public:
             /*.cert_check = */ nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
-
-        if (const auto& ice = ep_->underlyingICE())
-            ice->setOnShutdown([this]() {
-                if (tls)
-                    tls->shutdown();
-            });
     }
 
     Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
@@ -232,18 +226,10 @@ public:
             /*.cert_check = */ nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
-
-        if (const auto& ice = ep_->underlyingICE())
-            ice->setOnShutdown([this]() {
-                if (tls)
-                    tls->shutdown();
-            });
     }
 
     ~Impl()
     {
-        if (const auto& ice = ep_->underlyingICE())
-            ice->setOnShutdown({});
         {
             std::lock_guard<std::mutex> lk(cbMtx_);
             onStateChangeCb_ = {};
@@ -417,12 +403,12 @@ TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
 void
 TlsSocketEndpoint::shutdown()
 {
+    pimpl_->tls->shutdown();
     if (pimpl_->ep_) {
         const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_);
         if (iceSocket && iceSocket->underlyingICE())
             iceSocket->underlyingICE()->cancelOperations();
     }
-    pimpl_->tls->shutdown();
 }
 
 std::shared_ptr<IceTransport>
