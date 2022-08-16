@@ -20,7 +20,6 @@
 #include "account_const.h"
 #include "account_manager.h"
 #include "manager.h"
-#include "ice_transport.h"
 #include "peer_connection.h"
 #include "logger.h"
 
