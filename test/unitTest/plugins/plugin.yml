@@ -1,0 +1,6 @@
+jplDirectory:
+  "plugins"
+plugin:
+  "AudioFilter"
+handlers:
+  - "Filter"
