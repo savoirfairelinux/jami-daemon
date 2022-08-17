@@ -115,9 +115,9 @@ public:
 
     /**
      * Close all connections with a current device
-     * @param deviceId      Remote device
+     * @param peerUri      Peer URI
      */
-    void closeConnectionsWith(const DeviceId& deviceId);
+    void closeConnectionsWith(const std::string& peerUri);
 
     /**
      * Method to call to listen to incoming requests
