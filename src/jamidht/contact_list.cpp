@@ -114,6 +114,7 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     else if (not c->second.isActive() and c->second.banned == ban)
         return false;
     c->second.removed = std::time(nullptr);
+    c->second.confirmed = false;
     c->second.banned = ban;
     auto uri = h.toString();
     trust_.setCertificateStatus(uri,
