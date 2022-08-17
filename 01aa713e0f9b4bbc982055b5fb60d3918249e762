@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8a1e768_4196c528",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2022-08-17T17:49:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "957b33fc_b493b583",
+      "revId": "01aa713e0f9b4bbc982055b5fb60d3918249e762",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f759e3c4_a706a3c6",
@@ -31,6 +49,30 @@
       "writtenOn": "2022-08-17T17:15:17Z",
       "side": 1,
       "message": "woops",
+      "range": {
+        "startLine": 42,
+        "startChar": 36,
+        "endLine": 42,
+        "endChar": 46
+      },
+      "revId": "01aa713e0f9b4bbc982055b5fb60d3918249e762",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "abbd51ab_c45051a7",
+        "filename": "contrib/src/libressl/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2022-08-17T17:49:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f759e3c4_a706a3c6",
       "range": {
         "startLine": 42,
         "startChar": 36,
