@@ -67,7 +67,7 @@ private:
     void testDeclineICERequest();
     void testChannelRcvShutdown();
     void testChannelSenderShutdown();
-    void testCloseConnectionWithDevice();
+    void testCloseConnectionWith();
     void testShutdownCallbacks();
     void testFloodSocket();
     void testDestroyWhileSending();
@@ -90,7 +90,7 @@ private:
     CPPUNIT_TEST(testDeclineICERequest);
     CPPUNIT_TEST(testChannelRcvShutdown);
     CPPUNIT_TEST(testChannelSenderShutdown);
-    CPPUNIT_TEST(testCloseConnectionWithDevice);
+    CPPUNIT_TEST(testCloseConnectionWith);
     CPPUNIT_TEST(testShutdownCallbacks);
     CPPUNIT_TEST(testFloodSocket);
     CPPUNIT_TEST(testDestroyWhileSending);
@@ -685,7 +685,7 @@ ConnectionManagerTest::testChannelSenderShutdown()
 }
 
 void
-ConnectionManagerTest::testCloseConnectionWithDevice()
+ConnectionManagerTest::testCloseConnectionWith()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -736,7 +736,7 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
 
     rcv.wait_for(lk, 30s);
     // This should trigger onShutdown
-    aliceAccount->connectionManager().closeConnectionsWith(bobDeviceId);
+    aliceAccount->connectionManager().closeConnectionsWith(bobUri);
     CPPUNIT_ASSERT(scv.wait_for(lk, 60s, [&] {
         return events == 2 && successfullyReceive && successfullyConnected && receiverConnected;
     }));
@@ -804,7 +804,7 @@ ConnectionManagerTest::testShutdownCallbacks()
     chan2cv.wait_for(lk, 30s);
 
     // This should trigger onShutdown for second callback
-    bobAccount->connectionManager().closeConnectionsWith(aliceDeviceId);
+    bobAccount->connectionManager().closeConnectionsWith(aliceUri);
     CPPUNIT_ASSERT(rcv.wait_for(lk, 30s, [&] { return channel2NotConnected; }));
 }
 
