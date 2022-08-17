@@ -226,5 +226,10 @@ ut_sip_empty_offer_SOURCES = sip_account/sip_empty_offer.cpp
 check_PROGRAMS += ut_sip_srtp
 ut_sip_srtp_SOURCES = sip_account/sip_srtp.cpp
 
+#
+# Plugins
+#
+check_PROGRAMS += ut_plugins
+ut_plugins_SOURCES = plugins/plugins.cpp common.cpp
 
 TESTS = $(check_PROGRAMS)

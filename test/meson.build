@@ -452,4 +452,15 @@ if conf.get('ENABLE_VIDEO')
     test('video_scaler', ut_video_scaler,
         workdir: ut_workdir, is_parallel: false, timeout: 1800
     )
+
+
+    ut_plugins = executable('ut_plugins',
+        sources: files('unitTest/plugins/plugins.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library
+    )
+    test('plugins', ut_plugins,
+        workdir: ut_workdir, is_parallel: false, timeout: 1800
+    )
 endif
