@@ -31,7 +31,9 @@
 #include <mutex>
 #include <functional>
 #include <ciso646> // fix windows compiler bug
+#ifndef __DEBUG__ // this is only defined on plugins build for debugging
 #include "logger.h"
+#endif
 
 namespace jami {
 
@@ -127,7 +129,9 @@ protected:
                 try {
                     so->update(this, data);
                 } catch (std::exception& e) {
+#ifndef __DEBUG__
                     JAMI_ERR() << e.what();
+#endif
                 }
             } else {
                 it = priority_observers_.erase(it);

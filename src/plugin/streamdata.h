@@ -70,7 +70,7 @@ struct JamiMessage
     /**
      * @param accId AccountId
      * @param pId peerId
-     * @param isReceived False if local audio/video streams
+     * @param isReceived True if received message, False if sent
      * @param dataMap Message contents
      * @param pPlugin True if message is created/modified by plugin code
      */
