@@ -1133,16 +1133,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     // Erase linked conversation's requests
                     if (auto convModule = shared->convModule())
                         convModule->removeContact(uri, banned);
-
                     // Remove current connections with contact
-                    std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
-                    for (auto it = shared->sipConns_.begin(); it != shared->sipConns_.end();) {
-                        const auto& [key, value] = *it;
-                        if (key.first == uri)
-                            it = shared->sipConns_.erase(it);
-                        else
-                            ++it;
-                    }
+                    shared->connectionManager_->closeConnectionsWith(uri);
                     // Update client.
                     emitSignal<DRing::ConfigurationSignal::ContactRemoved>(shared->getAccountID(),
                                                                            uri,

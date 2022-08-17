@@ -2876,7 +2876,7 @@ ConversationTest::testRemoveReaddMultipleDevice()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Started; }));
 
     // Alice adds bob
-    requestReceived = false;
+    requestReceived = false, requestReceivedBob2 = false;
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived && requestReceivedBob2; }));
@@ -2893,9 +2893,9 @@ ConversationTest::testRemoveReaddMultipleDevice()
     std::this_thread::sleep_for(10s);
 
     // Alice send a message
-    requestReceived = false;
+    requestReceived = false, requestReceivedBob2 = false;
     DRing::sendMessage(aliceId, convId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived && requestReceivedBob2; }));
 
     // Re-Add contact should accept and clone the conversation on all devices
     conversationReadyBob = false;

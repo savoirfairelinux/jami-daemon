@@ -74,7 +74,7 @@ public:
         for (auto it = infos_.begin(); it != infos_.end();) {
             auto& [key, info] = *it;
             bool erased = false;
-            if (info) {
+            if (info && (!deviceId || key.first == deviceId)) {
                 if (info->tls_)
                     info->tls_->shutdown();
                 if (info->socket_)
@@ -84,10 +84,8 @@ public:
                     info->ice_->stop();
                 }
                 info->responseCv_.notify_all();
-                if (deviceId && key.first == deviceId) {
-                    erased = true;
-                    it = infos_.erase(it);
-                }
+                erased = true;
+                it = infos_.erase(it);
             }
             if (!erased)
                 ++it;
@@ -1072,23 +1070,31 @@ ConnectionManager::isConnecting(const DeviceId& deviceId, const std::string& nam
 }
 
 void
-ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
+ConnectionManager::closeConnectionsWith(const std::string& peerUri)
 {
-    for (const auto& pending : pimpl_->extractPendingCallbacks(deviceId))
-        pending.cb(nullptr, deviceId);
-
     std::vector<std::shared_ptr<ConnectionInfo>> connInfos;
+    std::set<DeviceId> peersDevices;
     {
         std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
         for (auto iter = pimpl_->infos_.begin(); iter != pimpl_->infos_.end();) {
             auto const& [key, value] = *iter;
-            if (key.first == deviceId) {
+            auto deviceId = key.first;
+            auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
+            if (cert && cert->issuer && peerUri == cert->issuer->getId().toString()) {
                 connInfos.emplace_back(value);
+                peersDevices.emplace(deviceId);
                 iter = pimpl_->infos_.erase(iter);
             } else {
                 iter++;
             }
         }
+    }
+    // Stop connections to all peers devices
+    for (const auto& deviceId : peersDevices) {
+        for (const auto& pending : pimpl_->extractPendingCallbacks(deviceId))
+            pending.cb(nullptr, deviceId);
+        // This will close the TLS Session
+        pimpl_->removeUnusedConnections(deviceId);
     }
     for (auto& info : connInfos) {
         if (info->ice_) {
@@ -1104,8 +1110,6 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
                 [ice = std::shared_ptr<IceTransport>(std::move(info->ice_))] {});
         }
     }
-    // This will close the TLS Session
-    pimpl_->removeUnusedConnections(deviceId);
 }
 
 void
