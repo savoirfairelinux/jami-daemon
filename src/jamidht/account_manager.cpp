@@ -429,6 +429,7 @@ AccountManager::removeContact(const std::string& uri, bool banned)
         return;
     }
     if (info_->contacts->removeContact(h, banned)) {
+        JAMI_ERR("@@@ SYNC DEVICES");
         syncDevices();
     }
 }

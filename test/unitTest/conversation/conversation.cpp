@@ -113,45 +113,45 @@ private:
     void testSendReply();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
-    CPPUNIT_TEST(testCreateConversation);
-    CPPUNIT_TEST(testGetConversation);
-    CPPUNIT_TEST(testGetConversationsAfterRm);
-    CPPUNIT_TEST(testRemoveInvalidConversation);
-    CPPUNIT_TEST(testSendMessage);
-    CPPUNIT_TEST(testReplaceWithBadCertificate);
-    CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
-    CPPUNIT_TEST(testMergeTwoDifferentHeads);
-    CPPUNIT_TEST(testMergeAfterMigration);
-    CPPUNIT_TEST(testSendMessageToMultipleParticipants);
-    CPPUNIT_TEST(testPingPongMessages);
-    CPPUNIT_TEST(testIsComposing);
-    CPPUNIT_TEST(testMessageStatus);
-    CPPUNIT_TEST(testSetMessageDisplayed);
-    CPPUNIT_TEST(testSetMessageDisplayedTwice);
-    CPPUNIT_TEST(testSetMessageDisplayedPreference);
-    CPPUNIT_TEST(testVoteNonEmpty);
-    CPPUNIT_TEST(testNoBadFileInInitialCommit);
-    CPPUNIT_TEST(testNoBadCertInInitialCommit);
-    CPPUNIT_TEST(testPlainTextNoBadFile);
-    CPPUNIT_TEST(testVoteNoBadFile);
-    CPPUNIT_TEST(testETooBigClone);
-    CPPUNIT_TEST(testETooBigFetch);
-    CPPUNIT_TEST(testUnknownModeDetected);
-    CPPUNIT_TEST(testUpdateProfile);
-    CPPUNIT_TEST(testGetProfileRequest);
-    CPPUNIT_TEST(testCheckProfileInConversationRequest);
-    CPPUNIT_TEST(testCheckProfileInTrustRequest);
-    CPPUNIT_TEST(testMemberCannotUpdateProfile);
-    CPPUNIT_TEST(testUpdateProfileWithBadFile);
-    CPPUNIT_TEST(testFetchProfileUnauthorized);
-    CPPUNIT_TEST(testDoNotLoadIncorrectConversation);
-    CPPUNIT_TEST(testSyncingWhileAccepting);
-    CPPUNIT_TEST(testCountInteractions);
-    CPPUNIT_TEST(testReplayConversation);
-    CPPUNIT_TEST(testSyncWithoutPinnedCert);
-    CPPUNIT_TEST(testImportMalformedContacts);
+    //CPPUNIT_TEST(testCreateConversation);
+    //CPPUNIT_TEST(testGetConversation);
+    //CPPUNIT_TEST(testGetConversationsAfterRm);
+    //CPPUNIT_TEST(testRemoveInvalidConversation);
+    //CPPUNIT_TEST(testSendMessage);
+    //CPPUNIT_TEST(testReplaceWithBadCertificate);
+    //CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
+    //CPPUNIT_TEST(testMergeTwoDifferentHeads);
+    //CPPUNIT_TEST(testMergeAfterMigration);
+    //CPPUNIT_TEST(testSendMessageToMultipleParticipants);
+    //CPPUNIT_TEST(testPingPongMessages);
+    //CPPUNIT_TEST(testIsComposing);
+    //CPPUNIT_TEST(testMessageStatus);
+    //CPPUNIT_TEST(testSetMessageDisplayed);
+    //CPPUNIT_TEST(testSetMessageDisplayedTwice);
+    //CPPUNIT_TEST(testSetMessageDisplayedPreference);
+    //CPPUNIT_TEST(testVoteNonEmpty);
+    //CPPUNIT_TEST(testNoBadFileInInitialCommit);
+    //CPPUNIT_TEST(testNoBadCertInInitialCommit);
+    //CPPUNIT_TEST(testPlainTextNoBadFile);
+    //CPPUNIT_TEST(testVoteNoBadFile);
+    //CPPUNIT_TEST(testETooBigClone);
+    //CPPUNIT_TEST(testETooBigFetch);
+    //CPPUNIT_TEST(testUnknownModeDetected);
+    //CPPUNIT_TEST(testUpdateProfile);
+    //CPPUNIT_TEST(testGetProfileRequest);
+    //CPPUNIT_TEST(testCheckProfileInConversationRequest);
+    //CPPUNIT_TEST(testCheckProfileInTrustRequest);
+    //CPPUNIT_TEST(testMemberCannotUpdateProfile);
+    //CPPUNIT_TEST(testUpdateProfileWithBadFile);
+    //CPPUNIT_TEST(testFetchProfileUnauthorized);
+    //CPPUNIT_TEST(testDoNotLoadIncorrectConversation);
+    //CPPUNIT_TEST(testSyncingWhileAccepting);
+    //CPPUNIT_TEST(testCountInteractions);
+    //CPPUNIT_TEST(testReplayConversation);
+    //CPPUNIT_TEST(testSyncWithoutPinnedCert);
+    //CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST(testRemoveReaddMultipleDevice);
-    CPPUNIT_TEST(testSendReply);
+    //CPPUNIT_TEST(testSendReply);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2955,7 +2955,7 @@ ConversationTest::testRemoveReaddMultipleDevice()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Started; }));
 
     // Alice adds bob
-    requestReceived = false;
+    requestReceived = false, requestReceivedBob2 = false;
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived && requestReceivedBob2; }));
@@ -2972,13 +2972,14 @@ ConversationTest::testRemoveReaddMultipleDevice()
     std::this_thread::sleep_for(10s);
 
     // Alice send a message
-    requestReceived = false;
+    requestReceived = false, requestReceivedBob2 = false;
     DRing::sendMessage(aliceId, convId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived && requestReceivedBob2; }));
 
     // Re-Add contact should accept and clone the conversation on all devices
     conversationReadyBob = false;
     conversationReadyBob2 = false;
+    JAMI_ERR("@@@@@");
     DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReadyBob && conversationReadyBob2; }));

@@ -1710,8 +1710,10 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
         if (update)
             pimpl_->saveConvRequests();
     }
-    if (banned)
+    if (banned) {
+        JAMI_ERR("@@@ BANNED!");
         return; // Keep the conversation in banned model
+    }
     // Remove related conversation
     auto isSelf = uri == pimpl_->username_;
     std::vector<std::string> toRm;

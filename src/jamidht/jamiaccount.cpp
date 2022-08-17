@@ -1126,6 +1126,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             dht::ThreadPool::io().run([w = weak(), uri, banned] {
                 if (auto shared = w.lock()) {
                     // Erase linked conversation's requests
+                    JAMI_ERR("@@@ %u", banned);
                     if (auto convModule = shared->convModule())
                         convModule->removeContact(uri, banned);
                     // Remove current connections with contact
