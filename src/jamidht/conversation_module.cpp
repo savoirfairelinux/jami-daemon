@@ -1690,7 +1690,7 @@ ConversationModule::isBannedDevice(const std::string& convId, const std::string&
 }
 
 void
-ConversationModule::removeContact(const std::string& uri, bool)
+ConversationModule::removeContact(const std::string& uri, bool banned)
 {
     // Remove linked conversation's requests
     {
@@ -1710,6 +1710,8 @@ ConversationModule::removeContact(const std::string& uri, bool)
         if (update)
             pimpl_->saveConvRequests();
     }
+    if (banned)
+        return; // Keep the conversation in banned model
     // Remove related conversation
     auto isSelf = uri == pimpl_->username_;
     std::vector<std::string> toRm;
