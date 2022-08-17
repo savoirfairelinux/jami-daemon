@@ -19,34 +19,23 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 SSL_VERSION := 3.5.3
-LIBRESSL_VERSION := v$(SSL_VERSION)
-OPENBSD_VERSION := libressl-v$(SSL_VERSION)
-LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL_VERSION).tar.gz
-OPENBSD_URL := https://github.com/libressl-portable/openbsd/archive/$(OPENBSD_VERSION).tar.gz
+LIBRESSL_VERSION := libressl-$(SSL_VERSION)
+LIBRESSL_URL := https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/$(LIBRESSL_VERSION).tar.gz
 
 # Check if openssl or libressl is already present on the system
 ifeq ($(or $(call need_pkg,"openssl >= 1.0.0"),$(call need_pkg,"libressl >= 1.0.0")),)
 PKGS_FOUND += libressl
 endif
 
-# Pure dependency of restinio: do not add to PKGS.
-
-$(TARBALLS)/portable-$(LIBRESSL_VERSION).tar.gz:
+$(TARBALLS)/$(LIBRESSL_VERSION).tar.gz:
 	$(call download,$(LIBRESSL_URL))
 
-$(TARBALLS)/openbsd-$(OPENBSD_VERSION).tar.gz:
-	$(call download,$(OPENBSD_URL))
-
-libressl: portable-$(LIBRESSL_VERSION).tar.gz openbsd-$(OPENBSD_VERSION).tar.gz
+libressl: $(LIBRESSL_VERSION).tar.gz
 	$(UNPACK)
-	mv portable-$(SSL_VERSION) portable-v$(SSL_VERSION)
-	$(APPLY) $(SRC)/libressl/0001-build-don-t-fetch-git-tag-if-openbsd-directory-exist.patch
-	mv openbsd-$(OPENBSD_VERSION) $(UNPACK_DIR)/openbsd
 	$(MOVE)
 
 .libressl: libressl .sum-libressl
 	mkdir -p "$(PREFIX)/include"
-	cd $< && ./autogen.sh
 ifdef HAVE_WIN32
 	cd $< && $(HOSTVARS) CPPFLAGS=-D__MINGW_USE_VC2005_COMPAT ./configure $(HOSTCONF) && $(MAKE) && $(MAKE) install
 else ifdef HAVE_WIN64
@@ -63,4 +52,4 @@ endif
 	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.*
 	touch $@
 
-.sum-libressl: portable-$(LIBRESSL_VERSION).tar.gz openbsd-$(OPENBSD_VERSION).tar.gz
+.sum-libressl: $(LIBRESSL_VERSION).tar.gz
