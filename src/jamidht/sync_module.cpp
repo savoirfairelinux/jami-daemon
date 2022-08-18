@@ -57,18 +57,48 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
     if (!acc)
         return;
     Json::Value syncValue;
+    msgpack::sbuffer buffer(UINT16_MAX); // Use max pkt size
     std::error_code ec;
-    msgpack::sbuffer buffer(8192);
-    SyncMsg msg;
-    if (auto info = acc->accountManager()->getInfo())
-        if (info->contacts)
+    // Send contacts infos
+    // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
+    // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all informations).
+    if (auto info = acc->accountManager()->getInfo()) {
+        if (info->contacts) {
+            SyncMsg msg;
             msg.ds = info->contacts->getSyncData();
-    msg.c = ConversationModule::convInfos(acc->getAccountID());
-    msg.cr = ConversationModule::convRequests(acc->getAccountID());
-    msgpack::pack(buffer, msg);
-    socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-    if (ec)
-        return;
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERR("%s", ec.message().c_str());
+                return;
+            }
+        }
+    }
+    buffer.clear();
+    // Sync conversations
+    auto c = ConversationModule::convInfos(acc->getAccountID());
+    if (!c.empty()) {
+        SyncMsg msg;
+        msg.c = std::move(c);
+        msgpack::pack(buffer, msg);
+        socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+        if (ec) {
+            JAMI_ERR("%s", ec.message().c_str());
+            return;
+        }
+    }
+    buffer.clear();
+    // Sync requests
+    auto cr = ConversationModule::convRequests(acc->getAccountID());
+    if (!cr.empty()) {
+        SyncMsg msg;
+        msg.cr = std::move(cr);
+        msgpack::pack(buffer, msg);
+        socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+        if (ec) {
+            JAMI_ERR("%s", ec.message().c_str());
+            return;
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////
@@ -118,7 +148,8 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
         if (auto manager = dynamic_cast<ArchiveAccountManager*>(acc->accountManager()))
             manager->onSyncData(std::move(msg.ds), false);
 
-        acc->convModule()->onSyncData(msg, peerId, device.toString());
+        if (!msg.c.empty() || !msg.cr.empty())
+            acc->convModule()->onSyncData(msg, peerId, device.toString());
         return len;
     });
 }
