@@ -380,12 +380,12 @@ if get_option('interfaces').contains('library')
 
     modpkgconfig.generate(
         libjami,
-        name: 'jami',
+        name: 'libjami',
         version: meson.project_version(),
         description: 'The Jami core library',
         url: 'https://jami.net/',
         subdirs: 'jami',
-        filebase: 'jami',
+        filebase: 'libjami',
         variables: [
             'video=' + (conf.get('ENABLE_VIDEO')? 'true' : 'false'),
             'plugins=' + (conf.get('ENABLE_PLUGIN')? 'true' : 'false')
