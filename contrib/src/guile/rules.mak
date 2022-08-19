@@ -19,10 +19,9 @@ guile: guile-$(GUILE_VERSION).tar.gz .sum-guile
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-GUILE_CONF := \
-	--enable-static \
-	--disable-shared \
-	$(HOSTCONF)
+GUILE_CONF :=       \
+	$(HOSTCONF) \
+	--enable-shared
 
 .guile: guile
 	cd $< && $(HOSTVARS) ./configure $(GUILE_CONF)

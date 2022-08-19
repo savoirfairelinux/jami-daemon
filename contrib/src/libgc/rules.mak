@@ -16,10 +16,11 @@ libgc: libgc-$(LIBGC_VERSION).tar.gz .sum-libgc
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-LIBGC_CONF :=            \
-	$(HOSTCONF)      \
-	--disable-static \
-	--enable-shared
+LIBGC_CONF :=             \
+	$(HOSTCONF)       \
+        --enable-cpluplus \
+        --disable-munmap  \
+        --enable-shared
 
 
 .libgc: libgc

@@ -15,8 +15,9 @@ libffi: libffi-$(LIBFFI_VERSION).tar.gz .sum-libffi
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-LIBFFI_CONF := \
-	$(HOSTCONF)
+LIBFFI_CONF :=      \
+	$(HOSTCONF) \
+        --enable-shared
 
 .libffi: libffi
 	cd $< && $(HOSTVARS) ./configure $(LIBFFI_CONF)

@@ -16,7 +16,8 @@ libunistring: libunistring-$(LIBUNISTRING_VERSION).tar.gz .sum-libunistring
 	$(MOVE)
 
 LIBUNISTRING_CONF := \
-	$(HOSTCONF)
+	$(HOSTCONF)  \
+        --enable-shared
 
 .libunistring: libunistring
 	cd $< && $(HOSTVARS) ./configure $(LIBUNISTRING_CONF)
