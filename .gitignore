@@ -119,6 +119,7 @@ tools/.vscode/
 
 build-aux/
 configure
+jami.pc
 bin/dbus/*.adaptor.h
 bin/dbus/cx.ring.Ring.service
 bin/jamid
