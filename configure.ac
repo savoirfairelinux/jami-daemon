@@ -658,7 +658,8 @@ AC_CONFIG_FILES([Makefile \
                  test/unitTest/Makefile \
                  man/Makefile \
                  doc/Makefile \
-                 doc/doxygen/Makefile])
+                 doc/doxygen/Makefile
+                 jami.pc])
 
 dnl Transfer the Automake variables set here to Makefile.in.
 echo DAEMONCPPFLAGS=$DAEMONCPPFLAGS

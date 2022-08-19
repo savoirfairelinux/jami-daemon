@@ -16,6 +16,9 @@ EXTRA_DIST = m4/libtool.m4 \
 			 contrib/bootstrap \
 			 contrib/src
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = jami.pc
+
 coverage-html:
 	$(AM_V_at)lcov --no-external --capture --initial --directory $(top_builddir) --output-file jami-coverage-base.info
 	$(AM_V_at)lcov --no-external --capture --directory $(top_builddir) --output-file jami-coverage-tests.info
