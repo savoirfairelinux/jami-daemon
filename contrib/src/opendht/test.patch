@@ -1,0 +1,14 @@
+diff --git a/src/thread_pool.cpp b/src/thread_pool.cpp
+index 31b7b3cc..f45ddd73 100644
+--- a/src/thread_pool.cpp
++++ b/src/thread_pool.cpp
+@@ -106,7 +106,8 @@ ThreadPool::stop()
+ {
+     std::lock_guard<std::mutex> l(lock_);
+     running_ = false;
+-    tasks_ = {};
++    while (not tasks_.empty())
++        tasks_.pop();
+     cv_.notify_all();
+ }
+ 
