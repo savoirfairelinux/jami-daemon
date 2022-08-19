@@ -72,6 +72,7 @@ RUN add-apt-repository universe && \
         libsecp256k1-dev \
         libasio-dev \
         libexpat1 libexpat1-dev \
+        guile-3.0 guile-3.0-dev \
         lcov gcovr \
         ninja-build
 
