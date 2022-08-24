@@ -75,7 +75,7 @@
 #include <nettle/sha3.h>
 
 #include <sstream>
-#include <fstream>
+#include <boost/nowide/fstream.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <limits>
@@ -415,7 +415,7 @@ std::vector<uint8_t>
 loadFile(const std::string& path, const std::string& default_dir)
 {
     std::vector<uint8_t> buffer;
-    std::ifstream file = ifstream(getFullPath(default_dir, path), std::ios::binary);
+    boost::nowide::ifstream file(getFullPath(default_dir, path), std::ios::binary);
     if (!file)
         throw std::runtime_error("Can't read file: " + path);
     file.seekg(0, std::ios::end);
@@ -433,7 +433,7 @@ std::string
 loadTextFile(const std::string& path, const std::string& default_dir)
 {
     std::string buffer;
-    std::ifstream file = ifstream(getFullPath(default_dir, path));
+    boost::nowide::ifstream file(getFullPath(default_dir, path));
     if (!file)
         throw std::runtime_error("Can't read file: " + path);
     file.seekg(0, std::ios::end);
@@ -450,7 +450,7 @@ loadTextFile(const std::string& path, const std::string& default_dir)
 void
 saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t UNUSED mode)
 {
-    std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
+    boost::nowide::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", path.c_str());
         return;
@@ -1001,53 +1001,13 @@ removeAll(const std::string& path, bool erase)
     return remove(path, erase);
 }
 
-void
-openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    file.open(jami::to_wstring(path), mode);
-#else
-    file.open(path, mode);
-#endif
-}
-
-void
-openStream(std::ofstream& file, const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    file.open(jami::to_wstring(path), mode);
-#else
-    file.open(path, mode);
-#endif
-}
-
-std::ifstream
-ifstream(const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    return std::ifstream(jami::to_wstring(path), mode);
-#else
-    return std::ifstream(path, mode);
-#endif
-}
-
-std::ofstream
-ofstream(const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    return std::ofstream(jami::to_wstring(path), mode);
-#else
-    return std::ofstream(path, mode);
-#endif
-}
-
 int64_t
 size(const std::string& path)
 {
-    std::ifstream file;
-    int64_t size;
+    boost::nowide::ifstream file;
+    int64_t size = 0;
     try {
-        openStream(file, path, std::ios::binary | std::ios::in);
+        file.open(path, std::ios::binary | std::ios::in);
         file.seekg(0, std::ios_base::end);
         size = file.tellg();
         file.close();
@@ -1062,11 +1022,11 @@ sha3File(const std::string& path)
     sha3_512_ctx ctx;
     sha3_512_init(&ctx);
 
-    std::ifstream file;
+    boost::nowide::ifstream file;
     try {
         if (!fileutils::isFile(path))
             return {};
-        openStream(file, path, std::ios::binary | std::ios::in);
+        file.open(path, std::ios::binary | std::ios::in);
         if (!file)
             return {};
         std::vector<char> buffer(8192, 0);

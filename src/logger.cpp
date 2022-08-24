@@ -45,7 +45,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <functional>
-#include <fstream>
+#include <boost/nowide/fstream.hpp>
 #include <string>
 #include <ios>
 #include <mutex>
@@ -454,7 +454,7 @@ public:
             thread_.join();
         }
 
-        std::ofstream file;
+        boost::nowide::ofstream file;
         if (not path.empty()) {
             file.open(path, std::ofstream::out | std::ofstream::app);
             enable(true);
@@ -502,7 +502,7 @@ private:
         cv_.notify_one();
     }
 
-    void do_consume(std::ofstream& file, const std::vector<Logger::Msg>& messages)
+    void do_consume(boost::nowide::ofstream& file, const std::vector<Logger::Msg>& messages)
     {
         for (const auto& msg : messages) {
             file << msg.header_ << msg.payload_;
