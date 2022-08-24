@@ -45,7 +45,8 @@
 #include <atomic>
 #include <condition_variable>
 #include <functional>
-#include <fstream>
+#include <nowide/fstream.hpp>
+#include <nowide/cstdlib.hpp>
 #include <string>
 #include <ios>
 #include <mutex>
@@ -335,8 +336,10 @@ public:
 
     virtual void consume(jami::Logger::Msg& msg) override
     {
-        static bool with_color = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR")
-                                   || getenv("NO_COLOURS"));
+        static bool with_color = !(nowide::getenv("NO_COLOR") ||
+                                   nowide::getenv("NO_COLORS") ||
+                                   nowide::getenv("NO_COLOUR") ||
+                                   nowide::getenv("NO_COLOURS"));
 
         printLogImpl(msg, with_color);
     }
@@ -454,7 +457,7 @@ public:
             thread_.join();
         }
 
-        std::ofstream file;
+        nowide::ofstream file;
         if (not path.empty()) {
             file.open(path, std::ofstream::out | std::ofstream::app);
             enable(true);
@@ -502,7 +505,7 @@ private:
         cv_.notify_one();
     }
 
-    void do_consume(std::ofstream& file, const std::vector<Logger::Msg>& messages)
+    void do_consume(nowide::ofstream& file, const std::vector<Logger::Msg>& messages)
     {
         for (const auto& msg : messages) {
             file << msg.header_ << msg.payload_;

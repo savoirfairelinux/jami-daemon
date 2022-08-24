@@ -46,6 +46,7 @@ endif
 depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5',
                         fallback: ['jsoncpp', 'jsoncpp_dep'], default_options: ['default_library=static'])
 depzlib = dependency('zlib', fallback: ['zlib', 'zlib_dep'], default_options: ['default_library=static'])
+depnowide = dependency('nowide', method: 'cmake')
 
 if get_option('interfaces').contains('dbus')
     depdbuscpp = dependency('dbus-c++-1')
