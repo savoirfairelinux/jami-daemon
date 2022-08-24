@@ -27,7 +27,7 @@
 
 #include "account_const.h"
 
-#include <fstream>
+#include <nowide/fstream.hpp>
 #include <gnutls/ocsp.h>
 
 namespace jami {
@@ -235,14 +235,14 @@ ContactList::loadContacts()
 void
 ContactList::saveContacts() const
 {
-    std::ofstream file(path_ + DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
+    nowide::ofstream file(path_ + DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, contacts_);
 }
 
 void
 ContactList::saveTrustRequests() const
 {
-    std::ofstream file(path_ + DIR_SEPARATOR_STR "incomingTrustRequests",
+    nowide::ofstream file(path_ + DIR_SEPARATOR_STR "incomingTrustRequests",
                        std::ios::trunc | std::ios::binary);
     msgpack::pack(file, trustRequests_);
 }
@@ -449,7 +449,7 @@ ContactList::loadKnownDevices()
 void
 ContactList::saveKnownDevices() const
 {
-    std::ofstream file(path_ + DIR_SEPARATOR_STR "knownDevices", std::ios::trunc | std::ios::binary);
+    nowide::ofstream file(path_ + DIR_SEPARATOR_STR "knownDevices", std::ios::trunc | std::ios::binary);
 
     std::map<dht::PkId, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)
