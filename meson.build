@@ -29,6 +29,7 @@ deplibavformat = dependency('libavformat', version: '>= 56.40.101')
 deplibswscale = dependency('libswscale', version: '>= 3.1.101')
 deplibswresample = dependency('libswresample', version: '>= 1.2.101')
 deplibavutil = dependency('libavutil', version: '>= 55.75.100')
+depboost = dependency('boost', modules: ['nowide'], static: true)
 depfmt = dependency('fmt', version: '>= 5.3')
 
 depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1', required: false)
