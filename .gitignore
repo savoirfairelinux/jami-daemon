@@ -44,6 +44,7 @@ libtool
 
 # Ignored folders
 build-local/
+subprojects/*/
 
 # Ignore rendered docs
 doc/doxygen/core-doc

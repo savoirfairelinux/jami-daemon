@@ -1,0 +1,6 @@
+[wrap-file]
+directory = nowide_standalone_v11.2.0
+
+source_url = https://github.com/boostorg/nowide/releases/download/v11.2.0/nowide_standalone_v11.2.0.tar.gz
+source_filename = nowide_standalone_v11.2.0.tar.gz
+source_hash = 1869d176a8af389e4f7416f42bdd15d6a5db3c6e4ae77269ecb071a232304e1d

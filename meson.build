@@ -47,6 +47,13 @@ depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5',
                         fallback: ['jsoncpp', 'jsoncpp_dep'], default_options: ['default_library=static'])
 depzlib = dependency('zlib', fallback: ['zlib', 'zlib_dep'], default_options: ['default_library=static'])
 
+depnowide_options = modcmake.subproject_options()
+depnowide_options.add_cmake_defines({
+    'CMAKE_BUILD_TYPE': 'Release',
+    'CMAKE_POSITION_INDEPENDENT_CODE': true
+})
+depnowide = modcmake.subproject('nowide', options: depnowide_options).dependency('nowide')
+
 if get_option('interfaces').contains('dbus')
     depdbuscpp = dependency('dbus-c++-1')
     progdbusxxxml2cpp = find_program('dbusxx-xml2cpp', native: true)
