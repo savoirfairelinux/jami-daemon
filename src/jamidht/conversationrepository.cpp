@@ -29,7 +29,8 @@
 using random_device = dht::crypto::random_device;
 
 #include <ctime>
-#include <fstream>
+#include <nowide/fstream.hpp>
+#include <nowide/cstdio.hpp>
 #include <future>
 #include <json/json.h>
 #include <regex>
@@ -374,7 +375,7 @@ add_initial_files(GitRepository& repo,
 
     // /admins
     std::string adminPath = adminsPath + "/" + parentCert->getId().toString() + ".crt";
-    auto file = fileutils::ofstream(adminPath, std::ios::trunc | std::ios::binary);
+    auto file = nowide::ofstream(adminPath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", adminPath.c_str());
         return false;
@@ -389,7 +390,7 @@ add_initial_files(GitRepository& repo,
 
     // /devices
     std::string devicePath = devicesPath + "/" + deviceId + ".crt";
-    file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    file = nowide::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", devicePath.c_str());
         return false;
@@ -408,7 +409,7 @@ add_initial_files(GitRepository& repo,
             continue;
         std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR
                               + dht::toHex(crl->getNumber()) + ".crl";
-        file = fileutils::ofstream(crlPath, std::ios::trunc | std::ios::binary);
+        file = nowide::ofstream(crlPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERR("Could not write data to %s", crlPath.c_str());
             return false;
@@ -429,7 +430,7 @@ add_initial_files(GitRepository& repo,
             return false;
         }
 
-        auto file = fileutils::ofstream(invitedMemberPath, std::ios::trunc | std::ios::binary);
+        auto file = nowide::ofstream(invitedMemberPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERR("Could not write data to %s", invitedMemberPath.c_str());
             return false;
@@ -1552,7 +1553,7 @@ ConversationRepository::Impl::validateDevice()
             JAMI_ERR("Current device's certificate is invalid. A migration is needed");
             return false;
         }
-        auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+        auto file = nowide::ofstream(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERR("Could not write data to %s", devicePath.c_str());
             return false;
@@ -1574,7 +1575,7 @@ ConversationRepository::Impl::validateDevice()
             path = memberPath;
         fullpath += path;
         if (fileutils::isFile(fullpath)) {
-            auto file = fileutils::ofstream(fullpath, std::ios::trunc | std::ios::binary);
+            auto file = nowide::ofstream(fullpath, std::ios::trunc | std::ios::binary);
             if (!file.is_open()) {
                 JAMI_ERR("Could not write data to %s", path.c_str());
                 return false;
@@ -2417,7 +2418,7 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
 
     // Move to wanted directory
     auto newPath = conversationsPath + "/" + id;
-    if (std::rename(tmpPath.c_str(), newPath.c_str())) {
+    if (nowide::rename(tmpPath.c_str(), newPath.c_str())) {
         JAMI_ERR("Couldn't move %s in %s", tmpPath.c_str(), newPath.c_str());
         fileutils::removeAll(tmpPath, true);
         return {};
@@ -2726,7 +2727,7 @@ ConversationRepository::addMember(const std::string& uri)
         return {};
     }
 
-    auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    auto file = nowide::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", devicePath.c_str());
         return {};
@@ -2912,7 +2913,7 @@ ConversationRepository::Impl::addUserDevice()
     std::string path = fmt::format("devices/{}.crt", account->currentDeviceId());
     std::string devicePath = git_repository_workdir(repo.get()) + path;
     if (!fileutils::isFile(devicePath)) {
-        auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+        auto file = nowide::ofstream(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERR("Could not write data to %s", devicePath.c_str());
             return;
@@ -3158,7 +3159,7 @@ ConversationRepository::join()
         JAMI_ERR("Error when creating %s. Abort create conversations", membersPath.c_str());
         return {};
     }
-    auto file = fileutils::ofstream(memberFile, std::ios::trunc | std::ios::binary);
+    auto file = nowide::ofstream(memberFile, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", memberFile.c_str());
         return {};
@@ -3321,7 +3322,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
         return {};
     }
     auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
-    auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
+    auto voteFile = nowide::ofstream(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
         JAMI_ERR("Could not write data to %s", votePath.c_str());
         return {};
@@ -3361,7 +3362,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string& typ
         return {};
     }
     auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
-    auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
+    auto voteFile = nowide::ofstream(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
         JAMI_ERR("Could not write data to %s", votePath.c_str());
         return {};
@@ -3399,7 +3400,7 @@ ConversationRepository::Impl::resolveBan(const std::string& type, const std::str
         return false;
     }
 
-    if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+    if (nowide::rename(originFilePath.c_str(), destFilePath.c_str())) {
         JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
                  originFilePath.c_str(),
                  destFilePath.c_str());
@@ -3450,7 +3451,7 @@ ConversationRepository::Impl::resolveUnban(const std::string& type, const std::s
         JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
         return false;
     }
-    if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+    if (nowide::rename(originFilePath.c_str(), destFilePath.c_str())) {
         JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
                  originFilePath.c_str(),
                  destFilePath.c_str());
@@ -3661,7 +3662,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         return {};
     std::string repoPath = git_repository_workdir(repo.get());
     auto profilePath = repoPath + "profile.vcf";
-    auto file = fileutils::ofstream(profilePath, std::ios::trunc | std::ios::binary);
+    auto file = nowide::ofstream(profilePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", profilePath.c_str());
         return {};
