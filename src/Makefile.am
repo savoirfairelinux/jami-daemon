@@ -62,6 +62,7 @@ endif
 # unspecified, but for some reason this is required otherwise the
 # shared object fails to link against ffmpeg's libswscale.a.
 libring_la_LDFLAGS = $(AM_LDFLAGS)
+libring_la_LDFLAGS += -lnowide
 
 if HAVE_WIN32
 libring_la_LDFLAGS += -no-undefined -avoid-version

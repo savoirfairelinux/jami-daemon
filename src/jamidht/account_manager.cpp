@@ -30,7 +30,6 @@
 
 #include <exception>
 #include <future>
-#include <fstream>
 #include <gnutls/ocsp.h>
 
 namespace jami {

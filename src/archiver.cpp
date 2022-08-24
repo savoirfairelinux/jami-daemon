@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
 #include <sys/stat.h>
-#include <fstream>
+#include <nowide/fstream.hpp>
 
 using namespace std::literals;
 
@@ -105,7 +105,7 @@ accountToJsonValue(const std::map<std::string, std::string>& details)
                    || i.first == DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE
                    || i.first == DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) {
             // replace paths by the files content
-            std::ifstream ifs = fileutils::ifstream(i.second);
+            nowide::ifstream ifs(i.second);
             std::string fileContent((std::istreambuf_iterator<char>(ifs)),
                                     std::istreambuf_iterator<char>());
             root[i.first] = fileContent;

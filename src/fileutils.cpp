@@ -75,12 +75,13 @@
 #include <nettle/sha3.h>
 
 #include <sstream>
-#include <fstream>
+#include <nowide/fstream.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <limits>
 
-#include <cstdlib>
+#include <nowide/cstdlib.hpp>
+#include <nowide/cstdio.hpp>
 #include <cstring>
 #include <cerrno>
 #include <cstddef>
@@ -99,34 +100,20 @@
 #include <filesystem>
 #endif
 
-#ifndef _MSC_VER
 #define PROTECTED_GETENV(str) \
     ({ \
-        char* envvar_ = getenv((str)); \
+        char* envvar_ = nowide::getenv((str)); \
         envvar_ ? envvar_ : ""; \
     })
 
+#ifndef _MSC_VER
 #define XDG_DATA_HOME   (PROTECTED_GETENV("XDG_DATA_HOME"))
 #define XDG_CONFIG_HOME (PROTECTED_GETENV("XDG_CONFIG_HOME"))
 #define XDG_CACHE_HOME  (PROTECTED_GETENV("XDG_CACHE_HOME"))
 #else
-const wchar_t*
-winGetEnv(const wchar_t* name)
-{
-    const DWORD buffSize = 65535;
-    static wchar_t buffer[buffSize];
-    if (GetEnvironmentVariable(name, buffer, buffSize)) {
-        return buffer;
-    } else {
-        return L"";
-    }
-}
-
-#define PROTECTED_GETENV(str) winGetEnv(str)
-
-#define JAMI_DATA_HOME   PROTECTED_GETENV(L"JAMI_DATA_HOME")
-#define JAMI_CONFIG_HOME PROTECTED_GETENV(L"JAMI_CONFIG_HOME")
-#define JAMI_CACHE_HOME  PROTECTED_GETENV(L"JAMI_CACHE_HOME")
+#define JAMI_DATA_HOME   PROTECTED_GETENV("JAMI_DATA_HOME")
+#define JAMI_CONFIG_HOME PROTECTED_GETENV("JAMI_CONFIG_HOME")
+#define JAMI_CACHE_HOME  PROTECTED_GETENV("JAMI_CACHE_HOME")
 #endif
 
 #define PIDFILE     ".ring.pid"
@@ -415,7 +402,7 @@ std::vector<uint8_t>
 loadFile(const std::string& path, const std::string& default_dir)
 {
     std::vector<uint8_t> buffer;
-    std::ifstream file = ifstream(getFullPath(default_dir, path), std::ios::binary);
+    nowide::ifstream file(getFullPath(default_dir, path), std::ios::binary);
     if (!file)
         throw std::runtime_error("Can't read file: " + path);
     file.seekg(0, std::ios::end);
@@ -433,7 +420,7 @@ std::string
 loadTextFile(const std::string& path, const std::string& default_dir)
 {
     std::string buffer;
-    std::ifstream file = ifstream(getFullPath(default_dir, path));
+    nowide::ifstream file(getFullPath(default_dir, path));
     if (!file)
         throw std::runtime_error("Can't read file: " + path);
     file.seekg(0, std::ios::end);
@@ -450,7 +437,7 @@ loadTextFile(const std::string& path, const std::string& default_dir)
 void
 saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t UNUSED mode)
 {
-    std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
+    nowide::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", path.c_str());
         return;
@@ -854,7 +841,7 @@ bool
 eraseFile_win32(const std::string& path, bool dosync)
 {
     HANDLE h
-        = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+        = CreateFileW(nowide::widen(path).c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (h == INVALID_HANDLE_VALUE) {
         JAMI_WARN("Can not open file %s for erasing.", path.c_str());
         return false;
@@ -983,7 +970,7 @@ remove(const std::string& path, bool erase)
         return !RemoveDirectory(jami::to_wstring(path).c_str());
 #endif
 
-    return std::remove(path.c_str());
+    return nowide::remove(path.c_str());
 }
 
 int
@@ -1001,53 +988,13 @@ removeAll(const std::string& path, bool erase)
     return remove(path, erase);
 }
 
-void
-openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    file.open(jami::to_wstring(path), mode);
-#else
-    file.open(path, mode);
-#endif
-}
-
-void
-openStream(std::ofstream& file, const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    file.open(jami::to_wstring(path), mode);
-#else
-    file.open(path, mode);
-#endif
-}
-
-std::ifstream
-ifstream(const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    return std::ifstream(jami::to_wstring(path), mode);
-#else
-    return std::ifstream(path, mode);
-#endif
-}
-
-std::ofstream
-ofstream(const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    return std::ofstream(jami::to_wstring(path), mode);
-#else
-    return std::ofstream(path, mode);
-#endif
-}
-
 int64_t
 size(const std::string& path)
 {
-    std::ifstream file;
-    int64_t size;
+    nowide::ifstream file;
+    int64_t size = 0;
     try {
-        openStream(file, path, std::ios::binary | std::ios::in);
+        file.open(path, std::ios::binary | std::ios::in);
         file.seekg(0, std::ios_base::end);
         size = file.tellg();
         file.close();
@@ -1062,11 +1009,11 @@ sha3File(const std::string& path)
     sha3_512_ctx ctx;
     sha3_512_init(&ctx);
 
-    std::ifstream file;
+    nowide::ifstream file;
     try {
         if (!fileutils::isFile(path))
             return {};
-        openStream(file, path, std::ios::binary | std::ios::in);
+        file.open(path, std::ios::binary | std::ios::in);
         if (!file)
             return {};
         std::vector<char> buffer(8192, 0);
