@@ -23,7 +23,7 @@
 
 #include <msgpack.hpp>
 #include <sstream>
-#include <fstream>
+#include <nowide/fstream.hpp>
 #include <fmt/core.h>
 
 #include "logger.h"
@@ -66,7 +66,7 @@ PluginPreferencesUtils::processLocaleFile(const std::string& preferenceLocaleFil
     if (!fileutils::isFile(preferenceLocaleFilePath)) {
         return {};
     }
-    std::ifstream file(preferenceLocaleFilePath);
+    nowide::ifstream file(preferenceLocaleFilePath);
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
     rbuilder["collectComments"] = false;
@@ -150,7 +150,7 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
 {
     std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferenceFilePath));
-    std::ifstream file(preferenceFilePath);
+    nowide::ifstream file(preferenceFilePath);
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
     rbuilder["collectComments"] = false;
@@ -242,7 +242,7 @@ PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath,
 {
     const std::string preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
-    std::ifstream file(preferencesValuesFilePath, std::ios::binary);
+    nowide::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
 
     // If file is accessible
@@ -312,7 +312,7 @@ PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath,
 
     const std::string preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
-    std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
+    nowide::ofstream fs(preferencesValuesFilePath, std::ios::binary);
     if (!fs.good()) {
         return false;
     }
@@ -331,7 +331,7 @@ PluginPreferencesUtils::setAllowDenyListPreferences(const ChatHandlerList& list)
 {
     std::string filePath = getAllowDenyListsPath();
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
-    std::ofstream fs(filePath, std::ios::binary);
+    nowide::ofstream fs(filePath, std::ios::binary);
     if (!fs.good()) {
         return;
     }
@@ -347,7 +347,7 @@ PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list)
 {
     const std::string filePath = getAllowDenyListsPath();
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
-    std::ifstream file(filePath, std::ios::binary);
+    nowide::ifstream file(filePath, std::ios::binary);
 
     // If file is accessible
     if (file.good()) {
@@ -384,7 +384,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
         Json::Value root;
 
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
-        std::ifstream file(filePath);
+        nowide::ifstream file(filePath);
         Json::CharReaderBuilder rbuilder;
         Json::Value preference;
         rbuilder["collectComments"] = false;
@@ -404,7 +404,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
     Json::Value root;
     {
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
-        std::ifstream file(filePath);
+        nowide::ifstream file(filePath);
         Json::CharReaderBuilder rbuilder;
         Json::Value preference;
         rbuilder["collectComments"] = false;
@@ -428,7 +428,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
         root.append(preference);
     }
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
-    std::ofstream outFile(filePath);
+    nowide::ofstream outFile(filePath);
     if (outFile) {
         // Save preference.json file with new "always preference"
         outFile << root.toStyledString();
