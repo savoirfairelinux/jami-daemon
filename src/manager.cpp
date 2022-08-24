@@ -116,7 +116,7 @@ using random_device = dht::crypto::random_device;
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
-#include <fstream>
+#include <boost/nowide/fstream.hpp>
 #include <sstream>
 #include <algorithm>
 #include <memory>
@@ -144,8 +144,8 @@ bool Manager::isIOSExtension = {false};
 static void
 copy_over(const std::string& srcPath, const std::string& destPath)
 {
-    std::ifstream src = fileutils::ifstream(srcPath.c_str());
-    std::ofstream dest = fileutils::ofstream(destPath.c_str());
+    boost::nowide::ifstream src(srcPath.c_str());
+    boost::nowide::ofstream dest(destPath.c_str());
     dest << src.rdbuf();
     src.close();
     dest.close();
@@ -480,7 +480,7 @@ Manager::ManagerPimpl::parseConfiguration()
     bool result = true;
 
     try {
-        std::ifstream file = fileutils::ifstream(path_);
+        boost::nowide::ifstream file(path_);
         YAML::Node parsedFile = YAML::Load(file);
         file.close();
         const int error_count = base_.loadAccountMap(parsedFile);
@@ -1748,7 +1748,7 @@ Manager::saveConfig()
 #endif
 
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(pimpl_->path_));
-        std::ofstream fout = fileutils::ofstream(pimpl_->path_);
+        boost::nowide::ofstream fout(pimpl_->path_);
         fout << out.c_str();
     } catch (const YAML::Exception& e) {
         JAMI_ERR("%s", e.what());
@@ -2845,7 +2845,7 @@ Manager::loadAccountMap(const YAML::Node& node)
             if (fileutils::isFile(configFile)) {
                 try {
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
-                        std::ifstream file = fileutils::ifstream(configFile);
+                        boost::nowide::ifstream file(configFile);
                         YAML::Node parsedConfig = YAML::Load(file);
                         file.close();
                         a->unserialize(parsedConfig);

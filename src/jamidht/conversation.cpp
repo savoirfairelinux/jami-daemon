@@ -28,6 +28,7 @@
 #include <string_view>
 #include <opendht/thread_pool.h>
 #include <tuple>
+#include <boost/nowide/fstream.hpp>
 
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
@@ -298,7 +299,7 @@ public:
     }
     void saveFetched()
     {
-        std::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
+        boost::nowide::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, fetchedDevices_);
     }
 
@@ -318,7 +319,7 @@ public:
 
     void saveLastDisplayed() const
     {
-        std::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
+        boost::nowide::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, lastDisplayed_);
     }
 

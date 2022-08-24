@@ -30,7 +30,7 @@
 
 #include <chrono>
 #include <cstdio>
-#include <fstream>
+#include <boost/nowide/fstream.hpp>
 #include <ios>
 #include <ratio>
 #include <string_view>
@@ -94,7 +94,7 @@ public:
                                        AV_SAMPLE_FMT_FLTP,
                                        AV_SAMPLE_FMT_DBL,
                                        AV_SAMPLE_FMT_DBLP};
-        f_ = std::ofstream(filename, std::ios_base::out | std::ios_base::binary);
+        f_ = boost::nowide::ofstream(filename, std::ios_base::out | std::ios_base::binary);
         f_.imbue(std::locale::classic());
         f_ << "RIFF----WAVEfmt ";
         if (std::find(v.begin(), v.end(), format_) == v.end()) {
@@ -189,7 +189,7 @@ public:
     }
 
 private:
-    std::ofstream f_;
+    boost::nowide::ofstream f_;
     size_t dataChunk_ {0};
     size_t factChunk_ {0};
     size_t length_ {0};

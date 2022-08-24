@@ -294,6 +294,9 @@ PKG_CHECK_MODULES(ZLIB, zlib,, AC_MSG_ERROR([zlib not found]))
 
 PKG_CHECK_MODULES(LIBGIT2, [libgit2 >= 1.1.0],, AC_MSG_ERROR([Missing libgit2 files]))
 
+BOOST_REQUIRE([1.73.0])
+BOOST_FIND_LIBS([nowide], [nowide], [s], [boost/nowide/fstream.hpp], [boost::nowide::ifstream file;], [], [], [$2])
+
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,,
   AC_MSG_ERROR([Missing pjproject files]))
