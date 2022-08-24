@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <cstdlib>
+#include <nowide/cstdlib.hpp>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -49,7 +49,7 @@ init(enum InitFlag flags) noexcept
     jami::Logger::setSysLog(true);
     jami::Logger::setConsoleLog(DRING_FLAG_CONSOLE_LOG == (flags & DRING_FLAG_CONSOLE_LOG));
 
-    const char* log_file = getenv("JAMI_LOG_FILE");
+    const char* log_file = nowide::getenv("JAMI_LOG_FILE");
 
     if (log_file) {
         jami::Logger::setFileLog(log_file);
