@@ -1,0 +1,20 @@
+{
+    "name": "nowide",
+    "version": "11.2.0",
+    "url": "https://github.com/boostorg/nowide/releases/download/v__VERSION__/nowide_standalone_v__VERSION__.tar.gz",
+    "deps": [],
+    "use_cmake" : true,
+    "defines": [
+        "NOWIDE_INSTALL=ON",
+        "BUILD_TESTING=OFF"
+    ],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
