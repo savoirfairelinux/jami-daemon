@@ -26,7 +26,7 @@
 
 #include <memory>
 #include <string>
-#include <fstream>
+#include <nowide/fstream.hpp>
 #include <optional>
 
 namespace jami {
@@ -96,7 +96,7 @@ private:
     {
         return std::static_pointer_cast<IncomingFile>(shared_from_this());
     }
-    std::ofstream stream_;
+    nowide::ofstream stream_;
     std::string sha3Sum_ {};
 };
 
@@ -114,7 +114,7 @@ public:
     void cancel() override;
 
 private:
-    std::ifstream stream_;
+    nowide::ifstream stream_;
     size_t start_ {0};
     size_t end_ {0};
 };

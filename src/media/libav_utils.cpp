@@ -29,6 +29,7 @@
 #include "video/video_base.h"
 #include "logger.h"
 
+#include <nowide/cstdlib.hpp>
 #include <vector>
 #include <algorithm>
 #include <string>
@@ -98,7 +99,7 @@ static void
 setAvLogLevel()
 {
 #ifndef RING_UWP
-    char* envvar = getenv(AVLOGLEVEL);
+    char* envvar = nowide::getenv(AVLOGLEVEL);
     signed level = AV_LOG_WARNING;
 
     if (envvar != nullptr) {

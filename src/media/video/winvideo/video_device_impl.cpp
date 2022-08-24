@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <nowide/convert.cpp>
 
 #include "logger.h"
 #include "../video_device.h"
@@ -159,7 +160,7 @@ VideoDeviceImpl::setup()
         if (hr != S_OK) {
             continue;
         }
-        auto unique_name = to_string(olestr);
+        auto unique_name = nowide::narrow(olestr);
         if (unique_name.empty()) {
             continue;
         }
@@ -184,7 +185,7 @@ VideoDeviceImpl::setup()
             hr = pPropBag->Read(L"FriendlyName", &var, 0);
         }
         if (SUCCEEDED(hr)) {
-            this->name = to_string(var.bstrVal);
+            this->name = nowide::narrow(var.bstrVal);
         }
         pPropBag->Write(L"FriendlyName", &var);
 
