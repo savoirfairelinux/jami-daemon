@@ -580,15 +580,22 @@ public:
 
     /**
      * Send Profile via cached SIP connection
+     * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
      */
     // Note: when swarm will be merged, this can be moved in transferManager
-    bool needToSendProfile(const std::string& deviceId);
+    bool needToSendProfile(const std::string& peerUri, const std::string& deviceId);
     /**
      * Send profile via cached SIP connection
+     * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
      */
-    void sendProfile(const std::string& deviceId);
+    void sendProfile(const std::string& peerUri, const std::string& deviceId);
+    /**
+     * Clear sent profiles (because of a removed contact or new trust request)
+     * @param peerUri       Uri used to clear cache
+     */
+    void clearProfileCache(const std::string& peerUri);
 
     std::string profilePath() const;
 

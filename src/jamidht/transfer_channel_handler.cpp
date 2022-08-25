@@ -45,7 +45,8 @@ TransferChannelHandler::connect(const DeviceId& deviceId,
 {}
 
 bool
-TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
+TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                                  const std::string& name)
 {
     auto acc = account_.lock();
     if (!acc || !cert || !cert->issuer)
@@ -66,7 +67,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     }
 
     // Check if peer is member of the conversation
-    if (fileId == "profile.vcf") {
+    if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
         auto members = acc->convModule()->getConversationMembers(conversationId);
         return std::find_if(members.begin(), members.end(), [&](auto m) { return m["uri"] == uri; })
                != members.end();
@@ -113,8 +114,8 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         fileId = fileId.substr(0, sep);
     }
 
-    if (fileId == "profile.vcf") {
-        std::string path = fileutils::sha3File(idPath_ + DIR_SEPARATOR_STR + "profile.vcf");
+    if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
+        std::string path = fmt::format("{}/profile.vcf", idPath_);
         acc->dataTransfer()->transferFile(channel, fileId, "", path);
         return;
     } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
