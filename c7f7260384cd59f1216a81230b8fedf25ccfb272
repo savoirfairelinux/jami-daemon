@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bc49ad0_235d7b1e",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1681,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-25T16:37:38Z",
+      "side": 0,
+      "message": "auto answer  +test_call broken / conference / connectionmanager / conversation",
+      "range": {
+        "startLine": 1678,
+        "startChar": 0,
+        "endLine": 1681,
+        "endChar": 1
+      },
+      "revId": "c7f7260384cd59f1216a81230b8fedf25ccfb272",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
