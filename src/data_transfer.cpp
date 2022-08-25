@@ -1340,10 +1340,12 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                     auto itO = pimpl->vcards_.find({deviceId, uri});
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
-                    if (code == uint32_t(DRing::DataTransferEventCode::finished))
+                    if (code == uint32_t(DRing::DataTransferEventCode::finished)) {
+                        JAMI_ERROR("@@@@ PROFILE RECEIVED FOR {} {}", uri, path);
                         emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                 uri,
                                                                                 path);
+                    }
                 }
             });
         });

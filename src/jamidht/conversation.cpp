@@ -1042,7 +1042,7 @@ Conversation::sync(const std::string& member,
         downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId);
     // VCard sync for member
     if (auto account = pimpl_->account_.lock()) {
-        if (not account->needToSendProfile(deviceId)) {
+        if (not account->needToSendProfile(member, deviceId)) {
             JAMI_INFO() << "Peer " << deviceId << " already got an up-to-date vcard";
             return;
         }

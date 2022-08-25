@@ -45,7 +45,8 @@ TransferChannelHandler::connect(const DeviceId& deviceId,
 {}
 
 bool
-TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
+TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                                  const std::string& name)
 {
     auto acc = account_.lock();
     if (!acc || !cert || !cert->issuer)
@@ -114,7 +115,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     }
 
     if (fileId == "profile.vcf") {
-        std::string path = fileutils::sha3File(idPath_ + DIR_SEPARATOR_STR + "profile.vcf");
+        std::string path = fmt::format("{}/profile.vcf", idPath_);
         acc->dataTransfer()->transferFile(channel, fileId, "", path);
         return;
     } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
