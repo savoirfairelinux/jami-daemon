@@ -1143,6 +1143,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                time_t received) {
             if (!id_.first)
                 return;
+            clearProfileCache(uri);
             if (conversationId.empty()) {
                 // Old path
                 emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
@@ -2944,7 +2945,8 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri,
     std::string conversationId = {};
     if (uri.scheme() == Uri::Scheme::SWARM)
         conversationId = uri.authority();
-    auto sendMessage = status == (int) DRing::Account::MessageStates::DISPLAYED && isReadReceiptEnabled();
+    auto sendMessage = status == (int) DRing::Account::MessageStates::DISPLAYED
+                       && isReadReceiptEnabled();
     if (!conversationId.empty())
         sendMessage &= convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
     if (sendMessage)
@@ -2992,12 +2994,10 @@ void
 JamiAccount::removeContact(const std::string& uri, bool ban)
 {
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-    if (accountManager_) {
+    if (accountManager_)
         accountManager_->removeContact(uri, ban);
-    } else {
+    else
         JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
-        return;
-    }
 }
 
 bool
@@ -3927,12 +3927,12 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
 }
 
 bool
-JamiAccount::needToSendProfile(const std::string& deviceId)
+JamiAccount::needToSendProfile(const std::string& peerUri, const std::string& deviceId)
 {
-    auto vCardMd5 = fileutils::sha3File(idPath_ + DIR_SEPARATOR_STR + "profile.vcf");
+    auto vCardMd5 = fileutils::sha3File(fmt::format("{}/profile.vcf", idPath_));
     std::string currentMd5 {};
-    auto vCardPath = cachePath_ + DIR_SEPARATOR_STR + "vcard";
-    auto sha3Path = vCardPath + DIR_SEPARATOR_STR + "sha3";
+    auto vCardPath = fmt::format("{}/vcard", cachePath_);
+    auto sha3Path = fmt::format("{}/sha3", vCardPath);
     fileutils::check_dir(vCardPath.c_str(), 0700);
     try {
         currentMd5 = fileutils::loadTextFile(sha3Path);
@@ -3947,7 +3947,8 @@ JamiAccount::needToSendProfile(const std::string& deviceId)
         fileutils::saveFile(sha3Path, {vCardMd5.begin(), vCardMd5.end()}, 0600);
         return true;
     }
-    return not fileutils::isFile(vCardPath + DIR_SEPARATOR_STR + deviceId);
+    fileutils::recursive_mkdir(fmt::format("{}/{}/", vCardPath, peerUri));
+    return not fileutils::isFile(fmt::format("{}/{}/{}", vCardPath, peerUri, deviceId));
 }
 
 bool
@@ -4041,11 +4042,11 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 }
 
 void
-JamiAccount::sendProfile(const std::string& deviceId)
+JamiAccount::sendProfile(const std::string& peerUri, const std::string& deviceId)
 {
     try {
-        if (not needToSendProfile(deviceId)) {
-            JAMI_INFO() << "Peer " << deviceId << " already got an up-to-date vcard";
+        if (not needToSendProfile(peerUri, deviceId)) {
+            JAMI_DEBUG("Peer {:s} ({:s}) already got an up-to-date vcard", deviceId, peerUri);
             return;
         }
 
@@ -4064,6 +4065,12 @@ JamiAccount::sendProfile(const std::string& deviceId)
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
     }
+}
+
+void
+JamiAccount::clearProfileCache(const std::string& peerUri)
+{
+    fileutils::removeAll(fmt::format("{}/vcard/{}", cachePath_, peerUri));
 }
 
 std::string
@@ -4118,7 +4125,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
               deviceId.to_c_str());
     lk.unlock();
 
-    sendProfile(deviceId.toString());
+    sendProfile(peerId, deviceId.toString());
 
     convModule()->syncConversations(peerId, deviceId.toString());
 
@@ -4266,7 +4273,11 @@ JamiAccount::transferFile(const std::string& conversationId,
                           size_t start,
                           size_t end)
 {
-    auto channelName = DATA_TRANSFER_URI + conversationId + "/" + currentDeviceId() + "/" + fileId;
+    auto channelName = fmt::format("{}{}/{}/{}",
+                                   DATA_TRANSFER_URI,
+                                   conversationId,
+                                   currentDeviceId(),
+                                   fileId);
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
@@ -4305,8 +4316,11 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
         if (!connectionManager_)
             return;
 
-        auto channelName = DATA_TRANSFER_URI + conversationId + "/" + currentDeviceId() + "/"
-                           + fileId;
+        auto channelName = fmt::format("{}{}/{}/{}",
+                                       DATA_TRANSFER_URI,
+                                       conversationId,
+                                       currentDeviceId(),
+                                       fileId);
         if (start != 0 || end != 0) {
             channelName += "?start=" + std::to_string(start) + "&end=" + std::to_string(end);
         }
@@ -4365,12 +4379,15 @@ JamiAccount::askForProfile(const std::string& conversationId,
                                    DATA_TRANSFER_URI,
                                    conversationId,
                                    memberUri);
+    channelName = fmt::format("{}{}/profile/profile.vcf", DATA_TRANSFER_URI, conversationId);
+    ;
     // We can avoid to negotiate new sessions, as the file notif
     // probably come from an online device or last connected device.
     connectionManager_->connectDevice(
         DeviceId(deviceId),
         channelName,
         [this, conversationId](std::shared_ptr<ChannelSocket> channel, const DeviceId&) {
+            JAMI_ERR("@@@ ANSWER???? %u", (bool) (channel));
             if (!channel)
                 return;
             dht::ThreadPool::io().run([w = weak(), conversationId, channel] {
