@@ -1340,10 +1340,11 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                     auto itO = pimpl->vcards_.find({deviceId, uri});
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
-                    if (code == uint32_t(DRing::DataTransferEventCode::finished))
+                    if (code == uint32_t(DRing::DataTransferEventCode::finished)) {
                         emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                 uri,
                                                                                 path);
+                    }
                 }
             });
         });
@@ -1354,8 +1355,8 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
 std::string
 TransferManager::profilePath(const std::string& contactId) const
 {
-    // TODO Android? iOS?
-    return pimpl_->profilesPath_ + DIR_SEPARATOR_STR + base64::encode(contactId) + ".vcf";
+    // TODO iOS?
+    return fmt::format("{}/{}.vcf", pimpl_->profilesPath_, base64::encode(contactId));
 }
 
 std::vector<WaitingRequest>

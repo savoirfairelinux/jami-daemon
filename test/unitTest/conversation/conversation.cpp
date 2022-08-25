@@ -2796,6 +2796,21 @@ ConversationTest::testRemoveReaddMultipleDevice()
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
 
+    std::string vcard = "BEGIN:VCARD\n\
+VERSION:2.1\n\
+FN:ALICE\n\
+DESCRIPTION:DESC\n\
+END:VCARD";
+    auto vCardPath = fmt::format("{}/{}/profile.vcf", fileutils::get_data_dir(), aliceId);
+    // Add file
+    auto p = std::filesystem::path(vCardPath);
+    fileutils::recursive_mkdir(p.parent_path());
+    std::ofstream file(p);
+    if (file.is_open()) {
+        file << vcard;
+        file.close();
+    }
+
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
@@ -2857,6 +2872,16 @@ ConversationTest::testRemoveReaddMultipleDevice()
                 conversationRmBob2 = true;
             cv.notify_one();
         }));
+    auto aliceProfileReceivedBob = false, aliceProfileReceivedBob2 = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ProfileReceived>(
+        [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
+            if (accountId == bobId && peerId == aliceUri) {
+                aliceProfileReceivedBob = true;
+            } else if (accountId == bob2Id && peerId == aliceUri) {
+                aliceProfileReceivedBob2 = true;
+            }
+            cv.notify_one();
+        }));
     DRing::registerSignalHandlers(confHandlers);
 
     // Bob creates a second device
@@ -2900,9 +2925,13 @@ ConversationTest::testRemoveReaddMultipleDevice()
     // Re-Add contact should accept and clone the conversation on all devices
     conversationReadyBob = false;
     conversationReadyBob2 = false;
+    aliceProfileReceivedBob = false;
+    aliceProfileReceivedBob2 = false;
     DRing::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReadyBob && conversationReadyBob2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return conversationReadyBob && conversationReadyBob2 && aliceProfileReceivedBob
+               && aliceProfileReceivedBob2;
+    }));
 }
 
 void
