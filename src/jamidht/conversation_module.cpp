@@ -403,6 +403,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                       conversationId.c_str());
             return;
         }
+        syncCnt.fetch_add(1);
         onNeedSocket_(conversationId,
                       deviceId,
                       [this,
@@ -416,10 +417,10 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                               || !conversation->second) {
                               std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
                               stopFetch(conversationId, deviceId);
+                              syncCnt.fetch_sub(1);
                               return false;
                           }
                           acc->addGitSocket(channel->deviceId(), conversationId, channel);
-                          syncCnt.fetch_add(1);
                           conversation->second->sync(
                               peer,
                               deviceId,
