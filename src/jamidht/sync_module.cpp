@@ -66,6 +66,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
         if (info->contacts) {
             SyncMsg msg;
             msg.ds = info->contacts->getSyncData();
+            msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
                 JAMI_ERR("%s", ec.message().c_str());
