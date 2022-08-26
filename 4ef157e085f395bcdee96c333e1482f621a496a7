@@ -16,6 +16,24 @@
       "message": "If I read download_git in the main.mak, this should not change anything\n\nIn one case:\ngit clone onnx_url --branch master \u0026\u0026 git checkout v1.6.0\nVersus\ngit clone onnx_url --branch v1.6.0 \u0026\u0026 git checkout v1.6.0\n\nwhat\u0027s the original issue?",
       "revId": "4ef157e085f395bcdee96c333e1482f621a496a7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbc637cf_78ff60eb",
+        "filename": "contrib/src/onnx/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-08-26T13:08:20Z",
+      "side": 1,
+      "message": "`fatal: Remote branch master not found in upstream origin`",
+      "parentUuid": "8e779abf_129e8a68",
+      "revId": "4ef157e085f395bcdee96c333e1482f621a496a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
