@@ -576,7 +576,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                       call->getCallId().c_str());
             // Else, ask for a channel (for future calls/text messages)
             auto type = call->hasVideo() ? "videoCall" : "audioCall";
-            requestSIPConnection(toUri, deviceId, type, true);
+            requestSIPConnection(toUri, deviceId, type, true, dev_call);
         };
 
     std::vector<std::shared_ptr<ChannelSocket>> channels;
@@ -2944,7 +2944,8 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri,
     std::string conversationId = {};
     if (uri.scheme() == Uri::Scheme::SWARM)
         conversationId = uri.authority();
-    auto sendMessage = status == (int) DRing::Account::MessageStates::DISPLAYED && isReadReceiptEnabled();
+    auto sendMessage = status == (int) DRing::Account::MessageStates::DISPLAYED
+                       && isReadReceiptEnabled();
     if (!conversationId.empty())
         sendMessage &= convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
     if (sendMessage)
@@ -3873,7 +3874,8 @@ void
 JamiAccount::requestSIPConnection(const std::string& peerId,
                                   const DeviceId& deviceId,
                                   const std::string& connectionType,
-                                  bool forceNewConnection)
+                                  bool forceNewConnection,
+                                  const std::shared_ptr<SIPCall>& pc)
 {
     JAMI_DBG("[Account %s] Request SIP connection to peer %s on device %s",
              getAccountID().c_str(),
@@ -3909,7 +3911,8 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
     connectionManager_->connectDevice(
         deviceId,
         "sip",
-        [w = weak(), id](std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
+        [w = weak(), id, pc = std::move(pc)](std::shared_ptr<ChannelSocket> socket,
+                                             const DeviceId&) {
             if (socket)
                 return;
             auto shared = w.lock();
@@ -3919,7 +3922,8 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
             // connectDevice didn't get any response from the DHT.
             // Stop searching pending call.
             shared->callConnectionClosed(id.second, true);
-            shared->forEachPendingCall(id.second, [](const auto& pc) { pc->onFailure(); });
+            if (pc)
+                pc->onFailure();
         },
         false,
         forceNewConnection,

@@ -879,7 +879,8 @@ private:
     void requestSIPConnection(const std::string& peerId,
                               const DeviceId& deviceId,
                               const std::string& connectionType,
-                              bool forceNewConnection = false);
+                              bool forceNewConnection = false,
+                              const std::shared_ptr<SIPCall>& pc = {});
     /**
      * Store a new SIP connection into sipConnections_
      * @param channel   The new sip channel
