@@ -159,8 +159,6 @@ AudioLayer::createAudioProcessor()
     auto nb_channels = std::max(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
     auto sample_rate = std::max(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
 
-    // round sample_rate to nearest multiple of 16000 and clamp it.
-    sample_rate = 16000u * ((sample_rate / 16000u) + 1u);
     sample_rate = std::clamp(sample_rate, 16000u, 48000u);
 
     AudioFormat formatForProcessor {sample_rate, nb_channels};
