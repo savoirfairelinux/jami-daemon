@@ -52,6 +52,12 @@
      (make-exception
       (make-exception-with-message "Can't make friend with bob"))))
 
+  (define (reset-connection elapse)
+    (account:send-register (agent:account-id me) #f)
+    (when elapse
+      (sleep elapse))
+    (account:send-register (agent:account-id me) #t))
+
   (define (call-bob timeout)
     (let ((this-call-id ""))
       (jami:with-signal-sync
@@ -62,6 +68,7 @@
               (string= state "CURRENT")))
        timeout
        (set! this-call-id (agent:call-friend me bob-id)))
+      (reset-connection timeout)
       this-call-id))
 
   ;; Synchronize with bob a first time.
