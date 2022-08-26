@@ -34,6 +34,24 @@
       "parentUuid": "8e779abf_129e8a68",
       "revId": "4ef157e085f395bcdee96c333e1482f621a496a7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a68f13d8_c68dc1a5",
+        "filename": "contrib/src/onnx/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-26T13:10:45Z",
+      "side": 1,
+      "message": "right, because \"main\" is their main branch, not \"master\".\n\nAnyway ok for me, as \"git clone onnx_url --branch v1.6.0 \u0026\u0026 git checkout v1.6.0\" will be ok, I guess download_git should just do this instead clone then checkout (except it will not work for tags...)",
+      "parentUuid": "dbc637cf_78ff60eb",
+      "revId": "4ef157e085f395bcdee96c333e1482f621a496a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
