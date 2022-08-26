@@ -70,6 +70,24 @@
       "parentUuid": "a68f13d8_c68dc1a5",
       "revId": "4ef157e085f395bcdee96c333e1482f621a496a7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "05c66a81_581ec3f8",
+        "filename": "contrib/src/onnx/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-26T13:21:41Z",
+      "side": 1,
+      "message": "in this case download_git can be simplified and checkout removed as useless I guess",
+      "parentUuid": "dc5ba279_924961bf",
+      "revId": "4ef157e085f395bcdee96c333e1482f621a496a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
