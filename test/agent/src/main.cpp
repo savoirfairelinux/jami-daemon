@@ -45,8 +45,6 @@ main_in_guile(void* args_raw)
 
     install_scheme_primitives();
 
-    atexit(DRing::fini);
-
     scm_shell(args->argc, args->argv);
 
     /* unreachable */
