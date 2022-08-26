@@ -59,46 +59,61 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
     Json::Value syncValue;
     msgpack::sbuffer buffer(UINT16_MAX); // Use max pkt size
     std::error_code ec;
-    // Send contacts infos
-    // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
-    // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all informations).
+
+    SyncMsg head = {};
+
+    head.v = SYNC_MSG_MULTIPART;
+
     if (auto info = acc->accountManager()->getInfo()) {
         if (info->contacts) {
-            SyncMsg msg;
-            msg.ds = info->contacts->getSyncData();
-            msgpack::pack(buffer, msg);
-            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-            if (ec) {
-                JAMI_ERR("%s", ec.message().c_str());
-                return;
-            }
+            head.ds = info->contacts->getSyncData();
         }
     }
-    buffer.clear();
-    // Sync conversations
+
     auto c = ConversationModule::convInfos(acc->getAccountID());
-    if (!c.empty()) {
-        SyncMsg msg;
-        msg.c = std::move(c);
-        msgpack::pack(buffer, msg);
-        socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-        if (ec) {
-            JAMI_ERR("%s", ec.message().c_str());
-            return;
-        }
+    auto cr = ConversationModule::convRequests(acc->getAccountID());
+
+    head.infoCount    = c.size();
+    head.requestCount = cr.size();
+
+    msgpack::pack(buffer, head);
+    socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+    if (ec) {
+        JAMI_ERR("%s", ec.message().c_str());
+        return;
     }
     buffer.clear();
-    // Sync requests
-    auto cr = ConversationModule::convRequests(acc->getAccountID());
-    if (!cr.empty()) {
-        SyncMsg msg;
-        msg.cr = std::move(cr);
-        msgpack::pack(buffer, msg);
+
+    for (const auto& [key, value] : c) {
+
+        SyncMsgConvInfoPart part;
+
+        part.k = key;
+        part.v = value;
+
+        msgpack::pack(buffer, part);
         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
         if (ec) {
             JAMI_ERR("%s", ec.message().c_str());
             return;
         }
+        buffer.clear();
+    }
+
+    for (const auto& [key, value] : cr) {
+
+        SyncMsgConvRequestPart part;
+
+        part.k = key;
+        part.v = value;
+
+        msgpack::pack(buffer, part);
+        socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+        if (ec) {
+            JAMI_ERR("%s", ec.message().c_str());
+            return;
+        }
+        buffer.clear();
     }
 }
 
@@ -137,10 +152,39 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             return len;
 
         SyncMsg msg;
+
         try {
-            msgpack::unpacked result;
-            msgpack::object_handle oh = msgpack::unpack(reinterpret_cast<const char*>(buf), len);
+            size_t off;
+
+            off = 0;
+
+            auto unpack = [&]() -> msgpack::object_handle {
+                return msgpack::unpack(reinterpret_cast<const char*>(buf), len, off);
+            };
+
+            auto oh = unpack();
+
             oh.get().convert(msg);
+
+            switch (msg.v) {
+            case SYNC_MSG_PLAIN:
+                break;
+            case SYNC_MSG_MULTIPART:
+                for (size_t i=0; i<msg.infoCount; ++i) {
+                    SyncMsgConvInfoPart part;
+                    oh = unpack();
+                    oh.get().convert(part);
+                    msg.c[part.k] = part.v;
+                }
+                for (size_t i=0; i<msg.requestCount; ++i) {
+                    SyncMsgConvRequestPart part;
+                    oh = unpack();
+                    oh.get().convert(part);
+                    msg.cr[part.k] = part.v;
+                }
+                break;
+            }
+
         } catch (const std::exception& e) {
             JAMI_WARN("[convInfo] error on sync: %s", e.what());
             return len;
