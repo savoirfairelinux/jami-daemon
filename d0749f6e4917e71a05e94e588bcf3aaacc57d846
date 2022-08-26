@@ -22,6 +22,30 @@
       },
       "revId": "d0749f6e4917e71a05e94e588bcf3aaacc57d846",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cd09290_ea43afb7",
+        "filename": "test/unitTest/conversation/conversationRequest.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-08-26T13:10:10Z",
+      "side": 1,
+      "message": "Right.  Ideally tests would all run in a different XDG paths.\n\nThe problem is that if the announcement fail, the removal will also fail in the majority of the time.",
+      "parentUuid": "cf861960_1bf83391",
+      "range": {
+        "startLine": 131,
+        "startChar": 1,
+        "endLine": 134,
+        "endChar": 5
+      },
+      "revId": "d0749f6e4917e71a05e94e588bcf3aaacc57d846",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
