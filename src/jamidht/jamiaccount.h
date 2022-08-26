@@ -871,15 +871,17 @@ private:
 
     /**
      * Ask a device to open a channeled SIP socket
-     * @param peerId        The contact who owns the device
-     * @param deviceId      The device to ask
+     * @param peerId             The contact who owns the device
+     * @param deviceId           The device to ask
      * @param forceNewConnection If we want a new SIP connection
+     * @param pc                 A pending call to stop if the request fails
      * @note triggers cacheSIPConnection
      */
     void requestSIPConnection(const std::string& peerId,
                               const DeviceId& deviceId,
                               const std::string& connectionType,
-                              bool forceNewConnection = false);
+                              bool forceNewConnection = false,
+                              const std::shared_ptr<SIPCall>& pc = {});
     /**
      * Store a new SIP connection into sipConnections_
      * @param channel   The new sip channel

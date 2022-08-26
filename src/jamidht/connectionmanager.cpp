@@ -502,18 +502,18 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         }
         if (noNewSocket) {
             // If no new socket is specified, we don't try to generate a new socket
-            for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+            for (const auto& pending : sthis->extractPendingCallbacks(deviceId, vid))
                 pending.cb(nullptr, deviceId);
             return;
         }
 
         // Note: used when the ice negotiation fails to erase
         // all stored structures.
-        auto eraseInfo = [w, cbId, deviceId] {
+        auto eraseInfo = [w, cbId] {
             if (auto shared = w.lock()) {
                 // If no new socket is specified, we don't try to generate a new socket
-                for (const auto& pending : shared->extractPendingCallbacks(deviceId))
-                    pending.cb(nullptr, deviceId);
+                for (const auto& pending : shared->extractPendingCallbacks(cbId.first, cbId.second))
+                    pending.cb(nullptr, cbId.first);
                 std::lock_guard<std::mutex> lk(shared->infosMtx_);
                 shared->infos_.erase(cbId);
             }
@@ -904,7 +904,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         auto eraseInfo = [w, id = req.id, deviceId] {
             if (auto shared = w.lock()) {
                 // If no new socket is specified, we don't try to generate a new socket
-                for (const auto& pending : shared->extractPendingCallbacks(deviceId))
+                for (const auto& pending : shared->extractPendingCallbacks(deviceId, id))
                     pending.cb(nullptr, deviceId);
                 if (shared->connReadyCb_)
                     shared->connReadyCb_(deviceId, "", nullptr);

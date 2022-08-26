@@ -315,6 +315,15 @@ public:
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
+    inline std::weak_ptr<const SIPCall> weak() const
+    {
+        return std::weak_ptr<const SIPCall>(shared());
+    }
+    inline std::weak_ptr<SIPCall> weak()
+    {
+        return std::weak_ptr<SIPCall>(shared());
+    }
+
 private:
     void generateMediaPorts();
 
@@ -429,14 +438,6 @@ private:
     inline std::shared_ptr<SIPCall> shared()
     {
         return std::static_pointer_cast<SIPCall>(shared_from_this());
-    }
-    inline std::weak_ptr<const SIPCall> weak() const
-    {
-        return std::weak_ptr<const SIPCall>(shared());
-    }
-    inline std::weak_ptr<SIPCall> weak()
-    {
-        return std::weak_ptr<SIPCall>(shared());
     }
 
     // Peer's User-Agent.
