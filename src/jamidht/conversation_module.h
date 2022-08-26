@@ -30,12 +30,35 @@
 
 namespace jami {
 
+enum SyncMsgVersion : uint16_t {
+    SYNC_MSG_PLAIN = 0,
+    SYNC_MSG_MULTIPART,
+    SYNC_MSG_DEFAULT = SYNC_MSG_MULTIPART
+};
+
 struct SyncMsg
 {
     jami::DeviceSync ds;
     std::map<std::string, jami::ConvInfo> c;
     std::map<std::string, jami::ConversationRequest> cr;
-    MSGPACK_DEFINE(ds, c, cr)
+    SyncMsgVersion v { SYNC_MSG_DEFAULT };
+    size_t infoCount { 0 };
+    size_t requestCount { 0 };
+    MSGPACK_DEFINE(ds, c, cr, v, infoCount, requestCount);
+};
+
+struct SyncMsgConvInfoPart
+{
+    std::string k;
+    jami::ConvInfo v;
+    MSGPACK_DEFINE(k, v);
+};
+
+struct SyncMsgConvRequestPart
+{
+    std::string k;
+    jami::ConversationRequest v;
+    MSGPACK_DEFINE(k, v);
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
@@ -357,3 +380,4 @@ private:
 };
 
 } // namespace jami
+MSGPACK_ADD_ENUM(jami::SyncMsgVersion);
