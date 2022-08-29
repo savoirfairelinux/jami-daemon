@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7307be93_04e99c5f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-29T17:04:49Z",
+      "side": 1,
+      "message": "the tests seems to not pass on my system or on jenkins, so we may fix it or drop it",
+      "revId": "330d787d6134bd92984ac1c2951f51c79987719e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
