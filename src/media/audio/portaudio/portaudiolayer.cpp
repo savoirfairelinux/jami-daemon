@@ -210,7 +210,8 @@ PortAudioLayer::startStream(AudioDeviceType stream)
 void
 PortAudioLayer::stopStream(AudioDeviceType stream)
 {
-    auto stopPaStream = [](PaStream* stream) -> bool {
+    auto stopPaStream = [this](PaStream* stream) -> bool {
+        std::lock_guard<std::mutex> lock(mutex_);
         if (!stream || Pa_IsStreamStopped(stream) != paNoError)
             return false;
         auto err = Pa_StopStream(stream);
@@ -227,14 +228,10 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
     };
 
     auto stopPlayback = [this, &stopPaStream](bool fullDuplexMode = false) -> bool {
-        std::lock_guard<std::mutex> lock(mutex_);
         if (status_.load() != Status::Started)
             return false;
-        bool stopped = false;
-        if (fullDuplexMode)
-            stopped = stopPaStream(pimpl_->streams_[Direction::IO]);
-        else
-            stopped = stopPaStream(pimpl_->streams_[Direction::Output]);
+        bool stopped = stopPaStream(fullDuplexMode ? pimpl_->streams_[Direction::IO]
+                                                   : pimpl_->streams_[Direction::Output]);
         if (stopped)
             status_.store(Status::Idle);
         return stopped;
@@ -246,7 +243,8 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
         if (pimpl_->streams_[Direction::IO]) {
             stopped = stopPlayback(true);
         } else {
-            stopped = stopPaStream(pimpl_->streams_[Direction::Input]) && stopPlayback();
+            stopped = stopPlayback();
+            stopped &= stopPaStream(pimpl_->streams_[Direction::Input]);
         }
         if (stopped) {
             recordChanged(false);
