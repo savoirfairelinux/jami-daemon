@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d7acda85_78884739",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-29T15:31:05Z",
+      "side": 1,
+      "message": "To choose between plain/multipart we can do like \"peerSupportMultiStream_\" and check peer\u0027s version (we got a channeled socket, so peer is connected).",
+      "range": {
+        "startLine": 65,
+        "startChar": 13,
+        "endLine": 65,
+        "endChar": 31
+      },
+      "revId": "3d14cfef83a0c57ef942f98e776f249a4429e95c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a1edf096_4e0b4750",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-29T15:31:05Z",
+      "side": 1,
+      "message": "this will generate a lot of packets, I don\u0027t think it\u0027s bad, but wondering if it can be optimized to send bigger buffers.",
+      "range": {
+        "startLine": 111,
+        "startChar": 37,
+        "endLine": 111,
+        "endChar": 55
+      },
+      "revId": "3d14cfef83a0c57ef942f98e776f249a4429e95c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb155a74_4e739f08",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-29T15:31:05Z",
+      "side": 1,
+      "message": "will break compat with old client :)",
+      "range": {
+        "startLine": 171,
+        "startChar": 18,
+        "endLine": 171,
+        "endChar": 21
+      },
+      "revId": "3d14cfef83a0c57ef942f98e776f249a4429e95c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
