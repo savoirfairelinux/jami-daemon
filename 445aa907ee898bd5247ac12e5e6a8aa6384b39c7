@@ -22,6 +22,30 @@
       },
       "revId": "445aa907ee898bd5247ac12e5e6a8aa6384b39c7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b032d670_2b9953f9",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-08-30T09:29:28Z",
+      "side": 1,
+      "message": "Yes, I agree, if you don\u0027t plan to use other boost libraries. The project provides a standalone version, but not sure how to integrate it correctly, because distributions package the whole `boost` only. I think the right scheme is this:\n\nMeson     -\u003e add required subproject `nowide`\nAutotools -\u003e add contrib/src/nowide\nCMake     -\u003e ???? (I need help here)\n\nAlso can be a potential problem here:\n```\n/// \\brief UTF-8 aware getenv. Returns 0 if the variable is not set.\n///\n/// This function is not thread safe or reenterable as defined by the standard library\n///\nBOOST_NOWIDE_DECL char* getenv(const char* key);\n```\n\nWhat do you think about using it in Jami?",
+      "parentUuid": "bc2c6cce_8630a39a",
+      "range": {
+        "startLine": 25,
+        "startChar": 10,
+        "endLine": 25,
+        "endChar": 15
+      },
+      "revId": "445aa907ee898bd5247ac12e5e6a8aa6384b39c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
