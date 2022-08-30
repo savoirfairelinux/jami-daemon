@@ -588,10 +588,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             }
         }
     } catch (const std::exception& e) {
-        emitSignal<DRing::ConversationSignal::OnConversationError>(accountId_,
-                                                                   conversationId,
-                                                                   EFETCH,
-                                                                   e.what());
         JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
     }
     erasePending();
