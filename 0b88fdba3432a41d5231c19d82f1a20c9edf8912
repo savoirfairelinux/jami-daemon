@@ -18,6 +18,29 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3c9e1333_2ff7b954",
+        "filename": "src/observer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-08-30T18:35:35Z",
+      "side": 1,
+      "message": "*",
+      "range": {
+        "startLine": 34,
+        "startChar": 18,
+        "endLine": 34,
+        "endChar": 72
+      },
+      "revId": "0b88fdba3432a41d5231c19d82f1a20c9edf8912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7ca0eafa_12fa2275",
@@ -31,6 +54,30 @@
       "writtenOn": "2022-08-30T17:50:42Z",
       "side": 1,
       "message": "mmh we show log on releases from dl.jami.net",
+      "range": {
+        "startLine": 133,
+        "startChar": 22,
+        "endLine": 133,
+        "endChar": 42
+      },
+      "revId": "0b88fdba3432a41d5231c19d82f1a20c9edf8912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "67b35f85_66faf96d",
+        "filename": "src/observer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-08-30T18:35:35Z",
+      "side": 1,
+      "message": "__DEBUG__ is defined in the scripts that builds the plugins for debug.\nIf i do not take this out, i will end up with a domino of includes because of logger.h.\nThis should not affect any of jami builds",
+      "parentUuid": "7ca0eafa_12fa2275",
       "range": {
         "startLine": 133,
         "startChar": 22,
@@ -64,6 +111,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "84d275bc_13d139d8",
+        "filename": "test/unitTest/Makefile.am",
+        "patchSetId": 6
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-08-30T18:35:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5ba642b4_e750116e",
+      "range": {
+        "startLine": 231,
+        "startChar": 1,
+        "endLine": 233,
+        "endChar": 9
+      },
+      "revId": "0b88fdba3432a41d5231c19d82f1a20c9edf8912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b33f1ece_eb2ba6df",
@@ -77,6 +148,30 @@
       "writtenOn": "2022-08-30T17:52:44Z",
       "side": 1,
       "message": "note, the translations can be tested later with setLanguage/getLanguage",
+      "range": {
+        "startLine": 131,
+        "startChar": 17,
+        "endLine": 131,
+        "endChar": 28
+      },
+      "revId": "0b88fdba3432a41d5231c19d82f1a20c9edf8912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7854cd3f_f810f448",
+        "filename": "test/unitTest/plugins/plugins.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-08-30T18:35:35Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b33f1ece_eb2ba6df",
       "range": {
         "startLine": 131,
         "startChar": 17,
