@@ -88,6 +88,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a6d21916_20caa897",
+        "filename": "src/observer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-31T15:48:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "67b35f85_66faf96d",
+      "range": {
+        "startLine": 133,
+        "startChar": 22,
+        "endLine": 133,
+        "endChar": 42
+      },
+      "revId": "0b88fdba3432a41d5231c19d82f1a20c9edf8912",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5ba642b4_e750116e",

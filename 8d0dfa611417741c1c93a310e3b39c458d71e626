@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74008849_e3cc3829",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 8
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-08-31T15:48:51Z",
+      "side": 1,
+      "message": "Can we just add a note in the README that TestSuite.jpl should be built with the oldest ubuntu poissible to avoid any glibc error (else LGTM)",
+      "range": {
+        "startLine": 9,
+        "startChar": 19,
+        "endLine": 9,
+        "endChar": 29
+      },
+      "revId": "8d0dfa611417741c1c93a310e3b39c458d71e626",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
