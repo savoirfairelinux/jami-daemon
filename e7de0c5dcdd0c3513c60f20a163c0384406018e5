@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a73eecb9_02df5149",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-08-31T10:53:51Z",
+      "side": 1,
+      "message": "* why do we need this ?\n* we don\u0027t want to depend on boost in general.\n* The contrib system is used instead of subprojects to ship dependencies",
+      "revId": "e7de0c5dcdd0c3513c60f20a163c0384406018e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
