@@ -16,7 +16,8 @@
         "libopusdec-enable-FEC.patch",
         "windows-configure.patch",
         "windows-configure-ffnvcodec.patch",
-        "windows-configure-libmfx.patch"
+        "windows-configure-libmfx.patch",
+        "windows-dxgi-support.patch"
     ],
     "win_patches": [
     ],
