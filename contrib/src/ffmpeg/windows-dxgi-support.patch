@@ -1,0 +1,814 @@
+From 3d6408aa5888341cd641e9888f65d9c81354d92b Mon Sep 17 00:00:00 2001
+From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Date: Tue, 20 Dec 2022 12:32:34 -0300
+Subject: [PATCH] Add dxgi support
+
+---
+ configure                        |   1 +
+ libavdevice/Makefile             |   4 +
+ libavdevice/alldevices.c         |   1 +
+ libavdevice/d3dHelpers.h         |  41 ++++++++
+ libavdevice/direct3d11.interop.h |  33 ++++++
+ libavdevice/dxgigrab.cpp         | 175 +++++++++++++++++++++++++++++++
+ libavdevice/dxgigrab.h           |  73 +++++++++++++
+ libavdevice/dxgigrab_c.c         |  61 +++++++++++
+ libavdevice/dxgigrab_c.h         |  96 +++++++++++++++++
+ libavdevice/simple_capture.cpp   | 166 +++++++++++++++++++++++++++++
+ libavdevice/simple_capture.h     |  46 ++++++++
+ 11 files changed, 697 insertions(+)
+ create mode 100644 libavdevice/d3dHelpers.h
+ create mode 100644 libavdevice/direct3d11.interop.h
+ create mode 100644 libavdevice/dxgigrab.cpp
+ create mode 100644 libavdevice/dxgigrab.h
+ create mode 100644 libavdevice/dxgigrab_c.c
+ create mode 100644 libavdevice/dxgigrab_c.h
+ create mode 100644 libavdevice/simple_capture.cpp
+ create mode 100644 libavdevice/simple_capture.h
+
+diff --git a/configure b/configure
+index 6b5ef6332e..3606ce5bc3 100755
+--- a/configure
++++ b/configure
+@@ -3509,6 +3509,7 @@ fbdev_outdev_deps="linux_fb_h"
+ gdigrab_indev_deps="CreateDIBSection"
+ gdigrab_indev_extralibs="-lgdi32"
+ gdigrab_indev_select="bmp_decoder"
++dxgigrab_indev_extralibs="-ldxgi -ld3d11"
+ iec61883_indev_deps="libiec61883"
+ jack_indev_deps="libjack"
+ jack_indev_deps_any="sem_timedwait dispatch_dispatch_h"
+diff --git a/libavdevice/Makefile b/libavdevice/Makefile
+index 53efda0514..9a75914cf6 100644
+--- a/libavdevice/Makefile
++++ b/libavdevice/Makefile
+@@ -28,6 +28,7 @@ OBJS-$(CONFIG_FBDEV_INDEV)               += fbdev_dec.o \
+ OBJS-$(CONFIG_FBDEV_OUTDEV)              += fbdev_enc.o \
+                                             fbdev_common.o
+ OBJS-$(CONFIG_GDIGRAB_INDEV)             += gdigrab.o
++OBJS-$(CONFIG_DXGIGRAB_INDEV)            += simple_capture.o dxgigrab.o dxgigrab_c.o
+ OBJS-$(CONFIG_IEC61883_INDEV)            += iec61883.o
+ OBJS-$(CONFIG_JACK_INDEV)                += jack.o timefilter.o
+ OBJS-$(CONFIG_KMSGRAB_INDEV)             += kmsgrab.o
+@@ -70,5 +71,8 @@ SKIPHEADERS-$(CONFIG_V4L2_INDEV)         += v4l2-common.h
+ SKIPHEADERS-$(CONFIG_V4L2_OUTDEV)        += v4l2-common.h
+ SKIPHEADERS-$(CONFIG_ALSA)               += alsa.h
+ SKIPHEADERS-$(CONFIG_SNDIO)              += sndio.h
++SKIPHEADERS-$(CONFIG_DXGIGRAB_INDEV)     += dxgigrab.h \
++                                            simple_capture.h \
++                                            dxgigrab_c.h
+ 
+ TESTPROGS-$(CONFIG_JACK_INDEV)           += timefilter
+diff --git a/libavdevice/alldevices.c b/libavdevice/alldevices.c
+index 22323a0a44..fb0a37513b 100644
+--- a/libavdevice/alldevices.c
++++ b/libavdevice/alldevices.c
+@@ -35,6 +35,7 @@ extern const AVInputFormat  ff_dshow_demuxer;
+ extern const AVInputFormat  ff_fbdev_demuxer;
+ extern const AVOutputFormat ff_fbdev_muxer;
+ extern const AVInputFormat  ff_gdigrab_demuxer;
++extern const AVInputFormat  ff_dxgigrab_demuxer;
+ extern const AVInputFormat  ff_iec61883_demuxer;
+ extern const AVInputFormat  ff_jack_demuxer;
+ extern const AVInputFormat  ff_kmsgrab_demuxer;
+diff --git a/libavdevice/d3dHelpers.h b/libavdevice/d3dHelpers.h
+new file mode 100644
+index 0000000000..8c17b1eaca
+--- /dev/null
++++ b/libavdevice/d3dHelpers.h
+@@ -0,0 +1,41 @@
++#pragma once
++
++#include <winrt/Windows.UI.Composition.h>
++#include <windows.ui.composition.interop.h>
++#include <d2d1_1.h>
++
++inline auto
++CreateD3DDevice(
++    D3D_DRIVER_TYPE const type,
++    winrt::com_ptr<ID3D11Device>& device)
++{
++    WINRT_ASSERT(!device);
++
++    UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
++
++    return D3D11CreateDevice(
++        nullptr,
++        type,
++        nullptr,
++        flags,
++        nullptr, 0,
++        D3D11_SDK_VERSION,
++        device.put(),
++        nullptr,
++        nullptr);
++}
++
++inline auto
++CreateD3DDevice()
++{
++    winrt::com_ptr<ID3D11Device> device;
++    HRESULT hr = CreateD3DDevice(D3D_DRIVER_TYPE_HARDWARE, device);
++
++    if (DXGI_ERROR_UNSUPPORTED == hr)
++    {
++        hr = CreateD3DDevice(D3D_DRIVER_TYPE_WARP, device);
++    }
++
++    winrt::check_hresult(hr);
++    return device;
++}
+diff --git a/libavdevice/direct3d11.interop.h b/libavdevice/direct3d11.interop.h
+new file mode 100644
+index 0000000000..f3d37116ec
+--- /dev/null
++++ b/libavdevice/direct3d11.interop.h
+@@ -0,0 +1,33 @@
++#pragma once
++#include <winrt/windows.graphics.directx.direct3d11.h>
++
++extern "C"
++{
++    HRESULT __stdcall CreateDirect3D11DeviceFromDXGIDevice(::IDXGIDevice* dxgiDevice,
++        ::IInspectable** graphicsDevice);
++
++    HRESULT __stdcall CreateDirect3D11SurfaceFromDXGISurface(::IDXGISurface* dgxiSurface,
++        ::IInspectable** graphicsSurface);
++}
++
++struct __declspec(uuid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1"))
++    IDirect3DDxgiInterfaceAccess : ::IUnknown
++{
++    virtual HRESULT __stdcall GetInterface(GUID const& id, void** object) = 0;
++};
++
++inline auto CreateDirect3DDevice(IDXGIDevice* dxgi_device)
++{
++    winrt::com_ptr<::IInspectable> d3d_device;
++    winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(dxgi_device, d3d_device.put()));
++    return d3d_device.as<winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice>();
++}
++
++template <typename T>
++auto GetDXGIInterfaceFromObject(winrt::Windows::Foundation::IInspectable const& object)
++{
++    auto access = object.as<IDirect3DDxgiInterfaceAccess>();
++    winrt::com_ptr<T> result;
++    winrt::check_hresult(access->GetInterface(winrt::guid_of<T>(), result.put_void()));
++    return result;
++}
+diff --git a/libavdevice/dxgigrab.cpp b/libavdevice/dxgigrab.cpp
+new file mode 100644
+index 0000000000..2984896bc1
+--- /dev/null
++++ b/libavdevice/dxgigrab.cpp
+@@ -0,0 +1,175 @@
++
++/*
++ * DXGI video grab interface
++ *
++ * This file is part of FFmpeg.
++ *
++ * Copyright (C) 2022 Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public License
++ * as published by the Free Software Foundation; either version 2.1
++ * of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++/**
++ * @file
++ * DXGI frame device demuxer
++ * @author Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
++ */
++
++#include "dxgigrab.h"
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++#include <libavutil/parseutils.h>
++#ifdef __cplusplus
++}
++#endif
++
++#pragma optimize("", off)
++
++int dxgigrab_read_header(AVFormatContext *s1)
++{
++    struct dxgigrab *s = static_cast<dxgigrab*>(s1->priv_data);
++    if (!s->internal_struct)
++        s->internal_struct = new dxgigrab_internal();
++    struct dxgigrab_internal* x_internal = static_cast<dxgigrab_internal*>(s->internal_struct);
++    HWND hwnd; // window
++    const char *filename = s1->url;
++    const char *name     = NULL;
++    AVStream   *st       = NULL;
++
++    int ret = 0;
++
++    if (!strncmp(filename, "title=", 6)) {
++        name = filename + 6;
++        hwnd = FindWindow(NULL, name);
++        if (!hwnd) {
++            av_log(s1, AV_LOG_ERROR,
++                   "Can't find window '%s', aborting.\n", name);
++            return AVERROR(EIO);
++        }
++        if (s->show_region) {
++            av_log(s1, AV_LOG_WARNING,
++                    "Can't show region when grabbing a window.\n");
++            s->show_region = 0;
++        }
++    } else if (!strcmp(filename, "desktop")) {
++        hwnd = NULL;
++    } else {
++        av_log(s1, AV_LOG_ERROR,
++               "Please use \"desktop\" or \"title=<windowname>\" to specify your target.\n");
++        return AVERROR(EIO);
++    }
++
++    bool openWindow = true;
++    if (!s1->nb_streams) {
++        st = avformat_new_stream(s1, NULL);
++    } else {
++        openWindow = false;
++        st = s1->streams[0];
++    }
++    if (!st) {
++        return AVERROR(ENOMEM);
++    }
++
++    std::lock_guard lk(x_internal->mtx);
++    if (openWindow) {
++        auto d3dDevice = CreateD3DDevice();
++        auto dxgiDevice = d3dDevice.as<IDXGIDevice>();
++        auto m_device = CreateDirect3DDevice(dxgiDevice.get());
++
++        auto activation_factory = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>();
++        auto interop_factory = activation_factory.as<IGraphicsCaptureItemInterop>();
++        winrt::Windows::Graphics::Capture::GraphicsCaptureItem windowItem = { nullptr };
++
++        try {
++            winrt::check_hresult(interop_factory
++                ->CreateForWindow(hwnd,
++                                winrt::guid_of<ABI::Windows::Graphics::Capture::IGraphicsCaptureItem>(),
++                                reinterpret_cast<void**>(winrt::put_abi(windowItem))));
++        }  catch (winrt::hresult_error &err) {
++            av_log(s, AV_LOG_ERROR, "CreateForWindow failed: %s\n", err.message().c_str());
++            return ret;
++        } catch (...) {
++            av_log(s, AV_LOG_ERROR, "CreateForWindow failed\n");
++            return ret;
++        }
++        av_log(s, AV_LOG_ERROR, "CreateForWindow success\n");
++
++        x_internal->m_capture.reset(new SimpleCapture(m_device, windowItem));
++        x_internal->m_capture->StartCapture();
++        x_internal->m_capture->checkNewFrameArrived();
++        x_internal->m_capture->window = name ? name : "";
++        x_internal->windowName = name ? name : "";
++    }
++
++    s->hwnd       = hwnd;
++    s->cursor_error_printed = 0;
++
++    s->time_base   = av_inv_q(s->framerate);
++
++    avpriv_set_pts_info(st, 64, 1, 1000000);
++
++    if (!s->width || !s->height || !openWindow) {
++        s->width = x_internal->m_capture->m_DeviceSize.Width;
++        s->height = x_internal->m_capture->m_DeviceSize.Height;
++    }
++    s->time_frame = av_gettime_relative();
++
++    st->avg_frame_rate = av_inv_q(s->time_base);
++
++    auto frame_size_bits = (int64_t)s->width * s->height * 4 * 8;
++    if (frame_size_bits / 8 + AV_INPUT_BUFFER_PADDING_SIZE > INT_MAX) {
++        av_log(s, AV_LOG_ERROR, "Captured area is too large\n");
++        return AVERROR_PATCHWELCOME;
++    }
++    s->frame_size = frame_size_bits / 8;
++
++    st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
++    st->codecpar->codec_id   = AV_CODEC_ID_RAWVIDEO;
++    st->codecpar->width      = s->width;
++    st->codecpar->height     = s->height;
++    st->codecpar->format     = AV_PIX_FMT_RGBA;
++    st->codecpar->bit_rate   = av_rescale(frame_size_bits, st->avg_frame_rate.num, st->avg_frame_rate.den);
++
++    return ret;
++}
++
++int dxgigrab_read_packet(AVFormatContext *s1, AVPacket *pkt)
++{
++    struct dxgigrab *s = static_cast<dxgigrab*>(s1->priv_data);
++    struct dxgigrab_internal *x_internal = static_cast<dxgigrab_internal*>(s->internal_struct);
++    std::lock_guard lk(x_internal->mtx);
++    int ret = 0;
++    int64_t pts = av_gettime();
++
++    ret = x_internal->m_capture->GetPkt(pkt);
++    if (ret < 0)
++        return ret;
++    pkt->dts = pkt->pts = pts;
++
++    return ret;
++}
++
++int dxgigrab_read_close(AVFormatContext *s1)
++{
++    struct dxgigrab* s = static_cast<dxgigrab*>(s1->priv_data);
++    struct dxgigrab_internal* x_internal = static_cast<dxgigrab_internal*>(s->internal_struct);
++    std::lock_guard lk(x_internal->mtx);
++
++    x_internal->m_capture->Close();
++
++    return 0;
++}
+diff --git a/libavdevice/dxgigrab.h b/libavdevice/dxgigrab.h
+new file mode 100644
+index 0000000000..8aecedb2fc
+--- /dev/null
++++ b/libavdevice/dxgigrab.h
+@@ -0,0 +1,73 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#ifndef AVDEVICE_DXGI_H
++#define AVDEVICE_DXGI_H
++
++#include <stdlib.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++#include "dxgigrab_c.h"
++#ifdef __cplusplus
++}
++#endif
++
++#include <Unknwn.h>
++#include <inspectable.h>
++
++// WinRT
++#include <winrt/Windows.Foundation.h>
++#include <winrt/Windows.System.h>
++#include <winrt/Windows.UI.h>
++#include <winrt/Windows.UI.Composition.h>
++#include <winrt/Windows.UI.Composition.Desktop.h>
++#include <winrt/Windows.UI.Popups.h>
++#include <winrt/Windows.Graphics.Capture.h>
++#include <winrt/Windows.Graphics.DirectX.h>
++#include <winrt/Windows.Graphics.DirectX.Direct3d11.h>
++#include <windows.graphics.capture.interop.h>
++#include <windows.graphics.capture.h>
++
++#include <windows.ui.composition.interop.h>
++#include <DispatcherQueue.h>
++
++// STL
++#include <atomic>
++#include <memory>
++#include <mutex>
++
++// D3D
++#include <d3d11_4.h>
++#include <dxgi1_6.h>
++#include <d2d1_3.h>
++#include <wincodec.h>
++
++// Internal
++#include "d3dHelpers.h"
++#include "direct3d11.interop.h"
++#include "simple_capture.h"
++
++struct dxgigrab_internal {
++    std::unique_ptr<SimpleCapture> m_capture{ nullptr };
++    std::string windowName;
++    std::mutex mtx;
++};
++
++#endif /* AVDEVICE_DXGI_H */
+diff --git a/libavdevice/dxgigrab_c.c b/libavdevice/dxgigrab_c.c
+new file mode 100644
+index 0000000000..d69a34e1ec
+--- /dev/null
++++ b/libavdevice/dxgigrab_c.c
+@@ -0,0 +1,61 @@
++/*
++ * DXGI video grab interface
++ *
++ * This file is part of FFmpeg.
++ *
++ * Copyright (C) 2022 Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public License
++ * as published by the Free Software Foundation; either version 2.1
++ * of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++/**
++ * @file
++ * DXGI frame device demuxer
++ * @author Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
++ */
++
++#include "dxgigrab_c.h"
++
++#define OFFSET(x) offsetof(struct dxgigrab, x)
++#define DEC AV_OPT_FLAG_DECODING_PARAM
++static const AVOption options[] = {
++    { "draw_mouse", "draw the mouse pointer", OFFSET(draw_mouse), AV_OPT_TYPE_INT, {.i64 = 1}, 0, 1, DEC },
++    { "show_region", "draw border around capture area", OFFSET(show_region), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 1, DEC },
++    { "framerate", "set video frame rate", OFFSET(framerate), AV_OPT_TYPE_VIDEO_RATE, {.str = "ntsc"}, 0, INT_MAX, DEC },
++    { "video_size", "set video frame size", OFFSET(width), AV_OPT_TYPE_IMAGE_SIZE, {.str = NULL}, 0, 0, DEC },
++    { "offset_x", "capture area x offset", OFFSET(offset_x), AV_OPT_TYPE_INT, {.i64 = 0}, INT_MIN, INT_MAX, DEC },
++    { "offset_y", "capture area y offset", OFFSET(offset_y), AV_OPT_TYPE_INT, {.i64 = 0}, INT_MIN, INT_MAX, DEC },
++    { NULL },
++};
++
++static const AVClass dxgigrab_class = {
++    .class_name = "DXGIgrab indev",
++    .item_name  = av_default_item_name,
++    .option     = options,
++    .version    = LIBAVUTIL_VERSION_INT,
++    .category   = AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT,
++};
++
++/** dxgi grabber device demuxer declaration */
++AVInputFormat ff_dxgigrab_demuxer = {
++    .name           = "dxgigrab",
++    .long_name      = NULL_IF_CONFIG_SMALL("DXGI API Windows frame grabber"),
++    .priv_data_size = sizeof(struct dxgigrab),
++    .read_header    = dxgigrab_read_header,
++    .read_packet    = dxgigrab_read_packet,
++    .read_close     = dxgigrab_read_close,
++    .flags          = AVFMT_NOFILE,
++    .priv_class     = &dxgigrab_class,
++};
+diff --git a/libavdevice/dxgigrab_c.h b/libavdevice/dxgigrab_c.h
+new file mode 100644
+index 0000000000..f16aed8ab0
+--- /dev/null
++++ b/libavdevice/dxgigrab_c.h
+@@ -0,0 +1,96 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#ifndef AVDEVICE_DXGI_C_H
++#define AVDEVICE_DXGI_C_H
++
++#include <stdlib.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include "libavformat/internal.h"
++#include "config.h"
++#include "libavutil/opt.h"
++#include "libavutil/time.h"
++
++#include <windows.h>
++
++/**
++ * DXGI Device Demuxer context
++ */
++struct dxgigrab {
++    const AVClass *avclass;   /**< Class for private options */
++
++    int        frame_size;  /**< Size in bytes of the frame pixel data */
++    int        header_size; /**< Size in bytes of the DIB header */
++    AVRational time_base;   /**< Time base */
++    int64_t    time_frame;  /**< Current time */
++
++    int        draw_mouse;  /**< Draw mouse cursor (private option) */
++    int        show_region; /**< Draw border (private option) */
++    AVRational framerate;   /**< Capture framerate (private option) */
++    int        width;       /**< Width of the grab frame (private option) */
++    int        height;      /**< Height of the grab frame (private option) */
++    int        offset_x;    /**< Capture x offset (private option) */
++    int        offset_y;    /**< Capture y offset (private option) */
++
++    HWND       hwnd;        /**< Handle of the window for the grab */
++    HDC        source_hdc;  /**< Source device context */
++    HDC        dest_hdc;    /**< Destination, source-compatible DC */
++    void      *buffer;      /**< The buffer containing the bitmap image data */
++    RECT       clip_rect;   /**< The subarea of the screen or window to clip */
++
++    HWND       region_hwnd; /**< Handle of the region border window */
++
++    int cursor_error_printed;
++    void* internal_struct;
++};
++
++/**
++ * Initializes the dxgi grab device demuxer (public device demuxer API).
++ *
++ * @param s1 Context from avformat core
++ * @return AVERROR_IO error, 0 success
++ */
++int dxgigrab_read_header(AVFormatContext *s1);
++
++/**
++ * Grabs a frame from dxgi (public device demuxer API).
++ *
++ * @param s1 Context from avformat core
++ * @param pkt Packet holding the grabbed frame
++ * @return frame size in bytes
++ */
++int dxgigrab_read_packet(AVFormatContext *s1, AVPacket *pkt);
++
++
++/**
++ * Closes dxgi frame grabber (public device demuxer API).
++ *
++ * @param s1 Context from avformat core
++ * @return 0 success, !0 failure
++ */
++int dxgigrab_read_close(AVFormatContext *s1);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* AVDEVICE_DXGI_C_H */
+diff --git a/libavdevice/simple_capture.cpp b/libavdevice/simple_capture.cpp
+new file mode 100644
+index 0000000000..b0eeda5fb0
+--- /dev/null
++++ b/libavdevice/simple_capture.cpp
+@@ -0,0 +1,166 @@
++//*********************************************************
++//
++// Copyright (c) Microsoft. All rights reserved.
++// This code is licensed under the MIT License (MIT).
++// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
++// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
++// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
++// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
++// TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
++// THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++//
++//*********************************************************
++
++#include "dxgigrab.h"
++
++#include <d3d11.h>
++
++using namespace winrt;
++using namespace Windows;
++using namespace Windows::Foundation;
++using namespace Windows::System;
++using namespace Windows::Graphics;
++using namespace Windows::Graphics::Capture;
++using namespace Windows::Graphics::DirectX;
++using namespace Windows::Graphics::DirectX::Direct3D11;
++using namespace Windows::Foundation::Numerics;
++using namespace Windows::UI;
++using namespace Windows::UI::Composition;
++
++#pragma optimize("", off)
++SimpleCapture::SimpleCapture(
++    IDirect3DDevice const& device,
++    GraphicsCaptureItem const& item)
++{
++    m_item = item;
++    m_device = device;
++
++    m_d3dDevice = GetDXGIInterfaceFromObject<ID3D11Device>(m_device);
++    m_d3dDevice->GetImmediateContext(m_d3dContext.put());
++
++    m_DeviceSize = m_item.Size();
++    m_DeviceSize.Width = m_DeviceSize.Width;
++    m_DeviceSize.Height = m_DeviceSize.Height;
++
++	// Create framepool, define pixel format (DXGI_FORMAT_B8G8R8A8_UNORM), and frame size.
++    m_framePool = Direct3D11CaptureFramePool::Create(
++        m_device,
++        DirectXPixelFormat::R8G8B8A8UIntNormalized,
++        2,
++		m_DeviceSize);
++    m_session = m_framePool.CreateCaptureSession(m_item);
++    auto sup = m_session.IsSupported();
++}
++
++// Start sending capture frames
++void SimpleCapture::StartCapture()
++{
++    // std::lock_guard<std::mutex> lk(mtx_);
++    running_ = true;
++    m_session.StartCapture();
++}
++
++// Process captured frames
++void SimpleCapture::Close()
++{
++    std::lock_guard<std::mutex> lk(mtx_);
++    running_ = false;
++    if (texture) {
++        texture->Release();
++    }
++    m_framePool.Close();
++    m_session.Close();
++
++    texture = nullptr;
++    m_framePool = nullptr;
++    m_session = nullptr;
++    m_item = nullptr;
++}
++
++bool SimpleCapture::checkNewFrameArrived()
++{
++    std::lock_guard<std::mutex> lk(mtx_);
++    if (!running_)
++        return 0;
++    auto shouldResize = false;
++
++    auto frame = m_framePool.TryGetNextFrame();
++    if (!frame)
++        return 0;
++
++    auto frameSurface = GetDXGIInterfaceFromObject<ID3D11Texture2D>(frame.Surface());
++
++    D3D11_TEXTURE2D_DESC desc;
++    frameSurface->GetDesc(&desc);
++    auto frameContentSize = frame.ContentSize();
++    if (desc.Width <= 0 || desc.Height <= 0)
++        return 0;
++    shouldResize = frameContentSize.Width != m_DeviceSize.Width || frameContentSize.Height != m_DeviceSize.Height;
++    m_DeviceSize.Width = frameContentSize.Width;
++    m_DeviceSize.Height = frameContentSize.Height;
++    if (shouldResize) {
++        m_framePool.Recreate(
++            m_device,
++            DirectXPixelFormat::R8G8B8A8UIntNormalized,
++            2,
++            m_DeviceSize);
++        return false;
++    }
++
++    texDesc.Width = desc.Width;
++    texDesc.Height = desc.Height;
++    texDesc.MipLevels = desc.MipLevels;
++    texDesc.ArraySize = desc.ArraySize;
++    texDesc.Format = desc.Format;
++    texDesc.SampleDesc = desc.SampleDesc;
++    texDesc.Usage = D3D11_USAGE_STAGING;
++    texDesc.BindFlags = 0;
++    texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
++    texDesc.MiscFlags = 0;
++
++    m_d3dDevice->CreateTexture2D(&texDesc, nullptr, &texture);
++
++    // copy the texture to a staging resource
++    m_d3dContext->CopyResource(texture, frameSurface.get());
++
++    return 1;
++}
++
++int SimpleCapture::GetPkt(AVPacket *pkt)
++{
++    if (!checkNewFrameArrived() || !running_ || !texture)
++        return 0;
++    std::lock_guard<std::mutex> lk(mtx_);
++
++    // now, map the staging resource TO CPU
++    D3D11_MAPPED_SUBRESOURCE mapInfo;
++    m_d3dContext->Map(
++        texture,
++        0,
++        D3D11_MAP_READ,
++        0,
++        &mapInfo);
++
++    m_d3dContext->Unmap(texture, 0);
++
++    auto ret = av_new_packet(pkt, mapInfo.DepthPitch);
++    if (ret < 0) {
++        if (mapInfo.DepthPitch) {
++            av_packet_unref(pkt);
++        }
++        return ret;
++    }
++
++    for (auto y = 0; y < m_DeviceSize.Height; y++) {
++        for (auto x = 0; x < m_DeviceSize.Width * 4; x++) {
++            auto idx = y * m_DeviceSize.Width * 4 + x;
++            pkt->data[idx] = static_cast<uint8_t*>(mapInfo.pData)[y * mapInfo.RowPitch + x];
++        }
++    }
++
++    texture->Release();
++    texture = nullptr;
++
++    return 0;
++}
+diff --git a/libavdevice/simple_capture.h b/libavdevice/simple_capture.h
+new file mode 100644
+index 0000000000..afcff6d93d
+--- /dev/null
++++ b/libavdevice/simple_capture.h
+@@ -0,0 +1,46 @@
++#pragma once
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++#include <libavutil/hwcontext_d3d11va.h>
++#ifdef __cplusplus
++}
++#endif
++
++#include <mutex>
++#include <memory>
++
++class SimpleCapture
++{
++public:
++    SimpleCapture(
++        winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice const& device,
++        winrt::Windows::Graphics::Capture::GraphicsCaptureItem const& item);
++    ~SimpleCapture() { Close(); }
++
++    void StartCapture();
++
++    int GetPkt(AVPacket *pkt);
++
++    void Close();
++    std::string window;
++
++    bool checkNewFrameArrived();
++    winrt::Windows::Graphics::SizeInt32 m_DeviceSize;
++
++private:
++    winrt::Windows::Graphics::Capture::GraphicsCaptureItem m_item{ nullptr };
++    winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool m_framePool{ nullptr };
++    winrt::Windows::Graphics::Capture::GraphicsCaptureSession m_session{ nullptr };
++
++    winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice m_device {nullptr};
++    winrt::com_ptr<ID3D11Device> m_d3dDevice{nullptr};
++    winrt::com_ptr<ID3D11DeviceContext> m_d3dContext {nullptr};
++
++    D3D11_TEXTURE2D_DESC texDesc;
++    ID3D11Texture2D *texture {nullptr};
++
++    std::mutex mtx_;
++    bool running_;
++};
+-- 
+2.30.2.windows.1
+
