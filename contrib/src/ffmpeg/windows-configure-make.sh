@@ -145,7 +145,7 @@ if [ "$1" == "uwp" ]; then
             OUTDIR=Output/Windows10/x86
     fi
 elif [ "$1" == "win32" ]; then
-    EXTRACFLAGS='-MD -D_WINDLL -I../../../../../msvc/include -I../../../../../msvc/include/opus -I../../../../../msvc/include/vpx -I../../../../../msvc/include/ffnvcodec -I../../../../../msvc/include/mfx' 
+    EXTRACFLAGS='-MD -D_WINDLL -I../../../../../msvc/include -I../../../../../msvc/include/opus -I../../../../../msvc/include/vpx -I../../../../../msvc/include/ffnvcodec -I../../../../../msvc/include/mfx  -D_WIN32_WINNT=0x0A00'
     FFMPEGCONF+='
                 --enable-libvpx
                 --enable-encoder=libvpx_vp8
@@ -154,7 +154,8 @@ elif [ "$1" == "win32" ]; then
     FFMPEGCONF+='
                 --enable-indev=dshow
                 --enable-indev=gdigrab
-                --enable-dxva2'
+                --enable-dxva2
+                --enable-indev=dxgigrab'
     FFMPEGCONF+='
                 --enable-ffnvcodec
                 --enable-cuvid
@@ -199,6 +200,6 @@ pwd
 FFMPEGCONF=$(echo $FFMPEGCONF | sed -e "s/[[:space:]]\+/ /g")
 set -x
 set -e
-../../../configure $FFMPEGCONF --extra-cflags="${EXTRACFLAGS}" --extra-ldflags="${EXTRALDFLAGS}" --prefix="${PREFIX}"
+../../../configure $FFMPEGCONF --extra-cflags="${EXTRACFLAGS}" --extra-ldflags="${EXTRALDFLAGS}" --prefix="${PREFIX}" --extra-cxxflags="-std:c++17"
 make -j8 install
 cd ../../..
