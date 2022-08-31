@@ -525,24 +525,16 @@ SIPAccount::unserialize(const YAML::Node& node)
     parseValue(node, Conf::PORT_KEY, port);
     localPort_ = port;
 
-    if (not isIP2IP()) {
-        unsigned expire = 0;
-        if (not parseValueOptional(node, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, expire)) {
-            // Proably using an older config file.
-            parseValueOptional(node, Preferences::REGISTRATION_EXPIRE_KEY, expire);
-        }
-        setRegistrationExpire(expire);
-
-        parseValue(node, Conf::KEEP_ALIVE_ENABLED, registrationRefreshEnabled_);
-        parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
-        parseValueOptional(node, Conf::ALLOW_IP_AUTO_REWRITE, allowIPAutoRewrite_);
-
-        const auto& credsNode = node[Conf::CRED_KEY];
-        setCredentials(parseVectorMap(credsNode,
-                                      {Conf::CONFIG_ACCOUNT_REALM,
-                                       Conf::CONFIG_ACCOUNT_USERNAME,
-                                       Conf::CONFIG_ACCOUNT_PASSWORD}));
+    unsigned expire = 0;
+    if (not parseValueOptional(node, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, expire)) {
+        // Proably using an older config file.
+        parseValueOptional(node, Preferences::REGISTRATION_EXPIRE_KEY, expire);
     }
+
+    setRegistrationExpire(expire);
+    parseValue(node, Conf::KEEP_ALIVE_ENABLED, registrationRefreshEnabled_);
+    parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
+    parseValueOptional(node, Conf::ALLOW_IP_AUTO_REWRITE, allowIPAutoRewrite_);
 
     bool presEnabled = false;
     parseValue(node, PRESENCE_MODULE_ENABLED_KEY, presEnabled);
