@@ -1962,6 +1962,7 @@ JamiAccount::doRegister_()
         config.dht_config.node_config.network = 0;
         config.dht_config.node_config.maintain_storage = false;
         config.dht_config.node_config.persist_path = cachePath_ + DIR_SEPARATOR_STR "dhtstate";
+        config.dht_config.node_config.cache_path = cachePath_;
         config.dht_config.id = id_;
         config.dht_config.cert_cache_all = true;
         config.push_node_id = getAccountID();
@@ -1995,7 +1996,7 @@ JamiAccount::doRegister_()
         dht::DhtRunner::Context context {};
         context.peerDiscovery = peerDiscovery_;
 
-        auto dht_log_level = Manager::instance().dhtLogLevel.load();
+        auto dht_log_level = 3; // Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
             static auto silent = [](char const* /*m*/, va_list /*args*/) {
             };

@@ -945,7 +945,12 @@ ConversationModule::loadConversations()
     if (oldConvInfosSize != pimpl_->convInfos_.size())
         pimpl_->saveConvInfos();
 
-    JAMI_INFO("[Account %s] Conversations loaded!", pimpl_->accountId_.c_str());
+    JAMI_INFO("[Account %s] @@@@ Conversations loaded!", pimpl_->accountId_.c_str());
+
+    auto content = fileutils::loadTextFile(fileutils::get_cache_dir() + "/debug");
+    JAMI_ERR("@@@@@@");
+    JAMI_ERR() << content;
+    JAMI_ERR("@@@@@@");
 }
 
 void
