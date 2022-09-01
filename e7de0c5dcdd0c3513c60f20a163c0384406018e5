@@ -16,6 +16,24 @@
       "message": "* why do we need this ?\n* we don\u0027t want to depend on boost in general.\n* The contrib system is used instead of subprojects to ship dependencies",
       "revId": "e7de0c5dcdd0c3513c60f20a163c0384406018e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f4412690_54fff5e8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-09-01T08:37:52Z",
+      "side": 1,
+      "message": "\u003e why do we need this ?\n\nTo add maintainers and documentation to your code.\n\n\u003e we don\u0027t want to depend on boost in general.\n\nWhy? I don\u0027t use it personally, but all boost libraries pass quality checks and are used by many big projects (MariaDB, Blender, FreeCAD, ...). Did you have some problems with it?\n\n\u003e The contrib system is used instead of subprojects to ship dependencies\n\nI agree here. Subprojects are useless for Autotools and CMake, so it would be better to have them in a separate patch. Will do later.",
+      "parentUuid": "a73eecb9_02df5149",
+      "revId": "e7de0c5dcdd0c3513c60f20a163c0384406018e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
