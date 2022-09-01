@@ -34,6 +34,24 @@
       "parentUuid": "a73eecb9_02df5149",
       "revId": "e7de0c5dcdd0c3513c60f20a163c0384406018e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05d8178e_1cd95ce6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-01T15:40:12Z",
+      "side": 1,
+      "message": "I would be ok to add the standalone nowide library since it would simplify the Windows code and prevent various issues on Windows.\n\nBoost is a huge project with its own custom build system, and it would be a significant maintenance overhead to add it to our dependencies and maintain it for all supported platforms.\n\nSince Jami uses C++17, Boost would not greatly benefit Jami. Boost was much more needed in the pre-C++11 area.",
+      "parentUuid": "f4412690_54fff5e8",
+      "revId": "e7de0c5dcdd0c3513c60f20a163c0384406018e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
