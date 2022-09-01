@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "string_utils.h" // to_string
 #include "jami/def.h"
 
 //#define __STDC_FORMAT_MACROS 1
@@ -33,7 +34,6 @@
 #include <atomic>
 #include <sstream>
 #include <string>
-#include "string_utils.h" // to_string
 
 #ifdef __ANDROID__
 
@@ -141,13 +141,11 @@ public:
     }
 
 private:
-
     int level_;              ///< LOG_XXXX values
     const char* const file_; ///< contextual filename (printed as header)
     const int line_;         ///< contextual line number (printed as header)
-    bool linefeed_ {
-        true}; ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
-    std::ostringstream os_; ///< string stream used with C++ stream style (stream operator<<)
+    bool linefeed_ {true};   ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
+    std::ostringstream os_;  ///< string stream used with C++ stream style (stream operator<<)
 };
 
 namespace log {
