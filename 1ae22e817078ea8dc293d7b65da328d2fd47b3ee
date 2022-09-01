@@ -16,6 +16,24 @@
       "message": "why not simply using an environment variable",
       "revId": "1ae22e817078ea8dc293d7b65da328d2fd47b3ee",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ca8b062f_abc5b41e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-09-01T16:31:47Z",
+      "side": 1,
+      "message": "In https://review.jami.net/c/jami-daemon/+/22112 i use the preference to reload the plugin with the language set from the client so that the client and the plugin will be aligned.",
+      "parentUuid": "581537f9_4c2e5ebe",
+      "revId": "1ae22e817078ea8dc293d7b65da328d2fd47b3ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
