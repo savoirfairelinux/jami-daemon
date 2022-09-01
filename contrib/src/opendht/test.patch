@@ -1,0 +1,280 @@
+ include/opendht/callbacks.h        |  1 +
+ include/opendht/dht_proxy_client.h |  6 ++++++
+ src/dht_proxy_client.cpp           | 29 +++++++++++++++++++++++++++--
+ src/dht_proxy_server.cpp           | 70 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ src/dhtrunner.cpp                  |  1 +
+ 5 files changed, 103 insertions(+), 4 deletions(-)
+
+diff --git a/include/opendht/callbacks.h b/include/opendht/callbacks.h
+index 88eeff42..00e8715e 100644
+--- a/include/opendht/callbacks.h
++++ b/include/opendht/callbacks.h
+@@ -121,6 +121,7 @@ struct OPENDHT_PUBLIC Config {
+ 
+     /** If set, the dht will load its state from this file on start and save its state in this file on shutdown */
+     std::string persist_path {};
++    std::string cache_path {};
+ 
+     /** If non-0, overrides the default global rate-limit. -1 means no limit. */
+     ssize_t max_req_per_sec {0};
+diff --git a/include/opendht/dht_proxy_client.h b/include/opendht/dht_proxy_client.h
+index 08bfb05f..7a86a874 100644
+--- a/include/opendht/dht_proxy_client.h
++++ b/include/opendht/dht_proxy_client.h
+@@ -280,6 +280,10 @@ public:
+         loopSignal_();
+     }
+ 
++    void setPath(const std::string& path) {
++        path_ = path;
++    }
++
+ private:
+     /**
+      * Start the connection with a server.
+@@ -426,6 +430,8 @@ private:
+     std::unique_ptr<Json::CharReader> jsonReader_;
+ 
+     std::shared_ptr<http::Request> buildRequest(const std::string& target = {});
++
++    std::string path_ {};
+ };
+ 
+ }
+diff --git a/src/dht_proxy_client.cpp b/src/dht_proxy_client.cpp
+index b91f2824..5cce451b 100644
+--- a/src/dht_proxy_client.cpp
++++ b/src/dht_proxy_client.cpp
+@@ -25,6 +25,7 @@
+ 
+ #include <http_parser.h>
+ #include <deque>
++#include <fstream>
+ 
+ 
+ namespace dht {
+@@ -421,8 +422,17 @@ DhtProxyClient::put(const InfoHash& key, Sp<Value> val, DoneCallback cb, time_po
+         } else {
+             search.pendingPuts.emplace(val);
+         }
++
++        if (key.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++            std::ofstream ofs(path_ + "/debug",  std::ios_base::app);
++            ofs << std::time(nullptr) << ": Permanent put " << val->id << std::endl;
++        }
+     }
+-    doPut(key, val, [this, cb, ok](bool result){
++    doPut(key, val, [this, cb, ok, key, val](bool result){
++        if (key.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++            std::ofstream ofs(path_ + "/debug",  std::ios_base::app);
++            ofs << std::time(nullptr) << ": CB Permanent put " << val->id << " - " << (ok? "ok": "FAILURE") << std::endl;
++        }
+         if (ok)
+             *ok = result;
+         if (cb) {
+@@ -447,13 +457,22 @@ DhtProxyClient::handleRefreshPut(const asio::error_code &ec, InfoHash key, Value
+     }
+     if (logger_)
+         logger_->d("[proxy:client] [put] [refresh %s]", key.to_c_str());
++
++    if (key.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++        std::ofstream ofs(path_ + "/debug",  std::ios_base::app);
++        ofs << std::time(nullptr) << ": Refresh put " << id << std::endl;
++    }
+     std::lock_guard<std::mutex> lock(searchLock_);
+     auto search = searches_.find(key);
+     if (search != searches_.end()) {
+         auto p = search->second.puts.find(id);
+         if (p != search->second.puts.end()){
+-            doPut(key, p->second.value, [ok = p->second.ok](bool result){
++            doPut(key, p->second.value, [ok = p->second.ok, this, id, key](bool result){
+                 *ok = result;
++                if (key.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                    std::ofstream ofs(path_ + "/debug",  std::ios_base::app);
++                    ofs << std::time(nullptr) << ": CB refresh put " << id << " - " << (ok? "ok": "FAILURE") << std::endl;
++                }
+             }, time_point::max(), true);
+             p->second.refreshPutTimer->expires_after(proxy::OP_TIMEOUT - proxy::OP_MARGIN);
+             p->second.refreshPutTimer->async_wait(std::bind(&DhtProxyClient::handleRefreshPut, this, std::placeholders::_1, key, id));
+@@ -1213,6 +1232,12 @@ DhtProxyClient::pushNotificationReceived(const std::map<std::string, std::string
+                 // Refresh put
+                 auto vid = std::stoull(vidIt->second);
+                 auto& put = search.puts.at(vid);
++
++                if (key.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                    std::ofstream ofs(path_ + "/debug",  std::ios_base::app);
++                    ofs << std::time(nullptr) << ": PUSH NOTIFICATION refresh put " << vid << std::endl;
++                }
++
+                 if (!put.refreshPutTimer)
+                     put.refreshPutTimer = std::make_unique<asio::steady_timer>(httpContext_, std::chrono::steady_clock::now());
+                 else
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index 5b1fbb0b..ffef4faa 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -380,6 +380,10 @@ DhtProxyServer::loadState(Is& is, size_t size) {
+                                 std::placeholders::_1, pput.second.pushToken, std::move(jsonProvider), pput.second.type, pput.second.topic));
+                         }
+ #endif
++                        if (put.first.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                            std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                            ofs << std::time(nullptr) << ": Server LOAD STATE PERMAMENT put " << pput.second.value->id << std::endl;
++                        }
+                         dht_->put(put.first, pput.second.value, DoneCallbackSimple{}, time_point::max(), true);
+                     }
+                 }
+@@ -1021,6 +1025,12 @@ DhtProxyServer::sendPushNotification(const std::string& token, Json::Value&& jso
+         request->set_header_field(restinio::http_field_t::accept, "*/*");
+         request->set_header_field(restinio::http_field_t::content_type, "application/json");
+ 
++
++        if (json["key"].asString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++            std::ofstream ofs("debug_proxy",  std::ios_base::app);
++            ofs << std::time(nullptr) << ": Server send push" << std::endl;
++        }
++
+         // NOTE: see https://github.com/appleboy/gorush
+         Json::Value notification(Json::objectValue);
+         Json::Value tokens(Json::arrayValue);
+@@ -1093,6 +1103,10 @@ DhtProxyServer::handleCancelPermamentPut(const asio::error_code &ec, const InfoH
+     }
+     if (logger_)
+         logger_->d("[proxy:server] [put %s] cancel permament put %i", key.toString().c_str(), vid);
++    if (key.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++        std::ofstream ofs("debug_proxy",  std::ios_base::app);
++        ofs << std::time(nullptr) << ": cancel put " << vid << std::endl;
++    }
+     std::lock_guard<std::mutex> lock(lockSearchPuts_);
+     auto sPuts = puts_.find(key);
+     if (sPuts == puts_.end())
+@@ -1171,6 +1185,10 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                             }
+                             auto response = initHttpResponse(request->create_response());
+                             response.append_body(Json::writeString(jsonBuilder_, value->toJson()) + "\n");
++                            if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                                std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                                ofs << std::time(nullptr) << ": Server put detected value: " << pp.second.value->id << std::endl;
++                            }
+                             return response.done();
+                         }
+                     }
+@@ -1181,10 +1199,18 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                 auto& pput = sPuts.puts[vid];
+                 pput.value = value;
+                 pput.expiration = timeout;
++                if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                    std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                    ofs << std::time(nullptr) << ": prepare permanent " << std::endl;
++                }
+                 if (not pput.expireTimer) {
+                     auto &ctx = io_context();
+                     // cancel permanent put
+                     pput.expireTimer = std::make_unique<asio::steady_timer>(ctx, timeout);
++                    if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                        std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                        ofs << std::time(nullptr) << ": prepare permanent 2" << std::endl;
++                    }
+ #ifdef OPENDHT_PUSH_NOTIFICATIONS
+                     if (not pushToken.empty()) {
+                         pput.pushToken = pushToken;
+@@ -1194,9 +1220,19 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                             topic = getDefaultTopic(pput.type);
+                         pput.topic = topic;
+                         pput.sessionCtx = std::make_shared<PushSessionContext>(sessionId);
+-                        // notify push listen expire
++                        // notify put listen expire
++                        if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                            std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                            ofs << std::time(nullptr) << ": prepare permanent 3" << std::endl;
++                        }
+                         auto jsonProvider = [infoHash, clientId, vid, sessionCtx = pput.sessionCtx](){
+                             Json::Value json;
++
++                            if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                                std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                                ofs << std::time(nullptr) << ": Server send timeout to client" << std::endl;
++                            }
++
+                             json["timeout"] = infoHash.toString();
+                             json["to"] = clientId;
+                             json["vid"] = std::to_string(vid);
+@@ -1209,13 +1245,25 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                                                      timeout - proxy::OP_MARGIN);
+                         else
+                             pput.expireNotifyTimer->expires_at(timeout - proxy::OP_MARGIN);
++                        if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                            std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                            ofs << std::time(nullptr) << ": prepare permanent 4" << std::endl;
++                        }
+                         pput.expireNotifyTimer->async_wait(std::bind(
+                             &DhtProxyServer::handleNotifyPushListenExpire, this,
+                             std::placeholders::_1, pushToken, std::move(jsonProvider), pput.type, pput.topic));
+                     }
+ #endif
+                 } else {
++                    if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                        std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                        ofs << std::time(nullptr) << ": prepare permanent A" << std::endl;
++                    }
+                     if (not sessionId.empty()) {
++                        if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                            std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                            ofs << std::time(nullptr) << ": prepare permanent B" << std::endl;
++                        }
+                         if (not pput.sessionCtx)
+                             pput.sessionCtx = std::make_shared<PushSessionContext>(sessionId);
+                         else {
+@@ -1223,6 +1271,10 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                             pput.sessionCtx->sessionId = sessionId;
+                         }
+                     }
++                    if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                        std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                        ofs << std::time(nullptr) << ": prepare permanent C" << std::endl;
++                    }
+                     pput.expireTimer->expires_at(timeout);
+                     if (pput.expireNotifyTimer)
+                         pput.expireNotifyTimer->expires_at(timeout - proxy::OP_MARGIN);
+@@ -1230,7 +1282,17 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                 pput.expireTimer->async_wait(std::bind(&DhtProxyServer::handleCancelPermamentPut, this,
+                                                 std::placeholders::_1, infoHash, vid));
+             }
+-            dht_->put(infoHash, value, [this, request, value](bool ok){
++
++            if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                ofs << std::time(nullptr) << ": Server Permanent put " << value->id << std::endl;
++            }
++            dht_->put(infoHash, value, [this, request, value, infoHash](bool ok){
++
++                if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                    std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                    ofs << std::time(nullptr) << ": Server Permanent put " << value->id << " - " << (ok? "ok": "FAILURE") << std::endl;
++                }
+                 if (ok){
+                     auto response = initHttpResponse(request->create_response());
+                     response.append_body(Json::writeString(jsonBuilder_, value->toJson()) + "\n");
+@@ -1281,6 +1343,10 @@ DhtProxyServer::putSigned(restinio::request_handle_t request,
+ 
+             auto value = std::make_shared<Value>(root);
+ 
++            if (infoHash.toString() == "d475e4de7f51ccb22b7382a813c075c69af93bed") {
++                std::ofstream ofs("debug_proxy",  std::ios_base::app);
++                ofs << std::time(nullptr) << ": Server put SIGNED " << value->id << std::endl;
++            }
+             dht_->putSigned(infoHash, value, [this, request, value](bool ok){
+                 if (ok){
+                     auto output = Json::writeString(jsonBuilder_, value->toJson()) + "\n";
+diff --git a/src/dhtrunner.cpp b/src/dhtrunner.cpp
+index a73897ff..f19ead4c 100644
+--- a/src/dhtrunner.cpp
++++ b/src/dhtrunner.cpp
+@@ -1111,6 +1111,7 @@ DhtRunner::enableProxy(bool proxify)
+                     }
+                 },
+                 config_.proxy_server, config_.push_node_id, logger_);
++        dht_via_proxy->setPath(config_.dht_config.node_config.cache_path);
+         if (not config_.push_token.empty())
+             dht_via_proxy->setPushNotificationToken(config_.push_token);
+         if (not config_.push_topic.empty())
