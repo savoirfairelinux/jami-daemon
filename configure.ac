@@ -170,7 +170,7 @@ AS_IF([test "$SYS" = linux],[
 ])
 AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
-AS_IF([test "$SYS" = linux && test "${HAVE_ANDROID}" != "1"],
+AS_IF([test "$SYS" = linux],
   [DAEMONCPPFLAGS+=" -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"]
   [])
 
