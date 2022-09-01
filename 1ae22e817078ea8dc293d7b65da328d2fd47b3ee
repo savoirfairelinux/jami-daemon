@@ -34,6 +34,24 @@
       "parentUuid": "581537f9_4c2e5ebe",
       "revId": "1ae22e817078ea8dc293d7b65da328d2fd47b3ee",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cced7402_6b0fb098",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-09-01T16:40:10Z",
+      "side": 1,
+      "message": "Actually Adrien prefers it to not be dynamic (as anyway we change only once the language generally). Getting \"JAMI_LANG\" like we do for \"DHT_LOG_LEVEL\" avoid any API and can be set by upper layers without new APIs.",
+      "parentUuid": "ca8b062f_abc5b41e",
+      "revId": "1ae22e817078ea8dc293d7b65da328d2fd47b3ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
