@@ -24,7 +24,7 @@ libguile_jami_la_SOURCES =          \
 	src/bindings/signal.cpp     \
 	src/bindings/signal.h
 
-libguile_jami_la_LIBADD = $(top_builddir)/src/libring.la
+libguile_jami_la_LIBADD = $(top_builddir)/src/libjami.la
 
 MODULES =                                       \
 	agent.scm                               \

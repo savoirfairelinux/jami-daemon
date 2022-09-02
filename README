@@ -154,7 +154,7 @@ cd ../../
 ./configure  --without-dbus --prefix=<install_path>
 make
 
-If you want to link against libringclient and native client easiest way is to
+If you want to link against libjamiclient and native client easiest way is to
 add to ./configure: --prefix=<prefix_path>
 
 Do a little dance!

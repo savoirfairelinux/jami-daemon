@@ -1,10 +1,10 @@
-noinst_LTLIBRARIES += libringacc.la
+noinst_LTLIBRARIES += libjamiacc.la
 
-libringacc_la_LIBADD=
+libjamiacc_la_LIBADD=
 
 AM_CPPFLAGS += -I$(top_srcdir)/src/jamidht/eth
 
-libringacc_la_SOURCES = \
+libjamiacc_la_SOURCES = \
 	./jamidht/abstract_sip_transport.h \
 	./jamidht/jamiaccount.cpp \
 	./jamidht/jamiaccount.h \
@@ -48,7 +48,7 @@ libringacc_la_SOURCES = \
 	./jamidht/transfer_channel_handler.cpp
 
 if RINGNS
-libringacc_la_SOURCES += \
+libjamiacc_la_SOURCES += \
 	./jamidht/namedirectory.cpp \
 	./jamidht/namedirectory.h
 endif
@@ -56,4 +56,4 @@ endif
 include ./jamidht/eth/libdevcore/Makefile.am
 include ./jamidht/eth/libdevcrypto/Makefile.am
 
-libring_la_LIBADD += libringacc.la
+libjami_la_LIBADD += libjamiacc.la
