@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b5aa7ede_2d13a59d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-02T18:29:58Z",
+      "side": 1,
+      "message": "It should be libjami.pc.  That is the convention.  Will change Meson.",
+      "parentUuid": "1dd9be12_caaacd5a",
+      "revId": "0ce113aebedb9e8f46196b0510b34f9502fb8cd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "29e96587_0221e023",
         "filename": "libjami.pc.in",
         "patchSetId": 1
