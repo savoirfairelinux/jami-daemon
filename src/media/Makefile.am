@@ -47,4 +47,4 @@ noinst_HEADERS += \
 include ./media/audio/Makefile.am
 include ./media/video/Makefile.am
 
-libring_la_LIBADD += libmedia.la
+libjami_la_LIBADD += libmedia.la

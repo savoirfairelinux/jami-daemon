@@ -106,7 +106,7 @@ DBusClient::DBusClient(int flags, bool persistent)
     }
 
     if (initLibrary(flags) < 0)
-        throw std::runtime_error {"cannot initialize libring"};
+        throw std::runtime_error {"cannot initialize libjami"};
 
     instanceManager_->started();
 }
