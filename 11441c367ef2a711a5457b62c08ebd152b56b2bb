@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "435849a4_811d3d22",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1310,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-02T15:47:25Z",
+      "side": 1,
+      "message": "std::next(itCommit)",
+      "range": {
+        "startLine": 1310,
+        "startChar": 19,
+        "endLine": 1310,
+        "endChar": 31
+      },
+      "revId": "11441c367ef2a711a5457b62c08ebd152b56b2bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49753a4d_bbf8ddb6",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1320,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-02T15:47:25Z",
+      "side": 1,
+      "message": "could be moved to the ioPool to avoid blocking on a slow device",
+      "range": {
+        "startLine": 1320,
+        "startChar": 8,
+        "endLine": 1320,
+        "endChar": 30
+      },
+      "revId": "11441c367ef2a711a5457b62c08ebd152b56b2bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
