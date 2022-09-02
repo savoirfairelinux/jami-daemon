@@ -217,7 +217,7 @@ AC_COMPILE_IFELSE(
 
 AC_MSG_RESULT([$CLANG])
 
-dnl define DRING_BUILD because we are building libring, not using it
+dnl define DRING_BUILD because we are building libjami, not using it
 dnl if building shared library, define jami_EXPORTS
 AC_MSG_CHECKING([if compiling shared library])
 DAEMONCPPFLAGS+=" -fvisibility=hidden -DDRING_BUILD"

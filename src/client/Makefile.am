@@ -22,4 +22,4 @@ libclient_la_SOURCES = \
 	$(PRESENCE_SRC) \
 	$(VIDEO_SRC)
 
-libring_la_LIBADD += libclient.la
+libjami_la_LIBADD += libclient.la
