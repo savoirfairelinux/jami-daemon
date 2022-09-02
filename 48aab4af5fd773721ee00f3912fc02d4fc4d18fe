@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc7edc03_304ba826",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-02T19:00:56Z",
+      "side": 1,
+      "message": "rg -l libring . | sort | uniq | xargs sed -i -e \u0027s|libring|libjami|g\u0027",
+      "revId": "48aab4af5fd773721ee00f3912fc02d4fc4d18fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
