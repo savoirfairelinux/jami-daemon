@@ -13,4 +13,4 @@ noinst_HEADERS += \
 	./jamidht/eth/libdevcore/CommonData.h \
 	./jamidht/eth/libdevcore/Address.h
 
-libringacc_la_LIBADD += libdevcore.la
+libjamiacc_la_LIBADD += libdevcore.la

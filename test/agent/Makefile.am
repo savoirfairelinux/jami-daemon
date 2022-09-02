@@ -16,7 +16,7 @@ agent_exe_SOURCES =                 \
 	src/bindings/signal.cpp     \
 	src/bindings/signal.h
 
-agent_exe_LDADD = $(top_builddir)/src/libring.la
+agent_exe_LDADD = $(top_builddir)/src/libjami.la
 
 MODULES =                                       \
 	agent.scm                               \
