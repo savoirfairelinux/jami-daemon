@@ -99,6 +99,30 @@
       },
       "revId": "0ce113aebedb9e8f46196b0510b34f9502fb8cd4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "04d8dd2e_36f1ca5c",
+        "filename": "libjami.pc.in",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-02T19:03:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "49ee098f_a16c0e20",
+      "range": {
+        "startLine": 9,
+        "startChar": 19,
+        "endLine": 9,
+        "endChar": 25
+      },
+      "revId": "0ce113aebedb9e8f46196b0510b34f9502fb8cd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
