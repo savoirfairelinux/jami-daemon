@@ -1129,7 +1129,9 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     if (auto convModule = shared->convModule())
                         convModule->removeContact(uri, banned);
                     // Remove current connections with contact
-                    shared->connectionManager_->closeConnectionsWith(uri);
+                    if (shared->connectionManager_) {
+                        shared->connectionManager_->closeConnectionsWith(uri);
+                    }
                     // Update client.
                     emitSignal<DRing::ConfigurationSignal::ContactRemoved>(shared->getAccountID(),
                                                                            uri,
