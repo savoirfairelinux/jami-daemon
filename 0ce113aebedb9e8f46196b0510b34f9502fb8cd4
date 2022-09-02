@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5780b260_419c09f9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-09-02T18:58:35Z",
+      "side": 1,
+      "message": "In this case you should also rename `opendht.pc`.\n\nI have not read the specification, but seems most projects does not follow this rule:\n```\n$ find /usr/lib/pkgconfig/ -name \u0027*.pc\u0027|wc -l\n1023\n$ find /usr/lib/pkgconfig/ -name \u0027lib*.pc\u0027|wc -l\n326\n```\n\nIn any case, I don\u0027t mind to use either variant.",
+      "parentUuid": "b5aa7ede_2d13a59d",
+      "revId": "0ce113aebedb9e8f46196b0510b34f9502fb8cd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "29e96587_0221e023",
         "filename": "libjami.pc.in",
         "patchSetId": 1
