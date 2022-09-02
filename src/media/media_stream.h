@@ -155,8 +155,8 @@ struct MediaStream
 inline std::ostream&
 operator<<(std::ostream& os, const MediaStream& ms)
 {
+    auto formatName = av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format));
     if (ms.isVideo) {
-        auto formatName = av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format));
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
            << (formatName ? formatName : "(unknown format)") << " video, " << ms.width << "x"
            << ms.height << ", " << ms.frameRate << " fps (" << ms.timeBase << ")";
@@ -164,7 +164,7 @@ operator<<(std::ostream& os, const MediaStream& ms)
             os << ", " << ms.bitrate << " kb/s";
     } else {
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
-           << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
+           << (formatName ? formatName : "(unknown format)") << " audio, "
            << ms.nbChannels << " channel(s), " << ms.sampleRate << " Hz (" << ms.timeBase << "), "
            << ms.frameSize << " samples per frame";
     }
