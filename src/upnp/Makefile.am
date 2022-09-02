@@ -10,4 +10,4 @@ libupnpcontrol_la_SOURCES = \
 
 include ./upnp/protocol/Makefile.am
 
-libring_la_LIBADD += libupnpcontrol.la
+libjami_la_LIBADD += libupnpcontrol.la

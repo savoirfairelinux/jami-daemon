@@ -2,7 +2,7 @@
 include $(top_srcdir)/globals.mk
 
 AM_CXXFLAGS += -I$(top_srcdir)/src
-AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libjami.la
 
 check_PROGRAMS = ut_sip
 ut_sip_SOURCES = sip.cpp test_SIP.h test_SIP.cpp

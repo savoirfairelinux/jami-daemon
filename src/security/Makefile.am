@@ -14,4 +14,4 @@ libsecurity_la_SOURCES = \
 		./security/diffie-hellman.cpp \
 		./security/diffie-hellman.h
 
-libring_la_LIBADD += libsecurity.la
+libjami_la_LIBADD += libsecurity.la

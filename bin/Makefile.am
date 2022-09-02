@@ -5,7 +5,7 @@ jamid_CXXFLAGS = -I$(top_srcdir)/src \
                    -I$(top_srcdir)/src/jami \
                    -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\" \
 		   $(AM_CXXFLAGS)
-jamid_LDADD = $(top_builddir)/src/libring.la
+jamid_LDADD = $(top_builddir)/src/libjami.la
 endif
 
 if HAVE_OSX
@@ -15,7 +15,7 @@ jamid_CXXFLAGS = -I$(top_srcdir)/src \
                    -I$(top_srcdir)/src/jami \
                    -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\" \
 		   $(AM_CXXFLAGS)
-jamid_LDADD = $(top_builddir)/src/libring.la
+jamid_LDADD = $(top_builddir)/src/libjami.la
 endif
 
 SUBDIRS=
@@ -31,7 +31,7 @@ jamid_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
                 -I$(top_srcdir)/src/jami \
                 -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 
-jamid_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la -ldl
+jamid_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libjami.la -ldl
 endif
 
 if ENABLE_NODEJS

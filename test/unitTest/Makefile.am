@@ -5,7 +5,7 @@ include $(top_srcdir)/globals.mk
 # against a static version of libjami instead.
 AM_CXXFLAGS += -I$(top_srcdir)/src
 AM_LDFLAGS += $(CPPUNIT_LIBS) -static
-LDADD = $(top_builddir)/src/libring.la
+LDADD = $(top_builddir)/src/libjami.la
 check_PROGRAMS =
 
 ####### Unit Test ########
