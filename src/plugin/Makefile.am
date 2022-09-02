@@ -30,6 +30,6 @@ libplugin_la_SOURCES = \
 	./plugin/callservicesmanager.cpp \
 	./plugin/preferenceservicesmanager.cpp
 
-libring_la_LIBADD += libplugin.la
+libjami_la_LIBADD += libplugin.la
 
 endif

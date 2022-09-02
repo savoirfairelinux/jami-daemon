@@ -6,7 +6,7 @@ if ENABLE_FUZZING
 	flex --outfile $@ $^
 
 AM_CXXFLAGS += -I$(top_srcdir)/src -I. -include common.h
-AM_LDFLAGS += $(top_builddir)/src/libring.la
+AM_LDFLAGS += $(top_builddir)/src/libjami.la
 check_PROGRAMS =
 
 lib_LTLIBRARIES = libfuzz.la

@@ -8,7 +8,7 @@ AM_TESTS_ENVIRONMENT =                    \
 # The unit tests require hidden symbols.  Thus, we link the tests
 # against a static version of libjami instead.
 AM_CXXFLAGS += -I$(top_srcdir)/src
-AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la -static
+AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libjami.la -static
 check_PROGRAMS =
 
 ####### Unit Test ########
