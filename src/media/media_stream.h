@@ -163,8 +163,9 @@ operator<<(std::ostream& os, const MediaStream& ms)
         if (ms.bitrate > 0)
             os << ", " << ms.bitrate << " kb/s";
     } else {
+        auto formatName = av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format));
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
-           << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
+           << (formatName ? formatName : "(unknown format)") << " audio, "
            << ms.nbChannels << " channel(s), " << ms.sampleRate << " Hz (" << ms.timeBase << "), "
            << ms.frameSize << " samples per frame";
     }
