@@ -69,6 +69,16 @@ make
 
 2) Then the jamid application
 
+A) With Autotools (recommended)
+
+cd ../..
+./autogen.sh
+./configure
+make
+make install
+
+B) With Meson
+
 cd ../../
 mkdir build
 export PATH=$PATH:`pwd`/contrib/`cc -dumpmachine`/bin
@@ -118,8 +128,8 @@ ninja install
 
 Note: to build the tests add `-Dtests=true` ; or it can be enabled later with `meson --reconfigure -Dtests=true build`
 
-How to compile on OSX
----------------------
+How to compile on macOS
+-----------------------
 
 # These first steps are only necessary if you don't use a package manager.
 cd extras/tools
