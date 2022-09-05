@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7340065b_dc644242",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-09-05T10:19:46Z",
+      "side": 1,
+      "message": "Please post the journal. I am out of ideas.",
+      "revId": "0dd4a86ac11103897f033b2b7e9612b645e13cad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13c78c42_322efbce",
+        "filename": "src/Makefile.am",
+        "patchSetId": 7
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-09-05T10:19:46Z",
+      "side": 1,
+      "message": "Is it the right place for it?",
+      "revId": "0dd4a86ac11103897f033b2b7e9612b645e13cad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
