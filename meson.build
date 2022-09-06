@@ -30,22 +30,9 @@ deplibswscale = dependency('libswscale', version: '>= 3.1.101')
 deplibswresample = dependency('libswresample', version: '>= 1.2.101')
 deplibavutil = dependency('libavutil', version: '>= 55.75.100')
 depfmt = dependency('fmt', version: '>= 5.3')
-
-depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1', required: false)
-if not depyamlcpp.found()
-    depyamlcpp = modcmake.subproject('yaml-cpp', cmake_options: [
-        '-DCMAKE_BUILD_TYPE=Release',
-        '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
-        '-DYAML_CPP_BUILD_TOOLS=OFF',
-        '-DYAML_CPP_BUILD_TESTS=OFF',
-        '-DYAML_CPP_BUILD_CONTRIB=OFF',
-        '-DBUILD_SHARED_LIBS=OFF'
-    ]).dependency('yaml-cpp')
-endif
-
-depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5',
-                        fallback: ['jsoncpp', 'jsoncpp_dep'], default_options: ['default_library=static'])
-depzlib = dependency('zlib', fallback: ['zlib', 'zlib_dep'], default_options: ['default_library=static'])
+depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1')
+depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5')
+depzlib = dependency('zlib')
 
 if get_option('interfaces').contains('dbus')
     depdbuscpp = dependency('dbus-c++-1')
@@ -139,18 +126,7 @@ if get_option('plugins')
     if host_machine.system() == 'darwin'
         depminizip = dependency('minizip', version: '>= 3.0.0')
     else
-        deplibarchive = dependency('libarchive', version: '>= 3.4.0', required: false)
-        if not deplibarchive.found()
-            deplibarchive = modcmake.subproject('libarchive', cmake_options: [
-                '-DCMAKE_BUILD_TYPE=Release',
-                '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
-                '-DENABLE_TEST=OFF',
-                '-DENABLE_TAR=OFF',
-                '-DENABLE_CPIO=OFF',
-                '-DENABLE_CAT=OFF',
-                '-DENABLE_LIBXML2=OFF'
-            ]).dependency('archive_static')
-        endif
+        deplibarchive = dependency('libarchive', version: '>= 3.4.0')
     endif
     depdl = meson.get_compiler('cpp').find_library('dl', required: false)
 else
@@ -166,6 +142,7 @@ endif
 
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')
 conf.set('ENABLE_SHM', get_option('interfaces').contains('dbus'))
+
 configure_file(
     output: 'config.h',
     configuration: conf

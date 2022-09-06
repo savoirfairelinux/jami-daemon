@@ -11,6 +11,8 @@ option('jack', type: 'feature', value: 'auto', description: 'Enable support for 
 option('portaudio', type: 'feature', value: 'auto', description: 'Enable support for PortAudio')
 option('upnp', type: 'feature', value: 'auto', description: 'Enable support for UPnP')
 option('natpmp', type: 'feature', value: 'auto', description: 'Enable support for NAT-PMP')
+
+# https://docs.jami.net/user/faq.html#how-can-i-configure-the-audio-processor
 option('webrtc_ap', type: 'feature', value: 'auto', description: 'Enable support for WebRTC audio processing')
 option('speex_ap', type: 'feature', value: 'auto', description: 'Enable support for Speex audio processing')
 

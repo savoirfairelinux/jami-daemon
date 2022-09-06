@@ -1,6 +1,0 @@
-[wrap-file]
-directory = libarchive-3.4.3
-
-source_url = https://github.com/libarchive/libarchive/releases/download/v3.4.3/libarchive-3.4.3.tar.gz
-source_filename = libarchive-3.4.3.tar.gz
-source_hash = ee1e749213c108cb60d53147f18c31a73d6717d7e3d2481c157e1b34c881ea39
