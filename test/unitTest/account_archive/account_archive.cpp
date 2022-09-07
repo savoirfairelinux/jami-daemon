@@ -42,6 +42,7 @@
 #include <filesystem>
 
 using namespace std::string_literals;
+using namespace std::literals::chrono_literals;
 using namespace DRing::Account;
 
 namespace jami {
@@ -199,7 +200,7 @@ AccountArchiveTest::testExportDht()
         }));
     DRing::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(DRing::exportOnRing(bobId, "test"));
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return !pin.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !pin.empty(); }));
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
 
@@ -229,7 +230,7 @@ AccountArchiveTest::testExportDhtWrongPassword()
         }));
     DRing::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(DRing::exportOnRing(bobId, "wrong"));
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return status == 1; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return status == 1; }));
 }
 
 void

@@ -3163,15 +3163,15 @@ ConversationTest::testSearchInConv()
     messageReceived = false;
     DRing::sendMessage(aliceId, convId, "message 3"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived; }));
-    DRing::searchConversation(aliceId, convId, "", "", "message", 0, 0, 0);
+    DRing::searchConversation(aliceId, convId, "", "", "message", "", 0, 0, 0);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 3 && finished; }));
     messages.clear();
     finished = false;
-    DRing::searchConversation(aliceId, convId, "", "", "message 2", 0, 0, 0);
+    DRing::searchConversation(aliceId, convId, "", "", "message 2", "", 0, 0, 0);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 1 && finished; }));
     messages.clear();
     finished = false;
-    DRing::searchConversation(aliceId, convId, "", "", "foo", 0, 0, 0);
+    DRing::searchConversation(aliceId, convId, "", "", "foo", "", 0, 0, 0);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 0 && finished; }));
 }
 
