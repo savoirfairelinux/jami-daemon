@@ -28,6 +28,7 @@ Persistent<Function> incomingMessageCb;
 Persistent<Function> incomingCallCb;
 Persistent<Function> incomingCallWithMediaCb;
 Persistent<Function> conversationLoadedCb;
+Persistent<Function> messagesFoundCb;
 Persistent<Function> messageReceivedCb;
 Persistent<Function> conversationProfileUpdatedCb;
 Persistent<Function> conversationRequestReceivedCb;
@@ -87,6 +88,8 @@ getPresistentCb(std::string_view signal)
         return &incomingCallWithMediaCb;
     else if (signal == "ConversationLoaded")
         return &conversationLoadedCb;
+    else if (signal == "MessagesFound")
+        return &messagesFoundCb;
     else if (signal == "MessageReceived")
         return &messageReceivedCb;
     else if (signal == "ConversationProfileUpdated")
@@ -111,7 +114,6 @@ getPresistentCb(std::string_view signal)
         return &conferenceRemovedCb;
     else if (signal == "OnConferenceInfosUpdated")
         return &onConferenceInfosUpdatedCb;
-
     else
         return nullptr;
 }
@@ -558,6 +560,23 @@ conversationLoaded(uint32_t id,
                                             V8_STRING_NEW_LOCAL(accountId),
                                             V8_STRING_NEW_LOCAL(conversationId),
                                             stringMapVecToJsMapArray(message)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+messagesFound(uint32_t id, const std::string& accountId, const std::string&  conversationId, const std::vector<std::map<std::string, std::string>>& messages)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([id, accountId, conversationId, messages]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), messagesFoundCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {SWIGV8_INTEGER_NEW_UNS(id),
+                                            V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            stringMapVecToJsMapArray(messages)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
