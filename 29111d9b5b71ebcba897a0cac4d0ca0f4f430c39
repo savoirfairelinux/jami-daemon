@@ -46,6 +46,30 @@
       },
       "revId": "29111d9b5b71ebcba897a0cac4d0ca0f4f430c39",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ca965cc_d7096251",
+        "filename": "bin/dbus/dbusclient.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-09-07T14:26:34Z",
+      "side": 1,
+      "message": "there is none, it\u0027s something introduced by your patch for now, but it can be opened",
+      "parentUuid": "f5821767_7ea74411",
+      "range": {
+        "startLine": 109,
+        "startChar": 53,
+        "endLine": 109,
+        "endChar": 60
+      },
+      "revId": "29111d9b5b71ebcba897a0cac4d0ca0f4f430c39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
