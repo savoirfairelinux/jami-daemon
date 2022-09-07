@@ -22,6 +22,30 @@
       },
       "revId": "29111d9b5b71ebcba897a0cac4d0ca0f4f430c39",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5821767_7ea74411",
+        "filename": "bin/dbus/dbusclient.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-07T13:54:24Z",
+      "side": 1,
+      "message": "Issue for jami-project?",
+      "parentUuid": "47989f36_d4b299fc",
+      "range": {
+        "startLine": 109,
+        "startChar": 53,
+        "endLine": 109,
+        "endChar": 60
+      },
+      "revId": "29111d9b5b71ebcba897a0cac4d0ca0f4f430c39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
