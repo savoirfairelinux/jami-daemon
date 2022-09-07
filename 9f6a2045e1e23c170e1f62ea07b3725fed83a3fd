@@ -22,6 +22,30 @@
       },
       "revId": "9f6a2045e1e23c170e1f62ea07b3725fed83a3fd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "20c5f8c0_622fe104",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 663,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-07T13:52:28Z",
+      "side": 1,
+      "message": "Right.  But this is a jami-project issue?",
+      "parentUuid": "5139c6af_70e43c5e",
+      "range": {
+        "startLine": 663,
+        "startChar": 19,
+        "endLine": 663,
+        "endChar": 23
+      },
+      "revId": "9f6a2045e1e23c170e1f62ea07b3725fed83a3fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
