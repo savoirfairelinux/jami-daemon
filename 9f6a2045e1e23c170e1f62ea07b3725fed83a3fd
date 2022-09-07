@@ -46,6 +46,30 @@
       },
       "revId": "9f6a2045e1e23c170e1f62ea07b3725fed83a3fd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aa44ed38_a7a2a7f0",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 663,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-09-07T13:54:47Z",
+      "side": 1,
+      "message": "yes, that\u0027s why I didn\u0027t add any -2/-1/+1/+2. There is nothing to change here,\n\nIt\u0027s just if we merge this, we can\u0027t do any release on rpm and this should be fixed too.",
+      "parentUuid": "20c5f8c0_622fe104",
+      "range": {
+        "startLine": 663,
+        "startChar": 19,
+        "endLine": 663,
+        "endChar": 23
+      },
+      "revId": "9f6a2045e1e23c170e1f62ea07b3725fed83a3fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
