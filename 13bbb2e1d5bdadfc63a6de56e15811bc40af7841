@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "08ed28f3_30064615",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-07T15:02:29Z",
+      "side": 1,
+      "message": "As a first step, could we install a symbolic link from libring.so to libjami.so ?",
+      "revId": "13bbb2e1d5bdadfc63a6de56e15811bc40af7841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
