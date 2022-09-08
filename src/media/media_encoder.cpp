@@ -41,7 +41,7 @@ extern "C" {
 }
 
 #include <algorithm>
-#include <fstream>
+#include <nowide/fstream.hpp>
 #include <iostream>
 #include <json/json.h>
 #include <sstream>
@@ -1150,7 +1150,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
         JAMI_WARN("encoder.json file found, default settings will be erased");
         try {
             Json::Value root;
-            std::ifstream file = fileutils::ifstream(path);
+            nowide::ifstream file(path);
             file >> root;
             if (!root.isObject()) {
                 JAMI_ERR() << "Invalid encoder configuration: root is not an object";

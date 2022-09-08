@@ -32,7 +32,7 @@
 
 #include <thread>
 #include <stdexcept>
-#include <fstream>
+#include <nowide/fstream.hpp>
 #include <sstream>
 #include <ios>
 #include <iostream>
@@ -366,7 +366,7 @@ private:
     }
 
     mutable std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo_;
-    mutable std::ifstream input_;
+    mutable nowide::ifstream input_;
     mutable bool headerSent_ {false};
     bool peerReady_ {false};
     const std::string peerUri_;
@@ -384,7 +384,7 @@ SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
     , peerUri_(peerUri)
 {
     info_ = metaInfo_->info();
-    fileutils::openStream(input_, info_.path, std::ios::in | std::ios::binary);
+    input_.open(info_.path, std::ios::in | std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
     metaInfo_->addLinkedTransfer(this);
@@ -509,7 +509,7 @@ private:
     OutgoingFileTransfer() = delete;
 
     mutable std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo_;
-    mutable std::ifstream input_;
+    mutable nowide::ifstream input_;
     mutable std::vector<std::shared_ptr<SubOutgoingFileTransfer>> subtransfer_;
 };
 
@@ -518,7 +518,7 @@ OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid,
                                            const InternalCompletionCb& cb)
     : DataTransfer(tid, cb)
 {
-    fileutils::openStream(input_, info.path, std::ios::binary);
+    input_.open(info.path, std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
 
@@ -573,7 +573,7 @@ private:
 
     DRing::DataTransferId internalId_;
 
-    std::ofstream fout_;
+    nowide::ofstream fout_;
     std::mutex cbMtx_ {};
     std::function<void(const std::string&)> onFilenameCb_ {};
 };
@@ -613,7 +613,7 @@ IncomingFileTransfer::requestFilename(const std::function<void(const std::string
                                        info_.accountId);
         fileutils::recursive_mkdir(path);
         auto filename = fmt::format("{}/{}", path, id);
-        fileutils::ofstream(filename);
+        nowide::ofstream file(filename);
         if (not fileutils::isFile(filename))
             throw std::system_error(errno, std::generic_category());
         info_.path = filename;
@@ -627,7 +627,7 @@ IncomingFileTransfer::start()
     if (!DataTransfer::start())
         return false;
 
-    fileutils::openStream(fout_, &info_.path[0], std::ios::binary);
+    fout_.open(&info_.path[0], std::ios::binary);
     if (!fout_) {
         JAMI_ERR() << "[FTP] Can't open file " << info_.path;
         return false;
@@ -740,7 +740,7 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
         channel_->shutdown();
         return;
     }
-    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::in);
+    stream_.open(info_.path, std::ios::binary | std::ios::in);
     if (!stream_ || !stream_.is_open()) {
         channel_->shutdown();
         return;
@@ -814,7 +814,7 @@ IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
 {
-    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::out);
+    stream_.open(info_.path, std::ios::binary | std::ios::out);
     if (!stream_)
         return;
 
@@ -924,7 +924,7 @@ public:
     }
     void saveWaiting()
     {
-        std::ofstream file(waitingPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(waitingPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, waitingIds_);
     }
 
@@ -1145,7 +1145,7 @@ TransferManager::info(const std::string& fileId,
         progress = itI->second->info().bytesProgress;
         return true;
     } else if (fileutils::isFile(path)) {
-        std::ifstream transfer(path, std::ios::binary);
+        nowide::ifstream transfer(path, std::ios::binary);
         transfer.seekg(0, std::ios::end);
         progress = transfer.tellg();
         if (itW != pimpl_->waitingIds_.end()) {

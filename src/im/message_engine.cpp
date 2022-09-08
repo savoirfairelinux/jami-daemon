@@ -28,7 +28,7 @@
 #include <opendht/thread_pool.h>
 #include <json/json.h>
 
-#include <fstream>
+#include <nowide/fstream.hpp>
 
 namespace jami {
 namespace im {
@@ -229,9 +229,9 @@ MessageEngine::load()
         Json::Value root;
         {
             std::lock_guard<std::mutex> lock(fileutils::getFileLock(savePath_));
-            std::ifstream file;
+            nowide::ifstream file;
             file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-            fileutils::openStream(file, savePath_);
+            file.open(savePath_);
             if (file.is_open())
                 file >> root;
         }
@@ -319,9 +319,9 @@ MessageEngine::save_() const
                 wbuilder["commentStyle"] = "None";
                 wbuilder["indentation"] = "";
                 std::unique_ptr<Json::StreamWriter> writer(wbuilder.newStreamWriter());
-                std::ofstream file;
+                nowide::ofstream file;
                 file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-                fileutils::openStream(file, path, std::ios::trunc);
+                file.open(path, std::ios::trunc);
                 if (file.is_open())
                     writer->write(root, &file);
             } catch (const std::exception& e) {
