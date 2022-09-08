@@ -34,6 +34,24 @@
       "parentUuid": "08ed28f3_30064615",
       "revId": "13bbb2e1d5bdadfc63a6de56e15811bc40af7841",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f0b2cbc4_6bb9c841",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-09-08T19:36:16Z",
+      "side": 1,
+      "message": "In fact, I think the best approach is just to forget libring.so\n\nThere is no reason to keep this, if the only change necessary is too change one line in a .spec file (https://review.jami.net/c/jami-project/+/22383)\n\nIf the package works with libjami.so it\u0027s ok and keeping an old .so nobody else uses is just ugly.",
+      "parentUuid": "2b1bbf98_3912d4e6",
+      "revId": "13bbb2e1d5bdadfc63a6de56e15811bc40af7841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
