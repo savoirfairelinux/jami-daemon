@@ -103,8 +103,6 @@
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <nowide/fstream.hpp>
-#include <nowide/cstdio.hpp>
 
 using namespace std::placeholders;
 
@@ -819,7 +817,7 @@ JamiAccount::saveConfig() const
         auto accountConfig = getPath() + DIR_SEPARATOR_STR + "config.yml";
 
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
-        nowide::ofstream fout(accountConfig);
+        std::ofstream fout = fileutils::ofstream(accountConfig);
         fout << accountOut.c_str();
         JAMI_DBG("Exported account to %s", accountConfig.c_str());
     } catch (const std::exception& e) {
@@ -1434,8 +1432,8 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
         proxyServerCached_ = {};
         auto proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
         auto proxyListCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxylist";
-        nowide::remove(proxyCachePath.c_str());
-        nowide::remove(proxyListCachePath.c_str());
+        std::remove(proxyCachePath.c_str());
+        std::remove(proxyListCachePath.c_str());
     }
     if (not managerUri_.empty() and managerUri_.rfind("http", 0) != 0) {
         managerUri_ = "https://" + managerUri_;
@@ -2579,7 +2577,7 @@ std::set<ID, std::less<>>
 loadIdList(const std::string& path)
 {
     std::set<ID, std::less<>> ids;
-    nowide::ifstream file(path);
+    std::ifstream file = fileutils::ifstream(path);
     if (!file.is_open()) {
         JAMI_DBG("Could not load %s", path.c_str());
         return ids;
@@ -2603,7 +2601,7 @@ template<typename List = std::set<dht::Value::Id>>
 void
 saveIdList(const std::string& path, const List& ids)
 {
-    nowide::ofstream file(path, std::ios::trunc | std::ios::binary);
+    std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not save to %s", path.c_str());
         return;
@@ -2817,7 +2815,7 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
         // Cache it!
         fileutils::check_dir(cachePath_.c_str(), 0700);
         std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
-        nowide::ofstream file(proxyCachePath);
+        std::ofstream file = fileutils::ofstream(proxyCachePath);
         JAMI_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
         if (file.is_open())
             file << proxyServerCached_;
@@ -3105,7 +3103,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests";
     fileutils::recursive_mkdir(requestPath, 0700);
     auto cachedFile = requestPath + DIR_SEPARATOR_STR + to;
-    nowide::ofstream req(cachedFile, std::ios::trunc | std::ios::binary);
+    std::ofstream req = fileutils::ofstream(cachedFile, std::ios::trunc | std::ios::binary);
     if (!req.is_open()) {
         JAMI_ERR("Could not write data to %s", cachedFile.c_str());
         return;
@@ -3790,7 +3788,7 @@ JamiAccount::cacheTurnServers()
         fileutils::recursive_mkdir(this_->cachePath_ + DIR_SEPARATOR_STR + "domains", 0700);
         auto pathV4 = this_->cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v4."
                       + server;
-        if (auto turnV4File = nowide::ifstream(pathV4)) {
+        if (auto turnV4File = std::ifstream(pathV4)) {
             std::string content((std::istreambuf_iterator<char>(turnV4File)),
                                 std::istreambuf_iterator<char>());
             std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
@@ -3798,7 +3796,7 @@ JamiAccount::cacheTurnServers()
         }
         auto pathV6 = this_->cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v6."
                       + server;
-        if (auto turnV6File = nowide::ifstream(pathV6)) {
+        if (auto turnV6File = std::ifstream(pathV6)) {
             std::string content((std::istreambuf_iterator<char>(turnV6File)),
                                 std::istreambuf_iterator<char>());
             std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
@@ -3809,7 +3807,7 @@ JamiAccount::cacheTurnServers()
         {
             if (turnV4) {
                 // Cache value to avoid a delay when starting up Jami
-                nowide::ofstream turnV4File(pathV4);
+                std::ofstream turnV4File(pathV4);
                 turnV4File << turnV4.toString();
             } else
                 fileutils::remove(pathV4, true);
@@ -3821,7 +3819,7 @@ JamiAccount::cacheTurnServers()
         {
             if (turnV6) {
                 // Cache value to avoid a delay when starting up Jami
-                nowide::ofstream turnV6File(pathV6);
+                std::ofstream turnV6File(pathV6);
                 turnV6File << turnV6.toString();
             } else
                 fileutils::remove(pathV6, true);
@@ -4069,7 +4067,7 @@ JamiAccount::sendProfile(const std::string& peerUri, const std::string& deviceId
                      std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
                      if (fileutils::isFile(path))
                          return;
-                     nowide::ofstream file(path);
+                     fileutils::ofstream(path);
                  });
 
     } catch (const std::exception& e) {

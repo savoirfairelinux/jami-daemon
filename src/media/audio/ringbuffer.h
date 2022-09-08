@@ -34,6 +34,7 @@
 #include <chrono>
 #include <map>
 #include <vector>
+#include <fstream>
 
 namespace jami {
 

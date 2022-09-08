@@ -65,7 +65,6 @@
 
 #include <unistd.h>
 
-#include <nowide/convert.hpp>
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -1389,8 +1388,8 @@ SIPAccount::getLoginName()
     DWORD size = UNLEN + 1;
     TCHAR username[UNLEN + 1];
     std::string uname;
-    if (GetUserNameW((TCHAR*) username, &size)) {
-        uname = nowide::narrow(username);
+    if (GetUserName((TCHAR*) username, &size)) {
+        uname = jami::to_string(username);
     }
     return uname;
 #endif

@@ -13,8 +13,7 @@
         "yaml-cpp",
         "libarchive",
         "webrtc-audio-processing",
-        "libgit2",
-        "nowide"
+        "libgit2"
     ],
     "configuration": "ReleaseLib_win32",
     "project_paths": ["ring-daemon.vcxproj"]
