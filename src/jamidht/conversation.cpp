@@ -29,6 +29,8 @@
 #include <string_view>
 #include <opendht/thread_pool.h>
 #include <tuple>
+#include <fstream>
+#include <nowide/fstream.hpp>
 
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
@@ -305,7 +307,7 @@ public:
     }
     void saveFetched()
     {
-        std::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, fetchedDevices_);
     }
 
@@ -324,7 +326,7 @@ public:
     }
     void saveSending()
     {
-        std::ofstream file(sendingPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(sendingPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, sending_);
     }
 
@@ -344,7 +346,7 @@ public:
 
     void saveLastDisplayed() const
     {
-        std::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, lastDisplayed_);
     }
 
@@ -1089,7 +1091,7 @@ Conversation::updatePreferences(const std::map<std::string, std::string>& map)
         prefs.erase(itLast);
     }
 
-    std::ofstream file(filePath, std::ios::trunc | std::ios::binary);
+    nowide::ofstream file(filePath, std::ios::trunc | std::ios::binary);
     msgpack::pack(file, prefs);
     emitSignal<libjami::ConversationSignal::ConversationPreferencesUpdated>(pimpl_->accountId_,
                                                                           id(),

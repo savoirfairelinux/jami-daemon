@@ -26,7 +26,6 @@
 
 #include <charconv>
 #include <ctime>
-#include <fstream>
 #include <git2.h>
 #include <iomanip>
 
