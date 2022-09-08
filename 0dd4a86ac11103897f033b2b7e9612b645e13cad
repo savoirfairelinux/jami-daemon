@@ -33,6 +33,24 @@
       "message": "Is it the right place for it?",
       "revId": "0dd4a86ac11103897f033b2b7e9612b645e13cad",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7542bfd4_7573da99",
+        "filename": "src/Makefile.am",
+        "patchSetId": 7
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-08T14:27:58Z",
+      "side": 1,
+      "message": "should normally be somewere in configure.ac",
+      "parentUuid": "13c78c42_322efbce",
+      "revId": "0dd4a86ac11103897f033b2b7e9612b645e13cad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
