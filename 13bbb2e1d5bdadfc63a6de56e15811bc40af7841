@@ -16,6 +16,24 @@
       "message": "As a first step, could we install a symbolic link from libring.so to libjami.so ?",
       "revId": "13bbb2e1d5bdadfc63a6de56e15811bc40af7841",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b1bbf98_3912d4e6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2022-09-08T19:27:18Z",
+      "side": 1,
+      "message": "+1; it\u0027d be nice to have both for a while, and drop libring.so later in the future.\n\nFrom a quick look/search, symlinking or manually messing with the .so after it is\ngenerated may not be easily or cleanly doable.  And it would have to be duplicated\nfor multiple package systems.  So it\u0027d probably be best to provide both names here\nin the daemon itself.",
+      "parentUuid": "08ed28f3_30064615",
+      "revId": "13bbb2e1d5bdadfc63a6de56e15811bc40af7841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
