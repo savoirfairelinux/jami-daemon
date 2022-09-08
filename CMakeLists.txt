@@ -166,7 +166,8 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/nowide/include;"
        )
    endif()
 
@@ -195,6 +196,7 @@ if(MSVC)
            "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
            "WEBRTC_NS_FLOAT;"
            "MSGPACK_NO_BOOST;"
+           "YAML_CPP_STATIC_DEFINE;"
        )
    endif()
 
@@ -262,7 +264,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/build/Release/libopendht.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/argon2/vs2015/Argon2Ref/vs2015/build/Argon2Ref.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/msvc/Release/libyaml-cppmd.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/msvc/Release/yaml-cpp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/build/Release/natpmp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/archive_static.lib
@@ -283,6 +285,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/build/Release/webrtc-audio-processing.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio_static_x64.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/msvc/Release/git2.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/nowide/build/Release/nowide.lib
         /ignore:4006"
    )
 

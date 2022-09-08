@@ -1,7 +1,7 @@
 {
     "name": "yaml-cpp",
-    "version": "24fa1b33805c9a91df0f32c46c28e314dd7ad96f",
-    "url": "https://github.com/jbeder/yaml-cpp/archive/__VERSION__.tar.gz",
+    "version": "0.7.0",
+    "url": "https://github.com/H5117/yaml-cpp/archive/refs/heads/bom.zip",
     "deps": [],
     "patches": [],
     "win_patches": [],

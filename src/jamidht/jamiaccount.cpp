@@ -91,10 +91,12 @@
 #include <cstdarg>
 #include <initializer_list>
 #include <memory>
+#include <fstream>
 #include <regex>
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <nowide/fstream.hpp>
 
 using namespace std::placeholders;
 
@@ -886,7 +888,7 @@ JamiAccount::saveConfig() const
         config().serialize(accountOut);
         auto accountConfig = config().path + DIR_SEPARATOR_STR + "config.yml";
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
-        std::ofstream fout = fileutils::ofstream(accountConfig);
+        nowide::ofstream fout(accountConfig);
         fout.write(accountOut.c_str(), accountOut.size());
         JAMI_DBG("Saved account config to %s", accountConfig.c_str());
     } catch (const std::exception& e) {
@@ -2365,7 +2367,7 @@ std::set<ID, std::less<>>
 loadIdList(const std::string& path)
 {
     std::set<ID, std::less<>> ids;
-    std::ifstream file = fileutils::ifstream(path);
+    nowide::ifstream file(path);
     if (!file.is_open()) {
         JAMI_DBG("Could not load %s", path.c_str());
         return ids;
@@ -2389,7 +2391,7 @@ template<typename List = std::set<dht::Value::Id>>
 void
 saveIdList(const std::string& path, const List& ids)
 {
-    std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
+    nowide::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not save to %s", path.c_str());
         return;
@@ -2602,7 +2604,7 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
         // Cache it!
         fileutils::check_dir(cachePath_.c_str(), 0700);
         std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
-        std::ofstream file = fileutils::ofstream(proxyCachePath);
+        nowide::ofstream file(proxyCachePath);
         JAMI_DEBUG("Cache DHT proxy server: {}", proxyServerCached_);
         Json::Value node(Json::objectValue);
         node[getProxyConfigKey()] = proxyServerCached_;
@@ -2892,7 +2894,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests";
     fileutils::recursive_mkdir(requestPath, 0700);
     auto cachedFile = requestPath + DIR_SEPARATOR_STR + to;
-    std::ofstream req = fileutils::ofstream(cachedFile, std::ios::trunc | std::ios::binary);
+    nowide::ofstream req(cachedFile, std::ios::trunc | std::ios::binary);
     if (!req.is_open()) {
         JAMI_ERR("Could not write data to %s", cachedFile.c_str());
         return;
