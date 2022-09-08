@@ -1274,10 +1274,9 @@ SIPCall::transfer(const std::string& to)
         return;
     }
 
-    if (Recordable::isRecording()) {
-        deinitRecorder();
+    deinitRecorder();
+    if (Call::isRecording())
         stopRecording();
-    }
 
     std::string toUri = account->getToUri(to);
     const pj_str_t dst(CONST_PJ_STR(toUri));
@@ -2219,10 +2218,10 @@ void
 SIPCall::stopAllMedia()
 {
     JAMI_DBG("[call:%s] Stopping all media", getCallId().c_str());
-    if (Recordable::isRecording()) {
-        deinitRecorder();
+    deinitRecorder();
+    if (Call::isRecording())
         stopRecording(); // if call stops, finish recording
-    }
+
 #ifdef ENABLE_VIDEO
     {
         std::lock_guard<std::mutex> lk(sinksMtx_);
@@ -3161,7 +3160,6 @@ SIPCall::toggleRecording()
 
     // add streams to recorder before starting the record
     if (not Call::isRecording()) {
-        updateRecState(true);
         auto account = getSIPAccount();
         if (!account) {
             JAMI_ERR("No account detected");
@@ -3178,15 +3176,17 @@ SIPCall::toggleRecording()
         deinitRecorder();
     }
     pendingRecord_ = false;
-    return Call::toggleRecording();
+    auto state = Call::toggleRecording();
+    if (state)
+        updateRecState(state);
+    return state;
 }
 
 void
 SIPCall::deinitRecorder()
 {
-    if (Call::isRecording())
-        for (const auto& rtpSession : getRtpSessionList())
-            rtpSession->deinitRecorder(recorder_);
+    for (const auto& rtpSession : getRtpSessionList())
+        rtpSession->deinitRecorder(recorder_);
 }
 
 void
@@ -3482,7 +3482,7 @@ SIPCall::peerRecording(bool state)
     auto conference = conf_.lock();
     const std::string& id = conference ? conference->getConfId() : getCallId();
     if (state) {
-        JAMI_WARN("Peer is recording");
+        JAMI_WARN("[call:%s] Peer is recording", getCallId().c_str());
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
     } else {
         JAMI_WARN("Peer stopped recording");
