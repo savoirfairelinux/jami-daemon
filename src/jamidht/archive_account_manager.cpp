@@ -29,7 +29,7 @@
 #include <opendht/thread_pool.h>
 
 #include <memory>
-#include <fstream>
+#include <nowide/fstream.hpp>
 
 namespace jami {
 
@@ -823,10 +823,10 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath, const s
 
         // Export the file
         auto sourcePath = fileutils::getFullPath(path_, archivePath_);
-        std::ifstream src(sourcePath, std::ios::in | std::ios::binary);
+        nowide::ifstream src(sourcePath, std::ios::in | std::ios::binary);
         if (!src)
             return false;
-        std::ofstream dst(destinationPath, std::ios::out | std::ios::binary);
+        nowide::ofstream dst(destinationPath, std::ios::out | std::ios::binary);
         dst << src.rdbuf();
         return true;
     } catch (const std::runtime_error& ex) {
