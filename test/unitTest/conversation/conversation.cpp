@@ -2063,7 +2063,7 @@ ConversationTest::testUnknownModeDetected()
             const std::string& /* conversationId */,
             int code,
             const std::string& /* what */) {
-            if (code == 1)
+            if (code == 2)
                 errorDetected = true;
             cv.notify_one();
         }));

@@ -227,8 +227,7 @@ ConversationRequestTest::acceptConvReqAlsoAddContact()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     DRing::acceptConversationRequest(bobId, convId2);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReady == 2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady == 2; }));
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
 }
 
@@ -352,9 +351,8 @@ ConversationRequestTest::testAddContact()
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReady && memberMessageGenerated;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
@@ -410,9 +408,8 @@ ConversationRequestTest::testAddContactDeleteAndReAdd()
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReady && memberMessageGenerated;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
 
     // removeContact
     aliceAccount->removeContact(bobUri, false);
@@ -474,9 +471,8 @@ ConversationRequestTest::testInviteFromMessageAfterRemoved()
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReady && memberMessageGenerated;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
 
     // removeContact
     bobAccount->removeContact(aliceUri, false);
@@ -545,14 +541,11 @@ ConversationRequestTest::testRemoveContact()
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return !convId.empty() && requestReceived;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestReceived; }));
     memberMessageGenerated = false;
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReady && memberMessageGenerated;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
 
     conversationRemovedBob = false;
     bobAccount->removeContact(aliceUri, false);
@@ -565,7 +558,8 @@ ConversationRequestTest::testRemoveContact()
     aliceAccount->removeContact(bobUri, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return conversationRemovedAlice; }));
 
-    std::this_thread::sleep_for(10s); // There is no signal, but daemon should then erase the repository
+    std::this_thread::sleep_for(
+        10s); // There is no signal, but daemon should then erase the repository
 
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
@@ -628,19 +622,15 @@ ConversationRequestTest::testRemoveSelfDoesntRemoveConversation()
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return !convId.empty() && requestReceived;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestReceived; }));
     memberMessageGenerated = false;
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReady && memberMessageGenerated;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
 
     conversationRemoved = false;
     aliceAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(
-        !cv.wait_for(lk, 10s, [&]() { return conversationRemoved; }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return conversationRemoved; }));
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
@@ -698,14 +688,11 @@ ConversationRequestTest::testRemoveConversationUpdateContactDetails()
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return !convId.empty() && requestReceived;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestReceived; }));
     memberMessageGenerated = false;
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReady && memberMessageGenerated;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
 
     conversationRemoved = false;
     DRing::removeConversation(bobId, convId);
@@ -765,13 +752,11 @@ ConversationRequestTest::testBanContact()
     memberMessageGenerated = false;
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
 
     memberMessageGenerated = false;
     bobAccount->removeContact(aliceUri, true);
-    CPPUNIT_ASSERT(
-        !cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
@@ -879,9 +864,8 @@ ConversationRequestTest::testAddOfflineContactThenConnect()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() { return requestReceived; }));
     memberMessageGenerated = false;
     CPPUNIT_ASSERT(carlaAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReady && memberMessageGenerated;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
 }
 
 void
@@ -996,6 +980,14 @@ ConversationRequestTest::testRemoveContactRemoveSyncing()
             }
             cv.notify_one();
         }));
+    bool contactRemoved = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ContactRemoved>(
+        [&](const std::string& accountId, const std::string& uri, bool) {
+            if (accountId == bobId && uri == aliceUri) {
+                contactRemoved = true;
+            }
+            cv.notify_one();
+        }));
     DRing::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
@@ -1007,6 +999,7 @@ ConversationRequestTest::testRemoveContactRemoveSyncing()
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 1);
     bobAccount->removeContact(aliceUri, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return contactRemoved; }));
 
     CPPUNIT_ASSERT(DRing::getConversations(bobId).size() == 0);
 }
@@ -1250,9 +1243,7 @@ ConversationRequestTest::testRemoveContactRemoveTrustRequest()
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return !convId.empty(); }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return requestB1Received && requestB2Received;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestB1Received && requestB2Received; }));
 
     // Bob1 accepts, both device should get it
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
@@ -1262,11 +1253,9 @@ ConversationRequestTest::testRemoveContactRemoveTrustRequest()
 
     // Bob2 remove Alice ; Bob1 should not have any trust requests
     bob2Account->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationB1Removed && conversationB2Removed;
-    }));
-    std::this_thread::sleep_for(
-        10s); // Wait a bit to ensure that everything is update (via synced)
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationB1Removed && conversationB2Removed; }));
+    std::this_thread::sleep_for(10s); // Wait a bit to ensure that everything is update (via synced)
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
     CPPUNIT_ASSERT(bob2Account->getTrustRequests().size() == 0);
 }
