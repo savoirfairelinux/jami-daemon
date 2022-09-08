@@ -184,6 +184,18 @@ RecorderTest::testRecordCall()
 
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttributeA
+        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
+           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+    std::map<std::string, std::string> mediaAttributeV
+        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+    mediaList.emplace_back(mediaAttributeA);
+    mediaList.emplace_back(mediaAttributeV);
     auto callId = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
@@ -191,15 +203,17 @@ RecorderTest::testRecordCall()
         return bobCall.mediaStatus
                == DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
     }));
+    // give time to start camera
+    std::this_thread::sleep_for(5s);
 
     // Start recorder
+    recordedFile.clear();
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
     DRing::toggleRecording(aliceId, callId);
 
     // Stop recorder after a few seconds
     std::this_thread::sleep_for(5s);
     CPPUNIT_ASSERT(DRing::getIsRecording(aliceId, callId));
-    recordedFile.clear();
     DRing::toggleRecording(aliceId, callId);
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
 
@@ -223,8 +237,7 @@ RecorderTest::testRecordAudioOnlyCall()
         = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
            {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
            {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
-           {DRing::Media::MediaAttributeKey::SOURCE, ""},
-           {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}};
+           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
     mediaList.emplace_back(mediaAttribute);
     auto callId = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
@@ -235,12 +248,12 @@ RecorderTest::testRecordAudioOnlyCall()
     }));
 
     // Start recorder
+    recordedFile.clear();
     DRing::toggleRecording(aliceId, callId);
 
     // Stop recorder
     std::this_thread::sleep_for(5s);
     CPPUNIT_ASSERT(DRing::getIsRecording(aliceId, callId));
-    recordedFile.clear();
     DRing::toggleRecording(aliceId, callId);
     CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
 
@@ -262,6 +275,18 @@ RecorderTest::testStopCallWhileRecording()
 
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttributeA
+        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
+           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+    std::map<std::string, std::string> mediaAttributeV
+        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
+           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+    mediaList.emplace_back(mediaAttributeA);
+    mediaList.emplace_back(mediaAttributeV);
     auto callId = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
@@ -269,13 +294,15 @@ RecorderTest::testStopCallWhileRecording()
         return bobCall.mediaStatus
                == DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
     }));
+    // give time to start camera
+    std::this_thread::sleep_for(5s);
 
     // Start recorder
+    recordedFile.clear();
     DRing::toggleRecording(aliceId, callId);
 
     // Hangup call
     std::this_thread::sleep_for(5s);
-    recordedFile.clear();
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && !recordedFile.empty(); }));
@@ -290,9 +317,16 @@ RecorderTest::testDaemonPreference()
     auto bobUri = bobAccount->getUsername();
 
     DRing::setIsAlwaysRecording(true);
+    recordedFile.clear();
 
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttributeA
+        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
+           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+    mediaList.emplace_back(mediaAttributeA);
     auto callId = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
@@ -304,7 +338,6 @@ RecorderTest::testDaemonPreference()
     // Let record some seconds
     std::this_thread::sleep_for(5s);
 
-    recordedFile.clear();
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && !recordedFile.empty(); }));

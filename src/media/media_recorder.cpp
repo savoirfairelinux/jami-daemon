@@ -230,6 +230,10 @@ MediaRecorder::addStream(const MediaStream& ms)
         JAMI_ERR() << "Trying to add video stream to audio only recording";
         return nullptr;
     }
+    if (ms.isVideo && ms.format < 0) {
+        JAMI_ERR() << "Trying to add invalid video stream to recording";
+        return nullptr;
+    }
 
     auto ptr = std::make_unique<StreamObserver>(ms,
                                                 [this,
