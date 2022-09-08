@@ -28,7 +28,9 @@
 
 #include <chrono>
 #include <cstdio>
+#include <nowide/cstdio.hpp>
 #include <fstream>
+#include <nowide/fstream.hpp>
 #include <ios>
 #include <ratio>
 #include <string_view>
@@ -92,7 +94,7 @@ public:
                                        AV_SAMPLE_FMT_FLTP,
                                        AV_SAMPLE_FMT_DBL,
                                        AV_SAMPLE_FMT_DBLP};
-        f_ = std::ofstream(filename, std::ios_base::out | std::ios_base::binary);
+        f_ = nowide::ofstream(filename, std::ios_base::out | std::ios_base::binary);
         f_.imbue(std::locale::classic());
         f_ << "RIFF----WAVEfmt ";
         if (std::find(v.begin(), v.end(), format_) == v.end()) {
@@ -187,7 +189,7 @@ public:
     }
 
 private:
-    std::ofstream f_;
+    nowide::ofstream f_;
     size_t dataChunk_ {0};
     size_t factChunk_ {0};
     size_t length_ {0};
@@ -210,7 +212,7 @@ public:
         , width_(width)
         , height_(height)
     {
-        f_ = fopen(filename.c_str(), "wb");
+        f_ = nowide::fopen(filename.c_str(), "wb");
     }
 
     // so an int (VideoFrame.format()) can be passed without casting
