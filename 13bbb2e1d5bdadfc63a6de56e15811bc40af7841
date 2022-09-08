@@ -52,6 +52,29 @@
       "parentUuid": "2b1bbf98_3912d4e6",
       "revId": "13bbb2e1d5bdadfc63a6de56e15811bc40af7841",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88238a1f_8093fcee",
+        "filename": "configure.ac",
+        "patchSetId": 3
+      },
+      "lineNbr": 220,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-09-08T20:19:10Z",
+      "side": 1,
+      "message": "build-daemon for android needs to be updated (maybe iOS too)",
+      "range": {
+        "startLine": 220,
+        "startChar": 47,
+        "endLine": 220,
+        "endChar": 54
+      },
+      "revId": "13bbb2e1d5bdadfc63a6de56e15811bc40af7841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
