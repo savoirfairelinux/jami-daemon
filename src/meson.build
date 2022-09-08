@@ -148,8 +148,7 @@ libjami_dependencies = [
     depfmt,
     depyamlcpp,
     depjsoncpp,
-    depzlib,
-    depnowide
+    depzlib
 ]
 
 if conf.get('HAVE_OPENSL') == 1

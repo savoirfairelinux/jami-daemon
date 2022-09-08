@@ -57,7 +57,6 @@
 #include <cstring>
 #include <stdexcept>
 #include <cmath>
-#include <nowide/cstdlib.hpp>
 
 namespace jami {
 namespace video {
@@ -279,7 +278,7 @@ SinkClient::start() noexcept
 {
     if (not shm_) {
         try {
-            char* envvar = nowide::getenv("JAMI_DISABLE_SHM");
+            char* envvar = getenv("JAMI_DISABLE_SHM");
             if (envvar) // Do not use SHM if set
                 return true;
             shm_ = std::make_shared<ShmHolder>();

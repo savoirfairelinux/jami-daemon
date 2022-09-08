@@ -132,6 +132,19 @@ int remove(const std::string& path, bool erase = false);
  */
 int removeAll(const std::string& path, bool erase = false);
 
+/**
+ * Wrappers for fstream opening that will convert paths to wstring
+ * on windows
+ */
+void openStream(std::ifstream& file,
+                const std::string& path,
+                std::ios_base::openmode mode = std::ios_base::in);
+void openStream(std::ofstream& file,
+                const std::string& path,
+                std::ios_base::openmode mode = std::ios_base::out);
+std::ifstream ifstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
+std::ofstream ofstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
+
 int64_t size(const std::string& path);
 
 std::string sha3File(const std::string& path);

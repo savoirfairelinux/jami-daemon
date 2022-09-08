@@ -48,8 +48,7 @@ extern "C" {
 #endif
 
 #include <sys/stat.h>
-#include <nowide/fstream.hpp>
-#include <nowide/convert.hpp>
+#include <fstream>
 
 using namespace std::literals;
 
@@ -106,7 +105,7 @@ accountToJsonValue(const std::map<std::string, std::string>& details)
                    || i.first == DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE
                    || i.first == DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) {
             // replace paths by the files content
-            nowide::ifstream ifs(i.second);
+            std::ifstream ifs = fileutils::ifstream(i.second);
             std::string fileContent((std::istreambuf_iterator<char>(ifs)),
                                     std::istreambuf_iterator<char>());
             root[i.first] = fileContent;
@@ -219,7 +218,7 @@ gzFile
 openGzip(const std::string& path, const char* mode)
 {
 #ifdef _WIN32
-    return gzopen_w(nowide::widen(path).c_str(), mode);
+    return gzopen_w(jami::to_wstring(path).c_str(), mode);
 #else
     return gzopen(path.c_str(), mode);
 #endif

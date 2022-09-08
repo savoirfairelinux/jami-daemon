@@ -25,7 +25,7 @@
 
 #include "logger.h"
 
-#include <nowide/fstream.hpp>
+#include <fstream>
 #include <stdexcept>
 #include <msgpack.hpp>
 #include "manager.h"
@@ -282,7 +282,7 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
         const std::string preferencesValuesFilePath
             = PluginPreferencesUtils::valuesFilePath(rootPath, acc);
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
-        nowide::ofstream fs(preferencesValuesFilePath, std::ios::binary);
+        std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
             if (force) {
                 loadPlugin(rootPath);

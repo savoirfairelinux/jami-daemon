@@ -22,7 +22,7 @@
 #include "logger.h"
 #include "fileutils.h"
 #include "archiver.h"
-#include <nowide/fstream.hpp>
+#include <fstream>
 #include <regex>
 
 #if defined(__APPLE__)
@@ -139,7 +139,7 @@ std::map<std::string, std::string>
 parseManifestFile(const std::string& manifestFilePath)
 {
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(manifestFilePath));
-    nowide::ifstream file(manifestFilePath);
+    std::ifstream file(manifestFilePath);
     if (file) {
         try {
             return checkManifestValidity(file);

@@ -81,11 +81,11 @@ B) With Meson
 
 cd ../../
 mkdir build
-path_deps=`pwd`/contrib/`cc -dumpmachine`
-export PATH=$path_deps/bin:$PATH
-meson build -Dpkg_config_path=$path_deps/lib/pkgconfig -Dcmake_prefix_path=$path_deps
-meson compile -C build
-meson install -C build
+export PATH=$PATH:`pwd`/contrib/`cc -dumpmachine`/bin
+meson -Dpkg_config_path=`pwd`/contrib/`cc -dumpmachine`/lib/pkgconfig -Ddefault_library=static -Dinterfaces=dbus build
+cd build
+ninja
+ninja install
 
 Done !
 

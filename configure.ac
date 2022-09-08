@@ -618,8 +618,6 @@ AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP],
   [Define if you have libnatpmp])
 AM_CONDITIONAL([BUILD_NATPMP], test "x$with_natpmp" = "xyes")
 
-DAEMONLDFLAGS+=" -lnowide"
-
 # SHM
 dnl check for shm
 AS_IF([test "x$with_dbus" == xyes],

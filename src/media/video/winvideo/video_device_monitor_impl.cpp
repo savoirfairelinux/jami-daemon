@@ -33,7 +33,6 @@
 #include <thread>
 #include <vector>
 #include <cctype>
-#include <nowide/convert.hpp>
 
 namespace jami {
 namespace video {
@@ -275,7 +274,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
         if (hr != S_OK) {
             continue;
         }
-        auto unique_name = nowide::narrow(olestr);
+        auto unique_name = to_string(olestr);
         if (!unique_name.empty()) {
             // replace ':' with '_' since ffmpeg uses : to delineate between sources
             std::replace(unique_name.begin(), unique_name.end(), ':', '_');
