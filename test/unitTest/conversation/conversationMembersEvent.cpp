@@ -2501,8 +2501,9 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
 
     // Accepts requests
     DRing::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReadyBob && conversationReadyBob2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return conversationReadyBob && conversationReadyBob2 && memberMessageGenerated;
+    }));
 
     // Bob bans alice, should update bob2
     bobAccount->removeContact(aliceUri, true);
