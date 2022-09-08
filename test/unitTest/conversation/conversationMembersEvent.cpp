@@ -2448,12 +2448,16 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
             }
             cv.notify_one();
         }));
-    auto bobMsgReceived = false, bob2MsgReceived = false;
+    auto bobMsgReceived = false, bob2MsgReceived = false, memberMessageGenerated = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             std::map<std::string, std::string> message) {
-            if (accountId == bobId && conversationId == convId)
+            if (accountId == aliceId && conversationId == convId) {
+                auto itFind = message.find("type");
+                if (itFind != message.end() && itFind->second == "member")
+                    memberMessageGenerated = true;
+            } else if (accountId == bobId && conversationId == convId)
                 bobMsgReceived = true;
             else if (accountId == bob2Id && conversationId == convId)
                 bob2MsgReceived = true;
@@ -2469,6 +2473,7 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
             }
             cv.notify_one();
         }));
+
     DRing::registerSignalHandlers(confHandlers);
 
     // Bob creates a second device
@@ -2511,8 +2516,8 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
     // Bobs re-add Alice
     contactAddedBob = false, contactAddedBob2 = false;
     bobAccount->addContact(aliceUri);
+    bobAccount->sendTrustRequest(aliceUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return contactAddedBob && contactAddedBob2; }));
-    std::this_thread::sleep_for(10s);
 
     // Alice can sends some messages now
     bobMsgReceived = false, bob2MsgReceived = false;

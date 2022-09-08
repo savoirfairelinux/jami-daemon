@@ -2064,7 +2064,7 @@ ConversationRepository::Impl::search(const Filter& filter) const
             if (filter.type.empty() && !isSearchable) {
                 // Not searchable, at least for now
                 return;
-            } else if (contentType == filter.type) {
+            } else if (contentType == filter.type || filter.type.empty()) {
                 if (isSearchable) {
                     // If it's a text match the body, else the display name
                     auto body = contentType == "text/plain" ? content->at("body")
