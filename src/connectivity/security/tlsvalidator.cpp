@@ -41,8 +41,7 @@
 #include <cassert>
 #include <ctime>
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <nowide/stat.hpp>
 
 #ifndef _MSC_VER
 #include <libgen.h>
@@ -857,8 +856,8 @@ TlsValidator::keyMatch()
 TlsValidator::CheckResult
 TlsValidator::privateKeyStoragePermissions()
 {
-    struct stat statbuf;
-    int err = stat(privateKeyPath_.c_str(), &statbuf);
+    nowide::stat_t statbuf;
+    int err = nowide::stat(privateKeyPath_.c_str(), &statbuf);
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
@@ -876,8 +875,8 @@ TlsValidator::privateKeyStoragePermissions()
 TlsValidator::CheckResult
 TlsValidator::publicKeyStoragePermissions()
 {
-    struct stat statbuf;
-    int err = stat(certificatePath_.c_str(), &statbuf);
+    nowide::stat_t statbuf;
+    int err = nowide::stat(certificatePath_.c_str(), &statbuf);
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
@@ -906,8 +905,8 @@ TlsValidator::privateKeyDirectoryPermissions()
     _splitpath(certificatePath_.c_str(), nullptr, dir, nullptr, nullptr);
 #endif
 
-    struct stat statbuf;
-    int err = stat(dir, &statbuf);
+    nowide::stat_t statbuf;
+    int err = nowide::stat(dir, &statbuf);
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
@@ -938,8 +937,8 @@ TlsValidator::publicKeyDirectoryPermissions()
     _splitpath(certificatePath_.c_str(), nullptr, dir, nullptr, nullptr);
 #endif
 
-    struct stat statbuf;
-    int err = stat(dir, &statbuf);
+    nowide::stat_t statbuf;
+    int err = nowide::stat(dir, &statbuf);
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 

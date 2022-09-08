@@ -70,6 +70,7 @@
 #include <stdexcept>
 #include "fileutils.h"
 #include "string_utils.h"
+#include <nowide/cstdlib.hpp>
 
 namespace jami {
 
@@ -308,7 +309,7 @@ AudioPreference::createAudioLayer()
 #if HAVE_JACK
     if (audioApi_ == JACK_API_STR) {
         try {
-            if (auto ret = system("jack_lsp > /dev/null"))
+            if (auto ret = nowide::system("jack_lsp > /dev/null"))
                 throw std::runtime_error("Error running jack_lsp: " + std::to_string(ret));
             return new JackLayer(*this);
         } catch (const std::runtime_error& e) {

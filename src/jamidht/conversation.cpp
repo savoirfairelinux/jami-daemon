@@ -28,6 +28,8 @@
 #include <json/json.h>
 #include <string_view>
 #include <opendht/thread_pool.h>
+#include <fstream>
+#include <nowide/fstream.hpp>
 
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
@@ -422,7 +424,7 @@ public:
     }
     void saveFetched()
     {
-        std::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, fetchedDevices_);
     }
 
@@ -441,7 +443,7 @@ public:
     }
     void saveSending()
     {
-        std::ofstream file(sendingPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(sendingPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, sending_);
     }
 
@@ -461,7 +463,7 @@ public:
 
     void saveLastDisplayed() const
     {
-        std::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, lastDisplayed_);
     }
 
@@ -481,7 +483,7 @@ public:
 
     void saveActiveCalls() const
     {
-        std::ofstream file(activeCallsPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(activeCallsPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, activeCalls_);
     }
 
@@ -501,7 +503,7 @@ public:
 
     void saveHostedCalls() const
     {
-        std::ofstream file(hostedCallsPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(hostedCallsPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, hostedCalls_);
     }
 
@@ -1214,7 +1216,7 @@ Conversation::sync(const std::string& member,
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
         if (fileutils::isFile(path))
             return;
-        fileutils::ofstream(path);
+        nowide::ofstream file(path);
     }
 }
 
@@ -1328,7 +1330,7 @@ Conversation::updatePreferences(const std::map<std::string, std::string>& map)
         prefs.erase(itLast);
     }
 
-    std::ofstream file(filePath, std::ios::trunc | std::ios::binary);
+    nowide::ofstream file(filePath, std::ios::trunc | std::ios::binary);
     msgpack::pack(file, prefs);
     emitSignal<libjami::ConversationSignal::ConversationPreferencesUpdated>(pimpl_->accountId_,
                                                                             id(),
