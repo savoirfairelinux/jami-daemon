@@ -21,6 +21,7 @@
 #include "conversation_module.h"
 
 #include <fstream>
+#include <nowide/fstream.hpp>
 
 #include <opendht/thread_pool.h>
 
@@ -900,8 +901,8 @@ ConversationModule::saveConvRequestsToPath(
 {
     std::lock_guard<std::mutex> lock(
         fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
-    std::ofstream file(path + DIR_SEPARATOR_STR + "convRequests",
-                       std::ios::trunc | std::ios::binary);
+    nowide::ofstream file(path + DIR_SEPARATOR_STR + "convRequests",
+                                 std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversationsRequests);
 }
 
@@ -915,7 +916,7 @@ ConversationModule::saveConvInfos(const std::string& accountId, const ConvInfoMa
 void
 ConversationModule::saveConvInfosToPath(const std::string& path, const ConvInfoMap& conversations)
 {
-    std::ofstream file(path + DIR_SEPARATOR_STR + "convInfo", std::ios::trunc | std::ios::binary);
+    nowide::ofstream file(path + DIR_SEPARATOR_STR + "convInfo", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversations);
 }
 

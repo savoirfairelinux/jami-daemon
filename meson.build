@@ -33,6 +33,7 @@ depfmt = dependency('fmt', version: '>= 5.3')
 depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1')
 depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5')
 depzlib = dependency('zlib')
+depnowide = dependency('nowide', method: 'cmake')
 
 if get_option('interfaces').contains('dbus')
     depdbuscpp = dependency('dbus-c++-1')

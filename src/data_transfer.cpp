@@ -34,6 +34,8 @@
 #include <charconv> // std::from_chars
 #include <cstdlib>  // mkstemp
 #include <filesystem>
+#include <fstream>
+#include <nowide/fstream.hpp>
 
 #include <opendht/rng.h>
 #include <opendht/thread_pool.h>
@@ -88,7 +90,7 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
         channel_->shutdown();
         return;
     }
-    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::in);
+    stream_.open(info_.path, std::ios::binary | std::ios::in);
     if (!stream_ || !stream_.is_open()) {
         channel_->shutdown();
         return;
@@ -162,7 +164,7 @@ IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
 {
-    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::out);
+    stream_.open(info_.path, std::ios::binary | std::ios::out);
     if (!stream_)
         return;
 
@@ -272,7 +274,7 @@ public:
     }
     void saveWaiting()
     {
-        std::ofstream file(waitingPath_, std::ios::trunc | std::ios::binary);
+        nowide::ofstream file(waitingPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, waitingIds_);
     }
 
@@ -367,7 +369,7 @@ TransferManager::info(const std::string& fileId,
         progress = itI->second->info().bytesProgress;
         return true;
     } else if (fileutils::isFile(path)) {
-        std::ifstream transfer(path, std::ios::binary);
+        nowide::ifstream transfer(path, std::ios::binary);
         transfer.seekg(0, std::ios::end);
         progress = transfer.tellg();
         if (itW != pimpl_->waitingIds_.end()) {

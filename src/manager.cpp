@@ -114,9 +114,10 @@ using random_device = dht::crypto::random_device;
 
 #include <cerrno>
 #include <ctime>
-#include <cstdlib>
+#include <nowide/cstdlib.hpp>
 #include <iostream>
-#include <fstream>
+#include <nowide/fstream.hpp>
+#include <nowide/cstdio.hpp>
 #include <sstream>
 #include <algorithm>
 #include <memory>
@@ -144,8 +145,8 @@ bool Manager::isIOSExtension = {false};
 static void
 copy_over(const std::string& srcPath, const std::string& destPath)
 {
-    std::ifstream src = fileutils::ifstream(srcPath.c_str());
-    std::ofstream dest = fileutils::ofstream(destPath.c_str());
+    nowide::ifstream src(srcPath.c_str());
+    nowide::ofstream dest(destPath.c_str());
     dest << src.rdbuf();
     src.close();
     dest.close();
@@ -175,7 +176,7 @@ check_rename(const std::string& old_dir, const std::string& new_dir)
 
     if (not fileutils::isDirectory(new_dir)) {
         JAMI_WARN() << "Migrating " << old_dir << " to " << new_dir;
-        std::rename(old_dir.c_str(), new_dir.c_str());
+        nowide::rename(old_dir.c_str(), new_dir.c_str());
     } else {
         for (const auto& file : fileutils::readDirectory(old_dir)) {
             auto old_dest = fileutils::getFullPath(old_dir, file);
@@ -184,7 +185,7 @@ check_rename(const std::string& old_dir, const std::string& new_dir)
                 check_rename(old_dest, new_dest);
             } else {
                 JAMI_WARN() << "Migrating " << old_dest << " to " << new_dest;
-                std::rename(old_dest.c_str(), new_dest.c_str());
+                nowide::rename(old_dest.c_str(), new_dest.c_str());
             }
         }
         fileutils::removeAll(old_dir);
@@ -207,7 +208,7 @@ setDhtLogLevel()
 {
 #ifndef RING_UWP
     int level = 0;
-    if (auto envvar = getenv(DHTLOGLEVEL)) {
+    if (auto envvar = nowide::getenv(DHTLOGLEVEL)) {
         level = to_int<int>(envvar, 0);
         level = std::clamp(level, 0, 3);
         JAMI_DBG("DHTLOGLEVEL=%u", level);
@@ -231,7 +232,7 @@ static void
 setSipLogLevel()
 {
 #ifndef RING_UWP
-    char* envvar = getenv(SIPLOGLEVEL);
+    char* envvar = nowide::getenv(SIPLOGLEVEL);
 
     int level = 0;
 
@@ -274,7 +275,7 @@ static void
 setGnuTlsLogLevel()
 {
 #ifndef RING_UWP
-    char* envvar = getenv("RING_TLS_LOGLEVEL");
+    char* envvar = nowide::getenv("RING_TLS_LOGLEVEL");
     int level = RING_TLS_LOGLEVEL;
 
     if (envvar != nullptr) {
@@ -472,7 +473,7 @@ Manager::ManagerPimpl::parseConfiguration()
     bool result = true;
 
     try {
-        std::ifstream file = fileutils::ifstream(path_);
+        nowide::ifstream file(path_);
         YAML::Node parsedFile = YAML::Load(file);
         file.close();
         const int error_count = base_.loadAccountMap(parsedFile);
@@ -1728,7 +1729,7 @@ Manager::saveConfig()
 #endif
 
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(pimpl_->path_));
-        std::ofstream fout = fileutils::ofstream(pimpl_->path_);
+        nowide::ofstream fout(pimpl_->path_);
         fout.write(out.c_str(), out.size());
     } catch (const YAML::Exception& e) {
         JAMI_ERR("%s", e.what());
@@ -2815,7 +2816,9 @@ Manager::loadAccountMap(const YAML::Node& node)
                 try {
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
                         auto config = a->buildConfig();
-                        config->unserialize(YAML::LoadFile(configFile));
+                        nowide::ifstream file(configFile);
+                        config->unserialize(YAML::Load(file));
+                        file.close();
                         a->setConfig(std::move(config));
                     }
                 } catch (const std::exception& e) {
