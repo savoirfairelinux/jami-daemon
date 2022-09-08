@@ -27,6 +27,8 @@
 #include "turn_cache.h"
 #include <asio/error_code.hpp>
 
+#include <nowide/fstream.hpp>
+
 namespace jami {
 
 TurnCache::TurnCache(const std::string& accountId,
@@ -122,13 +124,13 @@ TurnCache::refresh(const asio::error_code& ec)
     fileutils::recursive_mkdir(cachePath_ + DIR_SEPARATOR_STR + "domains", 0700);
     auto pathV4 = cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v4." + server;
     IpAddr testV4, testV6;
-    if (auto turnV4File = std::ifstream(pathV4)) {
+    if (auto turnV4File = nowide::ifstream(pathV4)) {
         std::string content((std::istreambuf_iterator<char>(turnV4File)),
                             std::istreambuf_iterator<char>());
         testV4 = IpAddr(content, AF_INET);
     }
     auto pathV6 = cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v6." + server;
-    if (auto turnV6File = std::ifstream(pathV6)) {
+    if (auto turnV6File = nowide::ifstream(pathV6)) {
         std::string content((std::istreambuf_iterator<char>(turnV6File)),
                             std::istreambuf_iterator<char>());
         testV6 = IpAddr(content, AF_INET6);
@@ -138,7 +140,7 @@ TurnCache::refresh(const asio::error_code& ec)
     {
         if (turnV4) {
             // Cache value to avoid a delay when starting up Jami
-            std::ofstream turnV4File(pathV4);
+            nowide::ofstream turnV4File(pathV4);
             turnV4File << turnV4.toString();
         } else
             fileutils::remove(pathV4, true);
@@ -149,7 +151,7 @@ TurnCache::refresh(const asio::error_code& ec)
     {
         if (turnV6) {
             // Cache value to avoid a delay when starting up Jami
-            std::ofstream turnV6File(pathV6);
+            nowide::ofstream turnV6File(pathV6);
             turnV6File << turnV6.toString();
         } else
             fileutils::remove(pathV6, true);

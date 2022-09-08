@@ -31,6 +31,7 @@
 
 #include <thread>
 #include <sstream>
+#include <nowide/cstdio.hpp>
 
 namespace jami {
 namespace tls {
@@ -83,7 +84,7 @@ CertificateStore::loadLocalCertificates()
             }
         } catch (const std::exception& e) {
             JAMI_WARN() << "Remove cert. " << e.what();
-            remove((certPath_ + DIR_SEPARATOR_CH + f).c_str());
+            nowide::remove((certPath_ + DIR_SEPARATOR_CH + f).c_str());
         }
     }
     JAMI_DBG("CertificateStore: loaded %u local certificates.", n);
@@ -364,7 +365,7 @@ CertificateStore::unpinCertificate(const std::string& id)
     std::lock_guard<std::mutex> l(lock_);
 
     certs_.erase(id);
-    return remove((certPath_ + DIR_SEPARATOR_CH + id).c_str()) == 0;
+    return nowide::remove((certPath_ + DIR_SEPARATOR_CH + id).c_str()) == 0;
 }
 
 bool
