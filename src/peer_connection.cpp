@@ -98,6 +98,8 @@ IceSocketEndpoint::IceSocketEndpoint(std::shared_ptr<IceTransport> ice, bool isS
 IceSocketEndpoint::~IceSocketEndpoint()
 {
     shutdown();
+    if (ice_)
+        dht::ThreadPool::io().run([ice = std::move(ice_)] {});
 }
 
 void
@@ -109,7 +111,6 @@ IceSocketEndpoint::shutdown()
         // any blocking operation.
         ice_->cancelOperations();
         ice_->stop();
-        dht::ThreadPool::io().run([ice = std::move(ice_)] {});
     }
 }
 
