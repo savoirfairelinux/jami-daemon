@@ -151,7 +151,9 @@ PUPnP::initUpnpLib()
     char* ip_address6 = nullptr;
     unsigned short port = UpnpGetServerPort();
     unsigned short port6 = 0;
+    JAMI_ERR("@@@@@@@@@@@@@@@?");
 #if UPNP_ENABLE_IPV6
+    JAMI_ERR("@@@@@@@@@@@@@@@!");
     ip_address6 = UpnpGetServerIp6Address();
     port6 = UpnpGetServerPort6();
 #endif
