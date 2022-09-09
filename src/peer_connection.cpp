@@ -105,13 +105,11 @@ IceSocketEndpoint::~IceSocketEndpoint()
 void
 IceSocketEndpoint::shutdown()
 {
-    if (ice_) {
-        // Sometimes the other peer never send any packet
-        // So, we cancel pending read to avoid to have
-        // any blocking operation.
+    // Sometimes the other peer never send any packet
+    // So, we cancel pending read to avoid to have
+    // any blocking operation.
+    if (ice_)
         ice_->cancelOperations();
-        ice_->stop();
-    }
 }
 
 int
