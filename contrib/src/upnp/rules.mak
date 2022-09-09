@@ -1,9 +1,9 @@
 # UPNP
-UPNP_VERSION := 1.14.0
+UPNP_VERSION := 1.14.13
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
-ifeq ($(call need_pkg,"libupnp >= 1.8.4"),)
+ifeq ($(call need_pkg,"libupnp >= 1.14.2"),)
 PKGS_FOUND += upnp
 endif
 

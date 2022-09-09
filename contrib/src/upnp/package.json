@@ -1,6 +1,6 @@
 {
     "name": "upnp",
-    "version": "1.8.4",
+    "version": "1.14.13",
     "url": "https://github.com/mrjimenez/pupnp/archive/release-__VERSION__.tar.gz",
     "deps": ["pthreads"],
     "patches": [],
