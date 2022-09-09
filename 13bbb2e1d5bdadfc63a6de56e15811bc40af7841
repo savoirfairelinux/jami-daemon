@@ -56,6 +56,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0ea8796f_583e9c3b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-09T00:52:25Z",
+      "side": 1,
+      "message": "I concur with Seb.  Let\u0027s not start messing around with shared lib and just make the transition to libjami.\n\nNext step will be to change the public API namespace.",
+      "parentUuid": "f0b2cbc4_6bb9c841",
+      "revId": "13bbb2e1d5bdadfc63a6de56e15811bc40af7841",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "88238a1f_8093fcee",
         "filename": "configure.ac",
         "patchSetId": 3
