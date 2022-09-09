@@ -150,11 +150,6 @@ public:
     bool startIce(const SDP& sdp);
 
     /**
-     * Stop a started or completed transport.
-     */
-    bool stop();
-
-    /**
      * Cancel operations
      */
     void cancelOperations();
@@ -176,12 +171,6 @@ public:
      * [mutex protected]
      */
     bool isRunning() const;
-
-    /**
-     * Return true if a start operations fails or if stop() has been called
-     * [mutex protected]
-     */
-    bool isStopped() const;
 
     /**
      * Returns true if ICE transport is in failure state
@@ -257,7 +246,6 @@ public:
 
 private:
     class Impl;
-    bool isStopped_ {false};
     bool isCancelled_ {false};
     std::unique_ptr<Impl> pimpl_;
 };

@@ -78,10 +78,8 @@ public:
                     info->tls_->shutdown();
                 if (info->socket_)
                     info->socket_->shutdown();
-                if (info->ice_) {
+                if (info->ice_)
                     info->ice_->cancelOperations();
-                    info->ice_->stop();
-                }
                 info->responseCv_.notify_all();
                 erased = true;
                 it = infos_.erase(it);
@@ -1096,10 +1094,8 @@ ConnectionManager::closeConnectionsWith(const std::string& peerUri)
         pimpl_->removeUnusedConnections(deviceId);
     }
     for (auto& info : connInfos) {
-        if (info->ice_) {
+        if (info->ice_)
             info->ice_->cancelOperations();
-            info->ice_->stop();
-        }
         if (info->socket_)
             info->socket_->shutdown();
         info->responseCv_.notify_all();

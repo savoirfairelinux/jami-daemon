@@ -1148,7 +1148,6 @@ IceTransport::IceTransport(const char* name)
 
 IceTransport::~IceTransport()
 {
-    isStopped_ = true;
     cancelOperations();
 }
 
@@ -1179,13 +1178,6 @@ IceTransport::isRunning() const
 {
     IceLock lk(pimpl_->icest_);
     return pimpl_->_isRunning();
-}
-
-bool
-IceTransport::isStopped() const
-{
-    IceLock lk(pimpl_->icest_);
-    return pimpl_->is_stopped_;
 }
 
 bool
@@ -1344,21 +1336,6 @@ IceTransport::startIce(const SDP& sdp)
         return false;
     }
 
-    return true;
-}
-
-bool
-IceTransport::stop()
-{
-    pimpl_->is_stopped_ = true;
-    if (isStarted()) {
-        auto status = pj_ice_strans_stop_ice(pimpl_->icest_);
-        if (status != PJ_SUCCESS) {
-            pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("[ice:%p] ICE stop failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
-            return false;
-        }
-    }
     return true;
 }
 
