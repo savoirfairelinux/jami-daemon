@@ -159,6 +159,17 @@ add to ./configure: --prefix=<prefix_path>
 
 Do a little dance!
 
+How to compile in a Docker container
+-----------------------
+
+docker build --tag jami-daemon .
+
+# To build with custom build args
+
+```bash
+docker build --tag jami-daemon --build-arg config_args="--with-nodejs" .
+```
+
 
 Common Issues
 -------------
