@@ -91,6 +91,8 @@ nbproject
 *.kdev*
 tools/.vscode/
 .vscode/
+.idea/
+*iml
 
 # JNI generated files
 *_wrap.cpp
