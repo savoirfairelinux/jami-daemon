@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "585e1331_23013ff8",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-12T18:57:26Z",
+      "side": 1,
+      "message": "Careful with tabs.",
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
