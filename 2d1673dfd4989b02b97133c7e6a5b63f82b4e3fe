@@ -3,6 +3,69 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "af89d798_2c5d8f3f",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-13T15:35:12Z",
+      "side": 1,
+      "message": "tabs",
+      "range": {
+        "startLine": 20,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 1
+      },
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ebc52ba8_345800e0",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-13T15:35:12Z",
+      "side": 1,
+      "message": "missing the following packages:\n\n        libjsoncpp-dev \\\n        libmsgpack-dev \\\n        libnatpmp-dev \\\n        libopus-dev \\\n        libspeex-dev \\\n        libspeexdsp-dev \\\n        libssl-dev \\\n        libupnp-dev \\\n        libasio-dev \\\n        libyaml-cpp-dev \\",
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "703c59a0_c8f89f8a",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-13T15:35:12Z",
+      "side": 1,
+      "message": "tabs",
+      "range": {
+        "startLine": 24,
+        "startChar": 0,
+        "endLine": 24,
+        "endChar": 1
+      },
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "585e1331_23013ff8",
         "filename": "Dockerfile",
         "patchSetId": 1
@@ -14,6 +77,52 @@
       "writtenOn": "2022-09-12T18:57:26Z",
       "side": 1,
       "message": "Careful with tabs.",
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ac83ec2_e1c96ee4",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-13T15:35:12Z",
+      "side": 1,
+      "message": "tabs",
+      "range": {
+        "startLine": 28,
+        "startChar": 0,
+        "endLine": 28,
+        "endChar": 1
+      },
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cca32d93_44323591",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-13T15:35:12Z",
+      "side": 1,
+      "message": "tabs",
+      "range": {
+        "startLine": 33,
+        "startChar": 3,
+        "endLine": 33,
+        "endChar": 4
+      },
       "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
