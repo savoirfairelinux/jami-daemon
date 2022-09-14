@@ -148,6 +148,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1589654_5eaa326c",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 960
+      },
+      "writtenOn": "2022-09-14T19:08:05Z",
+      "side": 1,
+      "message": "Added the new dependencies!",
+      "parentUuid": "1af68804_5a1cba77",
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "585e1331_23013ff8",
