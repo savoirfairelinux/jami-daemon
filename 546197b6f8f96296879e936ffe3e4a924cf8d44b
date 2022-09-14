@@ -16,6 +16,23 @@
       "message": "What about git?",
       "revId": "546197b6f8f96296879e936ffe3e4a924cf8d44b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ea204d6_8549108d",
+        "filename": "Dockerfile",
+        "patchSetId": 4
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-14T20:27:27Z",
+      "side": 1,
+      "message": "This will effectively rebuild contrib every time you modify a file in Jami since COPY is before this RUN?",
+      "revId": "546197b6f8f96296879e936ffe3e4a924cf8d44b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
