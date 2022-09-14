@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "49ae3f52_2fa6505d",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 960
+      },
+      "writtenOn": "2022-09-14T17:53:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "af89d798_2c5d8f3f",
+      "range": {
+        "startLine": 20,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 1
+      },
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ebc52ba8_345800e0",
@@ -64,6 +88,48 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c188c2a_b311bc06",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 960
+      },
+      "writtenOn": "2022-09-14T17:53:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "703c59a0_c8f89f8a",
+      "range": {
+        "startLine": 24,
+        "startChar": 0,
+        "endLine": 24,
+        "endChar": 1
+      },
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8882a8e7_6081c5aa",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 960
+      },
+      "writtenOn": "2022-09-14T17:53:37Z",
+      "side": 1,
+      "message": "Why are they required?",
+      "parentUuid": "ebc52ba8_345800e0",
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "585e1331_23013ff8",
@@ -77,6 +143,24 @@
       "writtenOn": "2022-09-12T18:57:26Z",
       "side": 1,
       "message": "Careful with tabs.",
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "27fdd048_c49faba8",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 960
+      },
+      "writtenOn": "2022-09-14T17:53:37Z",
+      "side": 1,
+      "message": "I changed my settings in my ide, should not happen again!",
+      "parentUuid": "585e1331_23013ff8",
       "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -104,6 +188,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2ef256d_1d231f07",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 960
+      },
+      "writtenOn": "2022-09-14T17:53:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0ac83ec2_e1c96ee4",
+      "range": {
+        "startLine": 28,
+        "startChar": 0,
+        "endLine": 28,
+        "endChar": 1
+      },
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cca32d93_44323591",
@@ -117,6 +225,30 @@
       "writtenOn": "2022-09-13T15:35:12Z",
       "side": 1,
       "message": "tabs",
+      "range": {
+        "startLine": 33,
+        "startChar": 3,
+        "endLine": 33,
+        "endChar": 4
+      },
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ca4c79b8_d22d0f75",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 960
+      },
+      "writtenOn": "2022-09-14T17:53:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cca32d93_44323591",
       "range": {
         "startLine": 33,
         "startChar": 3,
