@@ -130,6 +130,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1af68804_5a1cba77",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-14T18:01:19Z",
+      "side": 1,
+      "message": "They are daemon dependencies and if not available on the system they will be built from contrib as part of the daemon. Using system-provided dependencies is usually preferred on Linux, since they are updated with the system (including emergency security fixes, if any), reduce the build time, download time, disk usage, and runtime memory footprint (because these libraries will be shared with other apps).\n\nMore missing dependencies:\n\n    libdbus-1-dev \\\n    libdbus-c++-dev \\\n    libvpx-dev \\\n    libx264-dev \\\n    libgnutls28-dev \\\n    libfmt-dev \\\n    libarchive-dev \\",
+      "parentUuid": "8882a8e7_6081c5aa",
+      "revId": "2d1673dfd4989b02b97133c7e6a5b63f82b4e3fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "585e1331_23013ff8",
