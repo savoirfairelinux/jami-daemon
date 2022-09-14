@@ -26,6 +26,7 @@
 #include "call_factory.h"
 #include "sipcall.h"
 #include "sipaccount.h"
+#include "jamidht/jamiaccount.h"
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
 #include "logger.h"
@@ -3084,10 +3085,29 @@ SIPCall::setRotation(int streamIdx, int rotation)
 }
 
 void
-SIPCall::createSinks(const ConfInfo& infos)
+SIPCall::createSinks(ConfInfo& infos)
 {
     if (!hasVideo())
         return;
+
+    std::vector<std::string> localSinks{};
+    for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
+        if (not iter->mediaAttribute_ || iter->mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+            continue;
+        }
+        localSinks.emplace_back(iter->mediaAttribute_->sourceUri_);
+        JAMI_INFO() << "iter->mediaAttribute_->sourceUri_" << iter->mediaAttribute_->sourceUri_;
+    }
+
+    for (auto& participant : infos) {
+        if (string_remove_suffix(participant.uri, '@') == account_.lock()->getUsername() &&
+            !localSinks.empty() && participant.device == std::dynamic_pointer_cast<JamiAccount>(account_.lock())->currentDeviceId()) {
+            JAMI_INFO() << "participant.sinkId1" << participant.sinkId;
+            participant.sinkId = *(localSinks.begin());
+            localSinks.erase(localSinks.begin());
+            JAMI_INFO() << "participant.sinkId2" << participant.sinkId;
+        }
+    }
 
     std::lock_guard<std::mutex> lk(sinksMtx_);
     std::vector<std::shared_ptr<video::VideoFrameActiveWriter>> sinks;
@@ -3101,7 +3121,7 @@ SIPCall::createSinks(const ConfInfo& infos)
     }
     auto conf = conf_.lock();
     const auto& id = conf ? conf->getConfId() : getCallId();
-    Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_);
+    Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_, getAccountId());
 }
 #endif
 

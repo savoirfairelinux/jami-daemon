@@ -150,7 +150,7 @@ public:
     void exitConference() override;
 #ifdef ENABLE_VIDEO
     std::mutex sinksMtx_;
-    void createSinks(const ConfInfo& infos) override;
+    void createSinks(ConfInfo& infos) override;
     std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
 #endif
     bool hasVideo() const override;
