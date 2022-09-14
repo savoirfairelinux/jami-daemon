@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4722066_fe7b12cd",
+        "filename": ".dockerignore",
+        "patchSetId": 4
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-14T20:26:11Z",
+      "side": 1,
+      "message": "What about git?",
+      "revId": "546197b6f8f96296879e936ffe3e4a924cf8d44b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
