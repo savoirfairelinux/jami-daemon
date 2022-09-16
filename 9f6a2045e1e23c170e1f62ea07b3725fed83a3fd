@@ -70,6 +70,30 @@
       },
       "revId": "9f6a2045e1e23c170e1f62ea07b3725fed83a3fd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "531d81c4_0e85e0e0",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 663,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-16T18:22:20Z",
+      "side": 1,
+      "message": "https://review.jami.net/c/jami-project/+/22454",
+      "parentUuid": "aa44ed38_a7a2a7f0",
+      "range": {
+        "startLine": 663,
+        "startChar": 19,
+        "endLine": 663,
+        "endChar": 23
+      },
+      "revId": "9f6a2045e1e23c170e1f62ea07b3725fed83a3fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
