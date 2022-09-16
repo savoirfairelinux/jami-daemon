@@ -1,9 +1,10 @@
 (define-module (jami logger)
+  #:use-module (jami)
   #:use-module ((jami logger bindings) #:prefix ffi:)
-  #:export (debug
-            info
-            warning
-            error))
+  #:export-syntax (debug
+                   error
+                   info
+                   warning))
 
 (define-syntax-rule (logging% lvl fmt args ...)
   (let* ((source-location (current-source-location))
