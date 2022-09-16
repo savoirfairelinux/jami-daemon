@@ -86,7 +86,9 @@ main(int argc, char* argv[])
         /* NOTE!  It's very important to initialize the daemon before entering Guile!!! */
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
 
-        AGENT_ASSERT(DRing::start(""), "Failed to start daemon");
+        if (not DRing::start("")) {
+            scm_misc_error("Dring::start", NULL, 0);
+        }
 
         /* Entering guile context - This never returns */
         scm_with_guile(main_in_guile, (void*)&args);
