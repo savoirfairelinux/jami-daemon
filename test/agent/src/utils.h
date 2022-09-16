@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "logger.h"
 
 static inline SCM
@@ -32,6 +34,60 @@ static inline SCM
 to_guile(const std::string& str)
 {
     return scm_from_utf8_string(str.c_str());
+}
+
+static inline SCM
+to_guile(uint8_t x)
+{
+    return scm_from_uint8(x);
+}
+
+static inline SCM
+to_guile(uint16_t x)
+{
+    return scm_from_uint16(x);
+}
+
+static inline SCM
+to_guile(uint32_t x)
+{
+    return scm_from_uint32(x);
+}
+
+static inline SCM
+to_guile(uint64_t x)
+{
+    return scm_from_uint64(x);
+}
+
+static inline SCM
+to_guile(int8_t x)
+{
+    return scm_from_int8(x);
+}
+
+static inline SCM
+to_guile(int16_t x)
+{
+    return scm_from_int16(x);
+}
+
+static inline SCM
+to_guile(int32_t x)
+{
+    return scm_from_int32(x);
+}
+
+static inline SCM
+to_guile(int64_t x)
+{
+    return scm_from_int64(x);
+}
+
+static inline SCM
+to_guile(double x)
+{
+    return scm_from_double(x);
 }
 
 /* Forward declarations since we call to_guile() recursively for containers */
@@ -96,50 +152,58 @@ apply_to_guile(SCM body_proc, Args... args)
 struct from_guile
 {
     SCM value;
-    const char* expr;
-    const char* file;
-    int line;
 
-    from_guile(SCM val, const char* expr_, const char* file_, int line_)
-        : value(val),
-          expr(expr_),
-          file(file_),
-          line(line_)
-    {}
-
-    template<typename Pred>
-    void ensure_type(const char* msg, Pred&& pred)
-    {
-        if (not pred(value)) {
-            scm_wrong_type_arg_msg("from_guile", 0, value, msg);
-        }
-    }
+    from_guile(SCM val)
+        : value(val)
+    { }
 
     operator bool()
     {
-        ensure_type("bool", scm_is_bool);
-
         return scm_to_bool(value);
     }
 
     operator uint8_t()
     {
-        ensure_type("uint8", [](SCM v){ return scm_is_unsigned_integer(v, 0, 255); });
-
-        return scm_to_int(value);
+        return scm_to_uint8(value);
     }
 
-    operator int()
+    operator uint16_t()
     {
-        ensure_type("integer", scm_is_integer);
+        return scm_to_uint16(value);
+    }
 
-        return scm_to_int(value);
+    operator uint32_t()
+    {
+        return scm_to_uint32(value);
+    }
+
+    operator uint64_t()
+    {
+        return scm_to_uint64(value);
+    }
+
+    operator int8_t()
+    {
+        return scm_to_int8(value);
+    }
+
+    operator int16_t()
+    {
+        return scm_to_int16(value);
+    }
+
+    operator int32_t()
+    {
+        return scm_to_int32(value);
+    }
+
+    operator int64_t()
+    {
+        return scm_to_int64(value);
     }
 
     operator std::string()
     {
-        ensure_type("string", scm_is_string);
-
         char* str_raw = scm_to_locale_string(value);
         std::string ret(str_raw);
         free(str_raw);
@@ -150,8 +214,6 @@ struct from_guile
     template<typename T>
     operator std::vector<T>()
     {
-        ensure_type("simple vector", scm_is_simple_vector);
-
         std::vector<T> ret;
 
         ret.reserve(SCM_SIMPLE_VECTOR_LENGTH(value));
@@ -159,7 +221,7 @@ struct from_guile
         for (size_t i = 0; i < SCM_SIMPLE_VECTOR_LENGTH(value); ++i) {
             SCM val = SCM_SIMPLE_VECTOR_REF(value, i);
 
-            ret.emplace_back(from_guile(val, expr, file, line));
+            ret.emplace_back(from_guile(val));
         }
 
         return ret;
@@ -168,15 +230,13 @@ struct from_guile
     template<typename K, typename V>
     operator std::map<K, V>()
     {
-        ensure_type("list", [](SCM v){ return scm_is_true(scm_list_p(v)); });
-
         std::map<K, V> ret;
 
         while (not scm_is_null(value)) {
             SCM pair = scm_car(value);
 
-            K key = from_guile(scm_car(pair), expr, file, line);
-            V val = from_guile(scm_cdr(pair), expr, file, line);
+            K key = from_guile(scm_car(pair));
+            V val = from_guile(scm_cdr(pair));
 
             ret[key] = val;
 
@@ -187,4 +247,3 @@ struct from_guile
     }
 };
 
-#define from_guile(EXPR) from_guile(EXPR, #EXPR, __FILE__, __LINE__)
