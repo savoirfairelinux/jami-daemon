@@ -22,15 +22,6 @@
 
 #include "logger.h"
 
-#define AGENT_ERR(FMT, ARGS...)  JAMI_ERR("AGENT: " FMT, ##ARGS)
-#define AGENT_INFO(FMT, ARGS...) JAMI_INFO("AGENT: " FMT, ##ARGS)
-#define AGENT_DBG(FMT, ARGS...)  JAMI_DBG("AGENT: " FMT, ##ARGS)
-#define AGENT_ASSERT(COND, MSG, ARGS...) \
-        if (not(COND)) {                 \
-                AGENT_ERR(MSG, ##ARGS);  \
-                exit(1);                 \
-        }
-
 static inline SCM
 to_guile(bool b)
 {
@@ -93,8 +84,9 @@ template<typename... Args>
 static inline SCM
 apply_to_guile(SCM body_proc, Args... args)
 {
-    AGENT_ASSERT(scm_is_true(scm_procedure_p(body_proc)),
-                 "body_proc must be a procedure");
+    if (scm_is_false(scm_procedure_p(body_proc))) {
+        scm_wrong_type_arg_msg("apply_to_guile", 0, body_proc, "procedure");
+    }
 
     SCM arglst = pack_to_guile(args...);
 
@@ -118,16 +110,8 @@ struct from_guile
     template<typename Pred>
     void ensure_type(const char* msg, Pred&& pred)
     {
-        if (!pred(value)) {
-            jami::Logger::log(LOG_ERR,
-                              file,
-                              line,
-                              false,
-                              "[GUILE] For expression `%s`: "
-                              "Scheme value must be of type %s\n",
-                              expr,
-                              msg);
-            exit(EXIT_FAILURE);
+        if (not pred(value)) {
+            scm_wrong_type_arg_msg("from_guile", 0, value, msg);
         }
     }
 

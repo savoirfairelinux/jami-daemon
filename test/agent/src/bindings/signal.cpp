@@ -128,7 +128,9 @@ on_signal_binding(SCM signal_sym, SCM handler_proc)
     std::vector<SCM>* callbacks;
     std::mutex* mutex;
 
-    AGENT_ASSERT(scm_is_true(scm_procedure_p(handler_proc)), "handler_proc must be a procedure");
+    if (scm_is_false(scm_procedure_p(handler_proc))) {
+        scm_wrong_type_arg_msg("on_signal_binding", 0, handler_proc, "procedure");
+    }
 
     handler_pair = scm_assq_ref(signal_alist, signal_sym);
 

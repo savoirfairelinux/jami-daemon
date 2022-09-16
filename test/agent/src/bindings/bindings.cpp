@@ -68,10 +68,6 @@ install_scheme_primitives()
 void
 define_primitive(const char* name, int req, int opt, int rst, void* func)
 {
-        AGENT_ASSERT(req + opt + rst <= 10, "Primitive binding `%s` has too many argument", name);
-
-        AGENT_ASSERT(0 == rst or 1 == rst, "Rest argument for binding `%s` must be 0 or 1", name);
-
         scm_c_define_gsubr(name, req, opt, rst, func);
         scm_c_export(name, NULL);
 }
