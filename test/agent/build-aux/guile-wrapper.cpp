@@ -18,31 +18,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "bindings/bindings.h"
-
-#include "jami.h"
-
 #include <libguile.h>
 
-extern "C" {
-DRING_PUBLIC void init();
-DRING_PUBLIC void fini();
+void inner_main(void *, int argc, char **argv)
+{
+    scm_shell(argc, argv);
 }
 
-void
-init()
+int main(int argc, char *argv[])
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
-
-    if (not DRing::start("")) {
-        scm_misc_error("Dring::start", NULL, 0);
-    }
-
-    install_scheme_primitives();
-}
-
-void
-fini()
-{
-    DRing::fini();
+    (void) scm_boot_guile(argc, argv, inner_main, NULL);
+    __builtin_unreachable();
 }

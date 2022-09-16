@@ -36,11 +36,20 @@ abs_top_builddir="`cd "@abs_top_builddir@" > /dev/null; pwd -P`"
 
 GUILE_LOAD_COMPILED_PATH="$abs_top_builddir/test/agent${GUILE_LOAD_COMPILED_PATH:+:}$GUILE_LOAD_COMPILED_PATH"
 GUILE_LOAD_PATH="$abs_top_builddir:$abs_top_srcdir/test/agent${GUILE_LOAD_PATH:+:}$GUILE_LOAD_PATH"
+GUILE_EXTENSIONS_PATH="$abs_top_builddir:$abs_top_srcdir/test/agent${GUILE_EXTENSIONS_PATH:+:}$GUILE_EXTENSIONS_PATH"
 GUILE_AUTO_COMPILE="0"
-export GUILE_LOAD_COMPILED_PATH GUILE_LOAD_PATH GUILE_AUTO_COMPILE
+export GUILE_LOAD_COMPILED_PATH GUILE_LOAD_PATH GUILE_EXTENSIONS_PATH GUILE_AUTO_COMPILE
+
+LTDL_LIBRARY_PATH="$abs_top_builddir/test/agent${LTDL_LIBRARY_PATH:+:}$LTDL_LIBRARY_PATH"
+export LTDL_LIBRARY_PATH
 
 # Define $PATH so that `guile' and friends are easily found.
 PATH="$abs_top_srcdir/test/agent:$abs_top_srcdir/contrib/x86_64-unknown-linux-gnu/bin:$PATH"
 export PATH
+
+# Not Jami leaks
+LSAN_OPTIONS="suppressions=$abs_top_srcdir/test/agent/.lsan-suppress.txt"
+
+export LSAN_OPTIONS
 
 exec "$@"
