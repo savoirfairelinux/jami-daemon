@@ -18,81 +18,31 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-/* Agent */
 #include "bindings/bindings.h"
-#include "utils.h"
 
-/* Jami */
 #include "jami.h"
 
-/* Third parties */
 #include <libguile.h>
 
-struct args {
-    int argc;
-    char** argv;
-};
-
-static bool streq(const char* A, const char* B)
-{
-    return 0 == strcmp(A, B);
+extern "C" {
+DRING_PUBLIC void init();
+DRING_PUBLIC void fini();
 }
 
-void*
-main_in_guile(void* args_raw)
+void
+init()
 {
-    struct args* args = static_cast<struct args*>(args_raw);
+    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
 
-    install_scheme_primitives();
-
-    scm_shell(args->argc, args->argv);
-
-    /* unreachable */
-    return nullptr;
-}
-
-void*
-compile_in_guile(void* args_raw)
-{
-    struct args* args = static_cast<struct args*>(args_raw);
-    char buf[4096];
-
-    if (args->argc < 4) {
-        fprintf(stderr, "Usage: agent.exe compile FILE OUT\n");
-        exit(EXIT_FAILURE);
+    if (not DRing::start("")) {
+        scm_misc_error("Dring::start", NULL, 0);
     }
 
     install_scheme_primitives();
-
-    snprintf(buf, sizeof(buf),
-             "(use-modules (system base compile)) (compile-file \"%s\" #:output-file \"%s\")",
-             args->argv[2], args->argv[3]);
-
-    scm_c_eval_string(buf);
-    scm_gc();
-
-    return nullptr;
 }
 
-int
-main(int argc, char* argv[])
+void
+fini()
 {
-    struct args args = { argc, argv };
-
-    if (argc > 1 && streq(argv[1], "compile")) {
-        scm_with_guile(compile_in_guile, (void*)&args);
-    } else {
-
-        /* NOTE!  It's very important to initialize the daemon before entering Guile!!! */
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
-
-        if (not DRing::start("")) {
-            scm_misc_error("Dring::start", NULL, 0);
-        }
-
-        /* Entering guile context - This never returns */
-        scm_with_guile(main_in_guile, (void*)&args);
-    }
-
-    exit(EXIT_SUCCESS);
+    DRing::fini();
 }

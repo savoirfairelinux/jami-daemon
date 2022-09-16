@@ -15,7 +15,7 @@ export XDG_CACHE_HOME="$tmp_bob"
 export XDG_DATA_HOME="$tmp_bob"
 
 export JAMI_LOG_FILE="bob.log"
-agent -e main -s $agent_dir/scenarios/bulk-calls/scenario.scm "bob" > bob-guile.txt 2>&1 &
+guile-wrapper -e main -s $agent_dir/scenarios/bulk-calls/scenario.scm "bob" > bob-guile.txt 2>&1 &
 
 bob_pid=$!
 
@@ -25,7 +25,7 @@ export XDG_CONFIG_HOME="$tmp_alice"
 export XDG_CACHE_HOME="$tmp_alice"
 export XDG_DATA_HOME="$tmp_alice"
 export JAMI_LOG_FILE="alice.log"
-agent -e main -s $agent_dir/scenarios/bulk-calls/scenario.scm "alice" "$bob_id" > alice-guile.txt 2>&1
+guile-wrapper -e main -s $agent_dir/scenarios/bulk-calls/scenario.scm "alice" "$bob_id" > alice-guile.txt 2>&1
 
 wait $bob_pid
 
