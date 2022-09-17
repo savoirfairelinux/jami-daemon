@@ -15,8 +15,10 @@ libunistring: libunistring-$(LIBUNISTRING_VERSION).tar.gz .sum-libunistring
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-LIBUNISTRING_CONF := \
-	$(HOSTCONF)
+LIBUNISTRING_CONF :=     \
+	$(HOSTCONF)      \
+	--disable-static \
+	--enable-shared
 
 .libunistring: libunistring
 	cd $< && $(HOSTVARS) ./configure $(LIBUNISTRING_CONF)
