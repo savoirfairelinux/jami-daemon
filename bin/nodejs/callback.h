@@ -128,7 +128,7 @@ getPresistentCb(std::string_view signal)
 inline std::string_view
 toView(const String::Utf8Value& utf8)
 {
-    return {*utf8, utf8.length()};
+    return {*utf8, (size_t)utf8.length()};
 }
 
 inline SWIGV8_ARRAY
