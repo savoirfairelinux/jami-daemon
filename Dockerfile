@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     libdbus-c++-dev \
     libexpat1-dev \
     libfmt-dev \
+    libgmp-dev \
+    nettle-dev \
     libgnutls28-dev \
     libjsoncpp-dev \
     libmsgpack-dev \
@@ -35,6 +37,9 @@ RUN apt-get update && apt-get install -y \
     libvpx-dev \
     libx264-dev \
     libyaml-cpp-dev \
+    libhttp-parser-dev \
+    libwebrtc-audio-processing-dev \
+    libsecp256k1-dev \
     nasm \
     pkg-config \
     yasm
