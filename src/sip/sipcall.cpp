@@ -26,6 +26,7 @@
 #include "call_factory.h"
 #include "sipcall.h"
 #include "sipaccount.h"
+#include "jamidht/jamiaccount.h"
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
 #include "logger.h"
@@ -3084,12 +3085,77 @@ SIPCall::setRotation(int streamIdx, int rotation)
 }
 
 void
-SIPCall::createSinks(const ConfInfo& infos)
+SIPCall::setActiveMediaStream(const std::string& accountUri,
+    const std::string& deviceId,
+    const std::string& streamId,
+    const bool& state)
 {
+    auto remoteStreamId = streamId;
+    {
+        std::lock_guard<std::mutex> lk(sinksMtx_);
+        const auto& localIt = local2RemoteSinks_.find(streamId);
+        if (localIt != local2RemoteSinks_.end()) {
+            remoteStreamId = localIt->second;
+        }
+    }
+
+    if (Call::conferenceProtocolVersion() == 1) {
+        Json::Value sinkVal;
+        sinkVal["active"] = state;
+        Json::Value mediasObj;
+        mediasObj[remoteStreamId] = sinkVal;
+        Json::Value deviceVal;
+        deviceVal["medias"] = mediasObj;
+        Json::Value deviceObj;
+        deviceObj[deviceId] = deviceVal;
+        Json::Value accountVal;
+        deviceVal["devices"] = deviceObj;
+        Json::Value root;
+        root[accountUri] = deviceVal;
+        root["version"] = 1;
+        Call::sendConfOrder(root);
+    } else if (Call::conferenceProtocolVersion() == 0) {
+        Json::Value root;
+        root["activeParticipant"] = accountUri;
+        Call::sendConfOrder(root);
+    }
+}
+
+void
+SIPCall::createSinks(ConfInfo& infos)
+{
+    std::lock_guard<std::mutex> lk(sinksMtx_);
     if (!hasVideo())
         return;
 
-    std::lock_guard<std::mutex> lk(sinksMtx_);
+    std::vector<std::pair<std::pair<int, int>, MediaAttribute*>> localSinks {};
+    for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
+        if (not iter->mediaAttribute_ || iter->mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+            continue;
+        }
+        auto localVideo = std::static_pointer_cast<video::VideoRtpSession>(iter->rtpSession_)
+                              ->getVideoLocal().get();
+        if (!localVideo)
+            continue;
+        auto size = std::make_pair(localVideo->getWidth(), localVideo->getHeight());
+        localSinks.emplace_back(std::make_pair(size, iter->mediaAttribute_.get()));
+    }
+
+    for (auto& participant : infos) {
+        if (string_remove_suffix(participant.uri, '@') == account_.lock()->getUsername() && !localSinks.empty()
+            && participant.device
+                   == std::dynamic_pointer_cast<JamiAccount>(account_.lock())->currentDeviceId()) {
+            local2RemoteSinks_.emplace(localSinks.front().second->sourceUri_, participant.sinkId);
+            participant.sinkId = localSinks.front().second->sourceUri_;
+            participant.videoMuted = localSinks.front().second->muted_;
+            participant.w = localSinks.front().first.first;
+            participant.h = localSinks.front().first.second;
+            participant.x = 0;
+            participant.y = 0;
+            localSinks.erase(localSinks.begin());
+        }
+    }
+
     std::vector<std::shared_ptr<video::VideoFrameActiveWriter>> sinks;
     for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
         auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)
@@ -3101,7 +3167,7 @@ SIPCall::createSinks(const ConfInfo& infos)
     }
     auto conf = conf_.lock();
     const auto& id = conf ? conf->getConfId() : getCallId();
-    Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_);
+    Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_, getAccountId());
 }
 #endif
 
