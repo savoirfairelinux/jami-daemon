@@ -122,7 +122,7 @@ VideoInput::getWidth() const
     if (videoManagedByClient()) {
         return decOpts_.width;
     }
-    return decoder_->getWidth();
+    return decoder_ ? decoder_->getWidth() : 0;
 }
 
 int
@@ -131,7 +131,7 @@ VideoInput::getHeight() const
     if (videoManagedByClient()) {
         return decOpts_.height;
     }
-    return decoder_->getHeight();
+    return decoder_ ? decoder_->getHeight() : 0;
 }
 
 AVPixelFormat

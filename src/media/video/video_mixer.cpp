@@ -309,8 +309,14 @@ VideoMixer::process()
             if (currentLayout_ != Layout::ONE_BIG or active) {
                 sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, callId, streamId});
             }
-            if (currentLayout_ == Layout::ONE_BIG and active)
-                successfullyRendered = true;
+            if (currentLayout_ == Layout::ONE_BIG) {
+                if (active)
+                    successfullyRendered = true;
+                else
+                    sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 0, 0, false, callId, streamId});
+                // Add all participants info even in ONE_BIG layout.
+                // The width and height set to 0 here will led the peer to filter them out.
+            }
         }
         // add video sources
         for (auto& x : sources_) {
