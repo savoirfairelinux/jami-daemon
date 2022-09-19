@@ -150,8 +150,9 @@ public:
     void exitConference() override;
 #ifdef ENABLE_VIDEO
     std::mutex sinksMtx_;
-    void createSinks(const ConfInfo& infos) override;
+    void createSinks(ConfInfo& infos) override;
     std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
+    std::map<std::string, std::string> local2RemoteSinks_ {};
 #endif
     bool hasVideo() const override;
 
@@ -288,6 +289,10 @@ public:
     std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(
         MediaType type = MediaType::MEDIA_ALL) const;
     static size_t getActiveMediaStreamCount(const std::vector<MediaAttribute>& mediaAttrList);
+    void setActiveMediaStream(const std::string& accountUri,
+                              const std::string& deviceId,
+                              const std::string& streamId,
+                              const bool& state);
 
     void setPeerRegisteredName(const std::string& name)
     {

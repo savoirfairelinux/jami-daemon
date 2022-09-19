@@ -828,7 +828,8 @@ public:
     void createSinkClients(const std::string& callId,
                            const ConfInfo& infos,
                            const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
-                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap);
+                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap,
+                           const std::string& accountId = "");
 
     /**
      * Return an existing SinkClient instance as a shared_ptr associated to the given identifier.
