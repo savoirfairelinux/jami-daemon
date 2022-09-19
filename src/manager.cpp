@@ -3060,7 +3060,8 @@ Manager::createSinkClients(
     const std::string& callId,
     const ConfInfo& infos,
     const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
-    std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
+    std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap,
+    const std::string& accountId)
 {
     std::lock_guard<std::mutex> lk(pimpl_->sinksMutex_);
     std::set<std::string> sinkIdsList {};
@@ -3074,6 +3075,12 @@ Manager::createSinkClients(
         }
         if (participant.w && participant.h && !participant.videoMuted) {
             auto currentSink = getSinkClient(sinkId);
+            if (!accountId.empty() &&
+                currentSink &&
+                string_remove_suffix(participant.uri, '@') == getAccount(accountId)->getUsername() &&
+                participant.device == getAccount<JamiAccount>(accountId)->currentDeviceId()) {
+                continue;
+            }
             if (currentSink) {
                 currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
                 sinkIdsList.emplace(sinkId);
