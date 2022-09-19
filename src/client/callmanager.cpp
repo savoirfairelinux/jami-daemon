@@ -588,27 +588,8 @@ setActiveStream(const std::string& accountId,
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->setActiveStream(streamId, state);
-        } else if (auto call = account->getCall(confId)) {
-            if (call->conferenceProtocolVersion() == 1) {
-                Json::Value sinkVal;
-                sinkVal["active"] = state;
-                Json::Value mediasObj;
-                mediasObj[streamId] = sinkVal;
-                Json::Value deviceVal;
-                deviceVal["medias"] = mediasObj;
-                Json::Value deviceObj;
-                deviceObj[deviceId] = deviceVal;
-                Json::Value accountVal;
-                deviceVal["devices"] = deviceObj;
-                Json::Value root;
-                root[accountUri] = deviceVal;
-                root["version"] = 1;
-                call->sendConfOrder(root);
-            } else if (call->conferenceProtocolVersion() == 0) {
-                Json::Value root;
-                root["activeParticipant"] = accountUri;
-                call->sendConfOrder(root);
-            }
+        } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
+            call->setActiveMediaStream(accountUri, deviceId, streamId, state);
         }
     }
 }
