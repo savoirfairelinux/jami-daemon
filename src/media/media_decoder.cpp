@@ -767,19 +767,19 @@ MediaDecoder::flush()
 int
 MediaDecoder::getWidth() const
 {
-    return decoderCtx_->width;
+    return decoderCtx_ ? decoderCtx_->width : 0;
 }
 
 int
 MediaDecoder::getHeight() const
 {
-    return decoderCtx_->height;
+    return decoderCtx_ ? decoderCtx_->height : 0;
 }
 
 std::string
 MediaDecoder::getDecoderName() const
 {
-    return decoderCtx_->codec->name;
+    return decoderCtx_ ? decoderCtx_->codec->name : "";
 }
 
 rational<double>
