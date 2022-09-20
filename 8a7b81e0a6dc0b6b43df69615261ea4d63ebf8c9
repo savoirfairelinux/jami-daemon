@@ -77,6 +77,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3a0f052e_7adcb06b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3110,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-09-20T15:48:15Z",
+      "side": 1,
+      "message": "using local participants info  that comes from the conference host will allow us to have correct information like raise hand or local/moderator muted.\n\nThe only case when we did not had the participant coming from the host is if there is someone else in full and our video is muted, then we need to add the local.\nFor that case in this patch i introduced a change in the conference to add video muted participants in the ONE_BIG layout.\nAlso the addition is done for when we do not have a patched conference host.",
+      "parentUuid": "0a745253_accc8634",
+      "range": {
+        "startLine": 3093,
+        "startChar": 0,
+        "endLine": 3110,
+        "endChar": 5
+      },
+      "revId": "8a7b81e0a6dc0b6b43df69615261ea4d63ebf8c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a438bc3f_8d0f7d28",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
@@ -88,6 +112,30 @@
       "writtenOn": "2022-09-15T20:45:28Z",
       "side": 1,
       "message": "can\u0027t match remote streams with local streams",
+      "range": {
+        "startLine": 3102,
+        "startChar": 3,
+        "endLine": 3111,
+        "endChar": 0
+      },
+      "revId": "8a7b81e0a6dc0b6b43df69615261ea4d63ebf8c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7206c1d_c2494abc",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3111,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-09-20T15:48:15Z",
+      "side": 1,
+      "message": "remotes video_0 will correspond with local video_0",
+      "parentUuid": "a438bc3f_8d0f7d28",
       "range": {
         "startLine": 3102,
         "startChar": 3,
