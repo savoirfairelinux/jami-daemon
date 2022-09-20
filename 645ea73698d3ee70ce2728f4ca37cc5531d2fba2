@@ -33,6 +33,23 @@
       "message": "reference patch: https://review.jami.net/c/jami-daemon/+/21816",
       "revId": "645ea73698d3ee70ce2728f4ca37cc5531d2fba2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "293543b0_7093fb50",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-09-20T02:34:09Z",
+      "side": 1,
+      "message": "this can be abandoned, right? (already merged, I think).",
+      "revId": "645ea73698d3ee70ce2728f4ca37cc5531d2fba2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
