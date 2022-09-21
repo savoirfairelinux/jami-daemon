@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9bec9854_ab58db8c",
+        "filename": "contrib/src/libffi/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-21T17:54:44Z",
+      "side": 1,
+      "message": "remove from contrib and use distro version when needed",
+      "revId": "a9001ed64d2d6f386249ab584edacdab7af73cb7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9d2dd51_4c429fef",
+        "filename": "contrib/src/libunistring/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-21T17:54:44Z",
+      "side": 1,
+      "message": "remove from contrib and use distro version when needed",
+      "revId": "a9001ed64d2d6f386249ab584edacdab7af73cb7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
