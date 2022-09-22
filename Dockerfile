@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y \
     libhttp-parser-dev \
     libwebrtc-audio-processing-dev \
     libsecp256k1-dev \
+    guile-3.0-dev \
     nasm \
     pkg-config \
     yasm
