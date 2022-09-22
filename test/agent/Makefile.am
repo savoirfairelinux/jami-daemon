@@ -16,6 +16,7 @@ lib_LTLIBRARIES = libguile-jami.la
 libguile_jami_la_SOURCES =          \
 	src/main.cpp                \
 	src/utils.h                 \
+	src/bindings/jami.h         \
 	src/bindings/bindings.cpp   \
 	src/bindings/bindings.h     \
 	src/bindings/account.h      \

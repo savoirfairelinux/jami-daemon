@@ -25,6 +25,7 @@
 #include "bindings/account.h"
 #include "bindings/call.h"
 #include "bindings/conversation.h"
+#include "bindings/jami.h"
 #include "bindings/logger.h"
 #include "bindings/signal.h"
 
@@ -36,6 +37,7 @@ install_scheme_primitives()
         scm_c_define_module(name, init, NULL);
     };
 
+    load_module("jami", install_jami_primitives);
     load_module("jami account", install_account_primitives);
     load_module("jami call", install_call_primitives);
     load_module("jami conversation", install_conversation_primitives);
