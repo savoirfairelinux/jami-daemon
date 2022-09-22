@@ -94,6 +94,30 @@
       },
       "revId": "29111d9b5b71ebcba897a0cac4d0ca0f4f430c39",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "894c6231_e83b94e4",
+        "filename": "bin/dbus/dbusclient.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-22T14:09:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5b46e173_bb25f7e7",
+      "range": {
+        "startLine": 109,
+        "startChar": 53,
+        "endLine": 109,
+        "endChar": 60
+      },
+      "revId": "29111d9b5b71ebcba897a0cac4d0ca0f4f430c39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
