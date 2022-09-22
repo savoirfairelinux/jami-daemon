@@ -2399,7 +2399,7 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
             addMediaStream(newAttr);
             auto& stream = rtpStreams_.back();
             // If the remote asks for a new stream, our side sends nothing
-            stream.mediaAttribute_->muted_ = isRemote;
+            stream.mediaAttribute_->muted_ = isRemote ? isRemote : stream.mediaAttribute_->muted_;
             createRtpSession(stream);
             JAMI_DBG("[call:%s] Added a new media stream [%s] @ index %i",
                      getCallId().c_str(),
@@ -2771,8 +2771,7 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
     // If the offered media does not differ from the current local media, the
     // request is answered using the current local media.
     if (not checkMediaChangeRequest(remoteMediaList)) {
-        answerMediaChangeRequest(MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()),
-                                 true);
+        answerMediaChangeRequest(MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
         return;
     }
 
