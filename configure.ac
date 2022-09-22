@@ -300,7 +300,7 @@ PKG_CHECK_MODULES(PJPROJECT, libpjproject,,
 
 dnl Guile
 AM_COND_IF([ENABLE_AGENT],
-  [PKG_CHECK_MODULES(GUILE, [guile-3.0 >= 3.0.7],, AC_MSG_ERROR([Missing guile files]))],)
+  [PKG_CHECK_MODULES(GUILE, [guile-3.0 >= 3.0.1],, AC_MSG_ERROR([Missing guile files]))],)
 
 PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],,
   AC_MSG_ERROR([yaml-cpp not found]))
