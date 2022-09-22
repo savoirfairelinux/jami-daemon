@@ -31,7 +31,7 @@
 #include "account_const.h"
 #include "common.h"
 
-using namespace DRing::Account;
+using namespace libjami::Account;
 using namespace std::literals::chrono_literals;
 
 namespace jami {
@@ -43,11 +43,11 @@ public:
     ConnectionManagerTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~ConnectionManagerTest() { DRing::fini(); }
+    ~ConnectionManagerTest() { libjami::fini(); }
     static std::string name() { return "ConnectionManager"; }
     void setUp();
     void tearDown();

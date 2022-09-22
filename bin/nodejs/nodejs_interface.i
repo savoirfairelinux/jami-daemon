@@ -114,11 +114,11 @@ void init(const SWIGV8_VALUE& funcMap){
 
     using namespace std::placeholders;
     using std::bind;
-    using DRing::exportable_callback;
-    using DRing::ConfigurationSignal;
-    using DRing::CallSignal;
-    using DRing::ConversationSignal;
-    using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
+    using libjami::exportable_callback;
+    using libjami::ConfigurationSignal;
+    using libjami::CallSignal;
+    using libjami::ConversationSignal;
+    using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
     const std::map<std::string, SharedCallback> callEvHandlers = {
         exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3, _4)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&incomingMessage, _1, _2, _3, _4)),
@@ -157,14 +157,14 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConversationSignal::OnConversationError>(bind(&onConversationError, _1, _2, _3, _4))
     };
 
-    if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
+    if (!libjami::init(static_cast<libjami::InitFlag>(libjami::LIBJAMI_FLAG_DEBUG)))
         return;
 
     registerSignalHandlers(configEvHandlers);
     registerSignalHandlers(callEvHandlers);
     registerSignalHandlers(conversationHandlers);
 
-    DRing::start();
+    libjami::start();
 }
 %}
 #ifndef SWIG

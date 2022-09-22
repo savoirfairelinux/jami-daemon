@@ -59,13 +59,13 @@ VideoDeviceMonitor::getDeviceList() const
     return ids;
 }
 
-DRing::VideoCapabilities
+libjami::VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const string& id) const
 {
     std::lock_guard<std::mutex> l(lock_);
     const auto iter = findDeviceById(id);
     if (iter == devices_.end())
-        return DRing::VideoCapabilities();
+        return libjami::VideoCapabilities();
 
     return iter->getCapabilities();
 }
@@ -114,8 +114,8 @@ VideoDeviceMonitor::getMRLForDefaultDevice() const
     const auto it = findDeviceById(defaultDevice_);
     if (it == std::end(devices_) || it->getDeviceId() == DEVICE_DESKTOP)
         return {};
-    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
-    return DRing::Media::VideoProtocolPrefix::CAMERA + sep + it->getDeviceId();
+    static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+    return libjami::Media::VideoProtocolPrefix::CAMERA + sep + it->getDeviceId();
 }
 
 bool
@@ -183,7 +183,7 @@ static void
 notify()
 {
     if (Manager::initialized) {
-        emitSignal<DRing::VideoSignal::DeviceEvent>();
+        emitSignal<libjami::VideoSignal::DeviceEvent>();
     }
 }
 

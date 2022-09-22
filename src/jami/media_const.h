@@ -17,12 +17,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef DRING_MEDIA_H
-#define DRING_MEDIA_H
+#ifndef LIBJAMI_MEDIA_H
+#define LIBJAMI_MEDIA_H
 
 #include "def.h"
 
-namespace DRing {
+namespace libjami {
 
 namespace Media {
 
@@ -74,6 +74,6 @@ constexpr static auto NEGOTIATION_FAIL = "NEGOTIATION_FAIL";
 
 } // namespace Media
 
-} // namespace DRing
+} // namespace libjami
 
 #endif

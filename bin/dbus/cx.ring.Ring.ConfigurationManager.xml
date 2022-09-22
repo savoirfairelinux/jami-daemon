@@ -1884,7 +1884,7 @@
            </arg>
            <arg type="i" name="code">
                <tp:docstring>
-                   A DRing::DataTransferEventCode code
+                   A libjami::DataTransferEventCode code
                </tp:docstring>
            </arg>
        </signal>

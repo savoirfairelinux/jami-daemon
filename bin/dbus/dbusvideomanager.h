@@ -42,7 +42,7 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-class DRING_PUBLIC DBusVideoManager :
+class LIBJAMI_PUBLIC DBusVideoManager :
     public cx::ring::Ring::VideoManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor

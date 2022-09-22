@@ -108,7 +108,7 @@ public:
     SIPCall(const std::shared_ptr<SIPAccountBase>& account,
             const std::string& id,
             Call::CallType type,
-            const std::vector<DRing::MediaMap>& mediaList);
+            const std::vector<libjami::MediaMap>& mediaList);
 
     // Inherited from Call class
     LinkType getLinkType() const override { return LINK_TYPE; }
@@ -119,10 +119,10 @@ private:
 
 public:
     void answer() override;
-    void answer(const std::vector<DRing::MediaMap>& mediaList) override;
-    bool checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) override;
-    void handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) override;
-    void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList,
+    void answer(const std::vector<libjami::MediaMap>& mediaList) override;
+    bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
+    void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
+    void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList,
                                   bool isRemote = false) override;
     void hangup(int reason) override;
     void refuse() override;
@@ -133,8 +133,8 @@ public:
     void switchInput(const std::string& resource = {}) override;
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
-    bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList) override;
-    std::vector<DRing::MediaMap> currentMediaList() const override;
+    bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList) override;
+    std::vector<libjami::MediaMap> currentMediaList() const override;
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
     void removeCall() override;

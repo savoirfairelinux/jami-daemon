@@ -66,7 +66,7 @@ public:
 
 %feature("director") ConfigurationCallback;
 
-namespace DRing {
+namespace libjami {
 
 struct Message
 {

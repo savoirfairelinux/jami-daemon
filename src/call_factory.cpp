@@ -42,7 +42,7 @@ CallFactory::getNewCallID() const
 std::shared_ptr<SIPCall>
 CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
                         Call::CallType type,
-                        const std::vector<DRing::MediaMap>& mediaList)
+                        const std::vector<libjami::MediaMap>& mediaList)
 {
     if (not allowNewCall_) {
         JAMI_WARN("Creation of new calls is not allowed");

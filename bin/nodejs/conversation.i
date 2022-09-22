@@ -40,7 +40,7 @@ public:
 
 %feature("director") ConversationCallback;
 
-namespace DRing {
+namespace libjami {
 
   // Conversation management
   std::string startConversation(const std::string& accountId);

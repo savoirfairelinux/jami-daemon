@@ -281,7 +281,7 @@ CertificateStore::pinCertificatePath(const std::string& path,
         JAMI_DBG("CertificateStore: loaded %zu certificates from %s.", certs.size(), path.c_str());
         if (cb)
             cb(ids);
-        emitSignal<DRing::ConfigurationSignal::CertificatePathPinned>(path, ids);
+        emitSignal<libjami::ConfigurationSignal::CertificatePathPinned>(path, ids);
     });
 }
 
@@ -354,7 +354,7 @@ CertificateStore::pinCertificate(const std::shared_ptr<crypto::Certificate>& cer
         }
     }
     for (const auto& id : ids)
-        emitSignal<DRing::ConfigurationSignal::CertificatePinned>(id);
+        emitSignal<libjami::ConfigurationSignal::CertificatePinned>(id);
     return ids;
 }
 
@@ -460,9 +460,9 @@ CertificateStore::pinOcspResponse(const dht::crypto::Certificate& cert)
 TrustStore::PermissionStatus
 TrustStore::statusFromStr(const char* str)
 {
-    if (!std::strcmp(str, DRing::Certificate::Status::ALLOWED))
+    if (!std::strcmp(str, libjami::Certificate::Status::ALLOWED))
         return PermissionStatus::ALLOWED;
-    if (!std::strcmp(str, DRing::Certificate::Status::BANNED))
+    if (!std::strcmp(str, libjami::Certificate::Status::BANNED))
         return PermissionStatus::BANNED;
     return PermissionStatus::UNDEFINED;
 }
@@ -472,19 +472,19 @@ TrustStore::statusToStr(TrustStore::PermissionStatus s)
 {
     switch (s) {
     case PermissionStatus::ALLOWED:
-        return DRing::Certificate::Status::ALLOWED;
+        return libjami::Certificate::Status::ALLOWED;
     case PermissionStatus::BANNED:
-        return DRing::Certificate::Status::BANNED;
+        return libjami::Certificate::Status::BANNED;
     case PermissionStatus::UNDEFINED:
     default:
-        return DRing::Certificate::Status::UNDEFINED;
+        return libjami::Certificate::Status::UNDEFINED;
     }
 }
 
 TrustStatus
 trustStatusFromStr(const char* str)
 {
-    if (!std::strcmp(str, DRing::Certificate::TrustStatus::TRUSTED))
+    if (!std::strcmp(str, libjami::Certificate::TrustStatus::TRUSTED))
         return TrustStatus::TRUSTED;
     return TrustStatus::UNTRUSTED;
 }
@@ -494,10 +494,10 @@ statusToStr(TrustStatus s)
 {
     switch (s) {
     case TrustStatus::TRUSTED:
-        return DRing::Certificate::TrustStatus::TRUSTED;
+        return libjami::Certificate::TrustStatus::TRUSTED;
     case TrustStatus::UNTRUSTED:
     default:
-        return DRing::Certificate::TrustStatus::UNTRUSTED;
+        return libjami::Certificate::TrustStatus::UNTRUSTED;
     }
 }
 

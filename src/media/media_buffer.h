@@ -29,13 +29,13 @@
 
 namespace jami {
 
-using MediaFrame = DRing::MediaFrame;
-using AudioFrame = DRing::AudioFrame;
+using MediaFrame = libjami::MediaFrame;
+using AudioFrame = libjami::AudioFrame;
 using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
 
 #ifdef ENABLE_VIDEO
 
-using VideoFrame = DRing::VideoFrame;
+using VideoFrame = libjami::VideoFrame;
 
 // Some helpers
 int videoFrameSize(int format, int width, int height);
