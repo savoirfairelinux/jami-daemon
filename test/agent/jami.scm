@@ -1,12 +1,33 @@
 (define-module (jami)
-  #:use-module (system foreign-library))
+  #:use-module (system foreign-library)
+  #:export (init
+            initialized
+            fini
+            logging
+            platform
+            start
+            version
+            JAMI_FLAG_DEBUG
+            JAMI_FLAG_CONSOLE_LOG
+            JAMI_FLAG_AUTOANSWER
+            JAMI_FLAG_IOS_EXTENSION)
+  #:export-syntax (with-jami))
 
-;;; Call DRing::init so that every other bindings work.
-;;;
-;;; Since Dring::fini is not safe in atexit callback, we also register a exit
-;;; hook for finalizing Jami with DRing::fini.
 (let* ((libjami (load-foreign-library "libguile-jami"))
-       (init (foreign-library-function libjami "init"))
-       (fini (foreign-library-function libjami "fini")))
-  (init)
-  (add-hook! exit-hook fini))
+       (bootstrap (foreign-library-function libjami "bootstrap")))
+  (bootstrap))
+
+(define-syntax with-jami
+  (syntax-rules ()
+    ((_ config-file (init-flags ...) proc)
+     (dynamic-wind
+       (lambda ()
+         (init (logior init-flags ...))
+         (start config-file))
+       proc
+       fini))))
+
+(define JAMI_FLAG_DEBUG (ash 1 0))
+(define JAMI_FLAG_CONSOLE_LOG (ash 1 1))
+(define JAMI_FLAG_AUTOANSWER (ash 1 2))
+(define JAMI_FLAG_IOS_EXTENSION (ash 1 3))
