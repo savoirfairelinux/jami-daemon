@@ -649,7 +649,7 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     // This also means that if original call was an audio-only call,
     // the local camera will be enabled, unless the video is disabled
     // in the account settings.
-    call->answerMediaChangeRequest(newMediaList);
+    call->answerMediaChangeRequest(newMediaList, true);
     call->enterConference(shared_from_this());
 }
 
