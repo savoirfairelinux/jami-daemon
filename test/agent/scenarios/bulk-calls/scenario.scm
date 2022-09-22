@@ -26,6 +26,7 @@
  (ice-9 match)
  (ice-9 threads)
  ((agent) #:prefix agent:)
+ ((jami) #:select (with-jami JAMI_FLAG_DEBUG))
  ((jami account) #:prefix account:)
  ((jami call) #:prefix call:)
  ((jami signal) #:prefix jami:)
@@ -119,14 +120,19 @@
 
 (define (main args)
 
-  (match (cdr args)
-    (("alice" bob-id) (alice bob-id))
-    (("bob") (bob))
-    (_
-     (jami:error "Invalid arguments: ~a" args)
-     (jami:error "Usage: ~a alice|bob (ARG)\n" (car args))
-     (exit EXIT_FAILURE)))
-
-  (jami:info "bye bye")
+  (with-jami (JAMI_FLAG_DEBUG)
+             (match (cdr args)
+               (("alice" bob-id)
+                (lambda ()
+                  (alice bob-id)
+                  (jami:info "bye bye")))
+               (("bob")
+                (lambda ()
+                  (bob)
+                  (jami:info "bye bye")))
+               (_
+                (jami:error "Invalid arguments: ~a" args)
+                (jami:error "Usage: ~a alice|bob (ARG)\n" (car args))
+                (exit EXIT_FAILURE))))
 
   (exit EXIT_SUCCESS))
