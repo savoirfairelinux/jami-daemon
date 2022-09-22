@@ -999,6 +999,7 @@ MediaNegotiationTest::audio_only_then_caller_add_video()
     scenario.offerUpdate_.emplace_back(audio);
     scenario.offerUpdate_.emplace_back(video);
     scenario.answerUpdate_.emplace_back(audio);
+    video.muted_ = true;
     scenario.answerUpdate_.emplace_back(video);
     scenario.expectMediaRenegotiation_ = true;
     scenario.expectMediaChangeRequest_ = true;
