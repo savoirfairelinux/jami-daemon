@@ -25,24 +25,11 @@
 #include <libguile.h>
 
 extern "C" {
-DRING_PUBLIC void init();
-DRING_PUBLIC void fini();
+DRING_PUBLIC void bootstrap();
 }
 
 void
-init()
+bootstrap()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
-
-    if (not DRing::start("")) {
-        scm_misc_error("Dring::start", NULL, 0);
-    }
-
     install_scheme_primitives();
-}
-
-void
-fini()
-{
-    DRing::fini();
 }
