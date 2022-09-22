@@ -34,7 +34,7 @@
 
 #include "common.h"
 
-using namespace DRing::Account;
+using namespace libjami::Account;
 using namespace std::literals::chrono_literals;
 
 namespace jami {
@@ -64,11 +64,11 @@ public:
     RecorderTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~RecorderTest() { DRing::fini(); }
+    ~RecorderTest() { libjami::fini(); }
     static std::string name() { return "Recorder"; }
     void setUp();
     void tearDown();
@@ -113,13 +113,13 @@ RecorderTest::setUp()
     bobId = actors["bob"];
     bobCall.reset();
 
-    DRing::setRecordPath(recordDir);
+    libjami::setRecordPath(recordDir);
 }
 
 void
 RecorderTest::tearDown()
 {
-    DRing::setIsAlwaysRecording(false);
+    libjami::setIsAlwaysRecording(false);
     fileutils::removeAll(recordDir);
 
     wait_for_removal_of({aliceId, bobId});
@@ -132,9 +132,9 @@ RecorderTest::registerSignalHandlers()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [=](const std::string& accountId,
             const std::string& callId,
             const std::string&,
@@ -145,12 +145,12 @@ RecorderTest::registerSignalHandlers()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::CallSignal::StateChange>([=](const std::string& accountId,
+        libjami::exportable_callback<libjami::CallSignal::StateChange>([=](const std::string& accountId,
                                                                        const std::string& callId,
                                                                        const std::string& state,
                                                                        signed) {
             if (accountId == aliceId) {
-                auto details = DRing::getCallDetails(aliceId, callId);
+                auto details = libjami::getCallDetails(aliceId, callId);
                 if (details["PEER_NUMBER"].find(bobUri) != std::string::npos)
                     bobCall.hostState = state;
             } else if (bobCall.callId == callId)
@@ -158,7 +158,7 @@ RecorderTest::registerSignalHandlers()
             cv.notify_one();
         }));
 
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaNegotiationStatus>(
         [&](const std::string& callId,
             const std::string& event,
             const std::vector<std::map<std::string, std::string>>&) {
@@ -166,12 +166,12 @@ RecorderTest::registerSignalHandlers()
                 bobCall.mediaStatus = event;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::RecordPlaybackStopped>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::RecordPlaybackStopped>(
         [&](const std::string& path) {
             recordedFile = path;
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 }
 
 void
@@ -185,37 +185,37 @@ RecorderTest::testRecordCall()
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttributeA
-        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
-           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
-           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+           {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {libjami::Media::MediaAttributeKey::SOURCE, ""}};
     std::map<std::string, std::string> mediaAttributeV
-        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
-           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
-           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+           {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {libjami::Media::MediaAttributeKey::SOURCE, ""}};
     mediaList.emplace_back(mediaAttributeA);
     mediaList.emplace_back(mediaAttributeV);
-    auto callId = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.mediaStatus
-               == DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
+               == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
     }));
     // give time to start camera
     std::this_thread::sleep_for(5s);
 
     // Start recorder
     recordedFile.clear();
-    CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
-    DRing::toggleRecording(aliceId, callId);
+    CPPUNIT_ASSERT(!libjami::getIsRecording(aliceId, callId));
+    libjami::toggleRecording(aliceId, callId);
 
     // Stop recorder after a few seconds
     std::this_thread::sleep_for(5s);
-    CPPUNIT_ASSERT(DRing::getIsRecording(aliceId, callId));
-    DRing::toggleRecording(aliceId, callId);
-    CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
+    CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
+    libjami::toggleRecording(aliceId, callId);
+    CPPUNIT_ASSERT(!libjami::getIsRecording(aliceId, callId));
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !recordedFile.empty(); }));
 
@@ -234,28 +234,28 @@ RecorderTest::testRecordAudioOnlyCall()
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttribute
-        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
-           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
-           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+           {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {libjami::Media::MediaAttributeKey::SOURCE, ""}};
     mediaList.emplace_back(mediaAttribute);
-    auto callId = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.mediaStatus
-               == DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
+               == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
     }));
 
     // Start recorder
     recordedFile.clear();
-    DRing::toggleRecording(aliceId, callId);
+    libjami::toggleRecording(aliceId, callId);
 
     // Stop recorder
     std::this_thread::sleep_for(5s);
-    CPPUNIT_ASSERT(DRing::getIsRecording(aliceId, callId));
-    DRing::toggleRecording(aliceId, callId);
-    CPPUNIT_ASSERT(!DRing::getIsRecording(aliceId, callId));
+    CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
+    libjami::toggleRecording(aliceId, callId);
+    CPPUNIT_ASSERT(!libjami::getIsRecording(aliceId, callId));
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return !recordedFile.empty() && recordedFile.find(".ogg") != std::string::npos;
@@ -276,30 +276,30 @@ RecorderTest::testStopCallWhileRecording()
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttributeA
-        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
-           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
-           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+           {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {libjami::Media::MediaAttributeKey::SOURCE, ""}};
     std::map<std::string, std::string> mediaAttributeV
-        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
-           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
-           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+           {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {libjami::Media::MediaAttributeKey::SOURCE, ""}};
     mediaList.emplace_back(mediaAttributeA);
     mediaList.emplace_back(mediaAttributeV);
-    auto callId = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.mediaStatus
-               == DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
+               == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
     }));
     // give time to start camera
     std::this_thread::sleep_for(5s);
 
     // Start recorder
     recordedFile.clear();
-    DRing::toggleRecording(aliceId, callId);
+    libjami::toggleRecording(aliceId, callId);
 
     // Hangup call
     std::this_thread::sleep_for(5s);
@@ -316,23 +316,23 @@ RecorderTest::testDaemonPreference()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    DRing::setIsAlwaysRecording(true);
+    libjami::setIsAlwaysRecording(true);
     recordedFile.clear();
 
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
     std::map<std::string, std::string> mediaAttributeA
-        = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
-           {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-           {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
-           {DRing::Media::MediaAttributeKey::SOURCE, ""}};
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+           {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {libjami::Media::MediaAttributeKey::SOURCE, ""}};
     mediaList.emplace_back(mediaAttributeA);
-    auto callId = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.mediaStatus
-               == DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
+               == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
     }));
 
     // Let record some seconds

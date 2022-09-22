@@ -38,7 +38,7 @@ place_call_with_media_binding(SCM accountID_str,
         call_media_vector_alist_optional = scm_c_make_vector(0, SCM_UNDEFINED);
     }
 
-    return to_guile(DRing::placeCallWithMedia(from_guile(accountID_str),
+    return to_guile(libjami::placeCallWithMedia(from_guile(accountID_str),
                                               from_guile(contact_str),
                                               from_guile(call_media_vector_alist_optional)));
 }
@@ -48,7 +48,7 @@ hang_up_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(DRing::hangUp(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::hangUp(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static SCM
@@ -57,10 +57,10 @@ accept_binding(SCM accountID_str, SCM callID_str, SCM call_media_vector_alist_op
     LOG_BINDING();
 
     if (SCM_UNBNDP(call_media_vector_alist_optional)) {
-        return to_guile(DRing::accept(from_guile(accountID_str), from_guile(callID_str)));
+        return to_guile(libjami::accept(from_guile(accountID_str), from_guile(callID_str)));
     }
 
-    return to_guile(DRing::acceptWithMedia(from_guile(accountID_str),
+    return to_guile(libjami::acceptWithMedia(from_guile(accountID_str),
                                            from_guile(callID_str),
                                            from_guile(call_media_vector_alist_optional)));
 }
@@ -70,7 +70,7 @@ refuse_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(DRing::refuse(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::refuse(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static SCM
@@ -78,7 +78,7 @@ hold_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(DRing::hold(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::hold(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static SCM
@@ -86,7 +86,7 @@ unhold_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(DRing::unhold(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::unhold(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static void

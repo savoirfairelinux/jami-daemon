@@ -113,12 +113,12 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
     for (const auto& p : pending) {
         JAMI_DBG() << "[message " << p.token << "] Retry sending";
         if (p.payloads.find("application/im-gitmessage-id") == p.payloads.end())
-            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+            emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                 account_.getAccountID(),
                 "",
                 p.to,
                 std::to_string(p.token),
-                (int) DRing::Account::MessageStates::SENDING);
+                (int) libjami::Account::MessageStates::SENDING);
         account_.sendMessage(p.to, p.payloads, p.token, retryOnTimeout);
     }
 }
@@ -146,12 +146,12 @@ MessageEngine::cancel(MessageToken t)
                         == m->second.payloads.end();
             m->second.status = MessageStatus::CANCELLED;
             if (emit)
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                     account_.getAccountID(),
                     "",
                     m->second.to,
                     std::to_string(t),
-                    static_cast<int>(DRing::Account::MessageStates::CANCELLED));
+                    static_cast<int>(libjami::Account::MessageStates::CANCELLED));
             save_();
             return true;
         }
@@ -178,23 +178,23 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                 f->second.status = MessageStatus::SENT;
                 JAMI_DBG() << "[message " << token << "] Status changed to SENT";
                 if (emit)
-                    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                    emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                         account_.getAccountID(),
                         "",
                         f->second.to,
                         std::to_string(token),
-                        static_cast<int>(DRing::Account::MessageStates::SENT));
+                        static_cast<int>(libjami::Account::MessageStates::SENT));
                 save_();
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
                 JAMI_DBG() << "[message " << token << "] Status changed to FAILURE";
                 if (emit)
-                    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                    emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                         account_.getAccountID(),
                         "",
                         f->second.to,
                         std::to_string(token),
-                        static_cast<int>(DRing::Account::MessageStates::FAILURE));
+                        static_cast<int>(libjami::Account::MessageStates::FAILURE));
                 save_();
             } else {
                 f->second.status = MessageStatus::IDLE;
@@ -214,12 +214,12 @@ MessageEngine::onMessageDisplayed(const std::string& peer, MessageToken token, b
     if (not displayed)
         return;
     JAMI_DBG() << "[message " << token << "] Displayed by peer";
-    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+    emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
         account_.getAccountID(),
         "", /* No related conversation */
         peer,
         std::to_string(token),
-        static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
+        static_cast<int>(libjami::Account::MessageStates::DISPLAYED));
 }
 
 void

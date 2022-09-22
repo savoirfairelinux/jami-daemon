@@ -150,7 +150,7 @@ on_signal_binding(SCM signal_sym, SCM handler_proc)
 
 template<typename T, typename... Args>
 void
-add_handler(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>& handlers,
+add_handler(std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>>& handlers,
             const char* name)
 {
     static Handler<Args...> handler(name);
@@ -159,7 +159,7 @@ add_handler(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>& 
         handler.execute(args...);
     };
 
-    handlers.insert(DRing::exportable_callback<T>(std::move(fn)));
+    handlers.insert(libjami::exportable_callback<T>(std::move(fn)));
 }
 
 void
@@ -167,277 +167,277 @@ install_signal_primitives(void*)
 {
     define_primitive("on-signal", 2, 0, 0, (void*) on_signal_binding);
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> handlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handlers;
 
-    add_handler<DRing::CallSignal::StateChange,
+    add_handler<libjami::CallSignal::StateChange,
                 const std::string&,
                 const std::string&,
                 const std::string&,
                 signed>(handlers, "state-changed");
 
-    add_handler<DRing::CallSignal::TransferFailed>(handlers, "transfer-failed");
+    add_handler<libjami::CallSignal::TransferFailed>(handlers, "transfer-failed");
 
-    add_handler<DRing::CallSignal::TransferSucceeded>(handlers, "transfer-succeeded");
+    add_handler<libjami::CallSignal::TransferSucceeded>(handlers, "transfer-succeeded");
 
-    add_handler<DRing::CallSignal::RecordPlaybackStopped,
+    add_handler<libjami::CallSignal::RecordPlaybackStopped,
                 const std::string&>(handlers, "record-playback-stopped");
 
-    add_handler<DRing::CallSignal::VoiceMailNotify, const std::string&, int32_t, int32_t, int32_t>(
+    add_handler<libjami::CallSignal::VoiceMailNotify, const std::string&, int32_t, int32_t, int32_t>(
         handlers, "voice-mail-notify");
 
-    add_handler<DRing::CallSignal::IncomingMessage,
+    add_handler<libjami::CallSignal::IncomingMessage,
                 const std::string&,
                 const std::string&,
                 const std::string&,
                 const std::map<std::string, std::string>&>(handlers, "incoming-message");
 
-    add_handler<DRing::CallSignal::IncomingCall,
+    add_handler<libjami::CallSignal::IncomingCall,
                 const std::string&,
                 const std::string&,
                 const std::string&>(handlers, "incoming-call");
 
-    add_handler<DRing::CallSignal::IncomingCallWithMedia,
+    add_handler<libjami::CallSignal::IncomingCallWithMedia,
                 const std::string&,
                 const std::string&,
                 const std::string&,
-                const std::vector<DRing::MediaMap>>(handlers, "incoming-call/media");
+                const std::vector<libjami::MediaMap>>(handlers, "incoming-call/media");
 
-    add_handler<DRing::CallSignal::MediaChangeRequested,
+    add_handler<libjami::CallSignal::MediaChangeRequested,
                 const std::string&,
                 const std::string&,
                 const std::vector<std::map<std::string, std::string>>&>(handlers,
                                                                         "media-change-requested");
 
-    add_handler<DRing::CallSignal::RecordPlaybackFilepath, const std::string&, const std::string&>(
+    add_handler<libjami::CallSignal::RecordPlaybackFilepath, const std::string&, const std::string&>(
         handlers, "record-playback-filepath");
 
-    add_handler<DRing::CallSignal::ConferenceCreated, const std::string&, const std::string&>(
+    add_handler<libjami::CallSignal::ConferenceCreated, const std::string&, const std::string&>(
         handlers, "conference-created");
 
-    add_handler<DRing::CallSignal::ConferenceChanged,
+    add_handler<libjami::CallSignal::ConferenceChanged,
                 const std::string&,
                 const std::string&,
                 const std::string&>(handlers, "conference-changed");
 
-    add_handler<DRing::CallSignal::UpdatePlaybackScale, const std::string&, unsigned, unsigned>(
+    add_handler<libjami::CallSignal::UpdatePlaybackScale, const std::string&, unsigned, unsigned>(
         handlers, "update-playback-scale");
 
-    add_handler<DRing::CallSignal::ConferenceRemoved, const std::string&, const std::string&>(
+    add_handler<libjami::CallSignal::ConferenceRemoved, const std::string&, const std::string&>(
         handlers, "conference-removed");
 
-    add_handler<DRing::CallSignal::RecordingStateChanged, const std::string&, int>(
+    add_handler<libjami::CallSignal::RecordingStateChanged, const std::string&, int>(
         handlers, "recording-state-changed");
 
-    add_handler<DRing::CallSignal::RtcpReportReceived,
+    add_handler<libjami::CallSignal::RtcpReportReceived,
                 const std::string&,
                 const std::map<std::string, int>&>(handlers, "rtcp-report-received");
 
-    add_handler<DRing::CallSignal::PeerHold, const std::string&, bool>(handlers, "peer-hold");
+    add_handler<libjami::CallSignal::PeerHold, const std::string&, bool>(handlers, "peer-hold");
 
-    add_handler<DRing::CallSignal::VideoMuted, const std::string&, bool>(handlers, "video-muted");
+    add_handler<libjami::CallSignal::VideoMuted, const std::string&, bool>(handlers, "video-muted");
 
-    add_handler<DRing::CallSignal::AudioMuted, const std::string&, bool>(handlers, "audio-muted");
+    add_handler<libjami::CallSignal::AudioMuted, const std::string&, bool>(handlers, "audio-muted");
 
-    add_handler<DRing::CallSignal::SmartInfo,
+    add_handler<libjami::CallSignal::SmartInfo,
                 const std::map<std::string, std::string>&>(handlers, "smart-info");
 
-    add_handler<DRing::CallSignal::ConnectionUpdate, const std::string&, int>(handlers,
+    add_handler<libjami::CallSignal::ConnectionUpdate, const std::string&, int>(handlers,
                                                                               "connection-update");
 
-    add_handler<DRing::CallSignal::OnConferenceInfosUpdated,
+    add_handler<libjami::CallSignal::OnConferenceInfosUpdated,
                 const std::string&,
                 const std::vector<std::map<std::string, std::string>>&>(handlers,
                                                                         "conference-infos-updated");
 
-    add_handler<DRing::CallSignal::RemoteRecordingChanged,
+    add_handler<libjami::CallSignal::RemoteRecordingChanged,
                 const std::string&,
                 const std::string&,
                 bool>(handlers, "remote-recording-changed");
 
-    add_handler<DRing::CallSignal::MediaNegotiationStatus,
+    add_handler<libjami::CallSignal::MediaNegotiationStatus,
                 const std::string&,
                 const std::string&,
                 const std::vector<std::map<std::string, std::string>>&>(handlers,
                                                                         "media-negotiation-status");
 
     /* Configuration */
-    add_handler<DRing::ConfigurationSignal::VolumeChanged, const std::string&, double>(
+    add_handler<libjami::ConfigurationSignal::VolumeChanged, const std::string&, double>(
         handlers, "volume-changed");
 
-    add_handler<DRing::ConfigurationSignal::Error, int>(handlers, "configuration-error");
+    add_handler<libjami::ConfigurationSignal::Error, int>(handlers, "configuration-error");
 
-    add_handler<DRing::ConfigurationSignal::AccountsChanged>(handlers, "accounts-changed");
+    add_handler<libjami::ConfigurationSignal::AccountsChanged>(handlers, "accounts-changed");
 
-    add_handler<DRing::ConfigurationSignal::AccountDetailsChanged,
+    add_handler<libjami::ConfigurationSignal::AccountDetailsChanged,
                 const std::string&,
                 const std::map<std::string, std::string>&>(handlers, "account-details-changed");
 
-    add_handler<DRing::ConfigurationSignal::StunStatusFailed,
+    add_handler<libjami::ConfigurationSignal::StunStatusFailed,
                 const std::string&>(handlers, "stun-status-failed");
 
-    add_handler<DRing::ConfigurationSignal::RegistrationStateChanged,
+    add_handler<libjami::ConfigurationSignal::RegistrationStateChanged,
                 const std::string&,
                 const std::string&,
                 int,
                 const std::string&>(handlers, "registration-state-changed");
 
-    add_handler<DRing::ConfigurationSignal::VolatileDetailsChanged,
+    add_handler<libjami::ConfigurationSignal::VolatileDetailsChanged,
                 const std::string&,
                 const std::map<std::string, std::string>&>(handlers, "volatile-details-changed");
 
-    add_handler<DRing::ConfigurationSignal::IncomingAccountMessage,
+    add_handler<libjami::ConfigurationSignal::IncomingAccountMessage,
                 const std::string&,
                 const std::string&,
                 const std::string&,
                 const std::map<std::string, std::string>&>(handlers, "incoming-account-message");
 
-    add_handler<DRing::ConfigurationSignal::AccountMessageStatusChanged,
+    add_handler<libjami::ConfigurationSignal::AccountMessageStatusChanged,
                 const std::string&,
                 const std::string&,
                 const std::string&,
                 const std::string&,
                 int>(handlers, "account-message-status-changed");
 
-    add_handler<DRing::ConfigurationSignal::ProfileReceived,
+    add_handler<libjami::ConfigurationSignal::ProfileReceived,
                 const std::string&,
                 const std::string&,
                 const std::string&>(handlers, "profile-received");
 
-    add_handler<DRing::ConfigurationSignal::ComposingStatusChanged,
+    add_handler<libjami::ConfigurationSignal::ComposingStatusChanged,
                 const std::string&,
                 const std::string&,
                 const std::string&,
                 int>(handlers, "composing-status-changed");
 
-    add_handler<DRing::ConfigurationSignal::IncomingTrustRequest,
+    add_handler<libjami::ConfigurationSignal::IncomingTrustRequest,
                 const std::string&,
                 const std::string&,
                 const std::string&,
                 const std::vector<uint8_t>&,
                 time_t>(handlers, "incoming-trust-request");
 
-    add_handler<DRing::ConfigurationSignal::ContactAdded,
+    add_handler<libjami::ConfigurationSignal::ContactAdded,
                 const std::string&,
                 const std::string&,
                 bool>(handlers, "contact-added");
 
-    add_handler<DRing::ConfigurationSignal::ContactRemoved,
+    add_handler<libjami::ConfigurationSignal::ContactRemoved,
                 const std::string&,
                 const std::string&,
                 bool>(handlers, "contact-removed");
 
-    add_handler<DRing::ConfigurationSignal::ExportOnRingEnded,
+    add_handler<libjami::ConfigurationSignal::ExportOnRingEnded,
                 const std::string&,
                 int,
                 const std::string&>(handlers, "export-on-ring-ended");
 
-    add_handler<DRing::ConfigurationSignal::NameRegistrationEnded,
+    add_handler<libjami::ConfigurationSignal::NameRegistrationEnded,
                 const std::string&,
                 int,
                 const std::string&>(handlers, "name-registration-ended");
 
-    add_handler<DRing::ConfigurationSignal::KnownDevicesChanged,
+    add_handler<libjami::ConfigurationSignal::KnownDevicesChanged,
                 const std::string&,
                 const std::map<std::string, std::string>&>(handlers, "known-devices-changed");
 
-    add_handler<DRing::ConfigurationSignal::RegisteredNameFound,
+    add_handler<libjami::ConfigurationSignal::RegisteredNameFound,
                 const std::string&,
                 int,
                 const std::string&,
                 const std::string&>(handlers, "registered-name-found");
 
-    add_handler<DRing::ConfigurationSignal::UserSearchEnded,
+    add_handler<libjami::ConfigurationSignal::UserSearchEnded,
                 const std::string&,
                 int,
                 const std::string&,
                 const std::vector<std::map<std::string, std::string>>&>(handlers,
                                                                         "user-search-ended");
 
-    add_handler<DRing::ConfigurationSignal::CertificatePinned,
+    add_handler<libjami::ConfigurationSignal::CertificatePinned,
                 const std::string&>(handlers, "certificate-pinned");
 
-    add_handler<DRing::ConfigurationSignal::CertificatePathPinned,
+    add_handler<libjami::ConfigurationSignal::CertificatePathPinned,
                 const std::string&,
                 const std::vector<std::string>&>(handlers, "certificate-path-pinned");
 
-    add_handler<DRing::ConfigurationSignal::CertificateExpired,
+    add_handler<libjami::ConfigurationSignal::CertificateExpired,
                 const std::string&>(handlers, "certificate-expired");
 
-    add_handler<DRing::ConfigurationSignal::CertificateStateChanged,
+    add_handler<libjami::ConfigurationSignal::CertificateStateChanged,
                 const std::string&,
                 const std::string&,
                 const std::string&>(handlers, "certificate-state-changed");
 
-    add_handler<DRing::ConfigurationSignal::MediaParametersChanged,
+    add_handler<libjami::ConfigurationSignal::MediaParametersChanged,
                 const std::string&>(handlers, "media-parameters-changed");
 
-    add_handler<DRing::ConfigurationSignal::MigrationEnded, const std::string&, const std::string&>(
+    add_handler<libjami::ConfigurationSignal::MigrationEnded, const std::string&, const std::string&>(
         handlers, "migration-ended");
 
-    add_handler<DRing::ConfigurationSignal::DeviceRevocationEnded,
+    add_handler<libjami::ConfigurationSignal::DeviceRevocationEnded,
                 const std::string&,
                 const std::string&,
                 int>(handlers, "device-revocation-ended");
 
-    add_handler<DRing::ConfigurationSignal::AccountProfileReceived,
+    add_handler<libjami::ConfigurationSignal::AccountProfileReceived,
                 const std::string&,
                 const std::string&,
                 const std::string&>(handlers, "account-profile-received");
 
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-    add_handler<DRing::ConfigurationSignal::GetHardwareAudioFormat,
+    add_handler<libjami::ConfigurationSignal::GetHardwareAudioFormat,
                 std::vector<int32_t>*>(handlers, "get-hardware-audio-format");
 #endif
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(RING_UWP)
-    add_handler<DRing::ConfigurationSignal::GetAppDataPath,
+    add_handler<libjami::ConfigurationSignal::GetAppDataPath,
                 const std::string&,
                 std::vector<std::string>*>(handlers, "get-app-data-path");
 
-    add_handler<DRing::ConfigurationSignal::GetDeviceName,
+    add_handler<libjami::ConfigurationSignal::GetDeviceName,
                 std::vector<std::string>*>(handlers, "get-device-name");
 #endif
-    add_handler<DRing::ConfigurationSignal::HardwareDecodingChanged,
+    add_handler<libjami::ConfigurationSignal::HardwareDecodingChanged,
                 bool>(handlers, "hardware-decoding-changed");
 
-    add_handler<DRing::ConfigurationSignal::HardwareEncodingChanged,
+    add_handler<libjami::ConfigurationSignal::HardwareEncodingChanged,
                 bool>(handlers, "hardware-encoding-changed");
 
-    add_handler<DRing::ConfigurationSignal::MessageSend, const std::string&>(handlers,
+    add_handler<libjami::ConfigurationSignal::MessageSend, const std::string&>(handlers,
                                                                              "message-send");
 
     /* Presence */
-    add_handler<DRing::PresenceSignal::NewServerSubscriptionRequest,
+    add_handler<libjami::PresenceSignal::NewServerSubscriptionRequest,
                 const std::string&>(handlers, "new-server-subscription-request");
 
-    add_handler<DRing::PresenceSignal::ServerError,
+    add_handler<libjami::PresenceSignal::ServerError,
                 const std::string&,
                 const std::string&,
                 const std::string&>(handlers, "server-error");
 
-    add_handler<DRing::PresenceSignal::NewBuddyNotification,
+    add_handler<libjami::PresenceSignal::NewBuddyNotification,
                 const std::string&,
                 const std::string&,
                 int,
                 const std::string&>(handlers, "new-buddy-notification");
 
-    add_handler<DRing::PresenceSignal::NearbyPeerNotification,
+    add_handler<libjami::PresenceSignal::NearbyPeerNotification,
                 const std::string&,
                 const std::string&,
                 int,
                 const std::string&>(handlers, "nearby-peer-notification");
 
-    add_handler<DRing::PresenceSignal::SubscriptionStateChanged,
+    add_handler<libjami::PresenceSignal::SubscriptionStateChanged,
                 const std::string&,
                 const std::string&,
                 int>(handlers, "subscription-state-changed");
 
     /* Audio */
-    add_handler<DRing::AudioSignal::DeviceEvent>(handlers, "audio-device-event");
+    add_handler<libjami::AudioSignal::DeviceEvent>(handlers, "audio-device-event");
 
-    add_handler<DRing::AudioSignal::AudioMeter, const std::string&, float>(handlers, "audio-meter");
+    add_handler<libjami::AudioSignal::AudioMeter, const std::string&, float>(handlers, "audio-meter");
 
     /* DataTransfer */
-    add_handler<DRing::DataTransferSignal::DataTransferEvent,
+    add_handler<libjami::DataTransferSignal::DataTransferEvent,
                 const std::string&,
                 const std::string&,
                 const std::string&,
@@ -446,99 +446,99 @@ install_signal_primitives(void*)
 
 #ifdef ENABLE_VIDEO
     /* MediaPlayer */
-    add_handler<DRing::MediaPlayerSignal::FileOpened,
+    add_handler<libjami::MediaPlayerSignal::FileOpened,
                 const std::string&,
                 std::map<std::string, std::string>>(handlers, "media-file-opened");
 
     /* Video */
-    add_handler<DRing::VideoSignal::DeviceEvent>(handlers, "device-event");
+    add_handler<libjami::VideoSignal::DeviceEvent>(handlers, "device-event");
 
-    add_handler<DRing::VideoSignal::DecodingStarted,
+    add_handler<libjami::VideoSignal::DecodingStarted,
                 const std::string&,
                 const std::string&,
                 int,
                 int,
                 bool>(handlers, "video-decoding-started");
 
-    add_handler<DRing::VideoSignal::DecodingStopped, const std::string&, const std::string&, bool>(
+    add_handler<libjami::VideoSignal::DecodingStopped, const std::string&, const std::string&, bool>(
         handlers, "video-decoding-stopped");
 
 #ifdef __ANDROID__
-    add_handler<DRing::VideoSignal::GetCameraInfo,
+    add_handler<libjami::VideoSignal::GetCameraInfo,
                 const std::string&,
                 std::vector<int>*,
                 std::vector<unsigned>*,
                 std::vector<unsigned>*>(handlers, "video-get-camera-info");
 
-    add_handler<DRing::VideoSignal::SetParameters,
+    add_handler<libjami::VideoSignal::SetParameters,
                 const std::string&,
                 const int,
                 const int,
                 const int,
                 const int>(handlers, "video-set-parameters");
 
-    add_handler<DRing::VideoSignal::RequestKeyFrame>(handlers, "video-request-key-frame");
+    add_handler<libjami::VideoSignal::RequestKeyFrame>(handlers, "video-request-key-frame");
 
-    add_handler<DRing::VideoSignal::SetBitrate, const std::string&, const int>(handlers,
+    add_handler<libjami::VideoSignal::SetBitrate, const std::string&, const int>(handlers,
                                                                                "video-set-bitrate");
 
 #endif
-    add_handler<DRing::VideoSignal::StartCapture, const std::string&>(handlers,
+    add_handler<libjami::VideoSignal::StartCapture, const std::string&>(handlers,
                                                                       "video-start-capture");
 
-    add_handler<DRing::VideoSignal::StopCapture>(handlers, "video-stop-capture");
+    add_handler<libjami::VideoSignal::StopCapture>(handlers, "video-stop-capture");
 
-    add_handler<DRing::VideoSignal::DeviceAdded, const std::string&>(handlers, "video-device-added");
+    add_handler<libjami::VideoSignal::DeviceAdded, const std::string&>(handlers, "video-device-added");
 
-    add_handler<DRing::VideoSignal::ParametersChanged,
+    add_handler<libjami::VideoSignal::ParametersChanged,
                 const std::string&>(handlers, "video-parameters-changed");
 #endif
 
     /* Conversation */
-    add_handler<DRing::ConversationSignal::ConversationLoaded,
+    add_handler<libjami::ConversationSignal::ConversationLoaded,
                 uint32_t,
                 const std::string&,
                 const std::string&,
                 std::vector<std::map<std::string, std::string>>>(handlers, "conversation-loaded");
 
-    add_handler<DRing::ConversationSignal::MessagesFound,
+    add_handler<libjami::ConversationSignal::MessagesFound,
                 uint32_t,
                 const std::string&,
                 const std::string&,
                 std::vector<std::map<std::string, std::string>>>(handlers, "messages-found");
 
-    add_handler<DRing::ConversationSignal::MessageReceived,
+    add_handler<libjami::ConversationSignal::MessageReceived,
                 const std::string&,
                 const std::string&,
                 std::map<std::string, std::string>>(handlers, "message-received");
 
-    add_handler<DRing::ConversationSignal::ConversationRequestReceived,
+    add_handler<libjami::ConversationSignal::ConversationRequestReceived,
                 const std::string&,
                 const std::string&,
                 std::map<std::string, std::string>>(handlers, "conversation-request-received");
 
-    add_handler<DRing::ConversationSignal::ConversationRequestDeclined,
+    add_handler<libjami::ConversationSignal::ConversationRequestDeclined,
                 const std::string&,
                 const std::string&>(handlers, "conversation-request-declined");
 
-    add_handler<DRing::ConversationSignal::ConversationReady, const std::string&, const std::string&>(
+    add_handler<libjami::ConversationSignal::ConversationReady, const std::string&, const std::string&>(
         handlers, "conversation-ready");
 
-    add_handler<DRing::ConversationSignal::ConversationRemoved,
+    add_handler<libjami::ConversationSignal::ConversationRemoved,
                 const std::string&,
                 const std::string&>(handlers, "conversation-removed");
 
-    add_handler<DRing::ConversationSignal::ConversationMemberEvent,
+    add_handler<libjami::ConversationSignal::ConversationMemberEvent,
                 const std::string&,
                 const std::string&,
                 const std::string&,
                 int>(handlers, "conversation-member-event");
 
-    add_handler<DRing::ConversationSignal::OnConversationError,
+    add_handler<libjami::ConversationSignal::OnConversationError,
                 const std::string&,
                 const std::string&,
                 int,
                 const std::string&>(handlers, "conversation-error");
 
-    DRing::registerSignalHandlers(handlers);
+    libjami::registerSignalHandlers(handlers);
 }

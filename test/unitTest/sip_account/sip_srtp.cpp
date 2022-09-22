@@ -34,8 +34,8 @@
 #include "account_const.h"
 #include "sip/sipcall.h"
 #include "sip/sdp.h"
-using namespace DRing::Account;
-using namespace DRing::Call;
+using namespace libjami::Account;
+using namespace libjami::Call;
 
 namespace jami {
 namespace test {
@@ -71,11 +71,11 @@ public:
     SipSrtpTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~SipSrtpTest() { DRing::fini(); }
+    ~SipSrtpTest() { libjami::fini(); }
 
     static std::string name() { return "SipSrtpTest"; }
     void setUp();
@@ -97,7 +97,7 @@ private:
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
                                         const std::string& callId,
-                                        const std::vector<DRing::MediaMap> mediaList,
+                                        const std::vector<libjami::MediaMap> mediaList,
                                         CallData& callData);
     static void onMediaNegotiationStatus(const std::string& callId,
                                          const std::string& event,
@@ -126,7 +126,7 @@ void
 SipSrtpTest::setUp()
 {
     aliceData_.listeningPort_ = 5080;
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("SIP");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("SIP");
     details[ConfProperties::TYPE] = "SIP";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
     details[ConfProperties::ALIAS] = "ALICE";
@@ -136,7 +136,7 @@ SipSrtpTest::setUp()
     aliceData_.accountId_ = Manager::instance().addAccount(details);
 
     bobData_.listeningPort_ = 5082;
-    details = DRing::getAccountTemplate("SIP");
+    details = libjami::getAccountTemplate("SIP");
     details[ConfProperties::TYPE] = "SIP";
     details[ConfProperties::DISPLAYNAME] = "BOB";
     details[ConfProperties::ALIAS] = "BOB";
@@ -155,20 +155,20 @@ SipSrtpTest::tearDown()
 {
     JAMI_INFO("Remove created accounts...");
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     auto currentAccSize = Manager::instance().getAccountList().size();
     std::atomic_bool accountsRemoved {false};
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+        libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
             if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
                 accountsRemoved = true;
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     Manager::instance().removeAccount(aliceData_.accountId_, true);
     Manager::instance().removeAccount(bobData_.accountId_, true);
@@ -176,7 +176,7 @@ SipSrtpTest::tearDown()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 std::string
@@ -200,13 +200,13 @@ SipSrtpTest::getUserAlias(const std::string& callId)
 void
 SipSrtpTest::onIncomingCallWithMedia(const std::string& accountId,
                                      const std::string& callId,
-                                     const std::vector<DRing::MediaMap> mediaList,
+                                     const std::vector<libjami::MediaMap> mediaList,
                                      CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              DRing::CallSignal::IncomingCallWithMedia::name,
+              libjami::CallSignal::IncomingCallWithMedia::name,
               callData.alias_.c_str(),
               callId.c_str(),
               mediaList.size());
@@ -224,7 +224,7 @@ SipSrtpTest::onIncomingCallWithMedia(const std::string& accountId,
 
     std::unique_lock<std::mutex> lock {callData.mtx_};
     callData.callId_ = callId;
-    callData.signals_.emplace_back(CallData::Signal(DRing::CallSignal::IncomingCallWithMedia::name));
+    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
 
     callData.cv_.notify_one();
 }
@@ -248,7 +248,7 @@ SipSrtpTest::onCallStateChange(const std::string&,
     }
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              DRing::CallSignal::StateChange::name,
+              libjami::CallSignal::StateChange::name,
               callData.alias_.c_str(),
               callId.c_str(),
               state.c_str());
@@ -259,7 +259,7 @@ SipSrtpTest::onCallStateChange(const std::string&,
     {
         std::unique_lock<std::mutex> lock {callData.mtx_};
         callData.signals_.emplace_back(
-            CallData::Signal(DRing::CallSignal::StateChange::name, state));
+            CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
     // NOTE. Only states that we are interested on will notify the CV. If this
     // unit test is modified to process other states, they must be added here.
@@ -286,7 +286,7 @@ SipSrtpTest::onMediaNegotiationStatus(const std::string& callId,
     }
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              DRing::CallSignal::MediaNegotiationStatus::name,
+              libjami::CallSignal::MediaNegotiationStatus::name,
               account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
               call->getCallId().c_str(),
               event.c_str());
@@ -297,7 +297,7 @@ SipSrtpTest::onMediaNegotiationStatus(const std::string& callId,
     {
         std::unique_lock<std::mutex> lock {callData.mtx_};
         callData.signals_.emplace_back(
-            CallData::Signal(DRing::CallSignal::MediaNegotiationStatus::name, event));
+            CallData::Signal(libjami::CallSignal::MediaNegotiationStatus::name, event));
     }
 
     callData.cv_.notify_one();
@@ -372,14 +372,14 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
         account->setLocalPort(bobData.listeningPort_);
     }
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
 
     // Insert needed signal handlers.
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
-            const std::vector<DRing::MediaMap> mediaList) {
+            const std::vector<libjami::MediaMap> mediaList) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onIncomingCallWithMedia(accountId,
@@ -389,7 +389,7 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(
-        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+        libjami::exportable_callback<libjami::CallSignal::StateChange>([&](const std::string& accountId,
                                                                        const std::string& callId,
                                                                        const std::string& state,
                                                                        signed) {
@@ -401,7 +401,7 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
                                   user == aliceData.alias_ ? aliceData : bobData);
         }));
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaNegotiationStatus>(
         [&](const std::string& callId,
             const std::string& event,
             const std::vector<std::map<std::string, std::string>>& /* mediaList */) {
@@ -412,7 +412,7 @@ SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
                                          user == aliceData.alias_ ? aliceData : bobData);
         }));
 
-    DRing::registerSignalHandlers(signalHandlers);
+    libjami::registerSignalHandlers(signalHandlers);
 }
 
 void
@@ -428,7 +428,7 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     std::string bobUri = "127.0.0.1:" + std::to_string(bobData_.listeningPort_);
 
-    aliceData_.callId_ = DRing::placeCallWithMedia(aliceData_.accountId_,
+    aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
                                                    bobUri,
                                                    MediaAttribute::mediaAttributesToMediaMaps(
                                                        offer));
@@ -444,31 +444,31 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     // Wait for call to be processed.
     CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+        waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::RINGING));
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
-    DRing::acceptWithMedia(bobData_.accountId_,
+    libjami::acceptWithMedia(bobData_.accountId_,
                            bobData_.callId_,
                            MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_,
-                                 DRing::CallSignal::MediaNegotiationStatus::name,
-                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(
-        waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+        waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
     JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(aliceData_,
-                                 DRing::CallSignal::MediaNegotiationStatus::name,
-                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Validate Alice's media
     if (validateMedia) {
@@ -507,10 +507,10 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    DRing::hangUp(bobData_.accountId_, bobData_.callId_);
+    libjami::hangUp(bobData_.accountId_, bobData_.callId_);
 
     CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
+        waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
     JAMI_INFO("Call terminated on both sides");
 }

@@ -34,7 +34,7 @@
 #include "common.h"
 
 using namespace std::string_literals;
-using namespace DRing::Account;
+using namespace libjami::Account;
 
 namespace jami {
 namespace test {
@@ -45,11 +45,11 @@ public:
     RevokeTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~RevokeTest() { DRing::fini(); }
+    ~RevokeTest() { libjami::fini(); }
     static std::string name() { return "Revoke"; }
     void setUp();
     void tearDown();
@@ -90,30 +90,30 @@ RevokeTest::testRevokeDevice()
 
     CPPUNIT_ASSERT(aliceAccount->exportArchive("test.gz"));
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto deviceRevoked = false;
     auto knownChanged = false;
     std::string alice2Device;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::DeviceRevocationEnded>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
             [&](const std::string& accountId, const std::string& deviceId, int status) {
                 if (accountId == aliceId && deviceId == alice2Device && status == 0)
                     deviceRevoked = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::KnownDevicesChanged>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::KnownDevicesChanged>(
         [&](const std::string& accountId, auto devices) {
             if (accountId == aliceId && devices.size() == 2)
                 knownChanged = true;
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     auto alice2Id = jami::Manager::instance().addAccount(details);
     auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return knownChanged; }));
@@ -133,16 +133,16 @@ RevokeTest::testRevokeInvalidDevice()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto revokeFailed = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::DeviceRevocationEnded>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
             [&](const std::string& accountId, const std::string& deviceId, int status) {
                 if (accountId == aliceId && deviceId == "foo" && status == 2)
                     revokeFailed = true;
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     aliceAccount->revokeDevice("", "foo");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return revokeFailed; }));
 }

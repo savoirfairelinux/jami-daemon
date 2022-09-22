@@ -146,7 +146,7 @@ public:
                                                                 conversationId);
         if (!repository_) {
             if (auto shared = account.lock()) {
-                emitSignal<DRing::ConversationSignal::OnConversationError>(
+                emitSignal<libjami::ConversationSignal::OnConversationError>(
                     shared->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
             }
             throw std::logic_error("Couldn't clone repository");
@@ -229,7 +229,7 @@ public:
                             action = 4;
                         if (action != -1) {
                             announceMember = true;
-                            emitSignal<DRing::ConversationSignal::ConversationMemberEvent>(
+                            emitSignal<libjami::ConversationSignal::ConversationMemberEvent>(
                                 shared->getAccountID(), convId, uri, action);
                         }
                     }
@@ -248,7 +248,7 @@ public:
                 }
 #endif
                 // announce message
-                emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
+                emitSignal<libjami::ConversationSignal::MessageReceived>(shared->getAccountID(),
                                                                        convId,
                                                                        c);
                 // check if we should update lastDisplayed
@@ -743,12 +743,12 @@ Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnDon
             sthis->clearFetched();
             lk.unlock();
             sthis->pimpl_->announce(commit);
-            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+            emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                 shared->getAccountID(),
                 sthis->id(),
                 shared->getUsername(),
                 commit,
-                static_cast<int>(DRing::Account::MessageStates::SENDING));
+                static_cast<int>(libjami::Account::MessageStates::SENDING));
             if (cb)
                 cb(!commit.empty(), commit);
         }
@@ -975,7 +975,7 @@ Conversation::Impl::pull()
             if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf")
                 != changedFiles.end()) {
                 if (auto account = account_.lock())
-                    emitSignal<DRing::ConversationSignal::ConversationProfileUpdated>(
+                    emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(
                         account->getAccountID(), repo->id(), repo->infos());
             }
         }
@@ -1083,7 +1083,7 @@ Conversation::updateInfos(const std::map<std::string, std::string>& map, const O
             if (cb)
                 cb(!commit.empty(), commit);
             if (auto account = sthis->pimpl_->account_.lock())
-                emitSignal<DRing::ConversationSignal::ConversationProfileUpdated>(
+                emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(
                     account->getAccountID(), repo->id(), repo->infos());
         }
     });
@@ -1236,12 +1236,12 @@ Conversation::hasFetched(const std::string& deviceId, const std::string& commitI
             // Clear fetched commits and mark it as announced
             auto end = std::next(itCommit);
             for (auto it = sthis->pimpl_->sending_.begin(); it != end; ++it) {
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                     acc->getAccountID(),
                     sthis->id(),
                     acc->getUsername(),
                     *it,
-                    static_cast<int>(DRing::Account::MessageStates::SENT));
+                    static_cast<int>(libjami::Account::MessageStates::SENT));
             }
             sthis->pimpl_->sending_.erase(sthis->pimpl_->sending_.begin(), end);
             sthis->pimpl_->saveSending();
@@ -1343,13 +1343,13 @@ Conversation::search(uint32_t req,
                 return;
             auto commits = sthis->pimpl_->repository_->search(filter);
             if (commits.size() > 0)
-                emitSignal<DRing::ConversationSignal::MessagesFound>(req,
+                emitSignal<libjami::ConversationSignal::MessagesFound>(req,
                                                                      acc->getAccountID(),
                                                                      sthis->id(),
                                                                      std::move(commits));
             // If we're the latest thread, inform client that the search is finished
             if ((*flag)-- == 1 /* decrement return the old value */) {
-                emitSignal<DRing::ConversationSignal::MessagesFound>(
+                emitSignal<libjami::ConversationSignal::MessagesFound>(
                     req,
                     acc->getAccountID(),
                     std::string {},

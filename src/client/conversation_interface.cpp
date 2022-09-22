@@ -33,7 +33,7 @@
 #include "jamidht/jamiaccount.h"
 #include "jamidht/conversation_module.h"
 
-namespace DRing {
+namespace libjami {
 
 std::string
 startConversation(const std::string& accountId)
@@ -211,4 +211,4 @@ searchConversation(const std::string& accountId,
     return res;
 }
 
-} // namespace DRing
+} // namespace libjami

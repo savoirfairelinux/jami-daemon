@@ -153,7 +153,7 @@ add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
 #################################################
 # Build targets
 #################################################
-add_project_arguments('-DRING_BUILD', language: ['c', 'cpp'])
+add_project_arguments('-LIBJAMI_BUILD', language: ['c', 'cpp'])
 if get_option('default_library') != 'static'
     add_project_arguments('-Djami_EXPORTS', language: ['c', 'cpp'])
 endif

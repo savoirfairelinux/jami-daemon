@@ -25,17 +25,17 @@
 #include <libguile.h>
 
 extern "C" {
-DRING_PUBLIC void init();
-DRING_PUBLIC void fini();
+LIBJAMI_PUBLIC void init();
+LIBJAMI_PUBLIC void fini();
 }
 
 void
 init()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG));
 
-    if (not DRing::start("")) {
-        scm_misc_error("Dring::start", NULL, 0);
+    if (not libjami::start("")) {
+        scm_misc_error("libjami::start", NULL, 0);
     }
 
     install_scheme_primitives();
@@ -44,5 +44,5 @@ init()
 void
 fini()
 {
-    DRing::fini();
+    libjami::fini();
 }

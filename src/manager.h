@@ -69,15 +69,15 @@ class SIPVoIPLink;
 class JamiPluginManager;
 
 /** Manager (controller) of daemon */
-// TODO DRING_PUBLIC only if tests
-class DRING_TESTABLE Manager
+// TODO LIBJAMI_PUBLIC only if tests
+class LIBJAMI_TESTABLE Manager
 {
 private:
     std::mt19937_64 rand_;
 
 public:
-    // TODO DRING_PUBLIC only if tests
-    static DRING_TESTABLE Manager& instance();
+    // TODO LIBJAMI_PUBLIC only if tests
+    static LIBJAMI_TESTABLE Manager& instance();
 
     void setAutoAnswer(bool enable);
 
@@ -153,7 +153,7 @@ public:
      */
     std::string outgoingCall(const std::string& accountId,
                              const std::string& callee,
-                             const std::vector<DRing::MediaMap>& mediaList = {});
+                             const std::vector<libjami::MediaMap>& mediaList = {});
 
     /**
      * Functions which occur with a user's action
@@ -162,8 +162,8 @@ public:
      */
     bool answerCall(const std::string& accountId,
                     const std::string& callId,
-                    const std::vector<DRing::MediaMap>& mediaList = {});
-    bool answerCall(Call& call, const std::vector<DRing::MediaMap>& mediaList = {});
+                    const std::vector<libjami::MediaMap>& mediaList = {});
+    bool answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList = {});
 
     /**
      * Handle incoming call and notify user
@@ -779,7 +779,7 @@ public:
      */
     std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
                                           const std::string& accountId,
-                                          const std::vector<DRing::MediaMap>& mediaList);
+                                          const std::vector<libjami::MediaMap>& mediaList);
 
     CallFactory callFactory;
 
@@ -844,7 +844,7 @@ public:
     std::atomic<unsigned> dhtLogLevel {0}; // default = disable
     AccountFactory accountFactory;
 
-    std::vector<DRing::Message> getLastMessages(const std::string& accountID,
+    std::vector<libjami::Message> getLastMessages(const std::string& accountID,
                                                 const uint64_t& base_timestamp);
 
     SIPVoIPLink& sipVoIPLink() const;

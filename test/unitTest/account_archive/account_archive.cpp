@@ -43,7 +43,7 @@
 
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;
-using namespace DRing::Account;
+using namespace libjami::Account;
 
 namespace jami {
 namespace test {
@@ -54,11 +54,11 @@ public:
     AccountArchiveTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~AccountArchiveTest() { DRing::fini(); }
+    ~AccountArchiveTest() { libjami::fini(); }
     static std::string name() { return "AccountArchive"; }
     void setUp();
     void tearDown();
@@ -113,7 +113,7 @@ AccountArchiveTest::testExportImportNoPassword()
 
     CPPUNIT_ASSERT(aliceAccount->exportArchive("test.gz"));
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
 
     auto accountId = jami::Manager::instance().addAccount(details);
@@ -133,7 +133,7 @@ AccountArchiveTest::testExportImportNoPasswordDoubleGunzip()
     auto dat = fileutils::loadFile("test.gz");
     archiver::compressGzip(dat, "test.gz");
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
 
     auto accountId = jami::Manager::instance().addAccount(details);
@@ -151,7 +151,7 @@ AccountArchiveTest::testExportImportPassword()
 
     CPPUNIT_ASSERT(bobAccount->exportArchive("test.gz", "test"));
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
     details[ConfProperties::ARCHIVE_PASSWORD] = "test";
 
@@ -172,7 +172,7 @@ AccountArchiveTest::testExportImportPasswordDoubleGunzip()
     auto dat = fileutils::loadFile("test.gz");
     archiver::compressGzip(dat, "test.gz");
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
     details[ConfProperties::ARCHIVE_PASSWORD] = "test";
 
@@ -190,21 +190,21 @@ AccountArchiveTest::testExportDht()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::string pin;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ExportOnRingEnded>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ExportOnRingEnded>(
         [&](const std::string& accountId, int status, const std::string& p) {
             if (accountId == bobId && status == 0)
                 pin = p;
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(DRing::exportOnRing(bobId, "test"));
+    libjami::registerSignalHandlers(confHandlers);
+    CPPUNIT_ASSERT(libjami::exportOnRing(bobId, "test"));
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !pin.empty(); }));
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::ARCHIVE_PIN] = pin;
     details[ConfProperties::ARCHIVE_PASSWORD] = "test";
 
@@ -220,16 +220,16 @@ AccountArchiveTest::testExportDhtWrongPassword()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     int status;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ExportOnRingEnded>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ExportOnRingEnded>(
         [&](const std::string& accountId, int s, const std::string&) {
             if (accountId == bobId)
                 status = s;
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(DRing::exportOnRing(bobId, "wrong"));
+    libjami::registerSignalHandlers(confHandlers);
+    CPPUNIT_ASSERT(libjami::exportOnRing(bobId, "wrong"));
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return status == 1; }));
 }
 
@@ -237,13 +237,13 @@ void
 AccountArchiveTest::testChangePassword()
 {
     // Test wrong password, should fail
-    CPPUNIT_ASSERT(!DRing::changeAccountPassword(aliceId, "wrong", "new"));
+    CPPUNIT_ASSERT(!libjami::changeAccountPassword(aliceId, "wrong", "new"));
     // Test correct password, should succeed
-    CPPUNIT_ASSERT(DRing::changeAccountPassword(aliceId, "", "new"));
+    CPPUNIT_ASSERT(libjami::changeAccountPassword(aliceId, "", "new"));
     // Now it should fail
-    CPPUNIT_ASSERT(!DRing::changeAccountPassword(aliceId, "", "new"));
+    CPPUNIT_ASSERT(!libjami::changeAccountPassword(aliceId, "", "new"));
     // Remove password again (should succeed)
-    CPPUNIT_ASSERT(DRing::changeAccountPassword(aliceId, "new", ""));
+    CPPUNIT_ASSERT(libjami::changeAccountPassword(aliceId, "new", ""));
 }
 
 } // namespace test

@@ -37,7 +37,7 @@
 
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;
-using namespace DRing::Account;
+using namespace libjami::Account;
 
 namespace jami {
 namespace test {
@@ -48,11 +48,11 @@ public:
     MigrationTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~MigrationTest() { DRing::fini(); }
+    ~MigrationTest() { libjami::fini(); }
     static std::string name() { return "AccountArchive"; }
     void setUp();
     void tearDown();
@@ -132,16 +132,16 @@ MigrationTest::testLoadExpiredAccount()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto aliceMigrated = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::MigrationEnded>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::MigrationEnded>(
         [&](const std::string& accountId, const std::string& state) {
             if (accountId == aliceId && state == "SUCCESS") {
                 aliceMigrated = true;
             }
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     // Check migration is triggered and expiration updated
     aliceAccount->forceReloadAccount();
@@ -169,12 +169,12 @@ MigrationTest::testMigrationAfterRevokation()
     std::condition_variable cv;
 
     // Add second device for Bob
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
@@ -185,14 +185,14 @@ MigrationTest::testMigrationAfterRevokation()
 
     auto deviceRevoked = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::DeviceRevocationEnded>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
             [&](const std::string& accountId, const std::string&, int status) {
                 if (accountId == bobId && status == 0)
                     deviceRevoked = true;
                 cv.notify_one();
             }));
     auto bobMigrated = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::MigrationEnded>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::MigrationEnded>(
         [&](const std::string& accountId, const std::string& state) {
             if (accountId == bob2Id && state == "SUCCESS") {
                 bobMigrated = true;
@@ -200,13 +200,13 @@ MigrationTest::testMigrationAfterRevokation()
             cv.notify_one();
         }));
     auto knownChanged = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::KnownDevicesChanged>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::KnownDevicesChanged>(
         [&](const std::string& accountId, auto devices) {
             if (accountId == bobId && devices.size() == 2)
                 knownChanged = true;
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     bob2Id = Manager::instance().addAccount(details);
     auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
@@ -236,9 +236,9 @@ MigrationTest::testExpiredDeviceInSwarm()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
@@ -251,7 +251,7 @@ MigrationTest::testExpiredDeviceInSwarm()
         }));
     bool requestReceived = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
@@ -259,7 +259,7 @@ MigrationTest::testExpiredDeviceInSwarm()
                 cv.notify_one();
             }));
     bool conversationReady = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -267,7 +267,7 @@ MigrationTest::testExpiredDeviceInSwarm()
             }
         }));
     auto aliceMigrated = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::MigrationEnded>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::MigrationEnded>(
         [&](const std::string& accountId, const std::string& state) {
             if (accountId == aliceId && state == "SUCCESS") {
                 aliceMigrated = true;
@@ -276,20 +276,20 @@ MigrationTest::testExpiredDeviceInSwarm()
         }));
     bool aliceStopped = false, aliceAnnounced = false, aliceRegistered = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
                 if (daemonStatus == "UNREGISTERED")
                     aliceStopped = true;
                 else if (daemonStatus == "REGISTERED")
                     aliceRegistered = true;
-                auto announced = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                auto announced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 if (announced == "true")
                     aliceAnnounced = true;
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     CPPUNIT_ASSERT(aliceAccount->setValidity("", {}, 90));
     auto now = std::chrono::system_clock::now();
@@ -308,13 +308,13 @@ MigrationTest::testExpiredDeviceInSwarm()
     CPPUNIT_ASSERT(aliceAccount->currentDeviceId() == aliceDevice);
 
     // Create conversation
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return requestReceived; }));
 
     messageAliceReceived = 0;
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return conversationReady; }));
 
     // Assert that repository exists
@@ -325,7 +325,7 @@ MigrationTest::testExpiredDeviceInSwarm()
     cv.wait_for(lk, 20s, [&]() { return messageAliceReceived == 1; });
 
     messageBobReceived = 0;
-    DRing::sendMessage(aliceId, convId, "hi"s, "");
+    libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return messageBobReceived == 1; }));
 
     // Wait for certificate to expire
@@ -345,10 +345,10 @@ MigrationTest::testExpiredDeviceInSwarm()
 
     // Resend a new message
     messageBobReceived = 0;
-    DRing::sendMessage(aliceId, convId, "hi again"s, "");
+    libjami::sendMessage(aliceId, convId, "hi again"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return messageBobReceived == 1; }));
     messageAliceReceived = 0;
-    DRing::sendMessage(bobId, convId, "hi!"s, "");
+    libjami::sendMessage(bobId, convId, "hi!"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return messageAliceReceived == 1; }));
 
     // check that certificate in conversation is updated

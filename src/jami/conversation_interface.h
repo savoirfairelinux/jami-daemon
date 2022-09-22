@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef DRING_CONVERSATIONI_H
-#define DRING_CONVERSATIONI_H
+#ifndef LIBJAMI_CONVERSATIONI_H
+#define LIBJAMI_CONVERSATIONI_H
 
 #include "def.h"
 
@@ -29,56 +29,56 @@
 
 #include "jami.h"
 
-namespace DRing {
+namespace libjami {
 
 // Conversation management
-DRING_PUBLIC std::string startConversation(const std::string& accountId);
-DRING_PUBLIC void acceptConversationRequest(const std::string& accountId,
+LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
+LIBJAMI_PUBLIC void acceptConversationRequest(const std::string& accountId,
                                             const std::string& conversationId);
-DRING_PUBLIC void declineConversationRequest(const std::string& accountId,
+LIBJAMI_PUBLIC void declineConversationRequest(const std::string& accountId,
                                              const std::string& conversationId);
-DRING_PUBLIC bool removeConversation(const std::string& accountId,
+LIBJAMI_PUBLIC bool removeConversation(const std::string& accountId,
                                      const std::string& conversationId);
-DRING_PUBLIC std::vector<std::string> getConversations(const std::string& accountId);
-DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequests(
+LIBJAMI_PUBLIC std::vector<std::string> getConversations(const std::string& accountId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequests(
     const std::string& accountId);
 
 // Conversation's infos management
-DRING_PUBLIC void updateConversationInfos(const std::string& accountId,
+LIBJAMI_PUBLIC void updateConversationInfos(const std::string& accountId,
                                           const std::string& conversationId,
                                           const std::map<std::string, std::string>& infos);
-DRING_PUBLIC std::map<std::string, std::string> conversationInfos(const std::string& accountId,
+LIBJAMI_PUBLIC std::map<std::string, std::string> conversationInfos(const std::string& accountId,
                                                                   const std::string& conversationId);
 
 // Member management
-DRING_PUBLIC void addConversationMember(const std::string& accountId,
+LIBJAMI_PUBLIC void addConversationMember(const std::string& accountId,
                                         const std::string& conversationId,
                                         const std::string& contactUri);
-DRING_PUBLIC void removeConversationMember(const std::string& accountId,
+LIBJAMI_PUBLIC void removeConversationMember(const std::string& accountId,
                                            const std::string& conversationId,
                                            const std::string& contactUri);
-DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(
     const std::string& accountId, const std::string& conversationId);
 
 // Message send/load
-DRING_PUBLIC void sendMessage(const std::string& accountId,
+LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,
                               const std::string& conversationId,
                               const std::string& message,
                               const std::string& replyTo);
-DRING_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
+LIBJAMI_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
                                                const std::string& conversationId,
                                                const std::string& fromMessage,
                                                size_t n);
-DRING_PUBLIC uint32_t loadConversationUntil(const std::string& accountId,
+LIBJAMI_PUBLIC uint32_t loadConversationUntil(const std::string& accountId,
                                             const std::string& conversationId,
                                             const std::string& fromMessage,
                                             const std::string& toMessage);
-DRING_PUBLIC uint32_t countInteractions(const std::string& accountId,
+LIBJAMI_PUBLIC uint32_t countInteractions(const std::string& accountId,
                                         const std::string& conversationId,
                                         const std::string& toId,
                                         const std::string& fromId,
                                         const std::string& authorUri);
-DRING_PUBLIC uint32_t searchConversation(const std::string& accountId,
+LIBJAMI_PUBLIC uint32_t searchConversation(const std::string& accountId,
                                          const std::string& conversationId,
                                          const std::string& author,
                                          const std::string& lastId,
@@ -88,9 +88,9 @@ DRING_PUBLIC uint32_t searchConversation(const std::string& accountId,
                                          const int64_t& before,
                                          const uint32_t& maxResult);
 
-struct DRING_PUBLIC ConversationSignal
+struct LIBJAMI_PUBLIC ConversationSignal
 {
-    struct DRING_PUBLIC ConversationLoaded
+    struct LIBJAMI_PUBLIC ConversationLoaded
     {
         constexpr static const char* name = "ConversationLoaded";
         using cb_type = void(uint32_t /* id */,
@@ -98,7 +98,7 @@ struct DRING_PUBLIC ConversationSignal
                              const std::string& /* conversationId */,
                              std::vector<std::map<std::string, std::string>> /*messages*/);
     };
-    struct DRING_PUBLIC MessagesFound
+    struct LIBJAMI_PUBLIC MessagesFound
     {
         constexpr static const char* name = "MessagesFound";
         using cb_type = void(uint32_t /* id */,
@@ -106,46 +106,46 @@ struct DRING_PUBLIC ConversationSignal
                              const std::string& /* conversationId */,
                              std::vector<std::map<std::string, std::string>> /*messages*/);
     };
-    struct DRING_PUBLIC MessageReceived
+    struct LIBJAMI_PUBLIC MessageReceived
     {
         constexpr static const char* name = "MessageReceived";
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */,
                              std::map<std::string, std::string> /*message*/);
     };
-    struct DRING_PUBLIC ConversationProfileUpdated
+    struct LIBJAMI_PUBLIC ConversationProfileUpdated
     {
         constexpr static const char* name = "ConversationProfileUpdated";
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */,
                              std::map<std::string, std::string> /*profile*/);
     };
-    struct DRING_PUBLIC ConversationRequestReceived
+    struct LIBJAMI_PUBLIC ConversationRequestReceived
     {
         constexpr static const char* name = "ConversationRequestReceived";
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */,
                              std::map<std::string, std::string> /*metadatas*/);
     };
-    struct DRING_PUBLIC ConversationRequestDeclined
+    struct LIBJAMI_PUBLIC ConversationRequestDeclined
     {
         constexpr static const char* name = "ConversationRequestDeclined";
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */);
     };
-    struct DRING_PUBLIC ConversationReady
+    struct LIBJAMI_PUBLIC ConversationReady
     {
         constexpr static const char* name = "ConversationReady";
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */);
     };
-    struct DRING_PUBLIC ConversationRemoved
+    struct LIBJAMI_PUBLIC ConversationRemoved
     {
         constexpr static const char* name = "ConversationRemoved";
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */);
     };
-    struct DRING_PUBLIC ConversationMemberEvent
+    struct LIBJAMI_PUBLIC ConversationMemberEvent
     {
         constexpr static const char* name = "ConversationMemberEvent";
         using cb_type = void(const std::string& /*accountId*/,
@@ -154,13 +154,13 @@ struct DRING_PUBLIC ConversationSignal
                              int /* event 0 = add, 1 = joins, 2 = leave, 3 = banned */);
     };
 
-    struct DRING_PUBLIC ConversationSyncFinished
+    struct LIBJAMI_PUBLIC ConversationSyncFinished
     {
         constexpr static const char* name = "ConversationSyncFinished";
         using cb_type = void(const std::string& /*accountId*/);
     };
 
-    struct DRING_PUBLIC CallConnectionRequest
+    struct LIBJAMI_PUBLIC CallConnectionRequest
     {
         constexpr static const char* name = "CallConnectionRequest";
         using cb_type = void(const std::string& /*accountId*/,
@@ -168,7 +168,7 @@ struct DRING_PUBLIC ConversationSignal
                              bool hasVideo);
     };
 
-    struct DRING_PUBLIC OnConversationError
+    struct LIBJAMI_PUBLIC OnConversationError
     {
         constexpr static const char* name = "OnConversationError";
         using cb_type = void(const std::string& /*accountId*/,
@@ -178,6 +178,6 @@ struct DRING_PUBLIC ConversationSignal
     };
 };
 
-} // namespace DRing
+} // namespace libjami
 
-#endif // DRING_CONVERSATIONI_H
+#endif // LIBJAMI_CONVERSATIONI_H

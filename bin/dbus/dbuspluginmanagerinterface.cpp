@@ -28,26 +28,26 @@ DBusPluginManagerInterface::DBusPluginManagerInterface(DBus::Connection& connect
 bool
 DBusPluginManagerInterface::loadPlugin(const std::string& path)
 {
-    return DRing::loadPlugin(path);
+    return libjami::loadPlugin(path);
 }
 
 bool
 DBusPluginManagerInterface::unloadPlugin(const std::string& path)
 {
-    return DRing::unloadPlugin(path);
+    return libjami::unloadPlugin(path);
 }
 
 std::map<std::string, std::string>
 DBusPluginManagerInterface::getPluginDetails(const std::string& path)
 {
-    return DRing::getPluginDetails(path);
+    return libjami::getPluginDetails(path);
 }
 
 std::vector<std::map<std::string, std::string>>
 DBusPluginManagerInterface::getPluginPreferences(const std::string& path,
                                                  const std::string& accountId)
 {
-    return DRing::getPluginPreferences(path, accountId);
+    return libjami::getPluginPreferences(path, accountId);
 }
 
 bool
@@ -56,64 +56,64 @@ DBusPluginManagerInterface::setPluginPreference(const std::string& path,
                                                 const std::string& key,
                                                 const std::string& value)
 {
-    return DRing::setPluginPreference(path, accountId, key, value);
+    return libjami::setPluginPreference(path, accountId, key, value);
 }
 
 std::map<std::string, std::string>
 DBusPluginManagerInterface::getPluginPreferencesValues(const std::string& path,
                                                        const std::string& accountId)
 {
-    return DRing::getPluginPreferencesValues(path, accountId);
+    return libjami::getPluginPreferencesValues(path, accountId);
 }
 
 bool
 DBusPluginManagerInterface::resetPluginPreferencesValues(const std::string& path,
                                                          const std::string& accountId)
 {
-    return DRing::resetPluginPreferencesValues(path, accountId);
+    return libjami::resetPluginPreferencesValues(path, accountId);
 }
 
 auto
-DBusPluginManagerInterface::getInstalledPlugins() -> decltype(DRing::getInstalledPlugins())
+DBusPluginManagerInterface::getInstalledPlugins() -> decltype(libjami::getInstalledPlugins())
 {
-    return DRing::getInstalledPlugins();
+    return libjami::getInstalledPlugins();
 }
 
 auto
-DBusPluginManagerInterface::getLoadedPlugins() -> decltype(DRing::getLoadedPlugins())
+DBusPluginManagerInterface::getLoadedPlugins() -> decltype(libjami::getLoadedPlugins())
 {
-    return DRing::getLoadedPlugins();
+    return libjami::getLoadedPlugins();
 }
 
 int
 DBusPluginManagerInterface::installPlugin(const std::string& jplPath, const bool& force)
 {
-    return DRing::installPlugin(jplPath, force);
+    return libjami::installPlugin(jplPath, force);
 }
 
 int
 DBusPluginManagerInterface::uninstallPlugin(const std::string& pluginRootPath)
 {
-    return DRing::uninstallPlugin(pluginRootPath);
+    return libjami::uninstallPlugin(pluginRootPath);
 }
 
 auto
-DBusPluginManagerInterface::getCallMediaHandlers() -> decltype(DRing::getCallMediaHandlers())
+DBusPluginManagerInterface::getCallMediaHandlers() -> decltype(libjami::getCallMediaHandlers())
 {
-    return DRing::getCallMediaHandlers();
+    return libjami::getCallMediaHandlers();
 }
 
 auto
-DBusPluginManagerInterface::getChatHandlers() -> decltype(DRing::getChatHandlers())
+DBusPluginManagerInterface::getChatHandlers() -> decltype(libjami::getChatHandlers())
 {
-    return DRing::getChatHandlers();
+    return libjami::getChatHandlers();
 }
 void
 DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& mediaHandlerId,
                                                    const std::string& callId,
                                                    const bool& toggle)
 {
-    DRing::toggleCallMediaHandler(mediaHandlerId, callId, toggle);
+    libjami::toggleCallMediaHandler(mediaHandlerId, callId, toggle);
 }
 
 void
@@ -122,44 +122,44 @@ DBusPluginManagerInterface::toggleChatHandler(const std::string& chatHandlerId,
                                               const std::string& peerId,
                                               const bool& toggle)
 {
-    DRing::toggleChatHandler(chatHandlerId, accountId, peerId, toggle);
+    libjami::toggleChatHandler(chatHandlerId, accountId, peerId, toggle);
 }
 
 std::map<std::string, std::string>
 DBusPluginManagerInterface::getCallMediaHandlerDetails(const std::string& mediaHanlderId)
 {
-    return DRing::getCallMediaHandlerDetails(mediaHanlderId);
+    return libjami::getCallMediaHandlerDetails(mediaHanlderId);
 }
 
 std::vector<std::string>
 DBusPluginManagerInterface::getCallMediaHandlerStatus(const std::string& callId)
 {
-    return DRing::getCallMediaHandlerStatus(callId);
+    return libjami::getCallMediaHandlerStatus(callId);
 }
 
 std::map<std::string, std::string>
 DBusPluginManagerInterface::getChatHandlerDetails(const std::string& chatHanlderId)
 {
-    return DRing::getChatHandlerDetails(chatHanlderId);
+    return libjami::getChatHandlerDetails(chatHanlderId);
 }
 
 std::vector<std::string>
 DBusPluginManagerInterface::getChatHandlerStatus(const std::string& accountId,
                                                  const std::string& peerId)
 {
-    return DRing::getChatHandlerStatus(accountId, peerId);
+    return libjami::getChatHandlerStatus(accountId, peerId);
 }
 
 bool
 DBusPluginManagerInterface::getPluginsEnabled()
 {
-    return DRing::getPluginsEnabled();
+    return libjami::getPluginsEnabled();
 }
 
 void
 DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
 {
-    DRing::setPluginsEnabled(state);
+    libjami::setPluginsEnabled(state);
 }
 
 void
@@ -168,7 +168,7 @@ DBusPluginManagerInterface::sendWebViewMessage(const std::string& pluginId,
                                                const std::string& messageId,
                                                const std::string& payload)
 {
-    DRing::sendWebViewAttach(pluginId, webViewId, messageId, payload);
+    libjami::sendWebViewAttach(pluginId, webViewId, messageId, payload);
 }
 
 std::string
@@ -177,12 +177,12 @@ DBusPluginManagerInterface::sendWebViewAttach(const std::string& pluginId,
                                               const std::string& webViewId,
                                               const std::string& action)
 {
-    return DRing::sendWebViewAttach(pluginId, accountId, webViewId, action);
+    return libjami::sendWebViewAttach(pluginId, accountId, webViewId, action);
 }
 
 void
 DBusPluginManagerInterface::sendWebViewDetach(const std::string& pluginId,
                                               const std::string& webViewId)
 {
-    DRing::sendWebViewDetach(pluginId, webViewId);
+    libjami::sendWebViewDetach(pluginId, webViewId);
 }

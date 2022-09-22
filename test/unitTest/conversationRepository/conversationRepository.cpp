@@ -41,7 +41,7 @@
 #include <filesystem>
 
 using namespace std::string_literals;
-using namespace DRing::Account;
+using namespace libjami::Account;
 
 namespace jami {
 namespace test {
@@ -52,11 +52,11 @@ public:
     ConversationRepositoryTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~ConversationRepositoryTest() { DRing::fini(); }
+    ~ConversationRepositoryTest() { libjami::fini(); }
     static std::string name() { return "ConversationRepository"; }
     void setUp();
     void tearDown();

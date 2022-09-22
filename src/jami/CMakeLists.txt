@@ -1,7 +1,7 @@
 ################################################################################
-# Source groups - dring
+# Source groups - libjami
 ################################################################################
-list (APPEND Source_Files__dring
+list (APPEND Source_Files__libjami
       "${CMAKE_CURRENT_SOURCE_DIR}/account_const.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/call_const.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/callmanager_interface.h"
@@ -17,4 +17,4 @@ list (APPEND Source_Files__dring
       "${CMAKE_CURRENT_SOURCE_DIR}/videomanager_interface.h"
 )
 
-set (Source_Files__dring ${Source_Files__dring} PARENT_SCOPE)
+set (Source_Files__libjami ${Source_Files__libjami} PARENT_SCOPE)

@@ -35,7 +35,7 @@
 #include "account_const.h"
 #include "common.h"
 
-using namespace DRing::Account;
+using namespace libjami::Account;
 
 namespace jami {
 namespace test {
@@ -46,11 +46,11 @@ public:
     FileTransferTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~FileTransferTest() { DRing::fini(); }
+    ~FileTransferTest() { libjami::fini(); }
     static std::string name() { return "Call"; }
     bool compare(const std::string& fileA, const std::string& fileB) const;
     void setUp();
@@ -139,29 +139,29 @@ FileTransferTest::testFileTransfer()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::condition_variable cv2;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool transferWaiting = false, transferFinished = false;
     std::string finalId;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string&,
             const std::string&,
             const std::string& fileId,
             int code) {
             if (accountId == bobId
-                && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
+                && code == static_cast<int>(libjami::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
                 finalId = fileId;
                 cv.notify_one();
             } else if (accountId == aliceId
-                       && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+                       && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
                 transferFinished = true;
                 finalId = fileId;
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     // Create file to send
     auto sendVcfPath = sendPath + ".vcf";
@@ -172,20 +172,20 @@ FileTransferTest::testFileTransfer()
     sendFile.close();
 
     // Send File
-    DRing::DataTransferInfo info;
+    libjami::DataTransferInfo info;
     uint64_t id;
     info.accountId = aliceAccount->getAccountID();
     info.peer = bobUri;
     info.path = sendVcfPath;
     info.displayName = "SEND.vcf";
     info.bytesProgress = 0;
-    CPPUNIT_ASSERT(DRing::sendFileLegacy(info, id) == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::sendFileLegacy(info, id) == libjami::DataTransferError::success);
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(transferWaiting);
 
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, finalId, recvVcfPath)
-                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::acceptFileTransfer(bobId, finalId, recvVcfPath)
+                   == libjami::DataTransferError::success);
 
     // Wait 2 times, both sides will got a finished status
     cv.wait_for(lk, std::chrono::seconds(30));
@@ -212,29 +212,29 @@ FileTransferTest::testDataTransferInfo()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::condition_variable cv2;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool transferWaiting = false, transferFinished = false;
     std::string finalId;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string&,
             const std::string&,
             const std::string& fileId,
             int code) {
             if (accountId == bobId
-                && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
+                && code == static_cast<int>(libjami::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
                 finalId = fileId;
                 cv.notify_one();
             } else if (accountId == aliceId
-                       && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+                       && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
                 transferFinished = true;
                 finalId = fileId;
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -243,34 +243,34 @@ FileTransferTest::testDataTransferInfo()
     sendFile.close();
 
     // Send File
-    DRing::DataTransferInfo info;
+    libjami::DataTransferInfo info;
     uint64_t id;
     info.accountId = aliceAccount->getAccountID();
     info.peer = bobUri;
     info.path = sendPath;
     info.displayName = "SEND";
     info.bytesProgress = 0;
-    CPPUNIT_ASSERT(DRing::sendFileLegacy(info, id) == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::sendFileLegacy(info, id) == libjami::DataTransferError::success);
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(transferWaiting);
 
-    CPPUNIT_ASSERT(DRing::dataTransferInfo(bobId, std::to_string(id), info)
-                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::dataTransferInfo(bobId, std::to_string(id), info)
+                   == libjami::DataTransferError::success);
 
-    CPPUNIT_ASSERT(info.lastEvent == DRing::DataTransferEventCode::wait_host_acceptance);
+    CPPUNIT_ASSERT(info.lastEvent == libjami::DataTransferEventCode::wait_host_acceptance);
     CPPUNIT_ASSERT(info.bytesProgress == 0);
     CPPUNIT_ASSERT(info.totalSize == 64000);
 
-    CPPUNIT_ASSERT(DRing::dataTransferInfo(aliceId, std::to_string(id), info)
-                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::dataTransferInfo(aliceId, std::to_string(id), info)
+                   == libjami::DataTransferError::success);
 
-    CPPUNIT_ASSERT(info.lastEvent == DRing::DataTransferEventCode::wait_peer_acceptance);
+    CPPUNIT_ASSERT(info.lastEvent == libjami::DataTransferEventCode::wait_peer_acceptance);
     CPPUNIT_ASSERT(info.bytesProgress == 0);
     CPPUNIT_ASSERT(info.totalSize == 64000);
 
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, finalId, recvPath)
-                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::acceptFileTransfer(bobId, finalId, recvPath)
+                   == libjami::DataTransferError::success);
 
     // Wait 2 times, both sides will got a finished status
     cv.wait_for(lk, std::chrono::seconds(30));
@@ -279,10 +279,10 @@ FileTransferTest::testDataTransferInfo()
 
     CPPUNIT_ASSERT(compare(info.path, recvPath));
 
-    CPPUNIT_ASSERT(DRing::dataTransferInfo(bobId, std::to_string(id), info)
-                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::dataTransferInfo(bobId, std::to_string(id), info)
+                   == libjami::DataTransferError::success);
 
-    CPPUNIT_ASSERT(info.lastEvent == DRing::DataTransferEventCode::finished);
+    CPPUNIT_ASSERT(info.lastEvent == libjami::DataTransferEventCode::finished);
     CPPUNIT_ASSERT(info.bytesProgress == 64000);
     CPPUNIT_ASSERT(info.totalSize == 64000);
 
@@ -304,29 +304,29 @@ FileTransferTest::testMultipleFileTransfer()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::condition_variable cv2;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool transferWaiting = false, transferFinished = false;
     std::string finalId;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string&,
             const std::string&,
             const std::string& fileId,
             int code) {
             if (accountId == bobId
-                && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
+                && code == static_cast<int>(libjami::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
                 finalId = fileId;
                 cv.notify_one();
             } else if (accountId == aliceId
-                       && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+                       && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
                 transferFinished = true;
                 finalId = fileId;
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -340,21 +340,21 @@ FileTransferTest::testMultipleFileTransfer()
     sendFile2.close();
 
     // Send first File
-    DRing::DataTransferInfo info;
+    libjami::DataTransferInfo info;
     uint64_t id;
     info.accountId = aliceAccount->getAccountID();
     info.peer = bobUri;
     info.path = sendPath;
     info.displayName = "SEND";
     info.bytesProgress = 0;
-    CPPUNIT_ASSERT(DRing::sendFileLegacy(info, id) == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::sendFileLegacy(info, id) == libjami::DataTransferError::success);
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(transferWaiting);
     transferWaiting = false;
 
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, finalId, recvPath)
-                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::acceptFileTransfer(bobId, finalId, recvPath)
+                   == libjami::DataTransferError::success);
 
     // Wait 2 times, both sides will got a finished status
     cv.wait_for(lk, std::chrono::seconds(30));
@@ -364,19 +364,19 @@ FileTransferTest::testMultipleFileTransfer()
     CPPUNIT_ASSERT(compare(info.path, recvPath));
 
     // Send File
-    DRing::DataTransferInfo info2;
+    libjami::DataTransferInfo info2;
     info2.accountId = aliceAccount->getAccountID();
     info2.peer = bobUri;
     info2.path = sendPath2;
     info2.displayName = "SEND2";
     info2.bytesProgress = 0;
-    CPPUNIT_ASSERT(DRing::sendFileLegacy(info2, id) == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::sendFileLegacy(info2, id) == libjami::DataTransferError::success);
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(transferWaiting);
 
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, finalId, recv2Path)
-                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::acceptFileTransfer(bobId, finalId, recv2Path)
+                   == libjami::DataTransferError::success);
 
     // Wait 2 times, both sides will got a finished status
     cv.wait_for(lk, std::chrono::seconds(30));
@@ -407,7 +407,7 @@ FileTransferTest::testConversationFileTransfer()
     Manager::instance().sendRegister(carlaId, true);
     wait_for_announcement_of(carlaId);
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
@@ -417,7 +417,7 @@ FileTransferTest::testConversationFileTransfer()
     std::string tidBob, tidCarla, iidBob, iidCarla;
     std::string hostAcceptanceBob = {}, hostAcceptanceCarla = {};
     std::vector<std::string> peerAcceptance = {}, finished = {};
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -436,7 +436,7 @@ FileTransferTest::testConversationFileTransfer()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
@@ -444,13 +444,13 @@ FileTransferTest::testConversationFileTransfer()
                 if (requestReceived >= 2)
                     cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
             conversationReady += 1;
             if (conversationReady >= 3)
                 cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
@@ -458,31 +458,31 @@ FileTransferTest::testConversationFileTransfer()
             int code) {
             if (conversationId.empty())
                 return;
-            if (code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
+            if (code == static_cast<int>(libjami::DataTransferEventCode::wait_host_acceptance)) {
                 if (accountId == bobId)
                     hostAcceptanceBob = fileId;
                 else if (accountId == carlaId)
                     hostAcceptanceCarla = fileId;
                 cv.notify_one();
             } else if (code
-                       == static_cast<int>(DRing::DataTransferEventCode::wait_peer_acceptance)) {
+                       == static_cast<int>(libjami::DataTransferEventCode::wait_peer_acceptance)) {
                 peerAcceptance.emplace_back(fileId);
                 cv.notify_one();
-            } else if (code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+            } else if (code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
                 finished.emplace_back(fileId);
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
-    DRing::addConversationMember(aliceId, convId, carlaUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, carlaUri);
     cv.wait_for(lk, std::chrono::seconds(60), [&]() { return requestReceived == 2; });
 
-    DRing::acceptConversationRequest(bobId, convId);
-    DRing::acceptConversationRequest(carlaId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(carlaId, convId);
     cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady == 3 && memberJoined == 2;
     });
@@ -493,14 +493,14 @@ FileTransferTest::testConversationFileTransfer()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(45), [&]() {
         return !tidBob.empty() && !tidCarla.empty();
     }));
 
-    DRing::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
-    DRing::downloadFile(carlaId, convId, iidCarla, tidCarla, recv2Path);
+    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
+    libjami::downloadFile(carlaId, convId, iidCarla, tidCarla, recv2Path);
 
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(45), [&]() { return finished.size() == 3; }));
@@ -509,7 +509,7 @@ FileTransferTest::testConversationFileTransfer()
     std::remove(recvPath.c_str());
     std::remove(recv2Path.c_str());
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -519,17 +519,17 @@ FileTransferTest::testFileTransferInConversation()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
     bool bobJoined = false;
     std::string tidBob, iidBob;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -545,14 +545,14 @@ FileTransferTest::testFileTransferInConversation()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -561,13 +561,13 @@ FileTransferTest::testFileTransferInConversation()
         }));
     bool transferAFinished = false, transferBFinished = false;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
             const std::string&,
             int code) {
-            if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
+            if (code == static_cast<int>(libjami::DataTransferEventCode::finished)
                 && conversationId == convId) {
                 if (accountId == aliceId)
                     transferAFinished = true;
@@ -576,12 +576,12 @@ FileTransferTest::testFileTransferInConversation()
             }
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && bobJoined;
     }));
@@ -592,20 +592,20 @@ FileTransferTest::testFileTransferInConversation()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
+    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return transferAFinished && transferBFinished;
     }));
 
     std::remove(sendPath.c_str());
     std::remove(recvPath.c_str());
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
@@ -616,17 +616,17 @@ FileTransferTest::testVcfFileTransferInConversation()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
     bool bobJoined = false;
     std::string tidBob, iidBob;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -642,14 +642,14 @@ FileTransferTest::testVcfFileTransferInConversation()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -658,13 +658,13 @@ FileTransferTest::testVcfFileTransferInConversation()
         }));
     bool transferAFinished = false, transferBFinished = false;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
             const std::string&,
             int code) {
-            if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
+            if (code == static_cast<int>(libjami::DataTransferEventCode::finished)
                 && conversationId == convId) {
                 if (accountId == aliceId)
                     transferAFinished = true;
@@ -673,12 +673,12 @@ FileTransferTest::testVcfFileTransferInConversation()
             }
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && bobJoined;
     }));
@@ -689,20 +689,20 @@ FileTransferTest::testVcfFileTransferInConversation()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
+    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return transferAFinished && transferBFinished;
     }));
 
     std::remove(sendPath.c_str());
     std::remove(recvPath.c_str());
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
@@ -713,17 +713,17 @@ FileTransferTest::testBadSha3sumOut()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
     bool memberJoin = false;
     std::string mid = {}, iid;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -736,14 +736,14 @@ FileTransferTest::testBadSha3sumOut()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -752,14 +752,14 @@ FileTransferTest::testBadSha3sumOut()
         }));
     bool transferAFinished = false, transferBFinished = false;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
             const std::string&,
             int code) {
             if (conversationId == convId
-                && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+                && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
                 if (accountId == aliceId)
                     transferAFinished = true;
                 if (accountId == bobId)
@@ -768,7 +768,7 @@ FileTransferTest::testBadSha3sumOut()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationMemberEvent>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 const std::string& uri,
@@ -779,12 +779,12 @@ FileTransferTest::testBadSha3sumOut()
                 }
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && memberJoin;
     }));
@@ -795,7 +795,7 @@ FileTransferTest::testBadSha3sumOut()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !mid.empty(); }));
 
@@ -807,7 +807,7 @@ FileTransferTest::testBadSha3sumOut()
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, iid, mid, recvPath);
+    libjami::downloadFile(bobId, convId, iid, mid, recvPath);
 
     // The file transfer will not be sent as modified
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() {
@@ -815,7 +815,7 @@ FileTransferTest::testBadSha3sumOut()
     }));
 
     std::remove(sendPath.c_str());
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -825,17 +825,17 @@ FileTransferTest::testBadSha3sumIn()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
     bool memberJoin = false;
     std::string mid = {}, iid;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -848,14 +848,14 @@ FileTransferTest::testBadSha3sumIn()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -864,14 +864,14 @@ FileTransferTest::testBadSha3sumIn()
         }));
     bool transferAFinished = false, transferBFinished = false;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
             const std::string&,
             int code) {
             if (conversationId == convId
-                && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+                && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
                 if (accountId == aliceId)
                     transferAFinished = true;
                 if (accountId == bobId)
@@ -880,7 +880,7 @@ FileTransferTest::testBadSha3sumIn()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationMemberEvent>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 const std::string& uri,
@@ -891,12 +891,12 @@ FileTransferTest::testBadSha3sumIn()
                 }
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
         return conversationReady && memberJoin;
     }));
@@ -908,7 +908,7 @@ FileTransferTest::testBadSha3sumIn()
     sendFile.close();
 
     aliceAccount->noSha3sumVerification(true);
-    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !mid.empty(); }));
 
     // modifiy file
@@ -920,14 +920,14 @@ FileTransferTest::testBadSha3sumIn()
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, iid, mid, recvPath);
+    libjami::downloadFile(bobId, convId, iid, mid, recvPath);
 
     // The file transfer will be sent but refused by bob
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferAFinished; }));
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
 
     std::remove(sendPath.c_str());
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -939,17 +939,17 @@ FileTransferTest::testAskToMultipleParticipants()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto carlaUri = carlaAccount->getUsername();
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
     bool memberJoin = false;
     std::string bobTid, carlaTid, iidBob, iidCarla;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -965,14 +965,14 @@ FileTransferTest::testAskToMultipleParticipants()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId || accountId == carlaId) {
                 conversationReady = true;
@@ -981,14 +981,14 @@ FileTransferTest::testAskToMultipleParticipants()
         }));
     bool transferBFinished = false, transferCFinished = false;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
             const std::string&,
             int code) {
             if (conversationId == convId
-                && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+                && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
                 if (accountId == carlaId)
                     transferCFinished = true;
                 if (accountId == bobId)
@@ -997,7 +997,7 @@ FileTransferTest::testAskToMultipleParticipants()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationMemberEvent>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 const std::string& uri,
@@ -1008,12 +1008,12 @@ FileTransferTest::testAskToMultipleParticipants()
                 }
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
         return conversationReady && memberJoin;
     }));
@@ -1022,10 +1022,10 @@ FileTransferTest::testAskToMultipleParticipants()
     conversationReady = false;
     memberJoin = false;
 
-    DRing::addConversationMember(aliceId, convId, carlaUri);
+    libjami::addConversationMember(aliceId, convId, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(carlaId, convId);
+    libjami::acceptConversationRequest(carlaId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
         return conversationReady && memberJoin;
     }));
@@ -1036,26 +1036,26 @@ FileTransferTest::testAskToMultipleParticipants()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return !bobTid.empty() && !carlaTid.empty();
     }));
 
     transferCFinished = false;
-    DRing::downloadFile(carlaId, convId, iidCarla, carlaTid, recv2Path);
+    libjami::downloadFile(carlaId, convId, iidCarla, carlaTid, recv2Path);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferCFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile(recv2Path));
 
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, iidBob, bobTid, recvPath);
+    libjami::downloadFile(bobId, convId, iidBob, bobTid, recvPath);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile(recvPath));
 
     std::remove(sendPath.c_str());
     std::remove(recvPath.c_str());
     std::remove(recv2Path.c_str());
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -1065,17 +1065,17 @@ FileTransferTest::testCancelInTransfer()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
     bool bobJoined = false;
     std::string tidBob, iidBob;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -1091,14 +1091,14 @@ FileTransferTest::testCancelInTransfer()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -1107,29 +1107,29 @@ FileTransferTest::testCancelInTransfer()
         }));
     bool transferBOngoing = false, transferBCancelled = false;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
             const std::string&,
             int code) {
-            if (code == static_cast<int>(DRing::DataTransferEventCode::ongoing)
+            if (code == static_cast<int>(libjami::DataTransferEventCode::ongoing)
                 && conversationId == convId) {
                 if (accountId == bobId)
                     transferBOngoing = true;
-            } else if (code > static_cast<int>(DRing::DataTransferEventCode::finished)
+            } else if (code > static_cast<int>(libjami::DataTransferEventCode::finished)
                        && conversationId == convId) {
                 if (accountId == bobId)
                     transferBCancelled = true;
             }
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && bobJoined;
     }));
@@ -1140,21 +1140,21 @@ FileTransferTest::testCancelInTransfer()
     sendFile << std::string(640000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
     transferBOngoing = false;
-    CPPUNIT_ASSERT(DRing::downloadFile(bobId, convId, iidBob, tidBob, recvPath));
+    CPPUNIT_ASSERT(libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBOngoing; }));
     transferBCancelled = false;
-    DRing::cancelDataTransfer(bobId, convId, tidBob);
+    libjami::cancelDataTransfer(bobId, convId, tidBob);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBCancelled; }));
     CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(tidBob));
 
     std::remove(sendPath.c_str());
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -1164,17 +1164,17 @@ FileTransferTest::testTransferInfo()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
     bool bobJoined = false;
     std::string tidBob, iidBob;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -1190,14 +1190,14 @@ FileTransferTest::testTransferInfo()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -1206,13 +1206,13 @@ FileTransferTest::testTransferInfo()
         }));
     bool transferAFinished = false, transferBFinished = false;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
             const std::string&,
             int code) {
-            if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
+            if (code == static_cast<int>(libjami::DataTransferEventCode::finished)
                 && conversationId == convId) {
                 if (accountId == aliceId)
                     transferAFinished = true;
@@ -1221,12 +1221,12 @@ FileTransferTest::testTransferInfo()
             }
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && bobJoined;
     }));
@@ -1237,25 +1237,25 @@ FileTransferTest::testTransferInfo()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
     int64_t totalSize, bytesProgress;
     std::string path;
-    CPPUNIT_ASSERT(DRing::fileTransferInfo(bobId, convId, tidBob, path, totalSize, bytesProgress)
-                   == DRing::DataTransferError::invalid_argument);
+    CPPUNIT_ASSERT(libjami::fileTransferInfo(bobId, convId, tidBob, path, totalSize, bytesProgress)
+                   == libjami::DataTransferError::invalid_argument);
     CPPUNIT_ASSERT(bytesProgress == 0);
     CPPUNIT_ASSERT(!fileutils::isFile(path));
     // No check for total as not started
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
+    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return transferAFinished && transferBFinished;
     }));
-    CPPUNIT_ASSERT(DRing::fileTransferInfo(bobId, convId, tidBob, path, totalSize, bytesProgress)
-                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(libjami::fileTransferInfo(bobId, convId, tidBob, path, totalSize, bytesProgress)
+                   == libjami::DataTransferError::success);
 
     CPPUNIT_ASSERT(bytesProgress == 64000);
     CPPUNIT_ASSERT(totalSize == 64000);
@@ -1263,7 +1263,7 @@ FileTransferTest::testTransferInfo()
 
     std::remove(sendPath.c_str());
     std::remove(recvPath.c_str());
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
