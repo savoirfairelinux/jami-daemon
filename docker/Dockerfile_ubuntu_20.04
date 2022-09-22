@@ -73,7 +73,10 @@ RUN add-apt-repository universe && \
         libasio-dev \
         libexpat1 libexpat1-dev \
         lcov gcovr \
-        ninja-build
+        ninja-build \
+        guile-3.0-dev \
+        guile-3.0-libs \
+        guile-3.0
 
 RUN apt-get install -y python3 python3-pip python3-setuptools \
                        python3-wheel
