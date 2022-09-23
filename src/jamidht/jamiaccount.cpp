@@ -1175,7 +1175,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             });
         },
         [this](const std::string& conversationId) {
-            // Note: Do not retrigger on another thread. This as to be done
+            // Note: Do not retrigger on another thread. This has to be done
             // at the same time of acceptTrustRequest a synced state between TrustRequest
             // and convRequests.
             convModule()->acceptConversationRequest(conversationId);
