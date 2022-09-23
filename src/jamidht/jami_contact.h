@@ -73,6 +73,7 @@ struct Contact
         const auto copy = *this;
         if (c.added > added) {
             added = c.added;
+            conversationId = c.conversationId;
         }
         if (c.removed > removed) {
             removed = c.removed;
@@ -80,6 +81,9 @@ struct Contact
         }
         if (c.confirmed != confirmed) {
             confirmed = c.confirmed or confirmed;
+        }
+        if (c.isActive() and conversationId.empty() and not c.conversationId.empty()) {
+            conversationId = c.conversationId;
         }
         return hasDifferentState(copy);
     }
