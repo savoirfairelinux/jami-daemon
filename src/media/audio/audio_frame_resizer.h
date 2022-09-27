@@ -81,6 +81,13 @@ public:
      */
     std::shared_ptr<AudioFrame> dequeue();
 
+    /**
+     * Flush all frames from fifo
+     *
+     * @param force Force flush if no cb_ defined
+     */
+    void flush(bool force);
+
 private:
     NON_COPYABLE(AudioFrameResizer);
 

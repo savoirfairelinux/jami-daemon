@@ -115,14 +115,31 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
     // queue reallocates itself if need be
     if ((ret = av_audio_fifo_write(queue_, reinterpret_cast<void**>(f->data), f->nb_samples)) < 0) {
         JAMI_ERR() << "Audio resizer error: " << libav_utils::getError(ret);
-        throw std::runtime_error("Failed to add audio to frame resizer");
+        if (ret == -EINVAL) { // BUFFER SIZE LIMIT REACHED;
+            // flush buffer
+            flush(true);
+            // add present frame
+            // throw if fails twice
+            if ((ret = av_audio_fifo_write(queue_, reinterpret_cast<void**>(f->data), f->nb_samples)) < 0)
+                throw std::runtime_error("Failed to add audio to frame resizer");
+        } else {
+            throw std::runtime_error("Failed to add audio to frame resizer");
+        }
     }
 
     if (nextOutputPts_ == 0)
         nextOutputPts_ = frame->pointer()->pts - nb_samples;
 
-    if (cb_)
-        while (auto frame = dequeue())
+    flush(false);
+}
+
+void
+AudioFrameResizer::flush(bool force)
+{
+    if (!cb_ && !force)
+        return;
+    while (auto frame = dequeue())
+        if (cb_)
             cb_(std::move(frame));
 }
 

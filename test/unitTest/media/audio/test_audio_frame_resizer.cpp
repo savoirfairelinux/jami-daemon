@@ -38,11 +38,15 @@ class AudioFrameResizerTest : public CppUnit::TestFixture {
 public:
     static std::string name() { return "audio_frame_resizer"; }
 
+    void setUp();
+    void tearDown();
+
 private:
     void testSameSize();
     void testBiggerInput();
     void testBiggerOutput();
     void testDifferentFormat();
+    void testBufferOverflow();
 
     void gotFrame(std::shared_ptr<AudioFrame>&& framePtr);
     std::shared_ptr<AudioFrame> getFrame(int n);
@@ -52,6 +56,7 @@ private:
     CPPUNIT_TEST(testBiggerInput);
     CPPUNIT_TEST(testBiggerOutput);
     CPPUNIT_TEST(testDifferentFormat);
+    CPPUNIT_TEST(testBufferOverflow);
     CPPUNIT_TEST_SUITE_END();
 
     std::shared_ptr<AudioFrameResizer> q_;
@@ -60,6 +65,18 @@ private:
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioFrameResizerTest, AudioFrameResizerTest::name());
+
+void
+AudioFrameResizerTest::setUp()
+{
+    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+}
+
+void
+AudioFrameResizerTest::tearDown()
+{
+    DRing::fini();
+}
 
 void
 AudioFrameResizerTest::gotFrame(std::shared_ptr<AudioFrame>&& framePtr)
@@ -127,6 +144,23 @@ AudioFrameResizerTest::testDifferentFormat()
     CPPUNIT_ASSERT(q_->samples()==outputSize_-27);
     q_->setFormat(AudioFormat::MONO(), 960);
     CPPUNIT_ASSERT(q_->samples() == 0);
+}
+
+void
+AudioFrameResizerTest::testBufferOverflow()
+{
+    // input.nb_samples > INT_MAX
+    q_.reset(new AudioFrameResizer(format_, outputSize_));
+    // gotFrame should be called after this
+    auto n = 0;
+    // 393215 is the number of frames (sized 960) that makes the buffer
+    // reach ffmpeg limit
+    auto frames2Overflow = 393215;
+    while (n < frames2Overflow) {
+        auto in = getFrame(outputSize_);
+        CPPUNIT_ASSERT_NO_THROW(q_->enqueue(std::move(in)));
+        n++;
+    }
 }
 
 }} // namespace jami::test
