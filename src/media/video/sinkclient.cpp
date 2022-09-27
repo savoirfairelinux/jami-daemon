@@ -362,6 +362,12 @@ SinkClient::sendFrameTransformed(AVFrame* frame)
 {
     if (frame->width > 0 and frame->height > 0) {
         if (auto buffer_ptr = target_.pull()) {
+            // If we don't share a synchronization primitive with the target
+            // and queue DecodingStarted signals into some event loop, then
+            // we may catch mismatched frames.
+            if (frame->height != buffer_ptr->height || frame->width != buffer_ptr->width) {
+                return;
+            }
             scaler_->scale(frame, buffer_ptr.get());
             target_.push(std::move(buffer_ptr));
         }
