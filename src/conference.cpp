@@ -54,11 +54,12 @@ using namespace std::literals;
 
 namespace jami {
 
-Conference::Conference(const std::shared_ptr<Account>& account)
+Conference::Conference(const std::shared_ptr<Account>& account, bool attachHost)
     : id_(Manager::instance().callFactory.getNewCallID())
     , account_(account)
 #ifdef ENABLE_VIDEO
     , videoEnabled_(account->isVideoEnabled())
+    , attachHost_(attachHost)
 #endif
 {
     /** NOTE:
@@ -91,8 +92,8 @@ Conference::Conference(const std::shared_ptr<Account>& account)
     auto itVideo = std::find_if(hostSources_.begin(), hostSources_.end(), [&](auto attr) {
         return attr.type_ == MediaType::MEDIA_VIDEO;
     });
-    // We are done if the video is disabled.
-    auto hasVideo = videoEnabled_ && itVideo != hostSources_.end();
+    // Only set host source if creating conference from joining calls
+    auto hasVideo = videoEnabled_ && itVideo != hostSources_.end() && attachHost_;
     auto source = hasVideo ? itVideo->sourceUri_ : "";
     videoMixer_ = std::make_shared<video::VideoMixer>(id_, source, hasVideo);
     videoMixer_->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
