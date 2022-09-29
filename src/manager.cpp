@@ -2536,7 +2536,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
             }
 
             // First call
-            auto conf = std::make_shared<Conference>(account);
+            auto conf = std::make_shared<Conference>(account, false);
             account->attach(conf);
             emitSignal<DRing::CallSignal::ConferenceCreated>(account->getAccountID(),
                                                              conf->getConfId());

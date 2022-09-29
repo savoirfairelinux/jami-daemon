@@ -399,6 +399,10 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
+    // ensure that start has been called before restart
+    if (not socketPair_)
+        return;
+
     // Sender
     if (dir == Direction::SEND) {
         if (send_.onHold == mute) {
@@ -512,8 +516,9 @@ VideoRtpSession::enterConference(Conference& conference)
         // Restart encoder with conference parameter ON in order to unlink HW encoder
         // from HW decoder.
         restartSender();
-        setupConferenceVideoPipeline(conference, Direction::SEND);
-        setupConferenceVideoPipeline(conference, Direction::RECV);
+        if (conference_) {
+            setupConferenceVideoPipeline(conference, Direction::RECV);
+        }
     }
 }
 
