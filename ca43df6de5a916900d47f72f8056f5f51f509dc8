@@ -16,6 +16,24 @@
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027size_t\u0027 (aka \u0027unsigned long\u0027) but the argument has type \u0027Json::Value::ArrayIndex\u0027 (aka \u0027unsigned int\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
       "revId": "ca43df6de5a916900d47f72f8056f5f51f509dc8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "854ae0c8_4954fc51",
+        "filename": "src/im/message_engine.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-09-29T16:12:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6a1480f2_d1f39b0e",
+      "revId": "ca43df6de5a916900d47f72f8056f5f51f509dc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
