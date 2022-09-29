@@ -192,7 +192,7 @@ public:
     /**
      * Constructor for this class, increment static counter
      */
-    explicit Conference(const std::shared_ptr<Account>&);
+    explicit Conference(const std::shared_ptr<Account>&, bool attachHost = true);
 
     /**
      * Destructor for this class, decrement static counter
@@ -429,6 +429,8 @@ private:
     std::set<std::string, std::less<>> moderators_ {};
     std::set<std::string, std::less<>> participantsMuted_ {};
     std::set<std::string, std::less<>> handsRaised_;
+
+    bool attachHost_;
 
     // stream IDs
     std::set<std::string, std::less<>> streamsVoiceActive {};
