@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "672f9232_7bba5865",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-09-30T19:01:04Z",
+      "side": 1,
+      "message": "Guile bindings require version 3.0.7 which is only available on Ubuntu 22.04",
+      "revId": "807c4b6d2ee624be60eab0db0ce2c6ef612fdaa3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
