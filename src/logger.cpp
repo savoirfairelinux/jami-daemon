@@ -163,7 +163,12 @@ contextHeader(const char* const file, int line)
     }
 
     if (file) {
-        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <24s}:{: <4d}] "), secs, milli, tid, stripDirName(file), line);
+        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <24s}:{: <4d}] "),
+                           secs,
+                           milli,
+                           tid,
+                           stripDirName(file),
+                           line);
     } else {
         return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}] "), secs, milli, tid);
     }
@@ -185,7 +190,7 @@ formatPrintfArgs(const char* format, va_list ap)
     int size = vsnprintf(ret.data(), ret.size(), format, ap);
 
     /* Not enough space?  Well try again. */
-    if ((size_t)size >= ret.size()) {
+    if ((size_t) size >= ret.size()) {
         ret.resize(size + 1);
         vsnprintf((char*) ret.data(), ret.size(), format, cp);
     }
@@ -215,7 +220,7 @@ struct Logger::Msg
         , linefeed_(linefeed)
     {}
 
-    Msg(Msg&& other)
+    Msg(Msg&& other) noexcept
     {
         payload_ = std::move(other.payload_);
         header_ = std::move(other.header_);
@@ -257,6 +262,12 @@ public:
 #ifdef _WIN32
     void printLogImpl(jami::Logger::Msg& msg, bool with_color)
     {
+        static const bool debuggerPresent = IsDebuggerPresent();
+        if (debuggerPresent) {
+            OutputDebugStringA((msg.header_ + msg.payload_ + "\n").c_str());
+            return;
+        }
+
         WORD saved_attributes;
         static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         if (with_color) {
@@ -347,6 +358,8 @@ Logger::setConsoleLog(bool en)
 {
     ConsoleLog::instance().enable(en);
 #ifdef _WIN32
+    if (IsDebuggerPresent())
+        return;
     static WORD original_attributes;
     if (en) {
         if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()) {
@@ -396,7 +409,7 @@ public:
 #ifdef __ANDROID__
         __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.c_str());
 #else
-        ::syslog(msg.level_, "%.*s", (int)msg.payload_.size(), msg.payload_.data());
+        ::syslog(msg.level_, "%.*s", (int) msg.payload_.size(), msg.payload_.data());
 #endif
     }
 };
@@ -582,7 +595,8 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
 }
 
 void
-Logger::write(int level, const char* file, int line, std::string&& message) {
+Logger::write(int level, const char* file, int line, std::string&& message)
+{
     /* Timestamp is generated here. */
     Msg msg(level, file, line, true, std::move(message));
 
