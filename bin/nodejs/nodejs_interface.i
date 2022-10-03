@@ -131,6 +131,7 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
         exportable_callback<ConfigurationSignal::AccountDetailsChanged>(bind(&accountDetailsChanged, _1, _2)),
         exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&registrationStateChanged, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::ComposingStatusChanged>(bind(composingStatusChanged, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::ContactAdded>(bind(&contactAdded, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::ContactRemoved>(bind(&contactRemoved, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::ExportOnRingEnded>(bind(&exportOnRingEnded, _1, _2, _3 )),

@@ -12,6 +12,7 @@ using namespace v8;
 Persistent<Function> accountsChangedCb;
 Persistent<Function> accountDetailsChangedCb;
 Persistent<Function> registrationStateChangedCb;
+Persistent<Function> composingStatusChangedCb;
 Persistent<Function> volatileDetailsChangedCb;
 Persistent<Function> incomingAccountMessageCb;
 Persistent<Function> accountMessageStatusChangedCb;
@@ -56,6 +57,8 @@ getPresistentCb(std::string_view signal)
         return &accountDetailsChangedCb;
     else if (signal == "RegistrationStateChanged")
         return &registrationStateChangedCb;
+    else if (signal == "ComposingStatusChanged")
+        return &composingStatusChangedCb;
     else if (signal == "VolatileDetailsChanged")
         return &volatileDetailsChangedCb;
     else if (signal == "IncomingAccountMessage")
@@ -219,6 +222,28 @@ registrationStateChanged(const std::string& accountId,
                                             V8_STRING_NEW_LOCAL(state),
                                             SWIGV8_INTEGER_NEW(code),
                                             V8_STRING_NEW_LOCAL(detail_str)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+
+    uv_async_send(&signalAsync);
+}
+
+void
+composingStatusChanged(const std::string& accountId,
+                       const std::string& conversationId,
+                       const std::string& from,
+                       int state)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, from, state]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    composingStatusChangedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            V8_STRING_NEW_LOCAL(from),
+                                            SWIGV8_INTEGER_NEW(state)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });

@@ -35,6 +35,7 @@ public:
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
     virtual void accountMessageStatusChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*peer*/, const std::string& /*message_id*/, int /*state*/){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/){}
+    virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
     virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
 
@@ -91,6 +92,7 @@ std::vector<Message> getLastMessages(const std::string& accountID, const uint64_
 int getMessageStatus(uint64_t id);
 int getMessageStatus(const std::string& accountID, uint64_t id);
 bool cancelMessage(const std::string& accountID, uint64_t id);
+void setIsComposing(const std::string& accountID, const std::string& conversationUri, bool isWriting);
 bool setMessageDisplayed(const std::string& accountID, const std::string& conversationUri, const std::string& messageId, int status);
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
 bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
@@ -231,6 +233,7 @@ public:
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
     virtual void accountMessageStatusChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*peer*/, const std::string& /*message_id*/, int /*state*/){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/){}
+    virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
     virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
 
