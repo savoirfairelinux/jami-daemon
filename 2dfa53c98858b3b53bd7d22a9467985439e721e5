@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e7e37c2a_47ccd77b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-10-03T15:56:23Z",
+      "side": 1,
+      "message": "Right: finilization :p",
+      "parentUuid": "0347eb00_07d56ea3",
+      "range": {
+        "startLine": 10,
+        "startChar": 3,
+        "endLine": 10,
+        "endChar": 21
+      },
+      "revId": "2dfa53c98858b3b53bd7d22a9467985439e721e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "36605719_8df3f1e4",
         "filename": "test/agent/scenarios/bulk-calls/scenario.scm",
         "patchSetId": 3
@@ -37,6 +61,30 @@
       "writtenOn": "2022-10-03T15:50:19Z",
       "side": 1,
       "message": "perhaps the syntax could allow not providing a configuration file at all, instead of this awkward empty string value.",
+      "range": {
+        "startLine": 123,
+        "startChar": 13,
+        "endLine": 123,
+        "endChar": 15
+      },
+      "revId": "2dfa53c98858b3b53bd7d22a9467985439e721e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "340f1c3f_b4b64950",
+        "filename": "test/agent/scenarios/bulk-calls/scenario.scm",
+        "patchSetId": 3
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-10-03T15:56:23Z",
+      "side": 1,
+      "message": "I did try to have multiple cases in syntax-rules, but it seems I got it wrong.  I will try again.",
+      "parentUuid": "36605719_8df3f1e4",
       "range": {
         "startLine": 123,
         "startChar": 13,
