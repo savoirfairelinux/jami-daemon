@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0347eb00_07d56ea3",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-10-03T15:50:19Z",
+      "side": 1,
+      "message": "typo: initialization  also: finitialization isn\u0027t a word :-)",
+      "range": {
+        "startLine": 10,
+        "startChar": 3,
+        "endLine": 10,
+        "endChar": 21
+      },
+      "revId": "2dfa53c98858b3b53bd7d22a9467985439e721e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "36605719_8df3f1e4",
+        "filename": "test/agent/scenarios/bulk-calls/scenario.scm",
+        "patchSetId": 3
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-10-03T15:50:19Z",
+      "side": 1,
+      "message": "perhaps the syntax could allow not providing a configuration file at all, instead of this awkward empty string value.",
+      "range": {
+        "startLine": 123,
+        "startChar": 13,
+        "endLine": 123,
+        "endChar": 15
+      },
+      "revId": "2dfa53c98858b3b53bd7d22a9467985439e721e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
