@@ -1522,6 +1522,7 @@ JamiAccount::getVolatileAccountDetails() const
     if (not registeredName_.empty())
         a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
 #endif
+    a.emplace(DRing::Account::ConfProperties::PROXY_SERVER, proxyServerCached_);
     a.emplace(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED,
               deviceAnnounced_ ? TRUE_STR : FALSE_STR);
 
