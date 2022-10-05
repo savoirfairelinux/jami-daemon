@@ -644,6 +644,7 @@ MediaDecoder::decode(AVPacket& packet)
 #endif
     auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
+    frame->time_base = decoderCtx_->time_base;
     if (resolutionChangedCallback_) {
         if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
             JAMI_DBG("Resolution changed from %dx%d to %dx%d",
