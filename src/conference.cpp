@@ -115,7 +115,7 @@ Conference::Conference(const std::shared_ptr<Account>& account, bool attachHost)
             // Handle participants showing their video
             for (const auto& info : infos) {
                 std::string uri {};
-                bool isLocalMuted = false;
+                bool isLocalMuted = false, isPeerRecording = false;
                 std::string deviceId {};
                 auto active = false;
                 if (!info.callId.empty()) {
@@ -123,6 +123,7 @@ Conference::Conference(const std::shared_ptr<Account>& account, bool attachHost)
                     if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
                         uri = call->getPeerNumber();
                         isLocalMuted = call->isPeerMuted();
+                        isPeerRecording = call->isPeerRecording();
                         if (auto* transport = call->getTransport())
                             deviceId = transport->deviceId();
                     }
@@ -146,7 +147,8 @@ Conference::Conference(const std::shared_ptr<Account>& account, bool attachHost)
                                                           isModeratorMuted,
                                                           isModerator,
                                                           isHandRaised,
-                                                          isVoiceActive});
+                                                          isVoiceActive,
+                                                          isPeerRecording});
                 } else {
                     auto isModeratorMuted = false;
                     // If not local
@@ -165,6 +167,7 @@ Conference::Conference(const std::shared_ptr<Account>& account, bool attachHost)
                                 getCall(streamInfo.callId))) {
                             uri = call->getPeerNumber();
                             isLocalMuted = call->isPeerMuted();
+                            isPeerRecording = call->isPeerRecording();
                             if (auto* transport = call->getTransport())
                                 deviceId = transport->deviceId();
                         }
@@ -180,6 +183,7 @@ Conference::Conference(const std::shared_ptr<Account>& account, bool attachHost)
                         peerId = "host"sv;
                         deviceId = acc->currentDeviceId();
                         isLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
+                        isPeerRecording = shared->isRecording();
                     }
                     auto isHandRaised = shared->isHandRaised(deviceId);
                     auto isVoiceActive = shared->isVoiceActive(streamId);
@@ -196,7 +200,8 @@ Conference::Conference(const std::shared_ptr<Account>& account, bool attachHost)
                                                           isModeratorMuted,
                                                           isModerator,
                                                           isHandRaised,
-                                                          isVoiceActive});
+                                                          isVoiceActive,
+                                                          isPeerRecording});
                 }
             }
             if (auto videoMixer = shared->videoMixer_) {
@@ -659,9 +664,7 @@ Conference::addParticipant(const std::string& participant_id)
 {
     JAMI_DBG("Adding call %s to conference %s", participant_id.c_str(), id_.c_str());
 
-    jami_tracepoint(conference_add_participant,
-                    id_.c_str(),
-                    participant_id.c_str());
+    jami_tracepoint(conference_add_participant, id_.c_str(), participant_id.c_str());
 
     {
         std::lock_guard<std::mutex> lk(participantsMtx_);
@@ -1036,7 +1039,9 @@ Conference::toggleRecording()
     // Notify each participant
     foreachCall([&](auto call) { call->updateRecState(newState); });
 
-    return Recordable::toggleRecording();
+    auto res = Recordable::toggleRecording();
+    updateRecording();
+    return res;
 }
 
 std::string
@@ -1454,6 +1459,21 @@ Conference::muteParticipant(const std::string& participant_id, const bool& state
 }
 
 void
+Conference::updateRecording()
+{
+    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    for (auto& info : confInfo_) {
+        if (info.uri.empty()) {
+            info.recording = isRecording();
+        } else if (auto call = getCallWith(std::string(string_remove_suffix(info.uri, '@')),
+                                           info.device)) {
+            info.recording = call->isPeerRecording();
+        }
+    }
+    sendConferenceInfos();
+}
+
+void
 Conference::updateMuted()
 {
     std::lock_guard<std::mutex> lk(confInfoMutex_);
@@ -1761,6 +1781,21 @@ Conference::getRemoteId(const std::shared_ptr<jami::Call>& call) const
             if (cert->issuer)
                 return cert->issuer->getId().toString();
     return {};
+}
+
+void
+Conference::stopRecording()
+{
+    Recordable::stopRecording();
+    updateRecording();
+}
+
+bool
+Conference::startRecording(const std::string& path)
+{
+    auto res = Recordable::startRecording(path);
+    updateRecording();
+    return res;
 }
 
 } // namespace jami
