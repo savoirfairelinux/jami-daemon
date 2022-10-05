@@ -160,7 +160,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
         if (auto manager = dynamic_cast<ArchiveAccountManager*>(acc->accountManager()))
             manager->onSyncData(std::move(msg.ds), false);
 
-        if (!msg.c.empty() || !msg.cr.empty())
+        if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty())
             acc->convModule()->onSyncData(msg, peerId, device.toString());
         return len;
     });
