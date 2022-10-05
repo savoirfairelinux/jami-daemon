@@ -1,15 +1,10 @@
 # x264
-ifndef HAVE_IOS
-X264_HASH := db0d417728460c647ed4a847222a535b00d3dbcb
-else
-X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
-endif
+X264_HASH := ed0f7a634050a62c1da27c99eea710824d4c3705
 X264_GITURL := https://code.videolan.org/videolan/x264.git
 
 ifeq ($(call need_pkg,"x264 >= 0.86"),)
 PKGS_FOUND += x264
 endif
-
 
 X264CONF = --prefix="$(PREFIX)" \
            --host="$(HOST)"     \
