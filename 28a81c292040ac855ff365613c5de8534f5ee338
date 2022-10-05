@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e86c4632_01947ecf",
+        "filename": "doc/doxygen/core-doc.cfg.in",
+        "patchSetId": 1
+      },
+      "lineNbr": 425,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-05T15:55:11Z",
+      "side": 1,
+      "message": "no",
+      "range": {
+        "startLine": 425,
+        "startChar": 25,
+        "endLine": 425,
+        "endChar": 28
+      },
+      "revId": "28a81c292040ac855ff365613c5de8534f5ee338",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
