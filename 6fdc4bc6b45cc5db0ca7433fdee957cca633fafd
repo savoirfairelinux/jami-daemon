@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "43dd9485_ee8ca00f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-05T17:00:17Z",
+      "side": 1,
+      "message": "This should never happen in normal conditions and when the audio frame resizer is used properly. This is similar to malloc failing somewhere. Checking the return value of the failing malloc would not fix the root cause.",
+      "revId": "6fdc4bc6b45cc5db0ca7433fdee957cca633fafd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
