@@ -49,6 +49,7 @@ struct CallData
     std::atomic_bool moderatorMuted {false};
     std::atomic_bool raisedHand {false};
     std::atomic_bool active {false};
+    std::atomic_bool recording {false};
 
     void reset()
     {
@@ -60,6 +61,7 @@ struct CallData
         moderatorMuted = false;
         active = false;
         raisedHand = false;
+        recording = false;
     }
 };
 
@@ -96,6 +98,7 @@ private:
     void testAudioConferenceConfInfo();
     void testHostAddRmSecondVideo();
     void testParticipantAddRmSecondVideo();
+    void testPropagateRecording();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -115,10 +118,12 @@ private:
     CPPUNIT_TEST(testAudioConferenceConfInfo);
     CPPUNIT_TEST(testHostAddRmSecondVideo);
     CPPUNIT_TEST(testParticipantAddRmSecondVideo);
+    CPPUNIT_TEST(testPropagateRecording);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
     std::string aliceId;
+    std::atomic_bool hostRecording {false};
     std::string bobId;
     std::string carlaId;
     std::string daviId;
@@ -155,6 +160,7 @@ ConferenceTest::setUp()
     daviCall.reset();
     confId = {};
     confChanged = false;
+    hostRecording = false;
 }
 
 void
@@ -236,22 +242,27 @@ ConferenceTest::registerSignalHandlers()
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
                     bobCall.active = infos.at("active") == "true";
+                    bobCall.recording = infos.at("recording") == "true";
                     bobCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     bobCall.raisedHand = infos.at("handRaised") == "true";
                     bobCall.device = infos.at("device");
                     bobCall.streamId = infos.at("sinkId");
                 } else if (infos.at("uri").find(carlaUri) != std::string::npos) {
                     carlaCall.active = infos.at("active") == "true";
+                    carlaCall.recording = infos.at("recording") == "true";
                     carlaCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     carlaCall.raisedHand = infos.at("handRaised") == "true";
                     carlaCall.device = infos.at("device");
                     carlaCall.streamId = infos.at("sinkId");
                 } else if (infos.at("uri").find(daviUri) != std::string::npos) {
                     daviCall.active = infos.at("active") == "true";
+                    daviCall.recording = infos.at("recording") == "true";
                     daviCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                     daviCall.raisedHand = infos.at("handRaised") == "true";
                     daviCall.device = infos.at("device");
                     daviCall.streamId = infos.at("sinkId");
+                } else if (infos.at("uri").find(aliceUri) != std::string::npos) {
+                    hostRecording = infos.at("recording") == "true";
                 }
             }
             cv.notify_one();
@@ -877,6 +888,31 @@ ConferenceTest::testParticipantAddRmSecondVideo()
 
     // Check that bob has ont video attached to the conference
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 1; }));
+
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testPropagateRecording()
+{
+    registerSignalHandlers();
+
+    startConference();
+
+    JAMI_INFO("Play with recording state");
+    DRing::toggleRecording(bobId, bobCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.recording.load(); }));
+
+    DRing::toggleRecording(bobId, bobCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.recording.load(); }));
+
+    DRing::toggleRecording(aliceId, confId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return hostRecording.load(); }));
+
+    DRing::toggleRecording(aliceId, confId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return hostRecording.load(); }));
 
     hangupConference();
 

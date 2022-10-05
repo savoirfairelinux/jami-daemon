@@ -505,6 +505,9 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     pkt.data = nullptr; // packet data will be allocated by the encoder
     pkt.size = 0;
 
+    if (!encoderCtx)
+        return -1;
+
     ret = avcodec_send_frame(encoderCtx, frame);
     if (ret < 0)
         return -1;
