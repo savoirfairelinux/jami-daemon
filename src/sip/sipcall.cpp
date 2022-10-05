@@ -3489,6 +3489,8 @@ SIPCall::peerRecording(bool state)
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
     peerRecording_ = state;
+    if (auto conf = conf_.lock())
+        conf->updateRecording();
 }
 
 void

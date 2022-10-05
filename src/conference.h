@@ -76,6 +76,7 @@ struct ParticipantInfo
     bool isModerator {false};
     bool handRaised {false};
     bool voiceActivity {false};
+    bool recording {false};
 
     void fromJson(const Json::Value& v)
     {
@@ -93,6 +94,7 @@ struct ParticipantInfo
         isModerator = v["isModerator"].asBool();
         handRaised = v["handRaised"].asBool();
         voiceActivity = v["voiceActivity"].asBool();
+        recording = v["recording"].asBool();
     }
 
     Json::Value toJson() const
@@ -112,6 +114,7 @@ struct ParticipantInfo
         val["isModerator"] = isModerator;
         val["handRaised"] = handRaised;
         val["voiceActivity"] = voiceActivity;
+        val["recording"] = recording;
         return val;
     }
 
@@ -130,7 +133,8 @@ struct ParticipantInfo
                 {"audioModeratorMuted", audioModeratorMuted ? "true" : "false"},
                 {"isModerator", isModerator ? "true" : "false"},
                 {"handRaised", handRaised ? "true" : "false"},
-                {"voiceActivity", voiceActivity ? "true" : "false"}};
+                {"voiceActivity", voiceActivity ? "true" : "false"},
+                {"recording", recording ? "true" : "false"}};
     }
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -141,7 +145,7 @@ struct ParticipantInfo
                and p1.audioLocalMuted == p2.audioLocalMuted
                and p1.audioModeratorMuted == p2.audioModeratorMuted
                and p1.isModerator == p2.isModerator and p1.handRaised == p2.handRaised
-               and p1.voiceActivity == p2.voiceActivity;
+               and p1.voiceActivity == p2.voiceActivity and p1.recording == p2.recording;
     }
 
     friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -374,6 +378,7 @@ public:
                     const std::string& streamId,
                     const bool& state);
     void updateMuted();
+    void updateRecording();
 
     void updateVoiceActivity();
 
@@ -389,6 +394,10 @@ public:
      * @return current medias
      */
     std::vector<DRing::MediaMap> currentMediaList() const;
+
+    // Update layout if recording changes
+    void stopRecording() override;
+    bool startRecording(const std::string& path) override;
 
 private:
     std::weak_ptr<Conference> weak()
