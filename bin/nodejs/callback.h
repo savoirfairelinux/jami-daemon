@@ -824,3 +824,22 @@ onConferenceInfosUpdated(const std::string& accountId,
     });
     uv_async_send(&signalAsync);
 }
+
+void
+conversationPreferencesUpdated(const std::string& accountId,
+                               const std::string& convId,
+                               const std::map<std::string, std::string>& preferences)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, convId, preferences]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    conversationPreferencesUpdatedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(convId),
+                                            stringMapToJsMap(preferences)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}

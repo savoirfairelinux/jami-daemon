@@ -89,15 +89,7 @@
 #include <pj/ctype.h>
 #include <pjlib-util/md5.h>
 
-#if (defined __ANDROID__ || defined _WIN32)
-#define USE_STD_FILESYSTEM 1
-#else
-#define USE_STD_FILESYSTEM 0
-#endif
-
-#if USE_STD_FILESYSTEM
 #include <filesystem>
-#endif
 
 #ifndef _MSC_VER
 #define PROTECTED_GETENV(str) \
@@ -328,38 +320,24 @@ writeTime(const std::string& path)
 bool
 createSymlink(const std::string& linkFile, const std::string& target)
 {
-#if !USE_STD_FILESYSTEM
-    if (symlink(target.c_str(), linkFile.c_str())) {
-        JAMI_ERR("Couldn't create soft link: %s", strerror(errno));
-        return false;
-    }
-#else
     try {
         std::filesystem::create_symlink(target, linkFile);
     } catch (const std::exception& e) {
         JAMI_ERR("Couldn't create soft link: %s", e.what());
         return false;
     }
-#endif
     return true;
 }
 
 bool
 createHardlink(const std::string& linkFile, const std::string& target)
 {
-#if !USE_STD_FILESYSTEM
-    if (link(target.c_str(), linkFile.c_str())) {
-        JAMI_ERR("Couldn't create hard link: %s", strerror(errno));
-        return false;
-    }
-#else
     try {
         std::filesystem::create_hard_link(target, linkFile);
     } catch (const std::exception& e) {
         JAMI_ERR("Couldn't create hard link: %s", e.what());
         return false;
     }
-#endif
     return true;
 }
 
