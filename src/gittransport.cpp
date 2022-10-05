@@ -51,7 +51,7 @@ generateRequest(git_buf* request, const std::string& cmd, const std::string_view
                  + HOST_TAG.size() + deviceId.size() /* device */
                  + nullSeparator.size() /* \0 */;
 
-    std::stringstream streamed;
+    std::ostringstream streamed;
     streamed << std::setw(4) << std::setfill('0') << std::hex << (total & 0x0FFFF) << cmd;
     streamed << " " << conversationId;
     streamed << nullSeparator << HOST_TAG << deviceId << nullSeparator;
@@ -180,18 +180,16 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
     auto conversationId = gitUrl.substr(delim + 1, gitUrl.size());
 
     if (action == GIT_SERVICE_UPLOADPACK_LS) {
-        auto gitSocket = jami::Manager::instance().gitSocket(std::string(accountId),
-                                                             std::string(deviceId),
-                                                             std::string(conversationId));
-        if (gitSocket == std::nullopt) {
-            JAMI_ERR("Can't find related socket for %s, %s, %s",
-                     std::string(accountId).c_str(),
-                     std::string(deviceId).c_str(),
-                     std::string(conversationId).c_str());
+        auto gitSocket = jami::Manager::instance().gitSocket(accountId, deviceId, conversationId);
+        if (!gitSocket) {
+            JAMI_ERROR("Can't find related socket for {:s}, {:s}, {:s}",
+                       accountId,
+                       deviceId,
+                       conversationId);
             return -1;
         }
         auto stream = std::make_unique<P2PStream>();
-        stream->socket = *gitSocket;
+        stream->socket = gitSocket;
         stream->base.read = P2PStreamRead;
         stream->base.write = P2PStreamWrite;
         stream->base.free = P2PStreamFree;

@@ -18,40 +18,35 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "jamidht/conversation_channel_handler.h"
+#include "swarm_channel_handler.h"
 
 namespace jami {
 
-ConversationChannelHandler::ConversationChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                                       ConnectionManager& cm)
+SwarmChannelHandler::SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc,
+                                         ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
 {}
 
-ConversationChannelHandler::~ConversationChannelHandler() {}
+SwarmChannelHandler::~SwarmChannelHandler() {}
 
 void
-ConversationChannelHandler::connect(const DeviceId& deviceId,
-                                    const std::string& channelName,
-                                    ConnectCb&& cb)
+SwarmChannelHandler::connect(const DeviceId& deviceId,
+                             const std::string& conversationId,
+                             ConnectCb&& cb)
 {
-    connectionManager_.connectDevice(deviceId,
-                                     "git://" + deviceId.toString() + "/" + channelName,
-                                     std::move(cb));
+    connectionManager_.connectDevice(deviceId, fmt::format("swarm://{}", conversationId), cb);
 }
 
 bool
-ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                                      const std::string& name)
+SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                               const std::string& name)
 {
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
         return false;
 
-    // Pre-check before acceptance. Sometimes, another device can start a conversation
-    // which is still not synced. So, here we decline channel's request in this case
-    // to avoid the other device to want to sync with us if we are not ready.
     auto sep = name.find_last_of('/');
     auto conversationId = name.substr(sep + 1);
     if (auto acc = account_.lock())
@@ -64,9 +59,16 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
 }
 
 void
-ConversationChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
-                                    const std::string&,
-                                    std::shared_ptr<ChannelSocket>)
-{}
+SwarmChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
+                             const std::string& uri,
+                             std::shared_ptr<ChannelSocket> socket)
+{
+    auto sep = uri.find_last_of('/');
+    auto conversationId = uri.substr(sep + 1);
 
+    if (auto acc = account_.lock())
+        if (auto convModule = acc->convModule()) {
+            convModule->addSwarmChannel(conversationId, socket);
+        }
+}
 } // namespace jami

@@ -161,8 +161,8 @@ public:
 
     std::vector<std::string> getInitialMembers() const;
 
-    bool resolveBan(const std::string& type, const std::string& uri);
-    bool resolveUnban(const std::string& type, const std::string& uri);
+    bool resolveBan(std::string_view, const std::string& uri);
+    bool resolveUnban(std::string_view, const std::string& uri);
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
@@ -3342,7 +3342,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
 }
 
 std::string
-ConversationRepository::voteUnban(const std::string& uri, const std::string& type)
+ConversationRepository::voteUnban(const std::string& uri, std::string_view type)
 {
     auto repo = pimpl_->repository();
     auto account = pimpl_->account_.lock();
@@ -3382,7 +3382,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string& typ
 }
 
 bool
-ConversationRepository::Impl::resolveBan(const std::string& type, const std::string& uri)
+ConversationRepository::Impl::resolveBan(std::string_view type, const std::string& uri)
 {
     auto repo = repository();
     std::string repoPath = git_repository_workdir(repo.get());
@@ -3437,7 +3437,7 @@ ConversationRepository::Impl::resolveBan(const std::string& type, const std::str
 }
 
 bool
-ConversationRepository::Impl::resolveUnban(const std::string& type, const std::string& uri)
+ConversationRepository::Impl::resolveUnban(std::string_view type, const std::string& uri)
 {
     auto repo = repository();
     std::string repoPath = git_repository_workdir(repo.get());
@@ -3480,7 +3480,7 @@ ConversationRepository::Impl::resolveUnban(const std::string& type, const std::s
 
 std::string
 ConversationRepository::resolveVote(const std::string& uri,
-                                    const std::string& type,
+                                    std::string_view type,
                                     const std::string& voteType)
 {
     // Count ratio admin/votes

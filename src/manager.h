@@ -709,9 +709,9 @@ public:
      * @return std::shared_ptr<Account> Shared pointer on an Account instance or nullptr if not found
      */
     template<class T = Account>
-    std::shared_ptr<T> getAccount(const std::string& accountID) const
+    inline std::shared_ptr<T> getAccount(std::string_view accountId) const
     {
-        return accountFactory.getAccount<T>(accountID);
+        return accountFactory.getAccount<T>(accountId);
     }
 
     /**
@@ -825,10 +825,11 @@ public:
      * @param videoStream the the VideoFrameActiveWriter to which the sinks should be attached
      * @param sinksMap A map between sink ids and the respective shared pointer.
      */
-    void createSinkClients(const std::string& callId,
-                           const ConfInfo& infos,
-                           const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
-                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap);
+    void createSinkClients(
+        const std::string& callId,
+        const ConfInfo& infos,
+        const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
+        std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap);
 
     /**
      * Return an existing SinkClient instance as a shared_ptr associated to the given identifier.
@@ -841,7 +842,7 @@ public:
 #endif // ENABLE_VIDEO
     VideoManager& getVideoManager() const;
 
-    std::atomic<unsigned> dhtLogLevel {0}; // default = disable
+    std::atomic<unsigned> dhtLogLevel {3}; // default = disable
     AccountFactory accountFactory;
 
     std::vector<DRing::Message> getLastMessages(const std::string& accountID,
@@ -858,9 +859,9 @@ public:
      * @param conversationId    Related conversation
      * @return std::optional<std::weak_ptr<ChannelSocket>> the related socket
      */
-    std::optional<std::weak_ptr<ChannelSocket>> gitSocket(const std::string& accountId,
-                                                          const std::string& deviceId,
-                                                          const std::string& conversationId);
+    std::shared_ptr<ChannelSocket> gitSocket(std::string_view accountId,
+                                             std::string_view deviceId,
+                                             std::string_view conversationId);
 
     void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);

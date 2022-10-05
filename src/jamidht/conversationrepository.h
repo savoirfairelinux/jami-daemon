@@ -304,7 +304,7 @@ public:
      * @param type      device, members, admins or invited
      * @return the commit id or empty if failed
      */
-    std::string voteUnban(const std::string& uri, const std::string& type);
+    std::string voteUnban(const std::string& uri, std::string_view type);
     /**
      * Validate if a vote is finished
      * @param uri       identified of the user/device
@@ -313,7 +313,7 @@ public:
      * @return the commit id or empty if failed
      */
     std::string resolveVote(const std::string& uri,
-                            const std::string& type,
+                            std::string_view type,
                             const std::string& voteType);
 
     /**
