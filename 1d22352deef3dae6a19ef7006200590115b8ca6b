@@ -33,6 +33,42 @@
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027const char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
       "revId": "1d22352deef3dae6a19ef7006200590115b8ca6b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3593fef5_0d1bb533",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 611,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-06T14:33:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0822b9b6_f5682e64",
+      "revId": "1d22352deef3dae6a19ef7006200590115b8ca6b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "157cb089_fd02ee44",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 611,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-06T14:33:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d43be89b_6b18811f",
+      "revId": "1d22352deef3dae6a19ef7006200590115b8ca6b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
