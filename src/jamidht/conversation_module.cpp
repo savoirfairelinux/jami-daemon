@@ -890,16 +890,42 @@ ConversationModule::loadConversations()
     auto acc = pimpl_->account_.lock();
     if (!acc)
         return;
+    auto uri = acc->getUsername();
     JAMI_INFO("[Account %s] Start loading conversations…", pimpl_->accountId_.c_str());
     auto conversationsRepositories = fileutils::readDirectory(
         fileutils::get_data_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_ + DIR_SEPARATOR_STR
         + "conversations");
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
     pimpl_->conversations_.clear();
+    std::set<std::string> toRm;
     for (const auto& repository : conversationsRepositories) {
         try {
             auto conv = std::make_shared<Conversation>(pimpl_->account_, repository);
+            auto members = conv->memberUris(uri, {});
+            // NOTE: The following if is here to protect against any incorrect state
+            // that can be introduced
+            if (conv->mode() == ConversationMode::ONE_TO_ONE && members.size() == 1) {
+                // If we got a 1:1 conversation, but not in the contact details, it's rather a
+                // duplicate or a weird state
+                auto& otherUri = members[0];
+                auto convFromDetails = getOneToOneConversation(otherUri);
+                if (convFromDetails != repository) {
+                    if (convFromDetails.empty()) {
+                        JAMI_ERROR(
+                            "No conversation detected for {} but one exists ({}). Update details",
+                            otherUri,
+                            repository);
+                        acc->updateConvForContact(otherUri, convFromDetails, repository);
+                    } else {
+                        JAMI_ERROR("Multiple conversation detected for {} but ({} & {})",
+                                   otherUri,
+                                   repository,
+                                   convFromDetails);
+                        toRm.insert(repository);
+                    }
+                }
+            }
             conv->onLastDisplayedUpdated(std::move(
                 [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); }));
             auto convInfo = pimpl_->convInfos_.find(repository);
@@ -908,7 +934,7 @@ ConversationModule::loadConversations()
                 ConvInfo info;
                 info.id = repository;
                 info.created = std::time(nullptr);
-                info.members = conv->memberUris();
+                info.members = std::move(members);
                 info.lastDisplayed = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
                 addConvInfo(info);
             }
@@ -941,10 +967,15 @@ ConversationModule::loadConversations()
     // causing a potential incorrect state between "appdata/contacts" and "appdata/convInfos"
     if (!removed.empty())
         acc->unlinkConversations(removed);
-    // Save iff we've removed some invalid entries
+    // Save if we've removed some invalid entries
     if (oldConvInfosSize != pimpl_->convInfos_.size())
         pimpl_->saveConvInfos();
 
+    lk.unlock();
+    for (const auto& conv : toRm) {
+        JAMI_ERROR("Remove conversation ({})", conv);
+        removeConversation(conv);
+    }
     JAMI_INFO("[Account %s] Conversations loaded!", pimpl_->accountId_.c_str());
 }
 
