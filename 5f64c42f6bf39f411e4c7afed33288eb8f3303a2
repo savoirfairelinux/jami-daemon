@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "531bacbb_b83dfd4c",
+        "filename": "src/string_utils.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-07T17:29:12Z",
+      "side": 1,
+      "message": "seems formatter not installed, double space ;)",
+      "range": {
+        "startLine": 63,
+        "startChar": 11,
+        "endLine": 63,
+        "endChar": 27
+      },
+      "revId": "5f64c42f6bf39f411e4c7afed33288eb8f3303a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
