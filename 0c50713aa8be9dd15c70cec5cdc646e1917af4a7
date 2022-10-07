@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c89a6e0_d213c71e",
+        "filename": "test/agent/src/bindings/jami.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-07T15:37:22Z",
+      "side": 1,
+      "message": "2021 can be removed",
+      "range": {
+        "startLine": 2,
+        "startChar": 18,
+        "endLine": 2,
+        "endChar": 23
+      },
+      "revId": "0c50713aa8be9dd15c70cec5cdc646e1917af4a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
