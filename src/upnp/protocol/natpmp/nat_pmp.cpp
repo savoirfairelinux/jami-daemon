@@ -189,8 +189,14 @@ NatPmp::clearIgds()
         return;
     }
 
-    if (igd_)
+    bool do_close = false;
+
+    if (igd_) {
+        if (igd_->isValid()) {
+            do_close = true;
+        }
         igd_->setValid(false);
+    }
 
     initialized_ = false;
     if (searchForIgdTimer_)
@@ -198,8 +204,10 @@ NatPmp::clearIgds()
 
     igdSearchCounter_ = 0;
 
-    closenatpmp(&natpmpHdl_);
-    memset(&natpmpHdl_, 0, sizeof(natpmpHdl_));
+    if (do_close) {
+        closenatpmp(&natpmpHdl_);
+        memset(&natpmpHdl_, 0, sizeof(natpmpHdl_));
+    }
 }
 
 void
