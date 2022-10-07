@@ -22,6 +22,30 @@
       },
       "revId": "f0bad1e7ca65b205849a9fbf60cffe156982d32c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "12e476d9_703b8cdd",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-10-07T17:34:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "256505b2_352517c8",
+      "range": {
+        "startLine": 194,
+        "startChar": 0,
+        "endLine": 196,
+        "endChar": 0
+      },
+      "revId": "f0bad1e7ca65b205849a9fbf60cffe156982d32c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
