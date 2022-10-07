@@ -23,7 +23,7 @@
 
 namespace jami {
 
-MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap, bool secure)
+MediaAttribute::MediaAttribute(const libjami::MediaMap& mediaMap, bool secure)
 {
     std::pair<bool, MediaType> pairType = getMediaType(mediaMap);
     if (pairType.first)
@@ -31,24 +31,24 @@ MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap, bool secure)
 
     std::pair<bool, bool> pairBool;
 
-    pairBool = getBoolValue(mediaMap, DRing::Media::MediaAttributeKey::MUTED);
+    pairBool = getBoolValue(mediaMap, libjami::Media::MediaAttributeKey::MUTED);
     if (pairBool.first)
         muted_ = pairBool.second;
 
-    pairBool = getBoolValue(mediaMap, DRing::Media::MediaAttributeKey::ENABLED);
+    pairBool = getBoolValue(mediaMap, libjami::Media::MediaAttributeKey::ENABLED);
     if (pairBool.first)
         enabled_ = pairBool.second;
 
     std::pair<bool, std::string> pairString;
-    pairString = getStringValue(mediaMap, DRing::Media::MediaAttributeKey::SOURCE);
+    pairString = getStringValue(mediaMap, libjami::Media::MediaAttributeKey::SOURCE);
     if (pairBool.first)
         sourceUri_ = pairString.second;
 
-    pairString = getStringValue(mediaMap, DRing::Media::MediaAttributeKey::LABEL);
+    pairString = getStringValue(mediaMap, libjami::Media::MediaAttributeKey::LABEL);
     if (pairBool.first)
         label_ = pairString.second;
 
-    pairBool = getBoolValue(mediaMap, DRing::Media::MediaAttributeKey::ON_HOLD);
+    pairBool = getBoolValue(mediaMap, libjami::Media::MediaAttributeKey::ON_HOLD);
     if (pairBool.first)
         onHold_ = pairBool.second;
 
@@ -56,7 +56,7 @@ MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap, bool secure)
 }
 
 std::vector<MediaAttribute>
-MediaAttribute::buildMediaAttributesList(const std::vector<DRing::MediaMap>& mediaList, bool secure)
+MediaAttribute::buildMediaAttributesList(const std::vector<libjami::MediaMap>& mediaList, bool secure)
 {
     std::vector<MediaAttribute> mediaAttrList;
     mediaAttrList.reserve(mediaList.size());
@@ -71,17 +71,17 @@ MediaAttribute::buildMediaAttributesList(const std::vector<DRing::MediaMap>& med
 MediaType
 MediaAttribute::stringToMediaType(const std::string& mediaType)
 {
-    if (mediaType.compare(DRing::Media::MediaAttributeValue::AUDIO) == 0)
+    if (mediaType.compare(libjami::Media::MediaAttributeValue::AUDIO) == 0)
         return MediaType::MEDIA_AUDIO;
-    if (mediaType.compare(DRing::Media::MediaAttributeValue::VIDEO) == 0)
+    if (mediaType.compare(libjami::Media::MediaAttributeValue::VIDEO) == 0)
         return MediaType::MEDIA_VIDEO;
     return MediaType::MEDIA_NONE;
 }
 
 std::pair<bool, MediaType>
-MediaAttribute::getMediaType(const DRing::MediaMap& map)
+MediaAttribute::getMediaType(const libjami::MediaMap& map)
 {
-    const auto& iter = map.find(DRing::Media::MediaAttributeKey::MEDIA_TYPE);
+    const auto& iter = map.find(libjami::Media::MediaAttributeKey::MEDIA_TYPE);
     if (iter == map.end()) {
         return {false, MediaType::MEDIA_NONE};
     }
@@ -96,7 +96,7 @@ MediaAttribute::getMediaType(const DRing::MediaMap& map)
 }
 
 std::pair<bool, bool>
-MediaAttribute::getBoolValue(const DRing::MediaMap& map, const std::string& key)
+MediaAttribute::getBoolValue(const libjami::MediaMap& map, const std::string& key)
 {
     const auto& iter = map.find(key);
     if (iter == map.end()) {
@@ -114,7 +114,7 @@ MediaAttribute::getBoolValue(const DRing::MediaMap& map, const std::string& key)
 }
 
 std::pair<bool, std::string>
-MediaAttribute::getStringValue(const DRing::MediaMap& map, const std::string& key)
+MediaAttribute::getStringValue(const libjami::MediaMap& map, const std::string& key)
 {
     const auto& iter = map.find(key);
     if (iter == map.end()) {
@@ -134,9 +134,9 @@ char const*
 MediaAttribute::mediaTypeToString(MediaType type)
 {
     if (type == MediaType::MEDIA_AUDIO)
-        return DRing::Media::MediaAttributeValue::AUDIO;
+        return libjami::Media::MediaAttributeValue::AUDIO;
     if (type == MediaType::MEDIA_VIDEO)
-        return DRing::Media::MediaAttributeValue::VIDEO;
+        return libjami::Media::MediaAttributeValue::VIDEO;
     return nullptr;
 }
 
@@ -149,26 +149,26 @@ MediaAttribute::hasMediaType(const std::vector<MediaAttribute>& mediaList, Media
               });
 }
 
-DRing::MediaMap
+libjami::MediaMap
 MediaAttribute::toMediaMap(const MediaAttribute& mediaAttr)
 {
-    DRing::MediaMap mediaMap;
+    libjami::MediaMap mediaMap;
 
-    mediaMap.emplace(DRing::Media::MediaAttributeKey::MEDIA_TYPE,
+    mediaMap.emplace(libjami::Media::MediaAttributeKey::MEDIA_TYPE,
                      mediaTypeToString(mediaAttr.type_));
-    mediaMap.emplace(DRing::Media::MediaAttributeKey::LABEL, mediaAttr.label_);
-    mediaMap.emplace(DRing::Media::MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
-    mediaMap.emplace(DRing::Media::MediaAttributeKey::MUTED, boolToString(mediaAttr.muted_));
-    mediaMap.emplace(DRing::Media::MediaAttributeKey::SOURCE, mediaAttr.sourceUri_);
-    mediaMap.emplace(DRing::Media::MediaAttributeKey::ON_HOLD, boolToString(mediaAttr.onHold_));
+    mediaMap.emplace(libjami::Media::MediaAttributeKey::LABEL, mediaAttr.label_);
+    mediaMap.emplace(libjami::Media::MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
+    mediaMap.emplace(libjami::Media::MediaAttributeKey::MUTED, boolToString(mediaAttr.muted_));
+    mediaMap.emplace(libjami::Media::MediaAttributeKey::SOURCE, mediaAttr.sourceUri_);
+    mediaMap.emplace(libjami::Media::MediaAttributeKey::ON_HOLD, boolToString(mediaAttr.onHold_));
 
     return mediaMap;
 }
 
-std::vector<DRing::MediaMap>
+std::vector<libjami::MediaMap>
 MediaAttribute::mediaAttributesToMediaMaps(std::vector<MediaAttribute> mediaAttrList)
 {
-    std::vector<DRing::MediaMap> mediaList;
+    std::vector<libjami::MediaMap> mediaList;
     mediaAttrList.reserve(mediaAttrList.size());
     for (auto const& media : mediaAttrList) {
         mediaList.emplace_back(toMediaMap(media));

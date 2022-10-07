@@ -47,7 +47,7 @@ namespace DBus {
     class DefaultTimeout;
 }
 
-class DRING_PUBLIC DBusClient {
+class LIBJAMI_PUBLIC DBusClient {
     public:
         DBusClient(int flags, bool persistent);
         ~DBusClient();

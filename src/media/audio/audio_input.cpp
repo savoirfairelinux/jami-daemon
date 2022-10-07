@@ -292,7 +292,7 @@ AudioInput::switchInput(const std::string& resource)
         if (initDevice(""))
             foundDevOpts(devOpts_);
     } else {
-        static const std::string& sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+        static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
         const auto pos = resource.find(sep);
         if (pos == std::string::npos)
             return {};
@@ -303,7 +303,7 @@ AudioInput::switchInput(const std::string& resource)
 
         const auto suffix = resource.substr(pos + sep.size());
         bool ready = false;
-        if (prefix == DRing::Media::VideoProtocolPrefix::FILE)
+        if (prefix == libjami::Media::VideoProtocolPrefix::FILE)
             ready = initFile(suffix);
         else
             ready = initDevice(suffix);

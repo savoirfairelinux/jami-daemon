@@ -43,7 +43,7 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-class DRING_PUBLIC DBusPluginManagerInterface
+class LIBJAMI_PUBLIC DBusPluginManagerInterface
     : public cx::ring::Ring::PluginManagerInterface_adaptor,
       public DBus::IntrospectableAdaptor,
       public DBus::ObjectAdaptor

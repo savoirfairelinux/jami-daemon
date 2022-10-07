@@ -41,7 +41,7 @@ void
 Smartools::sendInfo()
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    emitSignal<DRing::CallSignal::SmartInfo>(information_);
+    emitSignal<libjami::CallSignal::SmartInfo>(information_);
     information_.clear();
 }
 

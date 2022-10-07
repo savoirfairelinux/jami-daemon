@@ -43,11 +43,11 @@ public:
 
     VideoInputTest()
     {
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        DRing::start("jami-sample.yml");
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::start("jami-sample.yml");
     }
 
-    ~VideoInputTest() { DRing::fini(); }
+    ~VideoInputTest() { libjami::fini(); }
 
 private:
     void testInput();
@@ -62,11 +62,11 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(VideoInputTest, VideoInputTest::name());
 void
 VideoInputTest::testInput()
 {
-    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
-    std::string resource = DRing::Media::VideoProtocolPrefix::DISPLAY + sep
+    static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+    std::string resource = libjami::Media::VideoProtocolPrefix::DISPLAY + sep
                            + std::string(getenv("DISPLAY") ?: ":0.0");
     video::VideoInput video;
-    DRing::switchInput("", "", resource);
+    libjami::switchInput("", "", resource);
 }
 
 } // namespace test

@@ -426,7 +426,7 @@ public:
      * @return a shared pointer on the created call.
      */
     std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
-                                          const std::vector<DRing::MediaMap>& mediaList) override;
+                                          const std::vector<libjami::MediaMap>& mediaList) override;
 
     /**
      * Create incoming SIPCall.
@@ -437,7 +437,7 @@ public:
      */
     std::shared_ptr<SIPCall> newIncomingCall(
         const std::string& from,
-        const std::vector<DRing::MediaMap>& mediaList,
+        const std::vector<libjami::MediaMap>& mediaList,
         const std::shared_ptr<SipTransport>& sipTr = {}) override;
 
     void onRegister(pjsip_regc_cbparam* param);
