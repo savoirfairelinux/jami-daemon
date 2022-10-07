@@ -440,7 +440,7 @@ VideoRtpSession::forceKeyFrame()
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 #if __ANDROID__
     if (videoLocal_)
-        emitSignal<DRing::VideoSignal::RequestKeyFrame>(videoLocal_->getName());
+        emitSignal<libjami::VideoSignal::RequestKeyFrame>(videoLocal_->getName());
 #else
     if (sender_)
         sender_->forceKeyFrame();
@@ -677,7 +677,7 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
 
 #if __ANDROID__
         if (auto input_device = std::dynamic_pointer_cast<VideoInput>(videoLocal_))
-            emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getConfig().name, (int) newBR);
+            emitSignal<libjami::VideoSignal::SetBitrate>(input_device->getConfig().name, (int) newBR);
 #endif
 
         if (sender_) {

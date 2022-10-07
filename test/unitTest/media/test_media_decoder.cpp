@@ -59,7 +59,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaDecoderTest, MediaDecoderTest::name()
 void
 MediaDecoderTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     libav_utils::av_init();
 }
 
@@ -67,7 +67,7 @@ void
 MediaDecoderTest::tearDown()
 {
     fileutils::remove(filename_);
-    DRing::fini();
+    libjami::fini();
 }
 
 void

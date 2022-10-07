@@ -40,7 +40,7 @@
 
 #include "jamidht/jamiaccount.h"
 
-namespace DRing {
+namespace libjami {
 
 using jami::SIPAccount;
 
@@ -128,9 +128,9 @@ getSubscriptions(const std::string& accountID)
             ret.reserve(subs.size());
             for (const auto& s : subs) {
                 ret.push_back(
-                    {{DRing::Presence::BUDDY_KEY, std::string(s->getURI())},
-                     {DRing::Presence::STATUS_KEY, s->isPresent() ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY},
-                     {DRing::Presence::LINESTATUS_KEY, std::string(s->getLineStatus())}});
+                    {{libjami::Presence::BUDDY_KEY, std::string(s->getURI())},
+                     {libjami::Presence::STATUS_KEY, s->isPresent() ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY},
+                     {libjami::Presence::LINESTATUS_KEY, std::string(s->getLineStatus())}});
             }
         } else
             JAMI_ERR("Presence not initialized");
@@ -140,9 +140,9 @@ getSubscriptions(const std::string& accountID)
         ret.reserve(trackedBuddies.size());
         for (const auto& tracked_id : trackedBuddies) {
             ret.push_back(
-                {{DRing::Presence::BUDDY_KEY, tracked_id.first},
-                 {DRing::Presence::STATUS_KEY,
-                  tracked_id.second ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY}});
+                {{libjami::Presence::BUDDY_KEY, tracked_id.first},
+                 {libjami::Presence::STATUS_KEY,
+                  tracked_id.second ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY}});
         }
     } else
         JAMI_ERR("Could not find account %s.", accountID.c_str());
@@ -170,4 +170,4 @@ setSubscriptions(const std::string& accountID, const std::vector<std::string>& u
         JAMI_ERR("Could not find account %s.", accountID.c_str());
 }
 
-} // namespace DRing
+} // namespace libjami

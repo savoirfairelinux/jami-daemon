@@ -78,9 +78,9 @@ public:
      *                 '800x448': ['15'],
      *                 '960x540': ['10']}}
      */
-    DRing::VideoCapabilities getCapabilities() const
+    libjami::VideoCapabilities getCapabilities() const
     {
-        DRing::VideoCapabilities cap;
+        libjami::VideoCapabilities cap;
 
         for (const auto& chan : getChannelList())
             for (const auto& size : getSizeList(chan)) {

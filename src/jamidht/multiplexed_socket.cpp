@@ -675,7 +675,7 @@ MultiplexedSocket::peerCertificate() const
     return pimpl_->endpoint->peerCertificate();
 }
 
-#ifdef DRING_TESTABLE
+#ifdef LIBJAMI_TESTABLE
 bool
 MultiplexedSocket::canSendBeacon() const
 {
@@ -844,7 +844,7 @@ ChannelSocket::onRecv(std::vector<uint8_t>&& pkt)
     pimpl_->cv.notify_all();
 }
 
-#ifdef DRING_TESTABLE
+#ifdef LIBJAMI_TESTABLE
 std::shared_ptr<MultiplexedSocket>
 ChannelSocket::underlyingSocket() const
 {

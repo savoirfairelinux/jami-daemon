@@ -57,13 +57,13 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ResamplerTest, ResamplerTest::name());
 void
 ResamplerTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
 }
 
 void
 ResamplerTest::tearDown()
 {
-    DRing::fini();
+    libjami::fini();
 }
 
 void
@@ -94,7 +94,7 @@ ResamplerTest::testAudioFrame()
     CPPUNIT_ASSERT(input->pointer()->data && input->pointer()->data[0]);
     CPPUNIT_ASSERT(input->pointer()->data[0][0] == 0);
 
-    DRing::AudioFrame out;
+    libjami::AudioFrame out;
     auto output = out.pointer();
     output->format = AV_SAMPLE_FMT_FLT;
     output->sample_rate = 48000;
@@ -114,17 +114,17 @@ ResamplerTest::testRematrix()
     const constexpr AudioFormat inFormat = AudioFormat(44100, 6);
     resampler_.reset(new Resampler);
 
-    auto input = std::make_unique<DRing::AudioFrame>(inFormat, 882);
+    auto input = std::make_unique<libjami::AudioFrame>(inFormat, 882);
     CPPUNIT_ASSERT(input->pointer() && input->pointer()->data);
 
-    auto output1 = std::make_unique<DRing::AudioFrame>(AudioFormat::STEREO(), 960);
+    auto output1 = std::make_unique<libjami::AudioFrame>(AudioFormat::STEREO(), 960);
     CPPUNIT_ASSERT(output1->pointer() && output1->pointer()->data);
 
     ret = resampler_->resample(input->pointer(), output1->pointer());
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
     CPPUNIT_ASSERT(output1->pointer()->data && output1->pointer()->data[0]);
 
-    auto output2 = std::make_unique<DRing::AudioFrame>(AudioFormat::MONO(), 960);
+    auto output2 = std::make_unique<libjami::AudioFrame>(AudioFormat::MONO(), 960);
     CPPUNIT_ASSERT(output2->pointer() && output2->pointer()->data);
 
     ret = resampler_->resample(input->pointer(), output2->pointer());

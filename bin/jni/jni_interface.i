@@ -222,16 +222,16 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     using namespace std::placeholders;
 
     using std::bind;
-    using DRing::exportable_callback;
-    using DRing::CallSignal;
-    using DRing::ConfigurationSignal;
-    using DRing::DataTransferInfo;
-    using DRing::DataTransferSignal;
-    using DRing::PresenceSignal;
-    using DRing::VideoSignal;
-    using DRing::ConversationSignal;
+    using libjami::exportable_callback;
+    using libjami::CallSignal;
+    using libjami::ConfigurationSignal;
+    using libjami::DataTransferInfo;
+    using libjami::DataTransferSignal;
+    using libjami::PresenceSignal;
+    using libjami::VideoSignal;
+    using libjami::ConversationSignal;
 
-    using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
+    using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
     // Call event handlers
     const std::map<std::string, SharedCallback> callEvHandlers = {
@@ -332,7 +332,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(bind(&ConversationCallback::conversationPreferencesUpdated, convM, _1, _2, _3))
     };
 
-    if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
+    if (!libjami::init(static_cast<libjami::InitFlag>(libjami::LIBJAMI_FLAG_DEBUG)))
         return;
 
     registerSignalHandlers(callEvHandlers);
@@ -342,7 +342,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     registerSignalHandlers(videoEvHandlers);
     registerSignalHandlers(conversationHandlers);
 
-    DRing::start();
+    libjami::start();
 }
 
 

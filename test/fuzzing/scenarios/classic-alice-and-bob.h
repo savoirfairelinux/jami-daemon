@@ -30,10 +30,10 @@
 
 int main(void)
 {
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
 
         if (not jami::Manager::instance().initialized) {
-            assert(DRing::start("dring-sample.yml"));
+            assert(libjami::start("dring-sample.yml"));
         }
 
         auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
@@ -47,19 +47,19 @@ int main(void)
         auto aliceUri = aliceAccount->getUsername();
         auto bobUri   = bobAccount->getUsername();
 
-        std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+        std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
         std::atomic_bool callReceived {false};
         std::mutex mtx;
         std::unique_lock<std::mutex> lk {mtx};
         std::condition_variable cv;
 
-        confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
+        confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
                                     [&](const std::string&, const std::string&, const std::string&) {
                                             callReceived = true;
                                             cv.notify_one();
                                     }));
 
-        DRing::registerSignalHandlers(confHandlers);
+        libjami::registerSignalHandlers(confHandlers);
 
         auto call = aliceAccount->newOutgoingCall(bobUri);
 
@@ -69,7 +69,7 @@ int main(void)
 
         wait_for_removal_of({alice, bob});
 
-        DRing::fini();
+        libjami::fini();
 
         return 0;
 }

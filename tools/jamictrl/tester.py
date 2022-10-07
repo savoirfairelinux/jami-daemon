@@ -41,7 +41,7 @@ ALL_TEST_NAME = {
         'DhtCallHold' : 'testLoopCallDhtWithHold'
         }
 
-class DRingTester():
+class libjamiTester():
 
 # init to default values
     dhtAccountId = ''

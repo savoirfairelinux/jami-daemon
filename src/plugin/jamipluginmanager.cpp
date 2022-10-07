@@ -142,7 +142,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                                             destinationDir,
                                             PluginUtils::uncompressJplFunction);
             }
-            DRing::loadPlugin(destinationDir);
+            libjami::loadPlugin(destinationDir);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
@@ -159,7 +159,7 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
             bool loaded = pm_.checkLoadedPlugin(rootPath);
             if (loaded) {
                 JAMI_INFO() << "PLUGIN: unloading before uninstall.";
-                bool status = DRing::unloadPlugin(rootPath);
+                bool status = libjami::unloadPlugin(rootPath);
                 if (!status) {
                     JAMI_INFO() << "PLUGIN: could not unload, not performing uninstall.";
                     return -1;

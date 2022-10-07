@@ -301,7 +301,7 @@ public:
     {
         if (decodingAccelerated_ != decodingAccelerated) {
             decodingAccelerated_ = decodingAccelerated;
-            emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(decodingAccelerated_);
+            emitSignal<libjami::ConfigurationSignal::HardwareDecodingChanged>(decodingAccelerated_);
             return true;
         }
         return false;
@@ -313,7 +313,7 @@ public:
     {
         if (encodingAccelerated_ != encodingAccelerated) {
             encodingAccelerated_ = encodingAccelerated;
-            emitSignal<DRing::ConfigurationSignal::HardwareEncodingChanged>(encodingAccelerated_);
+            emitSignal<libjami::ConfigurationSignal::HardwareEncodingChanged>(encodingAccelerated_);
             return true;
         }
         return false;

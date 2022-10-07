@@ -637,7 +637,7 @@ get_cache_dir(const char* pkg)
     std::string cache_path;
     std::vector<std::string> paths;
     paths.reserve(1);
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty()) {
         cache_path = paths[0] + DIR_SEPARATOR_STR + std::string(".cache");
         if (fileutils::recursive_mkdir(cache_path.data(), 0700) != true) {
@@ -650,7 +650,7 @@ get_cache_dir(const char* pkg)
 #elif defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
     paths.reserve(1);
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &paths);
+    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("cache", &paths);
     if (not paths.empty())
         return paths[0];
     return {};
@@ -683,14 +683,14 @@ get_home_dir()
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
     paths.reserve(1);
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
+    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("files", &paths);
     if (not paths.empty())
         return paths[0];
     return {};
 #elif defined RING_UWP
     std::vector<std::string> paths;
     paths.reserve(1);
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
         return paths[0];
     return {};
@@ -726,7 +726,7 @@ get_data_dir(const char* pkg)
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
     paths.reserve(1);
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
+    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("files", &paths);
     if (not paths.empty())
         return paths[0];
     return {};
@@ -748,7 +748,7 @@ get_data_dir(const char* pkg)
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
     paths.reserve(1);
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty()) {
         auto files_path = paths[0] + DIR_SEPARATOR_STR + std::string(".data");
         if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
@@ -782,12 +782,12 @@ get_config_dir(const char* pkg)
     std::string configdir;
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("config", &paths);
+    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("config", &paths);
     if (not paths.empty())
         configdir = std::move(paths[0]);
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
         configdir = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
 #elif defined(__APPLE__)

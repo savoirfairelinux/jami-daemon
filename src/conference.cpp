@@ -371,9 +371,9 @@ Conference::setLocalHostDefaultMediaSource()
 void
 Conference::reportMediaNegotiationStatus()
 {
-    emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
+    emitSignal<libjami::CallSignal::MediaNegotiationStatus>(
         getConfId(),
-        DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
+        libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
         currentMediaList());
 }
 
@@ -543,19 +543,19 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
             JAMI_WARN("Take over [AUDIO] control from call %s - current local source state [%s]",
                       callId.c_str(),
                       muted ? "muted" : "un-muted");
-            emitSignal<DRing::CallSignal::AudioMuted>(id_, muted);
+            emitSignal<libjami::CallSignal::AudioMuted>(id_, muted);
         } else {
             bool muted = isMediaSourceMuted(MediaType::MEDIA_VIDEO);
             JAMI_WARN("Take over [VIDEO] control from call %s - current local source state [%s]",
                       callId.c_str(),
                       muted ? "muted" : "un-muted");
-            emitSignal<DRing::CallSignal::VideoMuted>(id_, muted);
+            emitSignal<libjami::CallSignal::VideoMuted>(id_, muted);
         }
     }
 }
 
 bool
-Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
+Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     if (getState() != State::ACTIVE_ATTACHED) {
         JAMI_ERR("[conf %s] Request media change can be performed only in attached mode",
@@ -590,8 +590,8 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
                 // will set the new source as input.
                 muteLocalHost(mediaAttr.muted_,
                               mediaAttr.type_ == MediaType::MEDIA_AUDIO
-                                  ? DRing::Media::Details::MEDIA_TYPE_AUDIO
-                                  : DRing::Media::Details::MEDIA_TYPE_VIDEO);
+                                  ? libjami::Media::Details::MEDIA_TYPE_AUDIO
+                                  : libjami::Media::Details::MEDIA_TYPE_VIDEO);
             }
         }
     }
@@ -607,7 +607,7 @@ Conference::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
 
 void
 Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
-                                     const std::vector<DRing::MediaMap>& remoteMediaList)
+                                     const std::vector<libjami::MediaMap>& remoteMediaList)
 {
     JAMI_DBG("Conf [%s] Answer to media change request", getConfId().c_str());
     auto currentMediaList = hostSources_;
@@ -627,15 +627,15 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
 
     auto remoteList = remoteMediaList;
     for (auto it = remoteList.begin(); it != remoteList.end();) {
-        if (it->at(DRing::Media::MediaAttributeKey::MUTED) == TRUE_STR
-            or it->at(DRing::Media::MediaAttributeKey::ENABLED) == FALSE_STR) {
+        if (it->at(libjami::Media::MediaAttributeKey::MUTED) == TRUE_STR
+            or it->at(libjami::Media::MediaAttributeKey::ENABLED) == FALSE_STR) {
             it = remoteList.erase(it);
         } else {
             ++it;
         }
     }
     // Create minimum media list (ignore muted and disabled medias)
-    std::vector<DRing::MediaMap> newMediaList;
+    std::vector<libjami::MediaMap> newMediaList;
     newMediaList.reserve(remoteMediaList.size());
     for (auto const& media : currentMediaList) {
         if (media.enabled_ and not media.muted_)
@@ -841,7 +841,7 @@ Conference::sendConferenceInfos()
 #endif
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
+    jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(id_,
                                                                   confInfo.toVectorMapStringString());
 }
 
@@ -1564,7 +1564,7 @@ Conference::hangupParticipant(const std::string& accountUri, const std::string& 
         }
         if (auto call = getCallFromPeerID(string_remove_suffix(remoteHost, '@'))) {
             // Forward to the remote host.
-            DRing::hangupParticipant(acc->getAccountID(), call->getCallId(), accountUri, deviceId);
+            libjami::hangupParticipant(acc->getAccountID(), call->getCallId(), accountUri, deviceId);
         }
     }
 }
@@ -1572,7 +1572,7 @@ Conference::hangupParticipant(const std::string& accountUri, const std::string& 
 void
 Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 {
-    if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
+    if (mediaType.compare(libjami::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
         if (is_muted == isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
             JAMI_DBG("Local audio source already in [%s] state", is_muted ? "muted" : "un-muted");
             return;
@@ -1588,9 +1588,9 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         }
         setLocalHostMuteState(MediaType::MEDIA_AUDIO, is_muted);
         updateMuted();
-        emitSignal<DRing::CallSignal::AudioMuted>(id_, is_muted);
+        emitSignal<libjami::CallSignal::AudioMuted>(id_, is_muted);
         return;
-    } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
+    } else if (mediaType.compare(libjami::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef ENABLE_VIDEO
         if (not isVideoEnabled()) {
             JAMI_ERR("Cant't mute, the video is disabled!");
@@ -1618,7 +1618,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
                 mixer->switchInputs(videoInputs);
             }
         }
-        emitSignal<DRing::CallSignal::VideoMuted>(id_, is_muted);
+        emitSignal<libjami::CallSignal::VideoMuted>(id_, is_muted);
         return;
 #endif
     }

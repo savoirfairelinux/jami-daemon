@@ -169,7 +169,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
     size_ = getSize({params.width, params.height});
     rate_ = getRate(params.framerate);
-    emitSignal<DRing::VideoSignal::ParametersChanged>(name);
+    emitSignal<libjami::VideoSignal::ParametersChanged>(name);
 }
 
 VideoDevice::VideoDevice(const std::string& path,
