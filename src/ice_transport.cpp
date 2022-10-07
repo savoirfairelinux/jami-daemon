@@ -668,7 +668,7 @@ IceTransport::Impl::flushTimerHeapAndIoQueue()
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - start);
-    JAMI_DBG("[ice:%p] Timer heap flushed after %ld ms", this, duration.count());
+    JAMI_DEBUG("[ice:{}] Timer heap flushed after {}", fmt::ptr(this), duration);
 
     return static_cast<int>(pj_timer_heap_count(config_.stun_cfg.timer_heap));
 }
