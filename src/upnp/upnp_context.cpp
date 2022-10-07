@@ -57,20 +57,15 @@ UPnPContext::getUPnPContext()
 }
 
 void
-UPnPContext::shutdown()
+UPnPContext::shutdown(std::condition_variable& cv)
 {
-    if (not isValidThread()) {
-        runOnUpnpContextQueue([this] { shutdown(); });
-        waitForShutdown();
-        return;
-    }
-
     JAMI_DBG("Shutdown UPnPContext instance [%p]", this);
 
     stopUpnp(true);
 
-    for (auto const& [_, proto] : protocolList_)
+    for (auto const& [_, proto] : protocolList_) {
         proto->terminate();
+    }
 
     {
         std::lock_guard<std::mutex> lock(mappingMutex_);
@@ -80,17 +75,23 @@ UPnPContext::shutdown()
         controllerList_.clear();
         protocolList_.clear();
         shutdownComplete_ = true;
+        cv.notify_one();
     }
-
-    shutdownCv_.notify_one();
 }
 
 void
-UPnPContext::waitForShutdown()
+UPnPContext::shutdown()
 {
-    JAMI_DBG("Waiting for shutdown ...");
     std::unique_lock<std::mutex> lk(mappingMutex_);
-    if (shutdownCv_.wait_for(lk, std::chrono::seconds(30), [this] { return shutdownComplete_; })) {
+    std::condition_variable cv;
+
+    runOnUpnpContextQueue([&, this] {
+        shutdown(cv);
+    });
+
+    JAMI_DBG("Waiting for shutdown ...");
+
+    if (cv.wait_for(lk, std::chrono::seconds(30), [this] { return shutdownComplete_; })) {
         JAMI_DBG("Shutdown completed");
     } else {
         JAMI_ERR("Shutdown timed-out");

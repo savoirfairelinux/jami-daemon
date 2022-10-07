@@ -118,8 +118,9 @@ private:
     // Helpers to run tasks on UPNP context execution queue.
     ScheduledExecutor* getUpnContextScheduler() { return UpnpThreadUtil::getScheduler(); }
 
+    void terminate(std::condition_variable& cv);
+
     void initNatPmp();
-    void waitForShutdown();
     void getIgdPublicAddress();
     void removeAllMappings();
     int readResponse(natpmp_t& handle, natpmpresp_t& response);
@@ -170,7 +171,6 @@ private:
     mutable std::mutex natpmpMutex_;
 
     // Shutdown synchronization
-    std::condition_variable shutdownCv_ {};
     bool shutdownComplete_ {false};
 };
 
