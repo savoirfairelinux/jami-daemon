@@ -40,6 +40,11 @@ AS_IF([test "x$enable_debug" = "xyes"],
   [DAEMONCFLAGS+=" -DNDEBUG=1 -O3"
    DAEMONCXXFLAGS+=" -DNDEBUG=1 -O3 -Wno-deprecated"])
 
+AC_ARG_ENABLE([enable_integration_tests],
+  AS_HELP_STRING([--enable-integration-tests],
+    [Also run integration tests with check target]))
+AM_CONDITIONAL([ENABLE_INTEGRATION_TESTS], [test "x$enable_integration_tests" = "xyes"])
+
 AC_ARG_ENABLE([fuzzing],
   AS_HELP_STRING([--enable-fuzzing],
     [Build fuzzing tools]))
