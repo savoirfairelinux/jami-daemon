@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <regex>
 #include <iterator>
+#include <charconv>
 
 #ifdef _WIN32
 #include <WTypes.h>
@@ -52,6 +53,21 @@ std::string to_string(const std::wstring& wstr, int codePage = CP_UTF8);
 
 std::string to_hex_string(uint64_t id);
 uint64_t from_hex_string(const std::string& str);
+
+template<typename T>
+T
+to_int(std::string_view str)
+{
+    T result;
+    auto [p, ec] = std::from_chars(str.data(), str.data()+str.size(), result);
+    if (ec ==  std::errc())
+        return result;
+    if (ec == std::errc::invalid_argument)
+        throw std::invalid_argument("Can't parse integer: invalid_argument");
+    else if (ec == std::errc::result_out_of_range)
+        throw std::out_of_range("Can't parse integer: out of range");
+    throw std::system_error(std::make_error_code(ec));
+}
 
 static inline int
 stoi(const std::string& str)
