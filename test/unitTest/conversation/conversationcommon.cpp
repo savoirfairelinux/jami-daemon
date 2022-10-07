@@ -114,7 +114,7 @@ simulateRemoval(std::shared_ptr<JamiAccount> account,
     wbuilder["indentation"] = "";
     cr.commitMessage(Json::writeString(wbuilder, json));
 
-    DRing::sendMessage(account->getAccountID(),
+    libjami::sendMessage(account->getAccountID(),
                        convId,
                        "trigger the fake history to be pulled"s,
                        "");

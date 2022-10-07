@@ -29,164 +29,164 @@ DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
 
 auto
 DBusConfigurationManager::getAccountDetails(const std::string& accountID)
-    -> decltype(DRing::getAccountDetails(accountID))
+    -> decltype(libjami::getAccountDetails(accountID))
 {
-    return DRing::getAccountDetails(accountID);
+    return libjami::getAccountDetails(accountID);
 }
 
 auto
 DBusConfigurationManager::getVolatileAccountDetails(const std::string& accountID)
-    -> decltype(DRing::getVolatileAccountDetails(accountID))
+    -> decltype(libjami::getVolatileAccountDetails(accountID))
 {
-    return DRing::getVolatileAccountDetails(accountID);
+    return libjami::getVolatileAccountDetails(accountID);
 }
 
 void
 DBusConfigurationManager::setAccountDetails(const std::string& accountID,
                                             const std::map<std::string, std::string>& details)
 {
-    DRing::setAccountDetails(accountID, details);
+    libjami::setAccountDetails(accountID, details);
 }
 
 void
 DBusConfigurationManager::setAccountActive(const std::string& accountID, const bool& active)
 {
-    DRing::setAccountActive(accountID, active);
+    libjami::setAccountActive(accountID, active);
 }
 
 auto
 DBusConfigurationManager::getAccountTemplate(const std::string& accountType)
-    -> decltype(DRing::getAccountTemplate(accountType))
+    -> decltype(libjami::getAccountTemplate(accountType))
 {
-    return DRing::getAccountTemplate(accountType);
+    return libjami::getAccountTemplate(accountType);
 }
 
 auto
 DBusConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
-    -> decltype(DRing::addAccount(details))
+    -> decltype(libjami::addAccount(details))
 {
-    return DRing::addAccount(details);
+    return libjami::addAccount(details);
 }
 
 auto
-DBusConfigurationManager::monitor(const bool& continuous) -> decltype(DRing::monitor(continuous))
+DBusConfigurationManager::monitor(const bool& continuous) -> decltype(libjami::monitor(continuous))
 {
-    return DRing::monitor(continuous);
+    return libjami::monitor(continuous);
 }
 
 auto
 DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::string& password)
-    -> decltype(DRing::exportOnRing(accountID, password))
+    -> decltype(libjami::exportOnRing(accountID, password))
 {
-    return DRing::exportOnRing(accountID, password);
+    return libjami::exportOnRing(accountID, password);
 }
 
 auto
 DBusConfigurationManager::exportToFile(const std::string& accountID,
                                        const std::string& destinationPath,
                                        const std::string& password)
-    -> decltype(DRing::exportToFile(accountID, destinationPath, password))
+    -> decltype(libjami::exportToFile(accountID, destinationPath, password))
 {
-    return DRing::exportToFile(accountID, destinationPath, password);
+    return libjami::exportToFile(accountID, destinationPath, password);
 }
 
 auto
 DBusConfigurationManager::revokeDevice(const std::string& accountID,
                                        const std::string& password,
                                        const std::string& device)
-    -> decltype(DRing::revokeDevice(accountID, password, device))
+    -> decltype(libjami::revokeDevice(accountID, password, device))
 {
-    return DRing::revokeDevice(accountID, password, device);
+    return libjami::revokeDevice(accountID, password, device);
 }
 
 auto
 DBusConfigurationManager::getKnownRingDevices(const std::string& accountID)
-    -> decltype(DRing::getKnownRingDevices(accountID))
+    -> decltype(libjami::getKnownRingDevices(accountID))
 {
-    return DRing::getKnownRingDevices(accountID);
+    return libjami::getKnownRingDevices(accountID);
 }
 
 auto
 DBusConfigurationManager::changeAccountPassword(const std::string& accountID,
                                                 const std::string& password_old,
                                                 const std::string& password_new)
-    -> decltype(DRing::changeAccountPassword(accountID, password_old, password_new))
+    -> decltype(libjami::changeAccountPassword(accountID, password_old, password_new))
 {
-    return DRing::changeAccountPassword(accountID, password_old, password_new);
+    return libjami::changeAccountPassword(accountID, password_old, password_new);
 }
 
 auto
 DBusConfigurationManager::lookupName(const std::string& account,
                                      const std::string& nameserver,
                                      const std::string& name)
-    -> decltype(DRing::lookupName(account, nameserver, name))
+    -> decltype(libjami::lookupName(account, nameserver, name))
 {
-    return DRing::lookupName(account, nameserver, name);
+    return libjami::lookupName(account, nameserver, name);
 }
 
 auto
 DBusConfigurationManager::lookupAddress(const std::string& account,
                                         const std::string& nameserver,
                                         const std::string& address)
-    -> decltype(DRing::lookupAddress(account, nameserver, address))
+    -> decltype(libjami::lookupAddress(account, nameserver, address))
 {
-    return DRing::lookupAddress(account, nameserver, address);
+    return libjami::lookupAddress(account, nameserver, address);
 }
 
 auto
 DBusConfigurationManager::registerName(const std::string& account,
                                        const std::string& password,
                                        const std::string& name)
-    -> decltype(DRing::registerName(account, password, name))
+    -> decltype(libjami::registerName(account, password, name))
 {
-    return DRing::registerName(account, password, name);
+    return libjami::registerName(account, password, name);
 }
 
 auto
 DBusConfigurationManager::searchUser(const std::string& account, const std::string& query)
-    -> decltype(DRing::searchUser(account, query))
+    -> decltype(libjami::searchUser(account, query))
 {
-    return DRing::searchUser(account, query);
+    return libjami::searchUser(account, query);
 }
 
 void
 DBusConfigurationManager::removeAccount(const std::string& accountID)
 {
-    DRing::removeAccount(accountID);
+    libjami::removeAccount(accountID);
 }
 
 auto
-DBusConfigurationManager::getAccountList() -> decltype(DRing::getAccountList())
+DBusConfigurationManager::getAccountList() -> decltype(libjami::getAccountList())
 {
-    return DRing::getAccountList();
+    return libjami::getAccountList();
 }
 
 void
 DBusConfigurationManager::sendRegister(const std::string& accountID, const bool& enable)
 {
-    DRing::sendRegister(accountID, enable);
+    libjami::sendRegister(accountID, enable);
 }
 
 void
 DBusConfigurationManager::registerAllAccounts(void)
 {
-    DRing::registerAllAccounts();
+    libjami::registerAllAccounts();
 }
 
 auto
 DBusConfigurationManager::sendTextMessage(const std::string& accountID,
                                           const std::string& to,
                                           const std::map<std::string, std::string>& payloads)
-    -> decltype(DRing::sendAccountTextMessage(accountID, to, payloads))
+    -> decltype(libjami::sendAccountTextMessage(accountID, to, payloads))
 {
-    return DRing::sendAccountTextMessage(accountID, to, payloads);
+    return libjami::sendAccountTextMessage(accountID, to, payloads);
 }
 
 std::vector<RingDBusMessage>
 DBusConfigurationManager::getLastMessages(const std::string& accountID,
                                           const uint64_t& base_timestamp)
 {
-    auto messages = DRing::getLastMessages(accountID, base_timestamp);
+    auto messages = libjami::getLastMessages(accountID, base_timestamp);
     std::vector<RingDBusMessage> result;
     for (const auto& message : messages) {
         RingDBusMessage m;
@@ -201,27 +201,27 @@ DBusConfigurationManager::getLastMessages(const std::string& accountID,
 std::map<std::string, std::string>
 DBusConfigurationManager::getNearbyPeers(const std::string& accountID)
 {
-    return DRing::getNearbyPeers(accountID);
+    return libjami::getNearbyPeers(accountID);
 }
 
 auto
 DBusConfigurationManager::getMessageStatus(const uint64_t& id)
-    -> decltype(DRing::getMessageStatus(id))
+    -> decltype(libjami::getMessageStatus(id))
 {
-    return DRing::getMessageStatus(id);
+    return libjami::getMessageStatus(id);
 }
 
 auto
 DBusConfigurationManager::getMessageStatus(const std::string& accountID, const uint64_t& id)
-    -> decltype(DRing::getMessageStatus(accountID, id))
+    -> decltype(libjami::getMessageStatus(accountID, id))
 {
-    return DRing::getMessageStatus(accountID, id);
+    return libjami::getMessageStatus(accountID, id);
 }
 
 bool
 DBusConfigurationManager::cancelMessage(const std::string& accountID, const uint64_t& id)
 {
-    return DRing::cancelMessage(accountID, id);
+    return libjami::cancelMessage(accountID, id);
 }
 
 void
@@ -229,7 +229,7 @@ DBusConfigurationManager::setIsComposing(const std::string& accountID,
                                          const std::string& conversationUri,
                                          const bool& isWriting)
 {
-    DRing::setIsComposing(accountID, conversationUri, isWriting);
+    libjami::setIsComposing(accountID, conversationUri, isWriting);
 }
 
 bool
@@ -238,304 +238,304 @@ DBusConfigurationManager::setMessageDisplayed(const std::string& accountID,
                                               const std::string& messageId,
                                               const int32_t& status)
 {
-    return DRing::setMessageDisplayed(accountID, conversationUri, messageId, status);
+    return libjami::setMessageDisplayed(accountID, conversationUri, messageId, status);
 }
 
 auto
-DBusConfigurationManager::getCodecList() -> decltype(DRing::getCodecList())
+DBusConfigurationManager::getCodecList() -> decltype(libjami::getCodecList())
 {
-    return DRing::getCodecList();
+    return libjami::getCodecList();
 }
 
 auto
-DBusConfigurationManager::getSupportedTlsMethod() -> decltype(DRing::getSupportedTlsMethod())
+DBusConfigurationManager::getSupportedTlsMethod() -> decltype(libjami::getSupportedTlsMethod())
 {
-    return DRing::getSupportedTlsMethod();
+    return libjami::getSupportedTlsMethod();
 }
 
 auto
 DBusConfigurationManager::getSupportedCiphers(const std::string& accountID)
-    -> decltype(DRing::getSupportedCiphers(accountID))
+    -> decltype(libjami::getSupportedCiphers(accountID))
 {
-    return DRing::getSupportedCiphers(accountID);
+    return libjami::getSupportedCiphers(accountID);
 }
 
 auto
 DBusConfigurationManager::getCodecDetails(const std::string& accountID, const unsigned& codecId)
-    -> decltype(DRing::getCodecDetails(accountID, codecId))
+    -> decltype(libjami::getCodecDetails(accountID, codecId))
 {
-    return DRing::getCodecDetails(accountID, codecId);
+    return libjami::getCodecDetails(accountID, codecId);
 }
 
 auto
 DBusConfigurationManager::setCodecDetails(const std::string& accountID,
                                           const unsigned& codecId,
                                           const std::map<std::string, std::string>& details)
-    -> decltype(DRing::setCodecDetails(accountID, codecId, details))
+    -> decltype(libjami::setCodecDetails(accountID, codecId, details))
 {
-    return DRing::setCodecDetails(accountID, codecId, details);
+    return libjami::setCodecDetails(accountID, codecId, details);
 }
 
 auto
 DBusConfigurationManager::getActiveCodecList(const std::string& accountID)
-    -> decltype(DRing::getActiveCodecList(accountID))
+    -> decltype(libjami::getActiveCodecList(accountID))
 {
-    return DRing::getActiveCodecList(accountID);
+    return libjami::getActiveCodecList(accountID);
 }
 
 void
 DBusConfigurationManager::setActiveCodecList(const std::string& accountID,
                                              const std::vector<unsigned>& list)
 {
-    DRing::setActiveCodecList(accountID, list);
+    libjami::setActiveCodecList(accountID, list);
 }
 
 auto
-DBusConfigurationManager::getAudioPluginList() -> decltype(DRing::getAudioPluginList())
+DBusConfigurationManager::getAudioPluginList() -> decltype(libjami::getAudioPluginList())
 {
-    return DRing::getAudioPluginList();
+    return libjami::getAudioPluginList();
 }
 
 void
 DBusConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
 {
-    DRing::setAudioPlugin(audioPlugin);
+    libjami::setAudioPlugin(audioPlugin);
 }
 
 auto
-DBusConfigurationManager::getAudioOutputDeviceList() -> decltype(DRing::getAudioOutputDeviceList())
+DBusConfigurationManager::getAudioOutputDeviceList() -> decltype(libjami::getAudioOutputDeviceList())
 {
-    return DRing::getAudioOutputDeviceList();
+    return libjami::getAudioOutputDeviceList();
 }
 
 void
 DBusConfigurationManager::setAudioOutputDevice(const int32_t& index)
 {
-    DRing::setAudioOutputDevice(index);
+    libjami::setAudioOutputDevice(index);
 }
 
 void
 DBusConfigurationManager::setAudioInputDevice(const int32_t& index)
 {
-    DRing::setAudioInputDevice(index);
+    libjami::setAudioInputDevice(index);
 }
 
 void
 DBusConfigurationManager::setAudioRingtoneDevice(const int32_t& index)
 {
-    DRing::setAudioRingtoneDevice(index);
+    libjami::setAudioRingtoneDevice(index);
 }
 
 auto
-DBusConfigurationManager::getAudioInputDeviceList() -> decltype(DRing::getAudioInputDeviceList())
+DBusConfigurationManager::getAudioInputDeviceList() -> decltype(libjami::getAudioInputDeviceList())
 {
-    return DRing::getAudioInputDeviceList();
+    return libjami::getAudioInputDeviceList();
 }
 
 auto
 DBusConfigurationManager::getCurrentAudioDevicesIndex()
-    -> decltype(DRing::getCurrentAudioDevicesIndex())
+    -> decltype(libjami::getCurrentAudioDevicesIndex())
 {
-    return DRing::getCurrentAudioDevicesIndex();
+    return libjami::getCurrentAudioDevicesIndex();
 }
 
 auto
 DBusConfigurationManager::getAudioInputDeviceIndex(const std::string& name)
-    -> decltype(DRing::getAudioInputDeviceIndex(name))
+    -> decltype(libjami::getAudioInputDeviceIndex(name))
 {
-    return DRing::getAudioInputDeviceIndex(name);
+    return libjami::getAudioInputDeviceIndex(name);
 }
 
 auto
 DBusConfigurationManager::getAudioOutputDeviceIndex(const std::string& name)
-    -> decltype(DRing::getAudioOutputDeviceIndex(name))
+    -> decltype(libjami::getAudioOutputDeviceIndex(name))
 {
-    return DRing::getAudioOutputDeviceIndex(name);
+    return libjami::getAudioOutputDeviceIndex(name);
 }
 
 auto
 DBusConfigurationManager::getCurrentAudioOutputPlugin()
-    -> decltype(DRing::getCurrentAudioOutputPlugin())
+    -> decltype(libjami::getCurrentAudioOutputPlugin())
 {
-    return DRing::getCurrentAudioOutputPlugin();
+    return libjami::getCurrentAudioOutputPlugin();
 }
 
 auto
-DBusConfigurationManager::getNoiseSuppressState() -> decltype(DRing::getNoiseSuppressState())
+DBusConfigurationManager::getNoiseSuppressState() -> decltype(libjami::getNoiseSuppressState())
 {
-    return DRing::getNoiseSuppressState();
+    return libjami::getNoiseSuppressState();
 }
 
 void
 DBusConfigurationManager::setNoiseSuppressState(const bool& state)
 {
-    DRing::setNoiseSuppressState(state);
+    libjami::setNoiseSuppressState(state);
 }
 
 auto
-DBusConfigurationManager::isAgcEnabled() -> decltype(DRing::isAgcEnabled())
+DBusConfigurationManager::isAgcEnabled() -> decltype(libjami::isAgcEnabled())
 {
-    return DRing::isAgcEnabled();
+    return libjami::isAgcEnabled();
 }
 
 void
 DBusConfigurationManager::setAgcState(const bool& enabled)
 {
-    DRing::setAgcState(enabled);
+    libjami::setAgcState(enabled);
 }
 
 void
 DBusConfigurationManager::muteDtmf(const bool& mute)
 {
-    DRing::muteDtmf(mute);
+    libjami::muteDtmf(mute);
 }
 
 auto
-DBusConfigurationManager::isDtmfMuted() -> decltype(DRing::isDtmfMuted())
+DBusConfigurationManager::isDtmfMuted() -> decltype(libjami::isDtmfMuted())
 {
-    return DRing::isDtmfMuted();
+    return libjami::isDtmfMuted();
 }
 
 auto
-DBusConfigurationManager::isCaptureMuted() -> decltype(DRing::isCaptureMuted())
+DBusConfigurationManager::isCaptureMuted() -> decltype(libjami::isCaptureMuted())
 {
-    return DRing::isCaptureMuted();
+    return libjami::isCaptureMuted();
 }
 
 void
 DBusConfigurationManager::muteCapture(const bool& mute)
 {
-    DRing::muteCapture(mute);
+    libjami::muteCapture(mute);
 }
 
 auto
-DBusConfigurationManager::isPlaybackMuted() -> decltype(DRing::isPlaybackMuted())
+DBusConfigurationManager::isPlaybackMuted() -> decltype(libjami::isPlaybackMuted())
 {
-    return DRing::isPlaybackMuted();
+    return libjami::isPlaybackMuted();
 }
 
 void
 DBusConfigurationManager::mutePlayback(const bool& mute)
 {
-    DRing::mutePlayback(mute);
+    libjami::mutePlayback(mute);
 }
 
 auto
-DBusConfigurationManager::isRingtoneMuted() -> decltype(DRing::isRingtoneMuted())
+DBusConfigurationManager::isRingtoneMuted() -> decltype(libjami::isRingtoneMuted())
 {
-    return DRing::isRingtoneMuted();
+    return libjami::isRingtoneMuted();
 }
 
 void
 DBusConfigurationManager::muteRingtone(const bool& mute)
 {
-    DRing::muteRingtone(mute);
+    libjami::muteRingtone(mute);
 }
 
 auto
-DBusConfigurationManager::getAudioManager() -> decltype(DRing::getAudioManager())
+DBusConfigurationManager::getAudioManager() -> decltype(libjami::getAudioManager())
 {
-    return DRing::getAudioManager();
+    return libjami::getAudioManager();
 }
 
 auto
 DBusConfigurationManager::setAudioManager(const std::string& api)
-    -> decltype(DRing::setAudioManager(api))
+    -> decltype(libjami::setAudioManager(api))
 {
-    return DRing::setAudioManager(api);
+    return libjami::setAudioManager(api);
 }
 
 auto
 DBusConfigurationManager::getSupportedAudioManagers()
-    -> decltype(DRing::getSupportedAudioManagers())
+    -> decltype(libjami::getSupportedAudioManagers())
 {
-    return DRing::getSupportedAudioManagers();
+    return libjami::getSupportedAudioManagers();
 }
 
 auto
-DBusConfigurationManager::getRecordPath() -> decltype(DRing::getRecordPath())
+DBusConfigurationManager::getRecordPath() -> decltype(libjami::getRecordPath())
 {
-    return DRing::getRecordPath();
+    return libjami::getRecordPath();
 }
 
 void
 DBusConfigurationManager::setRecordPath(const std::string& recPath)
 {
-    DRing::setRecordPath(recPath);
+    libjami::setRecordPath(recPath);
 }
 
 auto
-DBusConfigurationManager::getIsAlwaysRecording() -> decltype(DRing::getIsAlwaysRecording())
+DBusConfigurationManager::getIsAlwaysRecording() -> decltype(libjami::getIsAlwaysRecording())
 {
-    return DRing::getIsAlwaysRecording();
+    return libjami::getIsAlwaysRecording();
 }
 
 void
 DBusConfigurationManager::setIsAlwaysRecording(const bool& rec)
 {
-    DRing::setIsAlwaysRecording(rec);
+    libjami::setIsAlwaysRecording(rec);
 }
 
 auto
-DBusConfigurationManager::getRecordPreview() -> decltype(DRing::getRecordPreview())
+DBusConfigurationManager::getRecordPreview() -> decltype(libjami::getRecordPreview())
 {
-    return DRing::getRecordPreview();
+    return libjami::getRecordPreview();
 }
 
 void
 DBusConfigurationManager::setRecordPreview(const bool& rec)
 {
-    DRing::setRecordPreview(rec);
+    libjami::setRecordPreview(rec);
 }
 
 auto
-DBusConfigurationManager::getRecordQuality() -> decltype(DRing::getRecordQuality())
+DBusConfigurationManager::getRecordQuality() -> decltype(libjami::getRecordQuality())
 {
-    return DRing::getRecordQuality();
+    return libjami::getRecordQuality();
 }
 
 void
 DBusConfigurationManager::setRecordQuality(const int32_t& quality)
 {
-    DRing::setRecordQuality(quality);
+    libjami::setRecordQuality(quality);
 }
 
 void
 DBusConfigurationManager::setHistoryLimit(const int32_t& days)
 {
-    DRing::setHistoryLimit(days);
+    libjami::setHistoryLimit(days);
 }
 
 auto
-DBusConfigurationManager::getHistoryLimit() -> decltype(DRing::getHistoryLimit())
+DBusConfigurationManager::getHistoryLimit() -> decltype(libjami::getHistoryLimit())
 {
-    return DRing::getHistoryLimit();
+    return libjami::getHistoryLimit();
 }
 
 void
 DBusConfigurationManager::setRingingTimeout(const int32_t& timeout)
 {
-    DRing::setRingingTimeout(timeout);
+    libjami::setRingingTimeout(timeout);
 }
 
 auto
-DBusConfigurationManager::getRingingTimeout() -> decltype(DRing::getRingingTimeout())
+DBusConfigurationManager::getRingingTimeout() -> decltype(libjami::getRingingTimeout())
 {
-    return DRing::getRingingTimeout();
+    return libjami::getRingingTimeout();
 }
 
 void
 DBusConfigurationManager::setAccountsOrder(const std::string& order)
 {
-    DRing::setAccountsOrder(order);
+    libjami::setAccountsOrder(order);
 }
 
 auto
 DBusConfigurationManager::validateCertificate(const std::string& accountId,
                                               const std::string& certificate)
-    -> decltype(DRing::validateCertificate(accountId, certificate))
+    -> decltype(libjami::validateCertificate(accountId, certificate))
 {
-    return DRing::validateCertificate(accountId, certificate);
+    return libjami::validateCertificate(accountId, certificate);
 }
 
 auto
@@ -544,105 +544,105 @@ DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
                                                   const std::string& privateKey,
                                                   const std::string& privateKeyPass,
                                                   const std::string& caList)
-    -> decltype(DRing::validateCertificatePath(
+    -> decltype(libjami::validateCertificatePath(
         accountId, certificate, privateKey, privateKeyPass, caList))
 {
-    return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
+    return libjami::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
 }
 
 auto
 DBusConfigurationManager::getCertificateDetails(const std::string& certificate)
-    -> decltype(DRing::getCertificateDetails(certificate))
+    -> decltype(libjami::getCertificateDetails(certificate))
 {
-    return DRing::getCertificateDetails(certificate);
+    return libjami::getCertificateDetails(certificate);
 }
 
 auto
 DBusConfigurationManager::getCertificateDetailsPath(const std::string& certificate,
                                                     const std::string& privateKey,
                                                     const std::string& privateKeyPass)
-    -> decltype(DRing::getCertificateDetailsPath(certificate, privateKey, privateKeyPass))
+    -> decltype(libjami::getCertificateDetailsPath(certificate, privateKey, privateKeyPass))
 {
-    return DRing::getCertificateDetailsPath(certificate, privateKey, privateKeyPass);
+    return libjami::getCertificateDetailsPath(certificate, privateKey, privateKeyPass);
 }
 
 auto
-DBusConfigurationManager::getPinnedCertificates() -> decltype(DRing::getPinnedCertificates())
+DBusConfigurationManager::getPinnedCertificates() -> decltype(libjami::getPinnedCertificates())
 {
-    return DRing::getPinnedCertificates();
+    return libjami::getPinnedCertificates();
 }
 
 auto
 DBusConfigurationManager::pinCertificate(const std::vector<uint8_t>& certificate, const bool& local)
-    -> decltype(DRing::pinCertificate(certificate, local))
+    -> decltype(libjami::pinCertificate(certificate, local))
 {
-    return DRing::pinCertificate(certificate, local);
+    return libjami::pinCertificate(certificate, local);
 }
 
 void
 DBusConfigurationManager::pinCertificatePath(const std::string& certPath)
 {
-    return DRing::pinCertificatePath(certPath);
+    return libjami::pinCertificatePath(certPath);
 }
 
 auto
 DBusConfigurationManager::unpinCertificate(const std::string& certId)
-    -> decltype(DRing::unpinCertificate(certId))
+    -> decltype(libjami::unpinCertificate(certId))
 {
-    return DRing::unpinCertificate(certId);
+    return libjami::unpinCertificate(certId);
 }
 
 auto
 DBusConfigurationManager::unpinCertificatePath(const std::string& p)
-    -> decltype(DRing::unpinCertificatePath(p))
+    -> decltype(libjami::unpinCertificatePath(p))
 {
-    return DRing::unpinCertificatePath(p);
+    return libjami::unpinCertificatePath(p);
 }
 
 auto
 DBusConfigurationManager::pinRemoteCertificate(const std::string& accountId,
                                                const std::string& certId)
-    -> decltype(DRing::pinRemoteCertificate(accountId, certId))
+    -> decltype(libjami::pinRemoteCertificate(accountId, certId))
 {
-    return DRing::pinRemoteCertificate(accountId, certId);
+    return libjami::pinRemoteCertificate(accountId, certId);
 }
 
 auto
 DBusConfigurationManager::setCertificateStatus(const std::string& accountId,
                                                const std::string& certId,
                                                const std::string& status)
-    -> decltype(DRing::setCertificateStatus(accountId, certId, status))
+    -> decltype(libjami::setCertificateStatus(accountId, certId, status))
 {
-    return DRing::setCertificateStatus(accountId, certId, status);
+    return libjami::setCertificateStatus(accountId, certId, status);
 }
 
 auto
 DBusConfigurationManager::getCertificatesByStatus(const std::string& accountId,
                                                   const std::string& status)
-    -> decltype(DRing::getCertificatesByStatus(accountId, status))
+    -> decltype(libjami::getCertificatesByStatus(accountId, status))
 {
-    return DRing::getCertificatesByStatus(accountId, status);
+    return libjami::getCertificatesByStatus(accountId, status);
 }
 
 auto
 DBusConfigurationManager::getTrustRequests(const std::string& accountId)
-    -> decltype(DRing::getTrustRequests(accountId))
+    -> decltype(libjami::getTrustRequests(accountId))
 {
-    return DRing::getTrustRequests(accountId);
+    return libjami::getTrustRequests(accountId);
 }
 
 auto
 DBusConfigurationManager::acceptTrustRequest(const std::string& accountId, const std::string& from)
-    -> decltype(DRing::acceptTrustRequest(accountId, from))
+    -> decltype(libjami::acceptTrustRequest(accountId, from))
 {
-    return DRing::acceptTrustRequest(accountId, from);
+    return libjami::acceptTrustRequest(accountId, from);
 }
 
 auto
 DBusConfigurationManager::discardTrustRequest(const std::string& accountId, const std::string& from)
-    -> decltype(DRing::discardTrustRequest(accountId, from))
+    -> decltype(libjami::discardTrustRequest(accountId, from))
 {
-    return DRing::discardTrustRequest(accountId, from);
+    return libjami::discardTrustRequest(accountId, from);
 }
 
 void
@@ -650,13 +650,13 @@ DBusConfigurationManager::sendTrustRequest(const std::string& accountId,
                                            const std::string& to,
                                            const std::vector<uint8_t>& payload)
 {
-    DRing::sendTrustRequest(accountId, to, payload);
+    libjami::sendTrustRequest(accountId, to, payload);
 }
 
 void
 DBusConfigurationManager::addContact(const std::string& accountId, const std::string& uri)
 {
-    DRing::addContact(accountId, uri);
+    libjami::addContact(accountId, uri);
 }
 
 void
@@ -664,82 +664,82 @@ DBusConfigurationManager::removeContact(const std::string& accountId,
                                         const std::string& uri,
                                         const bool& ban)
 {
-    DRing::removeContact(accountId, uri, ban);
+    libjami::removeContact(accountId, uri, ban);
 }
 
 auto
 DBusConfigurationManager::getContactDetails(const std::string& accountId, const std::string& uri)
-    -> decltype(DRing::getContactDetails(accountId, uri))
+    -> decltype(libjami::getContactDetails(accountId, uri))
 {
-    return DRing::getContactDetails(accountId, uri);
+    return libjami::getContactDetails(accountId, uri);
 }
 
 auto
 DBusConfigurationManager::getContacts(const std::string& accountId)
-    -> decltype(DRing::getContacts(accountId))
+    -> decltype(libjami::getContacts(accountId))
 {
-    return DRing::getContacts(accountId);
+    return libjami::getContacts(accountId);
 }
 
 auto
 DBusConfigurationManager::getCredentials(const std::string& accountID)
-    -> decltype(DRing::getCredentials(accountID))
+    -> decltype(libjami::getCredentials(accountID))
 {
-    return DRing::getCredentials(accountID);
+    return libjami::getCredentials(accountID);
 }
 
 void
 DBusConfigurationManager::setCredentials(
     const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details)
 {
-    DRing::setCredentials(accountID, details);
+    libjami::setCredentials(accountID, details);
 }
 
 auto
 DBusConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
-    -> decltype(DRing::getAddrFromInterfaceName(interface))
+    -> decltype(libjami::getAddrFromInterfaceName(interface))
 {
-    return DRing::getAddrFromInterfaceName(interface);
+    return libjami::getAddrFromInterfaceName(interface);
 }
 
 auto
-DBusConfigurationManager::getAllIpInterface() -> decltype(DRing::getAllIpInterface())
+DBusConfigurationManager::getAllIpInterface() -> decltype(libjami::getAllIpInterface())
 {
-    return DRing::getAllIpInterface();
+    return libjami::getAllIpInterface();
 }
 
 auto
-DBusConfigurationManager::getAllIpInterfaceByName() -> decltype(DRing::getAllIpInterfaceByName())
+DBusConfigurationManager::getAllIpInterfaceByName() -> decltype(libjami::getAllIpInterfaceByName())
 {
-    return DRing::getAllIpInterfaceByName();
+    return libjami::getAllIpInterfaceByName();
 }
 
 void
 DBusConfigurationManager::setVolume(const std::string& device, const double& value)
 {
-    DRing::setVolume(device, value);
+    libjami::setVolume(device, value);
 }
 
 auto
-DBusConfigurationManager::getVolume(const std::string& device) -> decltype(DRing::getVolume(device))
+DBusConfigurationManager::getVolume(const std::string& device) -> decltype(libjami::getVolume(device))
 {
-    return DRing::getVolume(device);
+    return libjami::getVolume(device);
 }
 
 void
 DBusConfigurationManager::connectivityChanged()
 {
-    DRing::connectivityChanged();
+    libjami::connectivityChanged();
 }
 
 void
 DBusConfigurationManager::sendFileLegacy(const RingDBusDataTransferInfo& in,
                                          uint32_t& error,
-                                         DRing::DataTransferId& id)
+                                         libjami::DataTransferId& id)
 {
-    DRing::DataTransferInfo info;
+    libjami::DataTransferInfo info;
     info.accountId = in._1;
-    info.lastEvent = DRing::DataTransferEventCode(in._2);
+    info.lastEvent = libjami::DataTransferEventCode(in._2);
     info.flags = in._3;
     info.totalSize = in._4;
     info.bytesProgress = in._5;
@@ -749,7 +749,7 @@ DBusConfigurationManager::sendFileLegacy(const RingDBusDataTransferInfo& in,
     info.displayName = in._9;
     info.path = in._10;
     info.mimetype = in._11;
-    error = uint32_t(DRing::sendFileLegacy(info, id));
+    error = uint32_t(libjami::sendFileLegacy(info, id));
 }
 
 void
@@ -759,7 +759,7 @@ DBusConfigurationManager::sendFile(const std::string& accountId,
                                    const std::string& displayName,
                                    const std::string& replyTo)
 {
-    DRing::sendFile(accountId, conversationId, path, displayName, replyTo);
+    libjami::sendFile(accountId, conversationId, path, displayName, replyTo);
 }
 
 void
@@ -768,9 +768,9 @@ DBusConfigurationManager::dataTransferInfo(const std::string& accountId,
                                            uint32_t& error,
                                            RingDBusDataTransferInfo& out)
 {
-    DRing::DataTransferInfo info;
-    auto res = DRing::dataTransferInfo(accountId, fileId, info);
-    if (res == DRing::DataTransferError::success) {
+    libjami::DataTransferInfo info;
+    auto res = libjami::dataTransferInfo(accountId, fileId, info);
+    if (res == libjami::DataTransferError::success) {
         out._1 = info.accountId;
         out._2 = uint32_t(info.lastEvent);
         out._3 = info.flags;
@@ -796,7 +796,7 @@ DBusConfigurationManager::fileTransferInfo(const std::string& accountId,
                                            int64_t& progress)
 {
     error = uint32_t(
-        DRing::fileTransferInfo(accountId, conversationId, fileId, path, total, progress));
+        libjami::fileTransferInfo(accountId, conversationId, fileId, path, total, progress));
 }
 
 uint32_t
@@ -804,7 +804,7 @@ DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
                                              const std::string& fileId,
                                              const std::string& file_path)
 {
-    return uint32_t(DRing::acceptFileTransfer(accountId, fileId, file_path));
+    return uint32_t(libjami::acceptFileTransfer(accountId, fileId, file_path));
 }
 
 bool
@@ -814,7 +814,7 @@ DBusConfigurationManager::downloadFile(const std::string& accountId,
                                        const std::string& fileId,
                                        const std::string& path)
 {
-    return DRing::downloadFile(accountId, conversationUri, interactionId, fileId, path);
+    return libjami::downloadFile(accountId, conversationUri, interactionId, fileId, path);
 }
 
 uint32_t
@@ -822,46 +822,46 @@ DBusConfigurationManager::cancelDataTransfer(const std::string& accountId,
                                              const std::string& conversationId,
                                              const std::string& fileId)
 {
-    return uint32_t(DRing::cancelDataTransfer(accountId, conversationId, fileId));
+    return uint32_t(libjami::cancelDataTransfer(accountId, conversationId, fileId));
 }
 
 std::string
 DBusConfigurationManager::startConversation(const std::string& accountId)
 {
-    return DRing::startConversation(accountId);
+    return libjami::startConversation(accountId);
 }
 
 void
 DBusConfigurationManager::acceptConversationRequest(const std::string& accountId,
                                                     const std::string& conversationId)
 {
-    DRing::acceptConversationRequest(accountId, conversationId);
+    libjami::acceptConversationRequest(accountId, conversationId);
 }
 
 void
 DBusConfigurationManager::declineConversationRequest(const std::string& accountId,
                                                      const std::string& conversationId)
 {
-    DRing::declineConversationRequest(accountId, conversationId);
+    libjami::declineConversationRequest(accountId, conversationId);
 }
 
 bool
 DBusConfigurationManager::removeConversation(const std::string& accountId,
                                              const std::string& conversationId)
 {
-    return DRing::removeConversation(accountId, conversationId);
+    return libjami::removeConversation(accountId, conversationId);
 }
 
 std::vector<std::string>
 DBusConfigurationManager::getConversations(const std::string& accountId)
 {
-    return DRing::getConversations(accountId);
+    return libjami::getConversations(accountId);
 }
 
 std::vector<std::map<std::string, std::string>>
 DBusConfigurationManager::getConversationRequests(const std::string& accountId)
 {
-    return DRing::getConversationRequests(accountId);
+    return libjami::getConversationRequests(accountId);
 }
 
 void
@@ -869,14 +869,14 @@ DBusConfigurationManager::updateConversationInfos(const std::string& accountId,
                                                   const std::string& conversationId,
                                                   const std::map<std::string, std::string>& infos)
 {
-    DRing::updateConversationInfos(accountId, conversationId, infos);
+    libjami::updateConversationInfos(accountId, conversationId, infos);
 }
 
 std::map<std::string, std::string>
 DBusConfigurationManager::conversationInfos(const std::string& accountId,
                                             const std::string& conversationId)
 {
-    return DRing::conversationInfos(accountId, conversationId);
+    return libjami::conversationInfos(accountId, conversationId);
 }
 
 void
@@ -884,14 +884,14 @@ DBusConfigurationManager::setConversationPreferences(const std::string& accountI
                                                      const std::string& conversationId,
                                                      const std::map<std::string, std::string>& infos)
 {
-    DRing::setConversationPreferences(accountId, conversationId, infos);
+    libjami::setConversationPreferences(accountId, conversationId, infos);
 }
 
 std::map<std::string, std::string>
 DBusConfigurationManager::getConversationPreferences(const std::string& accountId,
                                                      const std::string& conversationId)
 {
-    return DRing::getConversationPreferences(accountId, conversationId);
+    return libjami::getConversationPreferences(accountId, conversationId);
 }
 
 void
@@ -899,7 +899,7 @@ DBusConfigurationManager::addConversationMember(const std::string& accountId,
                                                 const std::string& conversationId,
                                                 const std::string& contactUri)
 {
-    DRing::addConversationMember(accountId, conversationId, contactUri);
+    libjami::addConversationMember(accountId, conversationId, contactUri);
 }
 
 void
@@ -907,14 +907,14 @@ DBusConfigurationManager::removeConversationMember(const std::string& accountId,
                                                    const std::string& conversationId,
                                                    const std::string& contactUri)
 {
-    DRing::removeConversationMember(accountId, conversationId, contactUri);
+    libjami::removeConversationMember(accountId, conversationId, contactUri);
 }
 
 std::vector<std::map<std::string, std::string>>
 DBusConfigurationManager::getConversationMembers(const std::string& accountId,
                                                  const std::string& conversationId)
 {
-    return DRing::getConversationMembers(accountId, conversationId);
+    return libjami::getConversationMembers(accountId, conversationId);
 }
 
 void
@@ -923,7 +923,7 @@ DBusConfigurationManager::sendMessage(const std::string& accountId,
                                       const std::string& message,
                                       const std::string& replyTo)
 {
-    DRing::sendMessage(accountId, conversationId, message, replyTo);
+    libjami::sendMessage(accountId, conversationId, message, replyTo);
 }
 
 uint32_t
@@ -932,7 +932,7 @@ DBusConfigurationManager::loadConversationMessages(const std::string& accountId,
                                                    const std::string& fromMessage,
                                                    const uint32_t& n)
 {
-    return DRing::loadConversationMessages(accountId, conversationId, fromMessage, n);
+    return libjami::loadConversationMessages(accountId, conversationId, fromMessage, n);
 }
 
 uint32_t
@@ -941,7 +941,7 @@ DBusConfigurationManager::loadConversationUntil(const std::string& accountId,
                                                 const std::string& fromMessage,
                                                 const std::string& to)
 {
-    return DRing::loadConversationUntil(accountId, conversationId, fromMessage, to);
+    return libjami::loadConversationUntil(accountId, conversationId, fromMessage, to);
 }
 
 uint32_t
@@ -951,7 +951,7 @@ DBusConfigurationManager::countInteractions(const std::string& accountId,
                                             const std::string& fromId,
                                             const std::string& authorUri)
 {
-    return DRing::countInteractions(accountId, conversationId, toId, fromId, authorUri);
+    return libjami::countInteractions(accountId, conversationId, toId, fromId, authorUri);
 }
 
 uint32_t
@@ -965,7 +965,7 @@ DBusConfigurationManager::searchConversation(const std::string& accountId,
                                              const int64_t& before,
                                              const uint32_t& maxResult)
 {
-    return DRing::searchConversation(accountId,
+    return libjami::searchConversation(accountId,
                                      conversationId,
                                      author,
                                      lastId,
@@ -979,13 +979,13 @@ DBusConfigurationManager::searchConversation(const std::string& accountId,
 bool
 DBusConfigurationManager::isAudioMeterActive(const std::string& id)
 {
-    return DRing::isAudioMeterActive(id);
+    return libjami::isAudioMeterActive(id);
 }
 
 void
 DBusConfigurationManager::setAudioMeterState(const std::string& id, const bool& state)
 {
-    return DRing::setAudioMeterState(id, state);
+    return libjami::setAudioMeterState(id, state);
 }
 
 void
@@ -993,37 +993,37 @@ DBusConfigurationManager::setDefaultModerator(const std::string& accountID,
                                               const std::string& peerURI,
                                               const bool& state)
 {
-    DRing::setDefaultModerator(accountID, peerURI, state);
+    libjami::setDefaultModerator(accountID, peerURI, state);
 }
 
 auto
 DBusConfigurationManager::getDefaultModerators(const std::string& accountID)
-    -> decltype(DRing::getDefaultModerators(accountID))
+    -> decltype(libjami::getDefaultModerators(accountID))
 {
-    return DRing::getDefaultModerators(accountID);
+    return libjami::getDefaultModerators(accountID);
 }
 
 void
 DBusConfigurationManager::enableLocalModerators(const std::string& accountID,
                                                 const bool& isModEnabled)
 {
-    return DRing::enableLocalModerators(accountID, isModEnabled);
+    return libjami::enableLocalModerators(accountID, isModEnabled);
 }
 
 bool
 DBusConfigurationManager::isLocalModeratorsEnabled(const std::string& accountID)
 {
-    return DRing::isLocalModeratorsEnabled(accountID);
+    return libjami::isLocalModeratorsEnabled(accountID);
 }
 
 void
 DBusConfigurationManager::setAllModerators(const std::string& accountID, const bool& allModerators)
 {
-    return DRing::setAllModerators(accountID, allModerators);
+    return libjami::setAllModerators(accountID, allModerators);
 }
 
 bool
 DBusConfigurationManager::isAllModerators(const std::string& accountID)
 {
-    return DRing::isAllModerators(accountID);
+    return libjami::isAllModerators(accountID);
 }

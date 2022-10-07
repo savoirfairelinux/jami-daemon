@@ -31,7 +31,7 @@ get_conversations_binding(SCM accountID_str)
 {
     LOG_BINDING();
 
-    return to_guile(DRing::getConversations(from_guile(accountID_str)));
+    return to_guile(libjami::getConversations(from_guile(accountID_str)));
 }
 
 static SCM
@@ -39,7 +39,7 @@ get_conversation_members_binding(SCM accountID_str, SCM conversationID_str)
 {
     LOG_BINDING();
 
-    return  to_guile(DRing::getConversationMembers(from_guile(accountID_str),
+    return  to_guile(libjami::getConversationMembers(from_guile(accountID_str),
                                                    from_guile(conversationID_str)));
 }
 
@@ -48,7 +48,7 @@ accept_conversation_binding(SCM accountID_str, SCM conversationID_str)
 {
     LOG_BINDING();
 
-    DRing::acceptConversationRequest(from_guile(accountID_str),
+    libjami::acceptConversationRequest(from_guile(accountID_str),
                                      from_guile(conversationID_str));
 
     return SCM_UNDEFINED;
@@ -61,13 +61,13 @@ send_message_binding(SCM accountID_str, SCM conversationID_str, SCM message_str,
     LOG_BINDING();
 
     if (SCM_UNBNDP(parent_str_optional)) {
-        DRing::sendMessage(from_guile(accountID_str),
+        libjami::sendMessage(from_guile(accountID_str),
                            from_guile(conversationID_str),
                            from_guile(message_str),
                            "");
 
     } else {
-        DRing::sendMessage(from_guile(accountID_str),
+        libjami::sendMessage(from_guile(accountID_str),
                            from_guile(conversationID_str),
                            from_guile(message_str),
                            from_guile(parent_str_optional));

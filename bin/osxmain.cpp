@@ -42,7 +42,7 @@ static void
 print_title()
 {
     std::cout
-        << "Jami Daemon " << DRing::version()
+        << "Jami Daemon " << libjami::version()
         << ", by Savoir-faire Linux 2004-2019" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
@@ -136,13 +136,13 @@ parse_args(int argc, char *argv[], bool& persistent)
     }
 
     if (consoleFlag)
-        ringFlags |= DRing::DRING_FLAG_CONSOLE_LOG;
+        ringFlags |= libjami::LIBJAMI_FLAG_CONSOLE_LOG;
 
     if (debugFlag)
-        ringFlags |= DRing::DRING_FLAG_DEBUG;
+        ringFlags |= libjami::LIBJAMI_FLAG_DEBUG;
 
     if (autoAnswer)
-        ringFlags |= DRing::DRING_FLAG_AUTOANSWER;
+        ringFlags |= libjami::LIBJAMI_FLAG_AUTOANSWER;
 
     return false;
 }
@@ -150,20 +150,20 @@ parse_args(int argc, char *argv[], bool& persistent)
 static int
 osxTests()
 {
-    using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
+    using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
-    DRing::init(static_cast<DRing::InitFlag>(ringFlags));
+    libjami::init(static_cast<libjami::InitFlag>(ringFlags));
 
-    registerSignalHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+    registerSignalHandlers(std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>>());
 
-    if (!DRing::start())
+    if (!libjami::start())
             return -1;
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    DRing::fini();
+    libjami::fini();
 }
 
 static int

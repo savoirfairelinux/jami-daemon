@@ -35,7 +35,7 @@
 
 #include "common.h"
 
-using namespace DRing::Account;
+using namespace libjami::Account;
 
 namespace jami {
 namespace test {
@@ -46,11 +46,11 @@ public:
     CallTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~CallTest() { DRing::fini(); }
+    ~CallTest() { libjami::fini(); }
     static std::string name() { return "Call"; }
     void setUp();
     void tearDown();
@@ -109,11 +109,11 @@ CallTest::testCall()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false};
     std::atomic<int> callStopped {0};
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string&,
             const std::string&,
             const std::string&,
@@ -121,7 +121,7 @@ CallTest::testCall()
             callReceived = true;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
         [&](const std::string&, const std::string&, const std::string& state, signed) {
             if (state == "OVER") {
                 callStopped += 1;
@@ -129,10 +129,10 @@ CallTest::testCall()
                     cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = DRing::placeCallWithMedia(aliceId, bobUri, {});
+    auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
@@ -154,11 +154,11 @@ CallTest::testCachedCall()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false}, successfullyConnected {false};
     std::atomic<int> callStopped {0};
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string&,
             const std::string&,
             const std::string&,
@@ -166,7 +166,7 @@ CallTest::testCachedCall()
             callReceived = true;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
         [&](const std::string&, const std::string&, const std::string& state, signed) {
             if (state == "OVER") {
                 callStopped += 1;
@@ -174,7 +174,7 @@ CallTest::testCachedCall()
                     cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Connect Alice's device and Bob's device");
     aliceAccount->connectionManager()
@@ -190,7 +190,7 @@ CallTest::testCachedCall()
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return successfullyConnected.load(); }));
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = DRing::placeCallWithMedia(aliceId, bobUri, {});
+    auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
     callStopped = 0;
@@ -212,20 +212,20 @@ CallTest::testStopSearching()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callStopped {false};
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
         [&](const std::string&, const std::string&, const std::string& state, signed) {
             if (state == "OVER") {
                 callStopped = true;
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = DRing::placeCallWithMedia(aliceId, bobUri, {});
+    auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     // Bob not there, so we should get a SEARCHING STATUS
     JAMI_INFO("Wait OVER state");
@@ -245,12 +245,12 @@ CallTest::testDeclineMultiDevice()
     std::condition_variable cv;
 
     // Add second device for Bob
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
@@ -267,7 +267,7 @@ CallTest::testDeclineMultiDevice()
     std::atomic<int> callStopped {0};
     std::string callIdBob;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
@@ -277,16 +277,16 @@ CallTest::testDeclineMultiDevice()
             callReceived += 1;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
         [&](const std::string&, const std::string&, const std::string& state, signed) {
             if (state == "OVER")
                 callStopped++;
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = DRing::placeCallWithMedia(aliceId, bobUri, {});
+    auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
         return callReceived == 2 && !callIdBob.empty();
@@ -311,12 +311,12 @@ CallTest::testTlsInfosPeerCertificate()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic<int> callStopped {0};
     std::string bobCallId;
     std::string aliceCallState;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
@@ -325,7 +325,7 @@ CallTest::testTlsInfosPeerCertificate()
                 bobCallId = callId;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
         [&](const std::string& accountId, const std::string&, const std::string& state, signed) {
             if (accountId == aliceId)
                 aliceCallState = state;
@@ -335,10 +335,10 @@ CallTest::testTlsInfosPeerCertificate()
                     cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto callId = DRing::placeCallWithMedia(aliceId, bobUri, {});
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !bobCallId.empty(); }));
 

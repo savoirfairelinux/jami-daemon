@@ -192,7 +192,7 @@ RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
         ++rmsFrameCount_;
         rmsLevel_ += newBuf->calcRMS();
         if (rmsFrameCount_ == RMS_SIGNAL_INTERVAL) {
-            emitSignal<DRing::AudioSignal::AudioMeter>(id, rmsLevel_ / RMS_SIGNAL_INTERVAL);
+            emitSignal<libjami::AudioSignal::AudioMeter>(id, rmsLevel_ / RMS_SIGNAL_INTERVAL);
             rmsLevel_ = 0;
             rmsFrameCount_ = 0;
         }

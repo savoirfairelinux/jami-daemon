@@ -34,7 +34,7 @@
 #include "account_const.h"
 #include "common.h"
 
-using namespace DRing::Account;
+using namespace libjami::Account;
 using namespace std::literals::chrono_literals;
 
 namespace jami {
@@ -46,11 +46,11 @@ public:
     SyncHistoryTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~SyncHistoryTest() { DRing::fini(); }
+    ~SyncHistoryTest() { libjami::fini(); }
     static std::string name() { return "SyncHistory"; }
     void setUp();
     void tearDown();
@@ -121,12 +121,12 @@ SyncHistoryTest::testCreateConversationThenSync()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     // Start conversation
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -138,9 +138,9 @@ SyncHistoryTest::testCreateConversationThenSync()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto conversationReady = false, alice2Ready = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
                 conversationReady = true;
@@ -148,19 +148,19 @@ SyncHistoryTest::testCreateConversationThenSync()
             }
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
                 if (alice2Id != accountId) {
                     return;
                 }
-                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                alice2Ready = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)
                               == "true";
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready && conversationReady; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -171,7 +171,7 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -183,12 +183,12 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
 
     // Start conversation now
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
     auto conversationReady = false, alice2Ready = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
                 conversationReady = true;
@@ -196,65 +196,65 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
             }
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
                 if (alice2Id != accountId) {
                     return;
                 }
-                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                alice2Ready = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)
                               == "true";
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return alice2Ready && conversationReady; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
 SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto conversationReady = false;
     auto messageReceived = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& /* accountId */,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
             messageReceived = true;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
                 conversationReady = true;
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     confHandlers.clear();
 
     // Start conversation
     messageReceived = false;
-    DRing::sendMessage(aliceId, convId, std::string("Message 1"), "");
+    libjami::sendMessage(aliceId, convId, std::string("Message 1"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
     messageReceived = false;
-    DRing::sendMessage(aliceId, convId, std::string("Message 2"), "");
+    libjami::sendMessage(aliceId, convId, std::string("Message 2"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
     messageReceived = false;
-    DRing::sendMessage(aliceId, convId, std::string("Message 3"), "");
+    libjami::sendMessage(aliceId, convId, std::string("Message 3"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
 
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -267,7 +267,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     // Check if conversation is ready
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady; }));
     std::vector<std::map<std::string, std::string>> messages;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationLoaded>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationLoaded>(
         [&](uint32_t,
             const std::string& accountId,
             const std::string& conversationId,
@@ -277,10 +277,10 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
-    DRing::loadConversationMessages(alice2Id, convId, "", 0);
+    libjami::registerSignalHandlers(confHandlers);
+    libjami::loadConversationMessages(alice2Id, convId, "", 0);
     cv.wait_for(lk, 30s);
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
     confHandlers.clear();
 
     // Check messages
@@ -295,30 +295,30 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     // Start conversation
-    auto convId = DRing::startConversation(aliceId);
-    DRing::sendMessage(aliceId, convId, std::string("Message 1"), "");
-    DRing::sendMessage(aliceId, convId, std::string("Message 2"), "");
-    DRing::sendMessage(aliceId, convId, std::string("Message 3"), "");
+    auto convId = libjami::startConversation(aliceId);
+    libjami::sendMessage(aliceId, convId, std::string("Message 1"), "");
+    libjami::sendMessage(aliceId, convId, std::string("Message 2"), "");
+    libjami::sendMessage(aliceId, convId, std::string("Message 3"), "");
     std::this_thread::sleep_for(1s);
-    auto convId2 = DRing::startConversation(aliceId);
-    DRing::sendMessage(aliceId, convId2, std::string("Message 1"), "");
-    DRing::sendMessage(aliceId, convId2, std::string("Message 2"), "");
-    DRing::sendMessage(aliceId, convId2, std::string("Message 3"), "");
+    auto convId2 = libjami::startConversation(aliceId);
+    libjami::sendMessage(aliceId, convId2, std::string("Message 1"), "");
+    libjami::sendMessage(aliceId, convId2, std::string("Message 2"), "");
+    libjami::sendMessage(aliceId, convId2, std::string("Message 3"), "");
     std::this_thread::sleep_for(1s);
-    auto convId3 = DRing::startConversation(aliceId);
-    DRing::sendMessage(aliceId, convId3, std::string("Message 1"), "");
-    DRing::sendMessage(aliceId, convId3, std::string("Message 2"), "");
-    DRing::sendMessage(aliceId, convId3, std::string("Message 3"), "");
+    auto convId3 = libjami::startConversation(aliceId);
+    libjami::sendMessage(aliceId, convId3, std::string("Message 1"), "");
+    libjami::sendMessage(aliceId, convId3, std::string("Message 2"), "");
+    libjami::sendMessage(aliceId, convId3, std::string("Message 3"), "");
     std::this_thread::sleep_for(1s);
-    auto convId4 = DRing::startConversation(aliceId);
-    DRing::sendMessage(aliceId, convId4, std::string("Message 1"), "");
-    DRing::sendMessage(aliceId, convId4, std::string("Message 2"), "");
-    DRing::sendMessage(aliceId, convId4, std::string("Message 3"), "");
+    auto convId4 = libjami::startConversation(aliceId);
+    libjami::sendMessage(aliceId, convId4, std::string("Message 1"), "");
+    libjami::sendMessage(aliceId, convId4, std::string("Message 2"), "");
+    libjami::sendMessage(aliceId, convId4, std::string("Message 3"), "");
 
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -331,21 +331,21 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_int conversationReady = 0;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string&) {
             if (accountId == alice2Id) {
                 conversationReady += 1;
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     confHandlers.clear();
 
     // Check if conversation is ready
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady == 4; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -361,16 +361,16 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
     auto uri = aliceAccount->getUsername();
 
     // Start conversation for Alice
-    auto convId = DRing::startConversation(bobId);
+    auto convId = libjami::startConversation(bobId);
 
     // Check that alice receives the request
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto requestReceived = false, memberEvent = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 std::map<std::string, std::string> /*metadatas*/) {
@@ -380,7 +380,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
                 }
             }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationMemberEvent>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
             [&](const std::string& /*accountId*/,
                 const std::string& /*conversationId*/,
                 const std::string& /*memberUri*/,
@@ -388,16 +388,16 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
                 memberEvent = true;
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     memberEvent = false;
-    DRing::addConversationMember(bobId, convId, uri);
+    libjami::addConversationMember(bobId, convId, uri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return memberEvent && requestReceived; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
     confHandlers.clear();
 
     // Now create alice2
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -409,7 +409,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
 
     requestReceived = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 std::map<std::string, std::string> /*metadatas*/) {
@@ -418,10 +418,10 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
                     cv.notify_one();
                 }
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestReceived; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -432,7 +432,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -444,20 +444,20 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
 
     // Start conversation now
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
     bool alice2Ready = false;
     auto conversationReady = false, conversationRemoved = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
                 conversationReady = true;
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
                 conversationRemoved = true;
@@ -465,23 +465,23 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
             }
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
                 if (alice2Id != accountId) {
                     return;
                 }
-                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                alice2Ready = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)
                               == "true";
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return alice2Ready && conversationReady; }));
-    DRing::removeConversation(aliceId, convId);
+    libjami::removeConversation(aliceId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationRemoved; }));
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -496,17 +496,17 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     aliceAccount->exportArchive(aliceArchive);
 
     // Start conversation
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
     bool alice2Ready = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
@@ -518,14 +518,14 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -538,21 +538,21 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
             }
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
                 if (alice2Id != accountId) {
                     return;
                 }
-                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                alice2Ready = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)
                               == "true";
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // Wait that alice sees Bob
@@ -562,7 +562,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     Manager::instance().sendRegister(aliceId, false);
     std::this_thread::sleep_for(5s);
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -576,16 +576,16 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready; }));
 
     // This will trigger a conversation request. Cause alice2 can't know first conversation
-    DRing::sendMessage(bobId, convId, std::string("hi"), "");
+    libjami::sendMessage(bobId, convId, std::string("hi"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestReceived; }));
 
-    DRing::acceptConversationRequest(alice2Id, convId);
+    libjami::acceptConversationRequest(alice2Id, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationReady; }));
 
     messageBobReceived = 0;
-    DRing::sendMessage(alice2Id, convId, std::string("hi"), "");
+    libjami::sendMessage(alice2Id, convId, std::string("hi"), "");
     cv.wait_for(lk, 30s, [&]() { return messageBobReceived == 1; });
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -597,18 +597,18 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     auto bobUri = bobAccount->getUsername();
 
     // Start conversation
-    auto convId = DRing::startConversation(aliceId);
+    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
     bool alice2Ready = false;
     bool memberAddGenerated = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
@@ -618,7 +618,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationMemberEvent>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 const std::string& uri,
@@ -630,14 +630,14 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
                 cv.notify_one();
             }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (conversationId != convId)
                 return;
@@ -646,21 +646,21 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
                 if (alice2Id != accountId) {
                     return;
                 }
-                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                alice2Ready = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)
                               == "true";
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // We need to track presence to know when to sync
@@ -677,7 +677,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     Manager::instance().sendRegister(aliceId, false);
     std::this_thread::sleep_for(5s);
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -693,9 +693,9 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationReady; }));
 
     messageBobReceived = 0;
-    DRing::sendMessage(alice2Id, convId, std::string("hi"), "");
+    libjami::sendMessage(alice2Id, convId, std::string("hi"), "");
     cv.wait_for(lk, 30s, [&]() { return messageBobReceived == 1; });
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -707,17 +707,17 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     auto aliceUri = aliceAccount->getUsername();
 
     // Start conversation
-    auto convId = DRing::startConversation(bobId);
+    auto convId = libjami::startConversation(bobId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
     bool alice2Ready = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
@@ -729,14 +729,14 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == bobId) {
                 conversationReady = true;
@@ -749,18 +749,18 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
             }
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
                 if (alice2Id != accountId) {
                     return;
                 }
-                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                alice2Ready = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)
                               == "true";
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(bobId, convId, aliceUri);
+    libjami::addConversationMember(bobId, convId, aliceUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     // Backup alice after startConversation with member
@@ -771,7 +771,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     Manager::instance().sendRegister(aliceId, false);
     std::this_thread::sleep_for(5s);
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -784,10 +784,10 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready; }));
 
     // Should get the same request as before.
-    DRing::acceptConversationRequest(alice2Id, convId);
+    libjami::acceptConversationRequest(alice2Id, convId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReady && messageBobReceived == 1; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -801,9 +801,9 @@ SyncHistoryTest::testSyncOneToOne()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto conversationReady = false, alice2Ready = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId)
                 convId = conversationId;
@@ -812,16 +812,16 @@ SyncHistoryTest::testSyncOneToOne()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
                 if (alice2Id != accountId) {
                     return;
                 }
-                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                alice2Ready = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)
                               == "true";
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     aliceAccount->addContact(bobAccount->getUsername());
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !convId.empty(); }));
@@ -829,7 +829,7 @@ SyncHistoryTest::testSyncOneToOne()
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -840,7 +840,7 @@ SyncHistoryTest::testSyncOneToOne()
 
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready && conversationReady; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -856,16 +856,16 @@ SyncHistoryTest::testConversationRequestRemoved()
     auto uri = aliceAccount->getUsername();
 
     // Start conversation for Alice
-    auto convId = DRing::startConversation(bobId);
+    auto convId = libjami::startConversation(bobId);
 
     // Check that alice receives the request
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto requestReceived = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 std::map<std::string, std::string> /*metadatas*/) {
@@ -874,15 +874,15 @@ SyncHistoryTest::testConversationRequestRemoved()
                     cv.notify_one();
                 }
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    DRing::addConversationMember(bobId, convId, uri);
+    libjami::addConversationMember(bobId, convId, uri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestReceived; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
     confHandlers.clear();
 
     // Now create alice2
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -895,7 +895,7 @@ SyncHistoryTest::testConversationRequestRemoved()
     requestReceived = false;
     bool requestDeclined = false, requestDeclined2 = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 std::map<std::string, std::string> /*metadatas*/) {
@@ -905,7 +905,7 @@ SyncHistoryTest::testConversationRequestRemoved()
                 }
             }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestDeclined>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestDeclined>(
             [&](const std::string& accountId, const std::string& conversationId) {
                 if (conversationId != convId)
                     return;
@@ -915,15 +915,15 @@ SyncHistoryTest::testConversationRequestRemoved()
                     requestDeclined2 = true;
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestReceived; }));
     // Now decline trust request, this should trigger ConversationRequestDeclined both sides for Alice
-    DRing::declineConversationRequest(aliceId, convId);
+    libjami::declineConversationRequest(aliceId, convId);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return requestDeclined && requestDeclined2; }));
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -967,12 +967,12 @@ END:VCARD";
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, bobProfileReceived = false,
          aliceProfileReceived = false;
     std::string convId = "";
     std::string bobDest = aliceAccount->dataTransfer()->profilePath(bobUri);
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
             const std::string& /*conversationId*/,
@@ -982,7 +982,7 @@ END:VCARD";
                 requestReceived = true;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
                 convId = conversationId;
@@ -991,7 +991,7 @@ END:VCARD";
             }
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::ProfileReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ProfileReceived>(
         [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
             if (accountId == aliceId && peerId == bobUri) {
                 bobProfileReceived = true;
@@ -1007,7 +1007,7 @@ END:VCARD";
             }
             cv.notify_one();
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
@@ -1019,7 +1019,7 @@ END:VCARD";
     CPPUNIT_ASSERT(fileutils::isFile(bobDest));
 
     // Now create alice2
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -1031,7 +1031,7 @@ END:VCARD";
     alice2Id = Manager::instance().addAccount(details);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return aliceProfileReceived && bobProfileReceived; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -1046,10 +1046,10 @@ SyncHistoryTest::testLastInteractionAfterClone()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageReceived = false;
     std::string msgId = "";
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& /* accountId */,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -1058,7 +1058,7 @@ SyncHistoryTest::testLastInteractionAfterClone()
             cv.notify_one();
         }));
     auto conversationReady = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == bobId || accountId == alice2Id) {
                 convId = conversationId;
@@ -1068,7 +1068,7 @@ SyncHistoryTest::testLastInteractionAfterClone()
         }));
     auto requestReceived = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& accountId,
                 const std::string& /*conversationId*/,
                 std::map<std::string, std::string> /*metadatas*/) {
@@ -1078,7 +1078,7 @@ SyncHistoryTest::testLastInteractionAfterClone()
             }));
     auto messageDisplayed = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
             [&](const std::string& /* accountId */,
                 const std::string& /* conversationId */,
                 const std::string& /* username */,
@@ -1088,7 +1088,7 @@ SyncHistoryTest::testLastInteractionAfterClone()
                     messageDisplayed = true;
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     confHandlers.clear();
 
     aliceAccount->addContact(bobUri);
@@ -1100,24 +1100,24 @@ SyncHistoryTest::testLastInteractionAfterClone()
 
     // Start conversation
     messageReceived = false;
-    DRing::sendMessage(bobId, convId, std::string("Message 1"), "");
+    libjami::sendMessage(bobId, convId, std::string("Message 1"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
     messageReceived = false;
-    DRing::sendMessage(bobId, convId, std::string("Message 2"), "");
+    libjami::sendMessage(bobId, convId, std::string("Message 2"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
     messageReceived = false;
-    DRing::sendMessage(bobId, convId, std::string("Message 3"), "");
+    libjami::sendMessage(bobId, convId, std::string("Message 3"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
 
     messageDisplayed = false;
-    DRing::setMessageDisplayed(aliceId, "swarm:" + convId, msgId, 3);
+    libjami::setMessageDisplayed(aliceId, "swarm:" + convId, msgId, 3);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageDisplayed; }));
 
     // Now create alice2
     conversationReady = false;
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -1130,7 +1130,7 @@ SyncHistoryTest::testLastInteractionAfterClone()
     // Check if conversation is ready
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady; }));
     // Check that last displayed is synched
-    auto membersInfos = DRing::getConversationMembers(alice2Id, convId);
+    auto membersInfos = libjami::getConversationMembers(alice2Id, convId);
     CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
                                 membersInfos.end(),
                                 [&](auto infos) {
@@ -1152,10 +1152,10 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageReceived = false;
     std::string msgId = "";
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& /* accountId */,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
@@ -1164,7 +1164,7 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
             cv.notify_one();
         }));
     auto conversationReady = false, conversationAlice2Ready = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == bobId) {
                 convId = conversationId;
@@ -1176,7 +1176,7 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
         }));
     auto requestReceived = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& accountId,
                 const std::string& /*conversationId*/,
                 std::map<std::string, std::string> /*metadatas*/) {
@@ -1186,7 +1186,7 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
             }));
     auto messageDisplayed = false, messageDisplayedAlice2 = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
             [&](const std::string& accountId,
                 const std::string& /* conversationId */,
                 const std::string& /* username */,
@@ -1200,13 +1200,13 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
                 }
                 cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     confHandlers.clear();
 
     // Creates alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
@@ -1226,22 +1226,22 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
 
     // Start conversation
     messageReceived = false;
-    DRing::sendMessage(bobId, convId, std::string("Message 1"), "");
+    libjami::sendMessage(bobId, convId, std::string("Message 1"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
     messageReceived = false;
-    DRing::sendMessage(bobId, convId, std::string("Message 2"), "");
+    libjami::sendMessage(bobId, convId, std::string("Message 2"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
     messageReceived = false;
-    DRing::sendMessage(bobId, convId, std::string("Message 3"), "");
+    libjami::sendMessage(bobId, convId, std::string("Message 3"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return messageReceived; }));
 
     messageDisplayed = false;
     messageDisplayedAlice2 = false;
     auto displayedId = msgId;
-    DRing::setMessageDisplayed(aliceId, "swarm:" + convId, displayedId, 3);
+    libjami::setMessageDisplayed(aliceId, "swarm:" + convId, displayedId, 3);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return messageDisplayed && messageDisplayedAlice2; }));
 
-    auto membersInfos = DRing::getConversationMembers(alice2Id, convId);
+    auto membersInfos = libjami::getConversationMembers(alice2Id, convId);
     CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
                                 membersInfos.end(),
                                 [&](auto infos) {

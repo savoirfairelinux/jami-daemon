@@ -201,7 +201,7 @@ MediaFilter::readOutput()
     switch (av_buffersink_get_type(output_)) {
 #ifdef ENABLE_VIDEO
     case AVMEDIA_TYPE_VIDEO:
-        frame = std::make_unique<DRing::VideoFrame>();
+        frame = std::make_unique<libjami::VideoFrame>();
         break;
 #endif
     case AVMEDIA_TYPE_AUDIO:

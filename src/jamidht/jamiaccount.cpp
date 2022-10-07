@@ -171,7 +171,7 @@ mapStateNumberToString(const State migrationState)
 void
 setState(const std::string& accountID, const State migrationState)
 {
-    emitSignal<DRing::ConfigurationSignal::MigrationEnded>(accountID,
+    emitSignal<libjami::ConfigurationSignal::MigrationEnded>(accountID,
                                                            mapStateNumberToString(migrationState));
 }
 
@@ -379,7 +379,7 @@ JamiAccount::flush()
 
 std::shared_ptr<SIPCall>
 JamiAccount::newIncomingCall(const std::string& from,
-                             const std::vector<DRing::MediaMap>& mediaList,
+                             const std::vector<libjami::MediaMap>& mediaList,
                              const std::shared_ptr<SipTransport>& sipTransp)
 {
     JAMI_DBG("New incoming call from %s with %lu media", from.c_str(), mediaList.size());
@@ -412,7 +412,7 @@ JamiAccount::newIncomingCall(const std::string& from,
 }
 
 std::shared_ptr<Call>
-JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::MediaMap>& mediaList)
+JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::MediaMap>& mediaList)
 {
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling peer " << suffix;
@@ -840,35 +840,35 @@ JamiAccount::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
-    out << YAML::Key << DRing::Account::ConfProperties::DHT_PEER_DISCOVERY << YAML::Value
+    out << YAML::Key << libjami::Account::ConfProperties::DHT_PEER_DISCOVERY << YAML::Value
         << dhtPeerDiscovery_;
-    out << YAML::Key << DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY << YAML::Value
+    out << YAML::Key << libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY << YAML::Value
         << accountPeerDiscovery_;
-    out << YAML::Key << DRing::Account::ConfProperties::ACCOUNT_PUBLISH << YAML::Value
+    out << YAML::Key << libjami::Account::ConfProperties::ACCOUNT_PUBLISH << YAML::Value
         << accountPublish_;
 
     out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
     out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
-    out << YAML::Key << DRing::Account::ConfProperties::DHT_PROXY_LIST_URL << YAML::Value
+    out << YAML::Key << libjami::Account::ConfProperties::DHT_PROXY_LIST_URL << YAML::Value
         << proxyListUrl_;
 
 #if HAVE_RINGNS
-    out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value << nameServer_;
+    out << YAML::Key << libjami::Account::ConfProperties::RingNS::URI << YAML::Value << nameServer_;
     if (not registeredName_.empty())
-        out << YAML::Key << DRing::Account::VolatileProperties::REGISTERED_NAME << YAML::Value
+        out << YAML::Key << libjami::Account::VolatileProperties::REGISTERED_NAME << YAML::Value
             << registeredName_;
 #endif
 
-    out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
-    out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD << YAML::Value
+    out << YAML::Key << libjami::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
+    out << YAML::Key << libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD << YAML::Value
         << archiveHasPassword_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
     if (receiptSignature_.size() > 0)
         out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value
             << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
-    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value << deviceName_;
-    out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
-    out << YAML::Key << DRing::Account::ConfProperties::MANAGER_USERNAME << YAML::Value
+    out << YAML::Key << libjami::Account::ConfProperties::DEVICE_NAME << YAML::Value << deviceName_;
+    out << YAML::Key << libjami::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
+    out << YAML::Key << libjami::Account::ConfProperties::MANAGER_USERNAME << YAML::Value
         << managerUsername_;
 
     // tls submap
@@ -904,18 +904,18 @@ JamiAccount::unserialize(const YAML::Node& node)
     parseValue(node, Conf::PROXY_ENABLED_KEY, proxyEnabled_);
     parseValue(node, Conf::PROXY_SERVER_KEY, proxyServer_);
     try {
-        parseValue(node, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
+        parseValue(node, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
     } catch (const std::exception& e) {
         proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
     }
 
-    parseValueOptional(node, DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
-    parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
-    parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
+    parseValueOptional(node, libjami::Account::ConfProperties::DEVICE_NAME, deviceName_);
+    parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_URI, managerUri_);
+    parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
 
     try {
-        parsePath(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
-        parseValue(node, DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_);
+        parsePath(node, libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
+        parseValue(node, libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_);
     } catch (const std::exception& e) {
         JAMI_WARN("can't read archive path: %s", e.what());
         archiveHasPassword_ = true;
@@ -938,17 +938,17 @@ JamiAccount::unserialize(const YAML::Node& node)
     if (not dhtDefaultPort_)
         dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
 
-    parseValueOptional(node, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
+    parseValueOptional(node, libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseValueOptional(node,
-                       DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
+                       libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
                        accountPeerDiscovery_);
-    parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
+    parseValueOptional(node, libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
 
 #if HAVE_RINGNS
-    parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
+    parseValueOptional(node, libjami::Account::ConfProperties::RingNS::URI, nameServer_);
     if (registeredName_.empty()) {
         parseValueOptional(node,
-                           DRing::Account::VolatileProperties::REGISTERED_NAME,
+                           libjami::Account::VolatileProperties::REGISTERED_NAME,
                            registeredName_);
     }
 #endif
@@ -973,13 +973,13 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
                  ex.what());
         if (password_old.empty()) {
             archiveHasPassword_ = true;
-            emitSignal<DRing::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
+            emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                           getAccountDetails());
         }
         return false;
     }
     if (password_old != password_new)
-        emitSignal<DRing::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
+        emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                       getAccountDetails());
     return true;
 }
@@ -994,20 +994,20 @@ void
 JamiAccount::addDevice(const std::string& password)
 {
     if (not accountManager_) {
-        emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
+        emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
         return;
     }
     accountManager_
         ->addDevice(password, [this](AccountManager::AddDeviceResult result, std::string pin) {
             switch (result) {
             case AccountManager::AddDeviceResult::SUCCESS_SHOW_PIN:
-                emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
+                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
                 break;
             case AccountManager::AddDeviceResult::ERROR_CREDENTIALS:
-                emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
+                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
                 break;
             case AccountManager::AddDeviceResult::ERROR_NETWORK:
-                emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
+                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
                 break;
             }
         });
@@ -1081,7 +1081,7 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
         return false;
     return accountManager_
         ->revokeDevice(password, device, [this, device](AccountManager::RevokeDeviceResult result) {
-            emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
+            emitSignal<libjami::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
                                                                           device,
                                                                           static_cast<int>(result));
         });
@@ -1116,7 +1116,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             if (!id_.first)
                 return;
             runOnMainThread([id = getAccountID(), uri, confirmed] {
-                emitSignal<DRing::ConfigurationSignal::ContactAdded>(id, uri, confirmed);
+                emitSignal<libjami::ConfigurationSignal::ContactAdded>(id, uri, confirmed);
             });
         },
         [this](const std::string& uri, bool banned) {
@@ -1133,7 +1133,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         shared->connectionManager_->closeConnectionsWith(uri);
                     }
                     // Update client.
-                    emitSignal<DRing::ConfigurationSignal::ContactRemoved>(shared->getAccountID(),
+                    emitSignal<libjami::ConfigurationSignal::ContactRemoved>(shared->getAccountID(),
                                                                            uri,
                                                                            banned);
                 }
@@ -1148,7 +1148,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             clearProfileCache(uri);
             if (conversationId.empty()) {
                 // Old path
-                emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
+                emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
                                                                              conversationId,
                                                                              uri,
                                                                              payload,
@@ -1171,7 +1171,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 ids.emplace(std::move(id), std::move(label));
             }
             runOnMainThread([id = getAccountID(), devices = std::move(ids)] {
-                emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(id, devices);
+                emitSignal<libjami::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
         },
         [this](const std::string& conversationId) {
@@ -1308,11 +1308,11 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     registeredName_ = managerUsername_;
                     deviceName_ = accountManager_->getAccountDeviceName();
 
-                    auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::URI);
+                    auto nameServerIt = config.find(libjami::Account::ConfProperties::RingNS::URI);
                     if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
                         nameServer_ = nameServerIt->second;
                     }
-                    auto displayNameIt = config.find(DRing::Account::ConfProperties::DISPLAYNAME);
+                    auto displayNameIt = config.find(libjami::Account::ConfProperties::DISPLAYNAME);
                     if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
                         displayName_ = displayNameIt->second;
                     }
@@ -1330,7 +1330,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     setAccountDetails(details);
 
                     if (not info.photo.empty() or not displayName_.empty())
-                        emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
+                        emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
                                                                                        displayName_,
                                                                                        info.photo);
                     setRegistrationState(RegistrationState::UNREGISTERED);
@@ -1385,43 +1385,43 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
 
     if (hostname_.empty())
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
-    parseString(details, DRing::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl_);
+    parseString(details, libjami::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl_);
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtDefaultPort_);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
-    parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
+    parseBool(details, libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseBool(details,
-              DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
+              libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
               accountPeerDiscovery_);
-    parseBool(details, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
+    parseBool(details, libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
     parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
+              libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
               allowPeersFromHistory_);
     parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
+              libjami::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
               allowPeersFromContact_);
     parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
+              libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
               allowPeersFromTrusted_);
     if (not dhtDefaultPort_)
         dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
 
-    parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
-    parseString(details, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
-    parseString(details, DRing::Account::ConfProperties::USERNAME, username_);
+    parseString(details, libjami::Account::ConfProperties::MANAGER_URI, managerUri_);
+    parseString(details, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
+    parseString(details, libjami::Account::ConfProperties::USERNAME, username_);
 
     std::string archive_password;
     std::string archive_pin;
     std::string archive_path;
-    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
-    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN, archive_pin);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PIN, archive_pin);
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
-    parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH, archive_path, idPath_);
-    parseString(details, DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
+    parsePath(details, libjami::Account::ConfProperties::ARCHIVE_PATH, archive_path, idPath_);
+    parseString(details, libjami::Account::ConfProperties::DEVICE_NAME, deviceName_);
 
     auto oldProxyServer = proxyServer_, oldProxyServerList = proxyListUrl_;
-    parseString(details, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
-    parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
-    parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
+    parseString(details, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
+    parseBool(details, libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
+    parseString(details, libjami::Account::ConfProperties::PROXY_SERVER, proxyServer_);
     // Migrate from old versions
     if (proxyServer_.empty()
         || ((proxyServer_ == "dhtproxy.jami.net" || proxyServer_ == "dhtproxy.ring.cx")
@@ -1440,7 +1440,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     }
 
 #if HAVE_RINGNS
-    parseString(details, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
+    parseString(details, libjami::Account::ConfProperties::RingNS::URI, nameServer_);
 #endif
 
     // update device name if necessary
@@ -1457,22 +1457,22 @@ JamiAccount::getAccountDetails() const
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtDefaultPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY,
+    a.emplace(libjami::Account::ConfProperties::DHT_PEER_DISCOVERY,
               dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
+    a.emplace(libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
               accountPeerDiscovery_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::ACCOUNT_PUBLISH,
+    a.emplace(libjami::Account::ConfProperties::ACCOUNT_PUBLISH,
               accountPublish_ ? TRUE_STR : FALSE_STR);
     if (accountManager_) {
         if (auto info = accountManager_->getInfo()) {
-            a.emplace(DRing::Account::ConfProperties::DEVICE_ID, info->deviceId);
-            a.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT, info->ethAccount);
+            a.emplace(libjami::Account::ConfProperties::DEVICE_ID, info->deviceId);
+            a.emplace(libjami::Account::ConfProperties::RingNS::ACCOUNT, info->ethAccount);
         }
     }
-    a.emplace(DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
-    a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
+    a.emplace(libjami::Account::ConfProperties::DEVICE_NAME, deviceName_);
+    a.emplace(libjami::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
     if (not archivePath_.empty() or not managerUri_.empty())
-        a.emplace(DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,
+        a.emplace(libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,
                   archiveHasPassword_ ? TRUE_STR : FALSE_STR);
 
     /* these settings cannot be changed (read only), but clients should still be
@@ -1493,21 +1493,21 @@ JamiAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_TLS_VERIFY_SERVER, TRUE_STR);
     a.emplace(Conf::CONFIG_TLS_VERIFY_CLIENT, TRUE_STR);
     a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR);
-    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
+    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
               allowPeersFromHistory_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
+    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
               allowPeersFromContact_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
+    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
               allowPeersFromTrusted_ ? TRUE_STR : FALSE_STR);
     /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, "-1");
-    a.emplace(DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
-    a.emplace(DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
-    a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
-    a.emplace(DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
+    a.emplace(libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_ ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServer_);
+    a.emplace(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
+    a.emplace(libjami::Account::ConfProperties::MANAGER_URI, managerUri_);
+    a.emplace(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
 #if HAVE_RINGNS
-    a.emplace(DRing::Account::ConfProperties::RingNS::URI, nameServer_);
+    a.emplace(libjami::Account::ConfProperties::RingNS::URI, nameServer_);
 #endif
 
     return a;
@@ -1517,13 +1517,13 @@ std::map<std::string, std::string>
 JamiAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
-    a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
+    a.emplace(libjami::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
 #if HAVE_RINGNS
     if (not registeredName_.empty())
-        a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
+        a.emplace(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
 #endif
-    a.emplace(DRing::Account::ConfProperties::PROXY_SERVER, proxyServerCached_);
-    a.emplace(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED,
+    a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServerCached_);
+    a.emplace(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED,
               deviceAnnounced_ ? TRUE_STR : FALSE_STR);
 
     return a;
@@ -1539,7 +1539,7 @@ JamiAccount::lookupName(const std::string& name)
                                    nameServer_,
                                    [acc = getAccountID(), name](const std::string& result,
                                                                 NameDirectory::Response response) {
-                                       emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(
+                                       emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(
                                            acc, (int) response, result, name);
                                    });
 }
@@ -1552,7 +1552,7 @@ JamiAccount::lookupAddress(const std::string& addr)
     if (accountManager_)
         accountManager_->lookupAddress(
             addr, [acc, addr](const std::string& result, NameDirectory::Response response) {
-                emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc,
+                emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc,
                                                                             (int) response,
                                                                             addr,
                                                                             result);
@@ -1583,11 +1583,11 @@ JamiAccount::registerName(const std::string& password, const std::string& name)
                     if (auto this_ = w.lock()) {
                         this_->registeredName_ = name;
                         this_->saveConfig();
-                        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                        emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                             this_->accountID_, this_->getVolatileAccountDetails());
                     }
                 }
-                emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
+                emitSignal<libjami::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
             });
 }
 #endif
@@ -1600,7 +1600,7 @@ JamiAccount::searchUser(const std::string& query)
             query,
             [acc = getAccountID(), query](const jami::NameDirectory::SearchResult& result,
                                           jami::NameDirectory::Response response) {
-                jami::emitSignal<DRing::ConfigurationSignal::UserSearchEnded>(acc,
+                jami::emitSignal<libjami::ConfigurationSignal::UserSearchEnded>(acc,
                                                                               (int) response,
                                                                               query,
                                                                               result);
@@ -1872,7 +1872,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 {
     std::string id(contactId.toString());
     JAMI_DBG("Buddy %s online", id.c_str());
-    emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), id, 1, "");
+    emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(), id, 1, "");
 
     auto details = getContactDetails(id);
     auto it = details.find("confirmed");
@@ -1907,7 +1907,7 @@ void
 JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 {
     JAMI_DBG("Buddy %s offline", contactId.toString().c_str());
-    emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(),
+    emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
                                                             contactId.toString(),
                                                             0,
                                                             "");
@@ -1945,13 +1945,13 @@ JamiAccount::doRegister_()
                     if (response == NameDirectory::Response::found) {
                         if (this_->registeredName_ != result) {
                             this_->registeredName_ = result;
-                            emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                            emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                                 this_->accountID_, this_->getVolatileAccountDetails());
                         }
                     } else if (response == NameDirectory::Response::notFound) {
                         if (not this_->registeredName_.empty()) {
                             this_->registeredName_.clear();
-                            emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                            emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                                 this_->accountID_, this_->getVolatileAccountDetails());
                         }
                     }
@@ -2020,7 +2020,7 @@ JamiAccount::doRegister_()
                 auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                                std::chrono::steady_clock::now().time_since_epoch())
                                .count();
-                jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(std::to_string(now) + " "
+                jami::emitSignal<libjami::ConfigurationSignal::MessageSend>(std::to_string(now) + " "
                                                                           + std::string(tmp));
             };
             context.logger = std::make_shared<dht::Logger>(log_all, log_all, silent);
@@ -2098,7 +2098,7 @@ JamiAccount::doRegister_()
                 },
                 [this] {
                     deviceAnnounced_ = true;
-                    emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                    emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                         accountID_, getVolatileAccountDetails());
                 });
         };
@@ -2190,12 +2190,12 @@ JamiAccount::doRegister_()
                     InternalCompletionCb cb;
                     if (isVCard)
                         cb = [peerId, accountId = getAccountID()](const std::string& path) {
-                            emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
+                            emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                     peerId,
                                                                                     path);
                         };
 
-                    DRing::DataTransferInfo info;
+                    libjami::DataTransferInfo info;
                     info.accountId = getAccountID();
                     info.peer = peerId;
                     try {
@@ -2557,7 +2557,7 @@ JamiAccount::setCertificateStatus(const std::string& cert_id,
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
     if (done) {
         findCertificate(cert_id);
-        emitSignal<DRing::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
+        emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
                                                                         cert_id,
                                                                         tls::TrustStore::statusToStr(
                                                                             status));
@@ -2951,7 +2951,7 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri,
     std::string conversationId = {};
     if (uri.scheme() == Uri::Scheme::SWARM)
         conversationId = uri.authority();
-    auto sendMessage = status == (int) DRing::Account::MessageStates::DISPLAYED
+    auto sendMessage = status == (int) libjami::Account::MessageStates::DISPLAYED
                        && isReadReceiptEnabled();
     if (!conversationId.empty())
         sendMessage &= convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
@@ -3016,7 +3016,7 @@ JamiAccount::updateConvForContact(const std::string& uri,
         if (auto info = accountManager_->getInfo()) {
             auto urih = dht::InfoHash(uri);
             auto details = getContactDetails(uri);
-            auto itDetails = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
+            auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
             if (itDetails != details.end() && itDetails->second != oldConv) {
                 JAMI_DBG("Old conversation is not found in details %s", oldConv.c_str());
                 return false;
@@ -3024,8 +3024,8 @@ JamiAccount::updateConvForContact(const std::string& uri,
             info->contacts->updateConversation(urih, newConv);
             // Also decline trust request if there is one
             auto req = info->contacts->getTrustRequest(urih);
-            if (req.find(DRing::Account::TrustRequest::CONVERSATIONID) != req.end()
-                && req.at(DRing::Account::TrustRequest::CONVERSATIONID) == oldConv)
+            if (req.find(libjami::Account::TrustRequest::CONVERSATIONID) != req.end()
+                && req.at(libjami::Account::TrustRequest::CONVERSATIONID) == oldConv)
                 accountManager_->discardTrustRequest(uri);
         }
         return true;
@@ -3083,9 +3083,9 @@ JamiAccount::discardTrustRequest(const std::string& from)
     // Remove 1:1 generated conv requests
     auto requests = getTrustRequests();
     for (const auto& req : requests) {
-        if (req.at(DRing::Account::TrustRequest::FROM) == from) {
+        if (req.at(libjami::Account::TrustRequest::FROM) == from) {
             convModule()->declineConversationRequest(
-                req.at(DRing::Account::TrustRequest::CONVERSATIONID));
+                req.at(libjami::Account::TrustRequest::CONVERSATIONID));
         }
     }
 
@@ -3408,7 +3408,7 @@ JamiAccount::onIsComposing(const std::string& conversationId,
 {
     try {
         const std::string fromUri {parseJamiUri(peer)};
-        emitSignal<DRing::ConfigurationSignal::ComposingStatusChanged>(accountID_,
+        emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountID_,
                                                                        conversationId,
                                                                        peer,
                                                                        isWriting ? 1 : 0);
@@ -3474,8 +3474,8 @@ JamiAccount::storeActiveIpAddress(std::function<void()>&& cb)
 
 void
 JamiAccount::requestConnection(
-    const DRing::DataTransferInfo& info,
-    const DRing::DataTransferId& tid,
+    const libjami::DataTransferInfo& info,
+    const libjami::DataTransferId& tid,
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
         channeledConnectedCb,
@@ -3493,7 +3493,7 @@ JamiAccount::requestConnection(
 }
 
 void
-JamiAccount::closePeerConnection(const DRing::DataTransferId& tid)
+JamiAccount::closePeerConnection(const libjami::DataTransferId& tid)
 {
     if (dhtPeerConnector_)
         dhtPeerConnector_->closeConnection(tid);
@@ -3535,7 +3535,7 @@ JamiAccount::getUserUri() const
     return JAMI_URI_PREFIX + username_;
 }
 
-std::vector<DRing::Message>
+std::vector<libjami::Message>
 JamiAccount::getLastMessages(const uint64_t& base_timestamp)
 {
     return SIPAccountBase::getLastMessages(base_timestamp);
@@ -3571,7 +3571,7 @@ JamiAccount::startAccountDiscovery()
                               v.displayName.c_str(),
                               v.accountId.to_c_str());
                     // Send Added Peer and corrsponding accoundID
-                    emitSignal<DRing::PresenceSignal::NearbyPeerNotification>(getAccountID(),
+                    emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(getAccountID(),
                                                                               v.accountId.toString(),
                                                                               0,
                                                                               v.displayName);
@@ -3585,7 +3585,7 @@ JamiAccount::startAccountDiscovery()
                                 this_->discoveredPeerMap_.erase(p.toString());
                             }
                             // Send Deleted Peer
-                            emitSignal<DRing::PresenceSignal::NearbyPeerNotification>(
+                            emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(
                                 this_->getAccountID(), p.toString(), 1, a);
                         }
                         JAMI_INFO("Account removed from discovery list: %s", a.c_str());
@@ -3732,12 +3732,12 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             else if (isDisplayed) {
                 if (convModule()->onMessageDisplayed(from, conversationId, messageId)) {
                     JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
-                    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                    emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                         accountID_,
                         conversationId,
                         from,
                         messageId,
-                        static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
+                        static_cast<int>(libjami::Account::MessageStates::DISPLAYED));
                 }
             }
             return true;
@@ -4260,7 +4260,7 @@ JamiAccount::sendFile(const std::string& conversationId,
     });
 }
 
-DRing::DataTransferId
+libjami::DataTransferId
 JamiAccount::sendFile(const std::string& peer,
                       const std::string& path,
                       const InternalCompletionCb& icb)

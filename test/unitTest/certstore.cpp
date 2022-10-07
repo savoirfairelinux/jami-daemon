@@ -152,10 +152,10 @@ CertStoreTest::trustStoreTest()
 
     // Test statusToStr
     CPPUNIT_ASSERT(strcmp(jami::tls::statusToStr(jami::tls::TrustStatus::TRUSTED),
-                          DRing::Certificate::TrustStatus::TRUSTED)
+                          libjami::Certificate::TrustStatus::TRUSTED)
                    == 0);
     CPPUNIT_ASSERT(strcmp(jami::tls::statusToStr(jami::tls::TrustStatus::UNTRUSTED),
-                          DRing::Certificate::TrustStatus::UNTRUSTED)
+                          libjami::Certificate::TrustStatus::UNTRUSTED)
                    == 0);
 }
 

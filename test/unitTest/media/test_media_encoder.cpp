@@ -56,7 +56,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaEncoderTest, MediaEncoderTest::name()
 void
 MediaEncoderTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     libav_utils::av_init();
     encoder_.reset(new MediaEncoder);
     files_.push_back("test.mkv");
@@ -68,7 +68,7 @@ MediaEncoderTest::tearDown()
     // clean up behind ourselves
     for (const auto& file : files_)
         fileutils::remove(file);
-    DRing::fini();
+    libjami::fini();
 }
 
 static AVFrame*

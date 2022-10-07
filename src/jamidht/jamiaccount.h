@@ -264,7 +264,7 @@ public:
      * @return A shared pointer on the created call.
      */
     std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
-                                          const std::vector<DRing::MediaMap>& mediaList) override;
+                                          const std::vector<libjami::MediaMap>& mediaList) override;
 
     /**
      * Create incoming SIPCall.
@@ -275,7 +275,7 @@ public:
      */
     std::shared_ptr<SIPCall> newIncomingCall(
         const std::string& from,
-        const std::vector<DRing::MediaMap>& mediaList,
+        const std::vector<libjami::MediaMap>& mediaList,
         const std::shared_ptr<SipTransport>& sipTr = {}) override;
 
     void onTextMessage(const std::string& id,
@@ -382,8 +382,8 @@ public:
      * @param onChanneledCancelled callback when channel is canceled
      */
     void requestConnection(
-        const DRing::DataTransferInfo& info,
-        const DRing::DataTransferId& tid,
+        const libjami::DataTransferInfo& info,
+        const libjami::DataTransferId& tid,
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
             channeledConnectedCb,
@@ -395,7 +395,7 @@ public:
     /// /// \param[in] peer RingID on request's recipient
     /// /// \param[in] tid linked outgoing data transfer
     ///
-    void closePeerConnection(const DRing::DataTransferId& tid);
+    void closePeerConnection(const libjami::DataTransferId& tid);
 
     /// \return true if the given DHT message identifier has been treated
     /// \note if message has not been treated yet this method store this id and returns true at
@@ -437,7 +437,7 @@ public:
      * Get last messages (should be used to retrieve messages when launching the client)
      * @param base_timestamp
      */
-    std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override;
+    std::vector<libjami::Message> getLastMessages(const uint64_t& base_timestamp) override;
 
     /**
      * Start Publish the Jami Account onto the Network
@@ -466,7 +466,7 @@ public:
      */
     void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
 
-#ifdef DRING_TESTABLE
+#ifdef LIBJAMI_TESTABLE
     ConnectionManager& connectionManager()
     {
         return *connectionManager_;
@@ -545,7 +545,7 @@ public:
                   const std::string& replyTo);
 
     // non-swarm version
-    DRing::DataTransferId sendFile(const std::string& peer,
+    libjami::DataTransferId sendFile(const std::string& peer,
                                    const std::string& path,
                                    const InternalCompletionCb& icb = {});
 
