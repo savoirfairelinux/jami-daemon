@@ -122,17 +122,6 @@ NatPmp::initNatPmp()
 }
 
 void
-NatPmp::waitForShutdown()
-{
-    std::unique_lock<std::mutex> lk(natpmpMutex_);
-    if (shutdownCv_.wait_for(lk, std::chrono::seconds(10), [this] { return shutdownComplete_; })) {
-        JAMI_DBG("NAT-PMP: Shutdown completed");
-    } else {
-        JAMI_ERR("NAT-PMP: Shutdown timed-out");
-    }
-}
-
-void
 NatPmp::setObserver(UpnpMappingObserver* obs)
 {
     if (not isValidThread()) {
@@ -150,27 +139,35 @@ NatPmp::setObserver(UpnpMappingObserver* obs)
 }
 
 void
-NatPmp::terminate()
+NatPmp::terminate(std::condition_variable& cv)
 {
-    if (not isValidThread()) {
-        runOnNatPmpQueue([w = weak()] {
-            if (auto pmpThis = w.lock()) {
-                pmpThis->terminate();
-            }
-        });
-        waitForShutdown();
-        return;
-    }
-
     initialized_ = false;
     observer_ = nullptr;
 
     {
         std::lock_guard<std::mutex> lock(natpmpMutex_);
         shutdownComplete_ = true;
+        cv.notify_one();
     }
+}
 
-    shutdownCv_.notify_one();
+void
+NatPmp::terminate()
+{
+    std::unique_lock<std::mutex> lk(natpmpMutex_);
+    std::condition_variable cv {};
+
+    runOnNatPmpQueue([w = weak(), &cv = cv] {
+        if (auto pmpThis = w.lock()) {
+            pmpThis->terminate(cv);
+        }
+    });
+
+    if (cv.wait_for(lk, std::chrono::seconds(10), [this] { return shutdownComplete_; })) {
+        JAMI_DBG("NAT-PMP: Shutdown completed");
+    } else {
+        JAMI_ERR("NAT-PMP: Shutdown timed-out");
+    }
 }
 
 const IpAddr
