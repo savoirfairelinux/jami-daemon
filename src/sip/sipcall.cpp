@@ -1838,9 +1838,9 @@ SIPCall::addLocalIceAttributes()
         // resolution or other issues).
         auto duration = std::chrono::steady_clock::now() - start;
         if (duration > EXPECTED_ICE_INIT_MAX_TIME) {
-            JAMI_WARN("[call:%s] ICE initialization time was unexpectedly high (%ld ms)",
-                      getCallId().c_str(),
-                      std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+            JAMI_WARNING("[call:{:s}] ICE initialization time was unexpectedly high ({})",
+                      getCallId(),
+                      std::chrono::duration_cast<std::chrono::milliseconds>(duration));
         }
     }
 

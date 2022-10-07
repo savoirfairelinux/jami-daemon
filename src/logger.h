@@ -26,6 +26,7 @@
 //#define __STDC_FORMAT_MACROS 1
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <fmt/chrono.h>
 
 #include <cinttypes> // for PRIx64
 #include <cstdarg>
