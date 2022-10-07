@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "18a4ad56_13c6f5ec",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-10-07T20:27:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c2a2596b_8b6d0b9b",
+      "range": {
+        "startLine": 7,
+        "startChar": 15,
+        "endLine": 7,
+        "endChar": 23
+      },
+      "revId": "c179b89cccfa85150f3623db7d5439f2b7c73cca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0cd70c32_04278182",
@@ -37,6 +61,24 @@
       "writtenOn": "2022-10-07T20:22:28Z",
       "side": 1,
       "message": "\"To enable integration tests, one can run:\", although this would be best mentioned in the README or some build doc.",
+      "revId": "c179b89cccfa85150f3623db7d5439f2b7c73cca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "341f297b_1daae16d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-10-07T20:27:45Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "0cd70c32_04278182",
       "revId": "c179b89cccfa85150f3623db7d5439f2b7c73cca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
