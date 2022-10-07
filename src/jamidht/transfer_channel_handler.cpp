@@ -136,9 +136,9 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         auto keyVal = split_string(arg, '=');
         if (keyVal.size() == 2) {
             if (keyVal[0] == "start") {
-                std::from_chars(keyVal[1].data(), keyVal[1].data() + keyVal[1].size(), start);
+                start = to_int<unsigned>(keyVal[1]);
             } else if (keyVal[0] == "end") {
-                std::from_chars(keyVal[1].data(), keyVal[1].data() + keyVal[1].size(), end);
+                end = to_int<unsigned>(keyVal[1]);
             }
         }
     }

@@ -1208,8 +1208,7 @@ Conversation::downloadFile(const std::string& interactionId,
     }
     auto sha3sum = commit->at("sha3sum");
     auto size_str = commit->at("totalSize");
-    std::size_t totalSize;
-    std::from_chars(size_str.data(), size_str.data() + size_str.size(), totalSize);
+    auto totalSize = to_int<size_t>(size_str);
 
     // Be sure to not lock conversation
     dht::ThreadPool().io().run(

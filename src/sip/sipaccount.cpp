@@ -1326,7 +1326,7 @@ SIPAccount::initStunConfiguration()
     } else {
         stunServerName_ = sip_utils::CONST_PJ_STR(stunServer.substr(0, pos));
         auto serverPort = stunServer.substr(pos + 1);
-        std::from_chars(serverPort.data(), serverPort.data() + serverPort.size(), stunPort_);
+        stunPort_ = to_int<uint16_t>(serverPort);
     }
 }
 

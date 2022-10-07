@@ -214,10 +214,7 @@ FtpServer::handleHeader(std::string_view key, std::string_view value)
     JAMI_DBG() << "[FTP] header: '" << key << "' = '" << value << "'";
 
     if (key == "Content-Length") {
-        auto [p, ec] = std::from_chars(value.data(), value.data() + value.size(), fileSize_);
-        if (ec != std::errc()) {
-            throw std::runtime_error("[FTP] header parsing error");
-        }
+        fileSize_ = to_int<size_t>(value);
     } else if (key == "Display-Name") {
         info_.displayName = value;
     }
