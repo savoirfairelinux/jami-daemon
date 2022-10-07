@@ -14,30 +14,6 @@ check_PROGRAMS =
 ####### Unit Test ########
 
 #
-# account_factory
-#
-check_PROGRAMS += ut_account_factory
-ut_account_factory_SOURCES = account_factory/testAccount_factory.cpp common.cpp
-
-#
-# account_archive
-#
-check_PROGRAMS += ut_account_archive
-ut_account_archive_SOURCES = account_archive/account_archive.cpp common.cpp
-
-#
-# migration
-#
-check_PROGRAMS += ut_migration
-ut_migration_SOURCES = account_archive/migration.cpp common.cpp
-
-#
-# certstore
-#
-check_PROGRAMS += ut_certstore
-ut_certstore_SOURCES = certstore.cpp common.cpp
-
-#
 # scheduler
 #
 check_PROGRAMS += ut_scheduler
@@ -126,6 +102,32 @@ ut_video_scaler_SOURCES = media/video/test_video_scaler.cpp common.cpp
 #
 check_PROGRAMS += ut_audio_frame_resizer
 ut_audio_frame_resizer_SOURCES = media/audio/test_audio_frame_resizer.cpp common.cpp
+
+if ENABLE_INTEGRATION_TESTS
+
+#
+# account_factory
+#
+check_PROGRAMS += ut_account_factory
+ut_account_factory_SOURCES = account_factory/testAccount_factory.cpp common.cpp
+
+#
+# account_archive
+#
+check_PROGRAMS += ut_account_archive
+ut_account_archive_SOURCES = account_archive/account_archive.cpp common.cpp
+
+#
+# migration
+#
+check_PROGRAMS += ut_migration
+ut_migration_SOURCES = account_archive/migration.cpp common.cpp
+
+#
+# certstore
+#
+check_PROGRAMS += ut_certstore
+ut_certstore_SOURCES = certstore.cpp common.cpp
 
 #
 # call
@@ -236,5 +238,7 @@ ut_sip_srtp_SOURCES = sip_account/sip_srtp.cpp
 #
 check_PROGRAMS += ut_plugins
 ut_plugins_SOURCES = plugins/plugins.cpp common.cpp
+
+endif # ENABLE_INTEGRATION_TESTS
 
 TESTS = $(check_PROGRAMS)
