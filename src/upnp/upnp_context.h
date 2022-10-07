@@ -127,9 +127,6 @@ private:
     // Initialization
     void init();
 
-    // Wait for Shutdown
-    void waitForShutdown();
-
     /**
      * @brief start the search for IGDs activate the mapping
      * list update.
@@ -145,6 +142,8 @@ private:
      *
      */
     void stopUpnp(bool forceRelease = false);
+
+    void shutdown(std::condition_variable& cv);
 
     // Create and register a new mapping.
     Mapping::sharedPtr_t registerMapping(Mapping& map);
@@ -290,7 +289,6 @@ private:
     std::set<std::shared_ptr<IGD>> validIgdList_ {};
 
     // Shutdown synchronization
-    std::condition_variable shutdownCv_ {};
     bool shutdownComplete_ {false};
 };
 

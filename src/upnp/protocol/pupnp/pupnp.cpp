@@ -166,19 +166,6 @@ PUPnP::initUpnpLib()
     initialized_ = true;
 }
 
-void
-PUPnP::waitForShutdown()
-{
-    std::unique_lock<std::mutex> lk(pupnpMutex_);
-    if (shutdownCv_.wait_for(lk, std::chrono::seconds(10), [this] { return shutdownComplete_; })) {
-        JAMI_DBG("PUPnP: Shutdown completed");
-    } else {
-        JAMI_ERR("PUPnP: Shutdown timed-out");
-        // Force stop if the shutdown take too much time.
-        shutdownComplete_ = true;
-    }
-}
-
 bool
 PUPnP::isRunning() const
 {
@@ -228,18 +215,8 @@ PUPnP::getHostAddress() const
 }
 
 void
-PUPnP::terminate()
+PUPnP::terminate(std::condition_variable& cv)
 {
-    if (not isValidThread()) {
-        runOnPUPnPQueue([w = weak()] {
-            if (auto upnpThis = w.lock()) {
-                upnpThis->terminate();
-            }
-        });
-        waitForShutdown();
-        return;
-    }
-
     JAMI_DBG("PUPnP: Terminate instance %p", this);
 
     clientRegistered_ = false;
@@ -262,9 +239,29 @@ PUPnP::terminate()
         std::lock_guard<std::mutex> lock(pupnpMutex_);
         validIgdList_.clear();
         shutdownComplete_ = true;
+        cv.notify_one();
     }
+}
 
-    shutdownCv_.notify_one();
+void
+PUPnP::terminate()
+{
+    std::unique_lock<std::mutex> lk(pupnpMutex_);
+    std::condition_variable cv {};
+
+    runOnPUPnPQueue([w = weak(), &cv = cv] {
+            if (auto upnpThis = w.lock()) {
+                upnpThis->terminate(cv);
+            }
+    });
+
+    if (cv.wait_for(lk, std::chrono::seconds(10), [this] { return shutdownComplete_; })) {
+        JAMI_DBG("PUPnP: Shutdown completed");
+    } else {
+        JAMI_ERR("PUPnP: Shutdown timed-out");
+        // Force stop if the shutdown take too much time.
+        shutdownComplete_ = true;
+    }
 }
 
 void

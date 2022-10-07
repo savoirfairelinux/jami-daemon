@@ -136,11 +136,10 @@ private:
     // Helper to run tasks on UPNP context execution queue.
     ScheduledExecutor* getUpnContextScheduler() { return UpnpThreadUtil::getScheduler(); }
 
+    void terminate(std::condition_variable& cv);
+
     // Init lib-upnp
     void initUpnpLib();
-
-    // Block until shutdown is complete or time-out.
-    void waitForShutdown();
 
     // Return true if running.
     bool isRunning() const;
@@ -269,7 +268,6 @@ private:
     mutable std::mutex pupnpMutex_;
 
     // Shutdown synchronization
-    std::condition_variable shutdownCv_ {};
     bool shutdownComplete_ {false};
 };
 
