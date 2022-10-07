@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6a82ecb_a9353ab2",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-10-07T15:31:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e7e37c2a_47ccd77b",
+      "range": {
+        "startLine": 10,
+        "startChar": 3,
+        "endLine": 10,
+        "endChar": 21
+      },
+      "revId": "2dfa53c98858b3b53bd7d22a9467985439e721e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "36605719_8df3f1e4",
@@ -85,6 +109,30 @@
       "side": 1,
       "message": "I did try to have multiple cases in syntax-rules, but it seems I got it wrong.  I will try again.",
       "parentUuid": "36605719_8df3f1e4",
+      "range": {
+        "startLine": 123,
+        "startChar": 13,
+        "endLine": 123,
+        "endChar": 15
+      },
+      "revId": "2dfa53c98858b3b53bd7d22a9467985439e721e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d60008f_9f6c17ff",
+        "filename": "test/agent/scenarios/bulk-calls/scenario.scm",
+        "patchSetId": 3
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-10-07T15:31:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "340f1c3f_b4b64950",
       "range": {
         "startLine": 123,
         "startChar": 13,
