@@ -1,6 +1,46 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2a2596b_8b6d0b9b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-10-07T20:22:28Z",
+      "side": 1,
+      "message": "Separate",
+      "range": {
+        "startLine": 7,
+        "startChar": 15,
+        "endLine": 7,
+        "endChar": 23
+      },
+      "revId": "c179b89cccfa85150f3623db7d5439f2b7c73cca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0cd70c32_04278182",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-10-07T20:22:28Z",
+      "side": 1,
+      "message": "\"To enable integration tests, one can run:\", although this would be best mentioned in the README or some build doc.",
+      "revId": "c179b89cccfa85150f3623db7d5439f2b7c73cca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "0e639d68_755a465c",
@@ -14,6 +54,23 @@
       "writtenOn": "2022-10-07T19:39:46Z",
       "side": 1,
       "message": "Enable integration tests in Jenkin!",
+      "revId": "c179b89cccfa85150f3623db7d5439f2b7c73cca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "97892351_81a4883f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-10-07T20:22:28Z",
+      "side": 1,
+      "message": "LGTM with reworded commit message/doc.",
       "revId": "c179b89cccfa85150f3623db7d5439f2b7c73cca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
