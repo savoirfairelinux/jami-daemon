@@ -39,8 +39,8 @@
 
 #include "common.h"
 
-using namespace DRing::Account;
-using namespace DRing::Call;
+using namespace libjami::Account;
+using namespace libjami::Call;
 
 namespace jami {
 namespace test {
@@ -81,11 +81,11 @@ public:
     IceMediaCandExchangeTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~IceMediaCandExchangeTest() { DRing::fini(); }
+    ~IceMediaCandExchangeTest() { libjami::fini(); }
 
     static std::string name() { return "IceMediaCandExchangeTest"; }
     void setUp();
@@ -115,7 +115,7 @@ private:
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
                                         const std::string& callId,
-                                        const std::vector<DRing::MediaMap> mediaList,
+                                        const std::vector<libjami::MediaMap> mediaList,
                                         CallData& callData);
     static void onMediaNegotiationStatus(const std::string& callId,
                                          const std::string& event,
@@ -184,13 +184,13 @@ IceMediaCandExchangeTest::getUserAlias(const std::string& callId)
 void
 IceMediaCandExchangeTest::onIncomingCallWithMedia(const std::string& accountId,
                                                   const std::string& callId,
-                                                  const std::vector<DRing::MediaMap> mediaList,
+                                                  const std::vector<libjami::MediaMap> mediaList,
                                                   CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              DRing::CallSignal::IncomingCallWithMedia::name,
+              libjami::CallSignal::IncomingCallWithMedia::name,
               callData.alias_.c_str(),
               callId.c_str(),
               mediaList.size());
@@ -204,7 +204,7 @@ IceMediaCandExchangeTest::onIncomingCallWithMedia(const std::string& accountId,
     std::unique_lock<std::mutex> lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(
-        CallData::Signal(callId, DRing::CallSignal::IncomingCallWithMedia::name));
+        CallData::Signal(callId, libjami::CallSignal::IncomingCallWithMedia::name));
 
     callData.cv_.notify_one();
 }
@@ -216,14 +216,14 @@ IceMediaCandExchangeTest::onCallStateChange(const std::string&,
                                             CallData& callData)
 {
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              DRing::CallSignal::StateChange::name,
+              libjami::CallSignal::StateChange::name,
               callData.alias_.c_str(),
               callId.c_str(),
               state.c_str());
     {
         std::unique_lock<std::mutex> lock {callData.mtx_};
         callData.signals_.emplace_back(
-            CallData::Signal(callId, DRing::CallSignal::StateChange::name, state));
+            CallData::Signal(callId, libjami::CallSignal::StateChange::name, state));
     }
 
     if (state == "RINGING" or state == "CURRENT" or state == "HUNGUP" or state == "OVER") {
@@ -249,7 +249,7 @@ IceMediaCandExchangeTest::onMediaNegotiationStatus(const std::string& callId,
     }
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              DRing::CallSignal::MediaNegotiationStatus::name,
+              libjami::CallSignal::MediaNegotiationStatus::name,
               account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
               call->getCallId().c_str(),
               event.c_str());
@@ -260,7 +260,7 @@ IceMediaCandExchangeTest::onMediaNegotiationStatus(const std::string& callId,
     {
         std::unique_lock<std::mutex> lock {callData.mtx_};
         callData.signals_.emplace_back(
-            CallData::Signal(callId, DRing::CallSignal::MediaNegotiationStatus::name, event));
+            CallData::Signal(callId, libjami::CallSignal::MediaNegotiationStatus::name, event));
     }
 
     callData.cv_.notify_one();
@@ -327,7 +327,7 @@ IceMediaCandExchangeTest::setupJamiAccount(CallData& user)
     // Apply the settings according to the test case
     details[ConfProperties::UPNP_ENABLED] = user.upnpEnabled_ ? "true" : "false";
     details[ConfProperties::TURN::ENABLED] = user.turnEnabled_ ? "true" : "false";
-    DRing::setAccountDetails(user.accountId_, details);
+    libjami::setAccountDetails(user.accountId_, details);
 }
 
 void
@@ -335,8 +335,8 @@ IceMediaCandExchangeTest::setupSipAccount(CallData& user)
 {
     CPPUNIT_ASSERT_GREATER(0, static_cast<int>(user.listeningPort_));
 
-    auto details = DRing::getAccountTemplate(DRing::Account::ProtocolNames::SIP);
-    details[ConfProperties::TYPE] = DRing::Account::ProtocolNames::SIP;
+    auto details = libjami::getAccountTemplate(libjami::Account::ProtocolNames::SIP);
+    details[ConfProperties::TYPE] = libjami::Account::ProtocolNames::SIP;
     details[ConfProperties::DISPLAYNAME] = user.displayName_.c_str();
     details[ConfProperties::ALIAS] = user.displayName_.c_str();
     details[ConfProperties::LOCAL_PORT] = std::to_string(user.listeningPort_);
@@ -367,7 +367,7 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
                                         CallData& bobData,
                                         const char* accountType)
 {
-    if (strcmp(accountType, DRing::Account::ProtocolNames::SIP) == 0) {
+    if (strcmp(accountType, libjami::Account::ProtocolNames::SIP) == 0) {
         JAMI_INFO("Setup SIP accounts and configure test case ...");
 
         aliceData.displayName_ = "ALICE";
@@ -394,13 +394,13 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
     }
 
     // Setup signal handlers.
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
-            const std::vector<DRing::MediaMap> mediaList) {
+            const std::vector<libjami::MediaMap> mediaList) {
             auto user = getUserAlias(callId);
             if (user.empty()) {
                 // The call was probably already removed, in this case, just
@@ -423,7 +423,7 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
         }));
 
     signalHandlers.insert(
-        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+        libjami::exportable_callback<libjami::CallSignal::StateChange>([&](const std::string& accountId,
                                                                        const std::string& callId,
                                                                        const std::string& state,
                                                                        signed) {
@@ -448,7 +448,7 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
             }
         }));
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaNegotiationStatus>(
         [&](const std::string& callId,
             const std::string& event,
             const std::vector<std::map<std::string, std::string>>& /* mediaList */) {
@@ -472,7 +472,7 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
         }));
 
     signalHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>&) {
                 auto account = Manager::instance().getAccount(accountId);
                 if (not account) {
@@ -481,7 +481,7 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
                 }
 
                 auto details = account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
 
                 if (accountId == aliceData.accountId_) {
                     aliceData.accountRegistered_ = daemonStatus == "REGISTERED";
@@ -494,14 +494,14 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
                 }
             }));
 
-    DRing::registerSignalHandlers(signalHandlers);
+    libjami::registerSignalHandlers(signalHandlers);
 }
 
 void
 IceMediaCandExchangeTest::configureAccount(CallData& user, const char* accountType)
 {
     auto details
-        = strcmp(accountType, DRing::Account::ProtocolNames::RING) == 0
+        = strcmp(accountType, libjami::Account::ProtocolNames::RING) == 0
               ? Manager::instance().getAccount<JamiAccount>(user.accountId_)->getAccountDetails()
               : Manager::instance().getAccount<SIPAccount>(user.accountId_)->getAccountDetails();
 
@@ -509,13 +509,13 @@ IceMediaCandExchangeTest::configureAccount(CallData& user, const char* accountTy
     details[ConfProperties::UPNP_ENABLED] = user.upnpEnabled_ ? "true" : "false";
     details[ConfProperties::TURN::ENABLED] = user.turnEnabled_ ? "true" : "false";
 
-    DRing::setAccountDetails(user.accountId_, details);
+    libjami::setAccountDetails(user.accountId_, details);
 
     // Note: setAccountDetails will trigger a re-register of the account, so
     // we need to wait for the registration to proceed.
     // Only done for JAMI accounts.
 
-    if (strcmp(accountType, DRing::Account::ProtocolNames::RING) != 0)
+    if (strcmp(accountType, libjami::Account::ProtocolNames::RING) != 0)
         return;
 
     auto account = Manager::instance().getAccount<JamiAccount>(user.accountId_);
@@ -564,7 +564,7 @@ IceMediaCandExchangeTest::validate_ice_candidates(CallData& user,
     // candidates are only added if UPNP is enabled and the mapping is
     // successful.
     int expectedSrflxCandCount = 0;
-    if (strcmp(accountType, DRing::Account::ProtocolNames::RING) == 0) {
+    if (strcmp(accountType, libjami::Account::ProtocolNames::RING) == 0) {
         if (hasUpnp) {
             if (upnpSameAsPublished) {
                 // UPNP and published are the same, published wont be added.
@@ -616,13 +616,13 @@ IceMediaCandExchangeTest::test_call(const char* accountType)
     CPPUNIT_ASSERT_EQUAL(MEDIA_COUNT, answer.size());
 
     // Set the destination according to account type.
-    auto dest = strcmp(accountType, DRing::Account::ProtocolNames::SIP) == 0
+    auto dest = strcmp(accountType, libjami::Account::ProtocolNames::SIP) == 0
                     ? bobData_.dest_.toString(true)
                     : bobData_.userName_;
 
     CPPUNIT_ASSERT(not dest.empty());
 
-    aliceData_.callId_ = DRing::placeCallWithMedia(aliceData_.accountId_,
+    aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
                                                    dest,
                                                    MediaAttribute::mediaAttributesToMediaMaps(
                                                        offer));
@@ -638,31 +638,31 @@ IceMediaCandExchangeTest::test_call(const char* accountType)
 
     // Wait for call to be processed.
     CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+        waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::RINGING));
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
-    DRing::acceptWithMedia(bobData_.accountId_,
+    libjami::acceptWithMedia(bobData_.accountId_,
                            bobData_.callId_,
                            MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_,
-                                 DRing::CallSignal::MediaNegotiationStatus::name,
-                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(
-        waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+        waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
     JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(aliceData_,
-                                 DRing::CallSignal::MediaNegotiationStatus::name,
-                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Validate ICE candidates
     validate_ice_candidates(aliceData_, accountType, hasUpnp_, upnpAddrSameAsPublished_);
@@ -676,15 +676,15 @@ IceMediaCandExchangeTest::test_call(const char* accountType)
     Manager::instance().hangupCall(bobData_.accountId_, bobData_.callId_);
 
     CPPUNIT_ASSERT(
-        waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
+        waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
     CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
+        waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
-    CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::OVER));
+    CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::OVER));
 
     CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::OVER));
+        waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::OVER));
 
     JAMI_INFO("Call terminated on both sides");
 
@@ -698,7 +698,7 @@ IceMediaCandExchangeTest::test_call(const char* accountType)
 void
 IceMediaCandExchangeTest::check_upnp()
 {
-    auto accountType = DRing::Account::ProtocolNames::RING;
+    auto accountType = libjami::Account::ProtocolNames::RING;
     setupAccounts(aliceData_, bobData_, accountType);
     auto const& account = Manager::instance().getAccount<JamiAccount>(aliceData_.accountId_);
     auto publishedAddr = account->getPublishedIpAddress(AF_INET);
@@ -750,7 +750,7 @@ IceMediaCandExchangeTest::jami_account_no_turn()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    auto accountType = DRing::Account::ProtocolNames::RING;
+    auto accountType = libjami::Account::ProtocolNames::RING;
     setupAccounts(aliceData_, bobData_, accountType);
 
     bobData_.turnEnabled_ = false;
@@ -794,7 +794,7 @@ IceMediaCandExchangeTest::jami_account_with_turn()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    auto accountType = DRing::Account::ProtocolNames::RING;
+    auto accountType = libjami::Account::ProtocolNames::RING;
     setupAccounts(aliceData_, bobData_, accountType);
 
     bobData_.turnEnabled_ = true;

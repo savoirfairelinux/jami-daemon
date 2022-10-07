@@ -275,7 +275,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
                      new_client_state.c_str(),
                      code);
             lock.unlock();
-            emitSignal<DRing::CallSignal::StateChange>(getAccountId(), id_, new_client_state, code);
+            emitSignal<libjami::CallSignal::StateChange>(getAccountId(), id_, new_client_state, code);
         }
     }
 
@@ -299,7 +299,7 @@ Call::setState(ConnectionState cnx_state, signed code)
 std::string
 Call::getStateStr() const
 {
-    using namespace DRing::Call;
+    using namespace libjami::Call;
 
     switch (getState()) {
     case CallState::ACTIVE:
@@ -363,7 +363,7 @@ Call::toggleRecording()
 void
 Call::updateDetails(const std::map<std::string, std::string>& details)
 {
-    const auto& iter = details.find(DRing::Call::Details::AUDIO_ONLY);
+    const auto& iter = details.find(libjami::Call::Details::AUDIO_ONLY);
     if (iter != std::end(details))
         isAudioOnly_ = iter->second == TRUE_STR;
 }
@@ -373,18 +373,18 @@ Call::getDetails() const
 {
     auto conference = conf_.lock();
     return {
-        {DRing::Call::Details::CALL_TYPE, std::to_string((unsigned) type_)},
-        {DRing::Call::Details::PEER_NUMBER, peerNumber_},
-        {DRing::Call::Details::DISPLAY_NAME, peerDisplayName_},
-        {DRing::Call::Details::CALL_STATE, getStateStr()},
-        {DRing::Call::Details::CONF_ID, conference ? conference->getConfId() : ""},
-        {DRing::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
-        {DRing::Call::Details::ACCOUNTID, getAccountId()},
-        {DRing::Call::Details::AUDIO_MUTED,
+        {libjami::Call::Details::CALL_TYPE, std::to_string((unsigned) type_)},
+        {libjami::Call::Details::PEER_NUMBER, peerNumber_},
+        {libjami::Call::Details::DISPLAY_NAME, peerDisplayName_},
+        {libjami::Call::Details::CALL_STATE, getStateStr()},
+        {libjami::Call::Details::CONF_ID, conference ? conference->getConfId() : ""},
+        {libjami::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
+        {libjami::Call::Details::ACCOUNTID, getAccountId()},
+        {libjami::Call::Details::AUDIO_MUTED,
          std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)))},
-        {DRing::Call::Details::VIDEO_MUTED,
+        {libjami::Call::Details::VIDEO_MUTED,
          std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_VIDEO)))},
-        {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(not hasVideo()))},
+        {libjami::Call::Details::AUDIO_ONLY, std::string(bool_to_str(not hasVideo()))},
     };
 }
 
@@ -591,7 +591,7 @@ Call::checkPendingIM()
     auto state = getStateStr();
     // Let parent call handles IM after the merge
     if (not parent_) {
-        if (state == DRing::Call::StateEvent::CURRENT) {
+        if (state == libjami::Call::StateEvent::CURRENT) {
             for (const auto& msg : pendingInMessages_)
                 Manager::instance().incomingMessage(getAccountId(),
                                                     getCallId(),
@@ -614,7 +614,7 @@ Call::checkPendingIM()
 void
 Call::checkAudio()
 {
-    using namespace DRing::Call;
+    using namespace libjami::Call;
 
     auto state = getStateStr();
     if (state == StateEvent::RINGING) {
@@ -686,7 +686,7 @@ Call::setConferenceInfo(const std::string& msg)
             createSinks(confInfo_);
 #endif
             // Inform client that layout has changed
-            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
+            jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(
                 id_, confInfo_.toVectorMapStringString());
         } else if (auto conf = conf_.lock()) {
             conf->mergeConfInfo(newInfo, getPeerNumber());

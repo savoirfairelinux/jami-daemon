@@ -33,57 +33,57 @@
 #import "TargetConditionals.h"
 #endif
 
-namespace DRing {
-DRING_PUBLIC bool loadPlugin(const std::string& path);
-DRING_PUBLIC bool unloadPlugin(const std::string& path);
-DRING_PUBLIC std::map<std::string, std::string> getPluginDetails(const std::string& path);
-DRING_PUBLIC std::vector<std::map<std::string, std::string>> getPluginPreferences(
+namespace libjami {
+LIBJAMI_PUBLIC bool loadPlugin(const std::string& path);
+LIBJAMI_PUBLIC bool unloadPlugin(const std::string& path);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getPluginDetails(const std::string& path);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getPluginPreferences(
     const std::string& path, const std::string& accountId);
-DRING_PUBLIC bool setPluginPreference(const std::string& path,
+LIBJAMI_PUBLIC bool setPluginPreference(const std::string& path,
                                       const std::string& accountId,
                                       const std::string& key,
                                       const std::string& value);
-DRING_PUBLIC std::map<std::string, std::string> getPluginPreferencesValues(
+LIBJAMI_PUBLIC std::map<std::string, std::string> getPluginPreferencesValues(
     const std::string& path, const std::string& accountId);
-DRING_PUBLIC bool resetPluginPreferencesValues(const std::string& path,
+LIBJAMI_PUBLIC bool resetPluginPreferencesValues(const std::string& path,
                                                const std::string& accountId);
-DRING_PUBLIC std::vector<std::string> getInstalledPlugins();
-DRING_PUBLIC std::vector<std::string> getLoadedPlugins();
-DRING_PUBLIC int installPlugin(const std::string& jplPath, bool force);
-DRING_PUBLIC int uninstallPlugin(const std::string& pluginRootPath);
-DRING_PUBLIC std::vector<std::string> getCallMediaHandlers();
-DRING_PUBLIC std::vector<std::string> getChatHandlers();
-DRING_PUBLIC void toggleCallMediaHandler(const std::string& mediaHandlerId,
+LIBJAMI_PUBLIC std::vector<std::string> getInstalledPlugins();
+LIBJAMI_PUBLIC std::vector<std::string> getLoadedPlugins();
+LIBJAMI_PUBLIC int installPlugin(const std::string& jplPath, bool force);
+LIBJAMI_PUBLIC int uninstallPlugin(const std::string& pluginRootPath);
+LIBJAMI_PUBLIC std::vector<std::string> getCallMediaHandlers();
+LIBJAMI_PUBLIC std::vector<std::string> getChatHandlers();
+LIBJAMI_PUBLIC void toggleCallMediaHandler(const std::string& mediaHandlerId,
                                          const std::string& callId,
                                          bool toggle);
-DRING_PUBLIC void toggleChatHandler(const std::string& chatHandlerId,
+LIBJAMI_PUBLIC void toggleChatHandler(const std::string& chatHandlerId,
                                     const std::string& accountId,
                                     const std::string& peerId,
                                     bool toggle);
-DRING_PUBLIC std::map<std::string, std::string> getCallMediaHandlerDetails(
+LIBJAMI_PUBLIC std::map<std::string, std::string> getCallMediaHandlerDetails(
     const std::string& mediaHandlerId);
-DRING_PUBLIC std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId);
-DRING_PUBLIC std::map<std::string, std::string> getChatHandlerDetails(
+LIBJAMI_PUBLIC std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getChatHandlerDetails(
     const std::string& chatHandlerId);
-DRING_PUBLIC std::vector<std::string> getChatHandlerStatus(const std::string& accountId,
+LIBJAMI_PUBLIC std::vector<std::string> getChatHandlerStatus(const std::string& accountId,
                                                            const std::string& peerId);
-DRING_PUBLIC bool getPluginsEnabled();
-DRING_PUBLIC void setPluginsEnabled(bool state);
+LIBJAMI_PUBLIC bool getPluginsEnabled();
+LIBJAMI_PUBLIC void setPluginsEnabled(bool state);
 
-DRING_PUBLIC void sendWebViewMessage(const std::string& pluginId,
+LIBJAMI_PUBLIC void sendWebViewMessage(const std::string& pluginId,
                                      const std::string& webViewId,
                                      const std::string& messageId,
                                      const std::string& payload);
 
-DRING_PUBLIC std::string sendWebViewAttach(const std::string& pluginId,
+LIBJAMI_PUBLIC std::string sendWebViewAttach(const std::string& pluginId,
                                            const std::string& accountId,
                                            const std::string& webViewId,
                                            const std::string& action);
 
-DRING_PUBLIC void sendWebViewDetach(const std::string& pluginId, const std::string& webViewId);
+LIBJAMI_PUBLIC void sendWebViewDetach(const std::string& pluginId, const std::string& webViewId);
 
 namespace PluginSignal {
-struct DRING_PUBLIC WebViewMessageReceived
+struct LIBJAMI_PUBLIC WebViewMessageReceived
 {
     constexpr static const char* name = "WebViewMessageReceived";
     using cb_type = void(const std::string& /*pluginId*/,
@@ -93,4 +93,4 @@ struct DRING_PUBLIC WebViewMessageReceived
 };
 } // namespace PluginSignal
 
-} // namespace DRing
+} // namespace libjami

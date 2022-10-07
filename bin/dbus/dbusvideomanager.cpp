@@ -26,113 +26,113 @@ DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
 {}
 
 auto
-DBusVideoManager::getDeviceList() -> decltype(DRing::getDeviceList())
+DBusVideoManager::getDeviceList() -> decltype(libjami::getDeviceList())
 {
-    return DRing::getDeviceList();
+    return libjami::getDeviceList();
 }
 
 auto
-DBusVideoManager::getCapabilities(const std::string& deviceId) -> decltype(DRing::getCapabilities(deviceId))
+DBusVideoManager::getCapabilities(const std::string& deviceId) -> decltype(libjami::getCapabilities(deviceId))
 {
-    return DRing::getCapabilities(deviceId);
+    return libjami::getCapabilities(deviceId);
 }
 
 auto
-DBusVideoManager::getSettings(const std::string& deviceId) -> decltype(DRing::getSettings(deviceId))
+DBusVideoManager::getSettings(const std::string& deviceId) -> decltype(libjami::getSettings(deviceId))
 {
-    return DRing::getSettings(deviceId);
+    return libjami::getSettings(deviceId);
 }
 
 void
 DBusVideoManager::applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings)
 {
-    DRing::applySettings(deviceId, settings);
+    libjami::applySettings(deviceId, settings);
 }
 
 void
 DBusVideoManager::setDefaultDevice(const std::string& deviceId)
 {
-    DRing::setDefaultDevice(deviceId);
+    libjami::setDefaultDevice(deviceId);
 }
 
 auto
-DBusVideoManager::getDefaultDevice() -> decltype(DRing::getDefaultDevice())
+DBusVideoManager::getDefaultDevice() -> decltype(libjami::getDefaultDevice())
 {
-    return DRing::getDefaultDevice();
+    return libjami::getDefaultDevice();
 }
 
 void
 DBusVideoManager::startAudioDevice()
 {
-    DRing::startAudioDevice();
+    libjami::startAudioDevice();
 }
 
 void
 DBusVideoManager::stopAudioDevice()
 {
-    DRing::stopAudioDevice();
+    libjami::stopAudioDevice();
 }
 
 std::string
 DBusVideoManager::openVideoInput(const std::string& inputUri)  {
-    return DRing::openVideoInput(inputUri);
+    return libjami::openVideoInput(inputUri);
 }
 
 bool
 DBusVideoManager::closeVideoInput(const std::string& inputId) {
-    return DRing::closeVideoInput(inputId);
+    return libjami::closeVideoInput(inputId);
 }
 
 auto
-DBusVideoManager::getDecodingAccelerated() -> decltype(DRing::getDecodingAccelerated())
+DBusVideoManager::getDecodingAccelerated() -> decltype(libjami::getDecodingAccelerated())
 {
-    return DRing::getDecodingAccelerated();
+    return libjami::getDecodingAccelerated();
 }
 
 void
 DBusVideoManager::setDecodingAccelerated(const bool& state)
 {
-    DRing::setDecodingAccelerated(state);
+    libjami::setDecodingAccelerated(state);
 }
 
 auto
-DBusVideoManager::getEncodingAccelerated() -> decltype(DRing::getEncodingAccelerated())
+DBusVideoManager::getEncodingAccelerated() -> decltype(libjami::getEncodingAccelerated())
 {
-    return DRing::getEncodingAccelerated();
+    return libjami::getEncodingAccelerated();
 }
 
 void
 DBusVideoManager::setEncodingAccelerated(const bool& state)
 {
-    DRing::setEncodingAccelerated(state);
+    libjami::setEncodingAccelerated(state);
 }
 
 void
 DBusVideoManager::setDeviceOrientation(const std::string& deviceId, const int& angle)
 {
-    DRing::setDeviceOrientation(deviceId, angle);
+    libjami::setDeviceOrientation(deviceId, angle);
 }
 
 void
 DBusVideoManager::startShmSink(const std::string& sinkId, const bool& value)
 {
-    DRing::startShmSink(sinkId, value);
+    libjami::startShmSink(sinkId, value);
 }
 
 std::map<std::string, std::string>
 DBusVideoManager::getRenderer(const std::string& callId)
 {
-    return DRing::getRenderer(callId);
+    return libjami::getRenderer(callId);
 }
 
 std::string
 DBusVideoManager::startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath)
 {
-    return DRing::startLocalMediaRecorder(videoInputId, filepath);
+    return libjami::startLocalMediaRecorder(videoInputId, filepath);
 }
 
 void
 DBusVideoManager::stopLocalRecorder(const std::string& filepath)
 {
-    DRing::stopLocalRecorder(filepath);
+    libjami::stopLocalRecorder(filepath);
 }

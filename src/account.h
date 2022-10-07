@@ -155,7 +155,7 @@ public:
      * @return The created call
      */
     virtual std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
-                                                  const std::vector<DRing::MediaMap>& mediaList)
+                                                  const std::vector<libjami::MediaMap>& mediaList)
         = 0;
 
     /**
@@ -178,7 +178,7 @@ public:
         return false;
     };
 
-    virtual std::vector<DRing::Message> getLastMessages(const uint64_t& /*base_timestamp*/)
+    virtual std::vector<libjami::Message> getLastMessages(const uint64_t& /*base_timestamp*/)
     {
         return {};
     }
@@ -393,7 +393,7 @@ public:
     {
         auto result = callSet_.removeConference(confId);
         if (result)
-            emitSignal<DRing::CallSignal::ConferenceRemoved>(getAccountID(), confId);
+            emitSignal<libjami::CallSignal::ConferenceRemoved>(getAccountID(), confId);
         return result;
     }
 

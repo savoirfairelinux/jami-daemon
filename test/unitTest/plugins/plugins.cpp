@@ -37,7 +37,7 @@
 
 #include "common.h"
 
-using namespace DRing::Account;
+using namespace libjami::Account;
 
 namespace jami {
 namespace test {
@@ -83,11 +83,11 @@ public:
     PluginsTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~PluginsTest() { DRing::fini(); }
+    ~PluginsTest() { libjami::fini(); }
     static std::string name() { return "Plugins"; }
     void setUp();
     void tearDown();
@@ -106,7 +106,7 @@ private:
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
                                         const std::string& callId,
-                                        const std::vector<DRing::MediaMap> mediaList,
+                                        const std::vector<libjami::MediaMap> mediaList,
                                         CallData& callData);
 
     std::string name_{};
@@ -139,13 +139,13 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(PluginsTest, PluginsTest::name());
 void
 PluginsTest::onIncomingCallWithMedia(const std::string& accountId,
                                         const std::string& callId,
-                                        const std::vector<DRing::MediaMap> mediaList,
+                                        const std::vector<libjami::MediaMap> mediaList,
                                         CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              DRing::CallSignal::IncomingCallWithMedia::name,
+              libjami::CallSignal::IncomingCallWithMedia::name,
               callData.alias_.c_str(),
               callId.c_str(),
               mediaList.size());
@@ -163,7 +163,7 @@ PluginsTest::onIncomingCallWithMedia(const std::string& accountId,
 
     std::unique_lock<std::mutex> lock {callData.mtx_};
     callData.callId_ = callId;
-    callData.signals_.emplace_back(CallData::Signal(DRing::CallSignal::IncomingCallWithMedia::name));
+    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
 
     callData.cv_.notify_one();
 }
@@ -175,7 +175,7 @@ PluginsTest::onCallStateChange(const std::string& accountId,
                                 CallData& callData)
 {
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              DRing::CallSignal::StateChange::name,
+              libjami::CallSignal::StateChange::name,
               callData.alias_.c_str(),
               callId.c_str(),
               state.c_str());
@@ -185,7 +185,7 @@ PluginsTest::onCallStateChange(const std::string& accountId,
     {
         std::unique_lock<std::mutex> lock {callData.mtx_};
         callData.signals_.emplace_back(
-            CallData::Signal(DRing::CallSignal::StateChange::name, state));
+            CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
     // NOTE. Only states that we are interested in will notify the CV.
     // If this unit test is modified to process other states, they must
@@ -223,14 +223,14 @@ PluginsTest::setUp()
         account->enableIceForMedia(true);
     }
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
 
     // Insert needed signal handlers.
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
-            const std::vector<DRing::MediaMap> mediaList) {
+            const std::vector<libjami::MediaMap> mediaList) {
             if (aliceData.accountId_ == accountId)
                 onIncomingCallWithMedia(accountId, callId, mediaList, aliceData);
             else if (bobData.accountId_ == accountId)
@@ -238,7 +238,7 @@ PluginsTest::setUp()
         }));
 
     signalHandlers.insert(
-        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+        libjami::exportable_callback<libjami::CallSignal::StateChange>([&](const std::string& accountId,
                                                                        const std::string& callId,
                                                                        const std::string& state,
                                                                        signed) {
@@ -248,7 +248,7 @@ PluginsTest::setUp()
                 onCallStateChange(accountId, callId, state, bobData);
         }));
 
-    DRing::registerSignalHandlers(signalHandlers);
+    libjami::registerSignalHandlers(signalHandlers);
 
     std::ifstream file = jami::fileutils::ifstream("plugins/plugin.yml");
     assert(file.is_open());
@@ -266,7 +266,7 @@ PluginsTest::setUp()
 void
 PluginsTest::tearDown()
 {
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
     wait_for_removal_of({aliceData.accountId_, bobData.accountId_});
 }
 
@@ -529,7 +529,7 @@ PluginsTest::testCall()
     answer.emplace_back(MediaAttribute(defaultVideo));
 
     JAMI_INFO("Start call between alice and Bob");
-    aliceData.callId_ = DRing::placeCallWithMedia(aliceData.accountId_, bobData.userName_, MediaAttribute::mediaAttributesToMediaMaps(request));
+    aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_, bobData.userName_, MediaAttribute::mediaAttributesToMediaMaps(request));
     CPPUNIT_ASSERT(not aliceData.callId_.empty());
 
     auto aliceCall = std::static_pointer_cast<SIPCall>(
@@ -543,17 +543,17 @@ PluginsTest::testCall()
               bobData.accountId_.c_str());
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
     {
-        DRing::acceptWithMedia(bobData.accountId_, bobData.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
+        libjami::acceptWithMedia(bobData.accountId_, bobData.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
     }
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(bobData,
-                                       DRing::CallSignal::StateChange::name,
-                                       DRing::Call::StateEvent::CURRENT));
+                                       libjami::CallSignal::StateChange::name,
+                                       libjami::Call::StateEvent::CURRENT));
 
     JAMI_INFO("BOB answered the call [%s]", bobData.callId_.c_str());
 
@@ -581,12 +581,12 @@ PluginsTest::testCall()
     std::this_thread::sleep_for(std::chrono::seconds(3));
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    DRing::hangUp(bobData.accountId_, bobData.callId_);
+    libjami::hangUp(bobData.accountId_, bobData.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(aliceData,
-                                       DRing::CallSignal::StateChange::name,
-                                       DRing::Call::StateEvent::HUNGUP));
+                                       libjami::CallSignal::StateChange::name,
+                                       libjami::Call::StateEvent::HUNGUP));
 
     JAMI_INFO("Call terminated on both sides");
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));
@@ -605,11 +605,11 @@ PluginsTest::testMessage()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
@@ -621,28 +621,28 @@ PluginsTest::testMessage()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
             }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobData.accountId_) {
                 conversationReady = true;
                 cv.notify_one();
             }
         }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-    auto convId = DRing::startConversation(aliceData.accountId_);
+    auto convId = libjami::startConversation(aliceData.accountId_);
 
-    DRing::addConversationMember(aliceData.accountId_, convId, bobData.userName_);
+    libjami::addConversationMember(aliceData.accountId_, convId, bobData.userName_);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
-    DRing::acceptConversationRequest(bobData.accountId_, convId);
+    libjami::acceptConversationRequest(bobData.accountId_, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // Assert that repository exists
@@ -666,7 +666,7 @@ PluginsTest::testMessage()
             auto statusMap = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerStatus(aliceData.accountId_, convId);
             CPPUNIT_ASSERT(std::find(statusMap.begin(), statusMap.end(), handler) != statusMap.end());
 
-            DRing::sendMessage(aliceData.accountId_, convId, "hi"s, "");
+            libjami::sendMessage(aliceData.accountId_, convId, "hi"s, "");
             cv.wait_for(lk, 30s, [&]() { return messageBobReceived == 1; });
 
             Manager::instance().getJamiPluginManager().getChatServicesManager().toggleChatHandler(handler, aliceData.accountId_, convId, false);

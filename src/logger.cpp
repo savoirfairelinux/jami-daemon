@@ -426,7 +426,7 @@ public:
          */
         auto tmp = msg.header_ + msg.payload_;
 
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(tmp);
+        jami::emitSignal<libjami::ConfigurationSignal::MessageSend>(tmp);
     }
 };
 
@@ -525,7 +525,7 @@ Logger::setFileLog(const std::string& path)
     FileLog::instance().setFile(path);
 }
 
-DRING_PUBLIC void
+LIBJAMI_PUBLIC void
 Logger::log(int level, const char* file, int line, bool linefeed, const char* fmt, ...)
 {
     va_list ap;

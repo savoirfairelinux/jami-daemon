@@ -51,18 +51,18 @@ namespace jami {
 struct AudioFormat;
 }
 
-namespace DRing {
+namespace libjami {
 
-[[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC void registerVideoHandlers(
+[[deprecated("Replaced by registerSignalHandlers")]] LIBJAMI_PUBLIC void registerVideoHandlers(
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
-struct DRING_PUBLIC AVFrame_deleter {
+struct LIBJAMI_PUBLIC AVFrame_deleter {
     void operator()(AVFrame* frame) const { av_frame_free(&frame); }
 };
 
 typedef std::unique_ptr<AVFrame, AVFrame_deleter> FrameBuffer;
 
-class DRING_PUBLIC MediaFrame
+class LIBJAMI_PUBLIC MediaFrame
 {
 public:
     // Construct an empty MediaFrame
@@ -93,7 +93,7 @@ protected:
     std::unique_ptr<AVPacket, void (*)(AVPacket*)> packet_;
 };
 
-class DRING_PUBLIC AudioFrame : public MediaFrame
+class LIBJAMI_PUBLIC AudioFrame : public MediaFrame
 {
 public:
     AudioFrame()
@@ -112,7 +112,7 @@ private:
     void reserve(size_t nb_samples = 0);
 };
 
-class DRING_PUBLIC VideoFrame : public MediaFrame
+class LIBJAMI_PUBLIC VideoFrame : public MediaFrame
 {
 public:
     // Construct an empty VideoFrame
@@ -164,7 +164,7 @@ private:
     void setGeometry(int format, int width, int height) noexcept;
 };
 
-struct DRING_PUBLIC SinkTarget
+struct LIBJAMI_PUBLIC SinkTarget
 {
     std::function<FrameBuffer()> pull;
     std::function<void(FrameBuffer)> push;
@@ -173,55 +173,55 @@ struct DRING_PUBLIC SinkTarget
 
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
-DRING_PUBLIC std::vector<std::string> getDeviceList();
-DRING_PUBLIC VideoCapabilities getCapabilities(const std::string& deviceId);
-DRING_PUBLIC std::map<std::string, std::string> getSettings(const std::string& deviceId);
-DRING_PUBLIC void applySettings(const std::string& deviceId,
+LIBJAMI_PUBLIC std::vector<std::string> getDeviceList();
+LIBJAMI_PUBLIC VideoCapabilities getCapabilities(const std::string& deviceId);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getSettings(const std::string& deviceId);
+LIBJAMI_PUBLIC void applySettings(const std::string& deviceId,
                                 const std::map<std::string, std::string>& settings);
-DRING_PUBLIC void setDefaultDevice(const std::string& deviceId);
-DRING_PUBLIC void setDeviceOrientation(const std::string& deviceId, int angle);
-DRING_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& deviceId);
-DRING_PUBLIC std::string getDefaultDevice();
-DRING_PUBLIC void startAudioDevice();
-DRING_PUBLIC void stopAudioDevice();
+LIBJAMI_PUBLIC void setDefaultDevice(const std::string& deviceId);
+LIBJAMI_PUBLIC void setDeviceOrientation(const std::string& deviceId, int angle);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& deviceId);
+LIBJAMI_PUBLIC std::string getDefaultDevice();
+LIBJAMI_PUBLIC void startAudioDevice();
+LIBJAMI_PUBLIC void stopAudioDevice();
 
-DRING_PUBLIC std::string openVideoInput(const std::string& path);
-DRING_PUBLIC bool closeVideoInput(const std::string& id);
+LIBJAMI_PUBLIC std::string openVideoInput(const std::string& path);
+LIBJAMI_PUBLIC bool closeVideoInput(const std::string& id);
 
-DRING_PUBLIC std::string createMediaPlayer(const std::string& path);
-DRING_PUBLIC bool closeMediaPlayer(const std::string& id);
-DRING_PUBLIC bool pausePlayer(const std::string& id, bool pause);
-DRING_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
-DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
+LIBJAMI_PUBLIC std::string createMediaPlayer(const std::string& path);
+LIBJAMI_PUBLIC bool closeMediaPlayer(const std::string& id);
+LIBJAMI_PUBLIC bool pausePlayer(const std::string& id, bool pause);
+LIBJAMI_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
+LIBJAMI_PUBLIC bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
 
-DRING_PUBLIC bool registerSinkTarget(const std::string& sinkId, SinkTarget target);
+LIBJAMI_PUBLIC bool registerSinkTarget(const std::string& sinkId, SinkTarget target);
 #ifdef ENABLE_SHM
-DRING_PUBLIC void startShmSink(const std::string& sinkId, bool value);
+LIBJAMI_PUBLIC void startShmSink(const std::string& sinkId, bool value);
 #endif
-DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
-DRING_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId,
+LIBJAMI_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId,
                                                  const std::string& filepath);
-DRING_PUBLIC void stopLocalRecorder(const std::string& filepath);
+LIBJAMI_PUBLIC void stopLocalRecorder(const std::string& filepath);
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-DRING_PUBLIC void addVideoDevice(
+LIBJAMI_PUBLIC void addVideoDevice(
     const std::string& node, const std::vector<std::map<std::string, std::string>>& devInfo = {});
-DRING_PUBLIC void removeVideoDevice(const std::string& node);
-DRING_PUBLIC VideoFrame* getNewFrame(std::string_view id);
-DRING_PUBLIC void publishFrame(std::string_view id);
+LIBJAMI_PUBLIC void removeVideoDevice(const std::string& node);
+LIBJAMI_PUBLIC VideoFrame* getNewFrame(std::string_view id);
+LIBJAMI_PUBLIC void publishFrame(std::string_view id);
 #endif
 
-DRING_PUBLIC bool getDecodingAccelerated();
-DRING_PUBLIC void setDecodingAccelerated(bool state);
-DRING_PUBLIC bool getEncodingAccelerated();
-DRING_PUBLIC void setEncodingAccelerated(bool state);
+LIBJAMI_PUBLIC bool getDecodingAccelerated();
+LIBJAMI_PUBLIC void setDecodingAccelerated(bool state);
+LIBJAMI_PUBLIC bool getEncodingAccelerated();
+LIBJAMI_PUBLIC void setEncodingAccelerated(bool state);
 
 // player signal type definitions
-struct DRING_PUBLIC MediaPlayerSignal
+struct LIBJAMI_PUBLIC MediaPlayerSignal
 {
-    struct DRING_PUBLIC FileOpened
+    struct LIBJAMI_PUBLIC FileOpened
     {
         constexpr static const char* name = "FileOpened";
         using cb_type = void(const std::string& /*playerId*/,
@@ -230,14 +230,14 @@ struct DRING_PUBLIC MediaPlayerSignal
 };
 
 // Video signal type definitions
-struct DRING_PUBLIC VideoSignal
+struct LIBJAMI_PUBLIC VideoSignal
 {
-    struct DRING_PUBLIC DeviceEvent
+    struct LIBJAMI_PUBLIC DeviceEvent
     {
         constexpr static const char* name = "DeviceEvent";
         using cb_type = void(void);
     };
-    struct DRING_PUBLIC DecodingStarted
+    struct LIBJAMI_PUBLIC DecodingStarted
     {
         constexpr static const char* name = "DecodingStarted";
         using cb_type = void(const std::string& /*id*/,
@@ -246,7 +246,7 @@ struct DRING_PUBLIC VideoSignal
                              int /*h*/,
                              bool /*is_mixer*/ id);
     };
-    struct DRING_PUBLIC DecodingStopped
+    struct LIBJAMI_PUBLIC DecodingStopped
     {
         constexpr static const char* name = "DecodingStopped";
         using cb_type = void(const std::string& /*id*/,
@@ -254,7 +254,7 @@ struct DRING_PUBLIC VideoSignal
                              bool /*is_mixer*/);
     };
 #ifdef __ANDROID__
-    struct DRING_PUBLIC SetParameters
+    struct LIBJAMI_PUBLIC SetParameters
     {
         constexpr static const char* name = "SetParameters";
         using cb_type = void(const std::string& device,
@@ -263,7 +263,7 @@ struct DRING_PUBLIC VideoSignal
                              const int height,
                              const int rate);
     };
-    struct DRING_PUBLIC GetCameraInfo
+    struct LIBJAMI_PUBLIC GetCameraInfo
     {
         constexpr static const char* name = "GetCameraInfo";
         using cb_type = void(const std::string& device,
@@ -271,39 +271,39 @@ struct DRING_PUBLIC VideoSignal
                              std::vector<unsigned>* sizes,
                              std::vector<unsigned>* rates);
     };
-    struct DRING_PUBLIC RequestKeyFrame
+    struct LIBJAMI_PUBLIC RequestKeyFrame
     {
         constexpr static const char* name = "RequestKeyFrame";
         using cb_type = void(const std::string& /*device*/);
     };
-    struct DRING_PUBLIC SetBitrate
+    struct LIBJAMI_PUBLIC SetBitrate
     {
         constexpr static const char* name = "SetBitrate";
         using cb_type = void(const std::string& /*device*/, const int bitrate);
     };
 #endif
-    struct DRING_PUBLIC StartCapture
+    struct LIBJAMI_PUBLIC StartCapture
     {
         constexpr static const char* name = "StartCapture";
         using cb_type = void(const std::string& /*device*/);
     };
-    struct DRING_PUBLIC StopCapture
+    struct LIBJAMI_PUBLIC StopCapture
     {
         constexpr static const char* name = "StopCapture";
         using cb_type = void(const std::string& /*device*/);
     };
-    struct DRING_PUBLIC DeviceAdded
+    struct LIBJAMI_PUBLIC DeviceAdded
     {
         constexpr static const char* name = "DeviceAdded";
         using cb_type = void(const std::string& /*device*/);
     };
-    struct DRING_PUBLIC ParametersChanged
+    struct LIBJAMI_PUBLIC ParametersChanged
     {
         constexpr static const char* name = "ParametersChanged";
         using cb_type = void(const std::string& /*device*/);
     };
 };
 
-} // namespace DRing
+} // namespace libjami
 
 #endif // DENABLE_VIDEOMANAGERI_H

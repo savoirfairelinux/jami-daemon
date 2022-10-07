@@ -115,7 +115,7 @@ DBusClient::~DBusClient()
 {
     // instances destruction order is important
     // so we enforce it here
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 #ifdef ENABLE_VIDEO
     videoManager_.reset();
 #endif
@@ -134,22 +134,22 @@ DBusClient::initLibrary(int flags)
     using namespace std::placeholders;
 
     using std::bind;
-    using DRing::exportable_callback;
-    using DRing::CallSignal;
-    using DRing::ConfigurationSignal;
-    using DRing::PresenceSignal;
-    using DRing::AudioSignal;
-    using DRing::DataTransferSignal;
-    using DRing::ConversationSignal;
+    using libjami::exportable_callback;
+    using libjami::CallSignal;
+    using libjami::ConfigurationSignal;
+    using libjami::PresenceSignal;
+    using libjami::AudioSignal;
+    using libjami::DataTransferSignal;
+    using libjami::ConversationSignal;
 
-    using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
+    using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
     auto callM = callManager_.get();
     auto confM = configurationManager_.get();
     auto presM = presenceManager_.get();
 
 #ifdef ENABLE_VIDEO
-    using DRing::VideoSignal;
+    using libjami::VideoSignal;
     auto videoM = videoManager_.get();
 #endif
 
@@ -335,28 +335,28 @@ DBusClient::initLibrary(int flags)
 #ifdef ENABLE_PLUGIN
     // Plugin event handlers
     const std::map<std::string, SharedCallback> pluginEvHandlers = {
-        exportable_callback<DRing::PluginSignal::WebViewMessageReceived>(
+        exportable_callback<libjami::PluginSignal::WebViewMessageReceived>(
             bind(&DBusPluginManagerInterface::webViewMessageReceived, pluginM, _1, _2, _3, _4)),
     };
 #endif
 
-    if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
+    if (!libjami::init(static_cast<libjami::InitFlag>(flags)))
         return -1;
 
-    DRing::registerSignalHandlers(callEvHandlers);
-    DRing::registerSignalHandlers(configEvHandlers);
-    DRing::registerSignalHandlers(presEvHandlers);
-    DRing::registerSignalHandlers(audioEvHandlers);
-    DRing::registerSignalHandlers(dataXferEvHandlers);
-    DRing::registerSignalHandlers(convEvHandlers);
+    libjami::registerSignalHandlers(callEvHandlers);
+    libjami::registerSignalHandlers(configEvHandlers);
+    libjami::registerSignalHandlers(presEvHandlers);
+    libjami::registerSignalHandlers(audioEvHandlers);
+    libjami::registerSignalHandlers(dataXferEvHandlers);
+    libjami::registerSignalHandlers(convEvHandlers);
 #ifdef ENABLE_VIDEO
-    DRing::registerSignalHandlers(videoEvHandlers);
+    libjami::registerSignalHandlers(videoEvHandlers);
 #endif
 #ifdef ENABLE_PLUGIN
-    DRing::registerSignalHandlers(pluginEvHandlers);
+    libjami::registerSignalHandlers(pluginEvHandlers);
 #endif
 
-    if (!DRing::start())
+    if (!libjami::start())
         return -1;
     return 0;
 }
@@ -364,7 +364,7 @@ DBusClient::initLibrary(int flags)
 void
 DBusClient::finiLibrary() noexcept
 {
-    DRing::fini();
+    libjami::fini();
 }
 
 int
