@@ -39,7 +39,7 @@
 #define PACKAGE_VERSION "unknown"
 #endif
 
-namespace DRing {
+namespace libjami {
 
 const char*
 version() noexcept
@@ -70,4 +70,4 @@ platform() noexcept
     #error "Unknown OS"
 #endif
 }
-} // namespace DRing
+} // namespace libjami

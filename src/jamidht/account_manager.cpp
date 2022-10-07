@@ -268,7 +268,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                         auto conversationId = v.conversationId;
                         // Check if there was an old active conversation.
                         auto details = info_->contacts->getContactDetails(peer_account);
-                        auto oldConvIt = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
+                        auto oldConvIt = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
                         if (oldConvIt != details.end() && oldConvIt->second != "") {
                             if (conversationId == oldConvIt->second)
                                 return;
@@ -561,7 +561,7 @@ AccountManager::acceptTrustRequest(const std::string& from, bool includeConversa
         if (info_->contacts->acceptTrustRequest(f)) {
             sendTrustRequestConfirm(f,
                                     includeConversation
-                                        ? req[DRing::Account::TrustRequest::CONVERSATIONID]
+                                        ? req[libjami::Account::TrustRequest::CONVERSATIONID]
                                         : "");
             syncDevices();
             return true;

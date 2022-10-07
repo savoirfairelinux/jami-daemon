@@ -39,15 +39,15 @@ public:
     DhtPeerConnector(JamiAccount& account);
 
     void requestConnection(
-        const DRing::DataTransferInfo& info,
-        const DRing::DataTransferId& tid,
+        const libjami::DataTransferInfo& info,
+        const libjami::DataTransferId& tid,
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
             channeledConnectedCb,
         const std::function<void(const std::string&)>& onChanneledCancelled);
-    void closeConnection(const DRing::DataTransferId& tid);
-    void onIncomingConnection(const DRing::DataTransferInfo& info,
-                              const DRing::DataTransferId& id,
+    void closeConnection(const libjami::DataTransferId& tid);
+    void onIncomingConnection(const libjami::DataTransferInfo& info,
+                              const libjami::DataTransferId& id,
                               const std::shared_ptr<ChannelSocket>& channel,
                               const InternalCompletionCb& cb = {});
 

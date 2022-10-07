@@ -49,11 +49,11 @@
 
 namespace jami {
 
-DRing::DataTransferId
+libjami::DataTransferId
 generateUID()
 {
     thread_local dht::crypto::random_device rd;
-    return std::uniform_int_distribution<DRing::DataTransferId> {1, JAMI_ID_MAX_VAL}(rd);
+    return std::uniform_int_distribution<libjami::DataTransferId> {1, JAMI_ID_MAX_VAL}(rd);
 }
 
 constexpr const uint32_t MAX_BUFFER_SIZE {65534}; /* Channeled max packet size */
@@ -62,7 +62,7 @@ constexpr const uint32_t MAX_BUFFER_SIZE {65534}; /* Channeled max packet size *
 class DataTransfer : public Stream
 {
 public:
-    DataTransfer(DRing::DataTransferId id, InternalCompletionCb cb = {})
+    DataTransfer(libjami::DataTransferId id, InternalCompletionCb cb = {})
         : Stream()
         , id {id}
         , internalCompletionCb_ {std::move(cb)}
@@ -70,7 +70,7 @@ public:
 
     virtual ~DataTransfer() = default;
 
-    DRing::DataTransferId getId() const override { return id; }
+    libjami::DataTransferId getId() const override { return id; }
 
     virtual void accept(const std::string&, std::size_t) {};
 
@@ -98,7 +98,7 @@ public:
         info_.bytesProgress = progress;
     }
 
-    void info(DRing::DataTransferInfo& info) const
+    void info(libjami::DataTransferInfo& info) const
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
         info = info_;
@@ -107,14 +107,14 @@ public:
     bool isFinished() const
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        return info_.lastEvent >= DRing::DataTransferEventCode::finished;
+        return info_.lastEvent >= libjami::DataTransferEventCode::finished;
     }
 
-    DRing::DataTransferInfo info() const { return info_; }
+    libjami::DataTransferInfo info() const { return info_; }
 
-    virtual void emit(DRing::DataTransferEventCode code) const;
+    virtual void emit(libjami::DataTransferEventCode code) const;
 
-    const DRing::DataTransferId id;
+    const libjami::DataTransferId id;
 
     virtual void cancel() {}
 
@@ -122,7 +122,7 @@ public:
 
 protected:
     mutable std::mutex infoMutex_;
-    mutable DRing::DataTransferInfo info_;
+    mutable libjami::DataTransferInfo info_;
     mutable std::atomic_bool started_ {false};
     std::atomic_bool wasStarted_ {false};
     InternalCompletionCb internalCompletionCb_ {};
@@ -130,7 +130,7 @@ protected:
 };
 
 void
-DataTransfer::emit(DRing::DataTransferEventCode code) const
+DataTransfer::emit(libjami::DataTransferEventCode code) const
 {
     std::string accountId, to;
     {
@@ -146,7 +146,7 @@ DataTransfer::emit(DRing::DataTransferEventCode code) const
     if (internalCompletionCb_)
         return; // VCard transfer is just for the daemon
     runOnMainThread([id = id, code, accountId, to]() {
-        emitSignal<DRing::DataTransferSignal::DataTransferEvent>(accountId,
+        emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accountId,
                                                                  "",
                                                                  "",
                                                                  std::to_string(id),
@@ -172,14 +172,14 @@ DataTransfer::setOnStateChangedCb(const OnStateChangedCb& cb)
 class OptimisticMetaOutgoingInfo
 {
 public:
-    OptimisticMetaOutgoingInfo(const DataTransfer* parent, const DRing::DataTransferInfo& info);
+    OptimisticMetaOutgoingInfo(const DataTransfer* parent, const libjami::DataTransferInfo& info);
     /**
      * Update the DataTransferInfo of the parent if necessary (if the event is more *interesting*
      * for the user)
      * @param info the last modified linked info (for example if a subtransfer is accepted, it will
      * gives as a parameter its info)
      */
-    void updateInfo(const DRing::DataTransferInfo& info) const;
+    void updateInfo(const libjami::DataTransferInfo& info) const;
     /**
      * Add a subtransfer as a linked transfer
      * @param linked
@@ -188,51 +188,51 @@ public:
     /**
      * Return the optimistic representation of the transfer
      */
-    const DRing::DataTransferInfo& info() const;
+    const libjami::DataTransferInfo& info() const;
 
 private:
     const DataTransfer* parent_;
     mutable std::mutex infoMutex_;
-    mutable DRing::DataTransferInfo info_;
+    mutable libjami::DataTransferInfo info_;
     mutable std::vector<DataTransfer*> linkedTransfers_;
 };
 
 OptimisticMetaOutgoingInfo::OptimisticMetaOutgoingInfo(const DataTransfer* parent,
-                                                       const DRing::DataTransferInfo& info)
+                                                       const libjami::DataTransferInfo& info)
     : parent_(parent)
     , info_(info)
 {}
 
 void
-OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) const
+OptimisticMetaOutgoingInfo::updateInfo(const libjami::DataTransferInfo& info) const
 {
     bool emitCodeChanged = false;
     bool checkOngoing = false;
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        if (info_.lastEvent > DRing::DataTransferEventCode::timeout_expired) {
-            info_.lastEvent = DRing::DataTransferEventCode::invalid;
+        if (info_.lastEvent > libjami::DataTransferEventCode::timeout_expired) {
+            info_.lastEvent = libjami::DataTransferEventCode::invalid;
         }
-        if (info.lastEvent >= DRing::DataTransferEventCode::created
-            && info.lastEvent <= DRing::DataTransferEventCode::finished
+        if (info.lastEvent >= libjami::DataTransferEventCode::created
+            && info.lastEvent <= libjami::DataTransferEventCode::finished
             && info.lastEvent > info_.lastEvent) {
             // Show the more advanced info
             info_.lastEvent = info.lastEvent;
             emitCodeChanged = true;
         }
 
-        if (info.lastEvent >= DRing::DataTransferEventCode::closed_by_host
-            && info.lastEvent <= DRing::DataTransferEventCode::timeout_expired
-            && info_.lastEvent < DRing::DataTransferEventCode::finished) {
+        if (info.lastEvent >= libjami::DataTransferEventCode::closed_by_host
+            && info.lastEvent <= libjami::DataTransferEventCode::timeout_expired
+            && info_.lastEvent < libjami::DataTransferEventCode::finished) {
             // if not finished show error if all failed
             // if the transfer was ongoing and canceled, we should go to the best status
             bool isAllFailed = true;
-            checkOngoing = info_.lastEvent == DRing::DataTransferEventCode::ongoing;
-            DRing::DataTransferEventCode bestEvent {DRing::DataTransferEventCode::invalid};
+            checkOngoing = info_.lastEvent == libjami::DataTransferEventCode::ongoing;
+            libjami::DataTransferEventCode bestEvent {libjami::DataTransferEventCode::invalid};
             for (const auto* transfer : linkedTransfers_) {
                 const auto& i = transfer->info();
-                if (i.lastEvent >= DRing::DataTransferEventCode::created
-                    && i.lastEvent <= DRing::DataTransferEventCode::finished) {
+                if (i.lastEvent >= libjami::DataTransferEventCode::created
+                    && i.lastEvent <= libjami::DataTransferEventCode::finished) {
                     isAllFailed = false;
                     if (checkOngoing)
                         bestEvent = bestEvent > i.lastEvent ? bestEvent : i.lastEvent;
@@ -243,7 +243,7 @@ OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) cons
             if (isAllFailed) {
                 info_.lastEvent = info.lastEvent;
                 emitCodeChanged = true;
-            } else if (checkOngoing && bestEvent != DRing::DataTransferEventCode::invalid) {
+            } else if (checkOngoing && bestEvent != libjami::DataTransferEventCode::invalid) {
                 info_.lastEvent = bestEvent;
                 emitCodeChanged = true;
             }
@@ -260,7 +260,7 @@ OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) cons
             info_.bytesProgress = bytesProgress;
             parent_->setBytesProgress(info_.bytesProgress);
         }
-        if (checkOngoing && info_.lastEvent != DRing::DataTransferEventCode::invalid) {
+        if (checkOngoing && info_.lastEvent != libjami::DataTransferEventCode::invalid) {
             parent_->setBytesProgress(0);
         }
     }
@@ -277,7 +277,7 @@ OptimisticMetaOutgoingInfo::addLinkedTransfer(DataTransfer* linked) const
     linkedTransfers_.emplace_back(linked);
 }
 
-const DRing::DataTransferInfo&
+const libjami::DataTransferInfo&
 OptimisticMetaOutgoingInfo::info() const
 {
     return info_;
@@ -289,16 +289,16 @@ OptimisticMetaOutgoingInfo::info() const
 class SubOutgoingFileTransfer final : public DataTransfer
 {
 public:
-    SubOutgoingFileTransfer(DRing::DataTransferId tid,
+    SubOutgoingFileTransfer(libjami::DataTransferId tid,
                             const std::string& peerUri,
                             const InternalCompletionCb& cb,
                             std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo);
     ~SubOutgoingFileTransfer();
 
     void close() noexcept override;
-    void closeAndEmit(DRing::DataTransferEventCode code) const noexcept;
+    void closeAndEmit(libjami::DataTransferEventCode code) const noexcept;
     bool write(std::string_view) override;
-    void emit(DRing::DataTransferEventCode code) const override;
+    void emit(libjami::DataTransferEventCode code) const override;
     const std::string& peer() { return peerUri_; }
 
     void cancel() override
@@ -332,7 +332,7 @@ private:
                                   info_.totalSize,
                                   info_.displayName);
         headerSent_ = true;
-        emit(DRing::DataTransferEventCode::wait_peer_acceptance);
+        emit(libjami::DataTransferEventCode::wait_peer_acceptance);
         if (onRecvCb_)
             onRecvCb_(header);
     }
@@ -357,11 +357,11 @@ private:
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
 
             if (info_.bytesProgress != info_.totalSize)
-                emit(DRing::DataTransferEventCode::closed_by_peer);
+                emit(libjami::DataTransferEventCode::closed_by_peer);
             else {
                 if (internalCompletionCb_)
                     internalCompletionCb_(info_.path);
-                emit(DRing::DataTransferEventCode::finished);
+                emit(libjami::DataTransferEventCode::finished);
             }
         });
     }
@@ -376,7 +376,7 @@ private:
     std::function<void(std::string_view)> onRecvCb_ {};
 };
 
-SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
+SubOutgoingFileTransfer::SubOutgoingFileTransfer(libjami::DataTransferId tid,
                                                  const std::string& peerUri,
                                                  const InternalCompletionCb& cb,
                                                  std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo)
@@ -400,16 +400,16 @@ SubOutgoingFileTransfer::~SubOutgoingFileTransfer()
 void
 SubOutgoingFileTransfer::close() noexcept
 {
-    closeAndEmit(DRing::DataTransferEventCode::closed_by_host);
+    closeAndEmit(libjami::DataTransferEventCode::closed_by_host);
 }
 
 void
-SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const noexcept
+SubOutgoingFileTransfer::closeAndEmit(libjami::DataTransferEventCode code) const noexcept
 {
     started_ = false; // NOTE: replace DataTransfer::close(); which is non const
     input_.close();
 
-    if (info_.lastEvent < DRing::DataTransferEventCode::finished)
+    if (info_.lastEvent < libjami::DataTransferEventCode::finished)
         emit(code);
 }
 
@@ -422,13 +422,13 @@ SubOutgoingFileTransfer::write(std::string_view buffer)
         // detect GO or NGO msg
         if (buffer.size() == 3 and buffer[0] == 'G' and buffer[1] == 'O' and buffer[2] == '\n') {
             peerReady_ = true;
-            emit(DRing::DataTransferEventCode::ongoing);
+            emit(libjami::DataTransferEventCode::ongoing);
             if (onRecvCb_)
                 sendFile();
         } else {
             // consider any other response as a cancel msg
             JAMI_WARN() << "FTP#" << getId() << ": refused by peer";
-            emit(DRing::DataTransferEventCode::closed_by_peer);
+            emit(libjami::DataTransferEventCode::closed_by_peer);
             return false;
         }
     }
@@ -436,7 +436,7 @@ SubOutgoingFileTransfer::write(std::string_view buffer)
 }
 
 void
-SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
+SubOutgoingFileTransfer::emit(libjami::DataTransferEventCode code) const
 {
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
@@ -445,13 +445,13 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
     if (stateChangedCb_)
         stateChangedCb_(id, code);
     metaInfo_->updateInfo(info_);
-    if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
+    if (code == libjami::DataTransferEventCode::wait_peer_acceptance) {
         if (timeoutTask_)
             timeoutTask_->cancel();
         timeoutTask_ = Manager::instance().scheduleTaskIn(
             [this]() {
                 JAMI_WARN() << "FTP#" << getId() << ": timeout. Cancel";
-                closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
+                closeAndEmit(libjami::DataTransferEventCode::timeout_expired);
             },
             std::chrono::minutes(10));
     } else if (timeoutTask_) {
@@ -466,8 +466,8 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
 class OutgoingFileTransfer final : public DataTransfer
 {
 public:
-    OutgoingFileTransfer(DRing::DataTransferId tid,
-                         const DRing::DataTransferInfo& info,
+    OutgoingFileTransfer(libjami::DataTransferId tid,
+                         const libjami::DataTransferInfo& info,
                          const InternalCompletionCb& cb = {});
     ~OutgoingFileTransfer() {}
 
@@ -514,8 +514,8 @@ private:
     mutable std::vector<std::shared_ptr<SubOutgoingFileTransfer>> subtransfer_;
 };
 
-OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid,
-                                           const DRing::DataTransferInfo& info,
+OutgoingFileTransfer::OutgoingFileTransfer(libjami::DataTransferId tid,
+                                           const libjami::DataTransferInfo& info,
                                            const InternalCompletionCb& cb)
     : DataTransfer(tid, cb)
 {
@@ -524,7 +524,7 @@ OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid,
         throw std::runtime_error("input file open failed");
 
     info_ = info;
-    info_.flags &= ~((uint32_t) 1 << int(DRing::DataTransferFlags::direction)); // outgoing
+    info_.flags &= ~((uint32_t) 1 << int(libjami::DataTransferFlags::direction)); // outgoing
 
     // File size?
     input_.seekg(0, std::ios_base::end);
@@ -546,8 +546,8 @@ OutgoingFileTransfer::close() noexcept
 class IncomingFileTransfer final : public DataTransfer
 {
 public:
-    IncomingFileTransfer(const DRing::DataTransferInfo&,
-                         DRing::DataTransferId,
+    IncomingFileTransfer(const libjami::DataTransferInfo&,
+                         libjami::DataTransferId,
                          const InternalCompletionCb& cb = {});
 
     bool start() override;
@@ -572,15 +572,15 @@ public:
 private:
     IncomingFileTransfer() = delete;
 
-    DRing::DataTransferId internalId_;
+    libjami::DataTransferId internalId_;
 
     std::ofstream fout_;
     std::mutex cbMtx_ {};
     std::function<void(const std::string&)> onFilenameCb_ {};
 };
 
-IncomingFileTransfer::IncomingFileTransfer(const DRing::DataTransferInfo& info,
-                                           DRing::DataTransferId internalId,
+IncomingFileTransfer::IncomingFileTransfer(const libjami::DataTransferInfo& info,
+                                           libjami::DataTransferId internalId,
                                            const InternalCompletionCb& cb)
     : DataTransfer(internalId, cb)
     , internalId_(internalId)
@@ -589,7 +589,7 @@ IncomingFileTransfer::IncomingFileTransfer(const DRing::DataTransferInfo& info,
                 << " byte(s): " << info.displayName;
 
     info_ = info;
-    info_.flags |= (uint32_t) 1 << int(DRing::DataTransferFlags::direction); // incoming
+    info_.flags |= (uint32_t) 1 << int(libjami::DataTransferFlags::direction); // incoming
 }
 
 void
@@ -606,7 +606,7 @@ IncomingFileTransfer::requestFilename(const std::function<void(const std::string
         onFilenameCb_ = cb;
     }
 
-    emit(DRing::DataTransferEventCode::wait_host_acceptance);
+    emit(libjami::DataTransferEventCode::wait_host_acceptance);
 
     if (internalCompletionCb_) {
         std::string path = fmt::format("{}/{}/profiles",
@@ -634,7 +634,7 @@ IncomingFileTransfer::start()
         return false;
     }
 
-    emit(DRing::DataTransferEventCode::ongoing);
+    emit(libjami::DataTransferEventCode::ongoing);
     return true;
 }
 
@@ -643,7 +643,7 @@ IncomingFileTransfer::close() noexcept
 {
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        if (info_.lastEvent >= DRing::DataTransferEventCode::finished)
+        if (info_.lastEvent >= libjami::DataTransferEventCode::finished)
             return;
     }
     DataTransfer::close();
@@ -662,9 +662,9 @@ IncomingFileTransfer::close() noexcept
     if (info_.bytesProgress >= info_.totalSize) {
         if (internalCompletionCb_)
             internalCompletionCb_(info_.path);
-        emit(DRing::DataTransferEventCode::finished);
+        emit(libjami::DataTransferEventCode::finished);
     } else
-        emit(DRing::DataTransferEventCode::closed_by_host);
+        emit(libjami::DataTransferEventCode::closed_by_host);
 }
 
 void
@@ -703,7 +703,7 @@ IncomingFileTransfer::write(std::string_view buffer)
 FileInfo::FileInfo(const std::shared_ptr<ChannelSocket>& channel,
                    const std::string& fileId,
                    const std::string& interactionId,
-                   const DRing::DataTransferInfo& info)
+                   const libjami::DataTransferInfo& info)
     : fileId_(fileId)
     , interactionId_(interactionId)
     , info_(info)
@@ -711,14 +711,14 @@ FileInfo::FileInfo(const std::shared_ptr<ChannelSocket>& channel,
 {}
 
 void
-FileInfo::emit(DRing::DataTransferEventCode code)
+FileInfo::emit(libjami::DataTransferEventCode code)
 {
-    if (finishedCb_ && code >= DRing::DataTransferEventCode::finished)
+    if (finishedCb_ && code >= libjami::DataTransferEventCode::finished)
         finishedCb_(uint32_t(code));
     if (interactionId_ != "") {
         // Else it's an internal transfer
         runOnMainThread([info = info_, iid = interactionId_, fid = fileId_, code]() {
-            emitSignal<DRing::DataTransferSignal::DataTransferEvent>(info.accountId,
+            emitSignal<libjami::DataTransferSignal::DataTransferEvent>(info.accountId,
                                                                      info.conversationId,
                                                                      iid,
                                                                      fid,
@@ -730,7 +730,7 @@ FileInfo::emit(DRing::DataTransferEventCode code)
 OutgoingFile::OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
                            const std::string& fileId,
                            const std::string& interactionId,
-                           const DRing::DataTransferInfo& info,
+                           const libjami::DataTransferInfo& info,
                            size_t start,
                            size_t end)
     : FileInfo(channel, fileId, interactionId, info)
@@ -788,8 +788,8 @@ OutgoingFile::process()
         // will retry the transfer if they need, so we don't need to show errors.
         if (!interactionId_.empty() && !correct)
             return;
-        auto code = correct ? DRing::DataTransferEventCode::finished
-                            : DRing::DataTransferEventCode::closed_by_peer;
+        auto code = correct ? libjami::DataTransferEventCode::finished
+                            : libjami::DataTransferEventCode::closed_by_peer;
         emit(code);
     }
 }
@@ -804,11 +804,11 @@ OutgoingFile::cancel()
     if (fileutils::isSymLink(path))
         fileutils::remove(path);
     isUserCancelled_ = true;
-    emit(DRing::DataTransferEventCode::closed_by_host);
+    emit(libjami::DataTransferEventCode::closed_by_host);
 }
 
 IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
-                           const DRing::DataTransferInfo& info,
+                           const libjami::DataTransferInfo& info,
                            const std::string& fileId,
                            const std::string& interactionId,
                            const std::string& sha3Sum)
@@ -819,7 +819,7 @@ IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
     if (!stream_)
         return;
 
-    emit(DRing::DataTransferEventCode::ongoing);
+    emit(libjami::DataTransferEventCode::ongoing);
 }
 
 IncomingFile::~IncomingFile()
@@ -836,7 +836,7 @@ void
 IncomingFile::cancel()
 {
     isUserCancelled_ = true;
-    emit(DRing::DataTransferEventCode::closed_by_peer);
+    emit(libjami::DataTransferEventCode::closed_by_peer);
     if (channel_)
         channel_->shutdown();
 }
@@ -872,8 +872,8 @@ IncomingFile::process()
         }
         if (shared->isUserCancelled_)
             return;
-        auto code = correct ? DRing::DataTransferEventCode::finished
-                            : DRing::DataTransferEventCode::closed_by_host;
+        auto code = correct ? libjami::DataTransferEventCode::finished
+                            : libjami::DataTransferEventCode::closed_by_host;
         shared->emit(code);
     });
 }
@@ -936,8 +936,8 @@ public:
     std::string conversationDataPath_ {};
 
     // Pre swarm
-    std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
-    std::map<DRing::DataTransferId, std::shared_ptr<IncomingFileTransfer>> iMap_ {};
+    std::map<libjami::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
+    std::map<libjami::DataTransferId, std::shared_ptr<IncomingFileTransfer>> iMap_ {};
 
     std::mutex mapMutex_ {};
     std::map<std::string, WaitingRequest> waitingIds_ {};
@@ -952,7 +952,7 @@ TransferManager::TransferManager(const std::string& accountId, const std::string
 
 TransferManager::~TransferManager() {}
 
-DRing::DataTransferId
+libjami::DataTransferId
 TransferManager::sendFile(const std::string& path,
                           const std::string& peer,
                           const InternalCompletionCb& icb)
@@ -969,7 +969,7 @@ TransferManager::sendFile(const std::string& path,
     std::size_t found = path.find_last_of(DIR_SEPARATOR_CH);
     auto filename = path.substr(found + 1);
 
-    DRing::DataTransferInfo info;
+    libjami::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.author = account->getUsername();
     info.peer = peer;
@@ -992,7 +992,7 @@ TransferManager::sendFile(const std::string& path,
         }
         pimpl_->oMap_.emplace(tid, transfer);
     }
-    transfer->emit(DRing::DataTransferEventCode::created);
+    transfer->emit(libjami::DataTransferEventCode::created);
 
     try {
         account->requestConnection(
@@ -1006,7 +1006,7 @@ TransferManager::sendFile(const std::string& path,
             [transfer](const std::string& peer) {
                 auto allFinished = transfer->cancelWithPeer(peer);
                 if (allFinished and not transfer->hasBeenStarted()) {
-                    transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
+                    transfer->emit(libjami::DataTransferEventCode::unjoinable_peer);
                     transfer->cancel();
                     transfer->close();
                 }
@@ -1020,7 +1020,7 @@ TransferManager::sendFile(const std::string& path,
 }
 
 bool
-TransferManager::acceptFile(const DRing::DataTransferId& id, const std::string& path)
+TransferManager::acceptFile(const libjami::DataTransferId& id, const std::string& path)
 {
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     auto it = pimpl_->iMap_.find(id);
@@ -1043,7 +1043,7 @@ TransferManager::transferFile(const std::shared_ptr<ChannelSocket>& channel,
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     if (pimpl_->outgoings_.find(channel) != pimpl_->outgoings_.end())
         return;
-    DRing::DataTransferInfo info;
+    libjami::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
     info.path = path;
@@ -1109,7 +1109,7 @@ TransferManager::cancel(const std::string& fileId)
 }
 
 bool
-TransferManager::info(const DRing::DataTransferId& id, DRing::DataTransferInfo& info) const noexcept
+TransferManager::info(const libjami::DataTransferId& id, libjami::DataTransferInfo& info) const noexcept
 {
     std::unique_lock<std::mutex> lk {pimpl_->mapMutex_};
     if (!pimpl_->to_.empty())
@@ -1167,8 +1167,8 @@ TransferManager::info(const std::string& fileId,
 }
 
 void
-TransferManager::onIncomingFileRequest(const DRing::DataTransferInfo& info,
-                                       const DRing::DataTransferId& id,
+TransferManager::onIncomingFileRequest(const libjami::DataTransferInfo& info,
+                                       const libjami::DataTransferId& id,
                                        const std::function<void(const IncomingFileInfo&)>& cb,
                                        const InternalCompletionCb& icb)
 {
@@ -1177,7 +1177,7 @@ TransferManager::onIncomingFileRequest(const DRing::DataTransferInfo& info,
         std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
         pimpl_->iMap_.emplace(id, transfer);
     }
-    transfer->emit(DRing::DataTransferEventCode::created);
+    transfer->emit(libjami::DataTransferEventCode::created);
     transfer->requestFilename([transfer, id, cb = std::move(cb)](const std::string& filename) {
         if (!filename.empty() && transfer->start())
             cb({id, std::static_pointer_cast<Stream>(transfer)});
@@ -1202,12 +1202,12 @@ TransferManager::waitForTransfer(const std::string& fileId,
     if (!pimpl_->to_.empty())
         pimpl_->saveWaiting();
     lk.unlock();
-    emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
+    emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
         pimpl_->accountId_,
         pimpl_->to_,
         interactionId,
         fileId,
-        uint32_t(DRing::DataTransferEventCode::wait_peer_acceptance));
+        uint32_t(libjami::DataTransferEventCode::wait_peer_acceptance));
 }
 
 void
@@ -1227,7 +1227,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
         return;
     }
 
-    DRing::DataTransferInfo info;
+    libjami::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
     info.path = itW->second.path;
@@ -1262,7 +1262,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
                     auto itO = pimpl->incomings_.find(fileId);
                     if (itO != pimpl->incomings_.end())
                         pimpl->incomings_.erase(itO);
-                    if (code == uint32_t(DRing::DataTransferEventCode::finished)) {
+                    if (code == uint32_t(libjami::DataTransferEventCode::finished)) {
                         auto itW = pimpl->waitingIds_.find(fileId);
                         if (itW != pimpl->waitingIds_.end()) {
                             pimpl->waitingIds_.erase(itW);
@@ -1310,7 +1310,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
     }
 
     auto tid = generateUID();
-    DRing::DataTransferInfo info;
+    libjami::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
     info.path = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_
@@ -1340,8 +1340,8 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                     auto itO = pimpl->vcards_.find({deviceId, uri});
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
-                    if (code == uint32_t(DRing::DataTransferEventCode::finished)) {
-                        emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
+                    if (code == uint32_t(libjami::DataTransferEventCode::finished)) {
+                        emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                 uri,
                                                                                 path);
                     }

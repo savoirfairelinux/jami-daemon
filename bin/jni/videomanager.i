@@ -57,7 +57,7 @@ public:
 
 %{
 
-std::map<ANativeWindow*, DRing::FrameBuffer> windows {};
+std::map<ANativeWindow*, libjami::FrameBuffer> windows {};
 std::mutex windows_mutex;
 
 std::vector<uint8_t> workspace;
@@ -156,7 +156,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoPacket(JN
         if (!inputId_pstr)
             return;
         std::string_view input(inputId_pstr);
-        auto frame = DRing::getNewFrame(input);
+        auto frame = libjami::getNewFrame(input);
         if (not frame)
             return;
         auto packet = std::unique_ptr<AVPacket, void(*)(AVPacket*)>(av_packet_alloc(), [](AVPacket* pkt){
@@ -174,7 +174,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoPacket(JN
         packet->size = size;
         packet->pts = timestamp;
         frame->setPacket(std::move(packet));
-        DRing::publishFrame(input);
+        libjami::publishFrame(input);
     } catch (const std::exception& e) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception capturing video packet: %s", e.what());
     }
@@ -200,7 +200,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoFrame(JNI
             return;
         std::string_view input(inputId_pstr);
 
-        auto frame = DRing::getNewFrame(input);
+        auto frame = libjami::getNewFrame(input);
         if (not frame) {
             jenv->CallVoidMethod(image, imageClose);
             return;
@@ -286,7 +286,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoFrame(JNI
             if (justAttached)
                 gJavaVM->DetachCurrentThread();
         });
-        DRing::publishFrame(input);
+        libjami::publishFrame(input);
         jenv->ReleaseStringUTFChars(inputId, inputId_pstr);
     } catch (const std::exception& e) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception capturing video frame: %s", e.what());
@@ -310,7 +310,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_setNativeWindowGeomet
     ANativeWindow_setBuffersGeometry(window, width, height, WINDOW_FORMAT_RGBX_8888);
 }
 
-void releaseBuffer(ANativeWindow *window, DRing::FrameBuffer frame)
+void releaseBuffer(ANativeWindow *window, libjami::FrameBuffer frame)
 {
     std::unique_lock<std::mutex> guard(windows_mutex);
     try {
@@ -320,16 +320,16 @@ void releaseBuffer(ANativeWindow *window, DRing::FrameBuffer frame)
     }
 }
 
-void AndroidDisplayCb(ANativeWindow *window, DRing::FrameBuffer frame)
+void AndroidDisplayCb(ANativeWindow *window, libjami::FrameBuffer frame)
 {
     ANativeWindow_unlockAndPost(window);
     releaseBuffer(window, std::move(frame));
 }
 
-DRing::FrameBuffer sinkTargetPullCallback(ANativeWindow *window)
+libjami::FrameBuffer sinkTargetPullCallback(ANativeWindow *window)
 {
     try {
-        DRing::FrameBuffer frame;
+        libjami::FrameBuffer frame;
         {
             std::lock_guard<std::mutex> guard(windows_mutex);
             frame = std::move(windows.at(window));
@@ -372,9 +372,9 @@ JNIEXPORT jboolean JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCall
 
     {
         std::lock_guard<std::mutex> guard(windows_mutex);
-        windows.emplace(nativeWindow, DRing::FrameBuffer{av_frame_alloc()});
+        windows.emplace(nativeWindow, libjami::FrameBuffer{av_frame_alloc()});
     }
-    return DRing::registerSinkTarget(sink, DRing::SinkTarget {.pull=p_display_cb, .push=f_display_cb}) ? JNI_TRUE : JNI_FALSE;
+    return libjami::registerSinkTarget(sink, libjami::SinkTarget {.pull=p_display_cb, .push=f_display_cb}) ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_unregisterVideoCallback(JNIEnv *jenv, jclass jcls, jstring sinkId, jlong window)
@@ -390,7 +390,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_unregisterVideoCallba
     jenv->ReleaseStringUTFChars(sinkId, arg1_pstr);
     ANativeWindow* nativeWindow = (ANativeWindow*)((intptr_t) window);
 
-    DRing::registerSinkTarget(sink, DRing::SinkTarget {});
+    libjami::registerSinkTarget(sink, libjami::SinkTarget {});
 
     std::lock_guard<std::mutex> guard(windows_mutex);
     windows.erase(nativeWindow);
@@ -407,7 +407,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_unregisterVideoCallba
 %native(captureVideoFrame) void captureVideoFrame(jstring, jobject, jint);
 %native(captureVideoPacket) void captureVideoPacket(jstring, jobject, jint, jint, jboolean, jlong, jint);
 
-namespace DRing {
+namespace libjami {
 
 void setDefaultDevice(const std::string& name);
 std::string getDefaultDevice();
@@ -420,7 +420,7 @@ void applySettings(const std::string& name, const std::map<std::string, std::str
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 void setDeviceOrientation(const std::string& name, int angle);
-bool registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
+bool registerSinkTarget(const std::string& sinkId, const libjami::SinkTarget& target);
 std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
 void stopLocalRecorder(const std::string& filepath);
 bool getDecodingAccelerated();

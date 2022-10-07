@@ -63,7 +63,7 @@ public:
 
 %feature("director") Callback;
 
-namespace DRing {
+namespace libjami {
 
 /* Call related methods */
 std::string placeCallWithMedia(const std::string& accountId,
@@ -100,7 +100,7 @@ std::vector<std::string> getConferenceList(const std::string& accountId);
 std::vector<std::string> getParticipantList(const std::string& accountId, const std::string& confId);
 std::string getConferenceId(const std::string& accountId, const std::string& callId);
 std::map<std::string, std::string> getConferenceDetails(const std::string& accountId, const std::string& callId);
-std::vector<DRing::MediaMap> currentMediaList(const std::string& accountId, const std::string& callId);
+std::vector<libjami::MediaMap> currentMediaList(const std::string& accountId, const std::string& callId);
 std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& accountId, const std::string& confId);
 void setModerator(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
 void muteStream(const std::string& accountId,

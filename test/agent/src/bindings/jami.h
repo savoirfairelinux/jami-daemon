@@ -30,14 +30,14 @@ static SCM init_binding(SCM flags)
 
         unsigned int flags_cast = from_guile(flags);
 
-        return to_guile(DRing::init(static_cast<DRing::InitFlag>(flags_cast)));
+        return to_guile(libjami::init(static_cast<libjami::InitFlag>(flags_cast)));
 }
 
 static SCM fini_binding()
 {
         LOG_BINDING();
 
-        DRing::fini();
+        libjami::fini();
 
         return SCM_UNDEFINED;
 }
@@ -46,14 +46,14 @@ static SCM initialized_binding()
 {
         LOG_BINDING();
 
-        return to_guile(DRing::initialized());
+        return to_guile(libjami::initialized());
 }
 
 static SCM logging_binding(SCM whom, SCM action)
 {
         LOG_BINDING();
 
-        DRing::logging(from_guile(whom), from_guile(action));
+        libjami::logging(from_guile(whom), from_guile(action));
 
         return SCM_UNDEFINED;
 }
@@ -62,21 +62,21 @@ static SCM platform_binding()
 {
         LOG_BINDING();
 
-        return to_guile(DRing::platform());
+        return to_guile(libjami::platform());
 }
 
 static SCM start_binding(SCM config_file)
 {
         LOG_BINDING();
 
-        return to_guile(DRing::start(from_guile(config_file)));
+        return to_guile(libjami::start(from_guile(config_file)));
 }
 
 static SCM version_binding()
 {
         LOG_BINDING();
 
-        return to_guile(DRing::version());
+        return to_guile(libjami::version());
 }
 
 static void

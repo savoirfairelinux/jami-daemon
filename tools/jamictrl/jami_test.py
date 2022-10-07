@@ -26,10 +26,10 @@ import time
 import argparse
 
 from gi.repository import GLib
-from errorsDring import DRingCtrlError
-from controller import DRingCtrl
+from errorsDring import libjamiCtrlError
+from controller import libjamiCtrl
 
-class JamiTest(DRingCtrl):
+class JamiTest(libjamiCtrl):
     def __init__(self, name, args):
         super(JamiTest, self).__init__(name, False)
         self.args = args
@@ -48,13 +48,13 @@ class JamiTest(DRingCtrl):
         volatileCallerDetails = self.getVolatileAccountDetails(self.account)
 
         if volatileCallerDetails['Account.registrationStatus'] != 'REGISTERED':
-            raise DRingCtrlError("Caller Account not registered")
+            raise libjamiCtrlError("Caller Account not registered")
 
         self.peer = args.peer
         volatilePeerDetails = self.getVolatileAccountDetails()
 
         if volatilePeerDetails['Account.registrationStatus'] != 'REGISTERED':
-            raise DRingCtrlError("Peer Account not registered")
+            raise libjamiCtrlError("Peer Account not registered")
 
         print("Using local test account: ", self.account, volatileCallerDetails['Account.registrationStatus'])
         print("Using test peer: ", self.peer, volatilePeerDetails['Account.registrationStatus'])
