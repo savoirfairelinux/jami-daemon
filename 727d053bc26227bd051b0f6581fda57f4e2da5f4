@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9b31f32a_6247d6f7",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 78
+      },
+      "lineNbr": 459,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-11T15:57:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e6b98afd_10e414d9",
+      "revId": "727d053bc26227bd051b0f6581fda57f4e2da5f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "01251551_695fd8aa",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-08-30T16:42:33Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027uri\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "727d053bc26227bd051b0f6581fda57f4e2da5f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "61c006f8_cdda02d4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 78
+      },
+      "lineNbr": 496,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-11T15:57:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "01251551_695fd8aa",
       "revId": "727d053bc26227bd051b0f6581fda57f4e2da5f4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
