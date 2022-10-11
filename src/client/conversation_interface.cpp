@@ -160,11 +160,17 @@ void
 sendMessage(const std::string& accountId,
             const std::string& conversationId,
             const std::string& message,
-            const std::string& replyTo)
+            const std::string& commitId,
+            const int32_t& flag)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto convModule = acc->convModule())
-            convModule->sendMessage(conversationId, message, replyTo);
+        if (auto convModule = acc->convModule()) {
+            if (flag == 0 /* Reply or simple commit */) {
+                convModule->sendMessage(conversationId, message, commitId);
+            } else if (flag == 1 /* message edition */) {
+                convModule->editMessage(conversationId, message, commitId);
+            }
+        }
 }
 
 uint32_t
