@@ -282,6 +282,10 @@ public:
                      const std::string& conversationId,
                      const std::string& message,
                      const std::string& replyTo);
+    void editMessage(const std::string& accountId,
+                     const std::string& conversationId,
+                     const std::string& newBody,
+                     const std::string& editedId);
     uint32_t loadConversationMessages(const std::string& accountId,
                                       const std::string& conversationId,
                                       const std::string& fromMessage,

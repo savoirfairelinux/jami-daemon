@@ -926,6 +926,15 @@ DBusConfigurationManager::sendMessage(const std::string& accountId,
     DRing::sendMessage(accountId, conversationId, message, replyTo);
 }
 
+void
+DBusConfigurationManager::editMessage(const std::string& accountId,
+                                      const std::string& conversationId,
+                                      const std::string& newBody,
+                                      const std::string& editedId)
+{
+    DRing::editMessage(accountId, conversationId, newBody, editedId);
+}
+
 uint32_t
 DBusConfigurationManager::loadConversationMessages(const std::string& accountId,
                                                    const std::string& conversationId,

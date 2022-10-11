@@ -114,6 +114,7 @@ private:
     void testSearchInConv();
     void testConversationPreferences();
     void testConversationPreferencesMultiDevices();
+    void testMessageEdition();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -158,6 +159,7 @@ private:
     CPPUNIT_TEST(testSearchInConv);
     CPPUNIT_TEST(testConversationPreferences);
     CPPUNIT_TEST(testConversationPreferencesMultiDevices);
+    CPPUNIT_TEST(testMessageEdition);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -3311,6 +3313,110 @@ ConversationTest::testConversationPreferencesMultiDevices()
     }));
     CPPUNIT_ASSERT(preferencesBob["foo"] == "bar" && preferencesBob["bar"] == "foo");
     CPPUNIT_ASSERT(preferencesBob2["foo"] == "bar" && preferencesBob2["bar"] == "foo");
+}
+
+void
+ConversationTest::testMessageEdition()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::vector<std::map<std::string, std::string>> messageBobReceived;
+    bool conversationReady = false, memberMessageGenerated = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> message) {
+            if (accountId == bobId) {
+                messageBobReceived.emplace_back(message);
+                JAMI_ERR("@@@ EMPLACE!");
+            } else if (accountId == aliceId && message["type"] == "member") {
+                memberMessageGenerated = true;
+            }
+            cv.notify_one();
+        }));
+    bool requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    auto errorDetected = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::OnConversationError>(
+        [&](const std::string& /* accountId */,
+            const std::string& /* conversationId */,
+            int code,
+            const std::string& /* what */) {
+            if (code == 3)
+                errorDetected = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    auto convId = DRing::startConversation(aliceId);
+
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+
+    memberMessageGenerated = false;
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
+
+    auto msgSize = messageBobReceived.size();
+    JAMI_ERR("@@@@@@@@ %u", msgSize);
+    DRing::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageBobReceived.size() == msgSize + 1; }));
+
+    msgSize = messageBobReceived.size();
+    auto editedId = messageBobReceived.rbegin()->at("id");
+    DRing::editMessage(aliceId, convId, "New body"s, editedId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return messageBobReceived.size() == msgSize + 1; }));
+    CPPUNIT_ASSERT(messageBobReceived.rbegin()->at("edit") == editedId);
+    CPPUNIT_ASSERT(messageBobReceived.rbegin()->at("body") == "New body");
+
+    // Not an existing message
+    msgSize = messageBobReceived.size();
+    DRing::editMessage(aliceId, convId, "New body"s, "invalidId");
+    CPPUNIT_ASSERT(
+        !cv.wait_for(lk, 10s, [&]() { return messageBobReceived.size() == msgSize + 1; }));
+
+    // Invalid author
+    DRing::editMessage(aliceId, convId, "New body"s, convId);
+    CPPUNIT_ASSERT(
+        !cv.wait_for(lk, 10s, [&]() { return messageBobReceived.size() == msgSize + 1; }));
+
+    // Add invalid edition
+    Json::Value root;
+    root["type"] = "application/edited-message";
+    root["edit"] = convId;
+    root["body"] = "new";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto message = Json::writeString(wbuilder, root);
+    commitInRepo(repoPath, aliceAccount, message);
+
+    errorDetected = false;
+    DRing::sendMessage(aliceId, convId, "trigger"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return errorDetected; }));
 }
 
 } // namespace test

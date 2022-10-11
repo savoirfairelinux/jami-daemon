@@ -1784,6 +1784,17 @@
            <arg type="s" name="replyTo" direction="in"/>
        </method>
 
+       <method name="editMessage" tp:name-for-bindings="editMessage">
+           <tp:added version="13.6.0"/>
+           <tp:docstring>
+               Edit a message in a conversation (must be by the same author and a text)
+           </tp:docstring>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+           <arg type="s" name="newBody" direction="in"/>
+           <arg type="s" name="editedId" direction="in"/>
+       </method>
+
        <method name="loadConversationMessages" tp:name-for-bindings="loadConversationMessages">
            <tp:added version="10.0.0"/>
            <tp:docstring>
