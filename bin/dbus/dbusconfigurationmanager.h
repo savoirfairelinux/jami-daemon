@@ -281,7 +281,8 @@ public:
     void sendMessage(const std::string& accountId,
                      const std::string& conversationId,
                      const std::string& message,
-                     const std::string& replyTo);
+                     const std::string& replyTo,
+                     const int32_t& flag);
     uint32_t loadConversationMessages(const std::string& accountId,
                                       const std::string& conversationId,
                                       const std::string& fromMessage,

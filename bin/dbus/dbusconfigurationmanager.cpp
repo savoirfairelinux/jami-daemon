@@ -921,9 +921,10 @@ void
 DBusConfigurationManager::sendMessage(const std::string& accountId,
                                       const std::string& conversationId,
                                       const std::string& message,
-                                      const std::string& replyTo)
+                                      const std::string& replyTo,
+                                      const int32_t& flag)
 {
-    DRing::sendMessage(accountId, conversationId, message, replyTo);
+    DRing::sendMessage(accountId, conversationId, message, replyTo, flag);
 }
 
 uint32_t

@@ -227,6 +227,10 @@ public:
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
 
+    void editMessage(const std::string& conversationId,
+                     const std::string& newBody,
+                     const std::string& editedId);
+
     // The following informations are stored on the disk
     mutable std::mutex convInfosMtx_; // Note, should be locked after conversationsMtx_ if needed
     std::map<std::string, ConvInfo> convInfos_;
@@ -837,6 +841,36 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
     }
 }
 
+void
+ConversationModule::Impl::editMessage(const std::string& conversationId,
+                                      const std::string& newBody,
+                                      const std::string& editedId)
+{
+    // Check that editedId is a valid commit, from ourself and plain/text
+    auto validCommit = false;
+    {
+        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        auto conversation = conversations_.find(conversationId);
+        if (conversation != conversations_.end() && conversation->second) {
+            auto commit = conversation->second->getCommit(editedId);
+            if (commit != std::nullopt) {
+                validCommit = commit->at("author") == username_
+                              && commit->at("type") == "text/plain";
+            }
+        }
+    }
+    if (!validCommit) {
+        JAMI_ERROR("Cannot edit commit {:s}", editedId);
+        return;
+    }
+    // Commit message edition
+    Json::Value json;
+    json["body"] = newBody;
+    json["edit"] = editedId;
+    json["type"] = "application/edited-message";
+    sendMessage(conversationId, std::move(json));
+}
+
 ////////////////////////////////////////////////////////////////
 
 void
@@ -1245,6 +1279,14 @@ ConversationModule::sendMessage(const std::string& conversationId,
                                 OnDoneCb&& cb)
 {
     pimpl_->sendMessage(conversationId, std::move(value), replyTo, announce, std::move(onCommit), std::move(cb));
+}
+
+void
+ConversationModule::editMessage(const std::string& conversationId,
+                                const std::string& newBody,
+                                const std::string& editedId)
+{
+    pimpl_->editMessage(conversationId, newBody, editedId);
 }
 
 void

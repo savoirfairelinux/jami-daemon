@@ -69,7 +69,8 @@ DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMemb
 DRING_PUBLIC void sendMessage(const std::string& accountId,
                               const std::string& conversationId,
                               const std::string& message,
-                              const std::string& replyTo);
+                              const std::string& replyTo,
+                              const int32_t& flag = 0);
 DRING_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
                                                const std::string& conversationId,
                                                const std::string& fromMessage,
