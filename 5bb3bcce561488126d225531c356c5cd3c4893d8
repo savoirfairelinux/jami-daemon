@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "25e4c6d7_08977176",
+        "filename": "contrib/src/ffmpeg/SHA512SUMS",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-11T20:26:04Z",
+      "side": 1,
+      "message": "breaks patches",
+      "range": {
+        "startLine": 1,
+        "startChar": 133,
+        "endLine": 1,
+        "endChar": 143
+      },
+      "revId": "5bb3bcce561488126d225531c356c5cd3c4893d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
