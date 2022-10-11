@@ -1774,14 +1774,17 @@
        </method>
 
        <method name="sendMessage" tp:name-for-bindings="sendMessage">
-           <tp:added version="10.0.0"/>
+           <tp:added version="13.6.0"/>
            <tp:docstring>
-               Add a message to a conversation
+               Add a message to a conversation.
+               Flag: 0 = reply (if commitId is not empty), else single message
+                     1 = edit message
            </tp:docstring>
            <arg type="s" name="accountId" direction="in"/>
            <arg type="s" name="conversationId" direction="in"/>
            <arg type="s" name="message" direction="in"/>
-           <arg type="s" name="replyTo" direction="in"/>
+           <arg type="s" name="commitId" direction="in"/>
+           <arg type="i" name="flag" direction="in"/>
        </method>
 
        <method name="loadConversationMessages" tp:name-for-bindings="loadConversationMessages">
