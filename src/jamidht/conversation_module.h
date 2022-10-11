@@ -158,6 +158,10 @@ public:
                      bool announce = true,
                      OnDoneCb&& cb = {});
 
+    void editMessage(const std::string& conversationId,
+                     const std::string& newBody,
+                     const std::string& editedId);
+
     /**
      * Add to the related conversation the call history message
      * @param uri           Peer number
