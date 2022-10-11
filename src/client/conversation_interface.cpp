@@ -176,6 +176,17 @@ sendMessage(const std::string& accountId,
             convModule->sendMessage(conversationId, message, replyTo);
 }
 
+void
+editMessage(const std::string& accountId,
+            const std::string& conversationId,
+            const std::string& newBody,
+            const std::string& editedId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule())
+            convModule->editMessage(conversationId, newBody, editedId);
+}
+
 uint32_t
 loadConversationMessages(const std::string& accountId,
                          const std::string& conversationId,

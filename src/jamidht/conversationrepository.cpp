@@ -102,6 +102,7 @@ public:
     bool checkVote(const std::string& userDevice,
                    const std::string& commitId,
                    const std::string& parentId) const;
+    bool checkEdit(const std::string& userDevice, const ConversationCommit& commit) const;
     bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const;
     bool checkInitialCommit(const std::string& userDevice,
                             const std::string& commitId,
@@ -176,6 +177,15 @@ public:
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
         return members_;
+    }
+
+    std::optional<ConversationCommit> getCommit(const std::string& commitId,
+                                                bool logIfNotFound = true) const
+    {
+        auto commits = log(commitId, "", 1, logIfNotFound);
+        if (commits.empty())
+            return std::nullopt;
+        return std::move(commits[0]);
     }
 
     bool resolveConflicts(git_index* index, const std::string& other_id);
@@ -859,6 +869,36 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
         }
     }
 
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkEdit(const std::string& userDevice,
+                                        const ConversationCommit& commit) const
+{
+    auto userUri = uriFromDevice(userDevice);
+    // Check that edited commit is found, for the same author, and editable (plain/text)
+    auto commitMap = convCommitToMap(commit);
+    if (commitMap == std::nullopt) {
+        return false;
+    }
+    auto editedId = commitMap->at("edit");
+    auto editedCommit = getCommit(editedId);
+    if (editedCommit == std::nullopt) {
+        JAMI_ERROR("Commit {:s} not found", editedId);
+        return false;
+    }
+    auto editedCommitMap = convCommitToMap(*editedCommit);
+    if (editedCommitMap == std::nullopt or editedCommitMap->at("author").empty()
+        or editedCommitMap->at("author") != commitMap->at("author")
+        or commitMap->at("author") != userUri) {
+        JAMI_ERROR("Edited commit {:s} got a different author ({:s})", editedId, commit.id);
+        return false;
+    }
+    if (editedCommitMap->at("type") != "text/plain") {
+        JAMI_ERROR("Edited commit {:s} is not text!", editedId);
+        return false;
+    }
     return true;
 }
 
@@ -2630,6 +2670,15 @@ ConversationRepository::Impl::validCommits(
                     }
                     return false;
                 }
+            } else if (type == "application/edited-message") {
+                if (!checkEdit(userDevice, commit)) {
+                    JAMI_ERROR("Commit {:s} malformed", commit.id);
+                    if (auto shared = account_.lock()) {
+                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            shared->getAccountID(), id_, EVALIDFETCH, "Malformed edit commit");
+                    }
+                    return false;
+                }
             } else {
                 // Note: accept all mimetype here, as we can have new mimetypes
                 // Just avoid to add weird files
@@ -2970,10 +3019,7 @@ ConversationRepository::search(const Filter& filter) const
 std::optional<ConversationCommit>
 ConversationRepository::getCommit(const std::string& commitId, bool logIfNotFound) const
 {
-    auto commits = logN(commitId, 1, logIfNotFound);
-    if (commits.empty())
-        return std::nullopt;
-    return std::move(commits[0]);
+    return pimpl_->getCommit(commitId, logIfNotFound);
 }
 
 std::pair<bool, std::string>

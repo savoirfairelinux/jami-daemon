@@ -63,6 +63,10 @@ namespace DRing {
 
   // Message send/load
   void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& replyTo);
+  void editMessage(const std::string& accountId,
+                    const std::string& conversationId,
+                    const std::string& newBody,
+                    const std::string& editedId);
   uint32_t loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
   uint32_t loadConversationUntil(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, const std::string& toMessage);
   uint32_t countInteractions(const std::string& accountId, const std::string& conversationId, const std::string& toId, const std::string& fromId, const std::string& authorUri);
