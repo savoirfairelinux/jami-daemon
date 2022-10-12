@@ -94,6 +94,8 @@ case "${host_os}" in
     ;;
   darwin*)
     SYS=darwin
+    DAEMONCFLAGS+=" -arch $ARCH -isysroot $SDKROOT"
+    DAEMONCXXFLAGS+=" -arch $ARCH -isysroot $SDKROOT"
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
         [[#import <TargetConditionals.h>
           #if TARGET_OS_IPHONE == 0
@@ -663,6 +665,17 @@ AC_CONFIG_FILES([Makefile \
                  jami.pc])
 
 dnl Transfer the Automake variables set here to Makefile.in.
+    CPPFLAGS="$DAEMONCPPFLAGS"
+    CXXFLAGS="$DAEMONCXXFLAGS"
+    OBJCXX="$CXX $DAEMONCXXFLAGS"
+    OBJCXXFLAG="$CXX $DAEMONCXXFLAGS"
+    CFLAGS=$DAEMONCFLAGS
+    LDFLAGS="$DAEMONLDFLAGS"
+echo CFLAGS=$CFLAGS
+echo CPPFLAGS=$CPPFLAGS
+echo OBJCXX=$OBJCXX
+echo OBJCXXFLAG=$OBJCXXFLAG
+echo LDFLAGS=$LDFLAGS
 echo DAEMONCPPFLAGS=$DAEMONCPPFLAGS
 AC_SUBST([AM_CPPFLAGS], [$DAEMONCPPFLAGS])
 AC_SUBST([AM_CFLAGS],   [$DAEMONCFLAGS])
