@@ -11,11 +11,11 @@ else
 PKGS_FOUND += zlib
 endif
 
-ifeq ($(shell uname),Darwin) # zlib tries to use libtool on Darwin
-ifdef HAVE_CROSS_COMPILE
-ZLIB_CONFIG_VARS=CHOST=$(HOST)
-endif
-endif
+#ifeq ($(shell uname),Darwin) # zlib tries to use libtool on Darwin
+#ifdef HAVE_CROSS_COMPILE
+#ZLIB_CONFIG_VARS=CHOST=$(HOST)
+#endif
+#endif
 
 $(TARBALLS)/zlib-$(ZLIB_VERSION).tar.gz:
 	$(call download,$(ZLIB_URL))
