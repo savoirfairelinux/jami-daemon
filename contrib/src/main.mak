@@ -141,9 +141,10 @@ AR=xcrun ar
 LD=xcrun ld
 STRIP=xcrun strip
 RANLIB=xcrun ranlib
-EXTRA_COMMON := -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
-EXTRA_CXXFLAGS += -stdlib=libc++
-EXTRA_LDFLAGS += -Wl,-syslibroot,$(MACOSX_SDK)
+EXTRA_COMMON := -arch $(ARCH) -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
+EXTRA_CFLAGS=-arch $(ARCH) -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
+EXTRA_CXXFLAGS += $(EXTRA_CFLAGS) -stdlib=libc++
+EXTRA_LDFLAGS += $(EXTRA_CFLAGS) -Wl,-syslibroot,$(MACOSX_SDK)
 EXTRA_COMMON += -m64
 XCODE_FLAGS = -sdk macosx$(OSX_VERSION) -arch $(ARCH)
 endif
@@ -305,6 +306,10 @@ HOSTCONF += --enable-static --disable-shared
 endif
 
 ifdef HAVE_IOS
+HOSTCONF += --enable-static --disable-shared
+endif
+
+ifdef HAVE_MACOSX
 HOSTCONF += --enable-static --disable-shared
 endif
 
