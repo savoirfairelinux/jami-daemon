@@ -28,6 +28,8 @@ class ChannelSocket;
 class TlsSocketEndpoint;
 
 using DeviceId = dht::PkId;
+using NodeId = DeviceId;
+
 using OnConnectionRequestCb
     = std::function<bool(const std::shared_ptr<dht::crypto::Certificate>& /* peer */,
                          const uint16_t& /* id */,
@@ -194,6 +196,9 @@ public:
     bool isReliable() const override;
     bool isInitiator() const override;
     int maxPayload() const override;
+
+    // NodeId getChannelNodeId() const { return deviceId();} ;
+
     /**
      * Like shutdown, but don't send any packet on the socket.
      * Used by Multiplexed Socket when the TLS endpoint is already shutting down
