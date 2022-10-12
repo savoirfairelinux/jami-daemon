@@ -1,9 +1,5 @@
 include $(top_srcdir)/globals.mk
 
-if HAVE_OSX
-AM_OBJCXXFLAGS=-std=c++17
-endif
-
 noinst_LTLIBRARIES=
 noinst_HEADERS=
 nobase_include_HEADERS=
@@ -47,6 +43,7 @@ libjami_la_LIBADD += \
 	$(LIBSSL_LIBS) \
 	$(LIBCRYPTO_LIBS) \
 	$(ARCHIVE_LIBS) \
+        $(ARCHIVE_LIBS) \
 	$(ZLIB_LIBS)
 
 if ENABLE_PLUGIN
