@@ -161,8 +161,8 @@ public:
 
     std::vector<std::string> getInitialMembers() const;
 
-    bool resolveBan(const std::string& type, const std::string& uri);
-    bool resolveUnban(const std::string& type, const std::string& uri);
+    bool resolveBan(std::string_view, const std::string& uri);
+    bool resolveUnban(std::string_view, const std::string& uri);
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
@@ -178,6 +178,19 @@ public:
         return members_;
     }
 
+    std::map<std::string, std::vector<DeviceId>> devices() const
+    {
+        std::map<std::string, std::vector<DeviceId>> memberDevices;
+        std::string deviceDir = fmt::format("{}devices/",
+                                            git_repository_workdir(repository().get()));
+        for (const auto& file : fileutils::readDirectory(deviceDir)) {
+            auto cert = std::make_shared<dht::crypto::Certificate>(
+                fileutils::loadFile(deviceDir + file));
+            memberDevices[cert->getIssuerUID()].emplace_back(DeviceId(cert->getUID()));
+        }
+        return memberDevices;
+    }
+
     bool resolveConflicts(git_index* index, const std::string& other_id);
 
     std::vector<std::string> memberUris(std::string_view filter,
@@ -185,6 +198,8 @@ public:
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
         std::vector<std::string> ret;
+        if (filter.empty() and filteredRoles.empty())
+            ret.reserve(members_.size());
         for (const auto& member : members_) {
             if ((filteredRoles.find(member.role) != filteredRoles.end())
                 or (not filter.empty() and filter == member.uri))
@@ -3342,7 +3357,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
 }
 
 std::string
-ConversationRepository::voteUnban(const std::string& uri, const std::string& type)
+ConversationRepository::voteUnban(const std::string& uri, std::string_view type)
 {
     auto repo = pimpl_->repository();
     auto account = pimpl_->account_.lock();
@@ -3382,7 +3397,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string& typ
 }
 
 bool
-ConversationRepository::Impl::resolveBan(const std::string& type, const std::string& uri)
+ConversationRepository::Impl::resolveBan(std::string_view type, const std::string& uri)
 {
     auto repo = repository();
     std::string repoPath = git_repository_workdir(repo.get());
@@ -3437,7 +3452,7 @@ ConversationRepository::Impl::resolveBan(const std::string& type, const std::str
 }
 
 bool
-ConversationRepository::Impl::resolveUnban(const std::string& type, const std::string& uri)
+ConversationRepository::Impl::resolveUnban(std::string_view type, const std::string& uri)
 {
     auto repo = repository();
     std::string repoPath = git_repository_workdir(repo.get());
@@ -3480,7 +3495,7 @@ ConversationRepository::Impl::resolveUnban(const std::string& type, const std::s
 
 std::string
 ConversationRepository::resolveVote(const std::string& uri,
-                                    const std::string& type,
+                                    std::string_view type,
                                     const std::string& voteType)
 {
     // Count ratio admin/votes
@@ -3588,6 +3603,12 @@ ConversationRepository::memberUris(std::string_view filter,
                                    const std::set<MemberRole>& filteredRoles) const
 {
     return pimpl_->memberUris(filter, filteredRoles);
+}
+
+std::map<std::string, std::vector<DeviceId>>
+ConversationRepository::devices() const
+{
+    return pimpl_->devices();
 }
 
 void
@@ -3743,12 +3764,6 @@ ConversationRepository::infosFromVCard(std::map<std::string, std::string>&& deta
         }
     }
     return result;
-}
-
-std::string
-ConversationRepository::uriFromDevice(const std::string& deviceId) const
-{
-    return pimpl_->uriFromDevice(deviceId);
 }
 
 std::string

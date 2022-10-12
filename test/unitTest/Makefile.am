@@ -20,6 +20,12 @@ check_PROGRAMS += ut_account_factory
 ut_account_factory_SOURCES = account_factory/testAccount_factory.cpp common.cpp
 
 #
+# routing_table
+#
+check_PROGRAMS += ut_routing_table
+ut_routing_table_SOURCES = swarm/routing_table.cpp
+
+#
 # account_archive
 #
 check_PROGRAMS += ut_account_archive
