@@ -412,18 +412,18 @@ std::vector<IpAddr>
 ip_utils::getLocalNameservers()
 {
     std::vector<IpAddr> res;
-#if defined __ANDROID__ || defined _WIN32 || TARGET_OS_IPHONE
-#ifdef _MSC_VER
-#pragma message(__FILE__ "(" STR2(__LINE__) ") : -NOTE- " \
-                                            "Not implemented")
-#else
-#warning "Not implemented"
-#endif
-#else
-    if (not(_res.options & RES_INIT))
-        res_init();
-    res.insert(res.end(), _res.nsaddr_list, _res.nsaddr_list + _res.nscount);
-#endif
+// #if defined __ANDROID__ || defined _WIN32 || TARGET_OS_IPHONE || 
+// #ifdef _MSC_VER
+// #pragma message(__FILE__ "(" STR2(__LINE__) ") : -NOTE- " \
+//                                             "Not implemented")
+// #else
+// #warning "Not implemented"
+// #endif
+// #else
+//     if (not(_res.options & RES_INIT))
+//         res_init();
+//     res.insert(res.end(), _res.nsaddr_list, _res.nsaddr_list + _res.nscount);
+// #endif
     return res;
 }
 

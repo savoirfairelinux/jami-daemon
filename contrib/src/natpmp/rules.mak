@@ -5,7 +5,13 @@ NATPMP_URL := http://miniupnp.free.fr/files/download.php?file=libnatpmp-$(NATPMP
 ifndef HAVE_WIN32
 ifndef HAVE_ANDROID
 ifndef HAVE_IOS
+ifdef HAVE_MACOSX
+ifeq ($(ARCH),x86_64)
 PKGS += natpmp
+endif
+else
+PKGS += natpmp
+endif
 endif
 endif
 endif

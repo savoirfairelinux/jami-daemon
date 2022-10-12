@@ -41,6 +41,9 @@ GNUTLS_CONF := \
 
 ifdef HAVE_MACOSX
 	GNUTLS_CONF += --without-brotli
+#ifeq ($(ARCH),arm64)
+#	GNUTLS_CONF += --disable-hardware-acceleration
+#endif
 endif
 
 ifdef HAVE_IOS

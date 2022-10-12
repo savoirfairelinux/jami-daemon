@@ -20,6 +20,4 @@ libcoreaudiolayer_la_CXXFLAGS = \
 	-I$(top_srcdir)/src \
 	$(AM_CXXFLAGS)
 
-libcoreaudiolayer_la_OBJCXXFLAGS = -std=c++17
-
 libaudio_la_LIBADD += libcoreaudiolayer.la
