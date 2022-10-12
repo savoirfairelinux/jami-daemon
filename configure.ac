@@ -94,6 +94,8 @@ case "${host_os}" in
     ;;
   darwin*)
     SYS=darwin
+    DAEMONCFLAGS+=" -arch $ARCH -isysroot $SDKROOT"
+    DAEMONCXXFLAGS+=" -arch $ARCH -isysroot $SDKROOT"
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
         [[#import <TargetConditionals.h>
           #if TARGET_OS_IPHONE == 0
@@ -613,6 +615,14 @@ AS_IF([test "x$with_natpmp" != xno],
         with_natpmp=no])],
   [])
 
+AC_SUBST(COREAUDIO_CFLAGS)
+AC_SUBST(COREAUDIO_LIBS)
+AC_CHECK_HEADERS([CoreAudio/CoreAudio.h, AudioUnit/AudioUnit.h CoreServices/CoreServices.h AudioToolbox/AudioToolbox.h])
+AC_CHECK_LIB([coreaudio])
+COREAUDIO_LIBS="-framework CoreAudio -framework Carbon -framework AudioUnit"
+DAEMONCPPFLAGS+=" ${COREAUDIO_LIBS}"
+DAEMONLDFLAGS+=" ${COREAUDIO_LIBS}"
+
 AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP],
   `if test "x$with_natpmp" != xno; then echo 1; else echo 0; fi`,
   [Define if you have libnatpmp])
@@ -663,6 +673,17 @@ AC_CONFIG_FILES([Makefile \
                  jami.pc])
 
 dnl Transfer the Automake variables set here to Makefile.in.
+    CPPFLAGS="$DAEMONCPPFLAGS"
+    CXXFLAGS="$DAEMONCXXFLAGS"
+    OBJCXX="$CXX $DAEMONCXXFLAGS"
+    OBJCXXFLAG="$CXX $DAEMONCXXFLAGS"
+    CFLAGS=$DAEMONCFLAGS
+    LDFLAGS="$DAEMONLDFLAGS"
+echo CFLAGS=$CFLAGS
+echo CPPFLAGS=$CPPFLAGS
+echo OBJCXX=$OBJCXX
+echo OBJCXXFLAG=$OBJCXXFLAG
+echo LDFLAGS=$LDFLAGS
 echo DAEMONCPPFLAGS=$DAEMONCPPFLAGS
 AC_SUBST([AM_CPPFLAGS], [$DAEMONCPPFLAGS])
 AC_SUBST([AM_CFLAGS],   [$DAEMONCFLAGS])
