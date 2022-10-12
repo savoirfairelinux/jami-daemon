@@ -281,6 +281,9 @@ FFMPEGCONF += \
 	--enable-encoder=h264_videotoolbox \
 	--enable-encoder=hevc_videotoolbox \
 	--disable-securetransport
+ifdef HAVE_CROSS_COMPILE
+FFMPEGCONF += --enable-cross-compile
+endif
 endif
 
 ifdef HAVE_IOS
@@ -299,8 +302,10 @@ endif
 
 ifndef HAVE_IOS
 ifndef HAVE_ANDROID
+ifndef HAVE_MACOSX
 ifdef HAVE_CROSS_COMPILE
 FFMPEGCONF += --cross-prefix=$(HOST)-
+endif
 endif
 endif
 endif

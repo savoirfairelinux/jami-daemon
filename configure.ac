@@ -145,6 +145,11 @@ AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
 AM_CONDITIONAL(HAVE_OSX,     test "${HAVE_OSX}" = "1")
 AM_CONDITIONAL(HAVE_IOS,     test "${HAVE_IOS}" = "1")
 
+AS_IF([test "${HAVE_OSX}" = "1"],
+  [DAEMONCFLAGS+=" -arch $ARCH -isysroot $SDKROOT"
+   DAEMONCXXFLAGS+=" -arch $ARCH -isysroot $SDKROOT"]
+  [])
+
 AC_DEFINE([MSGPACK_DISABLE_LEGACY_NIL], [1], [msgpack])
 
 dnl FIXME this should be deduced automatically
@@ -664,6 +669,9 @@ AC_CONFIG_FILES([Makefile \
 
 dnl Transfer the Automake variables set here to Makefile.in.
 echo DAEMONCPPFLAGS=$DAEMONCPPFLAGS
+CXXFLAGS="$DAEMONCXXFLAGS"
+OBJCXX="$CXX $DAEMONCXXFLAGS"
+OBJCXXFLAG="$CXX $DAEMONCXXFLAGS"
 AC_SUBST([AM_CPPFLAGS], [$DAEMONCPPFLAGS])
 AC_SUBST([AM_CFLAGS],   [$DAEMONCFLAGS])
 AC_SUBST([AM_CXXFLAGS], [$DAEMONCXXFLAGS])
