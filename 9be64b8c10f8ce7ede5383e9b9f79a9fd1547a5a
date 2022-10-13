@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "28832e14_52a37418",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2022-10-13T23:54:24Z",
+      "side": 1,
+      "message": "\u003e Data/Telemetry\n\u003e \n\u003e Windows distributions of this project may collect usage data and send it to Microsoft to help improve our products and services. See the privacy statement for more details.\n\nhttps://github.com/microsoft/onnxruntime/#datatelemetry\n\n\n\u003e Share, freely and privately.\nhttps://jami.net/\n\nSince Jami is promoted as *privately*, should a reference to telemetry be added to the Windows version of Jami at https://jami.net/download-jami-windows/ ?\n\nWhat do you think?\n\nThank you",
+      "revId": "9be64b8c10f8ce7ede5383e9b9f79a9fd1547a5a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
