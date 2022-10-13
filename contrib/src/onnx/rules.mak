@@ -1,5 +1,5 @@
 # ONNX
-ONNX_VERSION := v1.6.0
+ONNX_VERSION := v1.12.0
 ONNX_URL := https://github.com/microsoft/onnxruntime.git
 
 $(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:
@@ -30,6 +30,8 @@ ifdef USE_NVIDIA
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
 	if [ ! -d "$(PREFIX)/lib/onnxruntime/nvidia-gpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/nvidia-gpu) fi
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime.so
+	cd $< && cp ./build/Linux/Release/libonnxruntime_providers_shared.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime_providers_shared.so
+	cd $< && cp ./build/Linux/Release/libonnxruntime_providers_cuda.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime_providers_cuda.so
 else
 	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi

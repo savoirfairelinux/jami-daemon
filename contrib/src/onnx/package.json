@@ -1,6 +1,6 @@
 {
     "name": "onnx",
-    "version": "v1.6.0",
+    "version": "v1.12.0",
     "url": "https://github.com/microsoft/onnxruntime/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],
