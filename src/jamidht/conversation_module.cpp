@@ -337,7 +337,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                 }
             }
             return false;
-        });
+        }, "application/im-gitmessage-id");
 
         JAMI_INFO("[Account %s] New conversation detected: %s. Ask device %s to clone it",
                   accountId_.c_str(),
@@ -456,7 +456,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     },
                     commitId);
                 return true;
-            });
+            }, "");
     } else {
         if (getRequest(conversationId) != std::nullopt)
             return;
@@ -1213,7 +1213,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                     }
                 }
                 return false;
-            });
+            }, "application/im-gitmessage-id");
         });
     ConvInfo info;
     info.id = conversationId;
