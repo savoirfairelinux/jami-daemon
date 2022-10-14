@@ -45,7 +45,7 @@ struct SyncMsg
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
-using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&)>;
+using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
 using SengMsgCb
     = std::function<uint64_t(const std::string&, std::map<std::string, std::string>&&, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;

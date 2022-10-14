@@ -2464,8 +2464,8 @@ JamiAccount::convModule()
                 // main thread.
                 return sendTextMessage(uri, msg, token);
             },
-            [this](const auto& convId, const auto& deviceId, auto&& cb) {
-                runOnMainThread([w = weak(), convId, deviceId, cb = std::move(cb)] {
+            [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& type) {
+                runOnMainThread([w = weak(), convId, deviceId, cb = std::move(cb), type] {
                     auto shared = w.lock();
                     if (!shared)
                         return;
@@ -2498,7 +2498,7 @@ JamiAccount::convModule()
                                                     socket->shutdown();
                                             } else
                                                 cb({});
-                                        });
+                                        }, false, false, type);
                 });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
