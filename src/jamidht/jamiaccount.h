@@ -90,6 +90,7 @@ struct AccountInfo;
 class SipTransport;
 class ChanneledOutgoingTransfer;
 class SyncModule;
+struct TextMessageCtx;
 
 using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
 using GitSocketList = std::map<DeviceId,                               /* device Id */
@@ -929,6 +930,7 @@ private:
                         uint64_t token,
                         const std::map<std::string, std::string>& data,
                         pjsip_endpt_send_callback cb);
+    void onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int code);
 
     std::mutex gitServersMtx_ {};
     std::map<dht::Value::Id, std::unique_ptr<GitServer>> gitServers_ {};
