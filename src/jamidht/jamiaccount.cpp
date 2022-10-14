@@ -3337,7 +3337,7 @@ JamiAccount::sendMessage(const std::string& to,
         try {
             auto res = sendSIPMessage(
                 conn, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
-                    std::unique_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
+                    std::shared_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
                     auto code = event->body.tsx_state.tsx->status_code;
                     auto acc = c->acc.lock();
                     if (not acc)
@@ -3350,18 +3350,26 @@ JamiAccount::sendMessage(const std::string& to,
                         if (!c->onlyConnected)
                             acc->messageEngine_.onMessageSent(c->to, c->id, true);
                     } else {
-                        JAMI_WARN("Timeout when send a message, close current connection");
-                        acc->shutdownSIPConnection(c->channel, c->to, c->deviceId);
-                        // This MUST be done after closing the connection to avoid race condition
-                        // with messageEngine_
-                        if (!c->onlyConnected)
-                            acc->messageEngine_.onMessageSent(c->to, c->id, false);
+                        runOnMainThread([c]() {
+                            // Note: This can be called from pjsip's eventloop while
+                            // sipConnsMtx_ is locked. So we should retrigger the shutdown.
+                            auto acc = c->acc.lock();
+                            if (not acc)
+                                return;
+                            JAMI_WARN("Timeout when send a message, close current connection");
+                            acc->shutdownSIPConnection(c->channel, c->to, c->deviceId);
+                            // This MUST be done after closing the connection to avoid race condition
+                            // with messageEngine_
+                            if (!c->onlyConnected)
+                                acc->messageEngine_.onMessageSent(c->to, c->id, false);
 
-                        // In that case, the peer typically changed its connectivity.
-                        // After closing sockets with that peer, we try to re-connect to
-                        // that peer one time.
-                        if (c->retryOnTimeout)
-                            acc->messageEngine_.onPeerOnline(c->to, false);
+                            // In that case, the peer typically changed its connectivity.
+                            // After closing sockets with that peer, we try to re-connect to
+                            // that peer one time.
+                            if (c->retryOnTimeout)
+                                acc->messageEngine_.onPeerOnline(c->to, false);
+                        });
+
                     }
                 });
             if (!res) {
@@ -4225,14 +4233,16 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 
     // Convert to SIP transport
     auto onShutdown = [w = weak(), peerId, key, socket]() {
-        auto shared = w.lock();
-        if (!shared)
-            return;
-        shared->shutdownSIPConnection(socket, key.first, key.second);
-        // The connection can be closed during the SIP initialization, so
-        // if this happens, the request should be re-sent to ask for a new
-        // SIP channel to make the call pass through
-        shared->callConnectionClosed(key.second, false);
+        runOnMainThread([w=std::move(w), peerId, key, socket] {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            shared->shutdownSIPConnection(socket, key.first, key.second);
+            // The connection can be closed during the SIP initialization, so
+            // if this happens, the request should be re-sent to ask for a new
+            // SIP channel to make the call pass through
+            shared->callConnectionClosed(key.second, false);
+        });
     };
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(shared(),
                                                                   socket,
