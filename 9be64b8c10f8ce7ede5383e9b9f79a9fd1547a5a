@@ -16,6 +16,24 @@
       "message": "\u003e Data/Telemetry\n\u003e \n\u003e Windows distributions of this project may collect usage data and send it to Microsoft to help improve our products and services. See the privacy statement for more details.\n\nhttps://github.com/microsoft/onnxruntime/#datatelemetry\n\n\n\u003e Share, freely and privately.\nhttps://jami.net/\n\nSince Jami is promoted as *privately*, should a reference to telemetry be added to the Windows version of Jami at https://jami.net/download-jami-windows/ ?\n\nWhat do you think?\n\nThank you",
       "revId": "9be64b8c10f8ce7ede5383e9b9f79a9fd1547a5a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4e9fda18_3f0133fd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-10-14T12:05:38Z",
+      "side": 1,
+      "message": "Hello Ovari,\n\nYes it is true that the official windows distribution of ONNX has a default active telemetry but that is not the case here. We do not use their distribution, we build our own and in that process the telemetry flag is not set, thus there is no telemetry build for the onnx library used in the plugins.",
+      "parentUuid": "28832e14_52a37418",
+      "revId": "9be64b8c10f8ce7ede5383e9b9f79a9fd1547a5a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
