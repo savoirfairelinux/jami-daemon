@@ -4259,7 +4259,7 @@ JamiAccount::sendFile(const std::string& conversationId,
                               [accId = shared->getAccountID(),
                                conversationId,
                                tid,
-                               path](bool, const std::string& commitId) {
+                               path](const std::string& commitId) {
                                   // Create a symlink to answer to re-ask
                                   auto filelinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR
                                                       + accId + DIR_SEPARATOR_STR
