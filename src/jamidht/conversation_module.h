@@ -149,6 +149,7 @@ public:
                      Json::Value&& value,
                      const std::string& replyTo = "",
                      bool announce = true,
+                     OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
@@ -156,6 +157,7 @@ public:
                      const std::string& replyTo = "",
                      const std::string& type = "text/plain",
                      bool announce = true,
+                     OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
 
     /**

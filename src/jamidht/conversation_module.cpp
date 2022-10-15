@@ -216,6 +216,7 @@ public:
                      Json::Value&& value,
                      const std::string& replyTo = "",
                      bool announce = true,
+                     OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
@@ -223,6 +224,7 @@ public:
                      const std::string& replyTo = "",
                      const std::string& type = "text/plain",
                      bool announce = true,
+                     OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
 
     // The following informations are stored on the disk
@@ -518,7 +520,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     try {
         auto conversation = std::make_shared<Conversation>(account_, deviceId, conversationId);
         conversation->onLastDisplayedUpdated(
-            std::move([&](auto convId, auto lastId) { onLastDisplayedUpdated(convId, lastId); }));
+            [&](auto convId, auto lastId) { onLastDisplayedUpdated(convId, lastId); });
         if (!conversation->isMember(username_, true)) {
             JAMI_ERR("Conversation cloned but doesn't seems to be a valid member");
             conversation->erase();
@@ -797,12 +799,13 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       const std::string& replyTo,
                                       const std::string& type,
                                       bool announce,
+                                      OnCommitCb&& onCommit,
                                       OnDoneCb&& cb)
 {
     Json::Value json;
     json["body"] = std::move(message);
     json["type"] = type;
-    sendMessage(conversationId, std::move(json), replyTo, announce, std::move(cb));
+    sendMessage(conversationId, std::move(json), replyTo, announce, std::move(onCommit), std::move(cb));
 }
 
 void
@@ -810,6 +813,7 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       Json::Value&& value,
                                       const std::string& replyTo,
                                       bool announce,
+                                      OnCommitCb&& onCommit,
                                       OnDoneCb&& cb)
 {
     std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -818,6 +822,7 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
         conversation->second->sendMessage(
             std::move(value),
             replyTo,
+            std::move(onCommit),
             [this, conversationId, announce, cb = std::move(cb)](bool ok,
                                                                  const std::string& commitId) {
                 if (cb)
@@ -900,8 +905,8 @@ ConversationModule::loadConversations()
     for (const auto& repository : conversationsRepositories) {
         try {
             auto conv = std::make_shared<Conversation>(pimpl_->account_, repository);
-            conv->onLastDisplayedUpdated(std::move(
-                [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); }));
+            conv->onLastDisplayedUpdated(
+                [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); });
             auto convInfo = pimpl_->convInfos_.find(repository);
             if (convInfo == pimpl_->convInfos_.end()) {
                 JAMI_ERR() << "Missing conv info for " << repository << ". This is a bug!";
@@ -1134,8 +1139,8 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     std::shared_ptr<Conversation> conversation;
     try {
         conversation = std::make_shared<Conversation>(pimpl_->account_, mode, otherMember);
-        conversation->onLastDisplayedUpdated(std::move(
-            [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); }));
+        conversation->onLastDisplayedUpdated(
+            [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); });
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] Error while generating a conversation %s",
                  pimpl_->accountId_.c_str(),
@@ -1225,9 +1230,10 @@ ConversationModule::sendMessage(const std::string& conversationId,
                                 const std::string& replyTo,
                                 const std::string& type,
                                 bool announce,
+                                OnCommitCb&& onCommit,
                                 OnDoneCb&& cb)
 {
-    pimpl_->sendMessage(conversationId, std::move(message), replyTo, type, announce, std::move(cb));
+    pimpl_->sendMessage(conversationId, std::move(message), replyTo, type, announce, std::move(onCommit), std::move(cb));
 }
 
 void
@@ -1235,9 +1241,10 @@ ConversationModule::sendMessage(const std::string& conversationId,
                                 Json::Value&& value,
                                 const std::string& replyTo,
                                 bool announce,
+                                OnCommitCb&& onCommit,
                                 OnDoneCb&& cb)
 {
-    pimpl_->sendMessage(conversationId, std::move(value), replyTo, announce, std::move(cb));
+    pimpl_->sendMessage(conversationId, std::move(value), replyTo, announce, std::move(onCommit), std::move(cb));
 }
 
 void
