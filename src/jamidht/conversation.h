@@ -106,6 +106,7 @@ enum class ConversationMode;
 using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages
     = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
+using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
 
@@ -182,8 +183,9 @@ public:
     void sendMessage(std::string&& message,
                      const std::string& type = "text/plain",
                      const std::string& replyTo = "",
+                     OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
-    void sendMessage(Json::Value&& message, const std::string& replyTo = "", OnDoneCb&& cb = {});
+    void sendMessage(Json::Value&& message, const std::string& replyTo = "", OnCommitCb&& onCommit = {}, OnDoneCb&& cb = {});
     // Note: used for replay. Should not be used by clients
     void sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb = {});
     /**

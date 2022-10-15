@@ -702,16 +702,17 @@ void
 Conversation::sendMessage(std::string&& message,
                           const std::string& type,
                           const std::string& replyTo,
+                          OnCommitCb&& onCommit,
                           OnDoneCb&& cb)
 {
     Json::Value json;
     json["body"] = std::move(message);
     json["type"] = type;
-    sendMessage(std::move(json), replyTo, std::move(cb));
+    sendMessage(std::move(json), replyTo, std::move(onCommit), std::move(cb));
 }
 
 void
-Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnDoneCb&& cb)
+Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {
     if (!replyTo.empty()) {
         auto commit = pimpl_->repository_->getCommit(replyTo);
@@ -721,7 +722,7 @@ Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnDon
         }
         value["reply-to"] = replyTo;
     }
-    dht::ThreadPool::io().run([w = weak(), value = std::move(value), cb = std::move(cb)] {
+    dht::ThreadPool::io().run([w = weak(), value = std::move(value), onCommit=std::move(onCommit), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
             auto acc = sthis->pimpl_->account_.lock();
             if (!acc)
@@ -736,6 +737,8 @@ Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnDon
             sthis->pimpl_->saveSending();
             sthis->clearFetched();
             lk.unlock();
+            if (onCommit)
+                onCommit(commit);
             sthis->pimpl_->announce(commit);
             emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                 acc->getAccountID(),
