@@ -22,6 +22,30 @@
       },
       "revId": "729df56d01813445797eedbb5549046505fef5a0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6a6ada2a_bce83987",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2402,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-10-17T18:22:36Z",
+      "side": 1,
+      "message": "without the sipcall.cpp change the test should fail if video muted in answer.",
+      "parentUuid": "12e7882b_d7a0f948",
+      "range": {
+        "startLine": 2402,
+        "startChar": 61,
+        "endLine": 2402,
+        "endChar": 70
+      },
+      "revId": "729df56d01813445797eedbb5549046505fef5a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
