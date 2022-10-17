@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "36a83fcc_6de8271b",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-17T23:58:20Z",
+      "side": 1,
+      "message": "could use existing InfoHash operator \u003c or InfoHash::cmp() ?",
+      "range": {
+        "startLine": 140,
+        "startChar": 11,
+        "endLine": 140,
+        "endChar": 89
+      },
+      "revId": "7a38adb40a901bfa87f22e698ff043a7d4f69cf6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca60faae_1bf3e64a",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-17T23:58:20Z",
+      "side": 1,
+      "message": "same ?",
+      "range": {
+        "startLine": 142,
+        "startChar": 18,
+        "endLine": 145,
+        "endChar": 25
+      },
+      "revId": "7a38adb40a901bfa87f22e698ff043a7d4f69cf6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a325eb34_c6c0e5d4",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-17T23:58:20Z",
+      "side": 1,
+      "message": "use std library random API (you can use the rand_ field from the Account to get a seeded `std::mt19937_64`)",
+      "range": {
+        "startLine": 166,
+        "startChar": 4,
+        "endLine": 166,
+        "endChar": 22
+      },
+      "revId": "7a38adb40a901bfa87f22e698ff043a7d4f69cf6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5dbccdd_46bed835",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-17T23:58:20Z",
+      "side": 1,
+      "message": "try:\n  std::mt19937_64 rand_;\n  // (...)\n  std::uniform_int_distribution\u003c\u003e distrib(numberNodes);\n  while (counter \u003c numberNodes) {\n    a \u003d distrib(rand_);",
+      "range": {
+        "startLine": 169,
+        "startChar": 8,
+        "endLine": 169,
+        "endChar": 33
+      },
+      "revId": "7a38adb40a901bfa87f22e698ff043a7d4f69cf6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
