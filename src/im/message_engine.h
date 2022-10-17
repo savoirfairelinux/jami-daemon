@@ -91,7 +91,6 @@ private:
     const std::string savePath_;
 
     std::map<std::string, std::map<MessageToken, Message>> messages_;
-    std::set<MessageToken> sentMessages_;
 
     mutable std::mutex messagesMutex_ {};
 };
