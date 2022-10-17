@@ -54,11 +54,9 @@ public:
     std::string bobId;
 
 private:
-    void testIsComposing();
     void testSendFileCompatibility();
 
     CPPUNIT_TEST_SUITE(CompabilityTest);
-    CPPUNIT_TEST(testIsComposing);
     CPPUNIT_TEST(testSendFileCompatibility);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -133,71 +131,6 @@ CompabilityTest::tearDown()
             break;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-}
-
-void
-CompabilityTest::testIsComposing()
-{
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    bool conversationRemoved = false, requestReceived = false, aliceComposing = false;
-    std::string convId = "";
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
-        [&](const std::string& account_id,
-            const std::string& /*from*/,
-            const std::string& /*conversationId*/,
-            const std::vector<uint8_t>& /*payload*/,
-            time_t /*received*/) {
-            if (account_id == bobId)
-                requestReceived = true;
-            cv.notify_one();
-        }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string&) {
-            if (accountId == aliceId) {
-                conversationRemoved = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::ComposingStatusChanged>(
-            [&](const std::string& accountId,
-                const std::string& conversationId,
-                const std::string& peer,
-                bool state) {
-                if (accountId == bobId && conversationId == "" && peer == aliceUri) {
-                    aliceComposing = state;
-                    cv.notify_one();
-                }
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
-        return !convId.empty() && requestReceived;
-    }));
-    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri, false));
-
-    // Send iscomposing to non swarm compatible contact
-
-    aliceAccount->setIsComposing("jami:" + bobUri, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return aliceComposing; }));
-
-    aliceAccount->setIsComposing("jami:" + bobUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !aliceComposing; }));
-    DRing::unregisterSignalHandlers();
 }
 
 void
