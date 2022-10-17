@@ -45,6 +45,8 @@ using GitIndexConflictIterator
 
 namespace jami {
 
+using DeviceId = dht::PkId;
+
 constexpr auto EFETCH = 1;
 constexpr auto EINVALIDMODE = 2;
 constexpr auto EVALIDFETCH = 3;
@@ -304,7 +306,7 @@ public:
      * @param type      device, members, admins or invited
      * @return the commit id or empty if failed
      */
-    std::string voteUnban(const std::string& uri, const std::string& type);
+    std::string voteUnban(const std::string& uri, std::string_view type);
     /**
      * Validate if a vote is finished
      * @param uri       identified of the user/device
@@ -313,7 +315,7 @@ public:
      * @return the commit id or empty if failed
      */
     std::string resolveVote(const std::string& uri,
-                            const std::string& type,
+                            std::string_view type,
                             const std::string& voteType);
 
     /**
@@ -342,6 +344,12 @@ public:
      * @return members
      */
     std::vector<ConversationMember> members() const;
+
+    /**
+     * Get conversation's devices
+     * @return members
+     */
+    std::map<std::string, std::vector<DeviceId>> devices() const;
 
     /**
      * @param filter           If we want to remove one member
@@ -378,12 +386,6 @@ public:
     static std::map<std::string, std::string> infosFromVCard(
         std::map<std::string, std::string>&& details);
 
-    /**
-     * Retrieve account's URI from deviceId
-     * @param deviceId
-     * @return account's URI
-     */
-    std::string uriFromDevice(const std::string& deviceId) const;
     /**
      * Convert ConversationCommit to MapStringString for the client
      */
