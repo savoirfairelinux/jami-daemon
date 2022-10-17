@@ -584,7 +584,7 @@ PKG_CHECK_MODULES([OPENDHT], [opendht >= 2.3.2],,
 PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],,
   AC_MSG_FAILURE([Missing secp256k1]))
 
-PKG_CHECK_MODULES([FMT], [fmt >= 6.0],,
+PKG_CHECK_MODULES([FMT], [fmt >= 9.0],,
   AC_MSG_FAILURE([Missing {fmt}]))
 
 # LIBUPNP

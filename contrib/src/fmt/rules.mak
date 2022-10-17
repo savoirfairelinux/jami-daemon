@@ -3,11 +3,10 @@ FMT_VERSION := 9.1.0
 FMT_URL := https://github.com/fmtlib/fmt/archive/$(FMT_VERSION).tar.gz
 
 PKGS += fmt
-ifeq ($(call need_pkg,'fmt >= 6.0'),)
+ifeq ($(call need_pkg,'fmt >= 9.0'),)
 PKGS_FOUND += fmt
 endif
 
-# fmt 5.3.0 fix: https://github.com/fmtlib/fmt/issues/1267
 FMT_CMAKECONF = -DBUILD_SHARED_LIBS=Off \
 				-DFMT_TEST=Off \
                 CMAKE_INSTALL_LIBDIR=$(PREFIX)/lib
