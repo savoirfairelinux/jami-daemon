@@ -23,7 +23,7 @@
 #include "namedirectory.h"
 
 #include "logger.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "fileutils.h"
 #include "base64.h"
 #include "scheduled_executor.h"

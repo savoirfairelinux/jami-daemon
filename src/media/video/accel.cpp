@@ -22,7 +22,7 @@
 #include <algorithm>
 
 #include "media_buffer.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "accel.h"

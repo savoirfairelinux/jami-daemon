@@ -27,7 +27,7 @@
 
 #include "manager.h"
 #include "jamidht/conversationrepository.h"
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "jamidht/gitserver.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"

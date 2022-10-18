@@ -35,7 +35,7 @@
 #include "video/accel.h"
 #endif
 
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "logger.h"
 #include "client/ring_signal.h"
 

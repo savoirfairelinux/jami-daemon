@@ -20,14 +20,14 @@
 
 #include "pjsip/sip_multipart.h"
 
-#include "sipaccount.h"
-#include "sipvoiplink.h"
+#include "sip/sipaccount.h"
+#include "sip/sipvoiplink.h"
 #include "manager.h"
-#include "sippresence.h"
+#include "sip/sippresence.h"
 #include "logger.h"
 #include "pres_sub_server.h"
 #include "client/ring_signal.h"
-#include "sip_utils.h"
+#include "dhtnet/sip_utils.h"
 #include "compiler_intrinsics.h"
 
 namespace jami {

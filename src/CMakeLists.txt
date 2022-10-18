@@ -2,7 +2,7 @@
 # Source groups - src
 ################################################################################
 
-# client|config|jami.hooks|im|jamidht|media|security|sip|transport|upnp
+# client|config|dhtnet|jami.hooks|im|jamidht|media
 
 list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/account.cpp"
@@ -31,22 +31,14 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/fileutils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/ftp_server.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/ftp_server.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/generic_io.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/gittransport.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/gittransport.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ice_socket.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ice_transport.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ice_transport.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ip_utils.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ip_utils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/logger.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/logger.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/manager.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/manager.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/map_utils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/noncopyable.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/peer_connection.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/peer_connection.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/preferences.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/preferences.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/rational.h"
@@ -57,12 +49,8 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/scheduled_executor.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/smartools.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/smartools.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/string_utils.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/string_utils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/threadloop.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/threadloop.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/uri.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/uri.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/vcard.h"
@@ -81,17 +69,18 @@ set (Source_Files ${Source_Files} PARENT_SCOPE)
 
 add_subdirectory(client)
 add_subdirectory(config)
+add_subdirectory(dhtnet)
 add_subdirectory(jami)
 add_subdirectory(im)
 add_subdirectory(jamidht)
 add_subdirectory(media)
-add_subdirectory(security)
-add_subdirectory(sip)
 add_subdirectory(upnp)
 add_subdirectory(plugin)
+add_subdirectory(sip)
 
 set (Source_Files__client ${Source_Files__client} PARENT_SCOPE)
 set (Source_Files__config ${Source_Files__config} PARENT_SCOPE)
+set (Source_Files__dhtnet ${Source_Files__dhtnet} PARENT_SCOPE)
 set (Source_Files__jami ${Source_Files__jami} PARENT_SCOPE)
 set (Source_Files__hooks ${Source_Files__hooks} PARENT_SCOPE)
 set (Source_Files__im ${Source_Files__im} PARENT_SCOPE)

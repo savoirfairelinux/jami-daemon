@@ -31,7 +31,7 @@
 #include "sip/sipcall.h"
 #include "audio/audiolayer.h"
 #include "media/media_attribute.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 #include "logger.h"
 #include "manager.h"
