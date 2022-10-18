@@ -52,8 +52,8 @@ using random_device = dht::crypto::random_device;
 #include <yaml-cpp/yaml.h>
 #pragma GCC diagnostic pop
 
-#include "upnp/upnp_control.h"
-#include "ip_utils.h"
+#include "connectivity/upnp/upnp_control.h"
+#include "connectivity/ip_utils.h"
 #include "compiler_intrinsics.h"
 #include "jami/account_const.h"
 

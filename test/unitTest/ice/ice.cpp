@@ -25,7 +25,7 @@
 #include "manager.h"
 #include "opendht/dhtrunner.h"
 #include "opendht/thread_pool.h"
-#include "src/ice_transport.h"
+#include "connectivity/ice_transport.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"

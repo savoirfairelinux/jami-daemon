@@ -21,7 +21,7 @@
 #pragma once
 
 #include "data_transfer.h"
-#include "peer_connection.h"
+#include "connectivity/peer_connection.h"
 
 #include <vector>
 #include <array>
