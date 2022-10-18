@@ -23,7 +23,7 @@
 #include "instant_messaging.h"
 
 #include "logger.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/sip_utils.h"
 
 #include <pjsip_ua.h>
 #include <pjsip.h>

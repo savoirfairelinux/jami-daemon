@@ -64,7 +64,7 @@
 #pragma GCC diagnostic pop
 
 #include "config/yamlparser.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/sip_utils.h"
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
