@@ -26,8 +26,8 @@
 
 #include "account.h"
 
-#include "sip_utils.h"
-#include "ip_utils.h"
+#include "connectivity/sip_utils.h"
+#include "connectivity/ip_utils.h"
 #include "noncopyable.h"
 #include "im/message_engine.h"
 

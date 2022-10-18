@@ -23,8 +23,8 @@
 #include <condition_variable>
 
 #include "manager.h"
-#include "jamidht/connectionmanager.h"
-#include "jamidht/multiplexed_socket.h"
+#include "connectivity/connectionmanager.h"
+#include "connectivity/multiplexed_socket.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"
