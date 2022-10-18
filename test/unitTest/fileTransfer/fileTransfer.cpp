@@ -26,7 +26,7 @@
 
 #include "fileutils.h"
 #include "manager.h"
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"

@@ -27,7 +27,7 @@
 #include "jamidht/p2p.h"
 #include "manager.h"
 #include "map_utils.h"
-#include "peer_connection.h"
+#include "dhtnet/peer_connection.h"
 #include "string_utils.h"
 
 #include <thread>

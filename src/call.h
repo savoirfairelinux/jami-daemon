@@ -31,7 +31,7 @@
 
 #include "recordable.h"
 #include "peerrecorder.h"
-#include "ip_utils.h"
+#include "dhtnet/ip_utils.h"
 #include "conference.h"
 #include "media_codec.h"
 #include "media/media_attribute.h"

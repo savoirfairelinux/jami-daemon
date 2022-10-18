@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "ip_utils.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/ip_utils.h"
+#include "dhtnet/sip_utils.h"
 
 #include <pjsip.h>
 #include <pj/pool.h>

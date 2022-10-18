@@ -25,10 +25,10 @@
 #include "jamiaccount.h"
 #include "ftp_server.h"
 #include "manager.h"
-#include "peer_connection.h"
+#include "dhtnet/peer_connection.h"
 #include "account_manager.h"
-#include "multiplexed_socket.h"
-#include "connectionmanager.h"
+#include "dhtnet/multiplexed_socket.h"
+#include "dhtnet/connectionmanager.h"
 #include "fileutils.h"
 
 #include <opendht/default_types.h>

@@ -21,7 +21,7 @@
 #include "logger.h"
 #include "gittransport.h"
 #include "manager.h"
-#include "multiplexed_socket.h"
+#include "dhtnet/multiplexed_socket.h"
 #include "opendht/thread_pool.h"
 
 #include <charconv>
