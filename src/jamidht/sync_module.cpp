@@ -20,7 +20,7 @@
 
 #include "sync_module.h"
 
-#include "jamidht/multiplexed_socket.h"
+#include "dhtnet/multiplexed_socket.h"
 #include "jamidht/conversation_module.h"
 #include "jamidht/archive_account_manager.h"
 

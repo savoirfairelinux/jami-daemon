@@ -24,12 +24,12 @@
 
 #include "noncopyable.h"
 #include "sdes_negotiator.h"
-#include "sip_utils.h"
-#include "ip_utils.h"
-#include "ice_transport.h"
+#include "dhtnet/sip_utils.h"
+#include "dhtnet/ip_utils.h"
+#include "dhtnet/ice_transport.h"
 #include "media_codec.h"
 #include "media/media_attribute.h"
-#include "sip_utils.h"
+#include "dhtnet/sip_utils.h"
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>

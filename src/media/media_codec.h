@@ -26,7 +26,7 @@
 #endif
 
 #include "audio/audiobuffer.h" // for AudioFormat
-#include "ip_utils.h"
+#include "dhtnet/ip_utils.h"
 
 #include <cctype>
 #include <string>
