@@ -18,8 +18,8 @@
 #include "gittransport.h"
 
 #include "manager.h"
-#include "jamidht/multiplexed_socket.h"
-#include "jamidht/connectionmanager.h"
+#include "connectivity/multiplexed_socket.h"
+#include "connectivity/connectionmanager.h"
 
 using namespace std::string_view_literals;
 

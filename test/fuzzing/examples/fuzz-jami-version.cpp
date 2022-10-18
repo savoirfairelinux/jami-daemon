@@ -28,7 +28,7 @@
 #include "lib/gnutls.h"
 
 /* Jami */
-#include "jamidht/multiplexed_socket.h"
+#include "connectivity/multiplexed_socket.h"
 
 static gnutls_session_t captured_session = nullptr;
 

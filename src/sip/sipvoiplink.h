@@ -29,7 +29,7 @@
 #endif
 
 #include "ring_types.h"
-#include "ip_utils.h"
+#include "connectivity/ip_utils.h"
 #include "noncopyable.h"
 
 #include <pjsip.h>
