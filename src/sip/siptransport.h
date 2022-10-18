@@ -25,7 +25,7 @@
 #include "config.h"
 #endif
 
-#include "sip_utils.h"
+#include "dhtnet/sip_utils.h"
 
 #include "noncopyable.h"
 #include "logger.h"

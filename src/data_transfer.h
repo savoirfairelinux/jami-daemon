@@ -21,7 +21,7 @@
 #pragma once
 
 #include "jami/datatransfer_interface.h"
-#include "jamidht/multiplexed_socket.h"
+#include "dhtnet/multiplexed_socket.h"
 #include "noncopyable.h"
 
 #include <memory>

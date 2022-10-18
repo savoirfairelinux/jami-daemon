@@ -20,14 +20,14 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "ip_utils.h"   // MUST BE INCLUDED FIRST
+#include "dhtnet/ip_utils.h"   // MUST BE INCLUDED FIRST
 #include "libav_deps.h" // THEN THIS ONE AFTER
 
 #include "socket_pair.h"
-#include "ice_socket.h"
+#include "dhtnet/ice_socket.h"
 #include "libav_utils.h"
 #include "logger.h"
-#include "security/memory.h"
+#include "dhtnet/security/memory.h"
 
 #include <iostream>
 #include <string>

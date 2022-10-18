@@ -25,7 +25,7 @@
 #include <config.h>
 #endif
 
-#include "ip_utils.h"
+#include "dhtnet/ip_utils.h"
 #include "media_io_handle.h"
 
 #ifndef _WIN32

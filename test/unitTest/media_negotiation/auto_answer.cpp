@@ -27,7 +27,7 @@
 #include "../../test_runner.h"
 
 #include "manager.h"
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "account.h"
 #include "sip/sipaccount.h"
 #include "jami.h"

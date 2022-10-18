@@ -17,7 +17,7 @@
  */
 
 #include "base64.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/sip_utils.h"
 
 #include <pjlib.h>
 #include <pjlib-util/base64.h>
