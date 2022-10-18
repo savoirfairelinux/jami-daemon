@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "25b4b90c_873524c2",
+        "filename": "src/dhtnet/sip/sipaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-10-18T17:13:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f69dbddf_e13b1c8c",
+      "range": {
+        "startLine": 30,
+        "startChar": 38,
+        "endLine": 31,
+        "endChar": 36
+      },
+      "revId": "be61c28680cd78774cf7320b3b3d9749c054e432",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "97a9fb58_f4dc8dd6",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4b010e3_45b4ed34",
+        "filename": "src/dhtnet/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-10-18T17:13:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "97a9fb58_f4dc8dd6",
+      "range": {
+        "startLine": 29,
+        "startChar": 26,
+        "endLine": 29,
+        "endChar": 38
+      },
+      "revId": "be61c28680cd78774cf7320b3b3d9749c054e432",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9cfc6fe7_6d51f405",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-10-18T16:14:43Z",
       "side": 1,
       "message": "the rebase should not rollback commits ;)",
+      "range": {
+        "startLine": 2401,
+        "startChar": 58,
+        "endLine": 2402,
+        "endChar": 54
+      },
+      "revId": "be61c28680cd78774cf7320b3b3d9749c054e432",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0325f4a3_03651b2f",
+        "filename": "src/dhtnet/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2402,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-10-18T17:13:32Z",
+      "side": 1,
+      "message": "Woops! Looks like my git rebase rollbacked patch 190892f\n\nDone",
+      "parentUuid": "9cfc6fe7_6d51f405",
       "range": {
         "startLine": 2401,
         "startChar": 58,
