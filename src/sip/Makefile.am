@@ -15,8 +15,6 @@ libsiplink_la_SOURCES = \
 	./sip/sipcall.h \
 	./sip/sipvoiplink.h \
 	./sip/siptransport.h \
-	./sip/sip_utils.cpp \
-	./sip/sip_utils.h \
 	./sip/sippresence.cpp \
 	./sip/sippresence.h \
 	./sip/pres_sub_server.cpp\

@@ -31,7 +31,7 @@
 #include "manager.h"
 
 #include "sip/sipvoiplink.h"
-#include "sip/sip_utils.h"
+#include "connectivity/sip_utils.h"
 
 #include <atomic>
 
