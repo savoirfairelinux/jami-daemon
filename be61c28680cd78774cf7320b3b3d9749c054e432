@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f69dbddf_e13b1c8c",
+        "filename": "src/dhtnet/sip/sipaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-18T16:14:43Z",
+      "side": 1,
+      "message": "mmh the SIP part should stay in Jami I think (and the account part/sipaccountbase) as it\u0027s more related to Jami than connectivity",
+      "range": {
+        "startLine": 30,
+        "startChar": 38,
+        "endLine": 31,
+        "endChar": 36
+      },
+      "revId": "be61c28680cd78774cf7320b3b3d9749c054e432",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "97a9fb58_f4dc8dd6",
+        "filename": "src/dhtnet/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-18T16:14:43Z",
+      "side": 1,
+      "message": "same for the call part, I think it\u0027s specific to Jami more than a lib.",
+      "range": {
+        "startLine": 29,
+        "startChar": 26,
+        "endLine": 29,
+        "endChar": 38
+      },
+      "revId": "be61c28680cd78774cf7320b3b3d9749c054e432",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cfc6fe7_6d51f405",
+        "filename": "src/dhtnet/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2402,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-18T16:14:43Z",
+      "side": 1,
+      "message": "the rebase should not rollback commits ;)",
+      "range": {
+        "startLine": 2401,
+        "startChar": 58,
+        "endLine": 2402,
+        "endChar": 54
+      },
+      "revId": "be61c28680cd78774cf7320b3b3d9749c054e432",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
