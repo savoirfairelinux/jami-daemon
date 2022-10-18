@@ -205,6 +205,9 @@ public:
 void
 MultiplexedSocket::Impl::eventLoop()
 {
+    if (!endpoint) {
+        return;
+    }
     endpoint->setOnStateChange([this](tls::TlsSessionState state) {
         if (state == tls::TlsSessionState::SHUTDOWN && !isShutdown_) {
             JAMI_INFO("Tls endpoint is down, shutdown multiplexed socket");
@@ -712,7 +715,6 @@ MultiplexedSocket::sendVersion()
     pimpl_->sendVersion();
 }
 
-
 IpAddr
 MultiplexedSocket::getLocalAddress() const
 {
@@ -766,6 +768,10 @@ ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                              const uint16_t& channel,
                              bool isInitiator)
     : pimpl_ {std::make_unique<Impl>(endpoint, name, channel, isInitiator)}
+{}
+
+ChannelSocket::ChannelSocket()
+    : pimpl_ {std::make_unique<Impl>(std::weak_ptr<MultiplexedSocket> {}, "", 0, false)}
 {}
 
 ChannelSocket::~ChannelSocket() {}
