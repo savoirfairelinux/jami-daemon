@@ -21,7 +21,7 @@
 #include <condition_variable>
 
 #include "manager.h"
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "jami.h"
 #include "account_const.h"

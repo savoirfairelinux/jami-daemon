@@ -23,7 +23,7 @@
 
 #include <msgpack.hpp>
 
-#include "jamidht/multiplexed_socket.h"
+#include "dhtnet/multiplexed_socket.h"
 
 #include "lib/gnutls.h"
 

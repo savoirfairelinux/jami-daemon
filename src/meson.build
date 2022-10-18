@@ -14,6 +14,22 @@ libjami_sources = files(
     'client/ring_signal.cpp',
     'client/videomanager.cpp',
     'config/yamlparser.cpp',
+    'dhtnet/security/certstore.cpp',
+    'dhtnet/security/diffie-hellman.cpp',
+    'dhtnet/security/memory.cpp',
+    'dhtnet/security/tls_session.cpp',
+    'dhtnet/security/tlsvalidator.cpp',
+    'dhtnet/upnp/protocol/igd.cpp',
+    'dhtnet/upnp/protocol/mapping.cpp',
+    'dhtnet/upnp/upnp_context.cpp',
+    'dhtnet/upnp/upnp_control.cpp',
+    'dhtnet/connectionmanager.cpp',
+    'dhtnet/ice_transport.cpp',
+    'dhtnet/ip_utils.cpp',
+    'dhtnet/multiplexed_socket.cpp',
+    'dhtnet/peer_connection.cpp',
+    'dhtnet/sip_utils.cpp',
+    'dhtnet/utf8_utils.cpp',
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
     'jamidht/eth/libdevcore/Common.cpp',
@@ -26,7 +42,6 @@ libjami_sources = files(
     'jamidht/archive_account_manager.cpp',
     'jamidht/channeled_transfers.cpp',
     'jamidht/channeled_transport.cpp',
-    'jamidht/connectionmanager.cpp',
     'jamidht/contact_list.cpp',
     'jamidht/conversation.cpp',
     'jamidht/conversation_channel_handler.cpp',
@@ -34,7 +49,6 @@ libjami_sources = files(
     'jamidht/conversationrepository.cpp',
     'jamidht/gitserver.cpp',
     'jamidht/jamiaccount.cpp',
-    'jamidht/multiplexed_socket.cpp',
     'jamidht/namedirectory.cpp',
     'jamidht/p2p.cpp',
     'jamidht/server_account_manager.cpp',
@@ -78,26 +92,6 @@ libjami_sources = files(
     'media/socket_pair.cpp',
     'media/srtp.c',
     'media/system_codec_container.cpp',
-    'security/certstore.cpp',
-    'security/diffie-hellman.cpp',
-    'security/memory.cpp',
-    'security/tls_session.cpp',
-    'security/tlsvalidator.cpp',
-    'sip/pres_sub_client.cpp',
-    'sip/pres_sub_server.cpp',
-    'sip/sdes_negotiator.cpp',
-    'sip/sdp.cpp',
-    'sip/sipaccountbase.cpp',
-    'sip/sipaccount.cpp',
-    'sip/sipcall.cpp',
-    'sip/sippresence.cpp',
-    'sip/siptransport.cpp',
-    'sip/sip_utils.cpp',
-    'sip/sipvoiplink.cpp',
-    'upnp/protocol/igd.cpp',
-    'upnp/protocol/mapping.cpp',
-    'upnp/upnp_context.cpp',
-    'upnp/upnp_control.cpp',
     'account.cpp',
     'account_factory.cpp',
     'archiver.cpp',
@@ -111,19 +105,25 @@ libjami_sources = files(
     'fileutils.cpp',
     'ftp_server.cpp',
     'gittransport.cpp',
-    'ice_transport.cpp',
-    'ip_utils.cpp',
     'logger.cpp',
     'manager.cpp',
-    'peer_connection.cpp',
     'preferences.cpp',
     'ring_api.cpp',
+    'sip/pres_sub_client.cpp',
+    'sip/pres_sub_server.cpp',
+    'sip/sdes_negotiator.cpp',
+    'sip/sdp.cpp',
+    'sip/sipaccountbase.cpp',
+    'sip/sipaccount.cpp',
+    'sip/sipcall.cpp',
+    'sip/sippresence.cpp',
+    'sip/siptransport.cpp',
+    'sip/sipvoiplink.cpp',
     'scheduled_executor.cpp',
     'smartools.cpp',
     'string_utils.cpp',
     'threadloop.cpp',
     'uri.cpp',
-    'utf8_utils.cpp',
     'vcard.cpp'
 )
 if host_machine.system() == 'windows'
@@ -207,16 +207,16 @@ endif
 
 if conf.get('HAVE_LIBUPNP') == 1
     libjami_sources += files(
-        'upnp/protocol/pupnp/pupnp.cpp',
-        'upnp/protocol/pupnp/upnp_igd.cpp'
+        'dhtnet/upnp/protocol/pupnp/pupnp.cpp',
+        'dhtnet/upnp/protocol/pupnp/upnp_igd.cpp'
     )
     libjami_dependencies += deplibupnp
 endif
 
 if conf.get('HAVE_LIBNATPMP') == 1
     libjami_sources += files(
-        'upnp/protocol/natpmp/nat_pmp.cpp',
-        'upnp/protocol/natpmp/pmp_igd.cpp'
+        'dhtnet/upnp/protocol/natpmp/nat_pmp.cpp',
+        'dhtnet/upnp/protocol/natpmp/pmp_igd.cpp'
     )
     libjami_dependencies += depnatpmp
 endif

@@ -29,7 +29,7 @@
 #include <libavutil/log.h>
 #include "srtp.h"
 
-#include "security/memory.h"
+#include "dhtnet/security/memory.h"
 
 void ff_srtp_free(struct SRTPContext *s)
 {

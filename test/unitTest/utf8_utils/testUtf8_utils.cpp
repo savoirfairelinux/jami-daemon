@@ -23,7 +23,7 @@
 
 #include <string>
 
-#include "utf8_utils.h"
+#include "dhtnet/utf8_utils.h"
 #include "../../test_runner.h"
 
 

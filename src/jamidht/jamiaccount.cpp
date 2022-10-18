@@ -37,7 +37,7 @@
 #include "archive_account_manager.h"
 #include "server_account_manager.h"
 #include "jamidht/channeled_transport.h"
-#include "multiplexed_socket.h"
+#include "dhtnet/multiplexed_socket.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "transfer_channel_handler.h"
@@ -46,7 +46,7 @@
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/sip_utils.h"
 
 #include "p2p.h"
 #include "uri.h"
@@ -55,12 +55,12 @@
 #include "jami/call_const.h"
 #include "jami/account_const.h"
 
-#include "upnp/upnp_control.h"
+#include "dhtnet/upnp/upnp_control.h"
 #include "system_codec_container.h"
 
 #include "account_schema.h"
 #include "manager.h"
-#include "utf8_utils.h"
+#include "dhtnet/utf8_utils.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
@@ -77,7 +77,7 @@
 #include "conversation.h"
 
 #include "config/yamlparser.h"
-#include "security/certstore.h"
+#include "dhtnet/security/certstore.h"
 #include "libdevcrypto/Common.h"
 #include "base64.h"
 #include "vcard.h"

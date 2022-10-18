@@ -24,7 +24,7 @@
 #include <mutex>
 #include <thread>
 
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 
 #include "lib/gnutls.h"
 #include "lib/utils.h"

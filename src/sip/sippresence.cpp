@@ -18,17 +18,17 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "sippresence.h"
+#include "sip/sippresence.h"
 
 #include "logger.h"
 #include "manager.h"
-#include "sipaccount.h"
-#include "sip_utils.h"
+#include "sip/sipaccount.h"
+#include "dhtnet/sip_utils.h"
 #include "pres_sub_server.h"
 #include "pres_sub_client.h"
-#include "sipvoiplink.h"
+#include "sip/sipvoiplink.h"
 #include "client/ring_signal.h"
-#include "sip_utils.h"
+#include "dhtnet/sip_utils.h"
 
 #include <opendht/crypto.h>
 #include <fmt/core.h>

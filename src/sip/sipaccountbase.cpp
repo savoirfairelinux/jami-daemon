@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "sipaccountbase.h"
-#include "sipvoiplink.h"
+#include "sip/sipaccountbase.h"
+#include "sip/sipvoiplink.h"
 
 #ifdef ENABLE_VIDEO
 #include "libav_utils.h"
@@ -27,7 +27,7 @@
 
 #include "account_schema.h"
 #include "manager.h"
-#include "ice_transport.h"
+#include "dhtnet/ice_transport.h"
 
 #include "config/yamlparser.h"
 
@@ -35,8 +35,8 @@
 #include "jami/account_const.h"
 #include "string_utils.h"
 #include "fileutils.h"
-#include "sip_utils.h"
-#include "utf8_utils.h"
+#include "dhtnet/sip_utils.h"
+#include "dhtnet/utf8_utils.h"
 #include "uri.h"
 
 #include "manager.h"
