@@ -26,7 +26,7 @@
 #include "manager.h"
 #include "audio/audiolayer.h"
 #include "jamidht/jamiaccount.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "sip/siptransport.h"
 
 #include "client/videomanager.h"

@@ -20,7 +20,7 @@
 
 #include "conference_protocol.h"
 
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 namespace jami {
 

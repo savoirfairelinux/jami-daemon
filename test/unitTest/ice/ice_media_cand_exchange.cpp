@@ -35,7 +35,7 @@
 #include "account_const.h"
 #include "sip/sipcall.h"
 
-#include "upnp/upnp_control.h"
+#include "dhtnet/upnp/upnp_control.h"
 
 #include "common.h"
 

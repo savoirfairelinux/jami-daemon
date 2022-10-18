@@ -43,7 +43,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #endif
 
 #include <sys/types.h>

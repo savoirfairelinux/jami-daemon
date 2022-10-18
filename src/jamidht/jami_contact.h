@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 #include <opendht/infohash.h>
 #include <opendht/value.h>

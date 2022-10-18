@@ -23,7 +23,7 @@
 #pragma once
 
 #include "socket_pair.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/sip_utils.h"
 #include "media/media_codec.h"
 
 #include <functional>

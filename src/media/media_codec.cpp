@@ -22,7 +22,7 @@
 #include "media_codec.h"
 #include "account_const.h"
 
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "logger.h"
 
 #include <string>
