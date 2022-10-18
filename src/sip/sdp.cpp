@@ -27,8 +27,8 @@
 #include "config.h"
 #endif
 
-#include "sipaccount.h"
-#include "sipvoiplink.h"
+#include "sip/sipaccount.h"
+#include "sip/sipvoiplink.h"
 #include "string_utils.h"
 #include "base64.h"
 

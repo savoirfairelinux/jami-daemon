@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "jamidht/multiplexed_socket.h"
+#include "connectivity/multiplexed_socket.h"
 
 namespace jami {
 
