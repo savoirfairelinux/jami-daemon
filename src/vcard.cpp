@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include "vcard.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 namespace vCard {
 

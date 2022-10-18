@@ -29,7 +29,7 @@
 #include "fileutils.h"
 #include "logger.h"
 #include "manager.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "system_codec_container.h"
 
 #ifdef RING_ACCEL

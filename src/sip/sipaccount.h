@@ -27,8 +27,8 @@
 #include "config.h"
 #endif
 
-#include "sipaccountbase.h"
-#include "siptransport.h"
+#include "sip/sipaccountbase.h"
+#include "sip/siptransport.h"
 #include "noncopyable.h"
 #include "ring_types.h" // enable_if_base_of
 

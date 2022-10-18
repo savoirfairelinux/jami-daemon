@@ -43,7 +43,7 @@ extern "C" {
 
 #include "logger.h"
 #include "../video_device.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 #define ZEROVAR(x) std::memset(&(x), 0, sizeof(x))
 
