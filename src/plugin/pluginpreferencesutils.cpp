@@ -163,7 +163,7 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
         if (auto envLang = std::getenv("JAMI_LANG"))
             lang = envLang;
         else
-            JAMI_ERR() << "Error getting JAMI_LANG env, trying to get system language";
+            JAMI_INFO() << "Error getting JAMI_LANG env, trying to get system language";
         // If language preference is empty, try to get from the system.
         if (lang.empty()) {
 #ifdef WIN32
@@ -186,6 +186,8 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
             // For Android this should not work since std::locale is not supported by the NDK.
             lang = std::locale("").name();
 #endif // WIN32
+            auto envLang = "JAMI_LANG=" + lang;
+            putenv(envLang.c_str());
         }
         auto locales = getLocales(rootPath, std::string(string_remove_suffix(lang, '.')));
 
