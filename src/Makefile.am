@@ -12,14 +12,13 @@ lib_LTLIBRARIES = libjami.la
 libjami_la_LIBADD=
 
 include ./client/Makefile.am
-include ./media/Makefile.am
 include ./config/Makefile.am
-include ./sip/Makefile.am
-include ./upnp/Makefile.am
-include ./security/Makefile.am
-include ./jamidht/Makefile.am
+include ./dhtnet/Makefile.am
 include ./im/Makefile.am
+include ./jamidht/Makefile.am
+include ./media/Makefile.am
 include ./plugin/Makefile.am
+include ./sip/Makefile.am
 
 # libjami
 
@@ -87,12 +86,7 @@ libjami_la_SOURCES = \
 		fileutils.cpp \
 		archiver.cpp \
 		threadloop.cpp \
-		ip_utils.h \
-		ip_utils.cpp \
-		utf8_utils.cpp \
 		vcard.cpp \
-		ice_transport.cpp \
-		ice_transport.h \
 		threadloop.h \
 		conference.h \
 		conference_protocol.h \
@@ -107,30 +101,25 @@ libjami_la_SOURCES = \
 		fileutils.h \
 		archiver.h \
 		noncopyable.h \
-		utf8_utils.h \
 		ring_types.h \
 		compiler_intrinsics.h \
 		account_schema.h \
 		registration_states.h \
 		map_utils.h \
-		string_utils.h \
-		string_utils.cpp \
 		ring_api.cpp \
 		rational.h \
 		smartools.cpp \
 		smartools.h \
 		base64.h \
 		base64.cpp \
-		peer_connection.cpp \
-		peer_connection.h \
 		data_transfer.cpp \
 		data_transfer.h \
 		ftp_server.cpp \
 		ftp_server.h \
-		generic_io.h \
 		scheduled_executor.h \
 		scheduled_executor.cpp \
-		transport/peer_channel.h \
+		string_utils.cpp \
+		string_utils.h \
 		uri.h \
 		uri.cpp \
 		vcard.h

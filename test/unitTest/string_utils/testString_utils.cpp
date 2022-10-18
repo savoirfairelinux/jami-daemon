@@ -21,7 +21,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "account.h"
 
 #include <string>

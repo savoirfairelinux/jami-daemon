@@ -25,7 +25,7 @@
 #include "video_sender.h"
 #include "video_receive_thread.h"
 #include "video_mixer.h"
-#include "ice_socket.h"
+#include "dhtnet/ice_socket.h"
 #include "socket_pair.h"
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
 #include "manager.h"

@@ -24,7 +24,7 @@
 
 #include "test_runner.h"
 
-#include "security/certstore.h"
+#include "dhtnet/security/certstore.h"
 
 namespace jami {
 namespace test {
