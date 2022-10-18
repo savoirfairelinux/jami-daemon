@@ -27,21 +27,21 @@
 #include "config.h"
 #endif
 
-#include "security/tls_session.h"
-#include "security/diffie-hellman.h"
+#include "dhtnet/security/tls_session.h"
+#include "dhtnet/security/diffie-hellman.h"
 #include "sip/sipaccountbase.h"
 #include "jami/datatransfer_interface.h"
 #include "jamidht/conversation.h"
-#include "multiplexed_socket.h"
+#include "dhtnet/multiplexed_socket.h"
 #include "data_transfer.h"
 #include "uri.h"
 
 #include "noncopyable.h"
-#include "ip_utils.h"
+#include "dhtnet/ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
-#include "security/certstore.h"
+#include "dhtnet/security/certstore.h"
 #include "scheduled_executor.h"
-#include "connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "gitserver.h"
 #include "channel_handler.h"
 #include "conversation_module.h"
@@ -51,7 +51,7 @@
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
 
-#include "upnp/protocol/mapping.h"
+#include "dhtnet/upnp/protocol/mapping.h"
 
 #include <pjsip/sip_types.h>
 
