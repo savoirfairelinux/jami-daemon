@@ -32,9 +32,9 @@
 
 #include "logger.h"
 #include "manager.h"
-#include "sip/sipaccount.h"
-#include "sip/sippresence.h"
-#include "sip/pres_sub_client.h"
+#include "dhtnet/sip/sipaccount.h"
+#include "dhtnet/sip/sippresence.h"
+#include "dhtnet/sip/pres_sub_client.h"
 #include "client/ring_signal.h"
 #include "compiler_intrinsics.h"
 

@@ -21,7 +21,7 @@
 #include "ftp_server.h"
 
 #include "logger.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 

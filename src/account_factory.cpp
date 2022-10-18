@@ -24,7 +24,7 @@
 
 #include "account_factory.h"
 
-#include "sip/sipaccount.h"
+#include "dhtnet/sip/sipaccount.h"
 #include "jamidht/jamiaccount.h"
 
 #include <stdexcept>

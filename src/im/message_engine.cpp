@@ -18,7 +18,7 @@
  */
 
 #include "message_engine.h"
-#include "sip/sipaccountbase.h"
+#include "dhtnet/sip/sipaccountbase.h"
 #include "manager.h"
 #include "fileutils.h"
 

@@ -25,7 +25,7 @@
 
 #include "logger.h"
 #include "noncopyable.h"
-#include "sip/sdp.h"
+#include "dhtnet/sip/sdp.h"
 
 #include "audio_receive_thread.h"
 #include "audio_sender.h"

@@ -30,8 +30,8 @@
 // Application import
 #include "manager.h"
 
-#include "sip/sipvoiplink.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/sip/sipvoiplink.h"
+#include "dhtnet/sip/sip_utils.h"
 
 #include <atomic>
 

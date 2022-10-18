@@ -32,7 +32,7 @@
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif
-#include "sip/sip_utils.h"
+#include "dhtnet/sip/sip_utils.h"
 
 #include <cmath>
 #include <unistd.h>

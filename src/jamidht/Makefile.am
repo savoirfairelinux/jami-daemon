@@ -8,8 +8,6 @@ libjamiacc_la_SOURCES = \
 	./jamidht/abstract_sip_transport.h \
 	./jamidht/jamiaccount.cpp \
 	./jamidht/jamiaccount.h \
-	./jamidht/connectionmanager.h \
-	./jamidht/connectionmanager.cpp \
 	./jamidht/channeled_transport.h \
 	./jamidht/channeled_transport.cpp \
 	./jamidht/channeled_transfers.h \
@@ -25,8 +23,6 @@ libjamiacc_la_SOURCES = \
 	./jamidht/conversation_channel_handler.cpp \
 	./jamidht/conversation_module.h \
 	./jamidht/conversation_module.cpp \
-	./jamidht/multiplexed_socket.h \
-	./jamidht/multiplexed_socket.cpp \
 	./jamidht/accountarchive.cpp \
 	./jamidht/accountarchive.h \
 	./jamidht/p2p.cpp \

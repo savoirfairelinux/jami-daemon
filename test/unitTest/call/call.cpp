@@ -25,10 +25,10 @@
 #include <string>
 
 #include "manager.h"
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
-#include "sip/sipcall.h"
-#include "sip/siptransport.h"
+#include "dhtnet/sip/sipcall.h"
+#include "dhtnet/sip/siptransport.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"

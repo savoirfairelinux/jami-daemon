@@ -26,16 +26,16 @@
 
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
-#include "sip/sipaccount.h"
+#include "dhtnet/sip/sipaccount.h"
 #include "../../test_runner.h"
 
 #include "jami.h"
 #include "media_const.h"
 #include "call_const.h"
 #include "account_const.h"
-#include "sip/sipcall.h"
+#include "dhtnet/sip/sipcall.h"
 
-#include "upnp/upnp_control.h"
+#include "dhtnet/upnp/upnp_control.h"
 
 #include "common.h"
 

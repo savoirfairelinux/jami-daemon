@@ -27,15 +27,15 @@
 #include "../../test_runner.h"
 
 #include "manager.h"
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "account.h"
-#include "sip/sipaccount.h"
+#include "dhtnet/sip/sipaccount.h"
 #include "jami.h"
 #include "jami/media_const.h"
 #include "call_const.h"
 #include "account_const.h"
-#include "sip/sipcall.h"
-#include "sip/sdp.h"
+#include "dhtnet/sip/sipcall.h"
+#include "dhtnet/sip/sdp.h"
 
 #include "common.h"
 

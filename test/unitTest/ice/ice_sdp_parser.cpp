@@ -25,14 +25,14 @@
 #include <string>
 
 #include "manager.h"
-#include "sip/sipaccount.h"
+#include "dhtnet/sip/sipaccount.h"
 #include "../../test_runner.h"
 
 #include "jami.h"
 #include "media_const.h"
 #include "call_const.h"
 #include "account_const.h"
-#include "sip/sipcall.h"
+#include "dhtnet/sip/sipcall.h"
 #include "media/audio/audio_rtp_session.h"
 #include "media/audio/audio_receive_thread.h"
 #include "media/video/video_rtp_session.h"

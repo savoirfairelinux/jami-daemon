@@ -26,8 +26,8 @@
 
 #include "fileutils.h"
 #include "manager.h"
-#include "jamidht/connectionmanager.h"
-#include "jamidht/multiplexed_socket.h"
+#include "dhtnet/connectionmanager.h"
+#include "dhtnet/multiplexed_socket.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"

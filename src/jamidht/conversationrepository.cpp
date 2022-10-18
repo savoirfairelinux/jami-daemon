@@ -22,7 +22,7 @@
 #include "jamiaccount.h"
 #include "fileutils.h"
 #include "gittransport.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "client/ring_signal.h"
 #include "vcard.h"
 

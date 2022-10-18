@@ -64,12 +64,12 @@
 #pragma GCC diagnostic pop
 
 #include "config/yamlparser.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/sip/sip_utils.h"
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
 #include "fileutils.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 namespace jami {
 

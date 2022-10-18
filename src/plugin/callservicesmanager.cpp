@@ -24,7 +24,7 @@
 #include "pluginpreferencesutils.h"
 
 #include "manager.h"
-#include "sip/sipcall.h"
+#include "dhtnet/sip/sipcall.h"
 #include "fileutils.h"
 #include "logger.h"
 

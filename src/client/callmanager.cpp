@@ -26,12 +26,12 @@
 #include "call_factory.h"
 #include "client/ring_signal.h"
 
-#include "sip/siptransport.h"
-#include "sip/sipvoiplink.h"
-#include "sip/sipcall.h"
+#include "dhtnet/sip/siptransport.h"
+#include "dhtnet/sip/sipvoiplink.h"
+#include "dhtnet/sip/sipcall.h"
 #include "audio/audiolayer.h"
 #include "media/media_attribute.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 #include "logger.h"
 #include "manager.h"

@@ -29,7 +29,7 @@
 #include "manager.h"
 #include "media_device.h"
 #include "smartools.h"
-#include "sip/sipcall.h"
+#include "dhtnet/sip/sipcall.h"
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif

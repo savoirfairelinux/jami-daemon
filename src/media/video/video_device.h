@@ -26,7 +26,7 @@
 #include "rational.h"
 
 #include "videomanager_interface.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "logger.h"
 
 #include <fmt/core.h>

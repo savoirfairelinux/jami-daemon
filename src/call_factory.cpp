@@ -21,9 +21,9 @@
 #include <stdexcept>
 
 #include "call_factory.h"
-#include "sip/sipcall.h"
-#include "sip/sipaccountbase.h"
-#include "string_utils.h"
+#include "dhtnet/sip/sipcall.h"
+#include "dhtnet/sip/sipaccountbase.h"
+#include "dhtnet/string_utils.h"
 
 namespace jami {
 

@@ -21,8 +21,8 @@
 #include "channeled_transport.h"
 
 #include "logger.h"
-#include "multiplexed_socket.h"
-#include "sip/sip_utils.h"
+#include "dhtnet/multiplexed_socket.h"
+#include "dhtnet/sip/sip_utils.h"
 
 #include <pjsip/sip_transport.h>
 #include <pjsip/sip_endpoint.h>

@@ -26,8 +26,8 @@
 #include "manager.h"
 #include "audio/audiolayer.h"
 #include "jamidht/jamiaccount.h"
-#include "string_utils.h"
-#include "sip/siptransport.h"
+#include "dhtnet/string_utils.h"
+#include "dhtnet/sip/siptransport.h"
 
 #include "client/videomanager.h"
 #include "tracepoint.h"
@@ -46,7 +46,7 @@
 #include "logger.h"
 #include "jami/media_const.h"
 #include "audio/ringbufferpool.h"
-#include "sip/sipcall.h"
+#include "dhtnet/sip/sipcall.h"
 
 #include <opendht/thread_pool.h>
 

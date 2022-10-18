@@ -32,7 +32,7 @@
 #include "fileutils.h"
 #include "jami/media_const.h"
 #include "account_const.h"
-#include "sip/sipcall.h"
+#include "dhtnet/sip/sipcall.h"
 #include "call_const.h"
 
 #include "common.h"
