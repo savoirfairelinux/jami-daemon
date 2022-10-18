@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7956a27e_99827756",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-18T19:25:09Z",
+      "side": 1,
+      "message": "just a nitpick",
+      "revId": "b61b35f6b8a9cf888bba3075f1837e54852f2742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e12c3d9_34f2f0b4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 4277,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-18T19:25:09Z",
+      "side": 1,
+      "message": "can be removed, by default, OnDoneCb\u0026\u0026 cb \u003d {} should work :)",
+      "range": {
+        "startLine": 4274,
+        "startChar": 31,
+        "endLine": 4277,
+        "endChar": 31
+      },
+      "revId": "b61b35f6b8a9cf888bba3075f1837e54852f2742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
