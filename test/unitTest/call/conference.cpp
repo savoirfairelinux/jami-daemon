@@ -25,7 +25,7 @@
 
 #include "manager.h"
 #include "client/videomanager.h"
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"

@@ -33,7 +33,7 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 #include "im/message_engine.h"
-#include "ip_utils.h"
+#include "dhtnet/ip_utils.h"
 #include "media_codec.h"
 #include "media/media_attribute.h"
 #include "logger.h"

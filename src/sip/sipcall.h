@@ -29,9 +29,9 @@
 #endif
 
 #include "call.h"
-#include "ice_transport.h"
+#include "dhtnet/ice_transport.h"
 #include "media_codec.h" // for MediaType enum
-#include "sip_utils.h"
+#include "dhtnet/sip_utils.h"
 #include "sip/sdp.h"
 
 #include "media/rtp_session.h"

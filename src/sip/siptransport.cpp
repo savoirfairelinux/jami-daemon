@@ -19,17 +19,17 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "siptransport.h"
-#include "sip_utils.h"
-#include "ip_utils.h"
-#include "security/tls_session.h"
+#include "sip/siptransport.h"
+#include "dhtnet/sip_utils.h"
+#include "dhtnet/ip_utils.h"
+#include "dhtnet/security/tls_session.h"
 
 #include "jamidht/abstract_sip_transport.h"
 #include "jamidht/channeled_transport.h"
-#include "jamidht/multiplexed_socket.h"
+#include "dhtnet/multiplexed_socket.h"
 
 #include "compiler_intrinsics.h"
-#include "sipvoiplink.h"
+#include "sip/sipvoiplink.h"
 
 #include <pjsip.h>
 #include <pjsip/sip_types.h>

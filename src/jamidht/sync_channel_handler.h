@@ -21,7 +21,7 @@
 #pragma once
 
 #include "jamidht/channel_handler.h"
-#include "jamidht/connectionmanager.h"
+#include "dhtnet/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 
 namespace jami {

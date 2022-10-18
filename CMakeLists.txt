@@ -14,6 +14,13 @@ add_subdirectory("src")
 source_group("Source Files" FILES ${Source_Files})
 source_group("Source Files\\client" FILES ${Source_Files__client})
 source_group("Source Files\\config" FILES ${Source_Files__config})
+source_group("Source Files\\dhtnet" FILES ${Source_Files__dhtnet})
+source_group("Source Files\\dhtnet\\security" FILES ${Source_Files__security})
+source_group("Source Files\\dhtnet\\sip" FILES ${Source_Files__sip})
+source_group("Source Files\\dhtnet\\upnp" FILES ${Source_Files__upnp})
+source_group("Source Files\\dhtnet\\upnp\\protocol" FILES ${Source_Files__upnp__protocol})
+source_group("Source Files\\dhtnet\\upnp\\protocol\\natpmp" FILES ${Source_Files__upnp__protocol__natpmp})
+source_group("Source Files\\dhtnet\\upnp\\protocol\\pupnp" FILES ${Source_Files__upnp__protocol__pupnp})
 source_group("Source Files\\jami" FILES ${Source_Files__jami})
 source_group("Source Files\\hooks" FILES ${Source_Files__hooks})
 source_group("Source Files\\im" FILES ${Source_Files__im})
@@ -35,17 +42,11 @@ if(MSVC)
    source_group("Source Files\\media\\video\\winvideo" FILES ${Source_Files__media__video__winvideo})
 endif()
 
-source_group("Source Files\\security" FILES ${Source_Files__security})
-source_group("Source Files\\sip" FILES ${Source_Files__sip})
-source_group("Source Files\\upnp" FILES ${Source_Files__upnp})
-source_group("Source Files\\upnp\\protocol" FILES ${Source_Files__upnp__protocol})
-source_group("Source Files\\upnp\\protocol\\natpmp" FILES ${Source_Files__upnp__protocol__natpmp})
-source_group("Source Files\\upnp\\protocol\\pupnp" FILES ${Source_Files__upnp__protocol__pupnp})
-
 list (APPEND ALL_FILES
       ${Source_Files}
       ${Source_Files__client}
       ${Source_Files__config}
+      ${Source_Files__dhtnet}
       ${Source_Files__jami}
       ${Source_Files__hooks}
       ${Source_Files__im}
@@ -126,17 +127,18 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/src;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/config;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/dhtnet;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/dhtnet/security;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/dhtnet/sip;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/dhtnet/upnp;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/dhtnet/upnp/igd;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/dhtnet/upnp/protocol;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/dhtnet/upnp/mapping;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/jami;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/media;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/src/security;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/src/sip;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp/igd;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp/protocol;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp/mapping;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht/eth;"
            "${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc;"
