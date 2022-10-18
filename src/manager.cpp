@@ -41,7 +41,7 @@
 #include "gittransport.h"
 #include "map_utils.h"
 #include "account.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "jamidht/jamiaccount.h"
 #include "sip/sipvoiplink.h"
 #include "account.h"
@@ -50,7 +50,7 @@ using random_device = dht::crypto::random_device;
 
 #include "call_factory.h"
 
-#include "sip/sip_utils.h"
+#include "dhtnet/sip_utils.h"
 #include "sip/sipvoiplink.h"
 
 #include "im/instant_messaging.h"
@@ -74,7 +74,7 @@ using random_device = dht::crypto::random_device;
 #include "client/videomanager.h"
 
 #include "conference.h"
-#include "ice_transport.h"
+#include "dhtnet/ice_transport.h"
 
 #include "client/ring_signal.h"
 #include "jami/call_const.h"
@@ -92,7 +92,7 @@ using random_device = dht::crypto::random_device;
 #include "data_transfer.h"
 #include "jami/media_const.h"
 
-#include "upnp/upnp_context.h"
+#include "dhtnet/upnp/upnp_context.h"
 
 #include <libavutil/ffversion.h>
 

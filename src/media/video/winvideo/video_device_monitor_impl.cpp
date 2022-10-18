@@ -22,7 +22,7 @@
 #include "../video_device_monitor.h"
 #include "logger.h"
 #include "noncopyable.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 #include <dshow.h>
 #include <dbt.h>

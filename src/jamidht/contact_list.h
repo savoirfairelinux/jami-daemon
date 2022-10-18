@@ -20,7 +20,7 @@
 #pragma once
 
 #include "jami_contact.h"
-#include "security/certstore.h"
+#include "dhtnet/security/certstore.h"
 
 #include <opendht/infohash.h>
 #include <opendht/crypto.h>

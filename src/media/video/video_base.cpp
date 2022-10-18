@@ -22,7 +22,7 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "video_base.h"
 #include "media_buffer.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 #include "logger.h"
 
 #include <cassert>

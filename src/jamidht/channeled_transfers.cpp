@@ -21,7 +21,7 @@
 #include "channeled_transfers.h"
 
 #include "ftp_server.h"
-#include "multiplexed_socket.h"
+#include "dhtnet/multiplexed_socket.h"
 
 #include <opendht/thread_pool.h>
 

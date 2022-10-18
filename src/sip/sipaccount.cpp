@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "sipaccount.h"
+#include "sip/sipaccount.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -29,13 +29,13 @@
 #include "compiler_intrinsics.h"
 
 #include "sdp.h"
-#include "sipvoiplink.h"
-#include "sipcall.h"
-#include "sip_utils.h"
+#include "sip/sipvoiplink.h"
+#include "sip/sipcall.h"
+#include "dhtnet/sip_utils.h"
 
 #include "call_factory.h"
 
-#include "sippresence.h"
+#include "sip/sippresence.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -55,9 +55,9 @@
 
 #include "system_codec_container.h"
 
-#include "upnp/upnp_control.h"
-#include "ip_utils.h"
-#include "string_utils.h"
+#include "dhtnet/upnp/upnp_control.h"
+#include "dhtnet/ip_utils.h"
+#include "dhtnet/string_utils.h"
 
 #include "im/instant_messaging.h"
 

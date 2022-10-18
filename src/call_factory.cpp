@@ -23,7 +23,7 @@
 #include "call_factory.h"
 #include "sip/sipcall.h"
 #include "sip/sipaccountbase.h"
-#include "string_utils.h"
+#include "dhtnet/string_utils.h"
 
 namespace jami {
 

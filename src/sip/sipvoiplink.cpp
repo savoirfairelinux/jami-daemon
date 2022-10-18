@@ -22,15 +22,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "sipvoiplink.h"
+#include "sip/sipvoiplink.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "sdp.h"
-#include "sipcall.h"
-#include "sipaccount.h"
+#include "sip/sipcall.h"
+#include "sip/sipaccount.h"
 
 #include "jamidht/jamiaccount.h"
 
@@ -47,9 +47,9 @@
 
 #include "pres_sub_server.h"
 
-#include "ip_utils.h"
-#include "sip_utils.h"
-#include "string_utils.h"
+#include "dhtnet/ip_utils.h"
+#include "dhtnet/sip_utils.h"
+#include "dhtnet/string_utils.h"
 #include "logger.h"
 
 #include <opendht/thread_pool.h>

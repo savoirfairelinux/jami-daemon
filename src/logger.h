@@ -34,7 +34,7 @@
 #include <atomic>
 #include <sstream>
 #include <string>
-#include "string_utils.h" // to_string
+#include "dhtnet/string_utils.h" // to_string
 
 #ifdef __ANDROID__
 

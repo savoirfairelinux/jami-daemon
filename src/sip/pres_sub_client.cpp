@@ -35,10 +35,10 @@
 #include <unistd.h>
 
 #include "pres_sub_client.h"
-#include "sipaccount.h"
-#include "sippresence.h"
-#include "sipvoiplink.h"
-#include "sip_utils.h"
+#include "sip/sipaccount.h"
+#include "sip/sippresence.h"
+#include "sip/sipvoiplink.h"
+#include "dhtnet/sip_utils.h"
 #include "manager.h"
 #include "client/ring_signal.h"
 
