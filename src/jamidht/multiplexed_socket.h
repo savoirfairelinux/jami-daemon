@@ -20,6 +20,7 @@
 #include <opendht/default_types.h>
 
 #include "generic_io.h"
+#include <condition_variable>
 
 namespace jami {
 
@@ -175,22 +176,98 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
-/**
- * Represents a channel of the multiplexed socket (channel, name)
- */
-class ChannelSocket : public GenericSocket<uint8_t>
+class ChannelSocketInterface : public GenericSocket<uint8_t>
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
+
+    virtual DeviceId deviceId() const = 0;
+    virtual std::string name() const = 0;
+    virtual uint16_t channel() const = 0;
+    /**
+     * Triggered when a specific channel is ready
+     * Used by ConnectionManager::connectDevice()
+     */
+    virtual void onReady(ChannelReadyCb&& cb) = 0;
+    /**
+     * Will trigger that callback when shutdown() is called
+     */
+    virtual void onShutdown(OnShutdownCb&& cb) = 0;
+
+    virtual void onRecv(std::vector<uint8_t>&& pkt) = 0;
+};
+
+class ChannelSocketTest : public ChannelSocketInterface
+{
+public:
+    ChannelSocketTest(const DeviceId& deviceId, const std::string& name, const uint16_t& channel);
+    ~ChannelSocketTest();
+
+    void setPeer(const std::weak_ptr<ChannelSocketTest>& remote);
+
+    DeviceId deviceId() const override;
+    std::string name() const override;
+    uint16_t channel() const override;
+
+    bool isReliable() const override { return true; };
+    bool isInitiator() const override { return true; };
+    int maxPayload() const override { return 0;};
+
+    void shutdown() override;
+
+    std::size_t read(ValueType* buf,
+                     std::size_t len,
+                     std::error_code& ec) override;
+    std::size_t write(const ValueType* buf,
+                      std::size_t len,
+                      std::error_code& ec) override;
+    int waitForData(std::chrono::milliseconds timeout,
+                    std::error_code&) const override;
+    void setOnRecv(RecvCb&&) override;
+    void onRecv(std::vector<uint8_t>&& pkt) override;
+
+    /**
+     * Triggered when a specific channel is ready
+     * Used by ConnectionManager::connectDevice()
+     */
+    void onReady(ChannelReadyCb&& cb) override;
+    /**
+     * Will trigger that callback when shutdown() is called
+     */
+    void onShutdown(OnShutdownCb&& cb) override;
+
+    std::vector<uint8_t> buf {};
+    mutable std::mutex mutex {};
+    mutable std::condition_variable cv {};
+    GenericSocket<uint8_t>::RecvCb cb {};
+
+private:
+    const DeviceId pimpl_deviceId;
+    const std::string pimpl_name;
+    const uint16_t pimpl_channel;
+    std::weak_ptr<ChannelSocketTest> remote;
+    OnShutdownCb&& shutdownCb_ = 0;
+    std::atomic_bool isShutdown_ {false};
+
+    void eventLoop();
+    std::thread eventLoopThread_ {};
+};
+
+/**
+ * Represents a channel of the multiplexed socket (channel, name)
+ */
+class ChannelSocket : ChannelSocketInterface
+{
+public:
     ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                   const std::string& name,
                   const uint16_t& channel,
                   bool isInitiator = false);
     ~ChannelSocket();
 
-    DeviceId deviceId() const;
-    std::string name() const;
-    uint16_t channel() const;
+    DeviceId deviceId() const override;
+    std::string name() const override;
+    uint16_t channel() const override;
     bool isReliable() const override;
     bool isInitiator() const override;
     int maxPayload() const override;
@@ -211,11 +288,11 @@ public:
      * Triggered when a specific channel is ready
      * Used by ConnectionManager::connectDevice()
      */
-    void onReady(ChannelReadyCb&& cb);
+    void onReady(ChannelReadyCb&& cb) override;
     /**
      * Will trigger that callback when shutdown() is called
      */
-    void onShutdown(OnShutdownCb&& cb);
+    void onShutdown(OnShutdownCb&& cb) override;
 
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     /**
@@ -231,7 +308,7 @@ public:
      */
     void setOnRecv(RecvCb&&) override;
 
-    void onRecv(std::vector<uint8_t>&& pkt);
+    void onRecv(std::vector<uint8_t>&& pkt) override;
 
     /**
      * Send a beacon on the socket and close if no response come

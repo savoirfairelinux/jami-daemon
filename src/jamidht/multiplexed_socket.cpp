@@ -712,7 +712,6 @@ MultiplexedSocket::sendVersion()
     pimpl_->sendVersion();
 }
 
-
 IpAddr
 MultiplexedSocket::getLocalAddress() const
 {
@@ -760,6 +759,163 @@ public:
     std::condition_variable cv {};
     GenericSocket<uint8_t>::RecvCb cb {};
 };
+
+ChannelSocketTest::ChannelSocketTest(const DeviceId& deviceId,
+                                     const std::string& name,
+                                     const uint16_t& channel)
+    : pimpl_deviceId(deviceId)
+    , pimpl_name(name)
+    , pimpl_channel(channel)
+    , eventLoopThread_ {[this] {
+        try {
+            eventLoop();
+        } catch (const std::exception& e) {
+            JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
+            shutdown();
+        }
+    }}
+{}
+
+ChannelSocketTest::~ChannelSocketTest()
+{
+    eventLoopThread_.join();
+}
+
+void
+ChannelSocketTest::setPeer(const std::weak_ptr<ChannelSocketTest>& remote)
+{
+    this->remote = remote;
+}
+
+DeviceId
+ChannelSocketTest::deviceId() const
+{
+    return pimpl_deviceId;
+}
+
+std::string
+ChannelSocketTest::name() const
+{
+    return pimpl_name;
+}
+
+uint16_t
+ChannelSocketTest::channel() const
+{
+    return pimpl_channel;
+}
+
+void
+ChannelSocketTest::shutdown()
+{
+    if (!isShutdown_) {
+        isShutdown_ = true;
+        if (!shutdownCb_)
+            shutdownCb_();
+    }
+    cv.notify_all();
+}
+
+std::size_t
+ChannelSocketTest::read(ValueType* buf, std::size_t len, std::error_code& ec)
+{
+    std::lock_guard<std::mutex> lkSockets(mutex);
+    std::size_t size = std::min(len, this->buf.size());
+
+    for (std::size_t i = 0; i < size; ++i)
+        buf[i] = this->buf[i];
+
+    this->buf.erase(this->buf.begin(), this->buf.begin() + size);
+    return size;
+};
+
+std::size_t
+ChannelSocketTest::write(const ValueType* buf, std::size_t len, std::error_code& ec)
+{
+    if (isShutdown_) {
+        ec = std::make_error_code(std::errc::broken_pipe);
+        return -1;
+    }
+    if (auto peer = remote.lock()) {
+        std::vector<uint8_t> bufToSend(buf, buf + len);
+        std::size_t sent = 0;
+        do {
+            std::size_t lenToSend = std::min(static_cast<std::size_t>(UINT16_MAX), len - sent);
+            peer->buf.insert(peer->buf.end(),
+                             bufToSend.begin() + sent,
+                             bufToSend.begin() + sent + lenToSend);
+            sent += lenToSend;
+        } while (sent < len);
+        return sent;
+    }
+    ec = std::make_error_code(std::errc::broken_pipe);
+    return -1;
+}
+
+int
+ChannelSocketTest::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
+{
+    std::unique_lock<std::mutex> lk {mutex};
+    cv.wait_for(lk, timeout, [&] { return !buf.empty() or isShutdown_; });
+    return buf.size();
+}
+
+void
+ChannelSocketTest::setOnRecv(RecvCb&& cb)
+{
+    std::lock_guard<std::mutex> lkSockets(mutex);
+    this->cb = std::move(cb);
+    if (!buf.empty() && cb) {
+        cb(buf.data(), buf.size());
+        buf.clear();
+    }
+}
+
+void
+ChannelSocketTest::onRecv(std::vector<uint8_t>&& pkt)
+{
+    std::lock_guard<std::mutex> lkSockets(mutex);
+    if (cb) {
+        cb(&pkt[0], pkt.size());
+        return;
+    }
+    buf.insert(buf.end(), std::make_move_iterator(pkt.begin()), std::make_move_iterator(pkt.end()));
+    cv.notify_all();
+}
+
+void
+ChannelSocketTest::onReady(ChannelReadyCb&& cb)
+{}
+
+void
+ChannelSocketTest::onShutdown(OnShutdownCb&& cb)
+{
+    shutdownCb_ = std::move(cb);
+    if (isShutdown_) {
+        shutdownCb_();
+    }
+}
+
+void
+ChannelSocketTest::eventLoop()
+{
+    std::error_code ec;
+
+    while (!isShutdown_) {
+        uint8_t buf[IO_BUFFER_SIZE];
+        int size = read(buf, IO_BUFFER_SIZE, ec);
+        if (size < 0) {
+            if (ec)
+                JAMI_ERR("Read error detected: %s", ec.message().c_str());
+            break;
+        }
+
+        if (size != 0) {
+            std::vector<uint8_t> vec(buf, buf + size);
+            onRecv(std::move(vec));
+        }
+    }
+}
 
 ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                              const std::string& name,
