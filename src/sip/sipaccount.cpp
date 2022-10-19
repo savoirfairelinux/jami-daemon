@@ -94,6 +94,8 @@ static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
 static const char* const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
 constexpr const char* const SIPAccount::ACCOUNT_TYPE;
+constexpr const char* USERNAME_KEY = "username";
+constexpr const char* PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
 
 struct ctx
 {
@@ -801,7 +803,7 @@ SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
 
     deviceKey_ = pushDeviceToken;
 
-    if (enabled_)
+    if (config().enabled)
         doUnregister([&](bool /* transport_free */) { doRegister(); });
 }
 
@@ -811,7 +813,7 @@ SIPAccount::pushNotificationReceived(const std::string& from,
 {
     JAMI_WARN("[SIP Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
 
-    if (enabled_)
+    if (config().enabled)
         doUnregister([&](bool /* transport_free */) { doRegister(); });
 }
 
@@ -823,7 +825,7 @@ SIPAccount::doRegister()
         return;
     }
 
-    JAMI_DBG("doRegister %s", hostname_.c_str());
+    JAMI_DEBUG("doRegister {:s}", config_->hostname);
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnpCtrl_) {
@@ -849,7 +851,7 @@ SIPAccount::doRegister1_()
         }
     }
 
-    link_.resolveSrvName(hasServiceRoute() ? getServiceRoute() : hostname_,
+    link_.resolveSrvName(hasServiceRoute() ? getServiceRoute() : config().hostname,
                          tlsEnable_ ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
                          [w = weak()](std::vector<IpAddr> host_ips) {
                              if (auto acc = w.lock()) {
@@ -929,7 +931,7 @@ SIPAccount::doRegister2_()
             setTransport(link_.sipTransportBroker->getTlsTransport(tlsListener_,
                                                                    hostIp_,
                                                                    tlsServerName_.empty()
-                                                                       ? hostname_
+                                                                       ? config().hostname
                                                                        : tlsServerName_));
         } else {
             setTransport(link_.sipTransportBroker->getUdpTransport(bindAddress));
@@ -1090,7 +1092,7 @@ SIPAccount::setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType)
 {
     if (hostIp_) {
         auto ai = &tdata->dest_info;
-        ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
+        ai->name = pj_strdup3(tdata->pool, config().hostname.c_str());
         ai->addr.count = 1;
         ai->addr.entry[0].type = (pjsip_transport_type_e) transportKeyType;
         pj_memcpy(&ai->addr.entry[0].addr, hostIp_.pjPtr(), sizeof(pj_sockaddr));
@@ -1359,10 +1361,10 @@ SIPAccount::userMatch(std::string_view username) const
 bool
 SIPAccount::hostnameMatch(std::string_view hostname) const
 {
-    if (hostname == hostname_)
+    if (hostname == config().hostname)
         return true;
     const auto a = ip_utils::getAddrList(hostname);
-    const auto b = ip_utils::getAddrList(hostname_);
+    const auto b = ip_utils::getAddrList(config().hostname);
     return ip_utils::haveCommonAddr(a, b);
 }
 
@@ -1372,7 +1374,7 @@ SIPAccount::proxyMatch(std::string_view hostname) const
     if (hostname == serviceRoute_)
         return true;
     const auto a = ip_utils::getAddrList(hostname);
-    const auto b = ip_utils::getAddrList(hostname_);
+    const auto b = ip_utils::getAddrList(config().hostname);
     return ip_utils::haveCommonAddr(a, b);
 }
 
@@ -1403,7 +1405,7 @@ SIPAccount::getFromUri() const
 
     // Get login name if username is not specified
     std::string username(username_.empty() ? getLoginName() : username_);
-    std::string hostname(hostname_);
+    std::string hostname(config().hostname);
 
     // UDP does not require the transport specification
     if (transportType_ == PJSIP_TRANSPORT_TLS || transportType_ == PJSIP_TRANSPORT_TLS6) {
@@ -1413,7 +1415,7 @@ SIPAccount::getFromUri() const
         scheme = "sip:";
 
     // Get machine hostname if not provided
-    if (hostname_.empty()) {
+    if (hostname.empty()) {
         hostname = sip_utils::as_view(*pj_gethostname());
     }
 
@@ -1421,8 +1423,8 @@ SIPAccount::getFromUri() const
         hostname = IpAddr(hostname).toString(false, true);
 
     std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
-    if (not displayName_.empty())
-        return "\"" + displayName_ + "\" " + uri;
+    if (not config().displayName.empty())
+        return "\"" + config().displayName + "\" " + uri;
     return uri;
 }
 
@@ -1446,7 +1448,7 @@ SIPAccount::getToUri(const std::string& username) const
 
     // Check if hostname is already specified
     if (username.find('@') == std::string::npos)
-        hostname = hostname_;
+        hostname = config().hostname;
 
     if (not hostname.empty() and IpAddr::isIpv6(hostname))
         hostname = IpAddr(hostname).toString(false, true);
@@ -1473,10 +1475,10 @@ SIPAccount::getServerUri() const
     }
 
     std::string host;
-    if (IpAddr::isIpv6(hostname_))
-        host = IpAddr(hostname_).toString(false, true);
+    if (IpAddr::isIpv6(config().hostname))
+        host = IpAddr(config().hostname).toString(false, true);
     else
-        host = hostname_;
+        host = config().hostname;
 
     return "<" + scheme + host + transport + ">";
 }
@@ -1511,7 +1513,7 @@ SIPAccount::updateContactHeader()
     }
 
     auto contactHdr = printContactHeader(username_,
-                                         displayName_,
+                                         config().displayName,
                                          contactAddress_.toString(false, true),
                                          contactAddress_.getPort(),
                                          PJSIP_TRANSPORT_IS_SECURE(transport_->get()),
@@ -1544,7 +1546,7 @@ SIPAccount::initContactAddress()
     pj_uint16_t port;
 
     // Init the address to the local address.
-    link_.findLocalAddressFromTransport(transport_->get(), transportType, hostname_, address, port);
+    link_.findLocalAddressFromTransport(transport_->get(), transportType, config().hostname, address, port);
 
     if (getUPnPActive() and getUPnPIpAddress()) {
         address = getUPnPIpAddress().toString();
@@ -1800,7 +1802,7 @@ SIPAccount::getTlsSettings() const
 bool
 SIPAccount::isIP2IP() const
 {
-    return hostname_.empty();
+    return config().hostname.empty();
 }
 
 SIPPresence*
@@ -2024,7 +2026,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
      */
     {
         auto tempContact = printContactHeader(username_,
-                                              displayName_,
+                                              config().displayName,
                                               via_addrstr,
                                               rport,
                                               PJSIP_TRANSPORT_IS_SECURE(tp),
@@ -2210,7 +2212,7 @@ SIPAccount::sendMessage(const std::string& to,
 
     /* Initialize Auth header. */
     auto cred = getCredInfo();
-    const_cast<pjsip_cred_info*>(cred)->realm = CONST_PJ_STR(hostname_);
+    const_cast<pjsip_cred_info*>(cred)->realm = CONST_PJ_STR(config().hostname);
     status = pjsip_auth_clt_init(t->auth_sess.get(), link_.getEndpoint(), tdata->pool, 0);
 
     if (status != PJ_SUCCESS) {

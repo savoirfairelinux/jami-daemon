@@ -63,73 +63,21 @@ using namespace std::literals;
 
 namespace jami {
 
-const char* const Account::ALL_CODECS_KEY = "allCodecs";
-const char* const Account::VIDEO_CODEC_ENABLED = "enabled";
-const char* const Account::VIDEO_CODEC_NAME = "name";
-const char* const Account::VIDEO_CODEC_PARAMETERS = "parameters";
-const char* const Account::VIDEO_CODEC_BITRATE = "bitrate";
-const char* const Account::RINGTONE_PATH_KEY = "ringtonePath";
-const char* const Account::RINGTONE_ENABLED_KEY = "ringtoneEnabled";
-const char* const Account::VIDEO_ENABLED_KEY = "videoEnabled";
-const char* const Account::DISPLAY_NAME_KEY = "displayName";
-const char* const Account::ALIAS_KEY = "alias";
-const char* const Account::TYPE_KEY = "type";
-const char* const Account::ID_KEY = "id";
-const char* const Account::USERNAME_KEY = "username";
-const char* const Account::AUTHENTICATION_USERNAME_KEY = "authenticationUsername";
-const char* const Account::PASSWORD_KEY = "password";
-const char* const Account::HOSTNAME_KEY = "hostname";
-const char* const Account::ACCOUNT_ENABLE_KEY = "enable";
-const char* const Account::ACCOUNT_AUTOANSWER_KEY = "autoAnswer";
-const char* const Account::ACCOUNT_READRECEIPT_KEY = "sendReadReceipt";
-const char* const Account::ACCOUNT_ISRENDEZVOUS_KEY = "rendezVous";
-const char* const Account::ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
-const char* const Account::MAILBOX_KEY = "mailbox";
-const char* const Account::USER_AGENT_KEY = "useragent";
-const char* const Account::HAS_CUSTOM_USER_AGENT_KEY = "hasCustomUserAgent";
-const char* const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
-const char* const Account::UPNP_ENABLED_KEY = "upnpEnabled";
-const char* const Account::ACTIVE_CODEC_KEY = "activeCodecs";
-const std::string Account::DEFAULT_USER_AGENT = Account::setDefaultUserAgent();
-const char* const Account::DEFAULT_MODERATORS_KEY = "defaultModerators";
-const char* const Account::LOCAL_MODERATORS_ENABLED_KEY = "localModeratorsEnabled";
-const char* const Account::ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
-const char* const Account::PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
-const char* const Account::PROXY_PUSH_IOS_TOPIC_KEY = "proxyPushiOSTopic";
-
-// For portability, do not specify the absolute file name of the ring
-// tone.  Instead, specify its base name to be looked in
+// For portability, do not specify the absolute file name of the ringtone. 
+// Instead, specify its base name to be looked in
 // JAMI_DATADIR/ringtones/, where JAMI_DATADIR is a preprocessor macro denoting
 // the data directory prefix that must be set at build time.
 constexpr const char* const DEFAULT_RINGTONE_PATH = "default.opus";
+const std::string Account::DEFAULT_USER_AGENT = Account::getDefaultUserAgent();
 
 Account::Account(const std::string& accountID)
     : rand(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
     , accountID_(accountID)
     , username_()
-    , hostname_()
-    , alias_()
-    , enabled_(true)
-    , autoAnswerEnabled_(false)
-    , sendReadReceipt_(true)
-    , isRendezVous_(false)
     , registrationState_(RegistrationState::UNREGISTERED)
     , systemCodecContainer_(getSystemCodecContainer())
     , accountCodecInfoList_()
     , ringtonePath_(DEFAULT_RINGTONE_PATH)
-    , ringtoneEnabled_(true)
-    , displayName_("")
-    , customUserAgent_("")
-    , hasCustomUserAgent_(false)
-    , mailBox_()
-    , upnpEnabled_(true)
-    , localModeratorsEnabled_(true)
-    , allModeratorsEnabled_(true)
-#if defined(__linux__) || defined(WIN32) || defined(__APPLE__)
-    , multiStreamEnabled_(true)
-#else
-    , multiStreamEnabled_(false)
-#endif
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
@@ -149,7 +97,7 @@ Account::updateUpnpController()
 {
     std::lock_guard<std::mutex> lk {upnp_mtx};
 
-    if (not upnpEnabled_ or not isUsable()) {
+    if (not config().upnpEnabled or not isUsable()) {
         upnpCtrl_.reset();
         return;
     }
@@ -211,156 +159,50 @@ Account::loadDefaultCodecs()
 }
 
 void
-Account::serialize(YAML::Emitter& out) const
-{
-    const auto& activeCodecs = fmt::format("{}", fmt::join(getActiveCodecs(MEDIA_ALL), "/"sv));
-
-    out << YAML::Key << ID_KEY << YAML::Value << accountID_;
-    out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
-    out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
-    out << YAML::Key << TYPE_KEY << YAML::Value << getAccountType();
-    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << activeCodecs;
-    out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
-    out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
-    out << YAML::Key << ACCOUNT_READRECEIPT_KEY << YAML::Value << sendReadReceipt_;
-    out << YAML::Key << ACCOUNT_ISRENDEZVOUS_KEY << YAML::Value << isRendezVous_;
-    out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit_;
-    out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
-    out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
-    out << YAML::Key << HAS_CUSTOM_USER_AGENT_KEY << YAML::Value << hasCustomUserAgent_;
-    out << YAML::Key << USER_AGENT_KEY << YAML::Value << customUserAgent_;
-    out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
-    out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
-    out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled_;
-    out << YAML::Key << DEFAULT_MODERATORS_KEY << YAML::Value << string_join(defaultModerators_);
-    out << YAML::Key << LOCAL_MODERATORS_ENABLED_KEY << YAML::Value << localModeratorsEnabled_;
-    out << YAML::Key << ALL_MODERATORS_ENABLED_KEY << YAML::Value << allModeratorsEnabled_;
-    out << YAML::Key << PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
-    out << YAML::Key << PROXY_PUSH_IOS_TOPIC_KEY << YAML::Value << notificationTopic_;
-}
-
-void
-Account::unserialize(const YAML::Node& node)
-{
-    using yaml_utils::parseValue;
-    using yaml_utils::parseValueOptional;
-
-    parseValue(node, ALIAS_KEY, alias_);
-    parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
-    parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
-    parseValueOptional(node, ACCOUNT_READRECEIPT_KEY, sendReadReceipt_);
-    parseValueOptional(node, ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous_);
-    parseValue(node, ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit_);
-    // parseValue(node, PASSWORD_KEY, password_);
-
-    parseValue(node, MAILBOX_KEY, mailBox_);
-
-    std::string activeCodecs;
-    if (parseValueOptional(node, ACTIVE_CODEC_KEY, activeCodecs))
-        setActiveCodecs(split_string_to_unsigned(activeCodecs, '/'));
-    else {
-        std::string allCodecs;
-        if (parseValueOptional(node, ALL_CODECS_KEY, allCodecs)) {
-            JAMI_WARN("Converting deprecated codec list");
-            auto list = convertIdToAVId(split_string_to_unsigned(allCodecs, '/'));
-            auto codec = searchCodecByName("H265", MEDIA_ALL);
-            // set H265 as first active codec if found
-            if (codec)
-                list.emplace(list.begin(), codec->systemCodecInfo.id);
-            setActiveCodecs(list);
-            runOnMainThread([id = getAccountID()] {
-                if (auto sthis = Manager::instance().getAccount(id))
-                    Manager::instance().saveConfig(sthis);
-            });
-        }
-    }
-
-    parseValue(node, DISPLAY_NAME_KEY, displayName_);
-    parseValue(node, HOSTNAME_KEY, hostname_);
-
-    parseValue(node, HAS_CUSTOM_USER_AGENT_KEY, hasCustomUserAgent_);
-    parseValue(node, USER_AGENT_KEY, customUserAgent_);
-    parseValue(node, RINGTONE_PATH_KEY, ringtonePath_);
-    parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
-    if (ringtonePath_.empty()) {
+Account::loadConfig() {
+    deviceKey_ = config_->deviceKey;
+    notificationTopic_ = config_->notificationTopic;
+    if (config_->ringtonePath.empty()) {
         ringtonePath_ = DEFAULT_RINGTONE_PATH;
     } else {
         // If the user defined a custom ringtone, the file may not exists
         // In this case, fallback on the default ringtone path (this will be set during the next
         // setAccountDetails)
-        auto pathRingtone = fmt::format("{}/{}/{}", JAMI_DATADIR, RINGDIR, ringtonePath_);
+        auto pathRingtone = fmt::format("{}/{}/{}", JAMI_DATADIR, RINGDIR, config_->ringtonePath);
         if (!fileutils::isFile(ringtonePath_) && !fileutils::isFile(pathRingtone)) {
             JAMI_WARN("Ringtone %s is not a valid file", pathRingtone.c_str());
             ringtonePath_ = DEFAULT_RINGTONE_PATH;
         }
     }
-
-    parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
     updateUpnpController();
+}
 
-    std::string defMod;
-    parseValueOptional(node, DEFAULT_MODERATORS_KEY, defMod);
-    defaultModerators_ = string_split_set(defMod);
-    parseValueOptional(node, LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled_);
-    parseValueOptional(node, ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled_);
-    parseValueOptional(node, PROXY_PUSH_TOKEN_KEY, deviceKey_);
-    parseValueOptional(node, PROXY_PUSH_IOS_TOPIC_KEY, notificationTopic_);
+void
+Account::serialize(YAML::Emitter& out) const
+{
+    config_->serialize(out);
+}
+
+void
+Account::unserialize(const YAML::Node& node)
+{
+    auto config = std::make_unique<AccountConfig>();
+    config->unserialize(node);
+    config_ = std::move(config);
+    loadConfig();
 }
 
 void
 Account::setAccountDetails(const std::map<std::string, std::string>& details)
 {
-    // Account setting common to any account type
-    parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias_);
-    parseString(details, Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled_);
-    parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
-    parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_);
-    parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
-    parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
-    parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
-    if (ringtonePath_.empty()) {
-        ringtonePath_ = DEFAULT_RINGTONE_PATH;
-    }
-    parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
-    if (hasCustomUserAgent_)
-        parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_);
-
-    parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
-    updateUpnpController();
-
-    std::string defMod;
-    parseString(details, Conf::CONFIG_DEFAULT_MODERATORS, defMod);
-    defaultModerators_ = string_split_set(defMod);
-    parseBool(details, Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled_);
-    parseBool(details, Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled_);
+    config_->fromMap(details);
+    loadConfig();
 }
 
 std::map<std::string, std::string>
 Account::getAccountDetails() const
 {
-    return {{Conf::CONFIG_ACCOUNT_ALIAS, alias_},
-            {Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName_},
-            {Conf::CONFIG_ACCOUNT_ENABLE, enabled_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_ACCOUNT_TYPE, getAccountType()},
-            {Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_},
-            {Conf::CONFIG_ACCOUNT_USERNAME, username_},
-            {Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_},
-            {Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_},
-            {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_ ? TRUE_STR : FALSE_STR},
-            {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit_)},
-            {Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_RINGTONE_PATH, ringtonePath_},
-            {Conf::CONFIG_UPNP_ENABLED, upnpEnabled_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_DEFAULT_MODERATORS, string_join(defaultModerators_)},
-            {Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled_ ? TRUE_STR : FALSE_STR}};
+    return config_->toMap();
 }
 
 std::map<std::string, std::string>
@@ -670,36 +512,25 @@ Account::getActiveAccountCodecInfoList(MediaType mediaType) const
 const std::string&
 Account::getUserAgentName()
 {
-    if (hasCustomUserAgent_ and not customUserAgent_.empty())
-        return customUserAgent_;
-    return DEFAULT_USER_AGENT;
+    return config_->customUserAgent.empty() ? DEFAULT_USER_AGENT : config_->customUserAgent;
 }
 
 std::string
-Account::setDefaultUserAgent()
+Account::getDefaultUserAgent()
 {
-    // Build the default user-agent string
-    std::string defaultUA;
-    defaultUA.append(PACKAGE_NAME);
-    defaultUA.append(" ");
-    defaultUA.append(DRing::version());
-    defaultUA.append(" (");
-    defaultUA.append(DRing::platform());
-    defaultUA.append(")");
-
-    return defaultUA;
+    return fmt::format("{:s} {:s} ({:s})", PACKAGE_NAME, DRing::version(), DRing::platform());
 }
 
 void
 Account::addDefaultModerator(const std::string& uri)
 {
-    defaultModerators_.insert(uri);
+    config_->defaultModerators.insert(uri);
 }
 
 void
 Account::removeDefaultModerator(const std::string& uri)
 {
-    defaultModerators_.erase(uri);
+    config_->defaultModerators.erase(uri);
 }
 
 bool

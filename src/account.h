@@ -19,9 +19,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-
-#ifndef ACCOUNT_H
-#define ACCOUNT_H
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -39,6 +37,7 @@
 #include "logger.h"
 #include "compiler_intrinsics.h" // include the "UNUSED" macro
 #include "call_set.h"
+#include "account_config.h"
 
 #include <functional>
 #include <string>
@@ -115,7 +114,7 @@ public:
     /**
      * Load the settings for this account.
      */
-    virtual void loadConfig() = 0;
+    virtual void loadConfig();
 
     virtual void serialize(YAML::Emitter& out) const;
     virtual void unserialize(const YAML::Node& node);
@@ -209,9 +208,7 @@ public:
      * Tell if the account is enable or not.
      * @return true if enabled, false otherwise
      */
-    bool isEnabled() const noexcept { return enabled_; }
-
-    void setEnabled(bool enable) noexcept { enabled_ = enable; }
+    bool isEnabled() const noexcept { return config().enabled; }
 
     /**
      * Tell if the account is activated
@@ -221,10 +218,14 @@ public:
 
     void setActive(bool active) noexcept { active_ = active; }
 
-    bool isUsable() const noexcept { return enabled_ and active_; }
+    bool isUsable() const noexcept { return config().enabled and active_; }
 
-    void enableVideo(bool enable) { videoEnabled_ = enable; }
-    bool isVideoEnabled() const noexcept { return videoEnabled_; }
+    const AccountConfig& config() const {
+        if (config_) return *config_;
+        else throw std::runtime_error("Account doesn't have a configuration");
+    }
+
+    bool isVideoEnabled() const noexcept { return config().videoEnabled; }
 
     /**
      * Set the registration state of the specified link
@@ -236,13 +237,8 @@ public:
 
     /* They should be treated like macro definitions by the C++ compiler */
     const std::string& getUsername() const { return username_; }
-
-    const std::string& getHostname() const { return hostname_; }
-    void setHostname(const std::string& hostname) { hostname_ = hostname; }
-
-    const std::string& getAlias() const { return alias_; }
-
-    void setAlias(const std::string& alias) { alias_ = alias; }
+    const std::string& getHostname() const { return config().hostname; }
+    const std::string& getAlias() const { return config().alias; }
 
     static std::vector<unsigned> getDefaultCodecsId();
     static std::map<std::string, std::string> getDefaultCodecDetails(const unsigned& codecId);
@@ -263,25 +259,14 @@ public:
         MediaType mediaType) const;
     std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
 
-    std::string getRingtonePath() const { return ringtonePath_; }
+    std::string getRingtonePath() const { return config().ringtonePath; }
+    bool getRingtoneEnabled() const { return config().ringtoneEnabled; }
+    std::string getDisplayName() const { return config().displayName; }
+    std::string getMailBox() const { return config().mailbox; }
 
-    void setRingtonePath(const std::string& path) { ringtonePath_ = path; }
-
-    bool getRingtoneEnabled() const { return ringtoneEnabled_; }
-    void setRingtoneEnabled(bool enable) { ringtoneEnabled_ = enable; }
-
-    std::string getDisplayName() const { return displayName_; }
-    void setDisplayName(const std::string& name) { displayName_ = name; }
-
-    std::string getMailBox() const { return mailBox_; }
-
-    void setMailBox(const std::string& mb) { mailBox_ = mb; }
-
-    bool isRendezVous() const { return isRendezVous_; }
-
-    bool isAutoAnswerEnabled() const { return autoAnswerEnabled_; }
-
-    bool isReadReceiptEnabled() const { return sendReadReceipt_; }
+    bool isRendezVous() const { return config().isRendezVous; }
+    bool isAutoAnswerEnabled() const { return config().autoAnswerEnabled; }
+    bool isReadReceiptEnabled() const { return config().sendReadReceipt; }
 
     static const char* const VIDEO_CODEC_ENABLED;
     static const char* const VIDEO_CODEC_NAME;
@@ -333,26 +318,20 @@ public:
      */
     const std::string& getUserAgentName();
 
-    std::set<std::string> getDefaultModerators() const { return defaultModerators_; }
+    std::set<std::string> getDefaultModerators() const { return config().defaultModerators; }
 
     void addDefaultModerator(const std::string& peerURI);
     void removeDefaultModerator(const std::string& peerURI);
 
-    bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_; }
-    void enableLocalModerators(bool isModEnabled) { localModeratorsEnabled_ = isModEnabled; }
-    bool isAllModerators() const { return allModeratorsEnabled_; }
-    void setAllModerators(bool isAllModeratorEnabled)
-    {
-        allModeratorsEnabled_ = isAllModeratorEnabled;
-    }
+    bool isLocalModeratorsEnabled() const { return config().localModeratorsEnabled; }
+    bool isAllModerators() const { return config().allModeratorsEnabled; }
 
     // Enable/disable ICE for media
-    bool isIceForMediaEnabled() const { return iceForMediaEnabled_; }
-    void enableIceForMedia(bool enable) { iceForMediaEnabled_ = enable; }
+    bool isIceForMediaEnabled() const { return config().iceForMediaEnabled; }
 
     // Enable/disable generation of empty offers
-    bool isEmptyOffersEnabled() const { return emptyOffersEnabled_; }
-    void enableEmptyOffers(bool enable) { emptyOffersEnabled_ = enable; }
+    [[deprecated]]
+    bool isEmptyOffersEnabled() const { return false; }
 
     // Check if a Daemon version (typically peer's version) satisfies the
     // minimum required version. This check is typically used to disable a
@@ -373,8 +352,7 @@ public:
     // The current version is able to correctly parse both formats.
     // This feature is needed for backward compatiblity, and should be removed
     // once the  backward compatibility is no more required.
-    bool isIceCompIdRfc5245Compliant() const { return iceCompIdRfc5245Compliant_; }
-    void enableIceCompIdRfc5245Compliance(bool enable) { iceCompIdRfc5245Compliant_ = enable; }
+    bool isIceCompIdRfc5245Compliant() const { return config().iceCompIdRfc5245Compliant; }
 
     std::shared_ptr<Call> getCall(const std::string& callId) const
     {
@@ -440,39 +418,9 @@ protected:
         i = atoi(iter->second.c_str());
     }
 
-    friend class ConfigurationTest;
+    std::unique_ptr<AccountConfig> config_ {};
 
-    // General configuration keys for accounts
-    static const char* const ALL_CODECS_KEY;
-    static const char* const RINGTONE_PATH_KEY;
-    static const char* const RINGTONE_ENABLED_KEY;
-    static const char* const VIDEO_ENABLED_KEY;
-    static const char* const DISPLAY_NAME_KEY;
-    static const char* const ALIAS_KEY;
-    static const char* const TYPE_KEY;
-    static const char* const ID_KEY;
-    static const char* const USERNAME_KEY;
-    static const char* const AUTHENTICATION_USERNAME_KEY;
-    static const char* const PASSWORD_KEY;
-    static const char* const HOSTNAME_KEY;
-    static const char* const ACCOUNT_ENABLE_KEY;
-    static const char* const ACCOUNT_AUTOANSWER_KEY;
-    static const char* const ACCOUNT_READRECEIPT_KEY;
-    static const char* const ACCOUNT_ISRENDEZVOUS_KEY;
-    static const char* const ACCOUNT_ACTIVE_CALL_LIMIT_KEY;
-    static const char* const MAILBOX_KEY;
-    static const char* const USER_AGENT_KEY;
-    static const char* const HAS_CUSTOM_USER_AGENT_KEY;
-    static const char* const PRESENCE_MODULE_ENABLED_KEY;
-    static const char* const UPNP_ENABLED_KEY;
-    static const char* const PROXY_ENABLED_KEY;
-    static const char* const PROXY_SERVER_KEY;
-    static const char* const PROXY_PUSH_TOKEN_KEY;
-    static const char* const PROXY_PUSH_IOS_TOPIC_KEY;
-    static const char* const ACTIVE_CODEC_KEY;
-    static const char* const DEFAULT_MODERATORS_KEY;
-    static const char* const LOCAL_MODERATORS_ENABLED_KEY;
-    static const char* const ALL_MODERATORS_ENABLED_KEY;
+    friend class ConfigurationTest;
 
     static const std::string DEFAULT_USER_AGENT;
 
@@ -481,7 +429,7 @@ protected:
     /**
      * Build the user-agent string
      */
-    static std::string setDefaultUserAgent();
+    static std::string getDefaultUserAgent();
 
     /**
      * Account ID are assign in constructor and shall not changed
@@ -496,46 +444,11 @@ protected:
     std::string username_;
 
     /**
-     * Account login information: hostname
-     */
-    std::string hostname_;
-
-    /**
-     * Account login information: Alias
-     */
-    std::string alias_;
-
-    /**
-     * Tells if the account is enabled.
-     * This implies the link will be initialized on startup.
-     * Modified by the configuration (key: ENABLED)
-     */
-    bool enabled_;
-
-    /**
      * Tells if the account is active now.
      * This allows doRegister to be called.
      * When an account is unactivated, doUnregister must be called.
      */
     bool active_ {true};
-
-    /* If true, automatically answer calls to this account */
-    bool autoAnswerEnabled_;
-
-    // If true, send Displayed status (and emit to the client)
-    bool sendReadReceipt_;
-
-    /* If true mix calls into a conference */
-    bool isRendezVous_;
-
-    /**
-     * The number of concurrent calls for the account
-     * -1: Unlimited
-     *  0: Do not disturb
-     *  1: Single call
-     *  +: Multi line
-     */
-    int activeCallLimit_ {-1};
 
     /*
      * The general, protocol neutral registration
@@ -558,54 +471,10 @@ protected:
     std::string ringtonePath_;
 
     /**
-     * Allows user to temporarily disable video calling
-     */
-
-    bool videoEnabled_ = true;
-
-    /**
-     * Play ringtone when receiving a call
-     */
-    bool ringtoneEnabled_;
-
-    /**
-     * Display name when calling
-     */
-    std::string displayName_;
-
-    /**
-     * User-agent used for registration
-     */
-    std::string customUserAgent_;
-
-    //  true if user has overridden default
-    bool hasCustomUserAgent_;
-
-    /**
-     * Account mail box
-     */
-    std::string mailBox_;
-
-    /**
      * UPnP IGD controller and the mutex to access it
      */
-    bool upnpEnabled_;
     mutable std::mutex upnp_mtx {};
     std::shared_ptr<jami::upnp::Controller> upnpCtrl_;
-
-    std::set<std::string> defaultModerators_ {};
-    bool localModeratorsEnabled_;
-    bool allModeratorsEnabled_;
-
-    bool multiStreamEnabled_ {false};
-    bool iceForMediaEnabled_ {true};
-    bool iceCompIdRfc5245Compliant_ {false};
-
-    /**
-     * Allow generating empty offers. Mainly to validate proper
-     * handling of incoming empty offers.
-     */
-    bool emptyOffersEnabled_ {false};
 
     /**
      * Device push notification token.
@@ -636,4 +505,3 @@ operator<<(std::ostream& os, const Account& acc)
 
 } // namespace jami
 
-#endif
