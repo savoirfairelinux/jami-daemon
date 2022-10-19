@@ -32,6 +32,8 @@
 #include "common.h"
 #include "media_const.h"
 #include "video/sinkclient.h"
+#include "sip/sipcall.h"
+#include "sip/siptransport.h"
 
 using namespace DRing::Account;
 using namespace std::literals::chrono_literals;
@@ -99,6 +101,8 @@ private:
     void testHostAddRmSecondVideo();
     void testParticipantAddRmSecondVideo();
     void testPropagateRecording();
+    void testBrokenParticipantAudioAndVideo();
+    void testBrokenParticipantAudioOnly();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -119,6 +123,8 @@ private:
     CPPUNIT_TEST(testHostAddRmSecondVideo);
     CPPUNIT_TEST(testParticipantAddRmSecondVideo);
     CPPUNIT_TEST(testPropagateRecording);
+    CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
+    CPPUNIT_TEST(testBrokenParticipantAudioOnly);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -140,7 +146,7 @@ private:
     std::condition_variable cv;
 
     void registerSignalHandlers();
-    void startConference(bool audioOnly = false);
+    void startConference(bool audioOnly = false, bool addDavi = false);
     void hangupConference();
 };
 
@@ -272,13 +278,15 @@ ConferenceTest::registerSignalHandlers()
 }
 
 void
-ConferenceTest::startConference(bool audioOnly)
+ConferenceTest::startConference(bool audioOnly, bool addDavi)
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
     auto bobUri = bobAccount->getUsername();
     auto carlaUri = carlaAccount->getUsername();
+    auto daviUri = daviAccount->getUsername();
 
     std::vector<std::map<std::string, std::string>> mediaList;
     if (audioOnly) {
@@ -313,6 +321,16 @@ ConferenceTest::startConference(bool audioOnly)
         return !confId.empty() && confChanged && !carlaCall.device.empty()
                && !bobCall.device.empty();
     }));
+
+    if (addDavi) {
+        JAMI_INFO("Start call between Alice and Davi");
+        auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, mediaList);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+        Manager::instance().answerCall(daviId, daviCall.callId);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+        Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    }
 }
 
 void
@@ -322,6 +340,9 @@ ConferenceTest::hangupConference()
     Manager::instance().hangupConference(aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
         return bobCall.state == "OVER" && carlaCall.state == "OVER" && confId.empty();
+    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
+        return daviCall.callId.empty() ? true : daviCall.state == "OVER";
     }));
 }
 
@@ -474,15 +495,7 @@ ConferenceTest::testMuteStatusAfterRemove()
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
     auto daviUri = daviAccount->getUsername();
 
-    startConference();
-
-    JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
-    Manager::instance().answerCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    startConference(false, true);
 
     DRing::muteStream(aliceId, confId, daviUri, daviCall.device, daviCall.streamId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.moderatorMuted.load(); }));
@@ -518,23 +531,11 @@ ConferenceTest::testActiveStatusAfterRemove()
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
     auto daviUri = daviAccount->getUsername();
 
-    startConference();
+    startConference(false, true);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
     defaultAudio.label_ = "audio_0";
     defaultAudio.enabled_ = true;
-
-    JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = DRing::placeCallWithMedia(aliceId,
-                                           daviUri,
-                                           MediaAttribute::mediaAttributesToMediaMaps(
-                                               {defaultAudio}));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
-    Manager::instance().answerCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
-
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
 
     DRing::setActiveStream(aliceId, confId, daviUri, daviCall.device, daviCall.streamId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.active.load(); }));
@@ -575,7 +576,7 @@ ConferenceTest::testHandsUp()
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
     auto daviUri = daviAccount->getUsername();
 
-    startConference();
+    startConference(false, true);
 
     JAMI_INFO("Play with raise hand");
     DRing::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, true);
@@ -583,13 +584,6 @@ ConferenceTest::testHandsUp()
 
     DRing::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand.load(); }));
-
-    JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
-    Manager::instance().answerCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
 
     // Remove davi from moderators
     DRing::setModerator(aliceId, confId, daviUri, false);
@@ -732,15 +726,7 @@ ConferenceTest::testHangup()
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
     auto daviUri = daviAccount->getUsername();
 
-    startConference();
-
-    JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
-    Manager::instance().answerCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    startConference(false, true);
 
     DRing::hangupParticipant(carlaId, confId, daviUri, daviCall.device); // Unauthorized
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
@@ -913,6 +899,58 @@ ConferenceTest::testPropagateRecording()
 
     DRing::toggleRecording(aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !hostRecording.load(); }));
+
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testBrokenParticipantAudioAndVideo()
+{
+    registerSignalHandlers();
+
+    // Start conference with four participants
+    startConference(false, true);
+    auto expectedNumberOfParticipants = 4;
+
+    // Check participants number
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+
+    // Crash participant
+    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
+    auto call2Crash = std::dynamic_pointer_cast<SIPCall>(daviAccount->getCall(daviCall.callId));
+    pjsip_transport_shutdown(call2Crash->getTransport()->get());
+
+    // Check participants number
+    // It should have one less participant than in the conference start
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testBrokenParticipantAudioOnly()
+{
+    registerSignalHandlers();
+
+    // Start conference with four participants
+    startConference(true, true);
+    auto expectedNumberOfParticipants = 4;
+
+    // Check participants number
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+
+    // Crash participant
+    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
+    auto call2Crash = std::dynamic_pointer_cast<SIPCall>(daviAccount->getCall(daviCall.callId));
+    pjsip_transport_shutdown(call2Crash->getTransport()->get());
+
+    // Check participants number
+    // It should have one less participant than in the conference start
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
 
