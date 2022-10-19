@@ -984,7 +984,7 @@ TransferManager::sendFile(const std::string& path,
             // If the transfer is already in progress (aka not finished)
             // we do not need to send the request and can ignore it.
             if (!it->second->isFinished()) {
-                JAMI_DBG("Can't send request for %lu. Already sending the file", tid);
+                JAMI_DEBUG("Can't send request for {}. Already sending the file", tid);
                 return {};
             }
             pimpl_->oMap_.erase(it);
@@ -1024,7 +1024,7 @@ TransferManager::acceptFile(const DRing::DataTransferId& id, const std::string& 
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     auto it = pimpl_->iMap_.find(id);
     if (it == pimpl_->iMap_.end()) {
-        JAMI_WARN("Cannot accept %lu, request not found", id);
+        JAMI_WARNING("Cannot accept {:d}, request not found", id);
         return false;
     }
     it->second->accept(path, 0);

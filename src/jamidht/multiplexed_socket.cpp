@@ -651,15 +651,15 @@ MultiplexedSocket::monitor() const
     if (!cert || !cert->issuer)
         return;
     auto userUri = cert->issuer->getId().toString();
-    JAMI_DBG("- Socket with device: %s - account: %s", deviceId().to_c_str(), userUri.c_str());
+    JAMI_DEBUG("- Socket with device: {:s} - account: {:s}", deviceId().to_c_str(), userUri);
     auto now = clock::now();
-    JAMI_DBG("- Duration: %lu",
-             std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_).count());
+    JAMI_DEBUG("- Duration: {}",
+             std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_));
     pimpl_->endpoint->monitor();
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (const auto& [_, channel] : pimpl_->sockets) {
         if (channel)
-            JAMI_DBG("\t\t- Channel with name %s", channel->name().c_str());
+            JAMI_DEBUG("\t\t- Channel with name {:s}", channel->name());
     }
 }
 

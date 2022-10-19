@@ -382,7 +382,7 @@ JamiAccount::newIncomingCall(const std::string& from,
                              const std::vector<DRing::MediaMap>& mediaList,
                              const std::shared_ptr<SipTransport>& sipTransp)
 {
-    JAMI_DBG("New incoming call from %s with %lu media", from.c_str(), mediaList.size());
+    JAMI_DEBUG("New incoming call from {:s} with {:d} media", from, mediaList.size());
 
     if (sipTransp) {
         std::unique_lock<std::mutex> connLock(sipConnsMtx_);

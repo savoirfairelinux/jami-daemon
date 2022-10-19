@@ -912,7 +912,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         };
 
         ice_config.tcpEnable = true;
-        ice_config.onInitDone = [w, req, deviceId, eraseInfo](bool ok) {
+        ice_config.onInitDone = [w, req, eraseInfo](bool ok) {
             auto shared = w.lock();
             if (!shared)
                 return;
@@ -932,7 +932,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 });
         };
 
-        ice_config.onNegoDone = [w, req, eraseInfo, deviceId](bool ok) {
+        ice_config.onNegoDone = [w, req, eraseInfo](bool ok) {
             auto shared = w.lock();
             if (!shared)
                 return;

@@ -1848,9 +1848,9 @@ Manager::incomingCall(const std::string& accountId, Call& call)
         JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
     }
 
-    JAMI_INFO("Incoming call %s on account %s with %lu media",
-              call.getCallId().c_str(),
-              accountId.c_str(),
+    JAMI_DEBUG("Incoming call {:s} on account {:s} with {:d} media",
+              call.getCallId(),
+              accountId,
               mediaList.size());
 
     // Report the call using new API.
