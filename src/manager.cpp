@@ -2909,7 +2909,7 @@ Manager::sendRegister(const std::string& accountID, bool enable)
     if (!acc)
         return;
 
-    acc->setEnabled(enable);
+    // acc->setEnabled(enable);
     acc->loadConfig();
 
     saveConfig(acc);
@@ -3219,7 +3219,7 @@ Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
         JAMI_ERR("Fail to set local moderators, account %s not found", accountID.c_str());
         return;
     }
-    acc->enableLocalModerators(isModEnabled);
+   //acc->enableLocalModerators(isModEnabled);
     saveConfig(acc);
 }
 
@@ -3242,7 +3242,7 @@ Manager::setAllModerators(const std::string& accountID, bool allModerators)
         JAMI_ERR("Fail to set all moderators, account %s not found", accountID.c_str());
         return;
     }
-    acc->setAllModerators(allModerators);
+    //acc->setAllModerators(allModerators);
     saveConfig(acc);
 }
 
