@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0275cd26_137ebaed",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 497,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-19T17:27:20Z",
+      "side": 1,
+      "message": "Note that a test should be able to check this regression ;)",
+      "range": {
+        "startLine": 497,
+        "startChar": 27,
+        "endLine": 497,
+        "endChar": 52
+      },
+      "revId": "a2a645fe9bf94bbb3674e5e80216fc36c1296d6e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
