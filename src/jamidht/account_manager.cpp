@@ -674,7 +674,7 @@ AccountManager::forEachDevice(
         void ended()
         {
             if (remaining == 0 && onEnd) {
-                JAMI_DBG("Found %lu devices", treatedDevices.size());
+                JAMI_DEBUG("Found {:d} devices", treatedDevices.size());
                 onEnd(not treatedDevices.empty());
                 onDevice = {};
                 onEnd = {};
