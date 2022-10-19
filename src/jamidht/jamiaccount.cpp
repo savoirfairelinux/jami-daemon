@@ -1314,7 +1314,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     }
                     auto displayNameIt = config.find(DRing::Account::ConfProperties::DISPLAYNAME);
                     if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
-                        displayName_ = displayNameIt->second;
+                        config_->displayName = displayNameIt->second;
                     }
 
                     receipt_ = std::move(receipt);
@@ -1329,9 +1329,9 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         details[key] = value;
                     setAccountDetails(details);
 
-                    if (not info.photo.empty() or not displayName_.empty())
+                    if (not info.photo.empty() or not config_->displayName.empty())
                         emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
-                                                                                       displayName_,
+                                                                                       config_->displayName,
                                                                                        info.photo);
                     setRegistrationState(RegistrationState::UNREGISTERED);
                     saveConfig();
@@ -1383,8 +1383,8 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parsePath(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_, idPath_);
     parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
 
-    if (hostname_.empty())
-        hostname_ = DHT_DEFAULT_BOOTSTRAP;
+    if (config_->hostname.empty())
+        config_->hostname = DHT_DEFAULT_BOOTSTRAP;
     parseString(details, DRing::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl_);
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtDefaultPort_);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
@@ -1757,13 +1757,11 @@ std::vector<std::string>
 JamiAccount::loadBootstrap() const
 {
     std::vector<std::string> bootstrap;
-    if (!hostname_.empty()) {
-        std::string_view stream(hostname_), node_addr;
-        while (jami::getline(stream, node_addr, ';'))
-            bootstrap.emplace_back(node_addr);
-        for (const auto& b : bootstrap)
-            JAMI_DBG("[Account %s] Bootstrap node: %s", getAccountID().c_str(), b.c_str());
-    }
+    std::string_view stream(config().hostname), node_addr;
+    while (jami::getline(stream, node_addr, ';'))
+        bootstrap.emplace_back(node_addr);
+    for (const auto& b : bootstrap)
+        JAMI_DBG("[Account %s] Bootstrap node: %s", getAccountID().c_str(), b.c_str());
     return bootstrap;
 }
 
@@ -2857,8 +2855,8 @@ std::string
 JamiAccount::getFromUri() const
 {
     const std::string uri = "<sip:" + accountManager_->getInfo()->accountId + "@ring.dht>";
-    if (not displayName_.empty())
-        return "\"" + displayName_ + "\" " + uri;
+    if (not config().displayName.empty())
+        return "\"" + config().displayName + "\" " + uri;
     return uri;
 }
 
@@ -2970,7 +2968,7 @@ JamiAccount::getContactHeader(const std::shared_ptr<SipTransport>& sipTransport)
         auto address = td->self->getLocalAddress().toString(true);
         bool reliable = transport->flag & PJSIP_TRANSPORT_RELIABLE;
         return fmt::format("\"{}\" <sips:{}{}{};transport={}>",
-                           displayName_,
+                           config().displayName,
                            id_.second->getId().toString(),
                            address.empty() ? "" : "@",
                            address,
@@ -2978,7 +2976,7 @@ JamiAccount::getContactHeader(const std::shared_ptr<SipTransport>& sipTransport)
     } else {
         JAMI_ERR("getContactHeader: no SIP transport provided");
         return fmt::format("\"{}\" <sips:{}@ring.dht>",
-                           displayName_,
+                           config().displayName,
                            id_.second->getId().toString());
     }
 }
@@ -3560,7 +3558,7 @@ JamiAccount::startAccountPublish()
 {
     AccountPeerInfo info_pub;
     info_pub.accountId = dht::InfoHash(accountManager_->getInfo()->accountId);
-    info_pub.displayName = displayName_;
+    info_pub.displayName = config().displayName;
     peerDiscovery_->startPublish<AccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE, info_pub);
 }
 
