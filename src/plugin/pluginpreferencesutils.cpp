@@ -163,7 +163,7 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
         if (auto envLang = std::getenv("JAMI_LANG"))
             lang = envLang;
         else
-            JAMI_ERR() << "Error getting JAMI_LANG env, trying to get system language";
+            JAMI_INFO() << "Error getting JAMI_LANG env, trying to get system language";
         // If language preference is empty, try to get from the system.
         if (lang.empty()) {
 #ifdef WIN32
@@ -182,9 +182,22 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
                 lang.append(utf8Buffer);
                 string_replace(lang, "-", "_");
             }
+            // Even though we default to the system variable in windows, technically this
+            // part of the code should not be reached because the client-qt must define that
+            // variable and we cannot run the client and the daemon in diferent processes in Windows.
 #else
-            // For Android this should not work since std::locale is not supported by the NDK.
-            lang = std::locale("").name();
+            // The same way described in the comment just above, the android should not reach this
+            // part of the code given the client-android must define "JAMI_LANG" system variable.
+            // And even if this part is reached, it should not work since std::locale is not
+            // supported by the NDK.
+
+            // LC_COLLATE is used to grab the locale for the case when the system user has set different
+            // values for the preferred Language and Format.
+            lang = setlocale(LC_COLLATE, "");
+            // We set the environment to avoid checking from system everytime.
+            // This is the case when running daemon and client in different processes
+            // like with dbus.
+            setenv("JAMI_LANG", lang.c_str(), 1);
 #endif // WIN32
         }
         auto locales = getLocales(rootPath, std::string(string_remove_suffix(lang, '.')));
