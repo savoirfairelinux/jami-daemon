@@ -577,7 +577,7 @@ ArchiveAccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
     }
 
     // Sync known devices
-    JAMI_DBG("[Contacts] received device sync data (%lu devices, %lu contacts)",
+    JAMI_DEBUG("[Contacts] received device sync data ({:d} devices, {:d} contacts)",
              sync.devices_known.size() + sync.devices.size(),
              sync.peers.size());
     for (const auto& d : sync.devices_known) {
