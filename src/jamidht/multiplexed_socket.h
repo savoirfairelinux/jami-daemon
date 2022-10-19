@@ -175,22 +175,79 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
-/**
- * Represents a channel of the multiplexed socket (channel, name)
- */
-class ChannelSocket : public GenericSocket<uint8_t>
+class ChannelSocketInterface : public GenericSocket<uint8_t>
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
+
+    virtual DeviceId deviceId() const;
+    virtual std::string name() const;
+    virtual uint16_t channel() const;
+    /**
+     * Triggered when a specific channel is ready
+     * Used by ConnectionManager::connectDevice()
+     */
+    virtual void onReady(ChannelReadyCb&& cb);
+    /**
+     * Will trigger that callback when shutdown() is called
+     */
+    virtual void onShutdown(OnShutdownCb&& cb);
+
+    virtual void onRecv(std::vector<uint8_t>&& pkt);
+};
+
+#ifdef ENABLE_TESTS
+class ChannelSocketTest : public ChannelSocketInterface
+{
+    ChannelSocketTest(const DeviceId& deviceId, const std::string& name, const uint16_t& channel);
+    ~ChannelSocketTest();
+
+    void setPeer(std::weak_ptr<ChannelSocketTest>& remote);
+
+    DeviceId deviceId() const override; // TODO get from constructor
+    std::string name() const override;  // TODO get from constructor
+    uint16_t channel() const override;  // TODO get from constructor
+
+    void shutdown() override; // TODO: I guess nothing needed for now
+
+    std::size_t read(ValueType* buf,
+                     std::size_t len,
+                     std::error_code& ec) override; // TODO read from a buffer
+    std::size_t write(const ValueType* buf,
+                      std::size_t len,
+                      std::error_code& ec) override; // TODO write in peer buffer
+    int waitForData(std::chrono::milliseconds timeout,
+                    std::error_code&) const override; // TODO wait that buffer is not empty
+    void setOnRecv(RecvCb&&) override;                // TODO check ChannelSocket
+    void onRecv(std::vector<uint8_t>&& pkt) override; // TODO trigger when data are received
+
+    /**
+     * Triggered when a specific channel is ready
+     * Used by ConnectionManager::connectDevice()
+     */
+    void onReady(ChannelReadyCb&& cb) override; // TODO probably unused?
+    /**
+     * Will trigger that callback when shutdown() is called
+     */
+    void onShutdown(OnShutdownCb&& cb) override; // TODO probably unused?
+};
+#endif
+
+/**
+ * Represents a channel of the multiplexed socket (channel, name)
+ */
+class ChannelSocket : ChannelSocketInterface
+{
+public:
     ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                   const std::string& name,
                   const uint16_t& channel,
                   bool isInitiator = false);
     ~ChannelSocket();
 
-    DeviceId deviceId() const;
-    std::string name() const;
-    uint16_t channel() const;
+    DeviceId deviceId() const override;
+    std::string name() const override;
+    uint16_t channel() const override;
     bool isReliable() const override;
     bool isInitiator() const override;
     int maxPayload() const override;
@@ -211,11 +268,11 @@ public:
      * Triggered when a specific channel is ready
      * Used by ConnectionManager::connectDevice()
      */
-    void onReady(ChannelReadyCb&& cb);
+    void onReady(ChannelReadyCb&& cb) override;
     /**
      * Will trigger that callback when shutdown() is called
      */
-    void onShutdown(OnShutdownCb&& cb);
+    void onShutdown(OnShutdownCb&& cb) override;
 
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     /**
@@ -231,7 +288,7 @@ public:
      */
     void setOnRecv(RecvCb&&) override;
 
-    void onRecv(std::vector<uint8_t>&& pkt);
+    void onRecv(std::vector<uint8_t>&& pkt) override;
 
     /**
      * Send a beacon on the socket and close if no response come
