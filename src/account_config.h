@@ -1,4 +1,4 @@
-#include "sip_utils.h"
+#include "sip/sip_utils.h"
 #include "serializable.h"
 
 #include <yaml-cpp/yaml.h>
@@ -16,28 +16,28 @@ struct AccountConfig: public Serializable {
     virtual void serialize(YAML::Emitter& out) const;
     virtual void unserialize(const YAML::Node& node);
 
-    /**
-     * Account type
-     */
+    virtual std::map<std::string, std::string> toMap() const;
+    virtual void fromMap(const std::map<std::string, std::string>&);
+
+    /** Account type */
     std::string type {};
 
-    /**
-     * A user-defined name for this account
-     */
+    /** A user-defined name for this account */
     std::string alias {};
 
-    /**
-     * True if the account is enabled.
-     */
+    /** SIP hostname (SIP account) or DHT bootstrap nodes (Jami account) */
+    std::string hostname {};
+
+    /** True if the account is enabled. */
     bool enabled {true};
 
-    /* If true, automatically answer calls to this account */
+    /** If true, automatically answer calls to this account */
     bool autoAnswerEnabled {false};
 
-    // If true, send Displayed status (and emit to the client)
+    /** If true, send displayed status (and emit to the client) */
     bool sendReadReceipt {true};
 
-    /* If true mix calls into a conference */
+    /** If true mix calls into a conference */
     bool isRendezVous {false};
 
     /**

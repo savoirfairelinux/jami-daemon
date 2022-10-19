@@ -1,5 +1,8 @@
 #include "account_config.h"
+#include "account_const.h"
+#include "account_schema.h"
 #include "yamlparser.h"
+#include "string_utils.h"
 
 namespace jami {
 
@@ -37,12 +40,16 @@ constexpr const char* ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 constexpr const char* PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
 constexpr const char* PROXY_PUSH_TOPIC_KEY = "proxyPushiOSTopic";
 
+using yaml_utils::parseValue;
+using yaml_utils::parseValueOptional;
+
 void
 AccountConfig::serialize(YAML::Emitter& out) const
 {
-    out << YAML::Key << ALIAS_KEY << YAML::Value << alias;
     out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled;
     out << YAML::Key << TYPE_KEY << YAML::Value << type;
+    out << YAML::Key << ALIAS_KEY << YAML::Value << alias;
+    out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname;
     out << YAML::Key << DISABLED_CODECS_KEY << YAML::Value << disabledCodecs;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailbox;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled;
@@ -59,16 +66,16 @@ AccountConfig::serialize(YAML::Emitter& out) const
     out << YAML::Key << ALL_MODERATORS_ENABLED_KEY << YAML::Value << allModeratorsEnabled;
     out << YAML::Key << PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey;
     out << YAML::Key << PROXY_PUSH_TOPIC_KEY << YAML::Value << notificationTopic;
+    out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled;
 }
 
 void
 AccountConfig::unserialize(const YAML::Node& node)
 {
-    using yaml_utils::parseValue;
-    using yaml_utils::parseValueOptional;
-
     parseValueOptional(node, ALIAS_KEY, alias);
+    parseValueOptional(node, TYPE_KEY, type);
     parseValueOptional(node, ACCOUNT_ENABLE_KEY, enabled);
+    parseValueOptional(node, HOSTNAME_KEY, hostname);
     parseValueOptional(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
     parseValueOptional(node, ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
     parseValueOptional(node, ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous);
@@ -80,11 +87,11 @@ AccountConfig::unserialize(const YAML::Node& node)
         activeCodecs = split_string_to_unsigned(codecs, '/');
 
     parseValueOptional(node, DISPLAY_NAME_KEY, displayName);
-    //parseValueOptional(node, HOSTNAME_KEY, hostname);
 
     parseValueOptional(node, USER_AGENT_KEY, customUserAgent);
     parseValueOptional(node, RINGTONE_PATH_KEY, ringtonePath);
     parseValueOptional(node, RINGTONE_ENABLED_KEY, ringtoneEnabled);
+    parseValueOptional(node, VIDEO_ENABLED_KEY, videoEnabled);
 
     parseValue(node, UPNP_ENABLED_KEY, upnpEnabled);
 
@@ -97,80 +104,73 @@ AccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, PROXY_PUSH_TOPIC_KEY, notificationTopic);
 }
 
+std::map<std::string, std::string>
+AccountConfig::toMap() const
+{
+    return {{Conf::CONFIG_ACCOUNT_ALIAS, alias},
+            {Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName},
+            {Conf::CONFIG_ACCOUNT_ENABLE, enabled ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ACCOUNT_TYPE, type},
+            {Conf::CONFIG_ACCOUNT_HOSTNAME, hostname},
+            {Conf::CONFIG_ACCOUNT_MAILBOX, mailbox},
+            {Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent},
+            {Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous ? TRUE_STR : FALSE_STR},
+            {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit)},
+            {Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_RINGTONE_PATH, ringtonePath},
+            {Conf::CONFIG_VIDEO_ENABLED, videoEnabled ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_UPNP_ENABLED, upnpEnabled ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_DEFAULT_MODERATORS, string_join(defaultModerators)},
+            {Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled ? TRUE_STR : FALSE_STR}};
 }
 
-namespace YAML {
-
-Node
-convert<jami::AccountConfig>::encode(const jami::AccountConfig& config)
+void parseString(const std::map<std::string, std::string>& details, const char* key, std::string& s)
 {
-
+    auto it = details.find(key);
+    if (it != details.end())
+        s = it->second;
 }
 
-bool
-convert<jami::AccountConfig>::decode(const Node& node, jami::AccountConfig& config)
+void parseBool(const std::map<std::string, std::string>& details, const char* key, bool& s)
 {
+    auto it = details.find(key);
+    if (it != details.end())
+        s = it->second == TRUE_STR;
+}
 
-    parseValue(node, ALIAS_KEY, alias_);
-    parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
-    parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
-    parseValueOptional(node, ACCOUNT_READRECEIPT_KEY, sendReadReceipt_);
-    parseValueOptional(node, ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous_);
-    parseValue(node, ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit_);
-    // parseValue(node, PASSWORD_KEY, password_);
+template<class T>
+void parseInt(const std::map<std::string, std::string>& details, const char* key, T& s)
+{
+    auto it = details.find(key);
+    if (it != details.end())
+        s = to_int<T>(it->second);
+}
 
-    parseValue(node, MAILBOX_KEY, mailBox_);
-
-    std::string activeCodecs;
-    if (parseValueOptional(node, ACTIVE_CODEC_KEY, activeCodecs))
-        setActiveCodecs(split_string_to_unsigned(activeCodecs, '/'));
-    else {
-        std::string allCodecs;
-        if (parseValueOptional(node, ALL_CODECS_KEY, allCodecs)) {
-            JAMI_WARN("Converting deprecated codec list");
-            auto list = convertIdToAVId(split_string_to_unsigned(allCodecs, '/'));
-            auto codec = searchCodecByName("H265", MEDIA_ALL);
-            // set H265 as first active codec if found
-            if (codec)
-                list.emplace(list.begin(), codec->systemCodecInfo.id);
-            setActiveCodecs(list);
-            runOnMainThread([id = getAccountID()] {
-                if (auto sthis = Manager::instance().getAccount(id))
-                    Manager::instance().saveConfig(sthis);
-            });
-        }
-    }
-
-    parseValue(node, DISPLAY_NAME_KEY, displayName_);
-    parseValue(node, HOSTNAME_KEY, hostname_);
-
-    parseValue(node, HAS_CUSTOM_USER_AGENT_KEY, hasCustomUserAgent_);
-    parseValue(node, USER_AGENT_KEY, customUserAgent_);
-    parseValue(node, RINGTONE_PATH_KEY, ringtonePath_);
-    parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
-    if (ringtonePath_.empty()) {
-        ringtonePath_ = DEFAULT_RINGTONE_PATH;
-    } else {
-        // If the user defined a custom ringtone, the file may not exists
-        // In this case, fallback on the default ringtone path (this will be set during the next
-        // setAccountDetails)
-        auto pathRingtone = fmt::format("{}/{}/{}", JAMI_DATADIR, RINGDIR, ringtonePath_);
-        if (!fileutils::isFile(ringtonePath_) && !fileutils::isFile(pathRingtone)) {
-            JAMI_WARN("Ringtone %s is not a valid file", pathRingtone.c_str());
-            ringtonePath_ = DEFAULT_RINGTONE_PATH;
-        }
-    }
-
-    parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
-    updateUpnpController();
-
+void
+AccountConfig::fromMap(const std::map<std::string, std::string>& details)
+{
+    parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias);
+    parseString(details, Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName);
+    parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled);
+    parseBool(details, Conf::CONFIG_VIDEO_ENABLED, videoEnabled);
+    parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname);
+    parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailbox);
+    parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled);
+    parseBool(details, Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt);
+    parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous);
+    parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit);
+    parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled);
+    parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath);
+    parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent);
+    parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled);
     std::string defMod;
-    parseValueOptional(node, DEFAULT_MODERATORS_KEY, defMod);
-    defaultModerators_ = string_split_set(defMod);
-    parseValueOptional(node, LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled_);
-    parseValueOptional(node, ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled_);
-    parseValueOptional(node, PROXY_PUSH_TOKEN_KEY, deviceKey_);
-    parseValueOptional(node, PROXY_PUSH_TOPIC_KEY, notificationTopic_);
+    parseString(details, Conf::CONFIG_DEFAULT_MODERATORS, defMod);
+    defaultModerators = string_split_set(defMod);
+    parseBool(details, Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled);
+    parseBool(details, Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled);
 }
 
 }

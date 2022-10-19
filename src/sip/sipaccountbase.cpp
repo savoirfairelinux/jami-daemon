@@ -190,7 +190,6 @@ SIPAccountBase::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
     out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
 
-    out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
     out << YAML::Key << Conf::VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
     out << YAML::Key << Conf::VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
 
@@ -220,8 +219,6 @@ SIPAccountBase::unserialize(const YAML::Node& node)
     using yaml_utils::parseVectorMap;
 
     Account::unserialize(node);
-
-    parseValue(node, VIDEO_ENABLED_KEY, videoEnabled_);
 
     parseValue(node, Conf::INTERFACE_KEY, interface_);
     parseValue(node, Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal_);
@@ -255,8 +252,6 @@ void
 SIPAccountBase::setAccountDetails(const std::map<std::string, std::string>& details)
 {
     Account::setAccountDetails(details);
-
-    parseBool(details, Conf::CONFIG_VIDEO_ENABLED, videoEnabled_);
 
     // general sip settings
     parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
@@ -298,7 +293,6 @@ std::map<std::string, std::string>
 SIPAccountBase::getAccountDetails() const
 {
     auto a = Account::getAccountDetails();
-    a.emplace(Conf::CONFIG_VIDEO_ENABLED, videoEnabled_ ? TRUE_STR : FALSE_STR);
 
     addRangeToDetails(a,
                       Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN,
