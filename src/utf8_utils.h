@@ -20,8 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef H_UTF8_UTILS
-#define H_UTF8_UTILS
+#pragma once
 
 #include <cstdlib>
 #include <string>
@@ -41,7 +40,7 @@ namespace jami {
  * Returns: true if the text was valid UTF-8
  */
 
-bool utf8_validate(const std::string& str);
+bool utf8_validate(std::string_view str);
 
 /**
  * utf8_make_valid:
@@ -53,8 +52,6 @@ bool utf8_validate(const std::string& str);
  *
  * Returns: a valid utf8 string.
  */
-std::string utf8_make_valid(const std::string& name);
+std::string utf8_make_valid(std::string_view str);
 
 } // namespace jami
-
-#endif // H_UTF8_UTILS
