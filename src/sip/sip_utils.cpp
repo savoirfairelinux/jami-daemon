@@ -109,14 +109,13 @@ parseDisplayName(const pjsip_name_addr* sip_name_addr)
     if (not sip_name_addr->display.ptr or not sip_name_addr->display.slen)
         return {};
 
-    std::string displayName {sip_name_addr->display.ptr,
-                             static_cast<size_t>(sip_name_addr->display.slen)};
+    auto displayName = as_view(sip_name_addr->display);
 
     // Filter out invalid UTF-8 characters to avoid getting kicked from D-Bus
     if (not utf8_validate(displayName))
         return utf8_make_valid(displayName);
 
-    return displayName;
+    return std::string(displayName);
 }
 
 std::string

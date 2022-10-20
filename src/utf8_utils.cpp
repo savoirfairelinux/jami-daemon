@@ -237,21 +237,19 @@ utf8_validate_c_str(const char* str, ssize_t max_len, const char** end)
 }
 
 bool
-utf8_validate(const std::string& str)
+utf8_validate(std::string_view str)
 {
-    const char* p;
-
-    p = fast_validate(str.c_str());
+    const char* p = fast_validate_len(str.data(), str.size());
 
     return (*p == '\0');
 }
 
 std::string
-utf8_make_valid(const std::string& name)
+utf8_make_valid(std::string_view name)
 {
     ssize_t remaining_bytes = name.size();
     ssize_t valid_bytes;
-    const char* remainder = name.c_str();
+    const char* remainder = name.data();
     const char* invalid;
     char* str = NULL;
     char* pos;
@@ -289,7 +287,7 @@ utf8_make_valid(const std::string& name)
     pos += remaining_bytes;
 
     std::string answer(str, pos - str);
-    assert(utf8_validate_c_str(answer.c_str(), -1, NULL));
+    assert(utf8_validate(answer));
 
     delete[] str;
 
