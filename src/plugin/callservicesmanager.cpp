@@ -122,7 +122,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
             for (auto& toggledList : mediaHandlerToggled_) {
                 auto handlerId = std::find_if(toggledList.second.begin(),
                                               toggledList.second.end(),
-                                              [this, handlerIt](
+                                              [handlerIt](
                                                   std::pair<uintptr_t, bool> handlerIdPair) {
                                                   return handlerIdPair.first
                                                              == (uintptr_t) handlerIt->get()

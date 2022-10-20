@@ -1380,9 +1380,9 @@ PUPnP::getMappingsListByDescr(const std::shared_ptr<IGD>& igd, const std::string
         mapList.emplace(map.getMapKey(), std::move(map));
     }
 
-    JAMI_DBG("PUPnP: Found %lu allocated mappings on IGD %s",
+    JAMI_DEBUG("PUPnP: Found {:d} allocated mappings on IGD {:s}",
              mapList.size(),
-             upnpIgd->toString().c_str());
+             upnpIgd->toString());
 
     return mapList;
 }

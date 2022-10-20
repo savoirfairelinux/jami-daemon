@@ -139,8 +139,8 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
         }
     }
 
-    JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu media",
-             getCallId().c_str(),
+    JAMI_DEBUG("[call:{:s}] Create a new [{:s}] SIP call with {:d} media",
+             getCallId(),
              type == Call::CallType::INCOMING
                  ? "INCOMING"
                  : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
@@ -874,8 +874,8 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
         JAMI_DBG("[call:%s] Media list is empty, using current media", getCallId().c_str());
     } else if (newMediaAttrList.size() != rtpStreams_.size()) {
         // Media count is not expected to change
-        JAMI_ERR("[call:%s] Media list size %lu in answer does not match. Expected %lu",
-                 getCallId().c_str(),
+        JAMI_ERROR("[call:{:s}] Media list size {:d} in answer does not match. Expected {:d}",
+                 getCallId(),
                  newMediaAttrList.size(),
                  rtpStreams_.size());
         return;
@@ -887,10 +887,10 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
     JAMI_DBG("[call:%s] Answering incoming call with following media:", getCallId().c_str());
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         auto const& mediaAttr = mediaAttrList.at(idx);
-        JAMI_DBG("[call:%s] Media @%lu - %s",
-                 getCallId().c_str(),
+        JAMI_DEBUG("[call:{:s}] Media @{:d} - {:s}",
+                 getCallId(),
                  idx,
-                 mediaAttr.toString(true).c_str());
+                 mediaAttr.toString(true));
     }
 
     // Apply the media attributes.
@@ -2001,13 +2001,13 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
         auto& stream = rtpStreams_.back();
         createRtpSession(stream);
 
-        JAMI_DBG("[call:%s] Added media @%lu: %s",
-                 getCallId().c_str(),
+        JAMI_DEBUG("[call:{:s}] Added media @{:d}: {:s}",
+                 getCallId(),
                  idx,
-                 stream.mediaAttribute_->toString(true).c_str());
+                 stream.mediaAttribute_->toString(true));
     }
 
-    JAMI_DBG("[call:%s] Created %lu Media streams", getCallId().c_str(), rtpStreams_.size());
+    JAMI_DEBUG("[call:{:s}] Created {:d} Media streams", getCallId(), rtpStreams_.size());
 
     return rtpStreams_.size();
 }
@@ -2270,10 +2270,10 @@ SIPCall::updateRemoteMedia()
         auto const& remoteMedia = rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(
             remoteMediaList[idx]);
         if (remoteMedia->type_ == MediaType::MEDIA_VIDEO) {
-            JAMI_DBG("[call:%s] Remote media @ %lu : %s",
-                     getCallId().c_str(),
+            JAMI_DEBUG("[call:{:s}] Remote media @ {:d}: {:s}",
+                     getCallId(),
                      idx,
-                     remoteMedia->toString().c_str());
+                     remoteMedia->toString());
             rtpStream.rtpSession_->setMuted(remoteMedia->muted_, RtpSession::Direction::RECV);
             // Request a key-frame if we are un-muting the video
             if (not remoteMedia->muted_)
@@ -2375,7 +2375,7 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
     JAMI_DBG("[call:%s] New local media", getCallId().c_str());
 
     if (mediaAttrList.size() > PJ_ICE_MAX_COMP / 2) {
-        JAMI_DBG("[call:%s] Too many medias, limit it (%lu vs %u)",
+        JAMI_DEBUG("[call:{:s}] Too many medias, limit it ({:d} vs {:d})",
                  getCallId().c_str(),
                  mediaAttrList.size(),
                  PJ_ICE_MAX_COMP);

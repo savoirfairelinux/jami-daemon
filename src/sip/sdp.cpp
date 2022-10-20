@@ -553,8 +553,7 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
     if (mediaList.size() >= PJMEDIA_MAX_SDP_MEDIA) {
         throw SdpException("Media list size exceeds SDP media maximum size");
     }
-
-    JAMI_DBG("Creating SDP offer with %lu media", mediaList.size());
+    JAMI_DEBUG("Creating SDP offer with {} media", mediaList.size());
 
     createLocalSession(SdpDirection::OFFER);
 
@@ -603,8 +602,8 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
     if (not remoteSession_)
         return false;
 
-    JAMI_DBG("Processing received offer for [%s] with %lu media",
-             sessionName_.c_str(),
+    JAMI_DEBUG("Processing received offer for [{:s}] with {:d} media",
+             sessionName_,
              mediaList.size());
 
     printSession(remoteSession_, "Remote session:", SdpDirection::OFFER);

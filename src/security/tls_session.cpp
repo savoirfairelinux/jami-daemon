@@ -502,7 +502,7 @@ TlsSession::TlsSessionImpl::initCredentials()
                                                      chain.first.size());
         if (not chain.second.empty())
             gnutls_certificate_set_x509_crl(*xcred_, chain.second.data(), chain.second.size());
-        JAMI_DBG("[TLS] Peer CA list %lu (%lu CRLs): %d",
+        JAMI_DEBUG("[TLS] Peer CA list {:d} ({:d} CRLs): {:d}",
                  chain.first.size(),
                  chain.second.size(),
                  ret);
@@ -771,13 +771,12 @@ TlsSession::TlsSessionImpl::sendOcspRequest(const std::string& uri,
     request->set_header_field(restinio::http_field_t::content_type, "application/ocsp-request");
     request->set_body(std::move(body));
     request->set_connection_type(restinio::http_connection_header_t::close);
-    request->timeout(timeout, [this, request](const asio::error_code& ec) {
+    request->timeout(timeout, [request](const asio::error_code& ec) {
         if (ec and ec != asio::error::operation_aborted)
-            JAMI_ERR("HTTP OCSP Request timeout with error: %s", ec.message().c_str());
+            JAMI_ERROR("HTTP OCSP Request timeout with error: {:s}", ec.message());
         request->cancel();
     });
-    request->add_on_state_change_callback([this,
-                                           cb = std::move(cb)](const http::Request::State state,
+    request->add_on_state_change_callback([this, cb = std::move(cb)](const http::Request::State state,
                                                     const http::Response response) {
         JAMI_DBG("HTTP OCSP Request state=%i status_code=%i",
                  (unsigned int) state,
@@ -974,7 +973,7 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
         return -1;
     }
     if (rxQueue_.empty()) {
-        JAMI_ERR("[TLS] waitForRawData: timeout after %ld ms", timeout.count());
+        JAMI_ERROR("[TLS] waitForRawData: timeout after {}", timeout);
         return 0;
     }
     return 1;
@@ -993,7 +992,7 @@ TlsSession::TlsSessionImpl::initFromRecordState(int offset)
     baseSeq_ = array2uint(seq) + offset;
     gapOffset_ = baseSeq_;
     lastRxSeq_ = baseSeq_ - 1;
-    JAMI_DBG("[TLS] Initial sequence number: %lx", baseSeq_);
+    JAMI_DEBUG("[TLS] Initial sequence number: {:d}", baseSeq_);
     return true;
 }
 
@@ -1128,8 +1127,8 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
         // So we retry until we get a valid cookie.
         // To protect against a flood attack we delay each retry after FLOOD_THRESHOLD rx bytes.
         if (cookie_count_ >= FLOOD_THRESHOLD) {
-            JAMI_WARN("[TLS] flood threshold reach (retry in %zds)",
-                      std::chrono::duration_cast<std::chrono::seconds>(FLOOD_PAUSE).count());
+            JAMI_WARNING("[TLS] flood threshold reach (retry in {})",
+                      std::chrono::duration_cast<std::chrono::seconds>(FLOOD_PAUSE));
             dump_io_stats();
             std::this_thread::sleep_for(FLOOD_PAUSE); // flood attack protection
         }
@@ -1351,14 +1350,14 @@ TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint6
     } else {
         // too old?
         if (seq_delta <= -MISS_ORDERING_LIMIT) {
-            JAMI_WARN("[TLS] drop old pkt: 0x%lx", pkt_seq);
+            JAMI_WARNING("[TLS] drop old pkt: 0x{:x}", pkt_seq);
             return;
         }
 
         // No duplicate check as DTLS prevents that for us (replay protection)
 
         // accept Out-Of-Order pkt - will be reordered by queue flush operation
-        JAMI_WARN("[TLS] OOO pkt: 0x%lx", pkt_seq);
+        JAMI_WARNING("[TLS] OOO pkt: 0x{:x}", pkt_seq);
     }
 
     std::unique_lock<std::mutex> lk {rxMutex_};
@@ -1413,9 +1412,9 @@ TlsSession::TlsSessionImpl::flushRxQueue(std::unique_lock<std::mutex>& lk)
     if ((now - lastReadTime_) >= RX_OOO_TIMEOUT) {
         // OOO packet timeout - consider waited packets as lost
         if (auto lost = next_offset - gapOffset_)
-            JAMI_WARN("[TLS] %lu lost since 0x%lx", lost, gapOffset_);
+            JAMI_WARNING("[TLS] {:d} lost since 0x{:x}", lost, gapOffset_);
         else
-            JAMI_WARN("[TLS] slow flush");
+            JAMI_WARNING("[TLS] slow flush");
     } else if (next_offset != gapOffset_)
         return;
 

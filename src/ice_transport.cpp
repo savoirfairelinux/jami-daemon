@@ -965,8 +965,8 @@ IceTransport::Impl::addServerReflexiveCandidates(
     const std::vector<std::pair<IpAddr, IpAddr>>& addrList)
 {
     if (addrList.size() != compCount_) {
-        JAMI_WARN("[ice:%p] Provided addr list size %lu does not match component count %u",
-                  this,
+        JAMI_WARNING("[ice:{}] Provided addr list size {} does not match component count {}",
+                  fmt::ptr(this),
                   addrList.size(),
                   compCount_);
         return;

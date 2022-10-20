@@ -223,7 +223,7 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
     src->source = ob;
     JAMI_DBG("Add new source [%p]", src.get());
     sources_.emplace_back(std::move(src));
-    JAMI_DBG("Total sources: %lu", sources_.size());
+    JAMI_DEBUG("Total sources: {:d}", sources_.size());
     updateLayout();
 }
 
@@ -236,7 +236,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
         if (x->source == ob) {
             JAMI_DBG("Remove source [%p]", x.get());
             sources_.remove(x);
-            JAMI_DBG("Total sources: %lu", sources_.size());
+            JAMI_DEBUG("Total sources: {:d}", sources_.size());
             updateLayout();
             break;
         }
