@@ -2629,19 +2629,19 @@ ConversationTest::testCountInteractions()
 
     std::string msgId1 = "", msgId2 = "", msgId3 = "";
     aliceAccount->convModule()
-        ->sendMessage(convId, "1"s, "", "text/plain", true, [&](bool, std::string commitId) {
+        ->sendMessage(convId, "1"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
             msgId1 = commitId;
             cv.notify_one();
         });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId1.empty(); }));
     aliceAccount->convModule()
-        ->sendMessage(convId, "2"s, "", "text/plain", true, [&](bool, std::string commitId) {
+        ->sendMessage(convId, "2"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
             msgId2 = commitId;
             cv.notify_one();
         });
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId2.empty(); }));
     aliceAccount->convModule()
-        ->sendMessage(convId, "3"s, "", "text/plain", true, [&](bool, std::string commitId) {
+        ->sendMessage(convId, "3"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
             msgId3 = commitId;
             cv.notify_one();
         });
