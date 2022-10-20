@@ -41,6 +41,7 @@
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "transfer_channel_handler.h"
+#include "swarm/swarm_channel_handler.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -74,7 +75,6 @@
 #include "string_utils.h"
 #include "archiver.h"
 #include "data_transfer.h"
-#include "conversation.h"
 
 #include "config/yamlparser.h"
 #include "security/certstore.h"
@@ -360,7 +360,8 @@ JamiAccount::shutdownConnections()
         channelHandlers_.clear();
         connectionManager_.reset();
     }
-    gitSocketList_.clear();
+    if (convModule_)
+        convModule_->shutdownConnections();
     dhtPeerConnector_.reset();
     std::lock_guard<std::mutex> lk(sipConnsMtx_);
     sipConns_.clear();
@@ -2228,8 +2229,8 @@ JamiAccount::doRegister_()
                         return;
                     }
 
-                    auto sock = gitSocket(deviceId, conversationId);
-                    if (sock != std::nullopt && sock->lock() == channel) {
+                    auto sock = convModule()->gitSocket(deviceId.toString(), conversationId);
+                    if (sock == channel) {
                         // The onConnectionReady is already used as client (for retrieving messages)
                         // So it's not the server socket
                         return;
@@ -2354,37 +2355,45 @@ JamiAccount::convModule()
                     auto shared = w.lock();
                     if (!shared)
                         return;
-                    auto gs = shared->gitSocket(DeviceId(deviceId), convId);
-                    if (gs != std::nullopt) {
-                        if (auto socket = gs->lock()) {
-                            if (!cb(socket))
-                                socket->shutdown();
-                            else
-                                cb({});
-                            return;
-                        }
+                    if (auto socket = shared->convModule()->gitSocket(deviceId, convId)) {
+                        if (!cb(socket))
+                            socket->shutdown();
+                        else
+                            cb({});
+                        return;
                     }
                     std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_) {
                         cb({});
                         return;
                     }
-                    shared->connectionManager_
-                        ->connectDevice(DeviceId(deviceId),
-                                        "git://" + deviceId + "/" + convId,
-                                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId&) {
-                                            if (socket) {
-                                                socket->onShutdown(
-                                                    [shared, deviceId = socket->deviceId(), convId] {
-                                                        shared->removeGitSocket(deviceId, convId);
-                                                    });
-                                                if (!cb(socket))
-                                                    socket->shutdown();
-                                            } else
-                                                cb({});
-                                        });
+                    shared->connectionManager_->connectDevice(
+                        DeviceId(deviceId),
+                        fmt::format("git://{}/{}", deviceId, convId),
+                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
+                                             const DeviceId&) {
+                            if (socket) {
+                                socket->onShutdown([shared, deviceId = socket->deviceId(), convId] {
+                                    shared->convModule()->removeGitSocket(deviceId.toString(),
+                                                                          convId);
+                                });
+                                if (!cb(socket))
+                                    socket->shutdown();
+                            } else
+                                cb({});
+                        });
                 });
+            },
+            [this](const auto& convId, const auto& deviceId, auto&& cb) {
+                std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+                if (!connectionManager_) {
+                    cb({});
+                    return;
+                }
+                connectionManager_->connectDevice(DeviceId(deviceId),
+                                                  fmt::format("swarm://{}", convId),
+                                                  [cb](std::shared_ptr<ChannelSocket> socket,
+                                                       const DeviceId&) { cb(socket); });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
                 // NOTE: do not reschedule as the conversation's requests
@@ -4409,6 +4418,8 @@ JamiAccount::initConnectionManager()
 {
     if (!connectionManager_) {
         connectionManager_ = std::make_unique<ConnectionManager>(*this);
+        channelHandlers_[Uri::Scheme::SWARM]
+            = std::make_unique<SwarmChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::GIT]
             = std::make_unique<ConversationChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::SYNC]
