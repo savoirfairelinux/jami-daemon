@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
+#pragma once
 #include "sip/sip_utils.h"
 #include "serializable.h"
 
@@ -25,8 +26,6 @@
 using namespace std::literals;
 
 namespace jami {
-constexpr static const auto OVERRTP_STR = "overrtp"sv;
-constexpr static const auto SIPINFO_STR = "sipinfo"sv;
 
 struct AccountConfig: public Serializable {
     virtual void serialize(YAML::Emitter& out) const;
@@ -123,5 +122,27 @@ struct AccountConfig: public Serializable {
      */
     std::string notificationTopic {};
 };
+
+inline void parseString(const std::map<std::string, std::string>& details, const char* key, std::string& s)
+{
+    auto it = details.find(key);
+    if (it != details.end())
+        s = it->second;
+}
+
+inline void parseBool(const std::map<std::string, std::string>& details, const char* key, bool& s)
+{
+    auto it = details.find(key);
+    if (it != details.end())
+        s = it->second == TRUE_STR;
+}
+
+template<class T>
+inline void parseInt(const std::map<std::string, std::string>& details, const char* key, T& s)
+{
+    auto it = details.find(key);
+    if (it != details.end())
+        s = to_int<T>(it->second);
+}
 
 }

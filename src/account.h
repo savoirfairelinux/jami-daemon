@@ -220,7 +220,7 @@ public:
 
     bool isUsable() const noexcept { return config().enabled and active_; }
 
-    const AccountConfig& config() const {
+    virtual const AccountConfig& config() const {
         if (config_) return *config_;
         else throw std::runtime_error("Account doesn't have a configuration");
     }

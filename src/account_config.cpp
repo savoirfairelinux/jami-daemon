@@ -54,7 +54,6 @@ constexpr const char* ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 constexpr const char* PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
 constexpr const char* PROXY_PUSH_TOPIC_KEY = "proxyPushiOSTopic";
 
-using yaml_utils::parseValue;
 using yaml_utils::parseValueOptional;
 
 void
@@ -107,7 +106,7 @@ AccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, RINGTONE_ENABLED_KEY, ringtoneEnabled);
     parseValueOptional(node, VIDEO_ENABLED_KEY, videoEnabled);
 
-    parseValue(node, UPNP_ENABLED_KEY, upnpEnabled);
+    parseValueOptional(node, UPNP_ENABLED_KEY, upnpEnabled);
 
     std::string defMod;
     parseValueOptional(node, DEFAULT_MODERATORS_KEY, defMod);
@@ -139,28 +138,6 @@ AccountConfig::toMap() const
             {Conf::CONFIG_DEFAULT_MODERATORS, string_join(defaultModerators)},
             {Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled ? TRUE_STR : FALSE_STR}};
-}
-
-void parseString(const std::map<std::string, std::string>& details, const char* key, std::string& s)
-{
-    auto it = details.find(key);
-    if (it != details.end())
-        s = it->second;
-}
-
-void parseBool(const std::map<std::string, std::string>& details, const char* key, bool& s)
-{
-    auto it = details.find(key);
-    if (it != details.end())
-        s = it->second == TRUE_STR;
-}
-
-template<class T>
-void parseInt(const std::map<std::string, std::string>& details, const char* key, T& s)
-{
-    auto it = details.find(key);
-    if (it != details.end())
-        s = to_int<T>(it->second);
 }
 
 void

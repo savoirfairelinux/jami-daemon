@@ -31,6 +31,7 @@
 #include "siptransport.h"
 #include "noncopyable.h"
 #include "ring_types.h" // enable_if_base_of
+#include "sipaccount_config.h"
 
 #include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
@@ -47,13 +48,7 @@ class Emitter;
 namespace jami {
 
 namespace Conf {
-const char* const KEEP_ALIVE_ENABLED = "keepAlive";
-
 // TODO: write an object to store credential which implement serializable
-const char* const SRTP_KEY = "srtp";
-const char* const SRTP_ENABLE_KEY = "enable";
-const char* const KEY_EXCHANGE_KEY = "keyExchange";
-const char* const RTP_FALLBACK_KEY = "rtpFallback";
 } // namespace Conf
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
@@ -96,6 +91,10 @@ public:
     SIPAccount(const std::string& accountID, bool presenceEnabled);
 
     ~SIPAccount() noexcept;
+
+    virtual const SipAccountConfig& config() const override {
+        return *static_cast<const SipAccountConfig*>(&Account::config());
+    }
 
     const char* getAccountType() const override { return ACCOUNT_TYPE; }
 
@@ -209,27 +208,14 @@ public:
      */
     unsigned getRegistrationExpire() const
     {
-        if (registrationExpire_ == 0)
-            return PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
-
-        return registrationExpire_;
+        unsigned re = config().registrationExpire;
+        return re ? re : PJSIP_REGC_EXPIRATION_NOT_SPECIFIED;
     }
-
-    /**
-     * Set the expiration for this account as found in
-     * the "Expire" sip header or the CONTACT's "expire" param.
-     */
-    void setRegistrationExpire(unsigned expire);
 
     /**
      * Registration flag
      */
     bool isRegistered() const { return bRegister_; }
-
-    /**
-     * Set registration flag
-     */
-    void setRegister(bool result) { bRegister_ = result; }
 
     /**
      * Get the registration structure that is used
@@ -259,27 +245,7 @@ public:
      * actually using.
      * @return pj_uint16 The port used for that account
      */
-    pj_uint16_t getLocalPort() const { return localPort_; }
-
-    /**
-     * Set the new port on which this account is running over.
-     * @pram port The port used by this account.
-     */
-    void setLocalPort(pj_uint16_t port) { localPort_ = port; }
-
-    /**
-     * Get the bind ip address on which the account should use, or is
-     * actually using.
-     * Note: if it is NULL, this address should not be used
-     * @return std::string The bind ip address used for that account
-     */
-    std::string getBindAddress() const { return bindAddress_; }
-
-    /**
-     * Set the new bind ip address on which this account is bind on.
-     * @pram address The bind ip address used by this account.
-     */
-    void setBindAddress(const std::string& address) { bindAddress_ = address; }
+    pj_uint16_t getLocalPort() const { return config().localPort; }
 
     /**
      * @return pjsip_tls_setting structure, filled from the configuration
@@ -292,9 +258,9 @@ public:
      * Get the local port for TLS listener.
      * @return pj_uint16 The port used for that account
      */
-    pj_uint16_t getTlsListenerPort() const { return tlsListenerPort_; }
+    pj_uint16_t getTlsListenerPort() const { return config().tlsListenerPort; }
 
-    pj_str_t getStunServerName() const override { return stunServerName_; }
+    pj_str_t getStunServerName() const { return stunServerName_; }
 
     static const std::vector<std::string>& getSupportedTlsCiphers();
     static const std::vector<std::string>& getSupportedTlsProtocols();
@@ -310,7 +276,17 @@ public:
      * @return bool Tells if current transport for that
      * account is set to OTHER.
      */
-    bool isStunEnabled() const override { return stunEnabled_; }
+    bool isStunEnabled() const override { return config().stunEnabled; }
+
+    /**
+     * @return pj_str_t , filled from the configuration
+     * file, that can be used directly by PJSIP to initialize
+     * an alternate UDP transport.
+     */
+    std::string getStunServer() const
+    {
+        return config().stunServer;
+    }
 
     /**
      * @return pj_str_t "From" uri based on account information.
@@ -354,13 +330,13 @@ public:
      */
     std::string getContactHeader() const;
 
-    std::string getServiceRoute() const { return serviceRoute_; }
+    std::string getServiceRoute() const { return config().serviceRoute; }
 
-    bool hasServiceRoute() const { return not serviceRoute_.empty(); }
+    bool hasServiceRoute() const { return not config().serviceRoute.empty(); }
 
-    virtual bool isTlsEnabled() const override { return tlsEnable_; }
+    virtual bool isTlsEnabled() const override { return config().tlsEnable; }
 
-    virtual bool getSrtpFallback() const override { return srtpFallback_; }
+    virtual bool getSrtpFallback() const override { return config().srtpFallback; }
 
     void setReceivedParameter(const std::string& received)
     {
@@ -375,7 +351,7 @@ public:
     int getRPort() const
     {
         if (rPort_ == -1)
-            return localPort_;
+            return config().localPort;
         else
             return rPort_;
     }
@@ -386,7 +362,7 @@ public:
         via_addr_.port = rPort;
     }
 
-    bool isRegistrationRefreshEnabled() const { return registrationRefreshEnabled_; }
+    bool isRegistrationRefreshEnabled() const { return config().registrationRefreshEnabled; }
 
     void setTransport(const std::shared_ptr<SipTransport>& = nullptr);
 
@@ -618,16 +594,6 @@ private:
     bool bRegister_;
 
     /**
-     * Network settings
-     */
-    unsigned registrationExpire_;
-
-    /**
-     * Input Outbound Proxy Server Address
-     */
-    std::string serviceRoute_;
-
-    /**
      * Credential information stored for further registration.
      * Points to credentials_ members.
      */
@@ -654,33 +620,9 @@ private:
     pj_uint16_t stunPort_ {PJ_STUN_PORT};
 
     /**
-     * Local port to whih this account is bound
-     */
-    pj_uint16_t localPort_ {sip_utils::DEFAULT_AUTO_SELECT_PORT};
-
-    /**
-     * Potential ip addresss on which this account is bound
-     */
-    std::string bindAddress_;
-
-    /**
-     * The TLS listener port
-     */
-    pj_uint16_t tlsListenerPort_ {sip_utils::DEFAULT_AUTO_SELECT_PORT};
-
-    /**
      * Send Request Callback
      */
     static void onComplete(void* token, pjsip_event* event);
-
-    bool tlsEnable_ {false};
-    std::string tlsMethod_;
-    std::string tlsCiphers_;
-    std::string tlsServerName_;
-    bool tlsVerifyServer_;
-    bool tlsVerifyClient_;
-    bool tlsRequireClientCertificate_;
-    std::string tlsNegotiationTimeoutSec_;
 
     /**
      * Specifies the type of key exchange used for SRTP, if any.
@@ -689,24 +631,10 @@ private:
     KeyExchangeProtocol srtpKeyExchange_ {KeyExchangeProtocol::NONE};
 
     /**
-     * Determine if the softphone should fallback on non secured media channel if SRTP negotiation
-     * fails. Make sure other SIP endpoints share the same behavior since it could result in
-     * encrypted data to be played through the audio device.
-     */
-    bool srtpFallback_ {};
-
-    /**
      * Details about the registration state.
      * This is a protocol Code:Description pair.
      */
     std::pair<int, std::string> registrationStateDetailed_;
-
-    /**
-     * Enable/disable automatic refresh of the registration.
-     * If enabled, a new registration request is sent shortly before
-     * the current registration expires.
-     */
-    bool registrationRefreshEnabled_;
 
     /**
      * Optional: "received" parameter from VIA header
@@ -737,9 +665,6 @@ private:
     std::string contactHeader_;
     // Contact address (the address part of a SIP URI)
     IpAddr contactAddress_ {};
-    // If true, the contact addreass and header will be rewritten
-    // using the information received from the registrar.
-    bool allowIPAutoRewrite_;
     pjsip_transport* via_tp_;
 
     /**
