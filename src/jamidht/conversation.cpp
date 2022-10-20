@@ -29,6 +29,9 @@
 #include <string_view>
 #include <opendht/thread_pool.h>
 #include <tuple>
+#include "swarm/swarm_manager.h"
+
+//#include "swarm/routing_table.h"
 
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
@@ -117,9 +120,9 @@ public:
     Impl(const std::weak_ptr<JamiAccount>& account,
          ConversationMode mode,
          const std::string& otherMember = "")
-        : account_(account)
+        : repository_(ConversationRepository::createConversation(account, mode, otherMember))
+        , account_(account)
     {
-        repository_ = ConversationRepository::createConversation(account, mode, otherMember);
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
@@ -157,6 +160,7 @@ public:
     void init()
     {
         if (auto shared = account_.lock()) {
+            swarmManager_ = std::make_unique<SwarmManager>(NodeId(shared->currentDeviceId()));
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
                                                                  repository_->id());
             conversationDataPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR
@@ -177,7 +181,6 @@ public:
     bool isAdmin() const;
     std::string repoPath() const;
 
-    std::mutex writeMtx_ {};
     void announce(const std::string& commitId) const
     {
         std::vector<std::string> vec;
@@ -278,10 +281,7 @@ public:
             }
 
             if (announceMember) {
-                std::vector<std::string> members;
-                for (const auto& m : repository_->members())
-                    members.emplace_back(m.uri);
-                shared->saveMembers(convId, members);
+                shared->saveMembers(convId, repository_->memberUris("", {}));
             }
         }
     }
@@ -344,29 +344,56 @@ public:
         msgpack::pack(file, lastDisplayed_);
     }
 
-    void voteUnban(const std::string& contactUri, const std::string& type, const OnDoneCb& cb);
+    void voteUnban(const std::string& contactUri, std::string_view type, const OnDoneCb& cb);
 
-    std::string bannedType(const std::string& uri) const
+    std::string_view bannedType(const std::string& uri) const
     {
         auto shared = account_.lock();
         if (!shared)
             return {};
         auto bannedMember = fmt::format("{}/banned/members/{}.crt", repoPath(), uri);
         if (fileutils::isFile(bannedMember))
-            return "members";
+            return "members"sv;
         auto bannedAdmin = fmt::format("{}/banned/admins/{}.crt", repoPath(), uri);
         if (fileutils::isFile(bannedAdmin))
-            return "admins";
+            return "admins"sv;
         auto bannedInvited = fmt::format("{}/banned/invited/{}", repoPath(), uri);
         if (fileutils::isFile(bannedInvited))
-            return "invited";
+            return "invited"sv;
         auto bannedDevice = fmt::format("{}/banned/devices/{}.crt", repoPath(), uri);
         if (fileutils::isFile(bannedDevice))
-            return "devices";
+            return "devices"sv;
         return {};
     }
 
+    std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const
+    {
+        auto deviceSockets = gitSocketList_.find(deviceId);
+        return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr;
+    }
+
+    /*bool hasGitSocket(const DeviceId& deviceId) const
+    {
+        return gitSocket(deviceId) != nullptr;
+    }*/
+
+    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+    {
+        gitSocketList_[deviceId] = socket;
+    }
+
+    void removeGitSocket(const DeviceId& deviceId)
+    {
+        auto deviceSockets = gitSocketList_.find(deviceId);
+        if (deviceSockets != gitSocketList_.end()) {
+            gitSocketList_.erase(deviceSockets);
+            // matabledht.remove(deviceId);
+        }
+    }
+
+    std::mutex writeMtx_ {};
     std::unique_ptr<ConversationRepository> repository_;
+    std::unique_ptr<SwarmManager> swarmManager_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
@@ -390,6 +417,8 @@ public:
     mutable std::mutex lastDisplayedMtx_ {}; // for lastDisplayed_
     mutable std::map<std::string, std::string> lastDisplayed_ {};
     std::function<void(const std::string&, const std::string&)> lastDisplayedUpdatedCb_ {};
+
+    GitSocketList gitSocketList_ {};
 };
 
 bool
@@ -487,7 +516,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
                 [w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
                     if (auto sthis = w.lock()) {
                         auto members = sthis->pimpl_->repository_->members();
-                        std::string type = sthis->pimpl_->bannedType(contactUri);
+                        auto type = sthis->pimpl_->bannedType(contactUri);
                         if (type.empty()) {
                             cb(false, {});
                             return;
@@ -515,9 +544,39 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
     });
 }
 
+std::shared_ptr<ChannelSocket>
+Conversation::gitSocket(const DeviceId& deviceId) const
+{
+    return pimpl_->gitSocket(deviceId);
+}
+
+/*bool
+Conversation::hasGitSocket(const DeviceId& deviceId) const
+{
+    return pimpl_->hasGitSocket(deviceId);
+}*/
+
+void
+Conversation::addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+{
+    pimpl_->addGitSocket(deviceId, socket);
+}
+
+void
+Conversation::removeGitSocket(const DeviceId& deviceId)
+{
+    pimpl_->removeGitSocket(deviceId);
+}
+
+void
+Conversation::removeGitSockets()
+{
+    pimpl_->gitSocketList_.clear();
+}
+
 void
 Conversation::Impl::voteUnban(const std::string& contactUri,
-                              const std::string& type,
+                              std::string_view type,
                               const OnDoneCb& cb)
 {
     // Check if admin
@@ -1318,6 +1377,33 @@ Conversation::onLastDisplayedUpdated(
     std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb)
 {
     pimpl_->lastDisplayedUpdatedCb_ = std::move(lastDisplayedUpdatedCb);
+}
+
+void
+Conversation::onNeedSocket(NeedSocketCb needSocket)
+{
+    JAMI_ERROR("########################### onNEED SOCKET ############################");
+
+    pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
+                                            this](const std::string& deviceId, ChannelCb&& cb) {
+        // JAMI_ERROR("DEVICE ID {:s}", deviceId);
+
+        return needSocket(id(), deviceId, std::move(cb));
+    };
+    std::vector<DeviceId> devices;
+
+    for (const auto& m : pimpl_->repository_->devices())
+        devices.insert(devices.end(), m.second.begin(), m.second.end());
+
+    pimpl_->swarmManager_->setKnownNodes(devices);
+}
+
+void
+Conversation::addSwarmChannel(std::shared_ptr<ChannelSocket> channel)
+{
+    JAMI_ERROR("########################### SWARM CHANNEL ############################");
+
+    pimpl_->swarmManager_->addChannel(std::move(channel));
 }
 
 uint32_t
