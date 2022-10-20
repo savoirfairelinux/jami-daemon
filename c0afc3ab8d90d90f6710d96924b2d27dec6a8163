@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1676b7df_e54f05bc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-10-20T12:54:24Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "52ccebbb_c2762a04",
+      "revId": "c0afc3ab8d90d90f6710d96924b2d27dec6a8163",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bdf165f0_b17a21cc",
@@ -31,6 +49,30 @@
       "writtenOn": "2022-10-20T03:44:16Z",
       "side": 1,
       "message": "different",
+      "range": {
+        "startLine": 187,
+        "startChar": 71,
+        "endLine": 187,
+        "endChar": 79
+      },
+      "revId": "c0afc3ab8d90d90f6710d96924b2d27dec6a8163",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cb5220f_14009476",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-10-20T12:54:24Z",
+      "side": 1,
+      "message": "Oh, already merged, next time we touch that file we will fix it ;)",
+      "parentUuid": "bdf165f0_b17a21cc",
       "range": {
         "startLine": 187,
         "startChar": 71,
