@@ -1,14 +1,10 @@
 /*
  *  Copyright (C) 2004-2022 Savoir-faire Linux Inc.
  *
- *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
- *  Author: Eloi Bail <Eloi.Bail@savoirfairelinux.com>
- *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; either version 3, or (at your option)
+ *  any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,10 +12,8 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
-
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_codec.h"
 #include "media_encoder.h"
@@ -817,12 +811,12 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
     // Only clamp video bitrate
     if (mediaType == AVMEDIA_TYPE_VIDEO && br > 0) {
         if (br < SystemCodecInfo::DEFAULT_MIN_BITRATE) {
-            JAMI_WARN("Requested bitrate %lu too low, setting to %u",
+            JAMI_WARNING("Requested bitrate {:d} too low, setting to {:d}",
                       br,
                       SystemCodecInfo::DEFAULT_MIN_BITRATE);
             br = SystemCodecInfo::DEFAULT_MIN_BITRATE;
         } else if (br > SystemCodecInfo::DEFAULT_MAX_BITRATE) {
-            JAMI_WARN("Requested bitrate %lu too high, setting to %u",
+            JAMI_WARNING("Requested bitrate {:d} too high, setting to {:d}",
                       br,
                       SystemCodecInfo::DEFAULT_MAX_BITRATE);
             br = SystemCodecInfo::DEFAULT_MAX_BITRATE;
@@ -930,7 +924,7 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu kbit/s, bufsize=%lu kbit",
+        JAMI_DEBUG("H264 encoder setup: crf={:d}, maxrate={:d} kbit/s, bufsize={:d} kbit",
                  crf,
                  maxBitrate / 1000,
                  bufSize / 1000);
@@ -941,7 +935,7 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
 
-        JAMI_DBG("H264 encoder setup cbr: bitrate=%lu kbit/s", br);
+        JAMI_DEBUG("H264 encoder setup cbr: bitrate={:d} kbit/s", br);
     }
 }
 
@@ -961,7 +955,7 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("H265 encoder setup: crf=%u, maxrate=%lu kbit/s, bufsize=%lu kbit",
+        JAMI_DEBUG("H265 encoder setup: crf={:d}, maxrate={:d} kbit/s, bufsize={:d} kbit",
                  crf,
                  maxBitrate / 1000,
                  bufSize / 1000);
@@ -971,7 +965,7 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("H265 encoder setup cbr: bitrate=%lu kbit/s", br);
+        JAMI_DEBUG("H265 encoder setup cbr: bitrate={:d} kbit/s", br);
     }
 }
 
@@ -988,7 +982,7 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "qmin", 0, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "slices", 4, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "crf", 18, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("VP8 encoder setup: crf=18");
+        JAMI_DEBUG("VP8 encoder setup: crf=18");
     } else {
         // 1- if quality is set use it
         // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
@@ -1021,7 +1015,7 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("VP8 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu",
+        JAMI_DEBUG("VP8 encoder setup: crf={:d}, maxrate={:d}, bufsize={:d}",
                  crf,
                  maxBitrate / 1000,
                  bufSize / 1000);
@@ -1037,7 +1031,7 @@ MediaEncoder::initMPEG4(AVCodecContext* encoderCtx, uint64_t br)
     // Use CBR (set bitrate)
     encoderCtx->rc_buffer_size = bufSize;
     encoderCtx->bit_rate = encoderCtx->rc_min_rate = encoderCtx->rc_max_rate = maxBitrate;
-    JAMI_DBG("MPEG4 encoder setup: maxrate=%lu, bufsize=%lu", maxBitrate, bufSize);
+    JAMI_DEBUG("MPEG4 encoder setup: maxrate={:d}, bufsize={:d}", maxBitrate, bufSize);
 }
 
 void
@@ -1049,7 +1043,7 @@ MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
     // Use CBR (set bitrate)
     encoderCtx->rc_buffer_size = bufSize;
     encoderCtx->bit_rate = encoderCtx->rc_min_rate = encoderCtx->rc_max_rate = maxBitrate;
-    JAMI_DBG("H263 encoder setup: maxrate=%lu, bufsize=%lu", maxBitrate, bufSize);
+    JAMI_DEBUG("H263 encoder setup: maxrate={:d}, bufsize={:d}", maxBitrate, bufSize);
 }
 
 void

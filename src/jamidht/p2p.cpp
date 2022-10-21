@@ -191,7 +191,7 @@ DhtPeerConnector::requestConnection(
         }
         if (!shared)
             return;
-        JAMI_INFO("New file channel for outgoing transfer with id(%lu)", tid);
+        JAMI_DEBUG("New file channel for outgoing transfer with id {:d}", tid);
 
         auto outgoingFile = std::make_shared<ChanneledOutgoingTransfer>(
             channel,
@@ -207,7 +207,7 @@ DhtPeerConnector::requestConnection(
         }
 
         channel->onShutdown([w = pimpl_->weak(), tid, onChanneledCancelled, peer = outgoingFile->peer()]() {
-            JAMI_INFO("Channel down for outgoing transfer with id(%lu)", tid);
+            JAMI_DEBUG("Channel down for outgoing transfer with id {:d}", tid);
             onChanneledCancelled(peer);
             dht::ThreadPool::io().run([w = std::move(w), tid, peer] {
                 if (auto shared = w.lock())
@@ -219,7 +219,7 @@ DhtPeerConnector::requestConnection(
 
     if (isVCard) {
         acc->connectionManager().connectDevice(DeviceId(info.peer),
-                                               "vcard://" + std::to_string(tid),
+                                               fmt::format("vcard://{}", tid),
                                                channelReadyCb);
         return;
     }
@@ -257,12 +257,12 @@ DhtPeerConnector::requestConnection(
     for (const auto& peer_h : contacts) {
         acc->forEachDevice(
             peer_h,
-            [this, channelName, tid, channelReadyCb = std::move(channelReadyCb)](
+            [this, channelName, channelReadyCb = std::move(channelReadyCb)](
                 const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                 auto acc = pimpl_->account.lock();
                 if (!acc)
                     return;
-                auto deviceId = dev->getLongId();
+                const auto& deviceId = dev->getLongId();
                 if (deviceId == acc->dht()->getPublicKey()->getLongId()) {
                     // No connection to same device
                     return;
@@ -270,7 +270,6 @@ DhtPeerConnector::requestConnection(
 
                 acc->connectionManager().connectDevice(deviceId, channelName, channelReadyCb);
             },
-
             [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
                 if (!found) {
                     JAMI_WARN() << accId << "[CNX] aborted, no devices for " << peer_h;
@@ -306,7 +305,7 @@ DhtPeerConnector::onIncomingConnection(const DRing::DataTransferInfo& info,
         pimpl_->channeledIncoming_[id].emplace_back(std::move(incomingFile));
     }
     channel->onShutdown([w = pimpl_->weak(), id, peer_id]() {
-        JAMI_INFO("Channel down for incoming transfer with id(%lu)", id);
+        JAMI_DEBUG("Channel down for incoming transfer with id {:d}", id);
         dht::ThreadPool::io().run([w=std::move(w), id, peer_id] {
             if (auto shared = w.lock())
                 shared->removeIncoming(id, peer_id);
