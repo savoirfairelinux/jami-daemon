@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d283dddc_6521b004",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-10-21T20:44:00Z",
+      "side": 1,
+      "message": "CRITICAL SonarQube violation:\n\n\ncannot pass object of non-trivial type \u0027const __tuple_element_t\u003c0UL, tuple\u003cstd::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e \u003e \u003e\u0027 (aka \u0027const std::__cxx11::basic_string\u003cchar\u003e\u0027) through variadic function; call will abort at runtime\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-non-pod-varargs",
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2c0f037_8b6aad68",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-10-21T20:44:00Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\ndata argument not used by format string\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format-extra-args",
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbab12b6_02bb31a2",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-10-21T20:44:00Z",
+      "side": 1,
+      "message": "CRITICAL SonarQube violation:\n\n\ncannot pass object of non-trivial type \u0027const std::map\u003cstd::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e, std::less\u003cstd::__cxx11::basic_string\u003cchar\u003e \u003e, std::allocator\u003cstd::pair\u003cconst std::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e \u003e \u003e \u003e::mapped_type\u0027 (aka \u0027const std::__cxx11::basic_string\u003cchar\u003e\u0027) through variadic function; call will abort at runtime\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-non-pod-varargs",
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
