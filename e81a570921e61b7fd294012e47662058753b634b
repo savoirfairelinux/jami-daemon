@@ -22,6 +22,30 @@
       },
       "revId": "e81a570921e61b7fd294012e47662058753b634b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69c5d4e3_651703c0",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 921,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-10-21T17:11:56Z",
+      "side": 1,
+      "message": "what happens in the case when it takes some time before a channelsocket is send()ing information? are we just supposed to just shutdown each socket and drop their connectivity? or is this just not supposed to happen?",
+      "parentUuid": "c00efa02_75ff3cb7",
+      "range": {
+        "startLine": 920,
+        "startChar": 9,
+        "endLine": 921,
+        "endChar": 5
+      },
+      "revId": "e81a570921e61b7fd294012e47662058753b634b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
