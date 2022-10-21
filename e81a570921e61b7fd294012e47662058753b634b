@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c00efa02_75ff3cb7",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 921,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-21T16:59:08Z",
+      "side": 1,
+      "message": "if (size \u003d\u003d 0) we can shutdown",
+      "range": {
+        "startLine": 920,
+        "startChar": 9,
+        "endLine": 921,
+        "endChar": 5
+      },
+      "revId": "e81a570921e61b7fd294012e47662058753b634b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
