@@ -37,6 +37,8 @@
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
 #include "jamidht/jamiaccount.h"
+#include "sip/sipaccount_config.h"
+#include "jamidht/jamiaccount_config.h"
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "account_const.h"
@@ -423,9 +425,9 @@ std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
     if (accountType == Account::ProtocolNames::RING)
-        return jami::JamiAccount("dummy", false).getAccountDetails();
+        return jami::JamiAccountConfig().toMap();
     else if (accountType == Account::ProtocolNames::SIP)
-        return jami::SIPAccount("dummy", false).getAccountDetails();
+        return jami::SipAccountConfig().toMap();
     return {};
 }
 

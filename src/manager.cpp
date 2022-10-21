@@ -2690,8 +2690,8 @@ Manager::setAccountDetails(const std::string& accountID,
     account->doUnregister([&](bool /* transport_free */) {
         account->setAccountDetails(details);
         // Serialize configuration to disk once it is done
-        if (auto ringAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
-            saveConfig(ringAccount);
+        if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
+            saveConfig(jamiAccount);
         } else {
             saveConfig();
         }
