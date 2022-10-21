@@ -638,7 +638,9 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
     if (!accountid.empty()) {
         if (base_.accountFactory.isSupportedType(accountType.c_str())) {
             if (auto a = base_.accountFactory.createAccount(accountType.c_str(), accountid)) {
-                a->unserialize(node);
+                auto config = a->buildConfig();
+                config->unserialize(node);
+                a->setConfig(std::move(config));
             } else {
                 JAMI_ERR("Failed to create account type \"%s\"", accountType.c_str());
                 ++errorCount;
@@ -1730,7 +1732,7 @@ Manager::saveConfig()
                     saveConfig(ringAccount);
                 }
             } else {
-                account->serialize(out);
+                account->config().serialize(out);
             }
         }
         out << YAML::EndSeq;
@@ -2690,8 +2692,8 @@ Manager::setAccountDetails(const std::string& accountID,
     account->doUnregister([&](bool /* transport_free */) {
         account->setAccountDetails(details);
         // Serialize configuration to disk once it is done
-        if (auto ringAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
-            saveConfig(ringAccount);
+        if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
+            saveConfig(jamiAccount);
         } else {
             saveConfig();
         }
@@ -2845,10 +2847,9 @@ Manager::loadAccountMap(const YAML::Node& node)
             if (fileutils::isFile(configFile)) {
                 try {
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
-                        std::ifstream file = fileutils::ifstream(configFile);
-                        YAML::Node parsedConfig = YAML::Load(file);
-                        file.close();
-                        a->unserialize(parsedConfig);
+                        auto config = a->buildConfig();
+                        config->unserialize(YAML::LoadFile(configFile));
+                        a->setConfig(std::move(config));
                     }
                 } catch (const std::exception& e) {
                     JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());

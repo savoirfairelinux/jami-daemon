@@ -297,8 +297,8 @@ JamiAccount::createIceTransport(const Args&... args)
     return ice;
 }
 
-JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled */)
-    : SIPAccountBase(accountID)
+JamiAccount::JamiAccount(const std::string& accountId)
+    : SIPAccountBase(accountId)
     , dht_(new dht::DhtRunner)
     , idPath_(fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID())
     , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID())
@@ -307,14 +307,14 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , connectionManager_ {}
 {
     // Force the SFL turn server if none provided yet
-    turnServer_ = DEFAULT_TURN_SERVER;
+    /* turnServer_ = DEFAULT_TURN_SERVER;
     turnServerUserName_ = DEFAULT_TURN_USERNAME;
     turnServerPwd_ = DEFAULT_TURN_PWD;
     turnServerRealm_ = DEFAULT_TURN_REALM;
     turnEnabled_ = true;
 
     proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
-    proxyServer_ = DHT_DEFAULT_PROXY;
+    proxyServer_ = DHT_DEFAULT_PROXY; */
     nonSwarmTransferManager_ = std::make_shared<TransferManager>(getAccountID(), "");
 
     try {
@@ -332,10 +332,6 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount() noexcept
 {
-    if (peerDiscovery_) {
-        peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
-        peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
-    }
     if (auto dht = dht_)
         dht->join();
 }
@@ -813,18 +809,18 @@ JamiAccount::saveConfig() const
 {
     try {
         YAML::Emitter accountOut;
-        serialize(accountOut);
-        auto accountConfig = getPath() + DIR_SEPARATOR_STR + "config.yml";
-
+        config().serialize(accountOut);
+        auto accountConfig = config().path + DIR_SEPARATOR_STR + "config.yml";
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
         std::ofstream fout = fileutils::ofstream(accountConfig);
-        fout << accountOut.c_str();
-        JAMI_DBG("Exported account to %s", accountConfig.c_str());
+        fout.write(accountOut.c_str(), accountOut.size());
+        JAMI_DBG("Saved account config to %s", accountConfig.c_str());
     } catch (const std::exception& e) {
-        JAMI_ERR("Error exporting account: %s", e.what());
+        JAMI_ERR("Error saving account config: %s", e.what());
     }
 }
 
+/*
 void
 JamiAccount::serialize(YAML::Emitter& out) const
 {
@@ -832,6 +828,8 @@ JamiAccount::serialize(YAML::Emitter& out) const
 
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
+    
+    config_->serialize(out);
 
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
@@ -882,8 +880,6 @@ JamiAccount::serialize(YAML::Emitter& out) const
 void
 JamiAccount::unserialize(const YAML::Node& node)
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-
     using yaml_utils::parseValue;
     using yaml_utils::parseValueOptional;
     using yaml_utils::parsePath;
@@ -956,7 +952,7 @@ JamiAccount::unserialize(const YAML::Node& node)
     parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
 
     loadAccount();
-}
+}*/
 
 bool
 JamiAccount::changeArchivePassword(const std::string& password_old, const std::string& password_new)
@@ -1200,6 +1196,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             }
         }};
 
+    const auto& conf = config();
     try {
         auto onAsync = [w = weak()](AccountManager::AsyncUser&& cb) {
             if (auto this_ = w.lock())
@@ -1211,15 +1208,15 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 onAsync,
                 [this]() { return getAccountDetails(); },
                 archivePath_.empty() ? "archive.gz" : archivePath_,
-                nameServer_));
+                config().nameServer));
         } else {
             accountManager_.reset(
-                new ServerAccountManager(getPath(), onAsync, managerUri_, nameServer_));
+                new ServerAccountManager(getPath(), onAsync, managerUri_, conf.nameServer));
         }
 
-        auto id = accountManager_->loadIdentity(tlsCertificateFile_,
-                                                tlsPrivateKeyFile_,
-                                                tlsPassword_);
+        auto id = accountManager_->loadIdentity(conf.tlsCertificateFile,
+                                                conf.tlsPrivateKeyFile,
+                                                conf.tlsPassword);
 
         if (auto info = accountManager_->useIdentity(id,
                                                      receipt_,
@@ -1252,10 +1249,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             std::unique_ptr<AccountManager::AccountCredentials> creds;
             if (managerUri_.empty()) {
                 auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
-                if (archivePath_.empty()) {
-                    archivePath_ = "archive.gz";
-                }
-                auto archivePath = fileutils::getFullPath(idPath_, archivePath_);
+                auto archivePath = conf.archivePath.empty() ? fileutils::getFullPath(idPath_, "archive.gz") : conf.archivePath;
                 bool hasArchive = fileutils::isFile(archivePath);
 
                 if (not archive_path.empty()) {
@@ -1296,21 +1290,22 @@ JamiAccount::loadAccount(const std::string& archive_password,
 
                     fileutils::check_dir(idPath_.c_str(), 0700);
 
+                    auto& conf = *static_cast<JamiAccountConfig*>(config_.get());
                     // save the chain including CA
                     auto id = info.identity;
-                    std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(id,
+                    std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile) = saveIdentity(id,
                                                                                      idPath_,
                                                                                      DEVICE_ID_PATH);
                     id_ = std::move(id);
-                    tlsPassword_ = {};
+                    conf.tlsPassword = {};
 
                     username_ = info.accountId;
-                    registeredName_ = managerUsername_;
-                    deviceName_ = accountManager_->getAccountDeviceName();
+                    //conf.registeredName = managerUsername_;
+                    conf.deviceName = accountManager_->getAccountDeviceName();
 
                     auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::URI);
                     if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
-                        nameServer_ = nameServerIt->second;
+                        conf.nameServer = nameServerIt->second;
                     }
                     auto displayNameIt = config.find(DRing::Account::ConfProperties::DISPLAYNAME);
                     if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
@@ -1324,10 +1319,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     }
 
                     // Use the provided config by JAMS instead of default one
-                    auto details = getAccountDetails();
-                    for (const auto& [key, value] : config)
-                        details[key] = value;
-                    setAccountDetails(details);
+                    conf.fromMap(config);
 
                     if (not info.photo.empty() or not config_->displayName.empty())
                         emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
@@ -1371,6 +1363,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
     }
 }
 
+/*
 void
 JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details)
 {
@@ -1448,8 +1441,9 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
         accountManager_->setAccountDeviceName(deviceName_);
 
     loadAccount(archive_password, archive_pin, archive_path);
-}
+}*/
 
+/*
 std::map<std::string, std::string>
 JamiAccount::getAccountDetails() const
 {
@@ -1475,8 +1469,6 @@ JamiAccount::getAccountDetails() const
         a.emplace(DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,
                   archiveHasPassword_ ? TRUE_STR : FALSE_STR);
 
-    /* these settings cannot be changed (read only), but clients should still be
-     * able to read what they are */
     a.emplace(Conf::CONFIG_SRTP_KEY_EXCHANGE, sip_utils::getKeyExchangeName(getSrtpKeyExchange()));
     a.emplace(Conf::CONFIG_SRTP_ENABLE, isSrtpEnabled() ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_SRTP_RTP_FALLBACK, getSrtpFallback() ? TRUE_STR : FALSE_STR);
@@ -1499,7 +1491,6 @@ JamiAccount::getAccountDetails() const
               allowPeersFromContact_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
               allowPeersFromTrusted_ ? TRUE_STR : FALSE_STR);
-    /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, "-1");
     a.emplace(DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
@@ -1511,7 +1502,7 @@ JamiAccount::getAccountDetails() const
 #endif
 
     return a;
-}
+}*/
 
 std::map<std::string, std::string>
 JamiAccount::getVolatileAccountDetails() const
@@ -2139,7 +2130,7 @@ JamiAccount::doRegister_()
                           getAccountID().c_str(),
                           name.c_str());
 
-                if (turnEnabled_ && !cacheTurnV4_) {
+                if (this->config().turnEnabled && !cacheTurnV4_) {
                     // If TURN is enabled, but no TURN cached, there can be a temporary resolution
                     // error to solve. Sometimes, a connectivity change is not enough, so even if
                     // this case is really rare, it should be easy to avoid.
@@ -2438,6 +2429,11 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     std::mutex mtx;
     std::condition_variable cv;
     bool shutdown_complete {false};
+
+    if (peerDiscovery_) {
+        peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
+        peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
+    }
 
     JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
     dht_->shutdown(
@@ -3369,8 +3365,7 @@ JamiAccount::sendMessage(const std::string& to,
             std::unique_lock<std::mutex> l(confirm->lock);
             if (not confirm->replied) {
                 if (auto this_ = w.lock()) {
-                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
-                               << "] Timeout";
+                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Timeout";
                     for (auto& t : confirm->listenTokens)
                         this_->dht_->cancelListen(t.first, std::move(t.second));
                     confirm->listenTokens.clear();
@@ -3773,7 +3768,8 @@ JamiAccount::cacheTurnServers()
         // Avoid multiple refresh
         if (this_->isRefreshing_.exchange(true))
             return;
-        if (!this_->turnEnabled_) {
+        const auto& conf = this_->config();
+        if (!conf.turnEnabled) {
             // In this case, we do not use any TURN server
             std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
             this_->cacheTurnV4_.reset();
@@ -3786,7 +3782,7 @@ JamiAccount::cacheTurnServers()
         // Retrieve old cached value if available.
         // This means that we directly get the correct value when launching the application on the
         // same network
-        std::string server = this_->turnServer_.empty() ? DEFAULT_TURN_SERVER : this_->turnServer_;
+        std::string server = conf.turnServer.empty() ? DEFAULT_TURN_SERVER : conf.turnServer;
         // No need to resolve, it's already a valid address
         if (IpAddr::isValid(server, AF_INET)) {
             this_->cacheTurnV4_ = std::make_unique<IpAddr>(server, AF_INET);
@@ -3828,7 +3824,7 @@ JamiAccount::cacheTurnServers()
             // Update TURN
             this_->cacheTurnV4_ = std::make_unique<IpAddr>(std::move(turnV4));
         }
-        auto turnV6 = IpAddr {server.empty() ? DEFAULT_TURN_SERVER : server, AF_INET6};
+        auto turnV6 = IpAddr {server, AF_INET6};
         {
             if (turnV6) {
                 // Cache value to avoid a delay when starting up Jami
