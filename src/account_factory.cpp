@@ -35,36 +35,31 @@ const char* const AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYP
 
 AccountFactory::AccountFactory()
 {
-    auto sipfunc = [](const std::string& id) {
+    generators_.emplace(SIPAccount::ACCOUNT_TYPE, [](const std::string& id) {
         return std::make_shared<SIPAccount>(id, true);
-    };
-    generators_.emplace(SIPAccount::ACCOUNT_TYPE, sipfunc);
-    auto dhtfunc = [](const std::string& id) {
-        return std::make_shared<JamiAccount>(id, false);
-    };
-    generators_.emplace(JamiAccount::ACCOUNT_TYPE, dhtfunc);
+    });
+    generators_.emplace(JamiAccount::ACCOUNT_TYPE, [](const std::string& id) {
+        return std::make_shared<JamiAccount>(id);
+    });
 }
 
 std::shared_ptr<Account>
 AccountFactory::createAccount(const char* const accountType, const std::string& id)
 {
     if (hasAccount(id)) {
-        JAMI_ERR("Existing account %s", id.c_str());
+        JAMI_ERROR("Existing account {}", id);
         return nullptr;
     }
 
-    std::shared_ptr<Account> account;
-    {
-        const auto& it = generators_.find(accountType);
-        if (it != generators_.cend())
-            account = it->second(id);
-    }
+    const auto& it = generators_.find(accountType);
+    if (it == generators_.cend())
+        return {};
 
+    std::shared_ptr<Account> account = it->second(id);
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
-        accountMaps_[accountType].insert(std::make_pair(id, account));
+        accountMaps_[accountType].emplace(id, account);
     }
-
     return account;
 }
 
@@ -81,10 +76,10 @@ AccountFactory::removeAccount(Account& account)
 
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto& id = account.getAccountID();
-    JAMI_DBG("Removing account %s", id.c_str());
+    JAMI_DEBUG("Removing account {:s}", id);
     auto& map = accountMaps_.at(account_type);
     map.erase(id);
-    JAMI_DBG("Remaining %zu %s account(s)", map.size(), account_type);
+    JAMI_DEBUG("Remaining {:d} {:s} account(s)", map.size(), account_type);
 }
 
 void
@@ -95,7 +90,7 @@ AccountFactory::removeAccount(std::string_view id)
     if (auto account = getAccount(id)) {
         removeAccount(*account);
     } else
-        JAMI_ERR("No account with ID %.*s", (int)id.size(), id.data());
+        JAMI_ERROR("No account with ID {:s}", id);
 }
 
 template<>
