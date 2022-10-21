@@ -513,7 +513,7 @@ Logger::debugEnabled()
 void
 Logger::vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
 {
-    if (not debugEnabled_.load(std::memory_order_relaxed) and level < LOG_WARNING) {
+    if (level < LOG_WARNING and not debugEnabled_.load(std::memory_order_relaxed)) {
         return;
     }
 

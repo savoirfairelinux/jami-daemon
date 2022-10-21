@@ -210,8 +210,7 @@ setDhtLogLevel()
     int level = 0;
 
     if (envvar != nullptr) {
-        if (not(std::istringstream(envvar) >> level))
-            level = 0;
+        level = to_int<int>(envvar);
 
         // From 0 (min) to 3 (max)
         level = std::max(0, std::min(level, 3));
@@ -241,8 +240,7 @@ setSipLogLevel()
     int level = 0;
 
     if (envvar != nullptr) {
-        if (not(std::istringstream(envvar) >> level))
-            level = 0;
+        level = to_int<int>(envvar);
 
         // From 0 (min) to 6 (max)
         level = std::max(0, std::min(level, 6));
@@ -284,9 +282,7 @@ setGnuTlsLogLevel()
     int level = RING_TLS_LOGLEVEL;
 
     if (envvar != nullptr) {
-        int var_level;
-        if (std::istringstream(envvar) >> var_level)
-            level = var_level;
+        level = to_int<int>(envvar);
 
         // From 0 (min) to 9 (max)
         level = std::max(0, std::min(level, 9));
@@ -2690,11 +2686,11 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     else
         accountType = AccountFactory::DEFAULT_ACCOUNT_TYPE;
 
-    JAMI_DBG("Adding account %s", newAccountID.c_str());
+    JAMI_DEBUG("Adding account {:s}", newAccountID);
 
     auto newAccount = accountFactory.createAccount(accountType, newAccountID);
     if (!newAccount) {
-        JAMI_ERR("Unknown %s param when calling addAccount(): %s",
+        JAMI_ERROR("Unknown {:s} param when calling addAccount(): {:s}",
                  Conf::CONFIG_ACCOUNT_TYPE,
                  accountType);
         return "";
