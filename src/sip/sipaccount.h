@@ -680,6 +680,7 @@ private:
     bool tlsVerifyServer_;
     bool tlsVerifyClient_;
     bool tlsRequireClientCertificate_;
+    bool tlsDisableSecureDlgCheck_;
     std::string tlsNegotiationTimeoutSec_;
 
     /**

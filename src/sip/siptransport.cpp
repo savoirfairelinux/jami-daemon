@@ -338,6 +338,8 @@ SipTransportBroker::getTlsListener(const IpAddr& ipAddress, const pjsip_tls_sett
     RETURN_IF_FAIL(settings, nullptr, "TLS settings not specified");
     RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
     JAMI_DBG("Creating TLS listener on %s...", ipAddress.toString(true).c_str());
+    JAMI_DBG("Secure check dialog disabled ? %d", settings->disable_secure_dlg_check);
+    pjsip_cfg()->endpt.disable_secure_dlg_check = settings->disable_secure_dlg_check;
 #if 0
     JAMI_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
     JAMI_DBG(" cert_file    : %s", settings->cert_file.ptr);

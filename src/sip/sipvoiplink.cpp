@@ -23,6 +23,7 @@
  */
 
 #include "sipvoiplink.h"
+#include<typeinfo>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -376,7 +377,6 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     pjmedia_sdp_session* r_sdp {nullptr};
-
     if (body) {
         if (pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp)
             != PJ_SUCCESS) {
@@ -387,7 +387,6 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     if (not account->hasActiveCodec(MEDIA_AUDIO)) {
         try_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, NULL);
-
         return PJ_FALSE;
     }
 
@@ -395,6 +394,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
     unsigned options = 0;
 
     if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
+
+        JAMI_ERR("Couldn't verify INVITE request in secure dialog.");
         try_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
         return PJ_FALSE;
     }

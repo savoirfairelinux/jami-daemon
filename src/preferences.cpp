@@ -251,7 +251,6 @@ void
 VoipPreference::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << DISABLE_SECURE_DLG_CHECK_KEY << YAML::Value << disableSecureDlgCheck_;
     out << YAML::Key << PLAY_DTMF_KEY << YAML::Value << playDtmf_;
     out << YAML::Key << PLAY_TONES_KEY << YAML::Value << playTones_;
     out << YAML::Key << PULSE_LENGTH_KEY << YAML::Value << pulseLength_;
@@ -264,7 +263,6 @@ void
 VoipPreference::unserialize(const YAML::Node& in)
 {
     const auto& node = in[CONFIG_LABEL];
-    parseValue(node, DISABLE_SECURE_DLG_CHECK_KEY, disableSecureDlgCheck_);
     parseValue(node, PLAY_DTMF_KEY, playDtmf_);
     parseValue(node, PLAY_TONES_KEY, playTones_);
     parseValue(node, PULSE_LENGTH_KEY, pulseLength_);

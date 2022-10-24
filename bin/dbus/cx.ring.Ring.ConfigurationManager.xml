@@ -66,6 +66,7 @@
                         <li>TLS_VERIFY_SERVER</li>
                         <li>TLS_VERIFY_CLIENT</li>
                         <li>TLS_REQUIRE_CLIENT_CERTIFICATE</li>
+                        <li>TLS_DISABLE_SECURE_DLG_CHECK</li>
                         <li>TLS_NEGOTIATION_TIMEOUT_SEC</li>
                     </ul>
                 </tp:docstring>

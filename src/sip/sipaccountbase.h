@@ -87,6 +87,7 @@ const char* const TIMEOUT_KEY = "timeout";
 const char* const TLS_PASSWORD_KEY = "password";
 const char* const PRIVATE_KEY_KEY = "privateKey";
 const char* const REQUIRE_CERTIF_KEY = "requireCertif";
+const char* const DISABLE_SECURE_DLG_CHECK = "disableSecureDlgCheck";
 const char* const SERVER_KEY = "server";
 const char* const VERIFY_CLIENT_KEY = "verifyClient";
 const char* const VERIFY_SERVER_KEY = "verifyServer";
