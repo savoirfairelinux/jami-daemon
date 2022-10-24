@@ -140,6 +140,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , tlsVerifyServer_(false)
     , tlsVerifyClient_(true)
     , tlsRequireClientCertificate_(true)
+    , tlsDisableSecureDlgCheck_(true)
     , tlsNegotiationTimeoutSec_("2")
     , registrationStateDetailed_()
     , registrationRefreshEnabled_(true)
@@ -465,6 +466,7 @@ SIPAccount::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient_;
     out << YAML::Key << Conf::VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
     out << YAML::Key << Conf::REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate_;
+    out << YAML::Key << Conf::DISABLE_SECURE_DLG_CHECK << YAML::Value << tlsDisableSecureDlgCheck_;
     out << YAML::Key << Conf::TIMEOUT_KEY << YAML::Value << tlsNegotiationTimeoutSec_;
     out << YAML::Key << Conf::CIPHERS_KEY << YAML::Value << tlsCiphers_;
     out << YAML::Key << Conf::METHOD_KEY << YAML::Value << tlsMethod_;
@@ -581,6 +583,7 @@ SIPAccount::unserialize(const YAML::Node& node)
 
     parseValue(tlsMap, Conf::SERVER_KEY, tlsServerName_);
     parseValue(tlsMap, Conf::REQUIRE_CERTIF_KEY, tlsRequireClientCertificate_);
+    parseValue(tlsMap, Conf::DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck_);
     parseValue(tlsMap, Conf::VERIFY_CLIENT_KEY, tlsVerifyClient_);
     parseValue(tlsMap, Conf::VERIFY_SERVER_KEY, tlsVerifyServer_);
     // FIXME
@@ -635,6 +638,7 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
     parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
     parseBool(details, Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    parseBool(details, Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck_);
     parseString(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
     parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
     parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
@@ -1309,6 +1313,8 @@ SIPAccount::initTlsConfiguration()
     tlsSetting_.verify_client = tlsVerifyClient_;
     tlsSetting_.require_client_cert = tlsRequireClientCertificate_;
 
+    tlsSetting_.disable_secure_dlg_check = tlsDisableSecureDlgCheck_;
+
     tlsSetting_.timeout.sec = atol(tlsNegotiationTimeoutSec_.c_str());
 
     tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
@@ -1794,6 +1800,8 @@ SIPAccount::getTlsSettings() const
             {Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE,
              tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK, 
+             tlsDisableSecureDlgCheck_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_}};
 }
 
