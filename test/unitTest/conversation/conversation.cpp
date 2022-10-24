@@ -3188,17 +3188,22 @@ ConversationTest::testSearchInConv()
     libjami::sendMessage(aliceId, convId, "message 2"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived; }));
     messageReceived = false;
-    libjami::sendMessage(aliceId, convId, "message 3"s, "");
+    libjami::sendMessage(aliceId, convId, "Message 3"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived; }));
-    libjami::searchConversation(aliceId, convId, "", "", "message", "", 0, 0, 0);
+
+    libjami::searchConversation(aliceId, convId, "", "", "message", "", 0, 0, 0, 0);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 3 && finished; }));
     messages.clear();
     finished = false;
-    libjami::searchConversation(aliceId, convId, "", "", "message 2", "", 0, 0, 0);
+    libjami::searchConversation(aliceId, convId, "", "", "Message", "", 0, 0, 0, 1);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 1 && finished; }));
     messages.clear();
     finished = false;
-    libjami::searchConversation(aliceId, convId, "", "", "foo", "", 0, 0, 0);
+    libjami::searchConversation(aliceId, convId, "", "", "message 2", "", 0, 0, 0, 0);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 1 && finished; }));
+    messages.clear();
+    finished = false;
+    libjami::searchConversation(aliceId, convId, "", "", "foo", "", 0, 0, 0, 0);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 0 && finished; }));
 }
 

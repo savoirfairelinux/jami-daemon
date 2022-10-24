@@ -75,6 +75,7 @@ struct Filter
     int64_t after {0};
     int64_t before {0};
     uint32_t maxResult {0};
+    bool caseSensitive {false};
 };
 
 struct GitAuthor

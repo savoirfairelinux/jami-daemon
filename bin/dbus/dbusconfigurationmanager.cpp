@@ -925,7 +925,8 @@ DBusConfigurationManager::searchConversation(const std::string& accountId,
                                              const std::string& type,
                                              const int64_t& after,
                                              const int64_t& before,
-                                             const uint32_t& maxResult)
+                                             const uint32_t& maxResult,
+                                             const int32_t& flag)
 {
     return libjami::searchConversation(accountId,
                                        conversationId,
@@ -935,7 +936,8 @@ DBusConfigurationManager::searchConversation(const std::string& accountId,
                                        type,
                                        after,
                                        before,
-                                       maxResult);
+                                       maxResult,
+                                       flag);
 }
 
 bool
