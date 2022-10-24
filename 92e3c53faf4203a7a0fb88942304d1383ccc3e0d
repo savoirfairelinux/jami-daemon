@@ -50,6 +50,60 @@
       "message": "MAJOR SonarQube violation:\n\n\ndata argument not used by format string\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format-extra-args",
       "revId": "92e3c53faf4203a7a0fb88942304d1383ccc3e0d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cb82b106_ed735a32",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 88
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T13:15:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e67c0a09_11931cbc",
+      "revId": "92e3c53faf4203a7a0fb88942304d1383ccc3e0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f4debfb_dae56a5c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 88
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T13:15:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4f1d650b_d88078b5",
+      "revId": "92e3c53faf4203a7a0fb88942304d1383ccc3e0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d19f7ac0_9c459891",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 88
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T13:15:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "90cb70db_244eb6b3",
+      "revId": "92e3c53faf4203a7a0fb88942304d1383ccc3e0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

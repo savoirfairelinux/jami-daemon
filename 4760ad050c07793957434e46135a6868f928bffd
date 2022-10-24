@@ -50,6 +50,42 @@
       "message": "CRITICAL SonarQube violation:\n\n\ncannot pass object of non-trivial type \u0027const __tuple_element_t\u003c0UL, tuple\u003cstd::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e \u003e \u003e\u0027 (aka \u0027const std::__cxx11::basic_string\u003cchar\u003e\u0027) through variadic function; call will abort at runtime\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-non-pod-varargs",
       "revId": "4760ad050c07793957434e46135a6868f928bffd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "06c55ae8_b6637e57",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 89
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T13:15:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "49af2060_219509c4",
+      "revId": "4760ad050c07793957434e46135a6868f928bffd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1d563501_b430d7f7",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 89
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T13:15:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "055e5a87_20c367fa",
+      "revId": "4760ad050c07793957434e46135a6868f928bffd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
