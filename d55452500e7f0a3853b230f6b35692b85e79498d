@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "172b8ce2_aea34df2",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 859,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T21:13:24Z",
+      "side": 1,
+      "message": "the receiver is not wake up (no notify)",
+      "range": {
+        "startLine": 856,
+        "startChar": 31,
+        "endLine": 859,
+        "endChar": 30
+      },
+      "revId": "d55452500e7f0a3853b230f6b35692b85e79498d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d678981_36c38229",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 884,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T21:13:24Z",
+      "side": 1,
+      "message": "cb is both used for the member and the argument",
+      "range": {
+        "startLine": 873,
+        "startChar": 1,
+        "endLine": 884,
+        "endChar": 1
+      },
+      "revId": "d55452500e7f0a3853b230f6b35692b85e79498d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e52cb351_d76caf32",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 936,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T21:13:24Z",
+      "side": 1,
+      "message": "multiple double lock",
+      "range": {
+        "startLine": 919,
+        "startChar": 12,
+        "endLine": 936,
+        "endChar": 9
+      },
+      "revId": "d55452500e7f0a3853b230f6b35692b85e79498d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
