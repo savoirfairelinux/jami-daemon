@@ -506,16 +506,16 @@ public:
     std::string getCurrentAudioOutputPlugin() const;
 
     /**
-     * Get the noise reduction engin state from
+     * Get the noise reduction engine state from
      * the current audio layer.
      */
-    bool getNoiseSuppressState() const;
+    std::string getNoiseSuppressState() const;
 
     /**
-     * Set the noise reduction engin state in the current
+     * Set the noise reduction engine state in the current
      * audio layer.
      */
-    void setNoiseSuppressState(bool state);
+    void setNoiseSuppressState(const std::string& state);
 
     bool isAGCEnabled() const;
     void setAGCState(bool enabled);

@@ -207,6 +207,7 @@ protected:
     void playbackChanged(bool started);
     void recordChanged(bool started);
     void setHasNativeAEC(bool hasEAC);
+    void setHasNativeNS(bool hasNS);
 
     std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
     std::shared_ptr<AudioFrame> getToRing(AudioFormat format, size_t writableSamples);
@@ -239,6 +240,7 @@ protected:
     bool playbackStarted_ {false};
     bool recordStarted_ {false};
     bool hasNativeAEC_ {true};
+    bool hasNativeNS_ {false};
 
     /**
      * Gain applied to mic signal

@@ -49,6 +49,7 @@ AlsaLayer::AlsaLayer(const AudioPreference& pref)
     , captureBuff_(0, audioFormat_)
 {
     setHasNativeAEC(false);
+    setHasNativeNS(false);
 }
 
 AlsaLayer::~AlsaLayer()

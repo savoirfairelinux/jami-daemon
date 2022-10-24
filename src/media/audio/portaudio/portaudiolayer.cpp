@@ -96,6 +96,7 @@ PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
     , pimpl_ {new PortAudioLayerImpl(*this, pref)}
 {
     setHasNativeAEC(false);
+    setHasNativeNS(false);
 
     auto numDevices = Pa_GetDeviceCount();
     if (numDevices < 0) {

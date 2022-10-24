@@ -135,8 +135,8 @@ DRING_PUBLIC std::vector<std::string> getCurrentAudioDevicesIndex();
 DRING_PUBLIC int32_t getAudioInputDeviceIndex(const std::string& name);
 DRING_PUBLIC int32_t getAudioOutputDeviceIndex(const std::string& name);
 DRING_PUBLIC std::string getCurrentAudioOutputPlugin();
-DRING_PUBLIC bool getNoiseSuppressState();
-DRING_PUBLIC void setNoiseSuppressState(bool state);
+DRING_PUBLIC std::string getNoiseSuppressState();
+DRING_PUBLIC void setNoiseSuppressState(const std::string& state);
 
 DRING_PUBLIC bool isAgcEnabled();
 DRING_PUBLIC void setAgcState(bool enabled);

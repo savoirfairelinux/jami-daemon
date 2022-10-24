@@ -74,6 +74,8 @@ PulseLayer::PulseLayer(AudioPreference& pref)
     if (pa_threaded_mainloop_start(mainloop_.get()) < 0)
         throw std::runtime_error("Failed to start pulseaudio mainloop");
 
+    setHasNativeNS(false);
+
     PulseMainLoopLock lock(mainloop_.get());
 
     std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl(pa_proplist_new(),
