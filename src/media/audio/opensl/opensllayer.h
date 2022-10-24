@@ -166,6 +166,8 @@ private:
     std::unique_ptr<opensl::AudioRecorder> recorder_ {};
 
     std::thread recThread {};
+
+    AudioPreference& preference_;
 };
 
 } // namespace jami

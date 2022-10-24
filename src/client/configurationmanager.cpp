@@ -650,14 +650,14 @@ getCurrentAudioOutputPlugin()
     return plugin;
 }
 
-bool
+std::string
 getNoiseSuppressState()
 {
     return jami::Manager::instance().getNoiseSuppressState();
 }
 
 void
-setNoiseSuppressState(bool state)
+setNoiseSuppressState(const std::string& state)
 {
     jami::Manager::instance().setNoiseSuppressState(state);
 }
