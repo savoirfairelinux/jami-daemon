@@ -24,6 +24,7 @@
 #include <string>
 
 #include "manager.h"
+#include "client/videomanager.h"
 #include "jamidht/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
@@ -464,20 +465,39 @@ ConferenceTest::testCreateParticipantsSinks()
     auto carlaUri = carlaAccount->getUsername();
 
     startConference();
+    std::this_thread::sleep_for(5s);
 
-    auto infos = DRing::getConferenceInfos(aliceId, confId);
+    auto expectedNumberOfParticipants = 3;
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+    // Check participants number
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+
+    if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
+        JAMI_INFO() << "Check sinks if video device available.";
         bool sinksStatus = true;
-        for (auto& info : infos) {
-            if (info["uri"] == bobUri) {
+        for (auto& info : pInfos_) {
+            auto uri = string_remove_suffix(info["uri"], '@');
+            if (uri == bobUri) {
                 sinksStatus &= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
-            } else if (info["uri"] == carlaUri) {
+            } else if (uri == carlaUri) {
                 sinksStatus &= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
             }
         }
-        return sinksStatus;
-    }));
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return sinksStatus; }));
+    } else {
+        JAMI_INFO() << "Check sinks if no video device available.";
+        bool sinksStatus = false;
+        for (auto& info : pInfos_) {
+            auto uri = string_remove_suffix(info["uri"], '@');
+            if (uri == bobUri) {
+                sinksStatus |= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
+            } else if (uri == carlaUri) {
+                sinksStatus |= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
+            }
+        }
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !sinksStatus; }));
+    }
+
 
     hangupConference();
 
