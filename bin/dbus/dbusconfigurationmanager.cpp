@@ -367,7 +367,7 @@ DBusConfigurationManager::getNoiseSuppressState() -> decltype(libjami::getNoiseS
 }
 
 void
-DBusConfigurationManager::setNoiseSuppressState(const bool& state)
+DBusConfigurationManager::setNoiseSuppressState(const std::string& state)
 {
     libjami::setNoiseSuppressState(state);
 }

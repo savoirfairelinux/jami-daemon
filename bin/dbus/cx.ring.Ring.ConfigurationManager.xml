@@ -1008,13 +1008,15 @@
        <!--    General Settings Panel         -->
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">
-           <arg type="b" name="state" direction="out">
+           <tp:added version="13.5.0"/>
+           <arg type="s" name="state" direction="out">
            </arg>
        </method>
 
        <method name="setNoiseSuppressState" tp:name-for-bindings="setNoiseSuppressState">
-               <arg type="b" name="state" direction="in">
-               </arg>
+            <tp:added version="13.5.0"/>
+            <arg type="s" name="state" direction="in">
+            </arg>
        </method>
 
        <method name="isAgcEnabled" tp:name-for-bindings="isAgcEnabled">
