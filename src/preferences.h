@@ -111,9 +111,6 @@ public:
     void serialize(YAML::Emitter& out) const override;
     void unserialize(const YAML::Node& in) override;
 
-    bool getDisableSecureDlgCheck() const { return disableSecureDlgCheck_; }
-    void setDisableSecureDlgCheck(bool disable) { disableSecureDlgCheck_ = disable; }
-
     bool getPlayDtmf() const { return playDtmf_; }
 
     void setPlayDtmf(bool dtmf) { playDtmf_ = dtmf; }
@@ -133,7 +130,6 @@ public:
     void setZidFile(const std::string& file) { zidFile_ = file; }
 
 private:
-    bool disableSecureDlgCheck_;
     bool playDtmf_;
     bool playTones_;
     int pulseLength_;
