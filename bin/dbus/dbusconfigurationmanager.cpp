@@ -367,7 +367,7 @@ DBusConfigurationManager::getNoiseSuppressState() -> decltype(DRing::getNoiseSup
 }
 
 void
-DBusConfigurationManager::setNoiseSuppressState(const bool& state)
+DBusConfigurationManager::setNoiseSuppressState(const std::string& state)
 {
     DRing::setNoiseSuppressState(state);
 }

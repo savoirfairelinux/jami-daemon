@@ -224,9 +224,9 @@ public:
 
     void setAGCState(bool enabled) { agcEnabled_ = enabled; }
 
-    bool getNoiseReduce() const { return denoise_; }
+    const std::string& getNoiseReduce() const { return denoise_; }
 
-    void setNoiseReduce(bool enabled) { denoise_ = enabled; }
+    void setNoiseReduce(const std::string& enabled) { denoise_ = enabled; }
 
     bool getCaptureMuted() const { return captureMuted_; }
 
@@ -276,7 +276,7 @@ private:
 
     // audio processor preferences
     std::string audioProcessor_;
-    bool denoise_;
+    std::string denoise_;
     bool agcEnabled_;
     bool vadEnabled_;
     std::string echoCanceller_;
