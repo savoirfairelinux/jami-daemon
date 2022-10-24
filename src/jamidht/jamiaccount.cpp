@@ -1493,6 +1493,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_TLS_VERIFY_SERVER, TRUE_STR);
     a.emplace(Conf::CONFIG_TLS_VERIFY_CLIENT, TRUE_STR);
     a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR);
+    a.emplace(Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK, TRUE_STR);
     a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
               allowPeersFromHistory_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
