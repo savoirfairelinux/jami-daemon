@@ -44,7 +44,7 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-class DRING_PUBLIC DBusPresenceManager :
+class LIBJAMI_PUBLIC DBusPresenceManager :
     public cx::ring::Ring::PresenceManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor

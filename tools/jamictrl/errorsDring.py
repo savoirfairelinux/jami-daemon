@@ -21,7 +21,7 @@
 """Internal exceptions"""
 
 
-class DRingCtrlError(Exception):
+class libjamiCtrlError(Exception):
     """Base class for all our exceptions."""
 
     def __init__(self, help=None):
@@ -30,11 +30,11 @@ class DRingCtrlError(Exception):
     def __str__(self):
         return self.help
 
-class DRingCtrlDBusError(DRingCtrlError):
+class libjamiCtrlDBusError(libjamiCtrlError):
     """General error for dbus communication"""
 
-class DRingCtrlDeamonError(DRingCtrlError):
+class libjamiCtrlDeamonError(libjamiCtrlError):
     """General error for daemon communication"""
 
-class DRingCtrlAccountError(DRingCtrlError):
+class libjamiCtrlAccountError(libjamiCtrlError):
     """General error for account handling"""

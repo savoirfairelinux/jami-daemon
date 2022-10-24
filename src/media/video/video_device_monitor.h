@@ -50,7 +50,7 @@ public:
 
     std::vector<std::string> getDeviceList() const;
 
-    DRing::VideoCapabilities getCapabilities(const std::string& name) const;
+    libjami::VideoCapabilities getCapabilities(const std::string& name) const;
     VideoSettings getSettings(const std::string& name);
     void applySettings(const std::string& name, const VideoSettings& settings);
 

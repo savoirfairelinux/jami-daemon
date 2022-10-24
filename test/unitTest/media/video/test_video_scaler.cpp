@@ -57,13 +57,13 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(VideoScalerTest, VideoScalerTest::name());
 void
 VideoScalerTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
 }
 
 void
 VideoScalerTest::tearDown()
 {
-    DRing::fini();
+    libjami::fini();
 }
 
 void
@@ -71,7 +71,7 @@ VideoScalerTest::testConvertFrame()
 {
     scaler_.reset(new VideoScaler);
 
-    DRing::VideoFrame input;
+    libjami::VideoFrame input;
     input.reserve(AV_PIX_FMT_YUV420P, 100, 100);
     auto output = scaler_->convertFormat(input, AV_PIX_FMT_RGB24);
     CPPUNIT_ASSERT(static_cast<AVPixelFormat>(output->format()) == AV_PIX_FMT_RGB24);
@@ -82,7 +82,7 @@ VideoScalerTest::testScale()
 {
     scaler_.reset(new VideoScaler);
 
-    DRing::VideoFrame input, output;
+    libjami::VideoFrame input, output;
     input.reserve(AV_PIX_FMT_YUV420P, 100, 100);
     output.reserve(AV_PIX_FMT_YUV420P, 200, 200);
     scaler_->scale(input, output);
@@ -96,7 +96,7 @@ VideoScalerTest::testScaleWithAspect()
 {
     scaler_.reset(new VideoScaler);
 
-    DRing::VideoFrame input, output;
+    libjami::VideoFrame input, output;
     input.reserve(AV_PIX_FMT_YUV420P, 320, 240); // 4:3
     output.reserve(AV_PIX_FMT_YUV420P, 640, 360); // 16:9
     scaler_->scale_with_aspect(input, output);

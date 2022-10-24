@@ -35,7 +35,7 @@
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 
-using namespace DRing::Account;
+using namespace libjami::Account;
 using namespace std::literals::chrono_literals;
 
 namespace jami {
@@ -73,11 +73,11 @@ public:
     ConferenceTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
-    ~ConferenceTest() { DRing::fini(); }
+    ~ConferenceTest() { libjami::fini(); }
     static std::string name() { return "Conference"; }
     void setUp();
     void tearDown();
@@ -187,9 +187,9 @@ ConferenceTest::registerSignalHandlers()
     auto carlaUri = carlaAccount->getUsername();
     auto daviUri = daviAccount->getUsername();
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [=](const std::string& accountId,
             const std::string& callId,
             const std::string&,
@@ -204,12 +204,12 @@ ConferenceTest::registerSignalHandlers()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::CallSignal::StateChange>([=](const std::string& accountId,
+        libjami::exportable_callback<libjami::CallSignal::StateChange>([=](const std::string& accountId,
                                                                        const std::string& callId,
                                                                        const std::string& state,
                                                                        signed) {
             if (accountId == aliceId) {
-                auto details = DRing::getCallDetails(aliceId, callId);
+                auto details = libjami::getCallDetails(aliceId, callId);
                 if (details["PEER_NUMBER"].find(bobUri) != std::string::npos)
                     bobCall.hostState = state;
                 else if (details["PEER_NUMBER"].find(carlaUri) != std::string::npos)
@@ -224,24 +224,24 @@ ConferenceTest::registerSignalHandlers()
                 daviCall.state = state;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceCreated>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceCreated>(
         [=](const std::string&, const std::string& conferenceId) {
             confId = conferenceId;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceRemoved>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceRemoved>(
         [=](const std::string&, const std::string& conferenceId) {
             if (confId == conferenceId)
                 confId = "";
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceChanged>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceChanged>(
         [=](const std::string&, const std::string& conferenceId, const std::string&) {
             if (confId == conferenceId)
                 confChanged = true;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::OnConferenceInfosUpdated>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
         [=](const std::string&,
             const std::vector<std::map<std::string, std::string>> participantsInfos) {
             pInfos_ = participantsInfos;
@@ -274,7 +274,7 @@ ConferenceTest::registerSignalHandlers()
             cv.notify_one();
         }));
 
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 }
 
 void
@@ -291,23 +291,23 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
     std::vector<std::map<std::string, std::string>> mediaList;
     if (audioOnly) {
         std::map<std::string, std::string> mediaAttribute
-            = {{DRing::Media::MediaAttributeKey::MEDIA_TYPE,
-                DRing::Media::MediaAttributeValue::AUDIO},
-               {DRing::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-               {DRing::Media::MediaAttributeKey::MUTED, FALSE_STR},
-               {DRing::Media::MediaAttributeKey::SOURCE, ""},
-               {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}};
+            = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+                libjami::Media::MediaAttributeValue::AUDIO},
+               {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+               {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+               {libjami::Media::MediaAttributeKey::SOURCE, ""},
+               {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
         mediaList.emplace_back(mediaAttribute);
     }
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1 = DRing::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2 = DRing::placeCallWithMedia(aliceId, carlaUri, mediaList);
+    auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
@@ -324,7 +324,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
 
     if (addDavi) {
         JAMI_INFO("Start call between Alice and Davi");
-        auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, mediaList);
+        auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, mediaList);
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
         Manager::instance().answerCall(daviId, daviCall.callId);
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
@@ -351,18 +351,18 @@ ConferenceTest::testGetConference()
 {
     registerSignalHandlers();
 
-    CPPUNIT_ASSERT(DRing::getConferenceList(aliceId).size() == 0);
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 0);
 
     startConference();
 
-    CPPUNIT_ASSERT(DRing::getConferenceList(aliceId).size() == 1);
-    CPPUNIT_ASSERT(DRing::getConferenceList(aliceId)[0] == confId);
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 1);
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId)[0] == confId);
 
     hangupConference();
 
-    CPPUNIT_ASSERT(DRing::getConferenceList(aliceId).size() == 0);
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 0);
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -376,15 +376,15 @@ ConferenceTest::testModeratorMuteUpdateParticipantsInfos()
     startConference();
 
     JAMI_INFO("Play with mute from the moderator");
-    DRing::muteStream(aliceId, confId, bobUri, bobCall.device, bobCall.streamId, true);
+    libjami::muteStream(aliceId, confId, bobUri, bobCall.device, bobCall.streamId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.moderatorMuted.load(); }));
 
-    DRing::muteStream(aliceId, confId, bobUri, bobCall.device, bobCall.streamId, false);
+    libjami::muteStream(aliceId, confId, bobUri, bobCall.device, bobCall.streamId, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.moderatorMuted.load(); }));
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -398,12 +398,12 @@ ConferenceTest::testUnauthorizedMute()
     startConference();
 
     JAMI_INFO("Play with mute from unauthorized");
-    DRing::muteStream(carlaId, confId, bobUri, bobCall.device, bobCall.streamId, true);
+    libjami::muteStream(carlaId, confId, bobUri, bobCall.device, bobCall.streamId, true);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 15s, [&] { return bobCall.moderatorMuted.load(); }));
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -418,23 +418,23 @@ ConferenceTest::testAudioVideoMutedStates()
     auto carlaUri = carlaAccount->getUsername();
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1Id = DRing::placeCallWithMedia(aliceId, bobUri, {});
+    auto call1Id = libjami::placeCallWithMedia(aliceId, bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
     auto call1 = aliceAccount->getCall(call1Id);
-    call1->muteMedia(DRing::Media::MediaAttributeValue::AUDIO, true);
-    call1->muteMedia(DRing::Media::MediaAttributeValue::VIDEO, true);
+    call1->muteMedia(libjami::Media::MediaAttributeValue::AUDIO, true);
+    call1->muteMedia(libjami::Media::MediaAttributeValue::VIDEO, true);
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2Id = DRing::placeCallWithMedia(aliceId, carlaUri, {});
+    auto call2Id = libjami::placeCallWithMedia(aliceId, carlaUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
 
     auto call2 = aliceAccount->getCall(call2Id);
-    call2->muteMedia(DRing::Media::MediaAttributeValue::AUDIO, true);
-    call2->muteMedia(DRing::Media::MediaAttributeValue::VIDEO, true);
+    call2->muteMedia(libjami::Media::MediaAttributeValue::AUDIO, true);
+    call2->muteMedia(libjami::Media::MediaAttributeValue::VIDEO, true);
 
     JAMI_INFO("Start conference");
     Manager::instance().joinParticipant(aliceId, call1Id, aliceId, call2Id);
@@ -450,7 +450,7 @@ ConferenceTest::testAudioVideoMutedStates()
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -465,7 +465,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     startConference();
 
-    auto infos = DRing::getConferenceInfos(aliceId, confId);
+    auto infos = libjami::getConferenceInfos(aliceId, confId);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
         bool sinksStatus = true;
@@ -481,7 +481,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -497,14 +497,14 @@ ConferenceTest::testMuteStatusAfterRemove()
 
     startConference(false, true);
 
-    DRing::muteStream(aliceId, confId, daviUri, daviCall.device, daviCall.streamId, true);
+    libjami::muteStream(aliceId, confId, daviUri, daviCall.device, daviCall.streamId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.moderatorMuted.load(); }));
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = DRing::placeCallWithMedia(aliceId, daviUri, {});
+    auto call2 = libjami::placeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
@@ -517,7 +517,7 @@ ConferenceTest::testMuteStatusAfterRemove()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -537,14 +537,14 @@ ConferenceTest::testActiveStatusAfterRemove()
     defaultAudio.label_ = "audio_0";
     defaultAudio.enabled_ = true;
 
-    DRing::setActiveStream(aliceId, confId, daviUri, daviCall.device, daviCall.streamId, true);
+    libjami::setActiveStream(aliceId, confId, daviUri, daviCall.device, daviCall.streamId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.active.load(); }));
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = DRing::placeCallWithMedia(aliceId,
+    auto call2 = libjami::placeCallWithMedia(aliceId,
                                            daviUri,
                                            MediaAttribute::mediaAttributesToMediaMaps(
                                                {defaultAudio}));
@@ -560,7 +560,7 @@ ConferenceTest::testActiveStatusAfterRemove()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -579,39 +579,39 @@ ConferenceTest::testHandsUp()
     startConference(false, true);
 
     JAMI_INFO("Play with raise hand");
-    DRing::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, true);
+    libjami::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.raisedHand.load(); }));
 
-    DRing::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, false);
+    libjami::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand.load(); }));
 
     // Remove davi from moderators
-    DRing::setModerator(aliceId, confId, daviUri, false);
+    libjami::setModerator(aliceId, confId, daviUri, false);
 
     // Test to raise hand
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
-    DRing::raiseHand(daviId, daviCall.callId, daviUri, daviCall.device, true);
+    libjami::raiseHand(daviId, daviCall.callId, daviUri, daviCall.device, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.raisedHand.load(); }));
 
     // Test to raise hand for another one (should fail)
-    DRing::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, true);
+    libjami::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, true);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&] { return carlaCall.raisedHand.load(); }));
 
     // However, a moderator should be able to lower the hand (but not a non moderator)
-    DRing::raiseHand(carlaId, carlaCall.callId, carlaUri, carlaCall.device, true);
+    libjami::raiseHand(carlaId, carlaCall.callId, carlaUri, carlaCall.device, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return carlaCall.raisedHand.load(); }));
 
-    DRing::raiseHand(daviId, carlaCall.callId, carlaUri, carlaCall.device, false);
+    libjami::raiseHand(daviId, carlaCall.callId, carlaUri, carlaCall.device, false);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&] { return !carlaCall.raisedHand.load(); }));
 
-    DRing::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, false);
+    libjami::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !carlaCall.raisedHand.load(); }));
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = DRing::placeCallWithMedia(aliceId, daviUri, {});
+    auto call2 = libjami::placeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
@@ -624,7 +624,7 @@ ConferenceTest::testHandsUp()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -640,7 +640,7 @@ ConferenceTest::testPeerLeaveConference()
     Manager::instance().hangupCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && confId.empty(); }));
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -657,21 +657,21 @@ ConferenceTest::testJoinCallFromOtherAccount()
     startConference();
 
     JAMI_INFO("Play with raise hand");
-    DRing::raiseHand(aliceId, confId, bobUri, bobCall.device, true);
+    libjami::raiseHand(aliceId, confId, bobUri, bobCall.device, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.raisedHand.load(); }));
 
-    DRing::raiseHand(aliceId, confId, bobUri, bobCall.device, false);
+    libjami::raiseHand(aliceId, confId, bobUri, bobCall.device, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand.load(); }));
 
     JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = DRing::placeCallWithMedia(aliceId, daviUri, {});
+    auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
     CPPUNIT_ASSERT(Manager::instance().addParticipant(daviId, daviCall.callId, aliceId, confId));
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -692,7 +692,7 @@ ConferenceTest::testDevices()
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -707,12 +707,12 @@ ConferenceTest::testUnauthorizedSetActive()
 
     startConference();
 
-    DRing::setActiveStream(carlaId, confId, bobUri, bobCall.device, bobCall.streamId, true);
+    libjami::setActiveStream(carlaId, confId, bobUri, bobCall.device, bobCall.streamId, true);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 15s, [&] { return bobCall.active.load(); }));
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -728,14 +728,14 @@ ConferenceTest::testHangup()
 
     startConference(false, true);
 
-    DRing::hangupParticipant(carlaId, confId, daviUri, daviCall.device); // Unauthorized
+    libjami::hangupParticipant(carlaId, confId, daviUri, daviCall.device); // Unauthorized
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
-    DRing::hangupParticipant(aliceId, confId, daviUri, daviCall.device);
+    libjami::hangupParticipant(aliceId, confId, daviUri, daviCall.device);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -763,7 +763,7 @@ ConferenceTest::testIsConferenceParticipant()
     CPPUNIT_ASSERT(!aliceAccount->getCall(call2)->isConferenceParticipant());
     Manager::instance().hangupCall(aliceId, call2);
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -778,22 +778,22 @@ ConferenceTest::testHostAddRmSecondVideo()
     // Alice adds new media
     pInfos_.clear();
     std::vector<std::map<std::string, std::string>> mediaList
-        = {{{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
-            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
-            {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE, ""},
-            {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}},
-           {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
-            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
-            {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE, "bar"},
-            {DRing::Media::MediaAttributeKey::LABEL, "video_0"}},
-           {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
-            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
-            {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE, "foo"},
-            {DRing::Media::MediaAttributeKey::LABEL, "video_1"}}};
-    DRing::requestMediaChange(aliceId, confId, mediaList);
+        = {{{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, ""},
+            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, "bar"},
+            {libjami::Media::MediaAttributeKey::LABEL, "video_0"}},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, "foo"},
+            {libjami::Media::MediaAttributeKey::LABEL, "video_1"}}};
+    libjami::requestMediaChange(aliceId, confId, mediaList);
 
     // Check that alice has two videos attached to the conference
     auto aliceVideos = [&]() {
@@ -808,14 +808,14 @@ ConferenceTest::testHostAddRmSecondVideo()
     // Alice removes her second video
     pInfos_.clear();
     mediaList.pop_back();
-    DRing::requestMediaChange(aliceId, confId, mediaList);
+    libjami::requestMediaChange(aliceId, confId, mediaList);
 
     // Check that alice has ont video attached to the conference
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideos() == 1; }));
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -825,7 +825,7 @@ ConferenceTest::testAudioConferenceConfInfo()
 
     startConference(true);
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -840,22 +840,22 @@ ConferenceTest::testParticipantAddRmSecondVideo()
     // Bob adds new media
     pInfos_.clear();
     std::vector<std::map<std::string, std::string>> mediaList
-        = {{{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::AUDIO},
-            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
-            {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE, ""},
-            {DRing::Media::MediaAttributeKey::LABEL, "audio_0"}},
-           {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
-            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
-            {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE, "bar"},
-            {DRing::Media::MediaAttributeKey::LABEL, "video_0"}},
-           {{DRing::Media::MediaAttributeKey::MEDIA_TYPE, DRing::Media::MediaAttributeValue::VIDEO},
-            {DRing::Media::MediaAttributeKey::ENABLED, "true"},
-            {DRing::Media::MediaAttributeKey::MUTED, "false"},
-            {DRing::Media::MediaAttributeKey::SOURCE, "foo"},
-            {DRing::Media::MediaAttributeKey::LABEL, "video_1"}}};
-    DRing::requestMediaChange(bobId, bobCall.callId, mediaList);
+        = {{{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, ""},
+            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, "bar"},
+            {libjami::Media::MediaAttributeKey::LABEL, "video_0"}},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, "foo"},
+            {libjami::Media::MediaAttributeKey::LABEL, "video_1"}}};
+    libjami::requestMediaChange(bobId, bobCall.callId, mediaList);
 
     // Check that bob has two videos attached to the conference
     auto bobVideos = [&]() {
@@ -870,14 +870,14 @@ ConferenceTest::testParticipantAddRmSecondVideo()
     // Bob removes his second video
     pInfos_.clear();
     mediaList.pop_back();
-    DRing::requestMediaChange(bobId, bobCall.callId, mediaList);
+    libjami::requestMediaChange(bobId, bobCall.callId, mediaList);
 
     // Check that bob has ont video attached to the conference
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 1; }));
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -888,21 +888,21 @@ ConferenceTest::testPropagateRecording()
     startConference();
 
     JAMI_INFO("Play with recording state");
-    DRing::toggleRecording(bobId, bobCall.callId);
+    libjami::toggleRecording(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.recording.load(); }));
 
-    DRing::toggleRecording(bobId, bobCall.callId);
+    libjami::toggleRecording(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.recording.load(); }));
 
-    DRing::toggleRecording(aliceId, confId);
+    libjami::toggleRecording(aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return hostRecording.load(); }));
 
-    DRing::toggleRecording(aliceId, confId);
+    libjami::toggleRecording(aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !hostRecording.load(); }));
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -928,7 +928,7 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -954,7 +954,7 @@ ConferenceTest::testBrokenParticipantAudioOnly()
 
     hangupConference();
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 } // namespace test

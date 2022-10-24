@@ -747,7 +747,7 @@ void
 MediaEncoder::enableAccel(bool enableAccel)
 {
     enableAccel_ = enableAccel;
-    emitSignal<DRing::ConfigurationSignal::HardwareEncodingChanged>(enableAccel_);
+    emitSignal<libjami::ConfigurationSignal::HardwareEncodingChanged>(enableAccel_);
     if (!enableAccel_) {
         accel_.reset();
         for (auto enc : encoders_)

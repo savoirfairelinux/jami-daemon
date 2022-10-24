@@ -46,7 +46,7 @@ static void
 print_title()
 {
     std::cout
-        << "Jami Daemon " << DRing::version()
+        << "Jami Daemon " << libjami::version()
         << ", by Savoir-faire Linux 2004-2019" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
@@ -140,13 +140,13 @@ parse_args(int argc, char *argv[], bool& persistent)
     }
 
     if (consoleFlag)
-        ringFlags |= DRing::DRING_FLAG_CONSOLE_LOG;
+        ringFlags |= libjami::LIBJAMI_FLAG_CONSOLE_LOG;
 
     if (debugFlag)
-        ringFlags |= DRing::DRING_FLAG_DEBUG;
+        ringFlags |= libjami::LIBJAMI_FLAG_DEBUG;
 
     if (autoAnswer)
-        ringFlags |= DRing::DRING_FLAG_AUTOANSWER;
+        ringFlags |= libjami::LIBJAMI_FLAG_AUTOANSWER;
 
     return false;
 }
@@ -158,33 +158,33 @@ IncomingCall(const std::string& accountId,
     (void) accountId;
     (void) message;
     if (not isActive) {
-        DRing::accept(callId);
+        libjami::accept(callId);
         isActive = true;
     } else
-        DRing::refuse(callId);
+        libjami::refuse(callId);
 }
 
 static int
 run()
 {
-    using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
+    using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
-    DRing::init(static_cast<DRing::InitFlag>(ringFlags));
+    libjami::init(static_cast<libjami::InitFlag>(ringFlags));
 
     std::map<std::string, SharedCallback> callHandlers;
-    callHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>
+    callHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>
         (std::bind(&IncomingCall, _1, _2, _3)));
 
     registerSignalHandlers(callHandlers);
 
-    if (!DRing::start())
+    if (!libjami::start())
         return -1;
 
     while (loop) {
         Sleep(1000); // milliseconds
     }
 
-    DRing::fini();
+    libjami::fini();
 
     return 0;
 }

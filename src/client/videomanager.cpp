@@ -55,7 +55,7 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace DRing {
+namespace libjami {
 
 MediaFrame::MediaFrame()
     : frame_ {av_frame_alloc()}
@@ -554,18 +554,18 @@ getRenderer(const std::string& callId)
 #ifdef ENABLE_VIDEO
     if (auto sink = jami::Manager::instance().getSinkClient(callId))
         return {
-            {DRing::Media::Details::CALL_ID, callId},
-            {DRing::Media::Details::SHM_PATH, sink->openedName()},
-            {DRing::Media::Details::WIDTH, std::to_string(sink->getWidth())},
-            {DRing::Media::Details::HEIGHT, std::to_string(sink->getHeight())},
+            {libjami::Media::Details::CALL_ID, callId},
+            {libjami::Media::Details::SHM_PATH, sink->openedName()},
+            {libjami::Media::Details::WIDTH, std::to_string(sink->getWidth())},
+            {libjami::Media::Details::HEIGHT, std::to_string(sink->getHeight())},
         };
     else
 #endif
         return {
-            {DRing::Media::Details::CALL_ID, callId},
-            {DRing::Media::Details::SHM_PATH, ""},
-            {DRing::Media::Details::WIDTH, "0"},
-            {DRing::Media::Details::HEIGHT, "0"},
+            {libjami::Media::Details::CALL_ID, callId},
+            {libjami::Media::Details::SHM_PATH, ""},
+            {libjami::Media::Details::WIDTH, "0"},
+            {libjami::Media::Details::HEIGHT, "0"},
         };
 }
 
@@ -671,7 +671,7 @@ removeVideoDevice(const std::string& node)
 }
 #endif
 
-} // namespace DRing
+} // namespace libjami
 
 namespace jami {
 

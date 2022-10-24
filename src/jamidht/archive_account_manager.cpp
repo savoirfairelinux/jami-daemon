@@ -625,7 +625,7 @@ ArchiveAccountManager::readArchive(const std::string& pwd) const
 void
 ArchiveAccountManager::updateArchive(AccountArchive& archive) const
 {
-    using namespace DRing::Account::ConfProperties;
+    using namespace libjami::Account::ConfProperties;
 
     // Keys not exported to archive
     static const auto filtered_keys = {Ringtone::PATH,

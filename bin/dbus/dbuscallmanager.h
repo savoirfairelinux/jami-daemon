@@ -47,7 +47,7 @@
 #include "callmanager_interface.h"
 #include <stdexcept>
 
-class DRING_PUBLIC DBusCallManager : public cx::ring::Ring::CallManager_adaptor,
+class LIBJAMI_PUBLIC DBusCallManager : public cx::ring::Ring::CallManager_adaptor,
                                      public DBus::IntrospectableAdaptor,
                                      public DBus::ObjectAdaptor
 {
@@ -121,7 +121,7 @@ public:
     std::string getConferenceId(const std::string& accountId, const std::string& callId);
     std::map<std::string, std::string> getConferenceDetails(const std::string& accountId,
                                                             const std::string& confId);
-    std::vector<DRing::MediaMap> currentMediaList(const std::string& accountId,
+    std::vector<libjami::MediaMap> currentMediaList(const std::string& accountId,
                                                   const std::string& callId);
     bool startRecordedFilePlayback(const std::string& filepath);
     void stopRecordedFilePlayback();

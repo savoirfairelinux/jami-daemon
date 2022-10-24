@@ -48,14 +48,14 @@ struct AVIOContext;
 #endif
 }
 
-namespace DRing {
+namespace libjami {
 class MediaFrame;
 class VideoFrame;
-} // namespace DRing
+} // namespace libjami
 
 namespace jami {
-using MediaFrame = DRing::MediaFrame;
-using VideoFrame = DRing::VideoFrame;
+using MediaFrame = libjami::MediaFrame;
+using VideoFrame = libjami::VideoFrame;
 } // namespace jami
 
 namespace jami {

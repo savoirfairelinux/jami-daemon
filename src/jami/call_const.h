@@ -17,12 +17,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef DRING_CALL_H
-#define DRING_CALL_H
+#ifndef LIBJAMI_CALL_H
+#define LIBJAMI_CALL_H
 
 #include "def.h"
 
-namespace DRing {
+namespace libjami {
 
 namespace Call {
 
@@ -65,6 +65,6 @@ constexpr static char VIDEO_CODEC[] = "VIDEO_CODEC";
 
 } // namespace Call
 
-} // namespace DRing
+} // namespace libjami
 
 #endif

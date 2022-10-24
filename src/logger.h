@@ -103,7 +103,7 @@ public:
         return *this;
     }
 
-    DRING_PUBLIC
+    LIBJAMI_PUBLIC
     static void write(int level, const char* file, int line, std::string&& message);
 
     ///
@@ -111,14 +111,14 @@ public:
     ///
     /// Example: JAMI_DBG("%s", "Hello, World!")
     ///
-    DRING_PUBLIC
+    LIBJAMI_PUBLIC
     static void log(int level, const char* file, int line, bool linefeed, const char* const fmt, ...)
         PRINTF_ATTRIBUTE(5, 6);
 
     ///
     /// Printf fashion logging (using va_list parameters)
     ///
-    DRING_PUBLIC
+    LIBJAMI_PUBLIC
     static void vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list);
 
     static void setConsoleLog(bool enable);
