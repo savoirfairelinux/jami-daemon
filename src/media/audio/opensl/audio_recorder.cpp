@@ -63,7 +63,7 @@ AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
     }
 }
 
-AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLEngineItf slEngine)
+AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLEngineItf slEngine, AudioPreference& pref)
     : sampleInfo_(sampleFormat)
 {
     JAMI_DBG("Creating OpenSL record stream");
@@ -116,7 +116,10 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
                                     &streamType,
                                     sizeof(SLint32));
 
-    bool aec {true}, agc(true), ns(true);
+    bool aec {true}, agc(true);
+
+    bool ns = pref.getNoiseReduce() == "system"
+              || pref.getNoiseReduce() == "auto";
 
     result = (*recObjectItf_)->Realize(recObjectItf_, SL_BOOLEAN_FALSE);
     SLASSERT(result);
@@ -187,6 +190,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
                 (*nsItf)->SetEnabled(nsItf, true);
                 if ((*nsItf)->IsEnabled(nsItf, &enabled)  == SL_RESULT_SUCCESS) {
                     JAMI_WARN("NS is now %s\n", enabled ? "enabled" : "not enabled");
+                    hasNativeNS_ = enabled;
                 }
             }
         }
