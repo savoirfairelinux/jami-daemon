@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b8db8b9_69e381b6",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 859,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-10-24T21:48:08Z",
+      "side": 1,
+      "message": "Nice catch, done",
+      "parentUuid": "172b8ce2_aea34df2",
+      "range": {
+        "startLine": 856,
+        "startChar": 31,
+        "endLine": 859,
+        "endChar": 30
+      },
+      "revId": "d55452500e7f0a3853b230f6b35692b85e79498d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7d678981_36c38229",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f818a47c_599b9a34",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 884,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-10-24T21:48:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7d678981_36c38229",
+      "range": {
+        "startLine": 873,
+        "startChar": 1,
+        "endLine": 884,
+        "endChar": 1
+      },
+      "revId": "d55452500e7f0a3853b230f6b35692b85e79498d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e52cb351_d76caf32",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-10-24T21:13:24Z",
       "side": 1,
       "message": "multiple double lock",
+      "range": {
+        "startLine": 919,
+        "startChar": 12,
+        "endLine": 936,
+        "endChar": 9
+      },
+      "revId": "d55452500e7f0a3853b230f6b35692b85e79498d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e86b930_3affe6fc",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 936,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-10-24T21:48:08Z",
+      "side": 1,
+      "message": "that\u0027s what the lk.unlock() is for.\n\nI was thinking about using waitForData() instead of using lines 919-921, but in order to mimick TlsSocketEndpoint::read() calls as closely as possible, I scraped the idea of using timeouts and used a cv.wait() instead of a cv.wait_for().\n\ntherefore, everytime a lock is being done, it is ensured the mutex has been unlocked.\n\nif you want to instead use a \"one lock for everything\" paradigm, we should instead copy-paste the content of read and onRecv in there so that it doesn\u0027t relock the mutex and blocks the execution of the program",
+      "parentUuid": "e52cb351_d76caf32",
       "range": {
         "startLine": 919,
         "startChar": 12,
