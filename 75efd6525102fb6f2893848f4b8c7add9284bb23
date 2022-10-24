@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7c2e671b_37cf0df9",
+        "filename": "src/call.h",
+        "patchSetId": 91
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "219422b1_9277e3bc",
+      "range": {
+        "startLine": 174,
+        "startChar": 29,
+        "endLine": 174,
+        "endChar": 74
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ddb0a91a_f6faa610",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "21284e31_1d68ffc1",
+        "filename": "src/conference.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ddb0a91a_f6faa610",
+      "range": {
+        "startLine": 869,
+        "startChar": 4,
+        "endLine": 869,
+        "endChar": 12
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bc7f0257_3874aa46",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-10-24T13:15:32Z",
       "side": 1,
       "message": "invert",
+      "range": {
+        "startLine": 202,
+        "startChar": 44,
+        "endLine": 203,
+        "endChar": 44
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0b0535db_9f82b833",
+        "filename": "src/conference.h",
+        "patchSetId": 91
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bc7f0257_3874aa46",
       "range": {
         "startLine": 202,
         "startChar": 44,
@@ -198,6 +270,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e1793ab2_49df038a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 597,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "94dd8ee2_bdcadb36",
+      "range": {
+        "startLine": 597,
+        "startChar": 8,
+        "endLine": 597,
+        "endChar": 16
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8631512a_4f7f4da2",
@@ -211,6 +307,30 @@
       "writtenOn": "2022-10-24T13:15:32Z",
       "side": 1,
       "message": "lock_guard",
+      "range": {
+        "startLine": 1608,
+        "startChar": 13,
+        "endLine": 1608,
+        "endChar": 24
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "28126731_07960fa9",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 1608,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8631512a_4f7f4da2",
       "range": {
         "startLine": 1608,
         "startChar": 13,
@@ -244,6 +364,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c697f97a_b9c9553e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 1625,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "48db871e_28acdf63",
+      "range": {
+        "startLine": 1625,
+        "startChar": 9,
+        "endLine": 1625,
+        "endChar": 20
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aec73e24_a2512ecf",
@@ -257,6 +401,30 @@
       "writtenOn": "2022-10-24T13:15:32Z",
       "side": 1,
       "message": "remove",
+      "range": {
+        "startLine": 29,
+        "startChar": 11,
+        "endLine": 30,
+        "endChar": 16
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9b7f2364_76469d06",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 91
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aec73e24_a2512ecf",
       "range": {
         "startLine": 29,
         "startChar": 11,
@@ -290,6 +458,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "01514ab8_69ab6e2e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 963,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "de939dda_1e723b2a",
+      "range": {
+        "startLine": 963,
+        "startChar": 24,
+        "endLine": 963,
+        "endChar": 47
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d1132be2_d6512be9",
@@ -313,6 +505,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2482965_129b1f6e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 1968,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d1132be2_d6512be9",
+      "range": {
+        "startLine": 1968,
+        "startChar": 8,
+        "endLine": 1968,
+        "endChar": 22
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1621e51d_f37a7f95",
@@ -326,6 +542,30 @@
       "writtenOn": "2022-10-24T13:15:32Z",
       "side": 1,
       "message": "TODO add documentation",
+      "range": {
+        "startLine": 1982,
+        "startChar": 0,
+        "endLine": 1982,
+        "endChar": 13
+      },
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3016bed_179a77c9",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 1982,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1621e51d_f37a7f95",
       "range": {
         "startLine": 1982,
         "startChar": 0,

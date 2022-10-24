@@ -86,6 +86,24 @@
       "parentUuid": "9a3f8577_cc8b2599",
       "revId": "5a449a74acaa83d85a63257559acf0a254d97583",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "686879da_db1d07c8",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 87
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T15:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dc3efa8a_68330482",
+      "revId": "5a449a74acaa83d85a63257559acf0a254d97583",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
