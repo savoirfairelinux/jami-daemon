@@ -591,6 +591,24 @@
       "message": "1) test: jami::test::ConferenceTest::testCreateParticipantsSinks (F) line: 472 call/conference.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 5s, [\u0026] { bool sinksStatus \u003d true; for (auto\u0026 info : infos) { if (info[\"uri\"] \u003d\u003d bobUri) { sinksStatus \u0026\u003d (Manager::instance().getSinkClient(info[\"sinkId\"]) !\u003d nullptr); } else if (info[\"uri\"] \u003d\u003d carlaUri) { sinksStatus \u0026\u003d (Manager::instance().getSinkClient(info[\"sinkId\"]) !\u003d nullptr); } } return sinksStatus; })\n\n\n2) test: jami::test::ConferenceTest::testIsConferenceParticipant (F) line: 765 call/conference.cpp\nassertion failed\n- Expression: !aliceAccount-\u003egetCall(call2)-\u003eisConferenceParticipant()",
       "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bcc17aba_791554d3",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 91
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-24T17:39:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bc3c3a5e_42cc2b31",
+      "revId": "75efd6525102fb6f2893848f4b8c7add9284bb23",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
