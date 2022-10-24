@@ -58,9 +58,9 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 
-    JAMI_INFO("[audiolayer] AGC: %d, noiseReduce: %d, VAD: %d, echoCancel: %s, audioProcessor: %s",
+    JAMI_INFO("[audiolayer] AGC: %d, noiseReduce: %s, VAD: %d, echoCancel: %s, audioProcessor: %s",
               pref_.isAGCEnabled(),
-              pref.getNoiseReduce(),
+              pref.getNoiseReduce().c_str(),
               pref.getVadEnabled(),
               pref.getEchoCanceller().c_str(),
               pref.getAudioProcessor().c_str());
@@ -139,6 +139,17 @@ shouldUseAudioProcessorEchoCancel(bool hasNativeAEC, const std::string& echoCanc
         or (echoCancellerPref == "audioProcessor");
 }
 
+// helper function
+static inline bool
+shouldUseAudioProcessorNoiseSuppression(bool hasNativeNS, const std::string& noiseSuppressionPref)
+{
+    return
+        // user doesn't care which and there is no system noise suppression
+        (noiseSuppressionPref == "auto" && !hasNativeNS)
+        // user specifically wants audioProcessor
+        or (noiseSuppressionPref == "audioProcessor");
+}
+
 void
 AudioLayer::setHasNativeAEC(bool hasNativeAEC)
 {
@@ -149,6 +160,19 @@ AudioLayer::setHasNativeAEC(bool hasNativeAEC)
     if (audioProcessor) {
         audioProcessor->enableEchoCancel(
             shouldUseAudioProcessorEchoCancel(hasNativeAEC, pref_.getEchoCanceller()));
+    }
+}
+
+void
+AudioLayer::setHasNativeNS(bool hasNativeNS)
+{
+    JAMI_INFO("[audiolayer] setHasNativeNS: %d", hasNativeNS);
+    std::lock_guard<std::mutex> lock(audioProcessorMutex);
+    hasNativeNS_ = hasNativeNS;
+    // if we have a current audio processor, tell it to enable/disable its own noise suppression
+    if (audioProcessor) {
+        audioProcessor->enableNoiseSuppression(
+            shouldUseAudioProcessorNoiseSuppression(hasNativeNS, pref_.getNoiseReduce()));
     }
 }
 
@@ -207,7 +231,8 @@ AudioLayer::createAudioProcessor()
         audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
     }
 
-    audioProcessor->enableNoiseSuppression(pref_.getNoiseReduce());
+    audioProcessor->enableNoiseSuppression(
+        shouldUseAudioProcessorNoiseSuppression(hasNativeNS_, pref_.getNoiseReduce()));
 
     audioProcessor->enableAutomaticGainControl(pref_.isAGCEnabled());
 

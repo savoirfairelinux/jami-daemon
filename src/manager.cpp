@@ -2426,14 +2426,14 @@ Manager::getCurrentAudioOutputPlugin() const
     return audioPreference.getAlsaPlugin();
 }
 
-bool
+std::string
 Manager::getNoiseSuppressState() const
 {
     return audioPreference.getNoiseReduce();
 }
 
 void
-Manager::setNoiseSuppressState(bool state)
+Manager::setNoiseSuppressState(const std::string& state)
 {
     audioPreference.setNoiseReduce(state);
 }
