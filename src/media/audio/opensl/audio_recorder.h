@@ -43,6 +43,7 @@ class AudioRecorder
 
     EngineCallback callback_ {};
     bool hasNativeAEC_ {false};
+    bool hasNativeNS_ {false};
 
 public:
     explicit AudioRecorder(jami::AudioFormat, size_t bufSize, SLEngineItf engineEngine);
@@ -57,6 +58,7 @@ public:
     size_t dbgGetDevBufCount();
 
     bool hasNativeAEC() const { return hasNativeAEC_; }
+    bool hasNativeNS() const { return hasNativeNS_; }
 };
 
 } // namespace opensl
