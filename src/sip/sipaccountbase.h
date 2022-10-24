@@ -141,7 +141,7 @@ public:
      * @return A shared pointer on the created call.
      */
     virtual std::shared_ptr<SIPCall> newIncomingCall(const std::string& from,
-                                                     const std::vector<DRing::MediaMap>& mediaList,
+                                                     const std::vector<libjami::MediaMap>& mediaList,
                                                      const std::shared_ptr<SipTransport>& sipTr = {})
         = 0;
 
@@ -281,7 +281,7 @@ public:
 
     virtual std::string getUserUri() const = 0;
 
-    std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override;
+    std::vector<libjami::Message> getLastMessages(const uint64_t& base_timestamp) override;
 
     // Build the list of medias to be included in the SDP (offer/answer)
     std::vector<MediaAttribute> createDefaultMediaList(bool addVideo, bool onHold = false);
@@ -419,7 +419,7 @@ protected:
      */
     std::mutex mutexLastMessages_;
     static constexpr size_t MAX_WAITING_MESSAGES_SIZE = 1000;
-    std::deque<DRing::Message> lastMessages_;
+    std::deque<libjami::Message> lastMessages_;
 
     std::string composingUri_;
     std::chrono::steady_clock::time_point composingTime_ {

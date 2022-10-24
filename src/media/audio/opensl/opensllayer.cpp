@@ -174,7 +174,7 @@ OpenSLLayer::initAudioEngine()
     JAMI_WARN("OpenSL init started");
     std::vector<int32_t> hw_infos;
     hw_infos.reserve(4);
-    emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
+    emitSignal<libjami::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
     hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
     hardwareBuffSize_ = hw_infos[1];
     hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);

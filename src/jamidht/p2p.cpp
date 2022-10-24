@@ -62,9 +62,9 @@ public:
 
     std::weak_ptr<JamiAccount> account;
 
-    void closeConnection(const DRing::DataTransferId& tid, const std::string& peer = "");
-    void stateChanged(const DRing::DataTransferId& tid,
-                      const DRing::DataTransferEventCode& code,
+    void closeConnection(const libjami::DataTransferId& tid, const std::string& peer = "");
+    void stateChanged(const libjami::DataTransferId& tid,
+                      const libjami::DataTransferEventCode& code,
                       const std::string& peer);
 
     std::shared_ptr<DhtPeerConnector::Impl> shared()
@@ -84,7 +84,7 @@ public:
         return std::static_pointer_cast<DhtPeerConnector::Impl const>(shared_from_this());
     }
 
-    void removeIncoming(const DRing::DataTransferId& tid, const std::string& peer)
+    void removeIncoming(const libjami::DataTransferId& tid, const std::string& peer)
     {
         std::vector<std::unique_ptr<ChanneledIncomingTransfer>> ifiles;
         {
@@ -105,7 +105,7 @@ public:
         }
     }
 
-    void removeOutgoing(const DRing::DataTransferId& tid, const std::string& peer)
+    void removeOutgoing(const libjami::DataTransferId& tid, const std::string& peer)
     {
         std::vector<std::shared_ptr<ChanneledOutgoingTransfer>> ofiles;
         {
@@ -128,28 +128,28 @@ public:
 
     // For Channeled transports
     std::mutex channeledIncomingMtx_;
-    std::map<DRing::DataTransferId, std::vector<std::unique_ptr<ChanneledIncomingTransfer>>>
+    std::map<libjami::DataTransferId, std::vector<std::unique_ptr<ChanneledIncomingTransfer>>>
         channeledIncoming_;
     std::mutex channeledOutgoingMtx_;
     // TODO change <<id, peer>, Channeled>
-    std::map<DRing::DataTransferId, std::vector<std::shared_ptr<ChanneledOutgoingTransfer>>>
+    std::map<libjami::DataTransferId, std::vector<std::shared_ptr<ChanneledOutgoingTransfer>>>
         channeledOutgoing_;
 };
 //==============================================================================
 
 void
-DhtPeerConnector::Impl::stateChanged(const DRing::DataTransferId& tid,
-                                     const DRing::DataTransferEventCode& code,
+DhtPeerConnector::Impl::stateChanged(const libjami::DataTransferId& tid,
+                                     const libjami::DataTransferEventCode& code,
                                      const std::string& peer)
 {
-    if (code == DRing::DataTransferEventCode::finished
-        or code == DRing::DataTransferEventCode::closed_by_peer
-        or code == DRing::DataTransferEventCode::timeout_expired)
+    if (code == libjami::DataTransferEventCode::finished
+        or code == libjami::DataTransferEventCode::closed_by_peer
+        or code == libjami::DataTransferEventCode::timeout_expired)
         closeConnection(tid, peer);
 }
 
 void
-DhtPeerConnector::Impl::closeConnection(const DRing::DataTransferId& tid, const std::string& peer)
+DhtPeerConnector::Impl::closeConnection(const libjami::DataTransferId& tid, const std::string& peer)
 {
     dht::ThreadPool::io().run([w = weak(), tid, peer] {
         auto shared = w.lock();
@@ -168,8 +168,8 @@ DhtPeerConnector::DhtPeerConnector(JamiAccount& account)
 
 void
 DhtPeerConnector::requestConnection(
-    const DRing::DataTransferInfo& info,
-    const DRing::DataTransferId& tid,
+    const libjami::DataTransferInfo& info,
+    const libjami::DataTransferId& tid,
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
         channeledConnectedCb,
@@ -195,8 +195,8 @@ DhtPeerConnector::requestConnection(
 
         auto outgoingFile = std::make_shared<ChanneledOutgoingTransfer>(
             channel,
-            [this, deviceId](const DRing::DataTransferId& id,
-                             const DRing::DataTransferEventCode& code) {
+            [this, deviceId](const libjami::DataTransferId& id,
+                             const libjami::DataTransferEventCode& code) {
                 pimpl_->stateChanged(id, code, deviceId.toString());
             });
         if (!outgoingFile)
@@ -281,14 +281,14 @@ DhtPeerConnector::requestConnection(
 }
 
 void
-DhtPeerConnector::closeConnection(const DRing::DataTransferId& tid)
+DhtPeerConnector::closeConnection(const libjami::DataTransferId& tid)
 {
     pimpl_->closeConnection(tid);
 }
 
 void
-DhtPeerConnector::onIncomingConnection(const DRing::DataTransferInfo& info,
-                                       const DRing::DataTransferId& id,
+DhtPeerConnector::onIncomingConnection(const libjami::DataTransferInfo& info,
+                                       const libjami::DataTransferId& id,
                                        const std::shared_ptr<ChannelSocket>& channel,
                                        const InternalCompletionCb& cb)
 {
@@ -298,7 +298,7 @@ DhtPeerConnector::onIncomingConnection(const DRing::DataTransferInfo& info,
     auto incomingFile = std::make_unique<ChanneledIncomingTransfer>(
         channel,
         std::make_shared<FtpServer>(info, id, std::move(cb)),
-        [this, peer_id](const DRing::DataTransferId& id, const DRing::DataTransferEventCode& code) {
+        [this, peer_id](const libjami::DataTransferId& id, const libjami::DataTransferEventCode& code) {
             pimpl_->stateChanged(id, code, peer_id);
         });
     {

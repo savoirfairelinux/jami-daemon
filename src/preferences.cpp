@@ -107,7 +107,7 @@ static constexpr const char* PULSEMAP_KEY {"pulse"};
 static constexpr const char* PORTAUDIO_KEY {"portaudio"};
 static constexpr const char* CARDIN_KEY {"cardIn"};
 static constexpr const char* CARDOUT_KEY {"cardOut"};
-static constexpr const char* CARDRING_KEY {"cardRing"};
+static constexpr const char* CARLIBJAMI_KEY {"cardRing"};
 static constexpr const char* PLUGIN_KEY {"plugin"};
 static constexpr const char* SMPLRATE_KEY {"smplRate"};
 static constexpr const char* DEVICE_PLAYBACK_KEY {"devicePlayback"};
@@ -420,7 +420,7 @@ AudioPreference::serialize(YAML::Emitter& out) const
     out << YAML::Key << ALSAMAP_KEY << YAML::Value << YAML::BeginMap;
     out << YAML::Key << CARDIN_KEY << YAML::Value << alsaCardin_;
     out << YAML::Key << CARDOUT_KEY << YAML::Value << alsaCardout_;
-    out << YAML::Key << CARDRING_KEY << YAML::Value << alsaCardRingtone_;
+    out << YAML::Key << CARLIBJAMI_KEY << YAML::Value << alsaCardRingtone_;
     out << YAML::Key << PLUGIN_KEY << YAML::Value << alsaPlugin_;
     out << YAML::Key << SMPLRATE_KEY << YAML::Value << alsaSmplrate_;
     out << YAML::EndMap;
@@ -482,7 +482,7 @@ AudioPreference::unserialize(const YAML::Node& in)
 
     parseValue(alsa, CARDIN_KEY, alsaCardin_);
     parseValue(alsa, CARDOUT_KEY, alsaCardout_);
-    parseValue(alsa, CARDRING_KEY, alsaCardRingtone_);
+    parseValue(alsa, CARLIBJAMI_KEY, alsaCardRingtone_);
     parseValue(alsa, PLUGIN_KEY, alsaPlugin_);
     parseValue(alsa, SMPLRATE_KEY, alsaSmplrate_);
 

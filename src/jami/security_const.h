@@ -17,12 +17,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef DRING_SECURITY_H
-#define DRING_SECURITY_H
+#ifndef LIBJAMI_SECURITY_H
+#define LIBJAMI_SECURITY_H
 
 #include "def.h"
 
-namespace DRing {
+namespace libjami {
 
 namespace Certificate {
 
@@ -121,6 +121,6 @@ constexpr static char TLS_PEER_CA_[] = "TLS_PEER_CA_";
 constexpr static char TLS_CIPHER[] = "TLS_CIPHER";
 } // namespace TlsTransport
 
-} // namespace DRing
+} // namespace libjami
 
 #endif

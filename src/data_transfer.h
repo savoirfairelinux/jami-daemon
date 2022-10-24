@@ -31,13 +31,13 @@
 
 namespace jami {
 
-DRing::DataTransferId generateUID();
+libjami::DataTransferId generateUID();
 
 class Stream;
 
 struct IncomingFileInfo
 {
-    DRing::DataTransferId id;
+    libjami::DataTransferId id;
     std::shared_ptr<Stream> stream;
 };
 
@@ -52,7 +52,7 @@ struct WaitingRequest
 };
 
 typedef std::function<void(const std::string&)> InternalCompletionCb;
-typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransferEventCode&)>
+typedef std::function<void(const libjami::DataTransferId&, const libjami::DataTransferEventCode&)>
     OnStateChangedCb;
 
 class FileInfo
@@ -61,20 +61,20 @@ public:
     FileInfo(const std::shared_ptr<ChannelSocket>& channel,
              const std::string& fileId,
              const std::string& interactionId,
-             const DRing::DataTransferInfo& info);
+             const libjami::DataTransferInfo& info);
     virtual ~FileInfo() {}
     virtual void process() = 0;
     std::shared_ptr<ChannelSocket> channel() const { return channel_; }
-    DRing::DataTransferInfo info() const { return info_; }
+    libjami::DataTransferInfo info() const { return info_; }
     virtual void cancel() = 0;
     void onFinished(std::function<void(uint32_t)>&& cb) { finishedCb_ = std::move(cb); }
-    void emit(DRing::DataTransferEventCode code);
+    void emit(libjami::DataTransferEventCode code);
 
 protected:
     std::atomic_bool isUserCancelled_ {false};
     std::string fileId_ {};
     std::string interactionId_ {};
-    DRing::DataTransferInfo info_ {};
+    libjami::DataTransferInfo info_ {};
     std::shared_ptr<ChannelSocket> channel_ {};
     std::function<void(uint32_t)> finishedCb_ {};
 };
@@ -83,7 +83,7 @@ class IncomingFile : public FileInfo, public std::enable_shared_from_this<Incomi
 {
 public:
     IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
-                 const DRing::DataTransferInfo& info,
+                 const libjami::DataTransferInfo& info,
                  const std::string& fileId,
                  const std::string& interactionId,
                  const std::string& sha3Sum = "");
@@ -106,7 +106,7 @@ public:
     OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
                  const std::string& fileId,
                  const std::string& interactionId,
-                 const DRing::DataTransferInfo& info,
+                 const libjami::DataTransferInfo& info,
                  size_t start = 0,
                  size_t end = 0);
     ~OutgoingFile();
@@ -131,7 +131,7 @@ public:
      * @param peer      DeviceId for vcard or dest
      * @param icb       used for internal files (like vcard)
      */
-    /*[[deprecated("Non swarm method")]]*/ DRing::DataTransferId sendFile(
+    /*[[deprecated("Non swarm method")]]*/ libjami::DataTransferId sendFile(
         const std::string& path, const std::string& peer, const InternalCompletionCb& icb = {});
 
     /**
@@ -139,7 +139,7 @@ public:
      * @param id        of the transfer
      * @param path      of the file
      */
-    /*[[deprecated("Non swarm method")]]*/ bool acceptFile(const DRing::DataTransferId& id,
+    /*[[deprecated("Non swarm method")]]*/ bool acceptFile(const libjami::DataTransferId& id,
                                                            const std::string& path);
 
     /**
@@ -150,8 +150,8 @@ public:
      * @param icb       used for vcard
      */
     /*[[deprecated("Non swarm method")]]*/ void onIncomingFileRequest(
-        const DRing::DataTransferInfo& info,
-        const DRing::DataTransferId& id,
+        const libjami::DataTransferInfo& info,
+        const libjami::DataTransferId& id,
         const std::function<void(const IncomingFileInfo&)>& cb,
         const InternalCompletionCb& icb = {});
 
@@ -161,8 +161,8 @@ public:
      * @param info      to fill
      * @return if found
      */
-    /*[[deprecated("Non swarm method")]]*/ bool info(const DRing::DataTransferId& id,
-                                                     DRing::DataTransferInfo& info) const noexcept;
+    /*[[deprecated("Non swarm method")]]*/ bool info(const libjami::DataTransferId& id,
+                                                     libjami::DataTransferInfo& info) const noexcept;
 
     /**
      * Send a file to a channel

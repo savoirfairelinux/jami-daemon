@@ -317,7 +317,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     // According to rfc3842
                     // urgent messages are optional
                     if (ret >= 2)
-                        emitSignal<DRing::CallSignal::VoiceMailNotify>(account->getAccountID(),
+                        emitSignal<libjami::CallSignal::VoiceMailNotify>(account->getAccountID(),
                                                                        newCount,
                                                                        oldCount,
                                                                        urgentCount);

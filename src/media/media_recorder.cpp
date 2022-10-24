@@ -219,7 +219,7 @@ MediaRecorder::stopRecording()
     if (isRecording_) {
         JAMI_DBG() << "Stop recording '" << getPath() << "'";
         isRecording_ = false;
-        emitSignal<DRing::CallSignal::RecordPlaybackStopped>(getPath());
+        emitSignal<libjami::CallSignal::RecordPlaybackStopped>(getPath());
     }
 }
 

@@ -271,7 +271,7 @@ public:
      * @param remoteMediaList new media list from the remote
      * @return true on success
      */
-    bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList);
+    bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList);
 
     /**
      * Process incoming media change request.
@@ -280,7 +280,7 @@ public:
      * @param remoteMediaList new media list from the remote
      */
     void handleMediaChangeRequest(const std::shared_ptr<Call>& call,
-                                  const std::vector<DRing::MediaMap>& remoteMediaList);
+                                  const std::vector<libjami::MediaMap>& remoteMediaList);
 
     /**
      * Add a new participant to the conference
@@ -393,7 +393,7 @@ public:
      * Retrieve current medias list
      * @return current medias
      */
-    std::vector<DRing::MediaMap> currentMediaList() const;
+    std::vector<libjami::MediaMap> currentMediaList() const;
 
     // Update layout if recording changes
     void stopRecording() override;

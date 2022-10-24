@@ -18,8 +18,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef DRING_ACCOUNT_H
-#define DRING_ACCOUNT_H
+#ifndef LIBJAMI_ACCOUNT_H
+#define LIBJAMI_ACCOUNT_H
 
 #include "def.h"
 
@@ -28,7 +28,7 @@
 #undef ERROR
 #endif
 
-namespace DRing {
+namespace libjami {
 
 namespace Account {
 
@@ -69,7 +69,7 @@ enum class MessageStates : int {
     DISPLAYED,
     FAILURE,
     CANCELLED
-}; // DRing::Account::MessageStates
+}; // libjami::Account::MessageStates
 
 namespace VolatileProperties {
 
@@ -279,6 +279,6 @@ constexpr static const char CONVERSATIONID[] = "conversationId";
 
 } // namespace Account
 
-} // namespace DRing
+} // namespace libjami
 
 #endif

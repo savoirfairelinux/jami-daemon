@@ -60,20 +60,20 @@ jsonValueToAccount(Json::Value& value, const std::string& accountId)
 {
     auto idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
     fileutils::check_dir(idPath_.c_str(), 0700);
-    auto detailsMap = DRing::getAccountTemplate(
-        value[DRing::Account::ConfProperties::TYPE].asString());
+    auto detailsMap = libjami::getAccountTemplate(
+        value[libjami::Account::ConfProperties::TYPE].asString());
 
     for (Json::ValueIterator itr = value.begin(); itr != value.end(); itr++) {
         if (itr->asString().empty())
             continue;
-        if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
+        if (itr.key().asString().compare(libjami::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
             std::string fileContent(itr->asString());
             fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key",
                                 {fileContent.begin(), fileContent.end()},
                                 0600);
 
         } else if (itr.key().asString().compare(
-                       DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE)
+                       libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE)
                    == 0) {
             std::string fileContent(itr->asString());
             fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "dht.key",
@@ -81,7 +81,7 @@ jsonValueToAccount(Json::Value& value, const std::string& accountId)
                                 0600);
 
         } else if (itr.key().asString().compare(
-                       DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE)
+                       libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE)
                    == 0) {
             std::string fileContent(itr->asString());
             fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "dht.crt",
@@ -99,11 +99,11 @@ accountToJsonValue(const std::map<std::string, std::string>& details)
 {
     Json::Value root;
     for (const auto& i : details) {
-        if (i.first == DRing::Account::ConfProperties::Ringtone::PATH) {
+        if (i.first == libjami::Account::ConfProperties::Ringtone::PATH) {
             // Ringtone path is not exportable
-        } else if (i.first == DRing::Account::ConfProperties::TLS::CA_LIST_FILE
-                   || i.first == DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE
-                   || i.first == DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) {
+        } else if (i.first == libjami::Account::ConfProperties::TLS::CA_LIST_FILE
+                   || i.first == libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE
+                   || i.first == libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) {
             // replace paths by the files content
             std::ifstream ifs = fileutils::ifstream(i.second);
             std::string fileContent((std::istreambuf_iterator<char>(ifs)),

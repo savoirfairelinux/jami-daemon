@@ -28,29 +28,29 @@ DBusPresenceManager::DBusPresenceManager(DBus::Connection& connection)
 void
 DBusPresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
 {
-    DRing::publish(accountID, status, note);
+    libjami::publish(accountID, status, note);
 }
 
 void
 DBusPresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
 {
-    DRing::answerServerRequest(uri, flag);
+    libjami::answerServerRequest(uri, flag);
 }
 
 void
 DBusPresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
 {
-    DRing::subscribeBuddy(accountID, uri, flag);
+    libjami::subscribeBuddy(accountID, uri, flag);
 }
 
 auto
-DBusPresenceManager::getSubscriptions(const std::string& accountID) -> decltype(DRing::getSubscriptions(accountID))
+DBusPresenceManager::getSubscriptions(const std::string& accountID) -> decltype(libjami::getSubscriptions(accountID))
 {
-    return DRing::getSubscriptions(accountID);
+    return libjami::getSubscriptions(accountID);
 }
 
 void
 DBusPresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
-    DRing::setSubscriptions(accountID, uris);
+    libjami::setSubscriptions(accountID, uris);
 }

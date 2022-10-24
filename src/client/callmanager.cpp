@@ -39,7 +39,7 @@
 
 #include "smartools.h"
 
-namespace DRing {
+namespace libjami {
 
 void
 registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
@@ -58,7 +58,7 @@ placeCall(const std::string& accountId, const std::string& to)
 std::string
 placeCallWithMedia(const std::string& accountId,
                    const std::string& to,
-                   const std::vector<DRing::MediaMap>& mediaList)
+                   const std::vector<libjami::MediaMap>& mediaList)
 {
     // Check if a destination number is available
     if (to.empty()) {
@@ -72,7 +72,7 @@ placeCallWithMedia(const std::string& accountId,
 bool
 requestMediaChange(const std::string& accountId,
                    const std::string& callId,
-                   const std::vector<DRing::MediaMap>& mediaList)
+                   const std::vector<libjami::MediaMap>& mediaList)
 {
     if (auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
@@ -99,7 +99,7 @@ accept(const std::string& accountId, const std::string& callId)
 bool
 acceptWithMedia(const std::string& accountId,
                 const std::string& callId,
-                const std::vector<DRing::MediaMap>& mediaList)
+                const std::vector<libjami::MediaMap>& mediaList)
 {
     return jami::Manager::instance().answerCall(accountId, callId, mediaList);
 }
@@ -107,7 +107,7 @@ acceptWithMedia(const std::string& accountId,
 bool
 answerMediaChangeRequest(const std::string& accountId,
                          const std::string& callId,
-                         const std::vector<DRing::MediaMap>& mediaList)
+                         const std::vector<libjami::MediaMap>& mediaList)
 {
     if (auto account = jami::Manager::instance().getAccount(accountId))
         if (auto call = account->getCall(callId)) {
@@ -278,7 +278,7 @@ holdConference(const std::string& accountId, const std::string& confId)
     if (const auto account = jami::Manager::instance().getAccount(accountId))
         if (auto conf = account->getConference(confId)) {
             conf->detach();
-            jami::emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfId(),
+            jami::emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getConfId(),
     conf->getStateStr()); return true;
         }
     return false;*/
@@ -704,4 +704,4 @@ raiseHand(const std::string& accountId,
     }
 }
 
-} // namespace DRing
+} // namespace libjami

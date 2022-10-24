@@ -167,7 +167,7 @@ SIPAccount::~SIPAccount() noexcept
 
 std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& from UNUSED,
-                            const std::vector<DRing::MediaMap>& mediaList,
+                            const std::vector<libjami::MediaMap>& mediaList,
                             const std::shared_ptr<SipTransport>& transport)
 {
     auto call = Manager::instance().callFactory.newSipCall(shared(),
@@ -178,7 +178,7 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
 }
 
 std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::MediaMap>& mediaList)
+SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::MediaMap>& mediaList)
 {
     std::string to;
     int family;
@@ -312,7 +312,7 @@ SIPAccount::onTransportStateChanged(pjsip_transport_state state,
 
     // Notify the client of the new transport state
     if (currentStatus != transportStatus_)
-        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID_,
+        emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountID_,
                                                                        getVolatileAccountDetails());
 }
 
@@ -717,7 +717,7 @@ SIPAccount::getVolatileAccountDetails() const
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE,
               std::to_string(registrationStateDetailed_.first));
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC, registrationStateDetailed_.second);
-    a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
+    a.emplace(libjami::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
 
     if (presence_) {
         a.emplace(Conf::CONFIG_PRESENCE_STATUS, presence_->isOnline() ? TRUE_STR : FALSE_STR);
@@ -729,17 +729,17 @@ SIPAccount::getVolatileAccountDetails() const
         auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
         if (tlsInfos.cipher and not cipher)
             JAMI_WARN("Unknown cipher: %d", tlsInfos.cipher);
-        a.emplace(DRing::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
-        a.emplace(DRing::TlsTransport::TLS_PEER_CERT, tlsInfos.peerCert->toString());
+        a.emplace(libjami::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
+        a.emplace(libjami::TlsTransport::TLS_PEER_CERT, tlsInfos.peerCert->toString());
         auto ca = tlsInfos.peerCert->issuer;
         unsigned n = 0;
         while (ca) {
             std::ostringstream name_str;
-            name_str << DRing::TlsTransport::TLS_PEER_CA_ << n++;
+            name_str << libjami::TlsTransport::TLS_PEER_CA_ << n++;
             a.emplace(name_str.str(), ca->toString());
             ca = ca->issuer;
         }
-        a.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM, std::to_string(n));
+        a.emplace(libjami::TlsTransport::TLS_PEER_CA_NUM, std::to_string(n));
     }
 
     return a;
@@ -1562,7 +1562,7 @@ SIPAccount::initContactAddress()
                                                       address,
                                                       port);
         if (not success)
-            emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
+            emitSignal<libjami::ConfigurationSignal::StunStatusFailed>(getAccountID());
         setPublishedAddress({address});
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
@@ -1635,7 +1635,7 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t* pool)
                                                   addr,
                                                   port);
     if (not success)
-        emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
+        emitSignal<libjami::ConfigurationSignal::StunStatusFailed>(getAccountID());
     pjsip_host_port result;
     pj_strdup2(pool, &result.host, addr.c_str());
     result.port = port;
@@ -1853,7 +1853,7 @@ SIPAccount::supportPresence(int function, bool enabled)
 
     Manager::instance().saveConfig();
     // FIXME: bad signal used here, we need a global config changed signal.
-    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
+    emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 }
 
 MatchRank

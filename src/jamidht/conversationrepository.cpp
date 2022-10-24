@@ -1746,7 +1746,7 @@ ConversationRepository::Impl::mode() const
     auto lastMsg = log(id_, "", 1);
     if (lastMsg.size() == 0) {
         if (auto shared = account_.lock()) {
-            emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+            emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                        id_,
                                                                        EINVALIDMODE,
                                                                        "No initial commit");
@@ -1761,7 +1761,7 @@ ConversationRepository::Impl::mode() const
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (!reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &root, &err)) {
         if (auto shared = account_.lock()) {
-            emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+            emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                        id_,
                                                                        EINVALIDMODE,
                                                                        "No initial commit");
@@ -1770,7 +1770,7 @@ ConversationRepository::Impl::mode() const
     }
     if (!root.isMember("mode")) {
         if (auto shared = account_.lock()) {
-            emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+            emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                        id_,
                                                                        EINVALIDMODE,
                                                                        "No mode detected");
@@ -1794,7 +1794,7 @@ ConversationRepository::Impl::mode() const
         break;
     default:
         if (auto shared = account_.lock()) {
-            emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+            emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                        id_,
                                                                        EINVALIDMODE,
                                                                        "Incorrect mode detected");
@@ -2538,7 +2538,7 @@ ConversationRepository::Impl::validCommits(
                           "version of Jami, or that your contact is not doing unwanted stuff.",
                           commit.id.c_str());
                 if (auto shared = account_.lock()) {
-                    emitSignal<DRing::ConversationSignal::OnConversationError>(
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
                         shared->getAccountID(), id_, EVALIDFETCH, "Malformed initial commit");
                 }
                 return false;
@@ -2552,7 +2552,7 @@ ConversationRepository::Impl::validCommits(
                               "of Jami, or that your contact is not doing unwanted stuff.",
                               commit.id.c_str());
                     if (auto shared = account_.lock()) {
-                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
                             shared->getAccountID(), id_, EVALIDFETCH, "Malformed vote");
                     }
                     return false;
@@ -2568,7 +2568,7 @@ ConversationRepository::Impl::validCommits(
                                    &err)) {
                     JAMI_ERR() << "Failed to parse " << err;
                     if (auto shared = account_.lock()) {
-                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
                             shared->getAccountID(), id_, EVALIDFETCH, "Malformed member commit");
                     }
                     return false;
@@ -2582,7 +2582,7 @@ ConversationRepository::Impl::validCommits(
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             commit.id.c_str());
                         if (auto shared = account_.lock()) {
-                            emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            emitSignal<libjami::ConversationSignal::OnConversationError>(
                                 shared->getAccountID(),
                                 id_,
                                 EVALIDFETCH,
@@ -2597,7 +2597,7 @@ ConversationRepository::Impl::validCommits(
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             commit.id.c_str());
                         if (auto shared = account_.lock()) {
-                            emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            emitSignal<libjami::ConversationSignal::OnConversationError>(
                                 shared->getAccountID(),
                                 id_,
                                 EVALIDFETCH,
@@ -2615,7 +2615,7 @@ ConversationRepository::Impl::validCommits(
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             commit.id.c_str());
                         if (auto shared = account_.lock()) {
-                            emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            emitSignal<libjami::ConversationSignal::OnConversationError>(
                                 shared->getAccountID(),
                                 id_,
                                 EVALIDFETCH,
@@ -2635,7 +2635,7 @@ ConversationRepository::Impl::validCommits(
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             commit.id.c_str());
                         if (auto shared = account_.lock()) {
-                            emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            emitSignal<libjami::ConversationSignal::OnConversationError>(
                                 shared->getAccountID(),
                                 id_,
                                 EVALIDFETCH,
@@ -2650,7 +2650,7 @@ ConversationRepository::Impl::validCommits(
                               commit.id.c_str(),
                               action.c_str());
                     if (auto shared = account_.lock()) {
-                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
                             shared->getAccountID(), id_, EVALIDFETCH, "Malformed member commit");
                     }
                     return false;
@@ -2662,7 +2662,7 @@ ConversationRepository::Impl::validCommits(
                               "of Jami, or that your contact is not doing unwanted stuff.",
                               commit.id.c_str());
                     if (auto shared = account_.lock()) {
-                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
                             shared->getAccountID(),
                             id_,
                             EVALIDFETCH,
@@ -2674,7 +2674,7 @@ ConversationRepository::Impl::validCommits(
                 if (!checkEdit(userDevice, commit)) {
                     JAMI_ERROR("Commit {:s} malformed", commit.id);
                     if (auto shared = account_.lock()) {
-                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
                             shared->getAccountID(), id_, EVALIDFETCH, "Malformed edit commit");
                     }
                     return false;
@@ -2689,7 +2689,7 @@ ConversationRepository::Impl::validCommits(
                               type.c_str(),
                               commit.id.c_str());
                     if (auto shared = account_.lock()) {
-                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
                             shared->getAccountID(), id_, EVALIDFETCH, "Malformed commit");
                     }
                     return false;
@@ -2706,7 +2706,7 @@ ConversationRepository::Impl::validCommits(
                     validUserAtCommit.c_str(),
                     commit.commit_msg.c_str());
                 if (auto shared = account_.lock()) {
-                    emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                                id_,
                                                                                EVALIDFETCH,
                                                                                "Malformed commit");
@@ -2721,7 +2721,7 @@ ConversationRepository::Impl::validCommits(
                           "that your contact is not doing unwanted stuff.",
                           validUserAtCommit.c_str());
                 if (auto shared = account_.lock()) {
-                    emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                                id_,
                                                                                EVALIDFETCH,
                                                                                "Malformed commit");
@@ -2905,7 +2905,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
                      err->message);
 
             if (auto shared = pimpl_->account_.lock()) {
-                emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                            pimpl_->id_,
                                                                            EFETCH,
                                                                            err->message);
@@ -3250,12 +3250,12 @@ ConversationRepository::leave()
     if (!account || !repo)
         return {};
     auto details = account->getAccountDetails();
-    auto deviceId = details[DRing::Account::ConfProperties::DEVICE_ID];
-    auto uri = details[DRing::Account::ConfProperties::USERNAME];
-    auto name = details[DRing::Account::ConfProperties::DISPLAYNAME];
+    auto deviceId = details[libjami::Account::ConfProperties::DEVICE_ID];
+    auto uri = details[libjami::Account::ConfProperties::USERNAME];
+    auto name = details[libjami::Account::ConfProperties::DISPLAYNAME];
     if (name.empty())
         name = account
-                   ->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+                   ->getVolatileAccountDetails()[libjami::Account::VolatileProperties::REGISTERED_NAME];
     if (name.empty())
         name = deviceId;
 
@@ -3690,7 +3690,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     }
     if (!valid) {
         JAMI_ERR("Not enough authorization for updating infos");
-        emitSignal<DRing::ConversationSignal::OnConversationError>(
+        emitSignal<libjami::ConversationSignal::OnConversationError>(
             account->getAccountID(),
             pimpl_->id_,
             EUNAUTHORIZED,

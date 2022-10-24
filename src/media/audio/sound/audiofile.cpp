@@ -49,7 +49,7 @@ AudioFile::onBufferFinish()
     }
 
     if ((updatePlaybackScale_ % 5) == 0)
-        emitSignal<DRing::CallSignal::UpdatePlaybackScale>(filepath_,
+        emitSignal<libjami::CallSignal::UpdatePlaybackScale>(filepath_,
                                                            (unsigned) (pos_ / divisor),
                                                            (unsigned) (buffer_->frames() / divisor));
 

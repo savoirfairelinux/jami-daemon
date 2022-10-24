@@ -55,15 +55,15 @@ struct AVCodec;
 enum AVMediaType;
 }
 
-namespace DRing {
+namespace libjami {
 class AudioFrame;
 }
 
 namespace jami {
 
-using AudioFrame = DRing::AudioFrame;
+using AudioFrame = libjami::AudioFrame;
 #ifdef ENABLE_VIDEO
-using VideoFrame = DRing::VideoFrame;
+using VideoFrame = libjami::VideoFrame;
 #endif
 struct AudioFormat;
 class RingBuffer;
