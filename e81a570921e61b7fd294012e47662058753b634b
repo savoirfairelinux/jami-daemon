@@ -46,6 +46,30 @@
       },
       "revId": "e81a570921e61b7fd294012e47662058753b634b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "834d7fa3_af363dfa",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 921,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-10-24T16:17:24Z",
+      "side": 1,
+      "message": "After talks with Sébastien, in the eventLoop() case, read is meant to be blocked until there is data sent (whether it\u0027s 0 bytes -for shutdown signal- or not). Done.",
+      "parentUuid": "69c5d4e3_651703c0",
+      "range": {
+        "startLine": 920,
+        "startChar": 9,
+        "endLine": 921,
+        "endChar": 5
+      },
+      "revId": "e81a570921e61b7fd294012e47662058753b634b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
