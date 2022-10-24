@@ -42,6 +42,7 @@ namespace jami {
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference& pref)
     : AudioLayer(pref)
+    , preference_(pref)
 {}
 
 // Destructor
@@ -97,10 +98,11 @@ OpenSLLayer::startStream(AudioDeviceType stream)
             std::lock_guard<std::mutex> lck(recMtx);
             try {
                 recorder_.reset(
-                    new opensl::AudioRecorder(hardwareFormat_, hardwareBuffSize_, engineInterface_));
+                    new opensl::AudioRecorder(hardwareFormat_, hardwareBuffSize_, engineInterface_, preference_));
                 recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
                 recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this));
                 setHasNativeAEC(recorder_->hasNativeAEC());
+                setHasNativeNS(recorder_->hasNativeNS());
             } catch (const std::exception& e) {
                 JAMI_ERR("Error initializing audio capture: %s", e.what());
             }
