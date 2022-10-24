@@ -3162,17 +3162,22 @@ ConversationTest::testSearchInConv()
     DRing::sendMessage(aliceId, convId, "message 2"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived; }));
     messageReceived = false;
-    DRing::sendMessage(aliceId, convId, "message 3"s, "");
+    DRing::sendMessage(aliceId, convId, "Message 3"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived; }));
-    DRing::searchConversation(aliceId, convId, "", "", "message", "", 0, 0, 0);
+
+    DRing::searchConversation(aliceId, convId, "", "", "message", "", 0, 0, 0, 0);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 3 && finished; }));
     messages.clear();
     finished = false;
-    DRing::searchConversation(aliceId, convId, "", "", "message 2", "", 0, 0, 0);
+    DRing::searchConversation(aliceId, convId, "", "", "Message", "", 0, 0, 0, 1);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 1 && finished; }));
     messages.clear();
     finished = false;
-    DRing::searchConversation(aliceId, convId, "", "", "foo", "", 0, 0, 0);
+    DRing::searchConversation(aliceId, convId, "", "", "message 2", "", 0, 0, 0, 0);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 1 && finished; }));
+    messages.clear();
+    finished = false;
+    DRing::searchConversation(aliceId, convId, "", "", "foo", "", 0, 0, 0, 0);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messages.size() == 0 && finished; }));
 }
 
@@ -3458,7 +3463,6 @@ ConversationTest::testMessageEdition()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
     auto msgSize = messageBobReceived.size();
-    JAMI_ERR("@@@@@@@@ %u", msgSize);
     DRing::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageBobReceived.size() == msgSize + 1; }));
     msgSize = messageBobReceived.size();

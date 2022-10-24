@@ -306,7 +306,8 @@ public:
                                 const std::string& type,
                                 const int64_t& after,
                                 const int64_t& before,
-                                const uint32_t& maxResult);
+                                const uint32_t& maxResult,
+                                const int32_t& flag);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__

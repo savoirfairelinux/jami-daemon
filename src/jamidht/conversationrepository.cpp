@@ -2068,6 +2068,10 @@ std::vector<std::map<std::string, std::string>>
 ConversationRepository::Impl::search(const Filter& filter) const
 {
     std::vector<std::map<std::string, std::string>> commits {};
+    // std::regex_constants::ECMAScript is the default flag.
+    auto re = std::regex(filter.regexSearch,
+                         filter.caseSensitive ? std::regex_constants::ECMAScript
+                                              : std::regex_constants::icase);
     forEachCommit(
         [&](const auto& id, const auto& author, auto& commit) {
             if (!commits.empty()) {
@@ -2109,7 +2113,7 @@ ConversationRepository::Impl::search(const Filter& filter) const
                     auto body = contentType == "text/plain" ? content->at("body")
                                                             : content->at("displayName");
                     std::smatch body_match;
-                    if (std::regex_search(body, body_match, std::regex(filter.regexSearch))) {
+                    if (std::regex_search(body, body_match, re)) {
                         commits.emplace(commits.end(), std::move(*content));
                     }
                 } else {

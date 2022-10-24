@@ -1869,6 +1869,7 @@
            <arg type="x" name="after" direction="in"/>
            <arg type="x" name="before" direction="in"/>
            <arg type="u" name="maxResult" direction="in"/>
+           <arg type="i" name="flag" direction="in"/>
            <arg type="u" name="searchId" direction="out"/>
        </method>
 
