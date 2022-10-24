@@ -101,6 +101,7 @@ static const char* const CONFIG_TLS_SERVER_NAME = "TLS.serverName";
 static const char* const CONFIG_TLS_VERIFY_SERVER = "TLS.verifyServer";
 static const char* const CONFIG_TLS_VERIFY_CLIENT = "TLS.verifyClient";
 static const char* const CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE = "TLS.requireClientCertificate";
+static const char* const CONFIG_TLS_DISABLE_SECURE_DLG_CHECK = "TLS.disableSecureDlgCheck";
 static const char* const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC = "TLS.negotiationTimeoutSec";
 
 // DHT specific parameters
