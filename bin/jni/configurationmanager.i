@@ -132,8 +132,8 @@ std::vector<std::string> getCurrentAudioDevicesIndex();
 int32_t getAudioInputDeviceIndex(const std::string& name);
 int32_t getAudioOutputDeviceIndex(const std::string& name);
 std::string getCurrentAudioOutputPlugin();
-bool getNoiseSuppressState();
-void setNoiseSuppressState(bool state);
+std:string getNoiseSuppressState();
+void setNoiseSuppressState(const std::string& state);
 
 bool isAgcEnabled();
 void setAgcState(bool enabled);
