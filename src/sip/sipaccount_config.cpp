@@ -69,6 +69,7 @@ constexpr const char* KEY_EXCHANGE_KEY = "keyExchange";
 constexpr const char* RTP_FALLBACK_KEY = "rtpFallback";
 } // namespace Conf
 
+static const SipAccountConfig DEFAULT_CONFIG {};
 static constexpr unsigned MIN_REGISTRATION_TIME = 60;                  // seconds
 
 using yaml_utils::parseValueOptional;
@@ -88,7 +89,7 @@ void
 SipAccountConfig::serialize(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;
-    SipAccountBaseConfig::serialize(out);
+    SipAccountBaseConfig::serializeDiff(out, DEFAULT_CONFIG);
 
     out << YAML::Key << Conf::BIND_ADDRESS_KEY << YAML::Value << bindAddress;
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort;
@@ -96,7 +97,7 @@ SipAccountConfig::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::USERNAME_KEY << YAML::Value << username;
 
     // each credential is a map, and we can have multiple credentials
-    // out << YAML::Key << Conf::CRED_KEY << YAML::Value << getCredentials();
+    out << YAML::Key << Conf::CRED_KEY << YAML::Value << getCredentials();
 
     out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << registrationRefreshEnabled;
 
