@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d74c35a8_84014640",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 981
+      },
+      "writtenOn": "2022-10-25T15:55:31Z",
+      "side": 1,
+      "message": "Made an error while amending (should not have updated message), so new commit was created with some changes. Will abandon previous commit and keep only this one.",
+      "revId": "ebebd945b7396f88de742b51a06540f0057fdbf7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
