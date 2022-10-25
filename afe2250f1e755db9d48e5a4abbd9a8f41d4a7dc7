@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f2c2037_4ca97d18",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-25T23:29:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "84304924_1e388bfa",
+      "revId": "afe2250f1e755db9d48e5a4abbd9a8f41d4a7dc7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0eb0dbfe_bc2c6c4b",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-10-25T05:59:42Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nqualified name \u0027Account::config\u0027 refers to a member overridden in subclass; did you mean \u0027jami::SIPAccountBase\u0027?\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-parent-virtual-call",
+      "revId": "afe2250f1e755db9d48e5a4abbd9a8f41d4a7dc7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "669b1f10_907a7723",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-25T23:29:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0eb0dbfe_bc2c6c4b",
       "revId": "afe2250f1e755db9d48e5a4abbd9a8f41d4a7dc7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
