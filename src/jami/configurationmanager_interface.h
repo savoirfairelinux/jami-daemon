@@ -138,8 +138,8 @@ DRING_PUBLIC std::string getCurrentAudioOutputPlugin();
 DRING_PUBLIC bool getNoiseSuppressState();
 DRING_PUBLIC void setNoiseSuppressState(bool state);
 
-DRING_PUBLIC bool isAgcEnabled();
-DRING_PUBLIC void setAgcState(bool enabled);
+DRING_PUBLIC std::string getAgcState();
+DRING_PUBLIC void setAgcState(const std::string& state);
 
 DRING_PUBLIC void muteDtmf(bool mute);
 DRING_PUBLIC bool isDtmfMuted();

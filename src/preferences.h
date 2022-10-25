@@ -220,9 +220,9 @@ public:
     double getVolumespkr() const { return volumespkr_; }
     void setVolumespkr(double s) { volumespkr_ = s; }
 
-    bool isAGCEnabled() const { return agcEnabled_; }
+    std::string getAGCState() const { return agcState_; }
 
-    void setAGCState(bool enabled) { agcEnabled_ = enabled; }
+    void setAGCState(const std::string& state) { agcState_ = state; }
 
     bool getNoiseReduce() const { return denoise_; }
 
@@ -277,7 +277,7 @@ private:
     // audio processor preferences
     std::string audioProcessor_;
     bool denoise_;
-    bool agcEnabled_;
+    std::string agcState_;
     bool vadEnabled_;
     std::string echoCanceller_;
 
