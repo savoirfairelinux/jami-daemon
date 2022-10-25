@@ -126,17 +126,15 @@ public:
 
 private:
     mutable std::recursive_mutex mutex_ {};
-    std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)>> generators_ {};
+    std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)>, std::less<>> generators_ {};
     std::map<std::string, AccountMap<Account>, std::less<>> accountMaps_ {};
 
     template<class T>
     const AccountMap<Account>* getMap_() const
     {
         const auto& itermap = accountMaps_.find(T::ACCOUNT_TYPE);
-
         if (itermap != accountMaps_.cend())
             return &itermap->second;
-
         return nullptr;
     }
 };
