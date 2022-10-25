@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3cb9b6c7_4ac0d5a7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T18:36:54Z",
+      "side": 1,
+      "message": "two nitpicks and LGTM",
+      "revId": "b6b0e8bcb45d8bbf46a1aa4b70cf199e8396b427",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3cf578c2_d067a5c5",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1317,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T18:36:54Z",
+      "side": 1,
+      "message": "JAMI_DEBUG and replace \"%d\" by \"{}\"",
+      "range": {
+        "startLine": 1317,
+        "startChar": 4,
+        "endLine": 1317,
+        "endChar": 12
+      },
+      "revId": "b6b0e8bcb45d8bbf46a1aa4b70cf199e8396b427",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "75722cc5_82c980a5",
+        "filename": "src/sip/siptransport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 340,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T18:36:54Z",
+      "side": 1,
+      "message": "JAMI_DEBUG(\"Creating TLS listener on {:s}...\", ipAddress.toString(true));",
+      "range": {
+        "startLine": 340,
+        "startChar": 5,
+        "endLine": 340,
+        "endChar": 81
+      },
+      "revId": "b6b0e8bcb45d8bbf46a1aa4b70cf199e8396b427",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
