@@ -26,6 +26,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "879a6e85_9faf37fb",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 683,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T02:05:42Z",
+      "side": 1,
+      "message": "https://review.jami.net/c/jami-daemon/+/13176",
+      "range": {
+        "startLine": 683,
+        "startChar": 9,
+        "endLine": 683,
+        "endChar": 34
+      },
+      "revId": "6f1db25c142691123acbd62da293d5b8e6576286",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f075ac85_7566ecc7",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 2
