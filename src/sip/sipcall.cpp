@@ -2977,19 +2977,30 @@ SIPCall::getDetails() const
 
     details.emplace(DRing::Call::Details::PEER_HOLDING, peerHolding_ ? TRUE_STR : FALSE_STR);
 
-#ifdef ENABLE_VIDEO
     for (auto const& stream : rtpStreams_) {
-        if (stream.mediaAttribute_->type_ != MediaType::MEDIA_VIDEO)
-            continue;
-        details.emplace(DRing::Call::Details::VIDEO_SOURCE, stream.mediaAttribute_->sourceUri_);
-        if (auto const& rtpSession = stream.rtpSession_) {
-            if (auto codec = rtpSession->getCodec())
-                details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
-            else
-                details.emplace(DRing::Call::Details::VIDEO_CODEC, "");
+        if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
+            details.emplace(DRing::Call::Details::VIDEO_SOURCE, stream.mediaAttribute_->sourceUri_);
+            if (auto const& rtpSession = stream.rtpSession_) {
+                if (auto codec = rtpSession->getCodec()) {
+                    details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
+                    details.emplace(DRing::Call::Details::VIDEO_MIN_BITRATE,
+                                    std::to_string(codec->systemCodecInfo.minBitrate));
+                    details.emplace(DRing::Call::Details::VIDEO_MAX_BITRATE,
+                                    std::to_string(codec->systemCodecInfo.maxBitrate));
+                    details.emplace(DRing::Call::Details::VIDEO_BITRATE,
+                                    std::to_string(codec->systemCodecInfo.bitrate));
+                } else
+                    details.emplace(DRing::Call::Details::VIDEO_CODEC, "");
+            }
+        } else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+            if (auto const& rtpSession = stream.rtpSession_) {
+                if (auto codec = rtpSession->getCodec()) {
+                    details.emplace(DRing::Call::Details::AUDIO_CODEC, codec->systemCodecInfo.name);
+                } else
+                    details.emplace(DRing::Call::Details::AUDIO_CODEC, "");
+            }
         }
     }
-#endif
 
 #if HAVE_RINGNS
     if (not peerRegisteredName_.empty())
@@ -3023,6 +3034,10 @@ SIPCall::getDetails() const
         }
     }
 #endif
+    if (auto transport = getIceMedia()) {
+        if (transport && transport->isRunning())
+            details.emplace(DRing::Call::Details::SOCKETS, transport->link().c_str());
+    }
     return details;
 }
 
