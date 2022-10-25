@@ -100,6 +100,8 @@ public:
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
+    const VideoBitrateInfo& getVideoBitrateInfo();
+
     bool hasConference() { return conference_; }
 
     std::shared_ptr<VideoInput>& getVideoLocal() { return videoLocal_; }

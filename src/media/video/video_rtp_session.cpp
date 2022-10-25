@@ -78,6 +78,12 @@ VideoRtpSession::~VideoRtpSession()
     JAMI_DBG("[%p] Video RTP session destroyed", this);
 }
 
+const VideoBitrateInfo&
+VideoRtpSession::getVideoBitrateInfo()
+{
+    return videoBitrateInfo_;
+}
+
 /// Setup internal VideoBitrateInfo structure from media descriptors.
 ///
 void
