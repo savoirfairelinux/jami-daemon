@@ -1017,14 +1017,16 @@
                </arg>
        </method>
 
-       <method name="isAgcEnabled" tp:name-for-bindings="isAgcEnabled">
-           <arg type="b" name="enabled" direction="out">
-           </arg>
+       <method name="getAgcState" tp:name-for-bindings="getAgcState">
+            <tp:added version="13.5.0"/>
+            <arg type="s" name="state" direction="out">
+            </arg>
        </method>
 
        <method name="setAgcState" tp:name-for-bindings="setAgcState">
-               <arg type="b" name="enabled" direction="in">
-               </arg>
+            <tp:added version="13.5.0"/>
+            <arg type="s" name="state" direction="in">
+            </arg>
        </method>
 
        <!--    General Settings Panel         -->
