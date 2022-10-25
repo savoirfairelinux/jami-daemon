@@ -761,7 +761,10 @@ Conversation::sendMessage(std::string&& message,
 }
 
 void
-Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
+Conversation::sendMessage(Json::Value&& value,
+                          const std::string& replyTo,
+                          OnCommitCb&& onCommit,
+                          OnDoneCb&& cb)
 {
     if (!replyTo.empty()) {
         auto commit = pimpl_->repository_->getCommit(replyTo);
@@ -771,34 +774,35 @@ Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCom
         }
         value["reply-to"] = replyTo;
     }
-    dht::ThreadPool::io().run([w = weak(), value = std::move(value), onCommit=std::move(onCommit), cb = std::move(cb)] {
-        if (auto sthis = w.lock()) {
-            auto acc = sthis->pimpl_->account_.lock();
-            if (!acc)
-                return;
-            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
-            Json::StreamWriterBuilder wbuilder;
-            wbuilder["commentStyle"] = "None";
-            wbuilder["indentation"] = "";
-            auto commit = sthis->pimpl_->repository_->commitMessage(
-                Json::writeString(wbuilder, value));
-            sthis->pimpl_->sending_.emplace_back(commit);
-            sthis->pimpl_->saveSending();
-            sthis->clearFetched();
-            lk.unlock();
-            if (onCommit)
-                onCommit(commit);
-            sthis->pimpl_->announce(commit);
-            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-                acc->getAccountID(),
-                sthis->id(),
-                acc->getUsername(),
-                commit,
-                static_cast<int>(DRing::Account::MessageStates::SENDING));
-            if (cb)
-                cb(!commit.empty(), commit);
-        }
-    });
+    dht::ThreadPool::io().run(
+        [w = weak(), value = std::move(value), onCommit = std::move(onCommit), cb = std::move(cb)] {
+            if (auto sthis = w.lock()) {
+                auto acc = sthis->pimpl_->account_.lock();
+                if (!acc)
+                    return;
+                std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+                Json::StreamWriterBuilder wbuilder;
+                wbuilder["commentStyle"] = "None";
+                wbuilder["indentation"] = "";
+                auto commit = sthis->pimpl_->repository_->commitMessage(
+                    Json::writeString(wbuilder, value));
+                sthis->pimpl_->sending_.emplace_back(commit);
+                sthis->pimpl_->saveSending();
+                sthis->clearFetched();
+                lk.unlock();
+                if (onCommit)
+                    onCommit(commit);
+                sthis->pimpl_->announce(commit);
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                    acc->getAccountID(),
+                    sthis->id(),
+                    acc->getUsername(),
+                    commit,
+                    static_cast<int>(DRing::Account::MessageStates::SENDING));
+                if (cb)
+                    cb(!commit.empty(), commit);
+            }
+        });
 }
 
 void
@@ -1406,8 +1410,7 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
 {
     pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
                                             this](const std::string& deviceId, ChannelCb&& cb) {
-        return needSocket(id(), deviceId, std::move(cb),
-                               "application/im-gitmessage-id");
+        return needSocket(id(), deviceId, std::move(cb), "application/im-gitmessage-id");
     };
     std::vector<DeviceId> devices;
     for (const auto& m : pimpl_->repository_->devices())
