@@ -3023,6 +3023,10 @@ SIPCall::getDetails() const
         }
     }
 #endif
+    if (auto transport = getIceMedia()) {
+        if (transport && transport->isRunning())
+            details.emplace(DRing::Call::Details::SOCKETS,transport->link().c_str());
+    }
     return details;
 }
 
