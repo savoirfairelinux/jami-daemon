@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "484f4fcf_36b22268",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T01:50:30Z",
+      "side": 1,
+      "message": "small nitpick",
+      "revId": "243355e877bb0d9e55b6f98699a2bd1a54bd8baa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b4a412e_f36c6bbc",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T01:50:30Z",
+      "side": 1,
+      "message": "should not be there.\n\nThe next cv.wait_for should be enough (or if not, there is another condition that we are waiting for).\n\nIf it\u0027s the media negotiation there is a signal for this.",
+      "range": {
+        "startLine": 468,
+        "startChar": 17,
+        "endLine": 468,
+        "endChar": 36
+      },
+      "revId": "243355e877bb0d9e55b6f98699a2bd1a54bd8baa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
