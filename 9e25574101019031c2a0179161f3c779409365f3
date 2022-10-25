@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3b7acc83_6e7129a8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T01:36:24Z",
+      "side": 1,
+      "message": "Some nitpicks, but seems to work really well on GNU/Linux, I let others check for other platforms",
+      "revId": "9e25574101019031c2a0179161f3c779409365f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c9b5f54_3fbdea39",
+        "filename": "src/preferences.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T01:36:24Z",
+      "side": 1,
+      "message": "To check with adrien, migration from previous config (only new Jami will have noise suppression enabled, but current users will have \"false\" in their config).",
+      "range": {
+        "startLine": 290,
+        "startChar": 6,
+        "endLine": 290,
+        "endChar": 22
+      },
+      "revId": "9e25574101019031c2a0179161f3c779409365f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
