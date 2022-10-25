@@ -230,6 +230,7 @@ constexpr static const char SERVER_NAME[] = "TLS.serverName";
 constexpr static const char VERIFY_SERVER[] = "TLS.verifyServer";
 constexpr static const char VERIFY_CLIENT[] = "TLS.verifyClient";
 constexpr static const char REQUIRE_CLIENT_CERTIFICATE[] = "TLS.requireClientCertificate";
+constexpr static const char DISABLE_SECURE_DLG_CHECK[] = "TLS.disableSecureDlgCheck";
 constexpr static const char NEGOTIATION_TIMEOUT_SEC[] = "TLS.negotiationTimeoutSec";
 
 } // namespace TLS

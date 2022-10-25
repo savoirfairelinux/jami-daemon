@@ -121,6 +121,7 @@ SipAccountConfig::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient;
     out << YAML::Key << Conf::VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer;
     out << YAML::Key << Conf::REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate;
+    out << YAML::Key << Conf::DISABLE_SECURE_DLG_CHECK << YAML::Value << tlsDisableSecureDlgCheck;
     out << YAML::Key << Conf::TIMEOUT_KEY << YAML::Value << tlsNegotiationTimeout;
     out << YAML::Key << Conf::CIPHERS_KEY << YAML::Value << tlsCiphers;
     out << YAML::Key << Conf::METHOD_KEY << YAML::Value << tlsMethod;
@@ -181,6 +182,7 @@ SipAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(tlsMap, Conf::REQUIRE_CERTIF_KEY, tlsRequireClientCertificate);
     parseValueOptional(tlsMap, Conf::VERIFY_CLIENT_KEY, tlsVerifyClient);
     parseValueOptional(tlsMap, Conf::VERIFY_SERVER_KEY, tlsVerifyServer);
+    parseValueOptional(tlsMap, Conf::DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck);
     parseValueOptional(tlsMap, Conf::TIMEOUT_KEY, tlsNegotiationTimeout);
 
     // get srtp submap
@@ -217,7 +219,7 @@ SipAccountConfig::toMap() const
     a.emplace(Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, std::to_string(tlsNegotiationTimeout));
-
+    a.emplace(Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck ? TRUE_STR : FALSE_STR);
     return a;
 }
 
@@ -265,6 +267,7 @@ SipAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer);
     parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient);
     parseBool(details, Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate);
+    parseBool(details, Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck);
     parseInt(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeout);
 }
 

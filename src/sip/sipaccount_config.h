@@ -85,6 +85,7 @@ struct SipAccountConfig : public SipAccountBaseConfig {
     bool tlsVerifyServer {true};
     bool tlsVerifyClient {true};
     bool tlsRequireClientCertificate {true};
+    bool tlsDisableSecureDlgCheck {true};
     int tlsNegotiationTimeout {2};
 
     /**
