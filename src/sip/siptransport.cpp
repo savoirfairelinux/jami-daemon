@@ -337,7 +337,7 @@ SipTransportBroker::getTlsListener(const IpAddr& ipAddress, const pjsip_tls_sett
 {
     RETURN_IF_FAIL(settings, nullptr, "TLS settings not specified");
     RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
-    JAMI_DEBUG("Creating TLS listener on {:s}...", ipAddress.toString(true));
+    JAMI_DBG("Creating TLS listener on %s...", ipAddress.toString(true).c_str());
 #if 0
     JAMI_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
     JAMI_DBG(" cert_file    : %s", settings->cert_file.ptr);
