@@ -17,9 +17,9 @@
 #include "account_config.h"
 #include "account_const.h"
 #include "account_schema.h"
-#include "yamlparser.h"
 #include "string_utils.h"
 #include "fileutils.h"
+#include "config/account_config_utils.h"
 
 #include <fmt/compile.h>
 
@@ -54,30 +54,30 @@ constexpr const char* PROXY_PUSH_TOPIC_KEY = "proxyPushiOSTopic";
 using yaml_utils::parseValueOptional;
 
 void
-AccountConfig::serialize(YAML::Emitter& out) const
+AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CONFIG) const
 {
-    out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled;
-    out << YAML::Key << TYPE_KEY << YAML::Value << type;
-    out << YAML::Key << ALIAS_KEY << YAML::Value << alias;
-    out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname;
-    out << YAML::Key << USERNAME_KEY << YAML::Value << username;
+    SERIALIZE_CONFIG(ACCOUNT_ENABLE_KEY, enabled);
+    SERIALIZE_CONFIG(TYPE_KEY, type);
+    SERIALIZE_CONFIG(ALIAS_KEY, alias);
+    SERIALIZE_CONFIG(HOSTNAME_KEY, hostname);
+    SERIALIZE_CONFIG(USERNAME_KEY, username);
+    SERIALIZE_CONFIG(MAILBOX_KEY, mailbox);
     out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"sv));
-    out << YAML::Key << MAILBOX_KEY << YAML::Value << mailbox;
-    out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled;
-    out << YAML::Key << ACCOUNT_READRECEIPT_KEY << YAML::Value << sendReadReceipt;
-    out << YAML::Key << ACCOUNT_ISRENDEZVOUS_KEY << YAML::Value << isRendezVous;
-    out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit;
-    out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled;
-    out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath;
-    out << YAML::Key << USER_AGENT_KEY << YAML::Value << customUserAgent;
-    out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName;
-    out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled;
-    out << YAML::Key << DEFAULT_MODERATORS_KEY << YAML::Value << defaultModerators;
-    out << YAML::Key << LOCAL_MODERATORS_ENABLED_KEY << YAML::Value << localModeratorsEnabled;
-    out << YAML::Key << ALL_MODERATORS_ENABLED_KEY << YAML::Value << allModeratorsEnabled;
-    out << YAML::Key << PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey;
-    out << YAML::Key << PROXY_PUSH_TOPIC_KEY << YAML::Value << notificationTopic;
-    out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled;
+    SERIALIZE_CONFIG(ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
+    SERIALIZE_CONFIG(ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
+    SERIALIZE_CONFIG(ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous);
+    SERIALIZE_CONFIG(ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit);
+    SERIALIZE_CONFIG(RINGTONE_ENABLED_KEY, ringtoneEnabled);
+    SERIALIZE_CONFIG(RINGTONE_PATH_KEY, ringtonePath);
+    SERIALIZE_CONFIG(USER_AGENT_KEY, customUserAgent);
+    SERIALIZE_CONFIG(DISPLAY_NAME_KEY, displayName);
+    SERIALIZE_CONFIG(UPNP_ENABLED_KEY, upnpEnabled);
+    SERIALIZE_CONFIG(DEFAULT_MODERATORS_KEY, defaultModerators);
+    SERIALIZE_CONFIG(LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled);
+    SERIALIZE_CONFIG(ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled);
+    SERIALIZE_CONFIG(PROXY_PUSH_TOKEN_KEY, deviceKey);
+    SERIALIZE_CONFIG(PROXY_PUSH_TOPIC_KEY, notificationTopic);
+    SERIALIZE_CONFIG(VIDEO_ENABLED_KEY, videoEnabled);
 }
 
 void
