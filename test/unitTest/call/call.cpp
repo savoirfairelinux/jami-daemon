@@ -32,10 +32,12 @@
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
-
+#include "media_const.h"
+#include "call_const.h"
 #include "common.h"
 
 using namespace libjami::Account;
+using namespace libjami::Call::Details;
 
 namespace jami {
 namespace test {
@@ -65,6 +67,7 @@ private:
     void testStopSearching();
     void testDeclineMultiDevice();
     void testTlsInfosPeerCertificate();
+    void testSocketInfos();
 
     CPPUNIT_TEST_SUITE(CallTest);
     CPPUNIT_TEST(testCall);
@@ -72,6 +75,7 @@ private:
     CPPUNIT_TEST(testStopSearching);
     CPPUNIT_TEST(testDeclineMultiDevice);
     CPPUNIT_TEST(testTlsInfosPeerCertificate);
+    CPPUNIT_TEST(testSocketInfos);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -352,6 +356,80 @@ CallTest::testTlsInfosPeerCertificate()
     auto cert = transport->getTlsInfos().peerCert;
     CPPUNIT_ASSERT(cert && cert->issuer);
     CPPUNIT_ASSERT(cert->issuer->getId().toString() == bobAccount->getUsername());
+
+    JAMI_INFO("Stop call between alice and Bob");
+    callStopped = 0;
+    Manager::instance().hangupCall(aliceId, callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
+}
+
+void
+CallTest::testSocketInfos()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::atomic<int> callStopped {0};
+    std::string bobCallId;
+    std::string aliceCallState;
+    // Watch signals
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string& accountId,
+            const std::string& callId,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
+            if (accountId == bobId)
+                bobCallId = callId;
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& accountId, const std::string&, const std::string& state, signed) {
+            if (accountId == aliceId)
+                aliceCallState = state;
+            if (state == "OVER") {
+                callStopped += 1;
+                if (callStopped == 2)
+                    cv.notify_one();
+            }
+        }));
+    auto mediaReady = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaNegotiationStatus>(
+        [&](const std::string& callId,
+            const std::string& event,
+            const std::vector<std::map<std::string, std::string>>&) {
+            if (event == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS) {
+                mediaReady = true;
+                cv.notify_one();
+            }
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    JAMI_INFO("Start call between alice and Bob");
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, {});
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !bobCallId.empty(); }));
+
+    Manager::instance().answerCall(bobId, bobCallId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return aliceCallState == "CURRENT" && mediaReady;
+    }));
+
+    JAMI_INFO("Detail debug");
+    auto details = libjami::getCallDetails(aliceId, callId);
+    for (auto i = details.begin(); i != details.end(); i++) {
+        JAMI_INFO("%s : %s", i->first.c_str(), i->second.c_str());
+    }
+    auto call = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(callId));
+    auto transport = call->getIceMedia();
+    CPPUNIT_ASSERT(transport);
+    CPPUNIT_ASSERT(transport->isRunning());
+    CPPUNIT_ASSERT(transport->link().c_str() == details[libjami::Call::Details::SOCKETS]);
 
     JAMI_INFO("Stop call between alice and Bob");
     callStopped = 0;
