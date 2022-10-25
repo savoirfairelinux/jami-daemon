@@ -220,7 +220,9 @@ AC_MSG_RESULT([$CLANG])
 dnl define DRING_BUILD because we are building libjami, not using it
 dnl if building shared library, define jami_EXPORTS
 AC_MSG_CHECKING([if compiling shared library])
+
 DAEMONCPPFLAGS+=" -fvisibility=hidden -DDRING_BUILD"
+
 AS_IF([test "x$enable_shared" == "xyes"],
   [RING_SHARED=yes
    DAEMONCPPFLAGS+=" -Djami_EXPORTS"],
