@@ -170,6 +170,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
                 (*agcItf)->SetEnabled(agcItf, true);
                 if ((*agcItf)->IsEnabled(agcItf, &enabled) == SL_RESULT_SUCCESS) {
                     JAMI_WARN("AGC is now %s\n", enabled ? "enabled" : "not enabled");
+                    hasNativeAGC_ = enabled;
                 }
             }
         }

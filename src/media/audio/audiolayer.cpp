@@ -58,8 +58,8 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 
-    JAMI_INFO("[audiolayer] AGC: %d, noiseReduce: %d, VAD: %d, echoCancel: %s, audioProcessor: %s",
-              pref_.isAGCEnabled(),
+    JAMI_INFO("[audiolayer] AGC: %s, noiseReduce: %d, VAD: %d, echoCancel: %s, audioProcessor: %s",
+              pref_.getAGCState().c_str(),
               pref.getNoiseReduce(),
               pref.getVadEnabled(),
               pref.getEchoCanceller().c_str(),
@@ -139,6 +139,17 @@ shouldUseAudioProcessorEchoCancel(bool hasNativeAEC, const std::string& echoCanc
         or (echoCancellerPref == "audioProcessor");
 }
 
+//helper function
+static inline bool
+shouldUseAudioProcessorAGC(bool hasNativeAGC, const std::string& agcPref)
+{
+    return
+        // user doesn't care which and there is not a system AGC
+        (agcPref == "auto" && !hasNativeAGC)
+        // user specifically wants audioProcessor
+        or (agcPref == "audioProcessor");
+}
+
 void
 AudioLayer::setHasNativeAEC(bool hasNativeAEC)
 {
@@ -149,6 +160,19 @@ AudioLayer::setHasNativeAEC(bool hasNativeAEC)
     if (audioProcessor) {
         audioProcessor->enableEchoCancel(
             shouldUseAudioProcessorEchoCancel(hasNativeAEC, pref_.getEchoCanceller()));
+    }
+}
+
+void
+AudioLayer::setHasNativeAGC(bool hasNativeAGC)
+{
+    JAMI_INFO("[audiolayer] setHasNativeAGC: %d", hasNativeAGC);
+    std::lock_guard<std::mutex> lock(audioProcessorMutex);
+    hasNativeAGC_ = hasNativeAGC;
+    // if we have a current audio processor, tell it to enable/disable its own AEC
+    if (audioProcessor) {
+        audioProcessor->enableEchoCancel(
+            shouldUseAudioProcessorAGC(hasNativeAGC, pref_.getAGCState()));
     }
 }
 
@@ -209,7 +233,8 @@ AudioLayer::createAudioProcessor()
 
     audioProcessor->enableNoiseSuppression(pref_.getNoiseReduce());
 
-    audioProcessor->enableAutomaticGainControl(pref_.isAGCEnabled());
+    audioProcessor->enableAutomaticGainControl(
+        shouldUseAudioProcessorAGC(hasNativeAGC_, pref_.getAGCState()));
 
     audioProcessor->enableEchoCancel(
         shouldUseAudioProcessorEchoCancel(hasNativeAEC_, pref_.getEchoCanceller()));

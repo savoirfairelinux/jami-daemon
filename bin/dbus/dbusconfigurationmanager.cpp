@@ -373,15 +373,15 @@ DBusConfigurationManager::setNoiseSuppressState(const bool& state)
 }
 
 auto
-DBusConfigurationManager::isAgcEnabled() -> decltype(DRing::isAgcEnabled())
+DBusConfigurationManager::getAgcState() -> decltype(DRing::getAgcState())
 {
-    return DRing::isAgcEnabled();
+    return DRing::getAgcState();
 }
 
 void
-DBusConfigurationManager::setAgcState(const bool& enabled)
+DBusConfigurationManager::setAgcState(const std::string& state)
 {
-    DRing::setAgcState(enabled);
+    DRing::setAgcState(state);
 }
 
 void

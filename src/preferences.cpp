@@ -288,7 +288,7 @@ AudioPreference::AudioPreference()
     , volumespkr_(1.0)
     , audioProcessor_("webrtc")
     , denoise_(false)
-    , agcEnabled_(false)
+    , agcState_("auto")
     , vadEnabled_(true)
     , echoCanceller_("auto")
     , captureMuted_(false)
@@ -452,7 +452,7 @@ AudioPreference::serialize(YAML::Emitter& out) const
 
     // audio processor options, not in a submap
     out << YAML::Key << AUDIO_PROCESSOR_KEY << YAML::Value << audioProcessor_;
-    out << YAML::Key << AGC_KEY << YAML::Value << agcEnabled_;
+    out << YAML::Key << AGC_KEY << YAML::Value << agcState_;
     out << YAML::Key << VAD_KEY << YAML::Value << vadEnabled_;
     out << YAML::Key << NOISE_REDUCE_KEY << YAML::Value << denoise_;
     out << YAML::Key << ECHO_CANCEL_KEY << YAML::Value << echoCanceller_;
@@ -489,7 +489,7 @@ AudioPreference::unserialize(const YAML::Node& in)
     // common options
     parseValue(node, ALWAYS_RECORDING_KEY, alwaysRecording_);
     parseValue(node, AUDIO_API_KEY, audioApi_);
-    parseValue(node, AGC_KEY, agcEnabled_);
+    parseValue(node, AGC_KEY, agcState_);
     parseValue(node, CAPTURE_MUTED_KEY, captureMuted_);
     parseValue(node, NOISE_REDUCE_KEY, denoise_);
     parseValue(node, PLAYBACK_MUTED_KEY, playbackMuted_);

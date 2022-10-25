@@ -517,8 +517,8 @@ public:
      */
     void setNoiseSuppressState(bool state);
 
-    bool isAGCEnabled() const;
-    void setAGCState(bool enabled);
+    std::string getAgcState() const;
+    void setAgcState(const std::string& state);
 
     /**
      * Get is always recording functionality

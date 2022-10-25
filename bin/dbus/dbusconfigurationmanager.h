@@ -144,8 +144,8 @@ public:
     std::string getCurrentAudioOutputPlugin();
     bool getNoiseSuppressState();
     void setNoiseSuppressState(const bool& state);
-    bool isAgcEnabled();
-    void setAgcState(const bool& enabled);
+    std::string getAgcState();
+    void setAgcState(const std::string& state);
     void muteDtmf(const bool& mute);
     bool isDtmfMuted();
     bool isCaptureMuted();

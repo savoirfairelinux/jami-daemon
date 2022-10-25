@@ -2444,16 +2444,16 @@ Manager::setNoiseSuppressState(bool state)
     audioPreference.setNoiseReduce(state);
 }
 
-bool
-Manager::isAGCEnabled() const
+std::string
+Manager::getAgcState() const
 {
-    return audioPreference.isAGCEnabled();
+    return audioPreference.getAgcState();
 }
 
 void
-Manager::setAGCState(bool state)
+Manager::setAgcState(const std::string& state)
 {
-    audioPreference.setAGCState(state);
+    audioPreference.setAgcState(state);
 }
 
 /**

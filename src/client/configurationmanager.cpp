@@ -662,16 +662,16 @@ setNoiseSuppressState(bool state)
     jami::Manager::instance().setNoiseSuppressState(state);
 }
 
-bool
-isAgcEnabled()
+std::string
+getAGCState()
 {
-    return jami::Manager::instance().isAGCEnabled();
+    return jami::Manager::instance().getAgcState();
 }
 
 void
-setAgcState(bool enabled)
+setAGCState(const std::string& state)
 {
-    jami::Manager::instance().setAGCState(enabled);
+    jami::Manager::instance().setAgcState(state);
 }
 
 std::string
