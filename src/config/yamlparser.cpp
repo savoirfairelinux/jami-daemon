@@ -33,6 +33,15 @@ parsePath(const YAML::Node& node, const char* key, std::string& path, const std:
     path = fileutils::getCleanPath(base, val);
 }
 
+void
+parsePathOptional(const YAML::Node& node, const char* key, std::string& path, const std::string& base)
+{
+    std::string val;
+    if (parseValueOptional(node, key, val))
+        path = fileutils::getCleanPath(base, val);
+}
+
+
 // FIXME: Maybe think of something more clever, this is due to yaml-cpp's poor
 // handling of empty values for nested collections.
 std::vector<std::map<std::string, std::string>>
