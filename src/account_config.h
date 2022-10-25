@@ -16,7 +16,7 @@
  */
 #pragma once
 #include "sip/sip_utils.h"
-#include "serializable.h"
+#include "config/serializable.h"
 
 #include <yaml-cpp/yaml.h>
 #include <string>
