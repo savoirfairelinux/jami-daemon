@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "52b10fba_b91b7a87",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T12:44:50Z",
+      "side": 1,
+      "message": "Last nitpick, But I think for Fadi it will be ok",
+      "revId": "7fb24ee0e713485f98c66d480d2f2877f1d05793",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8edc41f1_e251d5f1",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 896,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-25T12:44:50Z",
+      "side": 1,
+      "message": "should not be needed, the eventLoop is the only thing waiting and onRecv is always called when not waiting",
+      "range": {
+        "startLine": 896,
+        "startChar": 4,
+        "endLine": 896,
+        "endChar": 20
+      },
+      "revId": "7fb24ee0e713485f98c66d480d2f2877f1d05793",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
