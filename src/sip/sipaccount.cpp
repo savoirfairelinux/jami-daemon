@@ -88,8 +88,6 @@ using yaml_utils::parseValueOptional;
 using yaml_utils::parseVectorMap;
 using sip_utils::CONST_PJ_STR;
 
-static constexpr int MIN_REGISTRATION_TIME = 60;                  // seconds
-static constexpr unsigned DEFAULT_REGISTRATION_EXPIRE = 3600;     // seconds
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
 static const char* const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
@@ -128,25 +126,13 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , auto_rereg_()
     , credentials_()
     , regc_(nullptr)
-    , bRegister_(false)
-    , registrationExpire_(DEFAULT_REGISTRATION_EXPIRE)
-    , serviceRoute_()
     , cred_()
     , tlsSetting_()
     , ciphers_(100)
-    , tlsMethod_("TLSv1")
-    , tlsCiphers_()
-    , tlsServerName_("")
-    , tlsVerifyServer_(false)
-    , tlsVerifyClient_(true)
-    , tlsRequireClientCertificate_(true)
-    , tlsNegotiationTimeoutSec_("2")
     , registrationStateDetailed_()
-    , registrationRefreshEnabled_(true)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
-    , allowIPAutoRewrite_(true)
     , via_tp_(nullptr)
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
 {
@@ -427,13 +413,14 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     return true;
 }
 
+/*
 void
 SIPAccount::serialize(YAML::Emitter& out) const
 {
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    SIPAccountBase::serialize(out);
 
     out << YAML::BeginMap;
-    SIPAccountBase::serialize(out);
 
     out << YAML::Key << Conf::BIND_ADDRESS_KEY << YAML::Value << bindAddress_;
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
@@ -479,7 +466,7 @@ SIPAccount::serialize(YAML::Emitter& out) const
     out << YAML::EndMap;
 
     out << YAML::EndMap;
-}
+}*/
 
 void
 SIPAccount::usePublishedAddressPortInVIA()
@@ -487,7 +474,7 @@ SIPAccount::usePublishedAddressPortInVIA()
     publishedIpStr_ = getPublishedIpAddress().toString();
     via_addr_.host.ptr = (char*) publishedIpStr_.c_str();
     via_addr_.host.slen = publishedIpStr_.size();
-    via_addr_.port = publishedPort_;
+    via_addr_.port = publishedPortUsed_;
 }
 
 void
@@ -511,6 +498,7 @@ validate(std::string& member, const std::string& param, const T& valid)
         JAMI_ERR("Invalid parameter \"%s\"", param.c_str());
 }
 
+/*
 void
 SIPAccount::unserialize(const YAML::Node& node)
 {
@@ -602,6 +590,7 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     SIPAccountBase::setAccountDetails(details);
     parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
 
+    parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
     parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
 
     // TLS
@@ -709,6 +698,7 @@ SIPAccount::getAccountDetails() const
 
     return a;
 }
+*/
 
 std::map<std::string, std::string>
 SIPAccount::getVolatileAccountDetails() const
@@ -748,13 +738,13 @@ SIPAccount::getVolatileAccountDetails() const
 bool
 SIPAccount::mapPortUPnP()
 {
-    upnp::Mapping map(upnp::PortType::UDP, publishedPort_, localPort_);
+    upnp::Mapping map(upnp::PortType::UDP, config().publishedPort, config().localPort);
     map.setNotifyCallback([w = weak()](upnp::Mapping::sharedPtr_t mapRes) {
         if (auto accPtr = w.lock()) {
             auto oldPort = static_cast<in_port_t>(accPtr->publishedPortUsed_);
             bool success = mapRes->getState() == upnp::MappingState::OPEN
                            or mapRes->getState() == upnp::MappingState::IN_PROGRESS;
-            auto newPort = success ? mapRes->getExternalPort() : accPtr->publishedPort_;
+            auto newPort = success ? mapRes->getExternalPort() : accPtr->config().publishedPort;
             if (not success and not accPtr->isRegistered()) {
                 JAMI_WARN("[Account %s] Failed to open port %u: registering SIP account anyway",
                           accPtr->getAccountID().c_str(),
@@ -796,12 +786,11 @@ SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
               getAccountID().c_str(),
               pushDeviceToken.c_str());
 
-    if (deviceKey_ == pushDeviceToken)
+    if (config().deviceKey == pushDeviceToken)
         return;
+    SIPAccountBase::setPushNotificationToken(pushDeviceToken);
 
-    deviceKey_ = pushDeviceToken;
-
-    if (enabled_)
+    if (config().enabled)
         doUnregister([&](bool /* transport_free */) { doRegister(); });
 }
 
@@ -811,7 +800,7 @@ SIPAccount::pushNotificationReceived(const std::string& from,
 {
     JAMI_WARN("[SIP Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
 
-    if (enabled_)
+    if (config().enabled)
         doUnregister([&](bool /* transport_free */) { doRegister(); });
 }
 
@@ -823,7 +812,7 @@ SIPAccount::doRegister()
         return;
     }
 
-    JAMI_DBG("doRegister %s", hostname_.c_str());
+    JAMI_DEBUG("doRegister {:s}", config_->hostname);
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnpCtrl_) {
@@ -849,8 +838,8 @@ SIPAccount::doRegister1_()
         }
     }
 
-    link_.resolveSrvName(hasServiceRoute() ? getServiceRoute() : hostname_,
-                         tlsEnable_ ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
+    link_.resolveSrvName(hasServiceRoute() ? getServiceRoute() : config().hostname,
+                         config().tlsEnable ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
                          [w = weak()](std::vector<IpAddr> host_ips) {
                              if (auto acc = w.lock()) {
                                  std::lock_guard<std::recursive_mutex> lock(
@@ -884,11 +873,11 @@ SIPAccount::doRegister2_()
     }
 
     bool ipv6 = bindAddress.isIpv6();
-    transportType_ = tlsEnable_ ? (ipv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS)
+    transportType_ = config().tlsEnable ? (ipv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS)
                                 : (ipv6 ? PJSIP_TRANSPORT_UDP6 : PJSIP_TRANSPORT_UDP);
 
     // Init TLS settings if the user wants to use TLS
-    if (tlsEnable_) {
+    if (config().tlsEnable) {
         JAMI_DBG("TLS is enabled for account %s", accountID_.c_str());
 
         // Dropping current calls already using the transport is currently required
@@ -908,14 +897,11 @@ SIPAccount::doRegister2_()
         tlsListener_.reset();
     }
 
-    // Init STUN settings for this account if the user selected it
-    initStunConfiguration();
-
     // In our definition of the ip2ip profile (aka Direct IP Calls),
     // no registration should be performed
     if (isIP2IP()) {
         // If we use Tls for IP2IP, transports will be created on connection.
-        if (!tlsEnable_) {
+        if (!config().tlsEnable) {
             setTransport(link_.sipTransportBroker->getUdpTransport(bindAddress));
         }
         setRegistrationState(RegistrationState::REGISTERED);
@@ -928,9 +914,9 @@ SIPAccount::doRegister2_()
         if (isTlsEnabled()) {
             setTransport(link_.sipTransportBroker->getTlsTransport(tlsListener_,
                                                                    hostIp_,
-                                                                   tlsServerName_.empty()
-                                                                       ? hostname_
-                                                                       : tlsServerName_));
+                                                                   config().tlsServerName.empty()
+                                                                       ? config().hostname
+                                                                       : config().tlsServerName));
         } else {
             setTransport(link_.sipTransportBroker->getUdpTransport(bindAddress));
         }
@@ -996,7 +982,7 @@ SIPAccount::sendRegister()
         return;
     }
 
-    setRegister(true);
+    bRegister_ = true;
     setRegistrationState(RegistrationState::TRYING);
 
     pjsip_regc* regc = nullptr;
@@ -1090,7 +1076,7 @@ SIPAccount::setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType)
 {
     if (hostIp_) {
         auto ai = &tdata->dest_info;
-        ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
+        ai->name = pj_strdup3(tdata->pool, config().hostname.c_str());
         ai->addr.count = 1;
         ai->addr.entry[0].type = (pjsip_transport_type_e) transportKeyType;
         pj_memcpy(&ai->addr.entry[0].addr, hostIp_.pjPtr(), sizeof(pj_sockaddr));
@@ -1145,7 +1131,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
              */
             // update_rfc5626_status(acc, param->rdata);
 
-            if (allowIPAutoRewrite_ and checkNATAddress(param, link_.getPool()))
+            if (config().allowIPAutoRewrite and checkNATAddress(param, link_.getPool()))
                 JAMI_WARN("New contact: %s", getContactHeader().c_str());
 
             /* TODO Check and update Service-Route header */
@@ -1177,10 +1163,10 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
             scheduleReregistration();
     }
 
-    if (param->expiration != registrationExpire_) {
+    if (param->expiration != config().registrationExpire) {
         JAMI_DBG("Registrar returned EXPIRE value [%u s] different from the requested [%u s]",
                  param->expiration,
-                 registrationExpire_);
+                 config().registrationExpire);
         // NOTE: We don't alter the EXPIRE set by the user even if the registrar
         // returned a different value. PJSIP lib will set the proper timer for
         // the refresh, if the auto-regisration is enabled.
@@ -1196,8 +1182,7 @@ SIPAccount::sendUnregister()
         return;
     }
 
-    setRegister(false);
-
+    bRegister_ = false;
     pjsip_regc* regc = getRegistrationInfo();
     if (!regc)
         throw VoipLinkException("Registration structure is NULL");
@@ -1257,7 +1242,8 @@ void
 SIPAccount::initTlsConfiguration()
 {
     pjsip_tls_setting_default(&tlsSetting_);
-    tlsSetting_.proto = tlsProtocolFromString(tlsMethod_);
+    const auto& conf = config();
+    tlsSetting_.proto = tlsProtocolFromString(conf.tlsMethod);
 
     // Determine the cipher list supported on this machine
     CipherArray avail_ciphers(256);
@@ -1267,7 +1253,7 @@ SIPAccount::initTlsConfiguration()
     avail_ciphers.resize(cipherNum);
 
     ciphers_.clear();
-    std::string_view stream(tlsCiphers_), item;
+    std::string_view stream(conf.tlsCiphers), item;
     while (jami::getline(stream, item, ' ')) {
         std::string cipher(item);
         auto item_cid = pj_ssl_cipher_id(cipher.c_str());
@@ -1290,14 +1276,10 @@ SIPAccount::initTlsConfiguration()
 
     trimCiphers();
 
-    pj_strset(&tlsSetting_.ca_list_file, (char*) tlsCaListFile_.c_str(), tlsCaListFile_.size());
-    pj_strset(&tlsSetting_.cert_file,
-              (char*) tlsCertificateFile_.c_str(),
-              tlsCertificateFile_.size());
-    pj_strset(&tlsSetting_.privkey_file,
-              (char*) tlsPrivateKeyFile_.c_str(),
-              tlsPrivateKeyFile_.size());
-    pj_strset(&tlsSetting_.password, (char*) tlsPassword_.c_str(), tlsPassword_.size());
+    tlsSetting_.ca_list_file = CONST_PJ_STR(conf.tlsCaListFile);
+    tlsSetting_.cert_file = CONST_PJ_STR(conf.tlsCaListFile);
+    tlsSetting_.privkey_file = CONST_PJ_STR(conf.tlsPrivateKeyFile);
+    tlsSetting_.password = CONST_PJ_STR(conf.tlsPassword);
 
     JAMI_DBG("Using %zu ciphers", ciphers_.size());
     tlsSetting_.ciphers_num = ciphers_.size();
@@ -1305,11 +1287,11 @@ SIPAccount::initTlsConfiguration()
         tlsSetting_.ciphers = &ciphers_.front();
     }
 
-    tlsSetting_.verify_server = tlsVerifyServer_;
-    tlsSetting_.verify_client = tlsVerifyClient_;
-    tlsSetting_.require_client_cert = tlsRequireClientCertificate_;
+    tlsSetting_.verify_server = conf.tlsVerifyServer;
+    tlsSetting_.verify_client = conf.tlsVerifyClient;
+    tlsSetting_.require_client_cert = conf.tlsRequireClientCertificate;
 
-    tlsSetting_.timeout.sec = atol(tlsNegotiationTimeoutSec_.c_str());
+    tlsSetting_.timeout.sec = conf.tlsNegotiationTimeout;
 
     tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
     tlsSetting_.qos_ignore_error = PJ_TRUE;
@@ -1318,7 +1300,7 @@ SIPAccount::initTlsConfiguration()
 void
 SIPAccount::initStunConfiguration()
 {
-    std::string_view stunServer(stunServer_);
+    std::string_view stunServer(config().stunServer);
     auto pos = stunServer.find(':');
     if (pos == std::string_view::npos) {
         stunServerName_ = sip_utils::CONST_PJ_STR(stunServer);
@@ -1333,11 +1315,9 @@ SIPAccount::initStunConfiguration()
 void
 SIPAccount::loadConfig()
 {
-    if (registrationExpire_ == 0)
-        registrationExpire_
-            = DEFAULT_REGISTRATION_EXPIRE; /** Default expire value for registration */
-
-    if (tlsEnable_) {
+    // Init STUN settings for this account if the user selected it
+    initStunConfiguration();
+    if (config().tlsEnable) {
         initTlsConfiguration();
         transportType_ = PJSIP_TRANSPORT_TLS;
     } else
@@ -1353,26 +1333,26 @@ SIPAccount::fullMatch(std::string_view username, std::string_view hostname) cons
 bool
 SIPAccount::userMatch(std::string_view username) const
 {
-    return !username.empty() and username == username_;
+    return !username.empty() and username == config().username;
 }
 
 bool
 SIPAccount::hostnameMatch(std::string_view hostname) const
 {
-    if (hostname == hostname_)
+    if (hostname == config().hostname)
         return true;
     const auto a = ip_utils::getAddrList(hostname);
-    const auto b = ip_utils::getAddrList(hostname_);
+    const auto b = ip_utils::getAddrList(config().hostname);
     return ip_utils::haveCommonAddr(a, b);
 }
 
 bool
 SIPAccount::proxyMatch(std::string_view hostname) const
 {
-    if (hostname == serviceRoute_)
+    if (hostname == config().serviceRoute)
         return true;
     const auto a = ip_utils::getAddrList(hostname);
-    const auto b = ip_utils::getAddrList(hostname_);
+    const auto b = ip_utils::getAddrList(config().hostname);
     return ip_utils::haveCommonAddr(a, b);
 }
 
@@ -1402,8 +1382,9 @@ SIPAccount::getFromUri() const
     std::string transport;
 
     // Get login name if username is not specified
-    std::string username(username_.empty() ? getLoginName() : username_);
-    std::string hostname(hostname_);
+    const auto& conf = config();
+    std::string username(conf.username.empty() ? getLoginName() : conf.username);
+    std::string hostname(conf.hostname);
 
     // UDP does not require the transport specification
     if (transportType_ == PJSIP_TRANSPORT_TLS || transportType_ == PJSIP_TRANSPORT_TLS6) {
@@ -1413,7 +1394,7 @@ SIPAccount::getFromUri() const
         scheme = "sip:";
 
     // Get machine hostname if not provided
-    if (hostname_.empty()) {
+    if (hostname.empty()) {
         hostname = sip_utils::as_view(*pj_gethostname());
     }
 
@@ -1421,8 +1402,8 @@ SIPAccount::getFromUri() const
         hostname = IpAddr(hostname).toString(false, true);
 
     std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
-    if (not displayName_.empty())
-        return "\"" + displayName_ + "\" " + uri;
+    if (not conf.displayName.empty())
+        return "\"" + conf.displayName + "\" " + uri;
     return uri;
 }
 
@@ -1446,7 +1427,7 @@ SIPAccount::getToUri(const std::string& username) const
 
     // Check if hostname is already specified
     if (username.find('@') == std::string::npos)
-        hostname = hostname_;
+        hostname = config().hostname;
 
     if (not hostname.empty() and IpAddr::isIpv6(hostname))
         hostname = IpAddr(hostname).toString(false, true);
@@ -1473,10 +1454,10 @@ SIPAccount::getServerUri() const
     }
 
     std::string host;
-    if (IpAddr::isIpv6(hostname_))
-        host = IpAddr(hostname_).toString(false, true);
+    if (IpAddr::isIpv6(config().hostname))
+        host = IpAddr(config().hostname).toString(false, true);
     else
-        host = hostname_;
+        host = config().hostname;
 
     return "<" + scheme + host + transport + ">";
 }
@@ -1510,12 +1491,12 @@ SIPAccount::updateContactHeader()
         return;
     }
 
-    auto contactHdr = printContactHeader(username_,
-                                         displayName_,
+    auto contactHdr = printContactHeader(config().username,
+                                         config().displayName,
                                          contactAddress_.toString(false, true),
                                          contactAddress_.getPort(),
                                          PJSIP_TRANSPORT_IS_SECURE(transport_->get()),
-                                         deviceKey_);
+                                         config().deviceKey);
 
     contactHeader_ = std::move(contactHdr);
 }
@@ -1544,18 +1525,18 @@ SIPAccount::initContactAddress()
     pj_uint16_t port;
 
     // Init the address to the local address.
-    link_.findLocalAddressFromTransport(transport_->get(), transportType, hostname_, address, port);
+    link_.findLocalAddressFromTransport(transport_->get(), transportType, config().hostname, address, port);
 
     if (getUPnPActive() and getUPnPIpAddress()) {
         address = getUPnPIpAddress().toString();
         port = publishedPortUsed_;
         useUPnPAddressPortInVIA();
         JAMI_DBG("Using UPnP address %s and port %d", address.c_str(), port);
-    } else if (not publishedSameasLocal_) {
+    } else if (not config().publishedSameasLocal) {
         address = getPublishedIpAddress().toString();
-        port = publishedPort_;
+        port = config().publishedPort;
         JAMI_DBG("Using published address %s and port %d", address.c_str(), port);
-    } else if (stunEnabled_) {
+    } else if (config().stunEnabled) {
         auto success = link_.findLocalAddressFromSTUN(transport_->get(),
                                                       &stunServerName_,
                                                       stunPort_,
@@ -1564,7 +1545,7 @@ SIPAccount::initContactAddress()
         if (not success)
             emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
         setPublishedAddress({address});
-        publishedPort_ = port;
+        publishedPortUsed_ = port;
         usePublishedAddressPortInVIA();
     } else {
         if (!receivedParameter_.empty()) {
@@ -1724,15 +1705,15 @@ SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string>>
             c.computePasswordHash();
 
         cred_.emplace_back(
-            pjsip_cred_info {/*.realm     = */ pj_str((char*) c.realm.c_str()),
-                             /*.scheme    = */ pj_str((char*) "digest"),
-                             /*.username  = */ pj_str((char*) c.username.c_str()),
+            pjsip_cred_info {/*.realm     = */ CONST_PJ_STR(c.realm),
+                             /*.scheme    = */ CONST_PJ_STR("digest"),
+                             /*.username  = */ CONST_PJ_STR(c.username),
                              /*.data_type = */
                              (c.password_h.empty() ? PJSIP_CRED_DATA_PLAIN_PASSWD
                                                    : PJSIP_CRED_DATA_DIGEST),
                              /*.data      = */
-                             pj_str((char*) (c.password_h.empty() ? c.password.c_str()
-                                                                  : c.password_h.c_str())),
+                             CONST_PJ_STR(c.password_h.empty() ? c.password
+                                                                  : c.password_h),
                              /*.ext       = */ {}});
     }
 }
@@ -1759,48 +1740,15 @@ SIPAccount::setRegistrationState(RegistrationState state,
     std::string details_str;
     const pj_str_t* description = pjsip_get_status_text(details_code);
     if (description)
-        details_str = {description->ptr, (size_t) description->slen};
+        details_str = sip_utils::as_view(*description);
     setRegistrationStateDetailed({details_code, details_str});
     SIPAccountBase::setRegistrationState(state, details_code, details_str);
-}
-
-void
-SIPAccount::setRegistrationExpire(unsigned expire)
-{
-    if (expire >= MIN_REGISTRATION_TIME) {
-        JAMI_DBG("Set SIP registration EXPIRE to %u - current %u", expire, registrationExpire_);
-        registrationExpire_ = expire;
-    } else {
-        JAMI_WARN("SIP registration EXPIRE %u is lower than min value %u",
-                  expire,
-                  MIN_REGISTRATION_TIME);
-        registrationExpire_ = MIN_REGISTRATION_TIME;
-    }
-}
-
-std::map<std::string, std::string>
-SIPAccount::getTlsSettings() const
-{
-    return {{Conf::CONFIG_TLS_ENABLE, tlsEnable_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_TLS_LISTENER_PORT, std::to_string(tlsListenerPort_)},
-            {Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_},
-            {Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_},
-            {Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_},
-            {Conf::CONFIG_TLS_PASSWORD, tlsPassword_},
-            {Conf::CONFIG_TLS_METHOD, tlsMethod_},
-            {Conf::CONFIG_TLS_CIPHERS, tlsCiphers_},
-            {Conf::CONFIG_TLS_SERVER_NAME, tlsServerName_},
-            {Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE,
-             tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_}};
 }
 
 bool
 SIPAccount::isIP2IP() const
 {
-    return hostname_.empty();
+    return config().hostname.empty();
 }
 
 SIPPresence*
@@ -1947,8 +1895,8 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     }
 
     // Set published Ip address
-    publishedSameasLocal_ = false;
-    publishedIpAddress_ = via_addrstr;
+    //publishedSameasLocal_ = false;
+    //publishedIpAddress_ = via_addrstr;
     setPublishedAddress(IpAddr(via_addrstr));
 
     /* Compare received and rport with the URI in our registration */
@@ -2023,12 +1971,12 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
      * Build new Contact header
      */
     {
-        auto tempContact = printContactHeader(username_,
-                                              displayName_,
+        auto tempContact = printContactHeader(config().username,
+                                              config().displayName,
                                               via_addrstr,
                                               rport,
                                               PJSIP_TRANSPORT_IS_SECURE(tp),
-                                              deviceKey_);
+                                              config().deviceKey);
 
         if (tempContact.empty()) {
             JAMI_ERR("Invalid contact header");
@@ -2124,7 +2072,7 @@ SIPAccount::scheduleReregistration()
 void
 SIPAccount::updateDialogViaSentBy(pjsip_dialog* dlg)
 {
-    if (allowIPAutoRewrite_ && via_addr_.host.slen > 0)
+    if (config().allowIPAutoRewrite && via_addr_.host.slen > 0)
         pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
 }
 
@@ -2210,7 +2158,7 @@ SIPAccount::sendMessage(const std::string& to,
 
     /* Initialize Auth header. */
     auto cred = getCredInfo();
-    const_cast<pjsip_cred_info*>(cred)->realm = CONST_PJ_STR(hostname_);
+    const_cast<pjsip_cred_info*>(cred)->realm = CONST_PJ_STR(config().hostname);
     status = pjsip_auth_clt_init(t->auth_sess.get(), link_.getEndpoint(), tdata->pool, 0);
 
     if (status != PJ_SUCCESS) {
@@ -2316,15 +2264,16 @@ IpAddr
 SIPAccount::createBindingAddress()
 {
     auto family = hostIp_ ? hostIp_.getFamily() : PJ_AF_INET;
+    const auto& conf = config();
 
-    IpAddr ret = bindAddress_.empty()
-                     ? (interface_ == ip_utils::DEFAULT_INTERFACE
+    IpAddr ret = conf.bindAddress.empty()
+                     ? (conf.interface == ip_utils::DEFAULT_INTERFACE
                             ? ip_utils::getAnyHostAddr(family)
                             : ip_utils::getInterfaceAddr(getLocalInterface(), family))
-                     : IpAddr(bindAddress_, family);
+                     : IpAddr(conf.bindAddress, family);
 
     if (ret.getPort() == 0) {
-        ret.setPort(tlsEnable_ ? getTlsListenerPort() : getLocalPort());
+        ret.setPort(conf.tlsEnable ? conf.tlsListenerPort : conf.localPort);
     }
 
     return ret;

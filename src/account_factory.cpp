@@ -72,14 +72,15 @@ AccountFactory::isSupportedType(const char* const name) const
 void
 AccountFactory::removeAccount(Account& account)
 {
-    const auto* account_type = account.getAccountType();
-
+    std::string_view account_type = account.getAccountType();
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto& id = account.getAccountID();
     JAMI_DEBUG("Removing account {:s}", id);
-    auto& map = accountMaps_.at(account_type);
-    map.erase(id);
-    JAMI_DEBUG("Remaining {:d} {:s} account(s)", map.size(), account_type);
+    auto m = accountMaps_.find(account_type);
+    if (m != accountMaps_.end()) {
+        m->second.erase(id);
+        JAMI_DEBUG("Remaining {:d} {:s} account(s)", m->second.size(), account_type);
+    }
 }
 
 void

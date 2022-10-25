@@ -1,16 +1,10 @@
 /*
  *  Copyright (C) 2004-2022 Savoir-faire Linux Inc.
  *
- *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
- *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
- *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
- *  Author: Nicolas Jäger <nicolas.jager@savoirfairelinux.com>
- *  Author: Mingrui Zhang <mingrui.zhang@savoirfairelinux.com>
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; either version 3, or (at your option)
+ *  any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,8 +12,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -226,10 +219,10 @@ struct JamiAccount::DiscoveredPeer
 
 static constexpr const char* const RING_URI_PREFIX = "ring:";
 static constexpr const char* const JAMI_URI_PREFIX = "jami:";
-static constexpr const char* DEFAULT_TURN_SERVER = "turn.jami.net";
+/*static constexpr const char* DEFAULT_TURN_SERVER = "turn.jami.net";
 static constexpr const char* DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char* DEFAULT_TURN_PWD = "ring";
-static constexpr const char* DEFAULT_TURN_REALM = "ring";
+static constexpr const char* DEFAULT_TURN_REALM = "ring";*/
 static const auto PROXY_REGEX = std::regex(
     "(https?://)?([\\w\\.\\-_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
 static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
@@ -297,26 +290,16 @@ JamiAccount::createIceTransport(const Args&... args)
     return ice;
 }
 
-JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled */)
-    : SIPAccountBase(accountID)
+JamiAccount::JamiAccount(const std::string& accountId)
+    : SIPAccountBase(accountId)
     , dht_(new dht::DhtRunner)
     , idPath_(fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID())
     , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , dhtPeerConnector_ {}
     , connectionManager_ {}
+    , nonSwarmTransferManager_(std::make_shared<TransferManager>(getAccountID(), ""))
 {
-    // Force the SFL turn server if none provided yet
-    turnServer_ = DEFAULT_TURN_SERVER;
-    turnServerUserName_ = DEFAULT_TURN_USERNAME;
-    turnServerPwd_ = DEFAULT_TURN_PWD;
-    turnServerRealm_ = DEFAULT_TURN_REALM;
-    turnEnabled_ = true;
-
-    proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
-    proxyServer_ = DHT_DEFAULT_PROXY;
-    nonSwarmTransferManager_ = std::make_shared<TransferManager>(getAccountID(), "");
-
     try {
         std::istringstream is(fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
                                                            std::chrono::hours(24 * 7)));
@@ -332,10 +315,6 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount() noexcept
 {
-    if (peerDiscovery_) {
-        peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
-        peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
-    }
     if (auto dht = dht_)
         dht->join();
 }
@@ -462,7 +441,7 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
     } catch (...) {
 #if HAVE_RINGNS
         NameDirectory::lookupUri(suffix,
-                                 nameServer_,
+                                 config().nameServer,
                                  [wthis_ = weak(), call](const std::string& result,
                                                          NameDirectory::Response response) {
                                      // we may run inside an unknown thread, but following code must
@@ -813,149 +792,22 @@ JamiAccount::saveConfig() const
 {
     try {
         YAML::Emitter accountOut;
-        serialize(accountOut);
-        auto accountConfig = getPath() + DIR_SEPARATOR_STR + "config.yml";
-
+        config().serialize(accountOut);
+        auto accountConfig = config().path + DIR_SEPARATOR_STR + "config.yml";
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
         std::ofstream fout = fileutils::ofstream(accountConfig);
-        fout << accountOut.c_str();
-        JAMI_DBG("Exported account to %s", accountConfig.c_str());
+        fout.write(accountOut.c_str(), accountOut.size());
+        JAMI_DBG("Saved account config to %s", accountConfig.c_str());
     } catch (const std::exception& e) {
-        JAMI_ERR("Error exporting account: %s", e.what());
+        JAMI_ERR("Error saving account config: %s", e.what());
     }
 }
 
 void
-JamiAccount::serialize(YAML::Emitter& out) const
+JamiAccount::loadConfig()
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-
-    if (registrationState_ == RegistrationState::INITIALIZING)
-        return;
-
-    out << YAML::BeginMap;
-    SIPAccountBase::serialize(out);
-    out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtDefaultPort_;
-    out << YAML::Key << Conf::DHT_PUBLIC_IN_CALLS << YAML::Value << dhtPublicInCalls_;
-    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory_;
-    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
-    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
-    out << YAML::Key << DRing::Account::ConfProperties::DHT_PEER_DISCOVERY << YAML::Value
-        << dhtPeerDiscovery_;
-    out << YAML::Key << DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY << YAML::Value
-        << accountPeerDiscovery_;
-    out << YAML::Key << DRing::Account::ConfProperties::ACCOUNT_PUBLISH << YAML::Value
-        << accountPublish_;
-
-    out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
-    out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
-    out << YAML::Key << DRing::Account::ConfProperties::DHT_PROXY_LIST_URL << YAML::Value
-        << proxyListUrl_;
-
-#if HAVE_RINGNS
-    out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value << nameServer_;
-    if (not registeredName_.empty())
-        out << YAML::Key << DRing::Account::VolatileProperties::REGISTERED_NAME << YAML::Value
-            << registeredName_;
-#endif
-
-    out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
-    out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD << YAML::Value
-        << archiveHasPassword_;
-    out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
-    if (receiptSignature_.size() > 0)
-        out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value
-            << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
-    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value << deviceName_;
-    out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
-    out << YAML::Key << DRing::Account::ConfProperties::MANAGER_USERNAME << YAML::Value
-        << managerUsername_;
-
-    // tls submap
-    out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
-    SIPAccountBase::serializeTls(out);
-    out << YAML::EndMap;
-
-    out << YAML::EndMap;
-}
-
-void
-JamiAccount::unserialize(const YAML::Node& node)
-{
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-
-    using yaml_utils::parseValue;
-    using yaml_utils::parseValueOptional;
-    using yaml_utils::parsePath;
-
-    SIPAccountBase::unserialize(node);
-
-    // get tls submap
-    const auto& tlsMap = node[Conf::TLS_KEY];
-    parsePath(tlsMap, Conf::CERTIFICATE_KEY, tlsCertificateFile_, idPath_);
-    parsePath(tlsMap, Conf::CALIST_KEY, tlsCaListFile_, idPath_);
-    parseValue(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword_);
-    parsePath(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile_, idPath_);
-
-    parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory_);
-    parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact_);
-    parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted_);
-
-    parseValue(node, Conf::PROXY_ENABLED_KEY, proxyEnabled_);
-    parseValue(node, Conf::PROXY_SERVER_KEY, proxyServer_);
-    try {
-        parseValue(node, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
-    } catch (const std::exception& e) {
-        proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
-    }
-
-    parseValueOptional(node, DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
-    parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
-    parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
-
-    try {
-        parsePath(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
-        parseValue(node, DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_);
-    } catch (const std::exception& e) {
-        JAMI_WARN("can't read archive path: %s", e.what());
-        archiveHasPassword_ = true;
-    }
-
-    try {
-        parseValue(node, Conf::RING_ACCOUNT_RECEIPT, receipt_);
-        auto receipt_sig = node[Conf::RING_ACCOUNT_RECEIPT_SIG].as<YAML::Binary>();
-        receiptSignature_ = {receipt_sig.data(), receipt_sig.data() + receipt_sig.size()};
-    } catch (const std::exception& e) {
-        JAMI_WARN("can't read receipt: %s", e.what());
-    }
-
-    // HACK
-    // MacOS doesn't seems to close the DHT port sometimes, so re-using the DHT port seems
-    // to make the DHT unusable (Address already in use, and SO_REUSEADDR & SO_REUSEPORT
-    // doesn't seems to work). For now, use a random port
-    // See https://git.jami.net/savoirfairelinux/ring-client-macosx/issues/221
-    // TODO: parseValueOptional(node, Conf::DHT_PORT_KEY, dhtDefaultPort_);
-    if (not dhtDefaultPort_)
-        dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
-
-    parseValueOptional(node, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
-    parseValueOptional(node,
-                       DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
-                       accountPeerDiscovery_);
-    parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
-
-#if HAVE_RINGNS
-    parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
-    if (registeredName_.empty()) {
-        parseValueOptional(node,
-                           DRing::Account::VolatileProperties::REGISTERED_NAME,
-                           registeredName_);
-    }
-#endif
-
-    parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
-
-    loadAccount();
+    SIPAccountBase::loadConfig();
+    loadAccount(config().archive_password, config().archive_pin, config().archive_path);
 }
 
 bool
@@ -966,13 +818,13 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
             JAMI_ERR("[Account %s] Can't change archive password", getAccountID().c_str());
             return false;
         }
-        archiveHasPassword_ = not password_new.empty();
+        static_cast<JamiAccountConfig*>(config_.get())->archiveHasPassword = not password_new.empty();
     } catch (const std::exception& ex) {
         JAMI_ERR("[Account %s] Can't change archive password: %s",
                  getAccountID().c_str(),
                  ex.what());
         if (password_old.empty()) {
-            archiveHasPassword_ = true;
+            static_cast<JamiAccountConfig*>(config_.get())->archiveHasPassword = true;
             emitSignal<DRing::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                           getAccountDetails());
         }
@@ -1037,8 +889,8 @@ JamiAccount::setValidity(const std::string& pwd, const dht::InfoHash& id, int64_
 void
 JamiAccount::forceReloadAccount()
 {
-    receipt_.clear();
-    receiptSignature_.clear();
+    //receipt_.clear();
+    //receiptSignature_.clear();
     loadAccount();
 }
 
@@ -1200,42 +1052,43 @@ JamiAccount::loadAccount(const std::string& archive_password,
             }
         }};
 
+    const auto& conf = config();
     try {
         auto onAsync = [w = weak()](AccountManager::AsyncUser&& cb) {
             if (auto this_ = w.lock())
                 cb(*this_->accountManager_);
         };
-        if (managerUri_.empty()) {
+        if (conf.managerUri.empty()) {
             accountManager_.reset(new ArchiveAccountManager(
                 getPath(),
                 onAsync,
                 [this]() { return getAccountDetails(); },
-                archivePath_.empty() ? "archive.gz" : archivePath_,
-                nameServer_));
+                conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
+                config().nameServer));
         } else {
             accountManager_.reset(
-                new ServerAccountManager(getPath(), onAsync, managerUri_, nameServer_));
+                new ServerAccountManager(getPath(), onAsync, conf.managerUri, conf.nameServer));
         }
 
-        auto id = accountManager_->loadIdentity(tlsCertificateFile_,
-                                                tlsPrivateKeyFile_,
-                                                tlsPassword_);
+        auto id = accountManager_->loadIdentity(conf.tlsCertificateFile,
+                                                conf.tlsPrivateKeyFile,
+                                                conf.tlsPassword);
 
         if (auto info = accountManager_->useIdentity(id,
-                                                     receipt_,
-                                                     receiptSignature_,
-                                                     managerUsername_,
+                                                     conf.receipt,
+                                                     conf.receiptSignature,
+                                                     conf.managerUsername,
                                                      callbacks)) {
             // normal loading path
             id_ = std::move(id);
-            username_ = info->accountId;
+            config_->username = info->accountId;
             JAMI_WARN("[Account %s] loaded account identity", getAccountID().c_str());
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
             convModule()->loadConversations();
         } else if (isEnabled()) {
-            if (not managerUri_.empty() and archive_password.empty()) {
+            if (not conf.managerUri.empty() and archive_password.empty()) {
                 Migration::setState(accountID_, Migration::State::INVALID);
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
                 return;
@@ -1250,12 +1103,9 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                   });
 
             std::unique_ptr<AccountManager::AccountCredentials> creds;
-            if (managerUri_.empty()) {
+            if (conf.managerUri.empty()) {
                 auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
-                if (archivePath_.empty()) {
-                    archivePath_ = "archive.gz";
-                }
-                auto archivePath = fileutils::getFullPath(idPath_, archivePath_);
+                auto archivePath = conf.archivePath.empty() ? fileutils::getFullPath(idPath_, "archive.gz") : conf.archivePath;
                 bool hasArchive = fileutils::isFile(archivePath);
 
                 if (not archive_path.empty()) {
@@ -1278,17 +1128,17 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 creds = std::move(acreds);
             } else {
                 auto screds = std::make_unique<ServerAccountManager::ServerAccountCredentials>();
-                screds->username = managerUsername_;
+                screds->username = conf.managerUsername;
                 creds = std::move(screds);
             }
             creds->password = archive_password;
-            archiveHasPassword_ = !archive_password.empty();
+            bool hasPassword = !archive_password.empty();
 
             accountManager_->initAuthentication(
                 fDeviceKey,
                 ip_utils::getDeviceName(),
                 std::move(creds),
-                [this, migrating](const AccountInfo& info,
+                [this, migrating, hasPassword](const AccountInfo& info,
                                   const std::map<std::string, std::string>& config,
                                   std::string&& receipt,
                                   std::vector<uint8_t>&& receipt_signature) {
@@ -1296,42 +1146,42 @@ JamiAccount::loadAccount(const std::string& archive_password,
 
                     fileutils::check_dir(idPath_.c_str(), 0700);
 
+                    auto& conf = *static_cast<JamiAccountConfig*>(config_.get());
                     // save the chain including CA
                     auto id = info.identity;
-                    std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(id,
+                    std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile) = saveIdentity(id,
                                                                                      idPath_,
                                                                                      DEVICE_ID_PATH);
                     id_ = std::move(id);
-                    tlsPassword_ = {};
+                    conf.tlsPassword = {};
+                    conf.archiveHasPassword = hasPassword;
 
-                    username_ = info.accountId;
-                    registeredName_ = managerUsername_;
-                    deviceName_ = accountManager_->getAccountDeviceName();
+                    conf.username = info.accountId;
+                    conf.registeredName = conf.managerUsername;
+                    registeredName_ = conf.managerUsername;
+                    conf.deviceName = accountManager_->getAccountDeviceName();
 
                     auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::URI);
                     if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
-                        nameServer_ = nameServerIt->second;
+                        conf.nameServer = nameServerIt->second;
                     }
                     auto displayNameIt = config.find(DRing::Account::ConfProperties::DISPLAYNAME);
                     if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
-                        displayName_ = displayNameIt->second;
+                        config_->displayName = displayNameIt->second;
                     }
 
-                    receipt_ = std::move(receipt);
-                    receiptSignature_ = std::move(receipt_signature);
+                    conf.receipt = std::move(receipt);
+                    conf.receiptSignature = std::move(receipt_signature);
                     if (migrating) {
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
 
                     // Use the provided config by JAMS instead of default one
-                    auto details = getAccountDetails();
-                    for (const auto& [key, value] : config)
-                        details[key] = value;
-                    setAccountDetails(details);
+                    conf.fromMap(config);
 
-                    if (not info.photo.empty() or not displayName_.empty())
+                    if (not info.photo.empty() or not config_->displayName.empty())
                         emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
-                                                                                       displayName_,
+                                                                                       config_->displayName,
                                                                                        info.photo);
                     setRegistrationState(RegistrationState::UNREGISTERED);
                     saveConfig();
@@ -1371,148 +1221,6 @@ JamiAccount::loadAccount(const std::string& archive_password,
     }
 }
 
-void
-JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details)
-{
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-    SIPAccountBase::setAccountDetails(details);
-
-    // TLS
-    parsePath(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_, idPath_);
-    parsePath(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_, idPath_);
-    parsePath(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_, idPath_);
-    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
-
-    if (hostname_.empty())
-        hostname_ = DHT_DEFAULT_BOOTSTRAP;
-    parseString(details, DRing::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl_);
-    parseInt(details, Conf::CONFIG_DHT_PORT, dhtDefaultPort_);
-    parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
-    parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
-    parseBool(details,
-              DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
-              accountPeerDiscovery_);
-    parseBool(details, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
-    parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
-              allowPeersFromHistory_);
-    parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
-              allowPeersFromContact_);
-    parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
-              allowPeersFromTrusted_);
-    if (not dhtDefaultPort_)
-        dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
-
-    parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
-    parseString(details, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
-    parseString(details, DRing::Account::ConfProperties::USERNAME, username_);
-
-    std::string archive_password;
-    std::string archive_pin;
-    std::string archive_path;
-    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
-    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN, archive_pin);
-    std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
-    parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH, archive_path, idPath_);
-    parseString(details, DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
-
-    auto oldProxyServer = proxyServer_, oldProxyServerList = proxyListUrl_;
-    parseString(details, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
-    parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
-    parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
-    // Migrate from old versions
-    if (proxyServer_.empty()
-        || ((proxyServer_ == "dhtproxy.jami.net" || proxyServer_ == "dhtproxy.ring.cx")
-            && proxyServerCached_.empty()))
-        proxyServer_ = DHT_DEFAULT_PROXY;
-    if (proxyServer_ != oldProxyServer || oldProxyServerList != proxyListUrl_) {
-        JAMI_DBG("DHT Proxy configuration changed, resetting cache");
-        proxyServerCached_ = {};
-        auto proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
-        auto proxyListCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxylist";
-        std::remove(proxyCachePath.c_str());
-        std::remove(proxyListCachePath.c_str());
-    }
-    if (not managerUri_.empty() and managerUri_.rfind("http", 0) != 0) {
-        managerUri_ = "https://" + managerUri_;
-    }
-
-#if HAVE_RINGNS
-    parseString(details, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
-#endif
-
-    // update device name if necessary
-    if (accountManager_)
-        accountManager_->setAccountDeviceName(deviceName_);
-
-    loadAccount(archive_password, archive_pin, archive_path);
-}
-
-std::map<std::string, std::string>
-JamiAccount::getAccountDetails() const
-{
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-    std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
-    a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtDefaultPort_));
-    a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY,
-              dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
-              accountPeerDiscovery_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::ACCOUNT_PUBLISH,
-              accountPublish_ ? TRUE_STR : FALSE_STR);
-    if (accountManager_) {
-        if (auto info = accountManager_->getInfo()) {
-            a.emplace(DRing::Account::ConfProperties::DEVICE_ID, info->deviceId);
-            a.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT, info->ethAccount);
-        }
-    }
-    a.emplace(DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
-    a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
-    if (not archivePath_.empty() or not managerUri_.empty())
-        a.emplace(DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,
-                  archiveHasPassword_ ? TRUE_STR : FALSE_STR);
-
-    /* these settings cannot be changed (read only), but clients should still be
-     * able to read what they are */
-    a.emplace(Conf::CONFIG_SRTP_KEY_EXCHANGE, sip_utils::getKeyExchangeName(getSrtpKeyExchange()));
-    a.emplace(Conf::CONFIG_SRTP_ENABLE, isSrtpEnabled() ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_SRTP_RTP_FALLBACK, getSrtpFallback() ? TRUE_STR : FALSE_STR);
-
-    a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE, fileutils::getFullPath(idPath_, tlsCaListFile_));
-    a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE,
-              fileutils::getFullPath(idPath_, tlsCertificateFile_));
-    a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE,
-              fileutils::getFullPath(idPath_, tlsPrivateKeyFile_));
-    a.emplace(Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
-    a.emplace(Conf::CONFIG_TLS_METHOD, "Automatic");
-    a.emplace(Conf::CONFIG_TLS_CIPHERS, "");
-    a.emplace(Conf::CONFIG_TLS_SERVER_NAME, "");
-    a.emplace(Conf::CONFIG_TLS_VERIFY_SERVER, TRUE_STR);
-    a.emplace(Conf::CONFIG_TLS_VERIFY_CLIENT, TRUE_STR);
-    a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR);
-    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
-              allowPeersFromHistory_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
-              allowPeersFromContact_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
-              allowPeersFromTrusted_ ? TRUE_STR : FALSE_STR);
-    /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
-    a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, "-1");
-    a.emplace(DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_ ? TRUE_STR : FALSE_STR);
-    a.emplace(DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
-    a.emplace(DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
-    a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
-    a.emplace(DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
-#if HAVE_RINGNS
-    a.emplace(DRing::Account::ConfProperties::RingNS::URI, nameServer_);
-#endif
-
-    return a;
-}
-
 std::map<std::string, std::string>
 JamiAccount::getVolatileAccountDetails() const
 {
@@ -1536,7 +1244,7 @@ JamiAccount::lookupName(const std::string& name)
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->lookupUri(name,
-                                   nameServer_,
+                                   config().nameServer,
                                    [acc = getAccountID(), name](const std::string& result,
                                                                 NameDirectory::Response response) {
                                        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(
@@ -1581,6 +1289,7 @@ JamiAccount::registerName(const std::string& password, const std::string& name)
                                                : 4)));
                 if (response == NameDirectory::RegistrationResponse::success) {
                     if (auto this_ = w.lock()) {
+                        static_cast<JamiAccountConfig*>(this_->config_.get())->registeredName = name;
                         this_->registeredName_ = name;
                         this_->saveConfig();
                         emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
@@ -1757,13 +1466,11 @@ std::vector<std::string>
 JamiAccount::loadBootstrap() const
 {
     std::vector<std::string> bootstrap;
-    if (!hostname_.empty()) {
-        std::string_view stream(hostname_), node_addr;
-        while (jami::getline(stream, node_addr, ';'))
-            bootstrap.emplace_back(node_addr);
-        for (const auto& b : bootstrap)
-            JAMI_DBG("[Account %s] Bootstrap node: %s", getAccountID().c_str(), b.c_str());
-    }
+    std::string_view stream(config().hostname), node_addr;
+    while (jami::getline(stream, node_addr, ';'))
+        bootstrap.emplace_back(node_addr);
+    for (const auto& b : bootstrap)
+        JAMI_DBG("[Account %s] Bootstrap node: %s", getAccountID().c_str(), b.c_str());
     return bootstrap;
 }
 
@@ -1922,6 +1629,7 @@ JamiAccount::doRegister_()
     }
 
     JAMI_DBG("[Account %s] Starting account...", getAccountID().c_str());
+    const auto& conf = config();
 
     try {
         if (not accountManager_ or not accountManager_->getInfo())
@@ -1937,7 +1645,7 @@ JamiAccount::doRegister_()
         convModule()->clearPendingFetch();
 
 #if HAVE_RINGNS
-        // Look for registered name on the blockchain
+        // Look for registered name
         accountManager_->lookupAddress(
             accountManager_->getInfo()->accountId,
             [w = weak()](const std::string& result, const NameDirectory::Response& response) {
@@ -1945,6 +1653,7 @@ JamiAccount::doRegister_()
                     if (response == NameDirectory::Response::found) {
                         if (this_->registeredName_ != result) {
                             this_->registeredName_ = result;
+                            
                             emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
                                 this_->accountID_, this_->getVolatileAccountDetails());
                         }
@@ -1966,12 +1675,12 @@ JamiAccount::doRegister_()
         config.dht_config.id = id_;
         config.dht_config.cert_cache_all = true;
         config.push_node_id = getAccountID();
-        config.push_token = deviceKey_;
-        config.push_topic = notificationTopic_;
+        config.push_token = conf.deviceKey;
+        config.push_topic = conf.notificationTopic;
         config.threaded = true;
-        config.peer_discovery = dhtPeerDiscovery_;
-        config.peer_publish = dhtPeerDiscovery_;
-        if (proxyEnabled_)
+        config.peer_discovery = conf.dhtPeerDiscovery;
+        config.peer_publish = conf.dhtPeerDiscovery;
+        if (conf.proxyEnabled)
             config.proxy_server = proxyServerCached_;
 
         if (not config.proxy_server.empty()) {
@@ -1984,13 +1693,13 @@ JamiAccount::doRegister_()
         }
 
         // check if dht peer service is enabled
-        if (accountPeerDiscovery_ or accountPublish_) {
+        if (conf.accountPeerDiscovery or conf.accountPublish) {
             peerDiscovery_ = std::make_shared<dht::PeerDiscovery>();
-            if (accountPeerDiscovery_) {
+            if (conf.accountPeerDiscovery) {
                 JAMI_INFO("[Account %s] starting Jami account discovery...", getAccountID().c_str());
                 startAccountDiscovery();
             }
-            if (accountPublish_)
+            if (conf.accountPublish)
                 startAccountPublish();
         }
         dht::DhtRunner::Context context {};
@@ -2141,7 +1850,7 @@ JamiAccount::doRegister_()
                           getAccountID().c_str(),
                           name.c_str());
 
-                if (turnEnabled_ && !cacheTurnV4_) {
+                if (this->config().turnEnabled && !cacheTurnV4_) {
                     // If TURN is enabled, but no TURN cached, there can be a temporary resolution
                     // error to solve. Sometimes, a connectivity change is not enough, so even if
                     // this case is really rare, it should be easy to avoid.
@@ -2440,6 +2149,11 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     std::mutex mtx;
     std::condition_variable cv;
     bool shutdown_complete {false};
+
+    if (peerDiscovery_) {
+        peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
+        peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
+    }
 
     JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
     dht_->shutdown(
@@ -2758,14 +2472,15 @@ JamiAccount::loadCachedUrl(const std::string& url,
 void
 JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)> cb)
 {
-    if (proxyEnabled_ and proxyServerCached_.empty()) {
-        JAMI_DBG("[Account %s] loading DHT proxy URL: %s",
-                 getAccountID().c_str(),
-                 proxyListUrl_.c_str());
-        if (proxyListUrl_.empty()) {
-            cb(getDhtProxyServer(proxyServer_));
+    const auto& conf = config();
+    if (conf.proxyEnabled and proxyServerCached_.empty()) {
+        JAMI_DEBUG("[Account {:s}] loading DHT proxy URL: {:s}",
+                 getAccountID(),
+                 conf.proxyListUrl);
+        if (conf.proxyListUrl.empty()) {
+            cb(getDhtProxyServer(conf.proxyServer));
         } else {
-            loadCachedUrl(proxyListUrl_,
+            loadCachedUrl(conf.proxyListUrl,
                           cachePath_ + DIR_SEPARATOR_STR "dhtproxylist",
                           std::chrono::hours(24 * 3),
                           [w = weak(), cb = std::move(cb)](const dht::http::Response& response) {
@@ -2773,7 +2488,7 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
                                   if (response.status_code == 200) {
                                       cb(sthis->getDhtProxyServer(response.body));
                                   } else {
-                                      cb(sthis->getDhtProxyServer(sthis->proxyServer_));
+                                      cb(sthis->getDhtProxyServer(sthis->config().proxyServer));
                                   }
                               }
                           });
@@ -2857,8 +2572,8 @@ std::string
 JamiAccount::getFromUri() const
 {
     const std::string uri = "<sip:" + accountManager_->getInfo()->accountId + "@ring.dht>";
-    if (not displayName_.empty())
-        return "\"" + displayName_ + "\" " + uri;
+    if (not config().displayName.empty())
+        return "\"" + config().displayName + "\" " + uri;
     return uri;
 }
 
@@ -2970,7 +2685,7 @@ JamiAccount::getContactHeader(const std::shared_ptr<SipTransport>& sipTransport)
         auto address = td->self->getLocalAddress().toString(true);
         bool reliable = transport->flag & PJSIP_TRANSPORT_RELIABLE;
         return fmt::format("\"{}\" <sips:{}{}{};transport={}>",
-                           displayName_,
+                           config().displayName,
                            id_.second->getId().toString(),
                            address.empty() ? "" : "@",
                            address,
@@ -2978,7 +2693,7 @@ JamiAccount::getContactHeader(const std::shared_ptr<SipTransport>& sipTransport)
     } else {
         JAMI_ERR("getContactHeader: no SIP transport provided");
         return fmt::format("\"{}\" <sips:{}@ring.dht>",
-                           displayName_,
+                           config().displayName,
                            id_.second->getId().toString());
     }
 }
@@ -3371,8 +3086,7 @@ JamiAccount::sendMessage(const std::string& to,
             std::unique_lock<std::mutex> l(confirm->lock);
             if (not confirm->replied) {
                 if (auto this_ = w.lock()) {
-                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
-                               << "] Timeout";
+                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Timeout";
                     for (auto& t : confirm->listenTokens)
                         this_->dht_->cancelListen(t.first, std::move(t.second));
                     confirm->listenTokens.clear();
@@ -3516,16 +3230,18 @@ JamiAccount::closePeerConnection(const DRing::DataTransferId& tid)
 void
 JamiAccount::setPushNotificationToken(const std::string& token)
 {
-    JAMI_WARN("[Account %s] setPushNotificationToken: %s", getAccountID().c_str(), token.c_str());
-    deviceKey_ = token;
-    dht_->setPushNotificationToken(deviceKey_);
+    JAMI_WARNING("[Account {:s}] setPushNotificationToken: {:s}", getAccountID(), token);
+    SIPAccountBase::setPushNotificationToken(token);
+    if (dht_)
+        dht_->setPushNotificationToken(token);
 }
 
 void
 JamiAccount::setPushNotificationTopic(const std::string& topic)
 {
-    notificationTopic_ = topic;
-    dht_->setPushNotificationTopic(notificationTopic_);
+    SIPAccountBase::setPushNotificationTopic(topic);
+    if (dht_)
+        dht_->setPushNotificationTopic(topic);
 }
 
 /**
@@ -3546,7 +3262,7 @@ JamiAccount::getUserUri() const
     if (not registeredName_.empty())
         return JAMI_URI_PREFIX + registeredName_;
 #endif
-    return JAMI_URI_PREFIX + username_;
+    return JAMI_URI_PREFIX + config().username;
 }
 
 std::vector<DRing::Message>
@@ -3560,7 +3276,7 @@ JamiAccount::startAccountPublish()
 {
     AccountPeerInfo info_pub;
     info_pub.accountId = dht::InfoHash(accountManager_->getInfo()->accountId);
-    info_pub.displayName = displayName_;
+    info_pub.displayName = config().displayName;
     peerDiscovery_->startPublish<AccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE, info_pub);
 }
 
@@ -3775,7 +3491,8 @@ JamiAccount::cacheTurnServers()
         // Avoid multiple refresh
         if (this_->isRefreshing_.exchange(true))
             return;
-        if (!this_->turnEnabled_) {
+        const auto& conf = this_->config();
+        if (!conf.turnEnabled) {
             // In this case, we do not use any TURN server
             std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
             this_->cacheTurnV4_.reset();
@@ -3788,7 +3505,7 @@ JamiAccount::cacheTurnServers()
         // Retrieve old cached value if available.
         // This means that we directly get the correct value when launching the application on the
         // same network
-        std::string server = this_->turnServer_.empty() ? DEFAULT_TURN_SERVER : this_->turnServer_;
+        std::string server = conf.turnServer.empty() ? DEFAULT_TURN_SERVER : conf.turnServer;
         // No need to resolve, it's already a valid address
         if (IpAddr::isValid(server, AF_INET)) {
             this_->cacheTurnV4_ = std::make_unique<IpAddr>(server, AF_INET);
@@ -3830,7 +3547,7 @@ JamiAccount::cacheTurnServers()
             // Update TURN
             this_->cacheTurnV4_ = std::make_unique<IpAddr>(std::move(turnV4));
         }
-        auto turnV6 = IpAddr {server.empty() ? DEFAULT_TURN_SERVER : server, AF_INET6};
+        auto turnV6 = IpAddr {server, AF_INET6};
         {
             if (turnV6) {
                 // Cache value to avoid a delay when starting up Jami

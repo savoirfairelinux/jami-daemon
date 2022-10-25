@@ -638,7 +638,9 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
     if (!accountid.empty()) {
         if (base_.accountFactory.isSupportedType(accountType.c_str())) {
             if (auto a = base_.accountFactory.createAccount(accountType.c_str(), accountid)) {
-                a->unserialize(node);
+                auto config = a->buildConfig();
+                config->unserialize(node);
+                a->setConfig(std::move(config));
             } else {
                 JAMI_ERR("Failed to create account type \"%s\"", accountType.c_str());
                 ++errorCount;
@@ -1661,15 +1663,6 @@ Manager::ioContext() const
     return pimpl_->ioContext_;
 }
 
-void
-Manager::addTask(std::function<bool()>&& task, const char* filename, uint32_t linum)
-{
-    pimpl_->scheduler_.scheduleAtFixedRate(std::move(task),
-                                           std::chrono::milliseconds(30),
-                                           filename,
-                                           linum);
-}
-
 std::shared_ptr<Task>
 Manager::scheduleTask(std::function<void()>&& task,
                       std::chrono::steady_clock::time_point when,
@@ -1687,13 +1680,6 @@ Manager::scheduleTaskIn(std::function<void()>&& task,
 {
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout, filename, linum);
 }
-
-// Must be invoked periodically by a timer from the main event loop
-void
-Manager::pollEvents()
-{}
-
-// THREAD=Main
 
 void
 Manager::saveConfig(const std::shared_ptr<Account>& acc)
@@ -1730,7 +1716,7 @@ Manager::saveConfig()
                     saveConfig(ringAccount);
                 }
             } else {
-                account->serialize(out);
+                account->config().serialize(out);
             }
         }
         out << YAML::EndSeq;
@@ -2251,7 +2237,7 @@ AudioDeviceGuard::AudioDeviceGuard(Manager& manager, AudioDeviceType type)
     auto streamId = (unsigned) type;
     if (streamId >= manager_.pimpl_->audioStreamUsers_.size())
         throw std::invalid_argument("Invalid audio device type");
-    if (manager_.pimpl_->audioStreamUsers_[(unsigned) type]++ == 0) {
+    if (manager_.pimpl_->audioStreamUsers_[streamId]++ == 0) {
         if (auto layer = manager_.getAudioDriver())
             layer->startStream(type);
     }
@@ -2690,8 +2676,8 @@ Manager::setAccountDetails(const std::string& accountID,
     account->doUnregister([&](bool /* transport_free */) {
         account->setAccountDetails(details);
         // Serialize configuration to disk once it is done
-        if (auto ringAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
-            saveConfig(ringAccount);
+        if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
+            saveConfig(jamiAccount);
         } else {
             saveConfig();
         }
@@ -2845,10 +2831,9 @@ Manager::loadAccountMap(const YAML::Node& node)
             if (fileutils::isFile(configFile)) {
                 try {
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
-                        std::ifstream file = fileutils::ifstream(configFile);
-                        YAML::Node parsedConfig = YAML::Load(file);
-                        file.close();
-                        a->unserialize(parsedConfig);
+                        auto config = a->buildConfig();
+                        config->unserialize(YAML::LoadFile(configFile));
+                        a->setConfig(std::move(config));
                     }
                 } catch (const std::exception& e) {
                     JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());
@@ -2910,8 +2895,6 @@ Manager::sendRegister(const std::string& accountID, bool enable)
         return;
 
     acc->setEnabled(enable);
-    acc->loadConfig();
-
     saveConfig(acc);
 
     if (acc->isEnabled()) {
@@ -3219,7 +3202,7 @@ Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
         JAMI_ERR("Fail to set local moderators, account %s not found", accountID.c_str());
         return;
     }
-    acc->enableLocalModerators(isModEnabled);
+   //acc->enableLocalModerators(isModEnabled);
     saveConfig(acc);
 }
 
@@ -3242,7 +3225,7 @@ Manager::setAllModerators(const std::string& accountID, bool allModerators)
         JAMI_ERR("Fail to set all moderators, account %s not found", accountID.c_str());
         return;
     }
-    acc->setAllModerators(allModerators);
+    //acc->setAllModerators(allModerators);
     saveConfig(acc);
 }
 
