@@ -96,8 +96,6 @@ constexpr const char* const VoipPreference::CONFIG_LABEL;
 static constexpr const char* PLAY_DTMF_KEY {"playDtmf"};
 static constexpr const char* PLAY_TONES_KEY {"playTones"};
 static constexpr const char* PULSE_LENGTH_KEY {"pulseLength"};
-static constexpr const char* SYMMETRIC_RTP_KEY {"symmetric"};
-static constexpr const char* ZID_FILE_KEY {"zidFile"};
 
 // audio preferences
 constexpr const char* const AudioPreference::CONFIG_LABEL;
@@ -242,7 +240,6 @@ VoipPreference::VoipPreference()
     : playDtmf_(true)
     , playTones_(true)
     , pulseLength_(PULSE_LENGTH_DEFAULT)
-    , symmetricRtp_(true)
 {}
 
 void
@@ -252,8 +249,6 @@ VoipPreference::serialize(YAML::Emitter& out) const
     out << YAML::Key << PLAY_DTMF_KEY << YAML::Value << playDtmf_;
     out << YAML::Key << PLAY_TONES_KEY << YAML::Value << playTones_;
     out << YAML::Key << PULSE_LENGTH_KEY << YAML::Value << pulseLength_;
-    out << YAML::Key << SYMMETRIC_RTP_KEY << YAML::Value << symmetricRtp_;
-    out << YAML::Key << ZID_FILE_KEY << YAML::Value << zidFile_;
     out << YAML::EndMap;
 }
 
@@ -264,8 +259,6 @@ VoipPreference::unserialize(const YAML::Node& in)
     parseValue(node, PLAY_DTMF_KEY, playDtmf_);
     parseValue(node, PLAY_TONES_KEY, playTones_);
     parseValue(node, PULSE_LENGTH_KEY, pulseLength_);
-    parseValue(node, SYMMETRIC_RTP_KEY, symmetricRtp_);
-    parseValue(node, ZID_FILE_KEY, zidFile_);
 }
 
 AudioPreference::AudioPreference()
