@@ -43,6 +43,7 @@ Persistent<Function> conferenceChangedCb;
 Persistent<Function> conferenceRemovedCb;
 Persistent<Function> onConferenceInfosUpdatedCb;
 Persistent<Function> conversationPreferencesUpdatedCb;
+Persistent<Function> messageSendCb;
 
 std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -120,6 +121,8 @@ getPresistentCb(std::string_view signal)
         return &onConferenceInfosUpdatedCb;
     else if (signal == "ConversationPreferencesUpdated")
         return &conversationPreferencesUpdatedCb;
+    else if (signal == "LogMessage")
+        return &messageSendCb;
     else
         return nullptr;
 }
@@ -839,6 +842,21 @@ conversationPreferencesUpdated(const std::string& accountId,
                                             V8_STRING_NEW_LOCAL(convId),
                                             stringMapToJsMap(preferences)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+logMessage(const std::string& message)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([message]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    messageSendCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(message)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 1, callback_args);
         }
     });
     uv_async_send(&signalAsync);

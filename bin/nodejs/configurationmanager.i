@@ -62,6 +62,7 @@ public:
     virtual void hardwareEncodingChanged(bool /*state*/){}
 
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
+    virtual void messageSend(const std::string& /*message*/){}
 };
 %}
 
@@ -260,5 +261,5 @@ public:
     virtual void hardwareEncodingChanged(bool /*state*/){}
 
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
-    //virtual void messageSend(const std::string& /*message*/){}
+    virtual void messageSend(const std::string& /*message*/){}
 };
