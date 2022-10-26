@@ -63,8 +63,9 @@ SwarmManager::sendRequest(const std::shared_ptr<ChannelSocketInterface>& socket,
     Message msg;
     msg.request = toRequest;
     pk.pack(msg);
-    JAMI_ERROR("SM {:s} request to Node {:s}", myId.toString(), socket->deviceId().toString());
-
+    JAMI_ERROR("SM {:s} sending request to Node {:s}",
+               myId.toString(),
+               socket->deviceId().toString());
     socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
     if (ec) {
         JAMI_ERR("%s", ec.message().c_str());
@@ -75,6 +76,7 @@ SwarmManager::sendRequest(const std::shared_ptr<ChannelSocketInterface>& socket,
 void
 SwarmManager::sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, const Message& msg_)
 {
+    JAMI_ERROR("In sendAnswer function, from  {:s}", socket->deviceId().toString());
     JAMI_ERROR("SM {:s} answer to Node {:s}", myId.toString(), socket->deviceId().toString());
 
     Response toResponse;
@@ -112,7 +114,7 @@ SwarmManager::sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, 
 void
 SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& socket)
 {
-    JAMI_ERR("socket pointer %p", socket.get());
+    JAMI_ERROR("In receive function {:s}", socket->deviceId().toString());
 
     socket->setOnRecv([w = weak(), socket](const uint8_t* buf, size_t len) {
         auto shared = w.lock();
@@ -146,7 +148,6 @@ SwarmManager::maintainBuckets()
         if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
             auto closest_nodes = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE
                                                             - connecting_nodes);
-
             for (auto node : closest_nodes) {
                 tryConnect(node);
             }
@@ -182,7 +183,8 @@ SwarmManager::tryConnect(const NodeId& nodeId)
 
                 routing_table.addNode(socket, bucket);
                 bucket->removeConnectingNode(socket->deviceId());
-                JAMI_ERR("socket pointer %p", socket.get());
+                JAMI_ERROR("In try connect function {:s}", socket->deviceId().toString());
+
                 receiveMessage(socket);
                 std::error_code ec;
                 resetNodeExpiry(ec, socket, myId);
@@ -221,13 +223,15 @@ SwarmManager::resetNodeExpiry(const asio::error_code& ec,
     if (!node) {
         bucket = routing_table.findBucket(socket->deviceId());
         idToFind = bucket->randomId();
+        JAMI_ERROR("Find request for random id");
     }
 
     else {
         bucket = routing_table.findBucket(node);
         idToFind = node;
+        JAMI_ERROR("Find request for specific node");
     }
-
+    JAMI_ERROR("In try nodeexpiry function, from  {:s}", socket->deviceId().toString());
     sendRequest(socket, idToFind, Query::FIND);
 
     auto& nodeTimer = bucket->getNodeTimer(socket);

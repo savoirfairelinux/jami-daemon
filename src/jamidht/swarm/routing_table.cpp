@@ -116,7 +116,6 @@ Bucket::getKnownNodesRandom(int numberNodes) const
     while (counter < numberNodes) {
         a = distrib(rand_);
         auto found = std::find(nodesToReturn.begin(), nodesToReturn.end(), getKnownNodeId(a));
-
         if (found == nodesToReturn.end()) {
             nodesToReturn.insert(getKnownNodeId(a));
             counter++;

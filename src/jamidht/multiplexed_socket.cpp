@@ -654,7 +654,7 @@ MultiplexedSocket::monitor() const
     JAMI_DEBUG("- Socket with device: {:s} - account: {:s}", deviceId().to_c_str(), userUri);
     auto now = clock::now();
     JAMI_DEBUG("- Duration: {}",
-             std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_));
+               std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_));
     pimpl_->endpoint->monitor();
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (const auto& [_, channel] : pimpl_->sockets) {
@@ -877,6 +877,7 @@ void
 ChannelSocketTest::setOnRecv(RecvCb&& cb)
 {
     std::lock_guard<std::mutex> lkSockets(mutex);
+    JAMI_ERROR("In setOnRecv function {:s}", this->deviceId().toString());
     this->cb = std::move(cb);
     if (!buf.empty() && this->cb) {
         this->cb(buf.data(), buf.size());
@@ -890,8 +891,11 @@ ChannelSocketTest::onRecv(std::vector<uint8_t>&& pkt)
     std::lock_guard<std::mutex> lkSockets(mutex);
     if (cb) {
         cb(&pkt[0], pkt.size());
+        JAMI_ERROR("In OnRecv function CALLBACK {:s}", this->deviceId().toString());
+
         return;
     }
+    JAMI_ERROR("In OnRecv function {:s}", this->deviceId().toString());
     buf.insert(buf.end(), std::make_move_iterator(pkt.begin()), std::make_move_iterator(pkt.end()));
 }
 
