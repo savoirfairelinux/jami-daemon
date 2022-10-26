@@ -123,18 +123,10 @@ public:
 
     void setPulseLength(int length) { pulseLength_ = length; }
 
-    bool getSymmetricRtp() const { return symmetricRtp_; }
-    void setSymmetricRtp(bool sym) { symmetricRtp_ = sym; }
-
-    std::string getZidFile() const { return zidFile_; }
-    void setZidFile(const std::string& file) { zidFile_ = file; }
-
 private:
     bool playDtmf_;
     bool playTones_;
     int pulseLength_;
-    bool symmetricRtp_;
-    std::string zidFile_;
     constexpr static const char* const CONFIG_LABEL = "voipPreferences";
 };
 
