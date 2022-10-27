@@ -2371,21 +2371,23 @@ JamiAccount::convModule()
                         cb({});
                         return;
                     }
-                    shared->connectionManager_
-                        ->connectDevice(DeviceId(deviceId),
-                                        "git://" + deviceId + "/" + convId,
-                                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId&) {
-                                            if (socket) {
-                                                socket->onShutdown(
-                                                    [shared, deviceId = socket->deviceId(), convId] {
-                                                        shared->removeGitSocket(deviceId, convId);
-                                                    });
-                                                if (!cb(socket))
-                                                    socket->shutdown();
-                                            } else
-                                                cb({});
-                                        }, false, false, type);
+                    shared->connectionManager_->connectDevice(
+                        DeviceId(deviceId),
+                        "git://" + deviceId + "/" + convId,
+                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
+                                             const DeviceId&) {
+                            if (socket) {
+                                socket->onShutdown([shared, deviceId = socket->deviceId(), convId] {
+                                    shared->removeGitSocket(deviceId, convId);
+                                });
+                                if (!cb(socket))
+                                    socket->shutdown();
+                            } else
+                                cb({});
+                        },
+                        false,
+                        false,
+                        type);
                 });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
@@ -3222,19 +3224,24 @@ JamiAccount::sendMessage(const std::string& to,
         ctx->confirmation = confirm;
 
         try {
-            auto res = sendSIPMessage(
-                conn, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
-                    std::shared_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
-                    auto code = event->body.tsx_state.tsx->status_code;
-                    runOnMainThread([c=std::move(c), code]() {
-                        if (c) {
-                            auto acc = c->acc.lock();
-                            if (not acc)
-                                return;
-                            acc->onSIPMessageSent(std::move(c), code);
-                        }
-                    });
-                });
+            auto res = sendSIPMessage(conn,
+                                      to,
+                                      ctx.release(),
+                                      token,
+                                      payloads,
+                                      [](void* token, pjsip_event* event) {
+                                          std::shared_ptr<TextMessageCtx> c {
+                                              (TextMessageCtx*) token};
+                                          auto code = event->body.tsx_state.tsx->status_code;
+                                          runOnMainThread([c = std::move(c), code]() {
+                                              if (c) {
+                                                  auto acc = c->acc.lock();
+                                                  if (not acc)
+                                                      return;
+                                                  acc->onSIPMessageSent(std::move(c), code);
+                                              }
+                                          });
+                                      });
             if (!res) {
                 if (!onlyConnected)
                     messageEngine_.onMessageSent(to, token, false);
@@ -4126,7 +4133,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 
     // Convert to SIP transport
     auto onShutdown = [w = weak(), peerId, key, socket]() {
-        runOnMainThread([w=std::move(w), peerId, key, socket] {
+        runOnMainThread([w = std::move(w), peerId, key, socket] {
             auto shared = w.lock();
             if (!shared)
                 return;
@@ -4257,10 +4264,8 @@ JamiAccount::sendFile(const std::string& conversationId,
                               std::move(value),
                               replyTo,
                               true,
-                              [accId = shared->getAccountID(),
-                               conversationId,
-                               tid,
-                               path](const std::string& commitId) {
+                              [accId = shared->getAccountID(), conversationId, tid, path](
+                                  const std::string& commitId) {
                                   // Create a symlink to answer to re-ask
                                   auto filelinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR
                                                       + accId + DIR_SEPARATOR_STR
@@ -4426,13 +4431,27 @@ void
 JamiAccount::initConnectionManager()
 {
     if (!connectionManager_) {
-        connectionManager_ = std::make_unique<ConnectionManager>(*this);
+        connectionManager_ = std::make_unique<ConnectionManager>(dht(), identity());
         channelHandlers_[Uri::Scheme::GIT]
             = std::make_unique<ConversationChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::SYNC]
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+
+#if TARGET_OS_IOS
+        connectionManager_->oniOSConnected([](const std::string& connType, dht::InfoHash peer_h) {
+            if ((connType == "videoCall" || connType == "audioCall")
+                && jami::Manager::instance().isIOSExtension) {
+                bool hasVideo = connType == "videoCall";
+                emitSignal<DRing::ConversationSignal::CallConnectionRequest>("",
+                                                                             peer_h.toString(),
+                                                                             hasVideo);
+                return true;
+            }
+            return false;
+        });
+#endif
     }
 }
 
