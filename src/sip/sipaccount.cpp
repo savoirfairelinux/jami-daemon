@@ -2125,7 +2125,7 @@ SIPAccount::scheduleReregistration()
 
     pj_time_val_normalize(&delay);
 
-    JAMI_WARN("Scheduling re-registration retry in %ld seconds..", delay.sec);
+    JAMI_WARNING("Scheduling re-registration retry in {:d} seconds..", delay.sec);
     auto_rereg_.timer.id = PJ_TRUE;
     if (pjsip_endpt_schedule_timer(link_.getEndpoint(), &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;
