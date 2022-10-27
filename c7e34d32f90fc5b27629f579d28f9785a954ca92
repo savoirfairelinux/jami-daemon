@@ -16,6 +16,29 @@
       "message": "Break tests (ut_plugins,  Test Media Negotiation,  Test Ice Cand Exchange, Test Ice SDP parser, Test SIP basic calls, Test SIP srtp, Test Auto answer, Test Account Archive) (daemon-tests on jenkins)",
       "revId": "c7e34d32f90fc5b27629f579d28f9785a954ca92",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8b67ebb_86d82c90",
+        "filename": "src/sip/sipaccount_config.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-27T19:46:09Z",
+      "side": 1,
+      "message": "This seems to break the SIP config (the password got removed, port 5060 is changed to 0, etc)",
+      "range": {
+        "startLine": 32,
+        "startChar": 5,
+        "endLine": 32,
+        "endChar": 7
+      },
+      "revId": "c7e34d32f90fc5b27629f579d28f9785a954ca92",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
