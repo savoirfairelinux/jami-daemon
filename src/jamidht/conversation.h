@@ -208,12 +208,6 @@ public:
      * @return last commit id
      */
     std::string lastCommitId() const;
-    /**
-     * Get new messages from peer
-     * @param uri       the peer
-     * @return if the operation was successful
-     */
-    bool fetchFrom(const std::string& uri);
 
     /**
      * Fetch and merge from peer

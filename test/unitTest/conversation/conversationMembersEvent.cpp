@@ -417,7 +417,7 @@ ConversationMembersEventTest::testMemberAddedNoBadFile()
             const std::string& conversationId,
             int code,
             const std::string& /* what */) {
-            if (accountId == bobId && conversationId == convId && code == 1)
+            if (accountId == bobId && conversationId == convId && code == 3)
                 errorDetected = true;
             cv.notify_one();
         }));

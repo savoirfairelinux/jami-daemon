@@ -2911,16 +2911,9 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     if (git_remote_fetch(remote.get(), nullptr, &fetch_opts, "fetch") < 0) {
         const git_error* err = giterr_last();
         if (err) {
-            JAMI_ERR("Could not fetch remote repository for conversation %s: %s",
-                     pimpl_->id_.c_str(),
-                     err->message);
-
-            if (auto shared = pimpl_->account_.lock()) {
-                emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                           pimpl_->id_,
-                                                                           EFETCH,
-                                                                           err->message);
-            }
+            JAMI_WARNING("Could not fetch remote repository for conversation {:s} {:s}",
+                         pimpl_->id_,
+                         err->message);
         }
         return false;
     }
