@@ -341,6 +341,13 @@ public:
                             const std::map<std::string, std::string>& msg);
     void onIsComposing(const std::string& conversationId, const std::string& peer, bool isWriting);
 
+    /**
+     * Create and return ICE options.
+     */
+    IceTransportOptions getIceOptions() const noexcept;
+
+    IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
+
     /* Devices */
     void addDevice(const std::string& password);
     /**
@@ -453,16 +460,6 @@ public:
      */
     std::map<std::string, std::string> getNearbyPeers() const override;
 
-    /**
-     * Store the local/public addresses used to register
-     */
-    void storeActiveIpAddress(std::function<void()>&& cb = {});
-
-    /**
-     * Create and return ICE options.
-     */
-    void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
-
 #ifdef LIBJAMI_TESTABLE
     ConnectionManager& connectionManager()
     {
@@ -543,8 +540,8 @@ public:
 
     // non-swarm version
     libjami::DataTransferId sendFile(const std::string& peer,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                     const std::string& path,
+                                     const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,
@@ -717,8 +714,6 @@ private:
                                const dht::IceCandidates&,
                                const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                                const dht::InfoHash& from);
-
-    static tls::DhParams loadDhParams(std::string path);
 
     void loadCachedUrl(const std::string& url,
                        const std::string& cachePath,
