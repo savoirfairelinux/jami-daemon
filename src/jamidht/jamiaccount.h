@@ -462,11 +462,6 @@ public:
      */
     void storeActiveIpAddress(std::function<void()>&& cb = {});
 
-    /**
-     * Create and return ICE options.
-     */
-    void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
-
 #ifdef LIBJAMI_TESTABLE
     ConnectionManager& connectionManager()
     {
@@ -721,8 +716,6 @@ private:
                                const dht::IceCandidates&,
                                const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                                const dht::InfoHash& from);
-
-    static tls::DhParams loadDhParams(std::string path);
 
     void loadCachedUrl(const std::string& url,
                        const std::string& cachePath,
