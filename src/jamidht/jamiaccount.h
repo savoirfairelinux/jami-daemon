@@ -722,8 +722,6 @@ private:
                                const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                                const dht::InfoHash& from);
 
-    static tls::DhParams loadDhParams(std::string path);
-
     void loadCachedUrl(const std::string& url,
                        const std::string& cachePath,
                        const std::chrono::seconds& cacheDuration,
