@@ -238,12 +238,10 @@ public:
     {
         return stunServer_;
     }
-
     void setStunServer(const std::string& srv)
     {
         stunServer_ = srv;
     }
-
     IceTransportOptions getIceOptions() const noexcept;
 
     virtual void sendMessage(const std::string& to,

@@ -16,12 +16,14 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "connectionmanager.h"
-#include "jamidht/jamiaccount.h"
 #include "account_const.h"
-#include "jamidht/account_manager.h"
 #include "manager.h"
 #include "peer_connection.h"
 #include "logger.h"
+#include "fileutils.h"
+#include "connectivity/upnp/upnp_control.h"
+#include "connectivity/sip_utils.h"
+#include "connectivity/security/certstore.h"
 
 #include <opendht/crypto.h>
 #include <opendht/thread_pool.h>
@@ -32,6 +34,8 @@
 #include <map>
 #include <condition_variable>
 #include <set>
+
+#include "config/yamlparser.h"
 
 static constexpr std::chrono::seconds DHT_MSG_TIMEOUT {30};
 static constexpr int MAX_TENTATIVES {100};
@@ -59,13 +63,32 @@ struct ConnectionInfo
     std::set<CallbackId> cbIds_ {};
 };
 
+static constexpr const char* DEFAULT_TURN_SERVER = "turn.jami.net";
+static constexpr const char* DEFAULT_TURN_USERNAME = "ring";
+static constexpr const char* DEFAULT_TURN_PWD = "ring";
+static constexpr const char* DEFAULT_TURN_REALM = "ring";
+
 class ConnectionManager::Impl : public std::enable_shared_from_this<ConnectionManager::Impl>
 {
 public:
-    explicit Impl(JamiAccount& account)
-        : account {account}
-    {}
+    explicit Impl(std::shared_ptr<dht::DhtRunner> dht_,
+                  const dht::crypto::Identity& id_,
+                  std::shared_ptr<jami::upnp::Controller> upnpCtrl_)
+        : dht_ {std::move(dht_)}
+        , id_ {id_}
+        , upnpCtrl_ {std::move(upnpCtrl_)}
+    {
+        // Force the SFL turn server if none provided yet
+        turnServer_ = DEFAULT_TURN_SERVER;
+        turnServerUserName_ = DEFAULT_TURN_USERNAME;
+        turnServerPwd_ = DEFAULT_TURN_PWD;
+        turnServerRealm_ = DEFAULT_TURN_REALM;
+        turnEnabled_ = true;
+    }
     ~Impl() {}
+
+    std::shared_ptr<dht::DhtRunner> dht() { return dht_; }
+    const dht::crypto::Identity& identity() const { return id_; }
 
     void removeUnusedConnections(const DeviceId& deviceId = {})
     {
@@ -159,6 +182,117 @@ public:
     void onPeerResponse(const PeerConnectionRequest& req);
     void onDhtConnected(const dht::crypto::PublicKey& devicePk);
 
+    const std::shared_future<tls::DhParams> dhParams() const;
+    static tls::DhParams loadDhParams(const std::string& path);
+
+    mutable std::mutex messageMutex_ {};
+    std::set<std::string, std::less<>> treatedMessages_ {};
+
+    void loadTreatedMessages();
+    void saveTreatedMessages() const;
+
+    /// \return true if the given DHT message identifier has been treated
+    /// \note if message has not been treated yet this method store this id and returns true at
+    /// further calls
+    bool isMessageTreated(std::string_view id);
+
+    std::string cachePath_ = fileutils::get_cache_dir();
+
+    /**
+     * Published IPv4/IPv6 addresses, used only if defined by the user in account
+     * configuration
+     *
+     */
+    IpAddr publishedIp_[2] {};
+
+    // This will be stored in the configuration
+    std::string publishedIpAddress_ {};
+
+    /**
+     * Published port, used only if defined by the user
+     */
+    pj_uint16_t publishedPort_ {sip_utils::DEFAULT_SIP_PORT};
+
+    /**
+     * Determine if STUN public address resolution is required to register this account. In this
+     * case a STUN server hostname must be specified.
+     */
+    bool stunEnabled_ {false};
+
+    /**
+     * The STUN server hostname (optional), used to provide the public IP address in case the
+     * softphone stay behind a NAT.
+     */
+    std::string stunServer_ {};
+
+    /**
+     * Determine if TURN public address resolution is required to register this account. In this
+     * case a TURN server hostname must be specified.
+     */
+    bool turnEnabled_ {false};
+
+    /**
+     * The TURN server hostname (optional), used to provide the public IP address in case the
+     * softphone stay behind a NAT.
+     */
+    std::string turnServer_;
+    std::string turnServerUserName_;
+    std::string turnServerPwd_;
+    std::string turnServerRealm_;
+
+    mutable std::mutex cachedTurnMutex_ {};
+    std::unique_ptr<IpAddr> cacheTurnV4_ {};
+    std::unique_ptr<IpAddr> cacheTurnV6_ {};
+
+    /**
+     * interface name on which this account is bound
+     */
+    std::string interface_ {"default"};
+
+    /**
+     * Get the local interface name on which this account is bound.
+     */
+    const std::string& getLocalInterface() const { return interface_; }
+
+    IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
+
+    void setPublishedAddress(const IpAddr& ip_addr);
+
+    /**
+     * Store the local/public addresses used to register
+     */
+    void storeActiveIpAddress(std::function<void()>&& cb = {});
+
+    /**
+     * Create and return ICE options.
+     */
+    void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
+    IceTransportOptions getIceOptions() const noexcept;
+
+    /**
+     * Inform that a potential peer device have been found.
+     * Returns true only if the device certificate is a valid device certificate.
+     * In that case (true is returned) the account_id parameter is set to the peer account ID.
+     */
+    static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                dht::InfoHash& account_id);
+
+    bool findCertificate(const dht::PkId& id,
+                         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb);
+
+    /**
+     * UPnP IGD controller and the mutex to access it
+     */
+    bool upnpEnabled_;
+    mutable std::mutex upnp_mtx {};
+    std::shared_ptr<jami::upnp::Controller> upnpCtrl_;
+
+    /**
+     * returns whether or not UPnP is enabled and active
+     * ie: if it is able to make port mappings
+     */
+    bool getUPnPActive() const;
+
     /**
      * Triggered when a new TLS socket is ready to use
      * @param ok        If succeed
@@ -171,7 +305,12 @@ public:
                               const dht::Value::Id& vid,
                               const std::string& name = "");
 
-    JamiAccount& account;
+    std::shared_ptr<dht::DhtRunner> dht_;
+    const dht::crypto::Identity& id_;
+
+    mutable std::mt19937_64 rand;
+
+    iOSConnectedCallback iOSConnectedCb_ {};
 
     std::mutex infosMtx_ {};
     // Note: Someone can ask multiple sockets, so to avoid any race condition,
@@ -315,17 +454,16 @@ ConnectionManager::Impl::connectDeviceStartIce(
     value->user_type = "peer_request";
 
     // Send connection request through DHT
-    JAMI_DBG() << account << "Request connection to " << deviceId;
-    account.dht()->putEncrypted(
-        dht::InfoHash::get(PeerConnectionRequest::key_prefix + devicePk->getId().toString()),
-        devicePk,
-        value,
-        [deviceId, accId = account.getAccountID()](bool ok) {
-            JAMI_DEBUG("[Account {:s}] Send connection request to {:s}. Put encrypted {:s}",
-                       accId,
-                       deviceId.toString(),
-                       (ok ? "ok" : "failed"));
-        });
+    JAMI_DBG() << "Request connection to " << deviceId;
+    dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix
+                                           + devicePk->getId().toString()),
+                        devicePk,
+                        value,
+                        [deviceId](bool ok) {
+                            JAMI_DEBUG("Sent connection request to {:s}. Put encrypted {:s}",
+                                       deviceId.toString(),
+                                       (ok ? "ok" : "failed"));
+                        });
     // Wait for call to onResponse() operated by DHT
     if (isDestroying_)
         return true; // This avoid to wait new negotiation when destroying
@@ -343,7 +481,7 @@ ConnectionManager::Impl::connectDeviceStartIce(
     auto sdp = ice->parseIceCandidates(info->response_.ice_msg);
 
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
-        JAMI_WARN("[Account:%s] start ICE failed", account.getAccountID().c_str());
+        JAMI_WARN("start ICE failed");
         return false;
     }
     return true;
@@ -373,12 +511,11 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
                                                         true);
 
     // Negotiate a TLS session
-    JAMI_DBG() << account
-               << "Start TLS session - Initied by connectDevice(). Launched by channel: " << name
+    JAMI_DBG() << "Start TLS session - Initied by connectDevice(). Launched by channel: " << name
                << " - device:" << deviceId << " - vid: " << vid;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(std::move(endpoint),
-                                                     account.identity(),
-                                                     account.dhParams(),
+                                                     identity(),
+                                                     dhParams(),
                                                      *cert);
 
     info->tls_->setOnReady(
@@ -398,37 +535,37 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                                        bool forceNewSocket,
                                        const std::string& connType)
 {
-    if (!account.dht()) {
+    if (!dht()) {
         cb(nullptr, deviceId);
         return;
     }
-    if (deviceId.toString() == account.currentDeviceId()) {
+    if (deviceId.toString() == identity().second->getLongId().toString()) {
         cb(nullptr, deviceId);
         return;
     }
-    account.findCertificate(deviceId,
-                            [w = weak(),
-                             deviceId,
-                             name,
-                             cb = std::move(cb),
-                             noNewSocket,
-                             forceNewSocket,
-                             connType](const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                                if (!cert) {
-                                    JAMI_ERR("No valid certificate found for device %s",
-                                             deviceId.to_c_str());
-                                    cb(nullptr, deviceId);
-                                    return;
-                                }
-                                if (auto shared = w.lock()) {
-                                    shared->connectDevice(cert,
-                                                          name,
-                                                          std::move(cb),
-                                                          noNewSocket,
-                                                          forceNewSocket,
-                                                          connType);
-                                }
-                            });
+    findCertificate(deviceId,
+                    [w = weak(),
+                     deviceId,
+                     name,
+                     cb = std::move(cb),
+                     noNewSocket,
+                     forceNewSocket,
+                     connType](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                        if (!cert) {
+                            JAMI_ERR("No valid certificate found for device %s",
+                                     deviceId.to_c_str());
+                            cb(nullptr, deviceId);
+                            return;
+                        }
+                        if (auto shared = w.lock()) {
+                            shared->connectDevice(cert,
+                                                  name,
+                                                  std::move(cb),
+                                                  noNewSocket,
+                                                  forceNewSocket,
+                                                  connType);
+                        }
+                    });
 }
 
 void
@@ -457,7 +594,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         dht::Value::Id vid;
         auto tentatives = 0;
         do {
-            vid = ValueIdDist(1, JAMI_ID_MAX_VAL)(sthis->account.rand);
+            vid = ValueIdDist(1, JAMI_ID_MAX_VAL)(sthis->rand);
             --tentatives;
         } while (sthis->getPendingCallbacks(deviceId, vid).size() != 0
                  && tentatives != MAX_TENTATIVES);
@@ -518,14 +655,14 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         };
 
         // If no socket exists, we need to initiate an ICE connection.
-        sthis->account.getIceOptions([w,
-                                      deviceId = std::move(deviceId),
-                                      devicePk = std::move(devicePk),
-                                      name = std::move(name),
-                                      cert = std::move(cert),
-                                      vid,
-                                      connType,
-                                      eraseInfo](auto&& ice_config) {
+        sthis->getIceOptions([w,
+                              deviceId = std::move(deviceId),
+                              devicePk = std::move(devicePk),
+                              name = std::move(name),
+                              cert = std::move(cert),
+                              vid,
+                              connType,
+                              eraseInfo](auto&& ice_config) {
             auto sthis = w.lock();
             if (!sthis) {
                 runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
@@ -589,10 +726,9 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             }
             std::unique_lock<std::mutex> lk {info->mutex_};
             ice_config.master = false;
-            ice_config.streamsCount = JamiAccount::ICE_STREAMS_COUNT;
-            ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
-            info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-                sthis->account.getAccountID().c_str());
+            ice_config.streamsCount = ICE_STREAMS_COUNT;
+            ice_config.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
+            info->ice_ = Manager::instance().getIceTransportFactory().createUTransport("");
             if (!info->ice_) {
                 JAMI_ERR("Cannot initialize ICE session.");
                 eraseInfo();
@@ -652,29 +788,29 @@ void
 ConnectionManager::Impl::onPeerResponse(const PeerConnectionRequest& req)
 {
     auto device = req.owner->getLongId();
-    JAMI_INFO() << account << " New response received from " << device.to_c_str();
+    JAMI_INFO() << "New response received from " << device.to_c_str();
     if (auto info = getInfo(device, req.id)) {
         std::lock_guard<std::mutex> lk {info->mutex_};
         info->responseReceived_ = true;
         info->response_ = std::move(req);
         info->responseCv_.notify_one();
     } else {
-        JAMI_WARN() << account << " respond received, but cannot find request";
+        JAMI_WARN() << "Respond received, but cannot find request";
     }
 }
 
 void
 ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
 {
-    if (!account.dht())
+    if (!dht())
         return;
-    account.dht()->listen<PeerConnectionRequest>(
+    dht()->listen<PeerConnectionRequest>(
         dht::InfoHash::get(PeerConnectionRequest::key_prefix + devicePk.getId().toString()),
         [w = weak()](PeerConnectionRequest&& req) {
             auto shared = w.lock();
             if (!shared)
                 return false;
-            if (shared->account.isMessageTreated(to_hex_string(req.id))) {
+            if (shared->isMessageTreated(to_hex_string(req.id))) {
                 // Message already treated. Just ignore
                 return true;
             }
@@ -687,7 +823,7 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                 shared->onPeerResponse(req);
             } else {
                 // Async certificate checking
-                shared->account.dht()->findCertificate(
+                shared->dht()->findCertificate(
                     req.from,
                     [w, req = std::move(req)](
                         const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
@@ -695,21 +831,15 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                         if (!shared)
                             return;
                         dht::InfoHash peer_h;
-                        if (AccountManager::foundPeerDevice(cert, peer_h)) {
+                        if (foundPeerDevice(cert, peer_h)) {
 #if TARGET_OS_IOS
-                            if ((req.connType == "videoCall" || req.connType == "audioCall")
-                                && jami::Manager::instance().isIOSExtension) {
-                                bool hasVideo = req.connType == "videoCall";
-                                emitSignal<libjami::ConversationSignal::CallConnectionRequest>(
-                                    shared->account.getAccountID(), peer_h.toString(), hasVideo);
+                            if (shared->iOSConnectedCb_(req.connType, peer_h))
                                 return;
-                            }
 #endif
                             shared->onDhtPeerRequest(req, cert);
                         } else {
-                            JAMI_WARN()
-                                << shared->account << "Rejected untrusted connection request from "
-                                << req.owner->getLongId();
+                            JAMI_WARN() << "Rejected untrusted connection request from "
+                                        << req.owner->getLongId();
                         }
                     });
             }
@@ -791,17 +921,16 @@ ConnectionManager::Impl::answerTo(IceTransport& ice,
     auto value = std::make_shared<dht::Value>(std::move(val));
     value->user_type = "peer_request";
 
-    JAMI_DBG() << account << "[CNX] connection accepted, DHT reply to " << from->getLongId();
-    account.dht()->putEncrypted(
-        dht::InfoHash::get(PeerConnectionRequest::key_prefix + from->getId().toString()),
-        from,
-        value,
-        [from, accId = account.getAccountID()](bool ok) {
-            JAMI_DEBUG("[Account {:s}] Answer to connection request from {:s}. Put encrypted {:s}",
-                       accId,
-                       from->getLongId().toString(),
-                       (ok ? "ok" : "failed"));
-        });
+    JAMI_DBG() << "[CNX] connection accepted, DHT reply to " << from->getLongId();
+    dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix
+                                           + from->getId().toString()),
+                        from,
+                        value,
+                        [from](bool ok) {
+                            JAMI_DEBUG("Answer to connection request from {:s}. Put encrypted {:s}",
+                                       from->getLongId().toString(),
+                                       (ok ? "ok" : "failed"));
+                        });
 }
 
 bool
@@ -824,7 +953,7 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
     auto sdp = ice->parseIceCandidates(req.ice_msg);
     answerTo(*ice, req.id, req.owner);
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
-        JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
+        JAMI_ERR("Start ICE failed - fallback to TURN");
         ice = nullptr;
         if (connReadyCb_)
             connReadyCb_(deviceId, "", nullptr);
@@ -855,12 +984,12 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
 
     // init TLS session
     auto ph = req.from;
-    JAMI_DBG() << account << "Start TLS session - Initied by DHT request. Device:" << req.from
+    JAMI_DBG() << "Start TLS session - Initied by DHT request. Device:" << req.from
                << " - vid: " << req.id;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(
         std::move(endpoint),
-        account.identity(),
-        account.dhParams(),
+        identity(),
+        dhParams(),
         [ph, w = weak()](const dht::crypto::Certificate& cert) {
             auto shared = w.lock();
             if (!shared)
@@ -884,16 +1013,14 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                                           const std::shared_ptr<dht::crypto::Certificate>& /*cert*/)
 {
     auto deviceId = req.owner->getLongId();
-    JAMI_INFO() << account << "New connection requested by " << deviceId;
+    JAMI_INFO() << "New connection requested by " << deviceId;
     if (!iceReqCb_ || !iceReqCb_(deviceId)) {
-        JAMI_INFO("[Account:%s] refuse connection from %s",
-                  account.getAccountID().c_str(),
-                  deviceId.toString().c_str());
+        JAMI_INFO("Refuse connection from %s", deviceId.toString().c_str());
         return;
     }
 
     // Because the connection is accepted, create an ICE socket.
-    account.getIceOptions([w = weak(), req, deviceId](auto&& ice_config) {
+    getIceOptions([w = weak(), req, deviceId](auto&& ice_config) {
         auto shared = w.lock();
         if (!shared)
             return;
@@ -956,15 +1083,12 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
             std::lock_guard<std::mutex> lk(shared->infosMtx_);
             shared->infos_[{deviceId, req.id}] = info;
         }
-        JAMI_INFO("[Account:%s] accepting connection from %s",
-                  shared->account.getAccountID().c_str(),
-                  deviceId.toString().c_str());
+        JAMI_INFO("accepting connection from %s", deviceId.toString().c_str());
         std::unique_lock<std::mutex> lk {info->mutex_};
-        ice_config.streamsCount = JamiAccount::ICE_STREAMS_COUNT;
-        ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
+        ice_config.streamsCount = ICE_STREAMS_COUNT;
+        ice_config.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
         ice_config.master = true;
-        info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-            shared->account.getAccountID().c_str());
+        info->ice_ = Manager::instance().getIceTransportFactory().createUTransport("");
         if (not info->ice_) {
             JAMI_ERR("Cannot initialize ICE session.");
             eraseInfo();
@@ -1026,8 +1150,309 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
     });
 }
 
-ConnectionManager::ConnectionManager(JamiAccount& account)
-    : pimpl_ {std::make_shared<Impl>(account)}
+const std::shared_future<tls::DhParams>
+ConnectionManager::Impl::dhParams() const
+{
+    return dht::ThreadPool::computation().get<tls::DhParams>(
+        std::bind(loadDhParams, fileutils::get_cache_dir() + DIR_SEPARATOR_STR "dhParams"));
+    ;
+}
+
+tls::DhParams
+ConnectionManager::Impl::loadDhParams(const std::string& path)
+{
+    std::lock_guard<std::mutex> l(fileutils::getFileLock(path));
+    try {
+        // writeTime throw exception if file doesn't exist
+        auto duration = std::chrono::system_clock::now() - fileutils::writeTime(path);
+        if (duration >= std::chrono::hours(24 * 3)) // file is valid only 3 days
+            throw std::runtime_error("file too old");
+
+        JAMI_DBG("Loading DhParams from file '%s'", path.c_str());
+        return {fileutils::loadFile(path)};
+    } catch (const std::exception& e) {
+        JAMI_DBG("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
+        if (auto params = tls::DhParams::generate()) {
+            try {
+                fileutils::saveFile(path, params.serialize(), 0600);
+                JAMI_DBG("Saved DhParams to file '%s'", path.c_str());
+            } catch (const std::exception& ex) {
+                JAMI_WARN("Failed to save DhParams in file '%s': %s", path.c_str(), ex.what());
+            }
+            return params;
+        }
+        JAMI_ERR("Can't generate DH params.");
+        return {};
+    }
+}
+
+template<typename ID = dht::Value::Id>
+std::set<ID, std::less<>>
+loadIdList(const std::string& path)
+{
+    std::set<ID, std::less<>> ids;
+    std::ifstream file = fileutils::ifstream(path);
+    if (!file.is_open()) {
+        JAMI_DBG("Could not load %s", path.c_str());
+        return ids;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        if constexpr (std::is_same<ID, std::string>::value) {
+            ids.emplace(std::move(line));
+        } else if constexpr (std::is_integral<ID>::value) {
+            ID vid;
+            if (auto [p, ec] = std::from_chars(line.data(), line.data() + line.size(), vid, 16);
+                ec == std::errc()) {
+                ids.emplace(vid);
+            }
+        }
+    }
+    return ids;
+}
+
+template<typename List = std::set<dht::Value::Id>>
+void
+saveIdList(const std::string& path, const List& ids)
+{
+    std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        JAMI_ERR("Could not save to %s", path.c_str());
+        return;
+    }
+    for (auto& c : ids)
+        file << std::hex << c << "\n";
+}
+
+void
+ConnectionManager::Impl::loadTreatedMessages()
+{
+    std::lock_guard<std::mutex> lock(messageMutex_);
+    auto path = cachePath_ + DIR_SEPARATOR_STR "treatedMessages";
+    treatedMessages_ = loadIdList<std::string>(path);
+    if (treatedMessages_.empty()) {
+        auto messages = loadIdList(path);
+        for (const auto& m : messages)
+            treatedMessages_.emplace(to_hex_string(m));
+    }
+}
+
+void
+ConnectionManager::Impl::saveTreatedMessages() const
+{
+    dht::ThreadPool::io().run([w = weak()]() {
+        if (auto sthis = w.lock()) {
+            auto& this_ = *sthis;
+            std::lock_guard<std::mutex> lock(this_.messageMutex_);
+            fileutils::check_dir(this_.cachePath_.c_str());
+            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_
+                                                             + DIR_SEPARATOR_STR "treatedMessages",
+                                                         this_.treatedMessages_);
+        }
+    });
+}
+
+bool
+ConnectionManager::Impl::isMessageTreated(std::string_view id)
+{
+    std::lock_guard<std::mutex> lock(messageMutex_);
+    auto res = treatedMessages_.emplace(id);
+    if (res.second) {
+        saveTreatedMessages();
+        return false;
+    }
+    return true;
+}
+
+/**
+ * returns whether or not UPnP is enabled and active_
+ * ie: if it is able to make port mappings
+ */
+bool
+ConnectionManager::Impl::getUPnPActive() const
+{
+    std::lock_guard<std::mutex> lk(upnp_mtx);
+    if (upnpCtrl_)
+        return upnpCtrl_->isReady();
+    return false;
+}
+
+IpAddr
+ConnectionManager::Impl::getPublishedIpAddress(uint16_t family) const
+{
+    if (family == AF_INET)
+        return publishedIp_[0];
+    if (family == AF_INET6)
+        return publishedIp_[1];
+
+    assert(family == AF_UNSPEC);
+
+    // If family is not set, prefere IPv4 if available. It's more
+    // likely to succeed behind NAT.
+    if (publishedIp_[0])
+        return publishedIp_[0];
+    if (publishedIp_[1])
+        return publishedIp_[1];
+    return {};
+}
+
+void
+ConnectionManager::Impl::setPublishedAddress(const IpAddr& ip_addr)
+{
+    if (ip_addr.getFamily() == AF_INET) {
+        publishedIp_[0] = ip_addr;
+    } else {
+        publishedIp_[1] = ip_addr;
+    }
+}
+
+void
+ConnectionManager::Impl::storeActiveIpAddress(std::function<void()>&& cb)
+{
+    dht()->getPublicAddress([this, cb = std::move(cb)](std::vector<dht::SockAddr>&& results) {
+        bool hasIpv4 {false}, hasIpv6 {false};
+        for (auto& result : results) {
+            auto family = result.getFamily();
+            if (family == AF_INET) {
+                if (not hasIpv4) {
+                    hasIpv4 = true;
+                    JAMI_DBG("Store DHT public IPv4 address : %s", result.toString().c_str());
+                    setPublishedAddress(*result.get());
+                    if (upnpCtrl_) {
+                        upnpCtrl_->setPublicAddress(*result.get());
+                    }
+                }
+            } else if (family == AF_INET6) {
+                if (not hasIpv6) {
+                    hasIpv6 = true;
+                    JAMI_DBG("Store DHT public IPv6 address : %s", result.toString().c_str());
+                    setPublishedAddress(*result.get());
+                }
+            }
+            if (hasIpv4 and hasIpv6)
+                break;
+        }
+        if (cb)
+            cb();
+    });
+}
+
+void
+ConnectionManager::Impl::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept
+{
+    storeActiveIpAddress([this, cb = std::move(cb)] {
+        IceTransportOptions opts = ConnectionManager::Impl::getIceOptions();
+        auto publishedAddr = getPublishedIpAddress();
+
+        if (publishedAddr) {
+            auto interfaceAddr = ip_utils::getInterfaceAddr(getLocalInterface(),
+                                                            publishedAddr.getFamily());
+            if (interfaceAddr) {
+                opts.accountLocalAddr = interfaceAddr;
+                opts.accountPublicAddr = publishedAddr;
+            }
+        }
+        if (cb)
+            cb(std::move(opts));
+    });
+}
+
+IceTransportOptions
+ConnectionManager::Impl::getIceOptions() const noexcept
+{
+    IceTransportOptions opts;
+    opts.upnpEnable = getUPnPActive();
+
+    if (stunEnabled_)
+        opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
+    if (turnEnabled_) {
+        auto cached = false;
+        std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+        cached = cacheTurnV4_ || cacheTurnV6_;
+        if (cacheTurnV4_ && *cacheTurnV4_) {
+            opts.turnServers.emplace_back(TurnServerInfo()
+                                              .setUri(cacheTurnV4_->toString(true))
+                                              .setUsername(turnServerUserName_)
+                                              .setPassword(turnServerPwd_)
+                                              .setRealm(turnServerRealm_));
+        }
+        // NOTE: first test with ipv6 turn was not concluant and resulted in multiple
+        // co issues. So this needs some debug. for now just disable
+        // if (cacheTurnV6_ && *cacheTurnV6_) {
+        //    opts.turnServers.emplace_back(TurnServerInfo()
+        //                                      .setUri(cacheTurnV6_->toString(true))
+        //                                      .setUsername(turnServerUserName_)
+        //                                      .setPassword(turnServerPwd_)
+        //                                      .setRealm(turnServerRealm_));
+        //}
+        // Nothing cached, so do the resolution
+        if (!cached) {
+            opts.turnServers.emplace_back(TurnServerInfo()
+                                              .setUri(turnServer_)
+                                              .setUsername(turnServerUserName_)
+                                              .setPassword(turnServerPwd_)
+                                              .setRealm(turnServerRealm_));
+        }
+    }
+    return opts;
+}
+
+bool
+ConnectionManager::Impl::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                         dht::InfoHash& account_id)
+{
+    if (not crt)
+        return false;
+
+    auto top_issuer = crt;
+    while (top_issuer->issuer)
+        top_issuer = top_issuer->issuer;
+
+    // Device certificate can't be self-signed
+    if (top_issuer == crt) {
+        JAMI_WARN("Found invalid peer device: %s", crt->getLongId().toString().c_str());
+        return false;
+    }
+
+    // Check peer certificate chain
+    // Trust store with top issuer as the only CA
+    dht::crypto::TrustList peer_trust;
+    peer_trust.add(*top_issuer);
+    if (not peer_trust.verify(*crt)) {
+        JAMI_WARN("Found invalid peer device: %s", crt->getLongId().toString().c_str());
+        return false;
+    }
+
+    // Check cached OCSP response
+    if (crt->ocspResponse and crt->ocspResponse->getCertificateStatus() != GNUTLS_OCSP_CERT_GOOD) {
+        JAMI_ERR("Certificate %s is disabled by cached OCSP response", crt->getLongId().to_c_str());
+        return false;
+    }
+
+    account_id = crt->issuer->getId();
+    JAMI_WARN("Found peer device: %s account:%s CA:%s",
+              crt->getLongId().toString().c_str(),
+              account_id.toString().c_str(),
+              top_issuer->getId().toString().c_str());
+    return true;
+}
+
+bool
+ConnectionManager::Impl::findCertificate(
+    const dht::PkId& id, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
+{
+    if (auto cert = tls::CertificateStore::instance().getCertificate(id.toString())) {
+        if (cb)
+            cb(cert);
+    } else if (cb)
+        cb(nullptr);
+    return true;
+}
+
+ConnectionManager::ConnectionManager(std::shared_ptr<dht::DhtRunner> dht_,
+                                     const dht::crypto::Identity& id_,
+                                     std::shared_ptr<jami::upnp::Controller> upnpCtrl_)
+    : pimpl_ {std::make_shared<Impl>(dht_, id_, upnpCtrl_)}
 {}
 
 ConnectionManager::~ConnectionManager()
@@ -1131,6 +1556,12 @@ ConnectionManager::onConnectionReady(ConnectionReadyCallback&& cb)
     pimpl_->connReadyCb_ = std::move(cb);
 }
 
+void
+ConnectionManager::oniOSConnected(iOSConnectedCallback&& cb)
+{
+    pimpl_->iOSConnectedCb_ = std::move(cb);
+}
+
 std::size_t
 ConnectionManager::activeSockets() const
 {
@@ -1142,16 +1573,12 @@ void
 ConnectionManager::monitor() const
 {
     std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
-    JAMI_DBG("ConnectionManager for account %s (%s), current status:",
-             pimpl_->account.getAccountID().c_str(),
-             pimpl_->account.getUserUri().c_str());
+    JAMI_DBG("ConnectionManager current status:");
     for (const auto& [_, ci] : pimpl_->infos_) {
         if (ci->socket_)
             ci->socket_->monitor();
     }
-    JAMI_DBG("ConnectionManager for account %s (%s), end status.",
-             pimpl_->account.getAccountID().c_str(),
-             pimpl_->account.getUserUri().c_str());
+    JAMI_DBG("ConnectionManager end status.");
 }
 
 void
@@ -1162,6 +1589,54 @@ ConnectionManager::connectivityChanged()
         if (ci->socket_)
             ci->socket_->sendBeacon();
     }
+}
+
+tls::DhParams
+ConnectionManager::loadDhParams(const std::string& path)
+{
+    return ConnectionManager::Impl::loadDhParams(path);
+}
+
+void
+ConnectionManager::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept
+{
+    return pimpl_->getIceOptions(std::move(cb));
+}
+
+IceTransportOptions
+ConnectionManager::getIceOptions() const noexcept
+{
+    return pimpl_->getIceOptions();
+}
+
+IpAddr
+ConnectionManager::getPublishedIpAddress(uint16_t family) const
+{
+    return pimpl_->getPublishedIpAddress(family);
+}
+
+void
+ConnectionManager::setPublishedAddress(const IpAddr& ip_addr)
+{
+    return pimpl_->setPublishedAddress(ip_addr);
+}
+
+void
+ConnectionManager::storeActiveIpAddress(std::function<void()>&& cb)
+{
+    return pimpl_->storeActiveIpAddress(std::move(cb));
+}
+
+bool
+ConnectionManager::isTurnEnabled()
+{
+    return pimpl_->turnEnabled_;
+}
+
+std::string&
+ConnectionManager::getTurnServer()
+{
+    return pimpl_->turnServer_;
 }
 
 } // namespace jami
