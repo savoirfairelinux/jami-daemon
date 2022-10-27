@@ -53,6 +53,19 @@ constexpr auto EUNAUTHORIZED = 4;
 class JamiAccount;
 class ChannelSocket;
 
+struct LogOptions
+{
+    std::string from {};
+    std::string to {};
+    uint64_t nbOfCommits {0}; // maximum number of commits wanted
+
+    bool includeTo {false};    // If we want or not the "to" commit [from-to] or [from-to)
+    bool fastLog {false};      // Do not parse content, used mostly to count
+    bool logIfNotFound {true}; // Add a warning in the log if commit is not found
+
+    std::string authorUri {}; // filter commits from author
+};
+
 struct Filter
 {
     std::string author;
@@ -197,22 +210,10 @@ public:
     std::string amend(const std::string& id, const std::string& msg);
 
     /**
-     * Get commits from [last-n, last]
-     * @param last              last commit (default empty)
-     * @param n                 Max commits number to get (default: 0)
-     * @param logIfNotFound     Log if commit is found (false for detect commit before pulling)
-     * @param fastLog           Used to count commits. This will just generate empty ConversationCommit
-     * @param authorUri         used to stop counting if detected with fast log
+     * Get commits depending on the options we pass
      * @return a list of commits
      */
-    std::vector<ConversationCommit> logN(const std::string& last = "",
-                                         unsigned n = 0,
-                                         bool logIfNotFound = true) const;
-    std::vector<ConversationCommit> log(const std::string& from = "",
-                                        const std::string& to = "",
-                                        bool logIfNotFound = true,
-                                        bool fastLog = false,
-                                        const std::string& authorUri = "") const;
+    std::vector<ConversationCommit> log(const LogOptions& options = {}) const;
     std::optional<ConversationCommit> getCommit(const std::string& commitId,
                                                 bool logIfNotFound = true) const;
 

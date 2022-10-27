@@ -352,14 +352,21 @@ ConversationRepositoryTest::testLogMessages()
     auto id2 = repository->commitMessage("Commit 2");
     auto id3 = repository->commitMessage("Commit 3");
 
-    auto messages = repository->logN(repository->id(), 1);
+    LogOptions options;
+    options.from = repository->id();
+    options.nbOfCommits = 1;
+    auto messages = repository->log(options);
     CPPUNIT_ASSERT(messages.size() == 1);
     CPPUNIT_ASSERT(messages[0].id == repository->id());
-    messages = repository->logN(id2, 2);
+    options.from = id2;
+    options.nbOfCommits = 2;
+    messages = repository->log(options);
     CPPUNIT_ASSERT(messages.size() == 2);
     CPPUNIT_ASSERT(messages[0].id == id2);
     CPPUNIT_ASSERT(messages[1].id == id1);
-    messages = repository->logN(repository->id(), 3);
+    options.from = repository->id();
+    options.nbOfCommits = 3;
+    messages = repository->log(options);
     CPPUNIT_ASSERT(messages.size() == 1);
     CPPUNIT_ASSERT(messages[0].id == repository->id());
 }
@@ -464,7 +471,7 @@ ConversationRepositoryTest::testFetch()
     gs2.stop();
     bobAccount->removeGitSocket(aliceDeviceId, repository->id());
 
-    auto messages = cloned->log(id3);
+    auto messages = cloned->log({id3});
     CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
     CPPUNIT_ASSERT(messages[0].id == id3);
     CPPUNIT_ASSERT(messages[0].parents.front() == id2);
