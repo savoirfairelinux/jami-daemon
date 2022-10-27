@@ -818,7 +818,7 @@ SIPVoIPLink::handleEvents()
 void
 SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
 {
-    JAMI_DBG("Register new keep alive timer %d with delay %ld", timer.id, delay.sec);
+    JAMI_DEBUG("Register new keep alive timer {:d} with delay {:d}", timer.id, delay.sec);
 
     if (timer.id == -1)
         JAMI_WARN("Timer already scheduled");

@@ -76,10 +76,10 @@ SipTransport::SipTransport(pjsip_transport* t)
     // Set pointer here, right after the successful pjsip_transport_add_ref
     transport_.reset(t);
 
-    JAMI_DBG("SipTransport@%p {tr=%p {rc=%ld}}",
-             this,
-             transport_.get(),
-             pj_atomic_get(transport_->ref_cnt));
+    JAMI_DEBUG("SipTransport@{} tr={} rc={:d}",
+                 fmt::ptr(this),
+                 fmt::ptr(transport_.get()),
+                 pj_atomic_get(transport_->ref_cnt));
 }
 
 SipTransport::SipTransport(pjsip_transport* t, const std::shared_ptr<TlsListener>& l)
@@ -97,10 +97,10 @@ SipTransport::SipTransport(pjsip_transport* t,
 
 SipTransport::~SipTransport()
 {
-    JAMI_DBG("~SipTransport@%p {tr=%p {rc=%ld}}",
-             this,
-             transport_.get(),
-             pj_atomic_get(transport_->ref_cnt));
+    JAMI_DEBUG("~SipTransport@{} tr={} rc={:d}",
+                 fmt::ptr(this),
+                 fmt::ptr(transport_.get()),
+                 pj_atomic_get(transport_->ref_cnt));
 }
 
 bool
