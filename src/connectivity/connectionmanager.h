@@ -27,12 +27,16 @@
 #include <opendht/default_types.h>
 
 #include "multiplexed_socket.h"
+#include "connectivity/security/diffie-hellman.h"
+#include "connectivity/upnp/upnp_control.h"
 
 namespace jami {
 
-class JamiAccount;
 class ChannelSocket;
 class ConnectionManager;
+
+constexpr static int ICE_STREAMS_COUNT {1};
+constexpr static int ICE_COMP_COUNT_PER_STREAM {1};
 
 /**
  * A PeerConnectionRequest is a request which ask for an initial connection
@@ -69,6 +73,14 @@ using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket>&
 using ConnectionReadyCallback = std::function<
     void(const DeviceId&, const std::string& /* channel_name */, std::shared_ptr<ChannelSocket>)>;
 
+using iOSConnectedCallback
+    = std::function<bool(const std::string& /* connType */, dht::InfoHash /* peer_h */)>;
+
+static constexpr const char* DEFAULT_TURN_SERVER = "turn.jami.net";
+static constexpr const char* DEFAULT_TURN_USERNAME = "ring";
+static constexpr const char* DEFAULT_TURN_PWD = "ring";
+static constexpr const char* DEFAULT_TURN_REALM = "ring";
+
 /**
  * Manages connections to other devices
  * @note the account MUST be valid if ConnectionManager lives
@@ -76,7 +88,9 @@ using ConnectionReadyCallback = std::function<
 class ConnectionManager
 {
 public:
-    ConnectionManager(JamiAccount& account);
+    class Config;
+
+    ConnectionManager(std::shared_ptr<dht::DhtRunner> dht_, std::shared_ptr<Config> config_);
     ~ConnectionManager();
 
     /**
@@ -146,6 +160,12 @@ public:
     void onConnectionReady(ConnectionReadyCallback&& cb);
 
     /**
+     * Trigger cb when connection with peer is ready for iOS devices
+     * @param cb    Callback to trigger
+     */
+    void oniOSConnected(iOSConnectedCallback&& cb);
+
+    /**
      * @return the number of active sockets
      */
     std::size_t activeSockets() const;
@@ -160,10 +180,133 @@ public:
      */
     void connectivityChanged();
 
+    static tls::DhParams loadDhParams(const std::string& path);
+
+    /**
+     * Create and return ICE options.
+     */
+    void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
+    IceTransportOptions getIceOptions() const noexcept;
+
+    IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
+
+    void setPublishedAddress(const IpAddr& ip_addr);
+
+    /**
+     * Store the local/public addresses used to register
+     */
+    void storeActiveIpAddress(std::function<void()>&& cb = {});
+
+    bool isTurnEnabled();
+    std::string& getTurnServer();
+
+    std::shared_ptr<Config> getConfig();
+
 private:
     ConnectionManager() = delete;
     class Impl;
     std::shared_ptr<Impl> pimpl_;
+};
+
+class ConnectionManager::Config : public std::enable_shared_from_this<ConnectionManager::Config>
+{
+public:
+    explicit Config(const dht::crypto::Identity& id_,
+                    std::shared_ptr<jami::upnp::Controller> upnpCtrl_)
+        : id_ {id_}
+        , upnpCtrl_ {upnpCtrl_}
+    {
+        // Force the SFL turn server if none provided yet
+        turnServer_ = DEFAULT_TURN_SERVER;
+        turnServerUserName_ = DEFAULT_TURN_USERNAME;
+        turnServerPwd_ = DEFAULT_TURN_PWD;
+        turnServerRealm_ = DEFAULT_TURN_REALM;
+        turnEnabled_ = true;
+    }
+
+    explicit Config(const dht::crypto::Identity& id_,
+                    std::shared_ptr<jami::upnp::Controller> upnpCtrl_,
+                    bool turnEnabled_)
+        : id_ {id_}
+        , upnpCtrl_ {upnpCtrl_}
+        , turnEnabled_ {turnEnabled_}
+    {
+        // Force the SFL turn server if none provided yet
+        turnServer_ = DEFAULT_TURN_SERVER;
+        turnServerUserName_ = DEFAULT_TURN_USERNAME;
+        turnServerPwd_ = DEFAULT_TURN_PWD;
+        turnServerRealm_ = DEFAULT_TURN_REALM;
+    }
+
+    explicit Config(const dht::crypto::Identity& id_,
+                    std::shared_ptr<jami::upnp::Controller> upnpCtrl_,
+                    std::string turnServer_,
+                    std::string turnServerUserName_,
+                    std::string turnServerPwd_,
+                    std::string turnServerRealm_,
+                    bool turnEnabled_)
+        : id_ {id_}
+        , upnpCtrl_ {upnpCtrl_}
+        , turnServer_ {turnServer_}
+        , turnServerUserName_ {turnServerUserName_}
+        , turnServerPwd_ {turnServerPwd_}
+        , turnServerRealm_ {turnServerRealm_}
+        , turnEnabled_ {turnEnabled_}
+    {}
+
+    Config()
+        : id_ {}
+        , upnpCtrl_ {}
+    {}
+    ~Config() {}
+
+    /**
+     * Determine if STUN public address resolution is required to register this account. In this
+     * case a STUN server hostname must be specified.
+     */
+    bool stunEnabled_ {false};
+
+    /**
+     * The STUN server hostname (optional), used to provide the public IP address in case the
+     * softphone stay behind a NAT.
+     */
+    std::string stunServer_ {};
+
+    /**
+     * Determine if TURN public address resolution is required to register this account. In this
+     * case a TURN server hostname must be specified.
+     */
+    bool turnEnabled_ {false};
+
+    /**
+     * The TURN server hostname (optional), used to provide the public IP address in case the
+     * softphone stay behind a NAT.
+     */
+    std::string turnServer_;
+    std::string turnServerUserName_;
+    std::string turnServerPwd_;
+    std::string turnServerRealm_;
+
+    mutable std::mutex cachedTurnMutex_ {};
+    std::unique_ptr<IpAddr> cacheTurnV4_ {};
+    std::unique_ptr<IpAddr> cacheTurnV6_ {};
+
+    const dht::crypto::Identity& id_;
+
+    const dht::crypto::Identity& identity() const { return id_; }
+
+    /**
+     * UPnP IGD controller and the mutex to access it
+     */
+    bool upnpEnabled_;
+    mutable std::mutex upnp_mtx {};
+    std::shared_ptr<jami::upnp::Controller> upnpCtrl_;
+
+    /**
+     * returns whether or not UPnP is enabled and active
+     * ie: if it is able to make port mappings
+     */
+    bool getUPnPActive() const;
 };
 
 } // namespace jami
