@@ -80,7 +80,7 @@ ToneControl::setAudioFile(const std::string& file)
     std::lock_guard<std::mutex> lk(mutex_);
 
     if (audioFile_) {
-        emitSignal<DRing::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
+        emitSignal<libjami::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
         audioFile_.reset();
     }
 
@@ -99,7 +99,7 @@ ToneControl::stopAudioFile()
     std::lock_guard<std::mutex> lk(mutex_);
 
     if (audioFile_) {
-        emitSignal<DRing::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
+        emitSignal<libjami::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
         audioFile_.reset();
     }
 }
@@ -113,7 +113,7 @@ ToneControl::stop()
         telephoneTone_->setCurrentTone(Tone::ToneId::TONE_NULL);
 
     if (audioFile_) {
-        emitSignal<DRing::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
+        emitSignal<libjami::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
         audioFile_.reset();
     }
 }

@@ -58,26 +58,26 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaFrameTest, MediaFrameTest::name());
 void
 MediaFrameTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
 }
 
 void
 MediaFrameTest::tearDown()
 {
-    DRing::fini();
+    libjami::fini();
 }
 
 void
 MediaFrameTest::testCopy()
 {
     // test allocation
-    DRing::VideoFrame v1;
+    libjami::VideoFrame v1;
     v1.reserve(AV_PIX_FMT_YUV420P, 100, 100);
     v1.pointer()->data[0][0] = 42;
     CPPUNIT_ASSERT(v1.pointer());
 
     // test frame referencing (different pointers, but same data)
-    DRing::VideoFrame v2;
+    libjami::VideoFrame v2;
     v2.copyFrom(v1);
     CPPUNIT_ASSERT(v1.format() == v2.format());
     CPPUNIT_ASSERT(v1.width() == v2.width());
@@ -92,7 +92,7 @@ MediaFrameTest::testMix()
 {
     const AudioFormat& format = AudioFormat::STEREO();
     const int nbSamples = format.sample_rate / 50;
-    auto a1 = std::make_unique<DRing::AudioFrame>(format, nbSamples);
+    auto a1 = std::make_unique<libjami::AudioFrame>(format, nbSamples);
     auto d1 = reinterpret_cast<AudioSample*>(a1->pointer()->extended_data[0]);
     d1[0] = 0;
     d1[1] = 1;
@@ -101,7 +101,7 @@ MediaFrameTest::testMix()
     d1[4] = 5;
     d1[5] = std::numeric_limits<AudioSample>::min();
     d1[6] = std::numeric_limits<AudioSample>::max();
-    auto a2 = std::make_unique<DRing::AudioFrame>(format, nbSamples);
+    auto a2 = std::make_unique<libjami::AudioFrame>(format, nbSamples);
     auto d2 = reinterpret_cast<AudioSample*>(a2->pointer()->extended_data[0]);
     d2[0] = 0;
     d2[1] = 3;

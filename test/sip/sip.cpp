@@ -27,8 +27,8 @@
 
 void init_daemon()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    DRing::start("test/unitTest/jami-sample.yml");
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    libjami::start("test/unitTest/jami-sample.yml");
 }
 
 int main()
@@ -54,7 +54,7 @@ int main()
         ret = 1;
     }
 
-    DRing::fini();
+    libjami::fini();
 
     return ret;
 }

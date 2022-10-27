@@ -39,7 +39,7 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-class DRING_PUBLIC DBusInstance :
+class LIBJAMI_PUBLIC DBusInstance :
     public cx::ring::Ring::Instance_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor

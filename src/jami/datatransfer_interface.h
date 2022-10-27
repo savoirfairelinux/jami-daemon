@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef DRING_DATATRANSFERI_H
-#define DRING_DATATRANSFERI_H
+#ifndef LIBJAMI_DATATRANSFERI_H
+#define LIBJAMI_DATATRANSFERI_H
 
 #include "def.h"
 
@@ -31,14 +31,14 @@
 #include <memory>
 #include <bitset>
 
-namespace DRing {
+namespace libjami {
 
-[[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC void registerDataXferHandlers(
+[[deprecated("Replaced by registerSignalHandlers")]] LIBJAMI_PUBLIC void registerDataXferHandlers(
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 using DataTransferId = uint64_t;
 
-enum class DRING_PUBLIC DataTransferEventCode : uint32_t {
+enum class LIBJAMI_PUBLIC DataTransferEventCode : uint32_t {
     invalid = 0,
     created,
     unsupported,
@@ -53,7 +53,7 @@ enum class DRING_PUBLIC DataTransferEventCode : uint32_t {
     timeout_expired,
 };
 
-enum class DRING_PUBLIC DataTransferError : uint32_t {
+enum class LIBJAMI_PUBLIC DataTransferError : uint32_t {
     success = 0,
     unknown,
     io,
@@ -61,11 +61,11 @@ enum class DRING_PUBLIC DataTransferError : uint32_t {
 };
 
 /// Bit definition for DataTransferInfo.flags field
-enum class DRING_PUBLIC DataTransferFlags {
+enum class LIBJAMI_PUBLIC DataTransferFlags {
     direction = 0, ///< 0: outgoing, 1: incoming
 };
 
-struct DRING_PUBLIC DataTransferInfo
+struct LIBJAMI_PUBLIC DataTransferInfo
 {
     std::string accountId; ///< Identifier of the emiter/receiver account
     DataTransferEventCode lastEvent {
@@ -108,10 +108,10 @@ struct DRING_PUBLIC DataTransferInfo
 /// DataTransferEvent signal for such event. There is no reserved or special values on
 /// DataTransferId type.
 ///
-DRING_PUBLIC DataTransferError sendFileLegacy(const DataTransferInfo& info,
+LIBJAMI_PUBLIC DataTransferError sendFileLegacy(const DataTransferInfo& info,
                                               DataTransferId& tid) noexcept;
 
-DRING_PUBLIC void sendFile(const std::string& accountId,
+LIBJAMI_PUBLIC void sendFile(const std::string& accountId,
                            const std::string& conversationId,
                            const std::string& path,
                            const std::string& displayName,
@@ -130,7 +130,7 @@ DRING_PUBLIC void sendFile(const std::string& accountId,
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note unknown \a id results to a no-op call.
 ///
-DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
+LIBJAMI_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
                                                   const std::string& fileId,
                                                   const std::string& file_path) noexcept;
 
@@ -142,7 +142,7 @@ DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
 /// \param fileId
 /// \param path
 ///
-DRING_PUBLIC bool downloadFile(const std::string& accountId,
+LIBJAMI_PUBLIC bool downloadFile(const std::string& accountId,
                                const std::string& conversationId,
                                const std::string& interactionId,
                                const std::string& fileId,
@@ -162,7 +162,7 @@ DRING_PUBLIC bool downloadFile(const std::string& accountId,
 ///
 DataTransferError cancelDataTransfer(const std::string& accountId,
                                      const std::string& conversationId,
-                                     const std::string& fileId) noexcept DRING_PUBLIC;
+                                     const std::string& fileId) noexcept LIBJAMI_PUBLIC;
 
 /// Return some information on given data transfer.
 ///
@@ -172,7 +172,7 @@ DataTransferError cancelDataTransfer(const std::string& accountId,
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note \a info structure is in undefined state in case of error.
 ///
-DRING_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
+LIBJAMI_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
                                                 const std::string& fileId,
                                                 DataTransferInfo& info) noexcept;
 
@@ -185,7 +185,7 @@ DRING_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
 /// \return DataTransferError::success if \a total and \a progress is set with valid values.
 /// DataTransferError::invalid_argument if the id is unknown.
 ///
-DRING_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
+LIBJAMI_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
                                                 const std::string& conversationId,
                                                 const std::string& fileId,
                                                 std::string& path,
@@ -193,9 +193,9 @@ DRING_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
                                                 int64_t& progress) noexcept;
 
 // Signals
-struct DRING_PUBLIC DataTransferSignal
+struct LIBJAMI_PUBLIC DataTransferSignal
 {
-    struct DRING_PUBLIC DataTransferEvent
+    struct LIBJAMI_PUBLIC DataTransferEvent
     {
         constexpr static const char* name = "DataTransferEvent";
         using cb_type = void(const std::string& accountId,
@@ -206,6 +206,6 @@ struct DRING_PUBLIC DataTransferSignal
     };
 };
 
-} // namespace DRing
+} // namespace libjami
 
-#endif // DRING_DATATRANSFERI_H
+#endif // LIBJAMI_DATATRANSFERI_H

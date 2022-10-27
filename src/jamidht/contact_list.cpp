@@ -345,10 +345,10 @@ ContactList::getTrustRequests() const
     ret.reserve(trustRequests_.size());
     for (const auto& r : trustRequests_) {
         ret.emplace_back(
-            Map {{DRing::Account::TrustRequest::FROM, r.first.toString()},
-                 {DRing::Account::TrustRequest::RECEIVED, std::to_string(r.second.received)},
-                 {DRing::Account::TrustRequest::CONVERSATIONID, r.second.conversationId},
-                 {DRing::Account::TrustRequest::PAYLOAD,
+            Map {{libjami::Account::TrustRequest::FROM, r.first.toString()},
+                 {libjami::Account::TrustRequest::RECEIVED, std::to_string(r.second.received)},
+                 {libjami::Account::TrustRequest::CONVERSATIONID, r.second.conversationId},
+                 {libjami::Account::TrustRequest::PAYLOAD,
                   std::string(r.second.payload.begin(), r.second.payload.end())}});
     }
     return ret;
@@ -361,10 +361,10 @@ ContactList::getTrustRequest(const dht::InfoHash& from) const
     auto r = trustRequests_.find(from);
     if (r == trustRequests_.end())
         return {};
-    return Map {{DRing::Account::TrustRequest::FROM, r->first.toString()},
-                {DRing::Account::TrustRequest::RECEIVED, std::to_string(r->second.received)},
-                {DRing::Account::TrustRequest::CONVERSATIONID, r->second.conversationId},
-                {DRing::Account::TrustRequest::PAYLOAD,
+    return Map {{libjami::Account::TrustRequest::FROM, r->first.toString()},
+                {libjami::Account::TrustRequest::RECEIVED, std::to_string(r->second.received)},
+                {libjami::Account::TrustRequest::CONVERSATIONID, r->second.conversationId},
+                {libjami::Account::TrustRequest::PAYLOAD,
                  std::string(r->second.payload.begin(), r->second.payload.end())}};
 }
 

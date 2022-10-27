@@ -83,7 +83,7 @@ VideoInput::~VideoInput()
 {
     isStopped_ = true;
     if (videoManagedByClient()) {
-        emitSignal<DRing::VideoSignal::StopCapture>(decOpts_.input);
+        emitSignal<libjami::VideoSignal::StopCapture>(decOpts_.input);
         capturing_ = false;
         return;
     }
@@ -111,7 +111,7 @@ VideoInput::switchDevice()
             return;
         }
 
-        emitSignal<DRing::VideoSignal::StartCapture>(decOpts_.input);
+        emitSignal<libjami::VideoSignal::StartCapture>(decOpts_.input);
         capturing_ = true;
     }
 }
@@ -567,7 +567,7 @@ VideoInput::switchInput(const std::string& resource)
     }
 
     // Supported MRL schemes
-    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+    static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
 
     const auto pos = resource.find(sep);
     if (pos == std::string::npos)
@@ -581,10 +581,10 @@ VideoInput::switchInput(const std::string& resource)
 
     bool ready = false;
 
-    if (prefix == DRing::Media::VideoProtocolPrefix::CAMERA) {
+    if (prefix == libjami::Media::VideoProtocolPrefix::CAMERA) {
         /* Video4Linux2 */
         ready = initCamera(suffix);
-    } else if (prefix == DRing::Media::VideoProtocolPrefix::DISPLAY) {
+    } else if (prefix == libjami::Media::VideoProtocolPrefix::DISPLAY) {
         /* X11 display name */
 #ifdef __APPLE__
         ready = initAVFoundation(suffix);
@@ -593,7 +593,7 @@ VideoInput::switchInput(const std::string& resource)
 #else
         ready = initX11(suffix);
 #endif
-    } else if (prefix == DRing::Media::VideoProtocolPrefix::FILE) {
+    } else if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
         ready = initFile(suffix);
     }

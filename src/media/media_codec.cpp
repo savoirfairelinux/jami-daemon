@@ -89,13 +89,13 @@ SystemAudioCodecInfo::~SystemAudioCodecInfo() {}
 std::map<std::string, std::string>
 SystemAudioCodecInfo::getCodecSpecifications() const
 {
-    return {{DRing::Account::ConfProperties::CodecInfo::NAME, longName},
-            {DRing::Account::ConfProperties::CodecInfo::TYPE,
+    return {{libjami::Account::ConfProperties::CodecInfo::NAME, longName},
+            {libjami::Account::ConfProperties::CodecInfo::TYPE,
              (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-            {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-            {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE,
+            {libjami::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
+            {libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE,
              std::to_string(audioformat.sample_rate)},
-            {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER,
+            {libjami::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER,
              std::to_string(audioformat.nb_channels)}};
 }
 
@@ -135,13 +135,13 @@ std::map<std::string, std::string>
 SystemVideoCodecInfo::getCodecSpecifications() const
 {
     return {
-        {DRing::Account::ConfProperties::CodecInfo::NAME, longName},
-        {DRing::Account::ConfProperties::CodecInfo::TYPE,
+        {libjami::Account::ConfProperties::CodecInfo::NAME, longName},
+        {libjami::Account::ConfProperties::CodecInfo::TYPE,
          (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)},
-        {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, std::to_string(minBitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, std::to_string(maxBitrate)},
+        {libjami::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
+        {libjami::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)},
+        {libjami::Account::ConfProperties::CodecInfo::MIN_BITRATE, std::to_string(minBitrate)},
+        {libjami::Account::ConfProperties::CodecInfo::MAX_BITRATE, std::to_string(maxBitrate)},
     };
 }
 
@@ -177,13 +177,13 @@ AccountAudioCodecInfo::AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCode
 std::map<std::string, std::string>
 AccountAudioCodecInfo::getCodecSpecifications() const
 {
-    return {{DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.longName},
-            {DRing::Account::ConfProperties::CodecInfo::TYPE,
+    return {{libjami::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.longName},
+            {libjami::Account::ConfProperties::CodecInfo::TYPE,
              (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-            {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-            {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE,
+            {libjami::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
+            {libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE,
              std::to_string(audioformat.sample_rate)},
-            {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER,
+            {libjami::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER,
              std::to_string(audioformat.nb_channels)}};
 }
 
@@ -191,10 +191,10 @@ void
 AccountAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
 {
     decltype(bitrate) tmp_bitrate = jami::stoi(
-        details.at(DRing::Account::ConfProperties::CodecInfo::BITRATE));
+        details.at(libjami::Account::ConfProperties::CodecInfo::BITRATE));
     decltype(audioformat) tmp_audioformat = audioformat;
     tmp_audioformat.sample_rate = jami::stoi(
-        details.at(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
+        details.at(libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
 
     // copy back if no exception was raised
     bitrate = tmp_bitrate;
@@ -216,21 +216,21 @@ AccountVideoCodecInfo::AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCode
 std::map<std::string, std::string>
 AccountVideoCodecInfo::getCodecSpecifications() const
 {
-    return {{DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.longName},
-            {DRing::Account::ConfProperties::CodecInfo::TYPE,
+    return {{libjami::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.longName},
+            {libjami::Account::ConfProperties::CodecInfo::TYPE,
              (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-            {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE,
+            {libjami::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
+            {libjami::Account::ConfProperties::CodecInfo::MAX_BITRATE,
              std::to_string(systemCodecInfo.maxBitrate)},
-            {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE,
+            {libjami::Account::ConfProperties::CodecInfo::MIN_BITRATE,
              std::to_string(systemCodecInfo.minBitrate)},
-            {DRing::Account::ConfProperties::CodecInfo::QUALITY, std::to_string(quality)},
-            {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY,
+            {libjami::Account::ConfProperties::CodecInfo::QUALITY, std::to_string(quality)},
+            {libjami::Account::ConfProperties::CodecInfo::MAX_QUALITY,
              std::to_string(systemCodecInfo.maxQuality)},
-            {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY,
+            {libjami::Account::ConfProperties::CodecInfo::MIN_QUALITY,
              std::to_string(systemCodecInfo.minQuality)},
-            {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)},
-            {DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED,
+            {libjami::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)},
+            {libjami::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED,
              bool_to_str(isAutoQualityEnabled)}};
 }
 
@@ -239,19 +239,19 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
 {
     auto copy = *this;
 
-    auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
+    auto it = details.find(libjami::Account::ConfProperties::CodecInfo::BITRATE);
     if (it != details.end())
         copy.bitrate = jami::stoi(it->second);
 
-    it = details.find(DRing::Account::ConfProperties::CodecInfo::FRAME_RATE);
+    it = details.find(libjami::Account::ConfProperties::CodecInfo::FRAME_RATE);
     if (it != details.end())
         copy.frameRate = jami::stoi(it->second);
 
-    it = details.find(DRing::Account::ConfProperties::CodecInfo::QUALITY);
+    it = details.find(libjami::Account::ConfProperties::CodecInfo::QUALITY);
     if (it != details.end())
         copy.quality = jami::stoi(it->second);
 
-    it = details.find(DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
+    it = details.find(libjami::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
     if (it != details.end())
         copy.isAutoQualityEnabled = (it->second == TRUE_STR) ? true : false;
 

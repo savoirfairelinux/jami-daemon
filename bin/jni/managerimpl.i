@@ -24,7 +24,7 @@
 #include "jami/jami.h"
 %}
 
-namespace DRing {
+namespace libjami {
 
 /**
  * Finalizes the daemon, freeing any resource allocated by the library.

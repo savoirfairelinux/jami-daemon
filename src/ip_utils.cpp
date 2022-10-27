@@ -199,7 +199,7 @@ ip_utils::getDeviceName()
 {
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> deviceNames;
-    emitSignal<DRing::ConfigurationSignal::GetDeviceName>(&deviceNames);
+    emitSignal<libjami::ConfigurationSignal::GetDeviceName>(&deviceNames);
     if (not deviceNames.empty()) {
         return deviceNames[0];
     }

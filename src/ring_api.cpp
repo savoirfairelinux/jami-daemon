@@ -39,15 +39,15 @@
 #include "client/videomanager.h"
 #endif // ENABLE_VIDEO
 
-namespace DRing {
+namespace libjami {
 
 bool
 init(enum InitFlag flags) noexcept
 {
-    jami::Logger::setDebugMode(DRING_FLAG_DEBUG == (flags & DRING_FLAG_DEBUG));
+    jami::Logger::setDebugMode(LIBJAMI_FLAG_DEBUG == (flags & LIBJAMI_FLAG_DEBUG));
 
     jami::Logger::setSysLog(true);
-    jami::Logger::setConsoleLog(DRING_FLAG_CONSOLE_LOG == (flags & DRING_FLAG_CONSOLE_LOG));
+    jami::Logger::setConsoleLog(LIBJAMI_FLAG_CONSOLE_LOG == (flags & LIBJAMI_FLAG_CONSOLE_LOG));
 
     const char* log_file = getenv("JAMI_LOG_FILE");
 
@@ -63,10 +63,10 @@ init(enum InitFlag flags) noexcept
     try {
         // current implementation use static variable
         auto& manager = jami::Manager::instance();
-        manager.setAutoAnswer(flags & DRING_FLAG_AUTOANSWER);
+        manager.setAutoAnswer(flags & LIBJAMI_FLAG_AUTOANSWER);
 
 #if TARGET_OS_IOS
-        if (flags & DRING_FLAG_IOS_EXTENSION)
+        if (flags & LIBJAMI_FLAG_IOS_EXTENSION)
             manager.isIOSExtension = true;
 #endif
 
@@ -116,4 +116,4 @@ logging(const std::string& whom, const std::string& action) noexcept
     }
 }
 
-} // namespace DRing
+} // namespace libjami

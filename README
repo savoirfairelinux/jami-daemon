@@ -44,7 +44,7 @@ the Contributing section for more information.
 Short description of content of source tree
 -------------------------------------------
 
-- src/ is the core of DRing.
+- src/ is the core of libjami.
 - bin/ contains applications main code.
 - bin/dbus, the D-Bus XML interfaces, and C++ bindings
 

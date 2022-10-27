@@ -726,7 +726,7 @@ void
 MediaDecoder::enableAccel(bool enableAccel)
 {
     enableAccel_ = enableAccel;
-    emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(enableAccel_);
+    emitSignal<libjami::ConfigurationSignal::HardwareDecodingChanged>(enableAccel_);
     if (!enableAccel) {
         accel_.reset();
         if (decoderCtx_)

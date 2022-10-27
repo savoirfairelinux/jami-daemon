@@ -188,7 +188,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data* rdata)
     PresSubServer *presSubServer = new PresSubServer(pres, sub, remote, dlg);
     pjsip_evsub_set_mod_data(sub, pres->getModId(), presSubServer);
     // Notify the client.
-    emitSignal<DRing::PresenceSignal::NewServerSubscriptionRequest>(presSubServer->remote_);
+    emitSignal<libjami::PresenceSignal::NewServerSubscriptionRequest>(presSubServer->remote_);
     pres->addPresSubServer(presSubServer);
 
     /* Capture the value of Expires header. */

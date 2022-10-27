@@ -62,7 +62,7 @@ class Stream
 public:
     virtual ~Stream() { close(); }
     virtual void close() noexcept {}
-    virtual DRing::DataTransferId getId() const = 0;
+    virtual libjami::DataTransferId getId() const = 0;
     virtual bool write(std::string_view) { return false; };
     virtual void setOnRecv(std::function<void(std::string_view)>&&)
     {

@@ -961,7 +961,7 @@ bool
 Manager::hasCurrentCall() const
 {
     for (const auto& call : callFactory.getAllCalls()) {
-        if (!call->isSubcall() && call->getStateStr() == DRing::Call::StateEvent::CURRENT)
+        if (!call->isSubcall() && call->getStateStr() == libjami::Call::StateEvent::CURRENT)
             return true;
     }
     return false;
@@ -1002,7 +1002,7 @@ Manager::unregisterAccounts()
 std::string
 Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
-                      const std::vector<DRing::MediaMap>& mediaList)
+                      const std::vector<libjami::MediaMap>& mediaList)
 {
     JAMI_DBG() << "try outgoing call to '" << to << "'"
                << " with account '" << account_id << "'";
@@ -1030,7 +1030,7 @@ Manager::outgoingCall(const std::string& account_id,
 bool
 Manager::answerCall(const std::string& accountId,
                     const std::string& callId,
-                    const std::vector<DRing::MediaMap>& mediaList)
+                    const std::vector<libjami::MediaMap>& mediaList)
 {
     if (auto account = getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
@@ -1041,7 +1041,7 @@ Manager::answerCall(const std::string& accountId,
 }
 
 bool
-Manager::answerCall(Call& call, const std::vector<DRing::MediaMap>& mediaList)
+Manager::answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
 {
     JAMI_INFO("Answer call %s", call.getCallId().c_str());
 
@@ -1072,8 +1072,8 @@ Manager::answerCall(Call& call, const std::vector<DRing::MediaMap>& mediaList)
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording()) {
         auto recResult = call.toggleRecording();
-        emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(call.getCallId(), call.getPath());
-        emitSignal<DRing::CallSignal::RecordingStateChanged>(call.getCallId(), recResult);
+        emitSignal<libjami::CallSignal::RecordPlaybackFilepath>(call.getCallId(), call.getPath());
+        emitSignal<libjami::CallSignal::RecordingStateChanged>(call.getCallId(), recResult);
     }
     return true;
 }
@@ -1224,13 +1224,13 @@ Manager::transferCall(const std::string& accountId, const std::string& callId, c
 void
 Manager::transferFailed()
 {
-    emitSignal<DRing::CallSignal::TransferFailed>();
+    emitSignal<libjami::CallSignal::TransferFailed>();
 }
 
 void
 Manager::transferSucceeded()
 {
-    emitSignal<DRing::CallSignal::TransferSucceeded>();
+    emitSignal<libjami::CallSignal::TransferSucceeded>();
 }
 
 // THREAD=Main : Call:Incoming
@@ -1257,7 +1257,7 @@ Manager::holdConference(const std::string& accountId, const std::string& confId)
     if (const auto account = getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->detachLocalParticipant();
-            emitSignal<DRing::CallSignal::ConferenceChanged>(accountId,
+            emitSignal<libjami::CallSignal::ConferenceChanged>(accountId,
                                                              conf->getConfId(),
                                                              conf->getStateStr());
             return true;
@@ -1281,7 +1281,7 @@ Manager::unHoldConference(const std::string& accountId, const std::string& confI
 
                 pimpl_->switchCall(confId);
                 conf->setState(Conference::State::ACTIVE_ATTACHED);
-                emitSignal<DRing::CallSignal::ConferenceChanged>(accountId,
+                emitSignal<libjami::CallSignal::ConferenceChanged>(accountId,
                                                                  conf->getConfId(),
                                                                  conf->getStateStr());
                 return true;
@@ -1348,7 +1348,7 @@ void
 Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
     conf.attachLocalParticipant();
-    emitSignal<DRing::CallSignal::ConferenceChanged>(conf.getAccountId(),
+    emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(),
                                                      conf.getConfId(),
                                                      conf.getStateStr());
     switchCall(conf.getConfId());
@@ -1429,7 +1429,7 @@ Manager::joinParticipant(const std::string& accountId,
 
     auto conf = std::make_shared<Conference>(account);
     account->attach(conf);
-    emitSignal<DRing::CallSignal::ConferenceCreated>(account->getAccountID(), conf->getConfId());
+    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), conf->getConfId());
 
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
@@ -1442,7 +1442,7 @@ Manager::joinParticipant(const std::string& accountId,
     } else {
         conf->detachLocalParticipant();
     }
-    emitSignal<DRing::CallSignal::ConferenceChanged>(account->getAccountID(),
+    emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
                                                      conf->getConfId(),
                                                      conf->getStateStr());
 
@@ -1487,7 +1487,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
     // Create the conference if and only if at least 2 calls have been successfully created
     if (successCounter >= 2) {
         account->attach(conf);
-        emitSignal<DRing::CallSignal::ConferenceCreated>(accountId, conf->getConfId());
+        emitSignal<libjami::CallSignal::ConferenceCreated>(accountId, conf->getConfId());
     }
 }
 
@@ -1499,7 +1499,7 @@ Manager::detachLocalParticipant(const std::shared_ptr<Conference>& conf)
 
     JAMI_INFO("Detach local participant from conference %s", conf->getConfId().c_str());
     conf->detachLocalParticipant();
-    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getAccountId(),
+    emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getAccountId(),
                                                      conf->getConfId(),
                                                      conf->getStateStr());
     pimpl_->unsetCurrentCall();
@@ -1540,7 +1540,7 @@ Manager::removeParticipant(Call& call)
 
     removeAudio(call);
 
-    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getAccountId(),
+    emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getAccountId(),
                                                      conf->getConfId(),
                                                      conf->getStateStr());
 
@@ -1848,7 +1848,7 @@ Manager::incomingCall(const std::string& accountId, Call& call)
               mediaList.size());
 
     // Report the call using new API.
-    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+    emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId,
                                                          call.getCallId(),
                                                          call.getPeerDisplayName() + " " + from,
                                                          mediaList);
@@ -1884,7 +1884,7 @@ Manager::incomingMessage(const std::string& accountId,
                 }
 
                 // in case of a conference we must notify client using conference id
-                emitSignal<DRing::CallSignal::IncomingMessage>(accountId,
+                emitSignal<libjami::CallSignal::IncomingMessage>(accountId,
                                                                conf->getConfId(),
                                                                from,
                                                                messages);
@@ -1892,7 +1892,7 @@ Manager::incomingMessage(const std::string& accountId,
                 JAMI_ERR("no conference associated to ID %s", callId.c_str());
             }
         } else {
-            emitSignal<DRing::CallSignal::IncomingMessage>(accountId, callId, from, messages);
+            emitSignal<libjami::CallSignal::IncomingMessage>(accountId, callId, from, messages);
         }
     }
 }
@@ -1955,8 +1955,8 @@ Manager::peerAnsweredCall(Call& call)
 
     if (audioPreference.getIsAlwaysRecording()) {
         auto result = call.toggleRecording();
-        emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(callId, call.getPath());
-        emitSignal<DRing::CallSignal::RecordingStateChanged>(callId, result);
+        emitSignal<libjami::CallSignal::RecordPlaybackFilepath>(callId, call.getPath());
+        emitSignal<libjami::CallSignal::RecordingStateChanged>(callId, result);
     }
 }
 
@@ -2290,8 +2290,8 @@ Manager::toggleRecordingCall(const std::string& accountId, const std::string& id
             return false;
         }
         result = rec->toggleRecording();
-        emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getPath());
-        emitSignal<DRing::CallSignal::RecordingStateChanged>(id, result);
+        emitSignal<libjami::CallSignal::RecordPlaybackFilepath>(id, rec->getPath());
+        emitSignal<libjami::CallSignal::RecordingStateChanged>(id, result);
     }
     return result;
 }
@@ -2532,13 +2532,13 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
             // First call
             auto conf = std::make_shared<Conference>(account, false);
             account->attach(conf);
-            emitSignal<DRing::CallSignal::ConferenceCreated>(account->getAccountID(),
+            emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(),
                                                              conf->getConfId());
 
             // Bind calls according to their state
             bindCallToConference(*incomCall, *conf);
             conf->detachLocalParticipant();
-            emitSignal<DRing::CallSignal::ConferenceChanged>(account->getAccountID(),
+            emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
                                                              conf->getConfId(),
                                                              conf->getStateStr());
         });
@@ -2614,7 +2614,7 @@ Manager::setAccountsOrder(const std::string& order)
 
     saveConfig();
 
-    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
+    emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 }
 
 std::vector<std::string>
@@ -2696,7 +2696,7 @@ Manager::setAccountDetails(const std::string& accountID,
             account->doUnregister();
 
         // Update account details to the client side
-        emitSignal<DRing::ConfigurationSignal::AccountDetailsChanged>(accountID, details);
+        emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(accountID, details);
     });
 }
 
@@ -2740,7 +2740,7 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     preferences.addAccount(newAccountID);
     saveConfig();
 
-    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
+    emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 
     return newAccountID;
 }
@@ -2766,7 +2766,7 @@ Manager::removeAccount(const std::string& accountID, bool flush)
 
     saveConfig();
 
-    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
+    emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 }
 
 void
@@ -2953,15 +2953,15 @@ statusFromImStatus(im::MessageStatus status)
     switch (status) {
     case im::MessageStatus::IDLE:
     case im::MessageStatus::SENDING:
-        return static_cast<int>(DRing::Account::MessageStates::SENDING);
+        return static_cast<int>(libjami::Account::MessageStates::SENDING);
     case im::MessageStatus::SENT:
-        return static_cast<int>(DRing::Account::MessageStates::SENT);
+        return static_cast<int>(libjami::Account::MessageStates::SENT);
     case im::MessageStatus::DISPLAYED:
-        return static_cast<int>(DRing::Account::MessageStates::DISPLAYED);
+        return static_cast<int>(libjami::Account::MessageStates::DISPLAYED);
     case im::MessageStatus::FAILURE:
-        return static_cast<int>(DRing::Account::MessageStates::FAILURE);
+        return static_cast<int>(libjami::Account::MessageStates::FAILURE);
     default:
-        return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
+        return static_cast<int>(libjami::Account::MessageStates::UNKNOWN);
     }
 }
 
@@ -2974,7 +2974,7 @@ Manager::getMessageStatus(uint64_t id) const
         if (status != im::MessageStatus::UNKNOWN)
             return statusFromImStatus(status);
     }
-    return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
+    return static_cast<int>(libjami::Account::MessageStates::UNKNOWN);
 }
 
 int
@@ -2982,7 +2982,7 @@ Manager::getMessageStatus(const std::string& accountID, uint64_t id) const
 {
     if (const auto acc = getAccount(accountID))
         return statusFromImStatus(acc->getMessageStatus(id));
-    return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
+    return static_cast<int>(libjami::Account::MessageStates::UNKNOWN);
 }
 
 void
@@ -3004,7 +3004,7 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
             }
         }
     }
-    emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID,
+    emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountID,
                                                                    acc->getVolatileAccountDetails());
 }
 
@@ -3017,7 +3017,7 @@ Manager::getAudioDriver()
 std::shared_ptr<Call>
 Manager::newOutgoingCall(std::string_view toUrl,
                          const std::string& accountId,
-                         const std::vector<DRing::MediaMap>& mediaList)
+                         const std::vector<libjami::MediaMap>& mediaList)
 {
     auto account = getAccount(accountId);
     if (not account) {
@@ -3136,7 +3136,7 @@ Manager::getVideoManager() const
     return *pimpl_->videoManager_;
 }
 
-std::vector<DRing::Message>
+std::vector<libjami::Message>
 Manager::getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)
 {
     if (const auto acc = getAccount(accountID))

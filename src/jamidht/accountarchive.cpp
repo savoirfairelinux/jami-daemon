@@ -50,14 +50,14 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
                 const auto key = itr.key().asString();
                 if (key.empty())
                     continue;
-                if (key.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::DHT_PROXY_LIST_URL) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::AUTOANSWER) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::PROXY_ENABLED) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::PROXY_SERVER) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN) == 0) {
+                if (key.compare(libjami::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL) == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::AUTOANSWER) == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::PROXY_ENABLED) == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::PROXY_SERVER) == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::PROXY_PUSH_TOKEN) == 0) {
                 } else if (key.compare(Conf::RING_CA_KEY) == 0) {
                     ca_key = std::make_shared<dht::crypto::PrivateKey>(
                         base64::decode(itr->asString()));

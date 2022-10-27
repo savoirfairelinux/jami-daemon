@@ -33,8 +33,8 @@ except Exception as e:
     exit(1)
 
 
-from controller import DRingCtrl
-from tester import DRingTester
+from controller import libjamiCtrl
+from tester import libjamiTester
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -102,12 +102,12 @@ if __name__ == "__main__":
     parser.add_argument('--dtmf', help='Send DTMF', metavar='<key>')
     parser.add_argument('--toggle-video', help='Launch toggle video  tests', action='store_true')
 
-    parser.add_argument('--test', help=' '.join(str(test) for test in DRingTester().getTestName() ), metavar='<testName>')
+    parser.add_argument('--test', help=' '.join(str(test) for test in libjamiTester().getTestName() ), metavar='<testName>')
     parser.add_argument('--auto-answer', help='Keep running and auto-answer the calls', action='store_true')
 
     args = parser.parse_args()
 
-    ctrl = DRingCtrl(sys.argv[0], args.auto_answer)
+    ctrl = libjamiCtrl(sys.argv[0], args.auto_answer)
 
     if args.add_ring_account:
         accDetails = {'Account.type':'RING', 'Account.alias':args.add_ring_account if args.add_ring_account!='' else 'RingAccount'}
@@ -224,7 +224,7 @@ if __name__ == "__main__":
         ctrl.Dtmf(args.dtmf)
 
     if args.test:
-        DRingTester().start(ctrl, args.test)
+        libjamiTester().start(ctrl, args.test)
 
     if args.toggle_video:
         if not ctrl.videomanager:
