@@ -30,9 +30,11 @@
 
 namespace jami {
 
-class JamiAccount;
 class ChannelSocket;
 class ConnectionManager;
+
+constexpr static int ICE_STREAMS_COUNT {1};
+constexpr static int ICE_COMP_COUNT_PER_STREAM {1};
 
 /**
  * A PeerConnectionRequest is a request which ask for an initial connection
@@ -69,6 +71,9 @@ using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket>&
 using ConnectionReadyCallback = std::function<
     void(const DeviceId&, const std::string& /* channel_name */, std::shared_ptr<ChannelSocket>)>;
 
+using iOSConnectedCallback
+    = std::function<bool(const std::string& /* connType */, dht::InfoHash /* peer_h */)>;
+
 /**
  * Manages connections to other devices
  * @note the account MUST be valid if ConnectionManager lives
@@ -76,7 +81,7 @@ using ConnectionReadyCallback = std::function<
 class ConnectionManager
 {
 public:
-    ConnectionManager(JamiAccount& account);
+    ConnectionManager(std::shared_ptr<dht::DhtRunner> dht_, const dht::crypto::Identity& id_);
     ~ConnectionManager();
 
     /**
@@ -144,6 +149,12 @@ public:
      * @param cb    Callback to trigger
      */
     void onConnectionReady(ConnectionReadyCallback&& cb);
+
+    /**
+     * Trigger cb when connection with peer is ready for iOS devices
+     * @param cb    Callback to trigger
+     */
+    void oniOSConnected(iOSConnectedCallback&& cb);
 
     /**
      * @return the number of active sockets
