@@ -34,6 +34,9 @@
 
 namespace jami {
 
+constexpr static int ICE_STREAMS_COUNT {1};
+constexpr static int ICE_COMP_COUNT_PER_STREAM {1};
+
 namespace upnp {
 class Controller;
 }
