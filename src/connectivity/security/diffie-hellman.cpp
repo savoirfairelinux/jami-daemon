@@ -20,6 +20,7 @@
 
 #include "diffie-hellman.h"
 #include "logger.h"
+#include "fileutils.h"
 
 #include <chrono>
 #include <ciso646>
@@ -104,6 +105,34 @@ DhParams::generate()
     std::chrono::duration<double> time_span = clock::now() - start;
     JAMI_DBG("Generated DH params with %u bits in %lfs", bits, time_span.count());
     return params;
+}
+
+DhParams
+DhParams::loadDhParams(const std::string& path)
+{
+    std::lock_guard<std::mutex> l(fileutils::getFileLock(path));
+    try {
+        // writeTime throw exception if file doesn't exist
+        auto duration = std::chrono::system_clock::now() - fileutils::writeTime(path);
+        if (duration >= std::chrono::hours(24 * 3)) // file is valid only 3 days
+            throw std::runtime_error("file too old");
+
+        JAMI_DBG("Loading DhParams from file '%s'", path.c_str());
+        return {fileutils::loadFile(path)};
+    } catch (const std::exception& e) {
+        JAMI_DBG("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
+        if (auto params = tls::DhParams::generate()) {
+            try {
+                fileutils::saveFile(path, params.serialize(), 0600);
+                JAMI_DBG("Saved DhParams to file '%s'", path.c_str());
+            } catch (const std::exception& ex) {
+                JAMI_WARN("Failed to save DhParams in file '%s': %s", path.c_str(), ex.what());
+            }
+            return params;
+        }
+        JAMI_ERR("Can't generate DH params.");
+        return {};
+    }
 }
 
 } // namespace tls
