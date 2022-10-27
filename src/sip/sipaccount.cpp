@@ -1214,7 +1214,8 @@ SIPAccount::sendUnregister()
     if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
         throw VoipLinkException("Unable to set transport");
 
-    setUpTransmissionData(tdata, tp_sel.u.transport->key.type);
+    if (tp_sel.u.transport)
+        setUpTransmissionData(tdata, tp_sel.u.transport->key.type);
 
     pj_status_t status;
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
