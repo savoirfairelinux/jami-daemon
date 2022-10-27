@@ -185,25 +185,18 @@ public:
                      const std::string& replyTo = "",
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
-    void sendMessage(Json::Value&& message, const std::string& replyTo = "", OnCommitCb&& onCommit = {}, OnDoneCb&& cb = {});
+    void sendMessage(Json::Value&& message,
+                     const std::string& replyTo = "",
+                     OnCommitCb&& onCommit = {},
+                     OnDoneCb&& cb = {});
     // Note: used for replay. Should not be used by clients
     void sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb = {});
     /**
      * Get a range of messages
      * @param cb        The callback when loaded
-     * @param from      The most recent message ("" = last (default))
-     * @param n         Number of messages to get (0 = no limit (default))
+     * @param options   The log options
      */
-    void loadMessages(const OnLoadMessages& cb, const std::string& fromMessage = "", size_t n = 0);
-    /**
-     * Get a range of messages
-     * @param cb        The callback when loaded
-     * @param fromMessage      The most recent message ("" = last (default))
-     * @param toMessage        The oldest message ("" = last (default)), no limit
-     */
-    void loadMessages(const OnLoadMessages& cb,
-                      const std::string& fromMessage = "",
-                      const std::string& toMessage = "");
+    void loadMessages(const OnLoadMessages& cb, const LogOptions& options);
     /**
      * Retrieve one commit
      * @param   commitId

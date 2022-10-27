@@ -2559,10 +2559,9 @@ ConversationTest::testDoNotLoadIncorrectConversation()
     aliceAccount->convModule()
         ->loadConversations(); // Refresh. This should detect the incorrect conversations.
 
-    // the conv should be detected as invalid and added as syncing
+    // the conv should be detected as non existing
     convInfos = DRing::conversationInfos(aliceId, convId);
-    CPPUNIT_ASSERT(convInfos.find("mode") == convInfos.end());
-    CPPUNIT_ASSERT(convInfos["syncing"] == "true");
+    CPPUNIT_ASSERT(convInfos.empty());
 }
 
 void
@@ -3458,7 +3457,6 @@ ConversationTest::testMessageEdition()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
     auto msgSize = messageBobReceived.size();
-    JAMI_ERR("@@@@@@@@ %u", msgSize);
     DRing::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageBobReceived.size() == msgSize + 1; }));
     msgSize = messageBobReceived.size();
