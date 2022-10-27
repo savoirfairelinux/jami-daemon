@@ -638,7 +638,9 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
     if (!accountid.empty()) {
         if (base_.accountFactory.isSupportedType(accountType.c_str())) {
             if (auto a = base_.accountFactory.createAccount(accountType.c_str(), accountid)) {
-                a->unserialize(node);
+                auto config = a->buildConfig();
+                config->unserialize(node);
+                a->setConfig(std::move(config));
             } else {
                 JAMI_ERR("Failed to create account type \"%s\"", accountType.c_str());
                 ++errorCount;
@@ -1655,15 +1657,6 @@ Manager::ioContext() const
     return pimpl_->ioContext_;
 }
 
-void
-Manager::addTask(std::function<bool()>&& task, const char* filename, uint32_t linum)
-{
-    pimpl_->scheduler_.scheduleAtFixedRate(std::move(task),
-                                           std::chrono::milliseconds(30),
-                                           filename,
-                                           linum);
-}
-
 std::shared_ptr<Task>
 Manager::scheduleTask(std::function<void()>&& task,
                       std::chrono::steady_clock::time_point when,
@@ -1681,13 +1674,6 @@ Manager::scheduleTaskIn(std::function<void()>&& task,
 {
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout, filename, linum);
 }
-
-// Must be invoked periodically by a timer from the main event loop
-void
-Manager::pollEvents()
-{}
-
-// THREAD=Main
 
 void
 Manager::saveConfig(const std::shared_ptr<Account>& acc)
@@ -1724,7 +1710,7 @@ Manager::saveConfig()
                     saveConfig(ringAccount);
                 }
             } else {
-                account->serialize(out);
+                account->config().serialize(out);
             }
         }
         out << YAML::EndSeq;
@@ -2098,14 +2084,6 @@ Manager::playRingtone(const std::string& accountID)
         return;
     }
 
-    std::string ringtone = account->getRingtonePath();
-    if (ringtone.find(DIR_SEPARATOR_CH) == std::string::npos) {
-        // A base file name was provided (such as the default); try to
-        // resolve it from Jami's data installation prefix.
-        ringtone = std::string(JAMI_DATADIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR
-                   + ringtone;
-    }
-
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
@@ -2119,7 +2097,7 @@ Manager::playRingtone(const std::string& accountID)
         pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
     }
 
-    if (not pimpl_->toneCtrl_.setAudioFile(ringtone))
+    if (not pimpl_->toneCtrl_.setAudioFile(account->getRingtonePath()))
         ringback();
 }
 
@@ -2245,7 +2223,7 @@ AudioDeviceGuard::AudioDeviceGuard(Manager& manager, AudioDeviceType type)
     auto streamId = (unsigned) type;
     if (streamId >= manager_.pimpl_->audioStreamUsers_.size())
         throw std::invalid_argument("Invalid audio device type");
-    if (manager_.pimpl_->audioStreamUsers_[(unsigned) type]++ == 0) {
+    if (manager_.pimpl_->audioStreamUsers_[streamId]++ == 0) {
         if (auto layer = manager_.getAudioDriver())
             layer->startStream(type);
     }
@@ -2658,18 +2636,14 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     }
 }
 
-// method to reduce the if/else mess.
-// Even better, switch to XML !
-
 void
 Manager::setAccountDetails(const std::string& accountID,
                            const std::map<std::string, std::string>& details)
 {
     JAMI_DBG("Set account details for %s", accountID.c_str());
 
-    const auto account = getAccount(accountID);
-
-    if (account == nullptr) {
+    auto account = getAccount(accountID);
+    if (not account) {
         JAMI_ERR("Could not find account %s", accountID.c_str());
         return;
     }
@@ -2679,17 +2653,10 @@ Manager::setAccountDetails(const std::string& accountID,
         return;
 
     // Unregister before modifying any account information
-    // FIXME: inefficient api, don't pass details (not as ref nor copy)
-    // let client requiests them we needed.
     account->doUnregister([&](bool /* transport_free */) {
         account->setAccountDetails(details);
         // Serialize configuration to disk once it is done
-        if (auto ringAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
-            saveConfig(ringAccount);
-        } else {
-            saveConfig();
-        }
-
+        saveConfig(account);
         if (account->isUsable())
             account->doRegister();
         else
@@ -2839,10 +2806,9 @@ Manager::loadAccountMap(const YAML::Node& node)
             if (fileutils::isFile(configFile)) {
                 try {
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
-                        std::ifstream file = fileutils::ifstream(configFile);
-                        YAML::Node parsedConfig = YAML::Load(file);
-                        file.close();
-                        a->unserialize(parsedConfig);
+                        auto config = a->buildConfig();
+                        config->unserialize(YAML::LoadFile(configFile));
+                        a->setConfig(std::move(config));
                     }
                 } catch (const std::exception& e) {
                     JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());
@@ -2904,8 +2870,6 @@ Manager::sendRegister(const std::string& accountID, bool enable)
         return;
 
     acc->setEnabled(enable);
-    acc->loadConfig();
-
     saveConfig(acc);
 
     if (acc->isEnabled()) {
@@ -3208,13 +3172,10 @@ Manager::getDefaultModerators(const std::string& accountID)
 void
 Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
 {
-    auto acc = getAccount(accountID);
-    if (!acc) {
-        JAMI_ERR("Fail to set local moderators, account %s not found", accountID.c_str());
-        return;
-    }
-    acc->enableLocalModerators(isModEnabled);
-    saveConfig(acc);
+    if (auto acc = getAccount(accountID))
+        acc->editConfig([&](AccountConfig& config){
+            config.localModeratorsEnabled = isModEnabled;
+        });
 }
 
 bool
@@ -3231,13 +3192,10 @@ Manager::isLocalModeratorsEnabled(const std::string& accountID)
 void
 Manager::setAllModerators(const std::string& accountID, bool allModerators)
 {
-    auto acc = getAccount(accountID);
-    if (!acc) {
-        JAMI_ERR("Fail to set all moderators, account %s not found", accountID.c_str());
-        return;
-    }
-    acc->setAllModerators(allModerators);
-    saveConfig(acc);
+    if (auto acc = getAccount(accountID))
+        acc->editConfig([&](AccountConfig& config){
+            config.allModeratorsEnabled = allModerators;
+        });
 }
 
 bool
