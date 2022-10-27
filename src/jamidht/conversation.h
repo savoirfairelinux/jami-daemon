@@ -185,7 +185,10 @@ public:
                      const std::string& replyTo = "",
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
-    void sendMessage(Json::Value&& message, const std::string& replyTo = "", OnCommitCb&& onCommit = {}, OnDoneCb&& cb = {});
+    void sendMessage(Json::Value&& message,
+                     const std::string& replyTo = "",
+                     OnCommitCb&& onCommit = {},
+                     OnDoneCb&& cb = {});
     // Note: used for replay. Should not be used by clients
     void sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb = {});
     /**
@@ -215,12 +218,6 @@ public:
      * @return last commit id
      */
     std::string lastCommitId() const;
-    /**
-     * Get new messages from peer
-     * @param uri       the peer
-     * @return if the operation was successful
-     */
-    bool fetchFrom(const std::string& uri);
 
     /**
      * Fetch and merge from peer
