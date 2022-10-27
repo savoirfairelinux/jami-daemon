@@ -146,12 +146,7 @@ public:
                        PostConditionCb&& postCondition,
                        const std::string& from = "",
                        bool logIfNotFound = true) const;
-    std::vector<ConversationCommit> log(const std::string& from,
-                                        const std::string& to,
-                                        unsigned n,
-                                        bool logIfNotFound = false,
-                                        bool fastLog = false,
-                                        const std::string& authorUri = "") const;
+    std::vector<ConversationCommit> log(const LogOptions& options) const;
     std::vector<std::map<std::string, std::string>> search(const Filter& filter) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
@@ -182,7 +177,11 @@ public:
     std::optional<ConversationCommit> getCommit(const std::string& commitId,
                                                 bool logIfNotFound = true) const
     {
-        auto commits = log(commitId, "", 1, logIfNotFound);
+        LogOptions options;
+        options.from = commitId;
+        options.nbOfCommits = 1;
+        options.logIfNotFound = logIfNotFound;
+        auto commits = log(options);
         if (commits.empty())
             return std::nullopt;
         return std::move(commits[0]);
@@ -1743,7 +1742,10 @@ ConversationRepository::Impl::mode() const
     if (mode_ != std::nullopt)
         return *mode_;
 
-    auto lastMsg = log(id_, "", 1);
+    LogOptions options;
+    options.from = id_;
+    options.nbOfCommits = 1;
+    auto lastMsg = log(options);
     if (lastMsg.size() == 0) {
         if (auto shared = account_.lock()) {
             emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
@@ -1920,7 +1922,7 @@ ConversationRepository::Impl::behind(const std::string& from) const
     std::string to = git_oid_tostr_s(&oid_local);
     if (to == from)
         return {};
-    return log(from, to, 0);
+    return log(LogOptions {from, to});
 }
 
 void
@@ -2020,15 +2022,11 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::Impl::log(const std::string& from,
-                                  const std::string& to,
-                                  unsigned n,
-                                  bool logIfNotFound,
-                                  bool fastLog,
-                                  const std::string& authorUri) const
+ConversationRepository::Impl::log(const LogOptions& options) const
 {
     std::vector<ConversationCommit> commits {};
-    auto startLogging = from == "";
+    auto startLogging = options.from == "";
+    auto breakLogging = false;
     forEachCommit(
         [&](const auto& id, const auto& author, const auto&) {
             if (!commits.empty()) {
@@ -2036,17 +2034,25 @@ ConversationRepository::Impl::log(const std::string& from,
                 commits.rbegin()->linearized_parent = id;
             }
 
-            if ((n != 0 && commits.size() == n) || (id == to))
+            if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
                 return CallbackResult::Break; // Stop logging
+            if (breakLogging)
+                return CallbackResult::Break; // Stop logging
+            if (id == options.to) {
+                if (options.includeTo)
+                    breakLogging = true; // For the next commit
+                else
+                    return CallbackResult::Break; // Stop logging
+            }
 
-            if (!startLogging && from != "" && from == id)
+            if (!startLogging && options.from != "" && options.from == id)
                 startLogging = true;
             if (!startLogging)
                 return CallbackResult::Skip; // Start logging after this one
 
-            if (fastLog) {
-                if (authorUri != "") {
-                    if (authorUri == uriFromDevice(author.email)) {
+            if (options.fastLog) {
+                if (options.authorUri != "") {
+                    if (options.authorUri == uriFromDevice(author.email)) {
                         return CallbackResult::Break; // Found author, stop
                     }
                 }
@@ -2059,8 +2065,8 @@ ConversationRepository::Impl::log(const std::string& from,
         },
         [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
         [](auto, auto, auto) { return false; },
-        from,
-        logIfNotFound);
+        options.from,
+        options.logIfNotFound);
     return commits;
 }
 
@@ -2189,7 +2195,10 @@ ConversationRepository::Impl::getCommitType(const std::string& commitMsg) const
 std::vector<std::string>
 ConversationRepository::Impl::getInitialMembers() const
 {
-    auto firstCommit = log(id_, "", 1);
+    LogOptions options;
+    options.from = id_;
+    options.nbOfCommits = 1;
+    auto firstCommit = log(options);
     if (firstCommit.size() == 0) {
         return {};
     }
@@ -2861,7 +2870,9 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     git_fetch_options fetch_opts;
     git_fetch_options_init(&fetch_opts, GIT_FETCH_OPTIONS_VERSION);
 
-    auto lastMsg = logN("", 1);
+    LogOptions options;
+    options.nbOfCommits = 1;
+    auto lastMsg = log(options);
     if (lastMsg.size() == 0)
         return false;
     auto lastCommit = lastMsg[0].id;
@@ -2995,19 +3006,9 @@ ConversationRepository::commitMessages(const std::vector<std::string>& msgs)
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::logN(const std::string& last, unsigned n, bool logIfNotFound) const
+ConversationRepository::log(const LogOptions& options) const
 {
-    return pimpl_->log(last, "", n, logIfNotFound);
-}
-
-std::vector<ConversationCommit>
-ConversationRepository::log(const std::string& from,
-                            const std::string& to,
-                            bool logIfNotFound,
-                            bool fastLog,
-                            const std::string& authorUri) const
-{
-    return pimpl_->log(from, to, 0, logIfNotFound, fastLog, authorUri);
+    return pimpl_->log(options);
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -3600,7 +3601,7 @@ ConversationRepository::validFetch(const std::string& remoteDevice) const
 bool
 ConversationRepository::validClone() const
 {
-    return pimpl_->validCommits(logN("", 0));
+    return pimpl_->validCommits(log({}));
 }
 
 void

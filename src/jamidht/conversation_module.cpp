@@ -324,24 +324,28 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
             }
             return;
         }
-        onNeedSocket_(convId, deviceId, [=](const auto& channel) {
-            auto acc = account_.lock();
-            std::unique_lock<std::mutex> lk(pendingConversationsFetchMtx_);
-            auto& pending = pendingConversationsFetch_[convId];
-            if (!pending.ready) {
-                if (channel) {
-                    pending.ready = true;
-                    pending.deviceId = channel->deviceId().toString();
-                    lk.unlock();
-                    acc->addGitSocket(channel->deviceId(), convId, channel);
-                    checkConversationsEvents();
-                    return true;
-                } else {
-                    stopFetch(convId, deviceId);
+        onNeedSocket_(
+            convId,
+            deviceId,
+            [=](const auto& channel) {
+                auto acc = account_.lock();
+                std::unique_lock<std::mutex> lk(pendingConversationsFetchMtx_);
+                auto& pending = pendingConversationsFetch_[convId];
+                if (!pending.ready) {
+                    if (channel) {
+                        pending.ready = true;
+                        pending.deviceId = channel->deviceId().toString();
+                        lk.unlock();
+                        acc->addGitSocket(channel->deviceId(), convId, channel);
+                        checkConversationsEvents();
+                        return true;
+                    } else {
+                        stopFetch(convId, deviceId);
+                    }
                 }
-            }
-            return false;
-        }, "application/im-gitmessage-id");
+                return false;
+            },
+            "application/im-gitmessage-id");
 
         JAMI_INFO("[Account %s] New conversation detected: %s. Ask device %s to clone it",
                   accountId_.c_str(),
@@ -460,7 +464,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     },
                     commitId);
                 return true;
-            }, "");
+            },
+            "");
     } else {
         if (getRequest(conversationId) != std::nullopt)
             return;
@@ -1261,42 +1266,48 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
         JAMI_WARN("Invalid member detected: %s", uri.c_str());
         return;
     }
-    acc->forEachDevice(
-        memberHash,
-        [w = pimpl_->weak(), conversationId, oldConvId](
-            const std::shared_ptr<dht::crypto::PublicKey>& pk) {
-            auto sthis = w.lock();
-            auto deviceId = pk->getLongId().toString();
-            if (!sthis or deviceId == sthis->deviceId_)
-                return;
+    acc->forEachDevice(memberHash,
+                       [w = pimpl_->weak(), conversationId, oldConvId](
+                           const std::shared_ptr<dht::crypto::PublicKey>& pk) {
+                           auto sthis = w.lock();
+                           auto deviceId = pk->getLongId().toString();
+                           if (!sthis or deviceId == sthis->deviceId_)
+                               return;
 
-            if (!sthis->startFetch(conversationId, deviceId)) {
-                JAMI_WARN("[Account %s] Already fetching %s",
-                          sthis->accountId_.c_str(),
-                          conversationId.c_str());
-                return;
-            }
-            sthis->onNeedSocket_(conversationId, pk->getLongId().toString(), [=](const auto& channel) {
-                auto acc = sthis->account_.lock();
-                std::unique_lock<std::mutex> lk(sthis->pendingConversationsFetchMtx_);
-                auto& pending = sthis->pendingConversationsFetch_[conversationId];
-                if (!pending.ready) {
-                    pending.removeId = oldConvId;
-                    if (channel) {
-                        pending.ready = true;
-                        pending.deviceId = channel->deviceId().toString();
-                        lk.unlock();
-                        // Save the git socket
-                        acc->addGitSocket(channel->deviceId(), conversationId, channel);
-                        sthis->checkConversationsEvents();
-                        return true;
-                    } else {
-                        sthis->stopFetch(conversationId, deviceId);
-                    }
-                }
-                return false;
-            }, "application/im-gitmessage-id");
-        });
+                           if (!sthis->startFetch(conversationId, deviceId)) {
+                               JAMI_WARN("[Account %s] Already fetching %s",
+                                         sthis->accountId_.c_str(),
+                                         conversationId.c_str());
+                               return;
+                           }
+                           sthis->onNeedSocket_(
+                               conversationId,
+                               pk->getLongId().toString(),
+                               [=](const auto& channel) {
+                                   auto acc = sthis->account_.lock();
+                                   std::unique_lock<std::mutex> lk(
+                                       sthis->pendingConversationsFetchMtx_);
+                                   auto& pending = sthis->pendingConversationsFetch_[conversationId];
+                                   if (!pending.ready) {
+                                       pending.removeId = oldConvId;
+                                       if (channel) {
+                                           pending.ready = true;
+                                           pending.deviceId = channel->deviceId().toString();
+                                           lk.unlock();
+                                           // Save the git socket
+                                           acc->addGitSocket(channel->deviceId(),
+                                                             conversationId,
+                                                             channel);
+                                           sthis->checkConversationsEvents();
+                                           return true;
+                                       } else {
+                                           sthis->stopFetch(conversationId, deviceId);
+                                       }
+                                   }
+                                   return false;
+                               },
+                               "application/im-gitmessage-id");
+                       });
     ConvInfo info;
     info.id = conversationId;
     info.created = std::time(nullptr);
@@ -1385,6 +1396,9 @@ ConversationModule::loadConversationMessages(const std::string& conversationId,
     auto conversation = pimpl_->conversations_.find(conversationId);
     if (acc && conversation != pimpl_->conversations_.end() && conversation->second) {
         const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+        LogOptions options;
+        options.from = fromMessage;
+        options.nbOfCommits = n;
         conversation->second->loadMessages(
             [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                 emitSignal<DRing::ConversationSignal::ConversationLoaded>(id,
@@ -1392,8 +1406,7 @@ ConversationModule::loadConversationMessages(const std::string& conversationId,
                                                                           conversationId,
                                                                           messages);
             },
-            fromMessage,
-            n);
+            options);
         return id;
     }
     return 0;
@@ -1409,6 +1422,10 @@ ConversationModule::loadConversationUntil(const std::string& conversationId,
     auto conversation = pimpl_->conversations_.find(conversationId);
     if (acc && conversation != pimpl_->conversations_.end() && conversation->second) {
         const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+        LogOptions options;
+        options.from = fromMessage;
+        options.to = toMessage;
+        options.includeTo = true;
         conversation->second->loadMessages(
             [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                 emitSignal<DRing::ConversationSignal::ConversationLoaded>(id,
@@ -1416,8 +1433,7 @@ ConversationModule::loadConversationUntil(const std::string& conversationId,
                                                                           conversationId,
                                                                           messages);
             },
-            fromMessage,
-            toMessage);
+            options);
         return id;
     }
     return 0;
@@ -1968,8 +1984,7 @@ ConversationModule::initReplay(const std::string& oldConvId, const std::string& 
                 pimpl_->replay_[newConvId] = std::move(messages);
                 waitLoad.set_value(true);
             },
-            "",
-            0);
+            {});
         fut.wait();
     }
 }

@@ -370,9 +370,7 @@ public:
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
-    std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
-                                                                 const std::string& toMessage = "",
-                                                                 size_t n = 0);
+    std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options);
     void pull();
     std::vector<std::map<std::string, std::string>> mergeHistory(const std::string& uri);
 
@@ -419,17 +417,12 @@ Conversation::Impl::repoPath() const
 }
 
 std::vector<std::map<std::string, std::string>>
-Conversation::Impl::loadMessages(const std::string& fromMessage,
-                                 const std::string& toMessage,
-                                 size_t n)
+Conversation::Impl::loadMessages(const LogOptions& options)
 {
     if (!repository_)
         return {};
     std::vector<ConversationCommit> convCommits;
-    if (toMessage.empty())
-        convCommits = repository_->logN(fromMessage, n);
-    else
-        convCommits = repository_->log(fromMessage, toMessage);
+    convCommits = repository_->log(options);
     return repository_->convCommitToMap(convCommits);
 }
 
@@ -712,7 +705,10 @@ Conversation::sendMessage(std::string&& message,
 }
 
 void
-Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
+Conversation::sendMessage(Json::Value&& value,
+                          const std::string& replyTo,
+                          OnCommitCb&& onCommit,
+                          OnDoneCb&& cb)
 {
     if (!replyTo.empty()) {
         auto commit = pimpl_->repository_->getCommit(replyTo);
@@ -722,34 +718,35 @@ Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCom
         }
         value["reply-to"] = replyTo;
     }
-    dht::ThreadPool::io().run([w = weak(), value = std::move(value), onCommit=std::move(onCommit), cb = std::move(cb)] {
-        if (auto sthis = w.lock()) {
-            auto acc = sthis->pimpl_->account_.lock();
-            if (!acc)
-                return;
-            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
-            Json::StreamWriterBuilder wbuilder;
-            wbuilder["commentStyle"] = "None";
-            wbuilder["indentation"] = "";
-            auto commit = sthis->pimpl_->repository_->commitMessage(
-                Json::writeString(wbuilder, value));
-            sthis->pimpl_->sending_.emplace_back(commit);
-            sthis->pimpl_->saveSending();
-            sthis->clearFetched();
-            lk.unlock();
-            if (onCommit)
-                onCommit(commit);
-            sthis->pimpl_->announce(commit);
-            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-                acc->getAccountID(),
-                sthis->id(),
-                acc->getUsername(),
-                commit,
-                static_cast<int>(DRing::Account::MessageStates::SENDING));
-            if (cb)
-                cb(!commit.empty(), commit);
-        }
-    });
+    dht::ThreadPool::io().run(
+        [w = weak(), value = std::move(value), onCommit = std::move(onCommit), cb = std::move(cb)] {
+            if (auto sthis = w.lock()) {
+                auto acc = sthis->pimpl_->account_.lock();
+                if (!acc)
+                    return;
+                std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+                Json::StreamWriterBuilder wbuilder;
+                wbuilder["commentStyle"] = "None";
+                wbuilder["indentation"] = "";
+                auto commit = sthis->pimpl_->repository_->commitMessage(
+                    Json::writeString(wbuilder, value));
+                sthis->pimpl_->sending_.emplace_back(commit);
+                sthis->pimpl_->saveSending();
+                sthis->clearFetched();
+                lk.unlock();
+                if (onCommit)
+                    onCommit(commit);
+                sthis->pimpl_->announce(commit);
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                    acc->getAccountID(),
+                    sthis->id(),
+                    acc->getUsername(),
+                    commit,
+                    static_cast<int>(DRing::Account::MessageStates::SENDING));
+                if (cb)
+                    cb(!commit.empty(), commit);
+            }
+        });
 }
 
 void
@@ -777,18 +774,6 @@ Conversation::sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& 
     });
 }
 
-void
-Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMessage, size_t n)
-{
-    if (!cb)
-        return;
-    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), fromMessage, n] {
-        if (auto sthis = w.lock()) {
-            cb(sthis->pimpl_->loadMessages(fromMessage, "", n));
-        }
-    });
-}
-
 std::optional<std::map<std::string, std::string>>
 Conversation::getCommit(const std::string& commitId) const
 {
@@ -799,15 +784,13 @@ Conversation::getCommit(const std::string& commitId) const
 }
 
 void
-Conversation::loadMessages(const OnLoadMessages& cb,
-                           const std::string& fromMessage,
-                           const std::string& toMessage)
+Conversation::loadMessages(const OnLoadMessages& cb, const LogOptions& options)
 {
     if (!cb)
         return;
-    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), fromMessage, toMessage] {
+    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), options] {
         if (auto sthis = w.lock()) {
-            cb(sthis->pimpl_->loadMessages(fromMessage, toMessage, 0));
+            cb(sthis->pimpl_->loadMessages(options));
         }
     });
 }
@@ -815,7 +798,9 @@ Conversation::loadMessages(const OnLoadMessages& cb,
 std::string
 Conversation::lastCommitId() const
 {
-    auto messages = pimpl_->loadMessages("", "", 1);
+    LogOptions options;
+    options.nbOfCommits = 1;
+    auto messages = pimpl_->loadMessages(options);
     if (messages.empty())
         return {};
     return messages.front().at(ConversationMapKeys::ID);
@@ -950,7 +935,9 @@ Conversation::Impl::pull()
             auto newHeadCommit = repo->getCommit(newHead);
             if (newHeadCommit != std::nullopt && newHeadCommit->parents.size() > 1) {
                 mergeBase = repo->mergeBase(newHeadCommit->parents[0], newHeadCommit->parents[1]);
-                auto updatedCommits = loadMessages("", mergeBase);
+                LogOptions options;
+                options.to = mergeBase;
+                auto updatedCommits = loadMessages(options);
                 // We announce commits from oldest to update to newest. This generally avoid
                 // to get detached commits until they are all announced.
                 std::reverse(std::begin(updatedCommits), std::end(updatedCommits));
@@ -1338,9 +1325,12 @@ Conversation::updateLastDisplayed(const std::string& lastDisplayed)
 
     // 4. lastDisplayed is present in the repository. In this can, if it's a more recent
     // commit than the current one, update it, else drop it.
-    auto commitsSinceLast = pimpl_->repository_->log("", lastDisplayed, false, true).size();
-    auto commitsSincePreviousLast = pimpl_->repository_->log("", currentLastDisplayed, false, true)
-                                        .size();
+    LogOptions options;
+    options.to = lastDisplayed;
+    options.fastLog = true;
+    auto commitsSinceLast = pimpl_->repository_->log(options).size();
+    options.to = currentLastDisplayed;
+    auto commitsSincePreviousLast = pimpl_->repository_->log(options).size();
     if (commitsSincePreviousLast > commitsSinceLast)
         updateLastDisplayed();
 }
@@ -1358,7 +1348,11 @@ Conversation::countInteractions(const std::string& toId,
                                 const std::string& authorUri) const
 {
     // Log but without content to avoid costly convertions.
-    return pimpl_->repository_->log(fromId, toId, false, true, authorUri).size();
+    LogOptions options;
+    options.from = fromId;
+    options.to = toId;
+    options.authorUri = authorUri;
+    return pimpl_->repository_->log(options).size();
 }
 
 void

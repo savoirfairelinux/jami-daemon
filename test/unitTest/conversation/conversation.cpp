@@ -3458,7 +3458,6 @@ ConversationTest::testMessageEdition()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
     auto msgSize = messageBobReceived.size();
-    JAMI_ERR("@@@@@@@@ %u", msgSize);
     DRing::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageBobReceived.size() == msgSize + 1; }));
     msgSize = messageBobReceived.size();
