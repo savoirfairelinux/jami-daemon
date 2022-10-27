@@ -55,7 +55,7 @@
 
 namespace jami {
 
-using SignalHandlerMap = std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>;
+using SignalHandlerMap = std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>>;
 extern SignalHandlerMap& getSignalHandlers();
 
 /*
@@ -70,7 +70,7 @@ void emitSignal(Args... args)
     jami_tracepoint_if_enabled(emit_signal, demangle<Ts>().c_str());
 
     const auto& handlers = getSignalHandlers();
-    if (auto wrap = DRing::CallbackWrapper<typename Ts::cb_type>(handlers.at(Ts::name))) {
+    if (auto wrap = libjami::CallbackWrapper<typename Ts::cb_type>(handlers.at(Ts::name))) {
         try {
             auto cb = *wrap;
             jami_tracepoint(emit_signal_begin_callback,
@@ -87,11 +87,11 @@ void emitSignal(Args... args)
 #pragma GCC diagnostic pop
 
 template<typename Ts>
-std::pair<std::string, std::shared_ptr<DRing::CallbackWrapper<typename Ts::cb_type>>>
+std::pair<std::string, std::shared_ptr<libjami::CallbackWrapper<typename Ts::cb_type>>>
 exported_callback()
 {
     return std::make_pair((const std::string&) Ts::name,
-                          std::make_shared<DRing::CallbackWrapper<typename Ts::cb_type>>());
+                          std::make_shared<libjami::CallbackWrapper<typename Ts::cb_type>>());
 }
 
 } // namespace jami

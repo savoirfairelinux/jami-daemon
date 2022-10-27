@@ -35,12 +35,12 @@ using RecvCb = std::function<void(std::string_view buf)>;
 class FtpServer final : public Stream, public std::enable_shared_from_this<FtpServer>
 {
 public:
-    FtpServer(const DRing::DataTransferInfo& info,
-              const DRing::DataTransferId& id,
+    FtpServer(const libjami::DataTransferInfo& info,
+              const libjami::DataTransferId& id,
               const InternalCompletionCb& cb = {});
 
     bool write(std::string_view data) override;
-    DRing::DataTransferId getId() const override;
+    libjami::DataTransferId getId() const override;
     void close() noexcept override;
 
     void setOnRecv(RecvCb&& cb) override { onRecvCb_ = cb; }
@@ -68,11 +68,11 @@ private:
         READ_DATA,
     };
 
-    DRing::DataTransferInfo info_;
+    libjami::DataTransferInfo info_;
     InternalCompletionCb cb_ {};
     std::atomic_bool isVCard_ {false};
     std::atomic_bool isTreatingRequest_ {false};
-    DRing::DataTransferId transferId_ {0};
+    libjami::DataTransferId transferId_ {0};
     IncomingFileInfo out_ {0, nullptr};
     std::size_t fileSize_ {0};
     std::size_t rx_ {0};

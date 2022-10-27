@@ -76,7 +76,7 @@ public:
     void setFrameSize(int width, int height);
     void setCrop(int x, int y, int w, int h);
 
-    void registerTarget(DRing::SinkTarget target) noexcept
+    void registerTarget(libjami::SinkTarget target) noexcept
     {
         std::lock_guard<std::mutex> lock(mtx_);
         target_ = std::move(target);
@@ -101,7 +101,7 @@ private:
 
     bool started_ {false}; // used to arbitrate client's stop signal.
     int rotation_ {0};
-    DRing::SinkTarget target_;
+    libjami::SinkTarget target_;
     std::unique_ptr<VideoScaler> scaler_;
     std::unique_ptr<MediaFilter> filter_;
     std::mutex mtx_;

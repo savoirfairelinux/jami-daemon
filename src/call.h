@@ -225,7 +225,7 @@ public:
      * If the media list is empty, the current media set when the call
      * was created will be used.
      */
-    virtual void answer(const std::vector<DRing::MediaMap>& mediaList) = 0;
+    virtual void answer(const std::vector<libjami::MediaMap>& mediaList) = 0;
 
     /**
      * Check the media of an incoming media change request.
@@ -241,14 +241,14 @@ public:
      * @param the new media list from the remote
      * @return true if the new media differs from the current media
      **/
-    virtual bool checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) = 0;
+    virtual bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) = 0;
 
     /**
      * Process incoming media change request.
      *
      * @param the new media list from the remote
      */
-    virtual void handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList) = 0;
+    virtual void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) = 0;
 
     /**
      * Answer to a media update request.
@@ -261,7 +261,7 @@ public:
      * to determine wether an answer will be sent to the peer.
      * @param isRemote      True if the media list is from the remote peer
      */
-    virtual void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList,
+    virtual void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList,
                                           bool isRemote = false)
         = 0;
     /**
@@ -383,13 +383,13 @@ public:
      * @param mediaList the new media list
      * @return true on success
      */
-    virtual bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList) = 0;
+    virtual bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList) = 0;
 
     /**
      * Retrieve current medias list
      * @return current medias
      */
-    virtual std::vector<DRing::MediaMap> currentMediaList() const = 0;
+    virtual std::vector<libjami::MediaMap> currentMediaList() const = 0;
 
     /**
      * Send a message to a call identified by its callid

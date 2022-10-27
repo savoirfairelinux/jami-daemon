@@ -33,7 +33,7 @@ MediaPlayer::MediaPlayer(const std::string& path)
             std::bind(&MediaPlayer::process, this),
             [] {})
 {
-    static const std::string& sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+    static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
     const auto pos = path.find(sep);
     const auto suffix = path.substr(pos + sep.size());
 
@@ -165,7 +165,7 @@ MediaPlayer::emitInfo()
     std::map<std::string, std::string> info {{"duration", std::to_string(fileDuration_)},
                                              {"audio_stream", std::to_string(audioStream_)},
                                              {"video_stream", std::to_string(videoStream_)}};
-    emitSignal<DRing::MediaPlayerSignal::FileOpened>(id_, info);
+    emitSignal<libjami::MediaPlayerSignal::FileOpened>(id_, info);
 }
 
 bool

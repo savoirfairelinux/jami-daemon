@@ -37,7 +37,7 @@
 #include "account_const.h"
 
 using namespace std::string_literals;
-using namespace DRing::Account;
+using namespace libjami::Account;
 
 namespace jami {
 namespace test {
@@ -45,7 +45,7 @@ namespace test {
 class CompabilityTest : public CppUnit::TestFixture
 {
 public:
-    ~CompabilityTest() { DRing::fini(); }
+    ~CompabilityTest() { libjami::fini(); }
     static std::string name() { return "Compability"; }
     void setUp();
     void tearDown();
@@ -69,11 +69,11 @@ void
 CompabilityTest::setUp()
 {
     // Init daemon
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
-        CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+        CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
     details[ConfProperties::ALIAS] = "ALICE";
@@ -83,7 +83,7 @@ CompabilityTest::setUp()
     details[ConfProperties::ARCHIVE_PATH] = "";
     aliceId = Manager::instance().addAccount(details);
 
-    details = DRing::getAccountTemplate("RING");
+    details = libjami::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "BOB";
     details[ConfProperties::ALIAS] = "BOB";
@@ -96,30 +96,30 @@ CompabilityTest::setUp()
     JAMI_INFO("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 bool ready = false;
                 auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
                 ready = (daemonStatus == "REGISTERED");
                 details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
                 ready &= (daemonStatus == "REGISTERED");
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
 CompabilityTest::tearDown()
 {
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
     auto currentAccSize = Manager::instance().getAccountList().size();
     Manager::instance().removeAccount(aliceId, true);
     Manager::instance().removeAccount(bobId, true);
@@ -145,10 +145,10 @@ CompabilityTest::testIsComposing()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationRemoved = false, requestReceived = false, aliceComposing = false;
     std::string convId = "";
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
             const std::string& /*conversationId*/,
@@ -158,14 +158,14 @@ CompabilityTest::testIsComposing()
                 requestReceived = true;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
                 convId = conversationId;
             }
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
         [&](const std::string& accountId, const std::string&) {
             if (accountId == aliceId) {
                 conversationRemoved = true;
@@ -173,7 +173,7 @@ CompabilityTest::testIsComposing()
             cv.notify_one();
         }));
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::ComposingStatusChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::ComposingStatusChanged>(
             [&](const std::string& accountId,
                 const std::string& conversationId,
                 const std::string& peer,
@@ -183,7 +183,7 @@ CompabilityTest::testIsComposing()
                     cv.notify_one();
                 }
             }));
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return !convId.empty() && requestReceived;
@@ -197,7 +197,7 @@ CompabilityTest::testIsComposing()
 
     aliceAccount->setIsComposing("jami:" + bobUri, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !aliceComposing; }));
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -210,10 +210,10 @@ CompabilityTest::testSendFileCompatibility()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool successfullyReceive = false, requestReceived = false;
     std::string convId = "";
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
             const std::string& /*conversationId*/,
@@ -223,7 +223,7 @@ CompabilityTest::testSendFileCompatibility()
                 requestReceived = true;
             cv.notify_one();
         }));
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
                 convId = conversationId;
@@ -236,7 +236,7 @@ CompabilityTest::testSendFileCompatibility()
             cv.notify_one();
             return true;
         });
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return !convId.empty(); }));
     ConversationRepository repo(aliceAccount, convId);
@@ -259,7 +259,7 @@ CompabilityTest::testSendFileCompatibility()
     sendFile.close();
 
     // Send File
-    DRing::sendFile(aliceId, convId, "SEND", "SEND", "");
+    libjami::sendFile(aliceId, convId, "SEND", "SEND", "");
 
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return successfullyReceive; });
     std::remove("SEND");

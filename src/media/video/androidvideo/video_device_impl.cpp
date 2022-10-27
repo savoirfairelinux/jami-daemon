@@ -120,7 +120,7 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& path)
     formats_.reserve(16);
     sizes.reserve(16);
     rates.reserve(16);
-    emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes, &rates);
+    emitSignal<libjami::VideoSignal::GetCameraInfo>(name, &formats_, &sizes, &rates);
     for (size_t i = 0, n = sizes.size(); i < n; i += 2)
         sizes_.emplace_back(sizes[i], sizes[i + 1]);
     for (const auto& r : rates)
@@ -183,7 +183,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
     size_ = getSize({params.width, params.height});
     rate_ = getRate(params.framerate);
-    emitSignal<DRing::VideoSignal::SetParameters>(name,
+    emitSignal<libjami::VideoSignal::SetParameters>(name,
                                                   fmt_->code,
                                                   size_.first,
                                                   size_.second,

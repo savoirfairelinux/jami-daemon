@@ -700,7 +700,7 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                             if ((req.connType == "videoCall" || req.connType == "audioCall")
                                 && jami::Manager::instance().isIOSExtension) {
                                 bool hasVideo = req.connType == "videoCall";
-                                emitSignal<DRing::ConversationSignal::CallConnectionRequest>(
+                                emitSignal<libjami::ConversationSignal::CallConnectionRequest>(
                                     shared->account.getAccountID(), peer_h.toString(), hasVideo);
                                 return;
                             }

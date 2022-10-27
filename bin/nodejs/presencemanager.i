@@ -35,7 +35,7 @@ public:
 
 %feature("director") PresenceCallback;
 
-namespace DRing {
+namespace libjami {
 
 /* Presence subscription/Notification. */
 void publish(const std::string& accountID, bool status, const std::string& note);

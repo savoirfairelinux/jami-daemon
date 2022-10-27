@@ -86,7 +86,7 @@ AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 void
 AudioLayer::devicesChanged()
 {
-    emitSignal<DRing::AudioSignal::DeviceEvent>();
+    emitSignal<libjami::AudioSignal::DeviceEvent>();
 }
 
 void

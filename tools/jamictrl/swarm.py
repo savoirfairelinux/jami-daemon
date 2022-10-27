@@ -18,7 +18,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
-from controller import DRingCtrl
+from controller import libjamiCtrl
 
 import argparse
 import sys
@@ -31,7 +31,7 @@ parser.add_argument('--account', help='Account to use', metavar='<account>', typ
 
 args = parser.parse_args()
 
-ctrl = DRingCtrl(sys.argv[0], False)
+ctrl = libjamiCtrl(sys.argv[0], False)
 if not args.account:
     for account in ctrl.getAllEnabledAccounts():
         details = ctrl.getAccountDetails(account)

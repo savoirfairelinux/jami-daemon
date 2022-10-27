@@ -18,8 +18,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef DRING_H
-#define DRING_H
+#ifndef LIBJAMI_H
+#define LIBJAMI_H
 
 #include "def.h"
 
@@ -32,25 +32,25 @@
 
 #include "trace-tools.h"
 
-namespace DRing {
+namespace libjami {
 
 /* flags for initialization */
 enum InitFlag {
-    DRING_FLAG_DEBUG = 1 << 0,
-    DRING_FLAG_CONSOLE_LOG = 1 << 1,
-    DRING_FLAG_AUTOANSWER = 1 << 2,
-    DRING_FLAG_IOS_EXTENSION = 1 << 4,
+    LIBJAMI_FLAG_DEBUG = 1 << 0,
+    LIBJAMI_FLAG_CONSOLE_LOG = 1 << 1,
+    LIBJAMI_FLAG_AUTOANSWER = 1 << 2,
+    LIBJAMI_FLAG_IOS_EXTENSION = 1 << 4,
 };
 
 /**
  * Return the library version as string.
  */
-DRING_PUBLIC const char* version() noexcept;
+LIBJAMI_PUBLIC const char* version() noexcept;
 
 /**
  * Return the target platform (OS) as a string.
  */
-DRING_PUBLIC const char* platform() noexcept;
+LIBJAMI_PUBLIC const char* platform() noexcept;
 
 /**
  * Initialize globals, create underlaying daemon.
@@ -58,27 +58,27 @@ DRING_PUBLIC const char* platform() noexcept;
  * @param flags  Flags to customize this initialization
  * @returns      true if initialization succeed else false.
  */
-DRING_PUBLIC bool init(enum InitFlag flags) noexcept;
+LIBJAMI_PUBLIC bool init(enum InitFlag flags) noexcept;
 
 /**
  * Start asynchronously daemon created by init().
  * @returns true if daemon started successfully
  */
-DRING_PUBLIC bool start(const std::string& config_file = {}) noexcept;
+LIBJAMI_PUBLIC bool start(const std::string& config_file = {}) noexcept;
 
 /**
  * Stop and freeing any resource allocated by daemon
  */
-DRING_PUBLIC void fini() noexcept;
+LIBJAMI_PUBLIC void fini() noexcept;
 
-DRING_PUBLIC bool initialized() noexcept;
+LIBJAMI_PUBLIC bool initialized() noexcept;
 
 /**
  * Control log handlers.
  *
  * @param whom  Log handler to control
  */
-DRING_PUBLIC void logging(const std::string& whom, const std::string& action) noexcept;
+LIBJAMI_PUBLIC void logging(const std::string& whom, const std::string& action) noexcept;
 
 /* External Callback Dynamic Utilities
  *
@@ -101,7 +101,7 @@ DRING_PUBLIC void logging(const std::string& whom, const std::string& action) no
  * Used conjointly with std::shared_ptr to hide the concrete class.
  * See CallbackWrapper template for details.
  */
-class DRING_PUBLIC CallbackWrapperBase
+class LIBJAMI_PUBLIC CallbackWrapperBase
 {};
 
 /* Concrete class of CallbackWrapperBase.
@@ -173,12 +173,12 @@ exportable_callback(std::function<typename Ts::cb_type>&& func,
                               std::forward<std::function<typename Ts::cb_type>>(func), file, linum));
 }
 
-DRING_PUBLIC void registerSignalHandlers(
+LIBJAMI_PUBLIC void registerSignalHandlers(
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
-DRING_PUBLIC void unregisterSignalHandlers();
+LIBJAMI_PUBLIC void unregisterSignalHandlers();
 
 using MediaMap = std::map<std::string, std::string>;
 
-} // namespace DRing
+} // namespace libjami
 
-#endif /* DRING_H */
+#endif /* LIBJAMI_H */

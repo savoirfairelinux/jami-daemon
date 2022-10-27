@@ -83,7 +83,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
 
     if (state == PJSIP_EVSUB_STATE_ACCEPTED) {
         pres_client->enable(true);
-        emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
+        emitSignal<libjami::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
                                                                         ->getAccountID(),
                                                                     std::string(pres_client->getURI()),
                                                                     PJ_TRUE);
@@ -96,7 +96,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                             &pres_client->term_reason_,
                             pjsip_evsub_get_termination_reason(sub));
 
-        emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
+        emitSignal<libjami::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
                                                                         ->getAccountID(),
                                                                     std::string(pres_client->getURI()),
                                                                     PJ_FALSE);
@@ -154,7 +154,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                  *  2) change the support field in the account schema if the pres_sub's server
                  *  is the same as the account's server
                  */
-                emitSignal<DRing::PresenceSignal::ServerError>(
+                emitSignal<libjami::PresenceSignal::ServerError>(
                     pres_client->getPresence()->getAccount()->getAccountID(), error, msg);
 
                 auto account_host = sip_utils::as_view(*pj_gethostname());

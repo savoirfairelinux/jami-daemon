@@ -39,8 +39,8 @@
 
 #include "common.h"
 
-using namespace DRing::Account;
-using namespace DRing::Call;
+using namespace libjami::Account;
+using namespace libjami::Call;
 
 namespace jami {
 namespace test {
@@ -123,15 +123,15 @@ public:
     IceSdpParsingTest()
     {
         // Init daemon
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
         for (size_t idx = 0; idx < MEDIA_COUNT; idx++) {
             mediaReceivers_.emplace_back(std::make_shared<MediaReceiver>(MediaType::MEDIA_AUDIO));
         }
     }
-    ~IceSdpParsingTest() { DRing::fini(); }
+    ~IceSdpParsingTest() { libjami::fini(); }
 
     static std::string name() { return "IceSdpParsingTest"; }
     void setUp();
@@ -154,7 +154,7 @@ private:
                                   CallData& callData);
     static void onIncomingCallWithMedia(const std::string& accountId,
                                         const std::string& callId,
-                                        const std::vector<DRing::MediaMap> mediaList,
+                                        const std::vector<libjami::MediaMap> mediaList,
                                         CallData& callData);
     static void onMediaNegotiationStatus(const std::string& callId,
                                          const std::string& event,
@@ -187,7 +187,7 @@ void
 IceSdpParsingTest::setUp()
 {
     aliceData_.listeningPort_ = 5080;
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("SIP");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("SIP");
     details[ConfProperties::TYPE] = "SIP";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
     details[ConfProperties::ALIAS] = "ALICE";
@@ -196,7 +196,7 @@ IceSdpParsingTest::setUp()
     aliceData_.accountId_ = Manager::instance().addAccount(details);
 
     bobData_.listeningPort_ = 5082;
-    details = DRing::getAccountTemplate("SIP");
+    details = libjami::getAccountTemplate("SIP");
     details[ConfProperties::TYPE] = "SIP";
     details[ConfProperties::DISPLAYNAME] = "BOB";
     details[ConfProperties::ALIAS] = "BOB";
@@ -237,13 +237,13 @@ IceSdpParsingTest::getUserAlias(const std::string& callId)
 void
 IceSdpParsingTest::onIncomingCallWithMedia(const std::string& accountId,
                                            const std::string& callId,
-                                           const std::vector<DRing::MediaMap> mediaList,
+                                           const std::vector<libjami::MediaMap> mediaList,
                                            CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              DRing::CallSignal::IncomingCallWithMedia::name,
+              libjami::CallSignal::IncomingCallWithMedia::name,
               callData.alias_.c_str(),
               callId.c_str(),
               mediaList.size());
@@ -261,7 +261,7 @@ IceSdpParsingTest::onIncomingCallWithMedia(const std::string& accountId,
 
     std::unique_lock<std::mutex> lock {callData.mtx_};
     callData.callId_ = callId;
-    callData.signals_.emplace_back(CallData::Signal(DRing::CallSignal::IncomingCallWithMedia::name));
+    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
 
     callData.cv_.notify_one();
 }
@@ -285,7 +285,7 @@ IceSdpParsingTest::onCallStateChange(const std::string&,
     }
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              DRing::CallSignal::StateChange::name,
+              libjami::CallSignal::StateChange::name,
               callData.alias_.c_str(),
               callId.c_str(),
               state.c_str());
@@ -296,7 +296,7 @@ IceSdpParsingTest::onCallStateChange(const std::string&,
     {
         std::unique_lock<std::mutex> lock {callData.mtx_};
         callData.signals_.emplace_back(
-            CallData::Signal(DRing::CallSignal::StateChange::name, state));
+            CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
 
     if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
@@ -322,7 +322,7 @@ IceSdpParsingTest::onMediaNegotiationStatus(const std::string& callId,
     }
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
-              DRing::CallSignal::MediaNegotiationStatus::name,
+              libjami::CallSignal::MediaNegotiationStatus::name,
               account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
               call->getCallId().c_str(),
               event.c_str());
@@ -333,7 +333,7 @@ IceSdpParsingTest::onMediaNegotiationStatus(const std::string& callId,
     {
         std::unique_lock<std::mutex> lock {callData.mtx_};
         callData.signals_.emplace_back(
-            CallData::Signal(DRing::CallSignal::MediaNegotiationStatus::name, event));
+            CallData::Signal(libjami::CallSignal::MediaNegotiationStatus::name, event));
     }
 
     callData.cv_.notify_one();
@@ -452,14 +452,14 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         account->enableIceCompIdRfc5245Compliance(bobData.compliancyEnabled_);
     }
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
 
     // Insert needed signal handlers.
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
-            const std::vector<DRing::MediaMap> mediaList) {
+            const std::vector<libjami::MediaMap> mediaList) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onIncomingCallWithMedia(accountId,
@@ -469,7 +469,7 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(
-        DRing::exportable_callback<DRing::CallSignal::StateChange>([&](const std::string& accountId,
+        libjami::exportable_callback<libjami::CallSignal::StateChange>([&](const std::string& accountId,
                                                                        const std::string& callId,
                                                                        const std::string& state,
                                                                        signed) {
@@ -481,7 +481,7 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
                                   user == aliceData.alias_ ? aliceData : bobData);
         }));
 
-    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaNegotiationStatus>(
         [&](const std::string& callId,
             const std::string& event,
             const std::vector<std::map<std::string, std::string>>& /* mediaList */) {
@@ -492,7 +492,7 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
                                          user == aliceData.alias_ ? aliceData : bobData);
         }));
 
-    DRing::registerSignalHandlers(signalHandlers);
+    libjami::registerSignalHandlers(signalHandlers);
 }
 
 void
@@ -530,7 +530,7 @@ IceSdpParsingTest::test_call()
     auto bobAddr = ip_utils::getLocalAddr(AF_INET);
     bobAddr.setPort(bobData_.listeningPort_);
 
-    aliceData_.callId_ = DRing::placeCallWithMedia(aliceData_.accountId_,
+    aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
                                                    bobAddr.toString(true),
                                                    MediaAttribute::mediaAttributesToMediaMaps(
                                                        offer));
@@ -545,31 +545,31 @@ IceSdpParsingTest::test_call()
 
     // Wait for call to be processed.
     CPPUNIT_ASSERT(
-        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+        waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::RINGING));
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::IncomingCallWithMedia::name));
 
     // Answer the call.
-    DRing::acceptWithMedia(bobData_.accountId_,
+    libjami::acceptWithMedia(bobData_.accountId_,
                            bobData_.callId_,
                            MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_,
-                                 DRing::CallSignal::MediaNegotiationStatus::name,
-                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(
-        waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+        waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
     JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(aliceData_,
-                                 DRing::CallSignal::MediaNegotiationStatus::name,
-                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+                                 libjami::CallSignal::MediaNegotiationStatus::name,
+                                 libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Give some time to media to start.
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -611,12 +611,12 @@ IceSdpParsingTest::test_call()
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(aliceData_,
-                                       DRing::CallSignal::StateChange::name,
+                                       libjami::CallSignal::StateChange::name,
                                        StateEvent::HUNGUP));
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(bobData_,
-                                       DRing::CallSignal::StateChange::name,
+                                       libjami::CallSignal::StateChange::name,
                                        StateEvent::HUNGUP));
 
     JAMI_INFO("Call terminated on both sides");

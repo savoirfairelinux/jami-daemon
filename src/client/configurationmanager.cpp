@@ -62,7 +62,7 @@
 #undef interface
 #endif
 
-namespace DRing {
+namespace libjami {
 
 constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
 
@@ -953,7 +953,7 @@ lookupName(const std::string& account, const std::string& nameserver, const std:
 #if HAVE_RINGNS
     if (account.empty()) {
         auto cb = [name](const std::string& result, jami::NameDirectory::Response response) {
-            jami::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("",
+            jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>("",
                                                                               (int) response,
                                                                               result,
                                                                               name);
@@ -980,7 +980,7 @@ lookupAddress(const std::string& account, const std::string& nameserver, const s
             .lookupAddress(address,
                            [address](const std::string& result,
                                      jami::NameDirectory::Response response) {
-                               jami::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(
+                               jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(
                                    "", (int) response, address, result);
                            });
         return true;
@@ -1097,4 +1097,4 @@ isAllModerators(const std::string& accountID)
     return jami::Manager::instance().isAllModerators(accountID);
 }
 
-} // namespace DRing
+} // namespace libjami

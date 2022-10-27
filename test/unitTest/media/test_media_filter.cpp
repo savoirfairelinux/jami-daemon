@@ -61,7 +61,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaFilterTest, MediaFilterTest::name());
 void
 MediaFilterTest::setUp()
 {
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     libav_utils::av_init();
     filter_.reset(new MediaFilter);
 }
@@ -69,7 +69,7 @@ MediaFilterTest::setUp()
 void
 MediaFilterTest::tearDown()
 {
-    DRing::fini();
+    libjami::fini();
 }
 
 static void

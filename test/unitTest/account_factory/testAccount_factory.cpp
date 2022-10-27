@@ -57,8 +57,8 @@ void
 Account_factoryTest::setUp()
 {
     // Init daemon
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
     accountFactory.reset(new AccountFactory);
 }
@@ -67,7 +67,7 @@ void
 Account_factoryTest::tearDown()
 {
     // Stop daemon
-    DRing::fini();
+    libjami::fini();
 }
 
 
@@ -78,7 +78,7 @@ Account_factoryTest::testAddRemoveSIPAccount()
     CPPUNIT_ASSERT(accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount()==0);
 
-    accountFactory->createAccount(DRing::Account::ProtocolNames::SIP, SIP_ID);
+    accountFactory->createAccount(libjami::Account::ProtocolNames::SIP, SIP_ID);
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(SIP_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(RING_ID));
@@ -98,7 +98,7 @@ Account_factoryTest::testAddRemoveRINGAccount()
     CPPUNIT_ASSERT(accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount()==0);
 
-    accountFactory->createAccount(DRing::Account::ProtocolNames::RING, RING_ID);
+    accountFactory->createAccount(libjami::Account::ProtocolNames::RING, RING_ID);
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(RING_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(SIP_ID));
@@ -121,7 +121,7 @@ Account_factoryTest::testClear()
     const int nbrAccount = 5;
 
     for(int i = 0; i < nbrAccount ; ++i) {
-        accountFactory->createAccount(DRing::Account::ProtocolNames::RING, RING_ID+std::to_string(i));
+        accountFactory->createAccount(libjami::Account::ProtocolNames::RING, RING_ID+std::to_string(i));
     }
 
     CPPUNIT_ASSERT(accountFactory->accountCount()==nbrAccount);

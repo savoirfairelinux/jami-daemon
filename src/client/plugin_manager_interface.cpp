@@ -24,7 +24,7 @@
 #include "logger.h"
 #include <iostream>
 
-namespace DRing {
+namespace libjami {
 bool
 loadPlugin(const std::string& path)
 {
@@ -236,4 +236,4 @@ sendWebViewDetach(const std::string& pluginId, const std::string& webViewId)
         .getWebViewServicesManager()
         .sendWebViewDetach(pluginId, webViewId);
 }
-} // namespace DRing
+} // namespace libjami

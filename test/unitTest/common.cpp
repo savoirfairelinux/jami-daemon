@@ -40,7 +40,7 @@ void
 wait_for_announcement_of(const std::vector<std::string> accountIDs,
                          std::chrono::seconds timeout)
 {
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
@@ -49,7 +49,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
     size_t to_be_announced = accountIDs.size();
 
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&,
              accountIDs = std::move(accountIDs)](const std::string& accountID,
                                                  const std::map<std::string, std::string>& details) {
@@ -60,7 +60,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 
                     try {
                         if ("true"
-                            != details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
+                            != details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
                             continue;
                         }
                     } catch (const std::out_of_range&) {
@@ -74,7 +74,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 
     JAMI_DBG("Waiting for %zu account to be announced...", to_be_announced);
 
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, timeout, [&] {
         for (const auto& rdy : accountsReady) {
@@ -86,7 +86,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
         return true;
     }));
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 
     JAMI_DBG("%zu account announced!", to_be_announced);
 }
@@ -104,7 +104,7 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 {
     JAMI_INFO("Removing %zu accounts...", accounts.size());
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
@@ -118,15 +118,15 @@ wait_for_removal_of(const std::vector<std::string> accounts,
     size_t target = current - accounts.size();
 
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+        libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
             if (jami::Manager::instance().getAccountList().size() <= target) {
                 accountsRemoved = true;
                 cv.notify_one();
             }
         }));
 
-    DRing::unregisterSignalHandlers();
-    DRing::registerSignalHandlers(confHandlers);
+    libjami::unregisterSignalHandlers();
+    libjami::registerSignalHandlers(confHandlers);
 
     for (const auto& account : accounts) {
         jami::Manager::instance().removeAccount(account, true);
@@ -134,7 +134,7 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 
     CPPUNIT_ASSERT(cv.wait_for(lk, timeout, [&] { return accountsRemoved.load(); }));
 
-    DRing::unregisterSignalHandlers();
+    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -148,7 +148,7 @@ std::map<std::string, std::string>
 load_actors(const std::string& from_yaml)
 {
     std::map<std::string, std::string> actors {};
-    std::map<std::string, std::string> default_details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> default_details = libjami::getAccountTemplate("RING");
 
     std::ifstream file = jami::fileutils::ifstream(from_yaml);
 

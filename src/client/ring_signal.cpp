@@ -27,121 +27,121 @@ getSignalHandlers()
 {
     static SignalHandlerMap handlers = {
         /* Call */
-        exported_callback<DRing::CallSignal::StateChange>(),
-        exported_callback<DRing::CallSignal::TransferFailed>(),
-        exported_callback<DRing::CallSignal::TransferSucceeded>(),
-        exported_callback<DRing::CallSignal::RecordPlaybackStopped>(),
-        exported_callback<DRing::CallSignal::VoiceMailNotify>(),
-        exported_callback<DRing::CallSignal::IncomingMessage>(),
-        exported_callback<DRing::CallSignal::IncomingCall>(),
-        exported_callback<DRing::CallSignal::IncomingCallWithMedia>(),
-        exported_callback<DRing::CallSignal::MediaChangeRequested>(),
-        exported_callback<DRing::CallSignal::RecordPlaybackFilepath>(),
-        exported_callback<DRing::CallSignal::ConferenceCreated>(),
-        exported_callback<DRing::CallSignal::ConferenceChanged>(),
-        exported_callback<DRing::CallSignal::UpdatePlaybackScale>(),
-        exported_callback<DRing::CallSignal::ConferenceRemoved>(),
-        exported_callback<DRing::CallSignal::RecordingStateChanged>(),
-        exported_callback<DRing::CallSignal::RtcpReportReceived>(),
-        exported_callback<DRing::CallSignal::PeerHold>(),
-        exported_callback<DRing::CallSignal::VideoMuted>(),
-        exported_callback<DRing::CallSignal::AudioMuted>(),
-        exported_callback<DRing::CallSignal::SmartInfo>(),
-        exported_callback<DRing::CallSignal::ConnectionUpdate>(),
-        exported_callback<DRing::CallSignal::OnConferenceInfosUpdated>(),
-        exported_callback<DRing::CallSignal::RemoteRecordingChanged>(),
-        exported_callback<DRing::CallSignal::MediaNegotiationStatus>(),
+        exported_callback<libjami::CallSignal::StateChange>(),
+        exported_callback<libjami::CallSignal::TransferFailed>(),
+        exported_callback<libjami::CallSignal::TransferSucceeded>(),
+        exported_callback<libjami::CallSignal::RecordPlaybackStopped>(),
+        exported_callback<libjami::CallSignal::VoiceMailNotify>(),
+        exported_callback<libjami::CallSignal::IncomingMessage>(),
+        exported_callback<libjami::CallSignal::IncomingCall>(),
+        exported_callback<libjami::CallSignal::IncomingCallWithMedia>(),
+        exported_callback<libjami::CallSignal::MediaChangeRequested>(),
+        exported_callback<libjami::CallSignal::RecordPlaybackFilepath>(),
+        exported_callback<libjami::CallSignal::ConferenceCreated>(),
+        exported_callback<libjami::CallSignal::ConferenceChanged>(),
+        exported_callback<libjami::CallSignal::UpdatePlaybackScale>(),
+        exported_callback<libjami::CallSignal::ConferenceRemoved>(),
+        exported_callback<libjami::CallSignal::RecordingStateChanged>(),
+        exported_callback<libjami::CallSignal::RtcpReportReceived>(),
+        exported_callback<libjami::CallSignal::PeerHold>(),
+        exported_callback<libjami::CallSignal::VideoMuted>(),
+        exported_callback<libjami::CallSignal::AudioMuted>(),
+        exported_callback<libjami::CallSignal::SmartInfo>(),
+        exported_callback<libjami::CallSignal::ConnectionUpdate>(),
+        exported_callback<libjami::CallSignal::OnConferenceInfosUpdated>(),
+        exported_callback<libjami::CallSignal::RemoteRecordingChanged>(),
+        exported_callback<libjami::CallSignal::MediaNegotiationStatus>(),
 
         /* Configuration */
-        exported_callback<DRing::ConfigurationSignal::VolumeChanged>(),
-        exported_callback<DRing::ConfigurationSignal::AccountsChanged>(),
-        exported_callback<DRing::ConfigurationSignal::AccountDetailsChanged>(),
-        exported_callback<DRing::ConfigurationSignal::StunStatusFailed>(),
-        exported_callback<DRing::ConfigurationSignal::RegistrationStateChanged>(),
-        exported_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(),
-        exported_callback<DRing::ConfigurationSignal::CertificatePinned>(),
-        exported_callback<DRing::ConfigurationSignal::CertificatePathPinned>(),
-        exported_callback<DRing::ConfigurationSignal::CertificateExpired>(),
-        exported_callback<DRing::ConfigurationSignal::CertificateStateChanged>(),
-        exported_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(),
-        exported_callback<DRing::ConfigurationSignal::ComposingStatusChanged>(),
-        exported_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(),
-        exported_callback<DRing::ConfigurationSignal::ProfileReceived>(),
-        exported_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(),
-        exported_callback<DRing::ConfigurationSignal::ContactAdded>(),
-        exported_callback<DRing::ConfigurationSignal::ContactRemoved>(),
-        exported_callback<DRing::ConfigurationSignal::ExportOnRingEnded>(),
-        exported_callback<DRing::ConfigurationSignal::KnownDevicesChanged>(),
-        exported_callback<DRing::ConfigurationSignal::NameRegistrationEnded>(),
-        exported_callback<DRing::ConfigurationSignal::RegisteredNameFound>(),
-        exported_callback<DRing::ConfigurationSignal::UserSearchEnded>(),
-        exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
-        exported_callback<DRing::ConfigurationSignal::MigrationEnded>(),
-        exported_callback<DRing::ConfigurationSignal::DeviceRevocationEnded>(),
-        exported_callback<DRing::ConfigurationSignal::AccountProfileReceived>(),
-        exported_callback<DRing::ConfigurationSignal::Error>(),
+        exported_callback<libjami::ConfigurationSignal::VolumeChanged>(),
+        exported_callback<libjami::ConfigurationSignal::AccountsChanged>(),
+        exported_callback<libjami::ConfigurationSignal::AccountDetailsChanged>(),
+        exported_callback<libjami::ConfigurationSignal::StunStatusFailed>(),
+        exported_callback<libjami::ConfigurationSignal::RegistrationStateChanged>(),
+        exported_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(),
+        exported_callback<libjami::ConfigurationSignal::CertificatePinned>(),
+        exported_callback<libjami::ConfigurationSignal::CertificatePathPinned>(),
+        exported_callback<libjami::ConfigurationSignal::CertificateExpired>(),
+        exported_callback<libjami::ConfigurationSignal::CertificateStateChanged>(),
+        exported_callback<libjami::ConfigurationSignal::IncomingAccountMessage>(),
+        exported_callback<libjami::ConfigurationSignal::ComposingStatusChanged>(),
+        exported_callback<libjami::ConfigurationSignal::AccountMessageStatusChanged>(),
+        exported_callback<libjami::ConfigurationSignal::ProfileReceived>(),
+        exported_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(),
+        exported_callback<libjami::ConfigurationSignal::ContactAdded>(),
+        exported_callback<libjami::ConfigurationSignal::ContactRemoved>(),
+        exported_callback<libjami::ConfigurationSignal::ExportOnRingEnded>(),
+        exported_callback<libjami::ConfigurationSignal::KnownDevicesChanged>(),
+        exported_callback<libjami::ConfigurationSignal::NameRegistrationEnded>(),
+        exported_callback<libjami::ConfigurationSignal::RegisteredNameFound>(),
+        exported_callback<libjami::ConfigurationSignal::UserSearchEnded>(),
+        exported_callback<libjami::ConfigurationSignal::MediaParametersChanged>(),
+        exported_callback<libjami::ConfigurationSignal::MigrationEnded>(),
+        exported_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(),
+        exported_callback<libjami::ConfigurationSignal::AccountProfileReceived>(),
+        exported_callback<libjami::ConfigurationSignal::Error>(),
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
+        exported_callback<libjami::ConfigurationSignal::GetHardwareAudioFormat>(),
 #endif
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(RING_UWP)
-        exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
-        exported_callback<DRing::ConfigurationSignal::GetDeviceName>(),
+        exported_callback<libjami::ConfigurationSignal::GetAppDataPath>(),
+        exported_callback<libjami::ConfigurationSignal::GetDeviceName>(),
 #endif
-        exported_callback<DRing::ConfigurationSignal::HardwareDecodingChanged>(),
-        exported_callback<DRing::ConfigurationSignal::HardwareEncodingChanged>(),
-        exported_callback<DRing::ConfigurationSignal::MessageSend>(),
+        exported_callback<libjami::ConfigurationSignal::HardwareDecodingChanged>(),
+        exported_callback<libjami::ConfigurationSignal::HardwareEncodingChanged>(),
+        exported_callback<libjami::ConfigurationSignal::MessageSend>(),
 
         /* Presence */
-        exported_callback<DRing::PresenceSignal::NewServerSubscriptionRequest>(),
-        exported_callback<DRing::PresenceSignal::NearbyPeerNotification>(),
-        exported_callback<DRing::PresenceSignal::ServerError>(),
-        exported_callback<DRing::PresenceSignal::NewBuddyNotification>(),
-        exported_callback<DRing::PresenceSignal::SubscriptionStateChanged>(),
+        exported_callback<libjami::PresenceSignal::NewServerSubscriptionRequest>(),
+        exported_callback<libjami::PresenceSignal::NearbyPeerNotification>(),
+        exported_callback<libjami::PresenceSignal::ServerError>(),
+        exported_callback<libjami::PresenceSignal::NewBuddyNotification>(),
+        exported_callback<libjami::PresenceSignal::SubscriptionStateChanged>(),
 
         /* Audio */
-        exported_callback<DRing::AudioSignal::DeviceEvent>(),
-        exported_callback<DRing::AudioSignal::AudioMeter>(),
+        exported_callback<libjami::AudioSignal::DeviceEvent>(),
+        exported_callback<libjami::AudioSignal::AudioMeter>(),
 
         /* DataTransfer */
-        exported_callback<DRing::DataTransferSignal::DataTransferEvent>(),
+        exported_callback<libjami::DataTransferSignal::DataTransferEvent>(),
 
 #ifdef ENABLE_VIDEO
         /* MediaPlayer */
-        exported_callback<DRing::MediaPlayerSignal::FileOpened>(),
+        exported_callback<libjami::MediaPlayerSignal::FileOpened>(),
 
         /* Video */
-        exported_callback<DRing::VideoSignal::DeviceEvent>(),
-        exported_callback<DRing::VideoSignal::DecodingStarted>(),
-        exported_callback<DRing::VideoSignal::DecodingStopped>(),
+        exported_callback<libjami::VideoSignal::DeviceEvent>(),
+        exported_callback<libjami::VideoSignal::DecodingStarted>(),
+        exported_callback<libjami::VideoSignal::DecodingStopped>(),
 #ifdef __ANDROID__
-        exported_callback<DRing::VideoSignal::GetCameraInfo>(),
-        exported_callback<DRing::VideoSignal::SetParameters>(),
-        exported_callback<DRing::VideoSignal::RequestKeyFrame>(),
-        exported_callback<DRing::VideoSignal::SetBitrate>(),
+        exported_callback<libjami::VideoSignal::GetCameraInfo>(),
+        exported_callback<libjami::VideoSignal::SetParameters>(),
+        exported_callback<libjami::VideoSignal::RequestKeyFrame>(),
+        exported_callback<libjami::VideoSignal::SetBitrate>(),
 #endif
-        exported_callback<DRing::VideoSignal::StartCapture>(),
-        exported_callback<DRing::VideoSignal::StopCapture>(),
-        exported_callback<DRing::VideoSignal::DeviceAdded>(),
-        exported_callback<DRing::VideoSignal::ParametersChanged>(),
+        exported_callback<libjami::VideoSignal::StartCapture>(),
+        exported_callback<libjami::VideoSignal::StopCapture>(),
+        exported_callback<libjami::VideoSignal::DeviceAdded>(),
+        exported_callback<libjami::VideoSignal::ParametersChanged>(),
 #endif
 
         /* Conversation */
-        exported_callback<DRing::ConversationSignal::ConversationLoaded>(),
-        exported_callback<DRing::ConversationSignal::MessagesFound>(),
-        exported_callback<DRing::ConversationSignal::MessageReceived>(),
-        exported_callback<DRing::ConversationSignal::ConversationProfileUpdated>(),
-        exported_callback<DRing::ConversationSignal::ConversationRequestReceived>(),
-        exported_callback<DRing::ConversationSignal::ConversationRequestDeclined>(),
-        exported_callback<DRing::ConversationSignal::ConversationReady>(),
-        exported_callback<DRing::ConversationSignal::ConversationRemoved>(),
-        exported_callback<DRing::ConversationSignal::ConversationMemberEvent>(),
-        exported_callback<DRing::ConversationSignal::ConversationSyncFinished>(),
-        exported_callback<DRing::ConversationSignal::CallConnectionRequest>(),
-        exported_callback<DRing::ConversationSignal::OnConversationError>(),
-        exported_callback<DRing::ConversationSignal::ConversationPreferencesUpdated>(),
+        exported_callback<libjami::ConversationSignal::ConversationLoaded>(),
+        exported_callback<libjami::ConversationSignal::MessagesFound>(),
+        exported_callback<libjami::ConversationSignal::MessageReceived>(),
+        exported_callback<libjami::ConversationSignal::ConversationProfileUpdated>(),
+        exported_callback<libjami::ConversationSignal::ConversationRequestReceived>(),
+        exported_callback<libjami::ConversationSignal::ConversationRequestDeclined>(),
+        exported_callback<libjami::ConversationSignal::ConversationReady>(),
+        exported_callback<libjami::ConversationSignal::ConversationRemoved>(),
+        exported_callback<libjami::ConversationSignal::ConversationMemberEvent>(),
+        exported_callback<libjami::ConversationSignal::ConversationSyncFinished>(),
+        exported_callback<libjami::ConversationSignal::CallConnectionRequest>(),
+        exported_callback<libjami::ConversationSignal::OnConversationError>(),
+        exported_callback<libjami::ConversationSignal::ConversationPreferencesUpdated>(),
 
 #ifdef ENABLE_PLUGIN
-        exported_callback<DRing::PluginSignal::WebViewMessageReceived>(),
+        exported_callback<libjami::PluginSignal::WebViewMessageReceived>(),
 #endif
     };
 
@@ -150,7 +150,7 @@ getSignalHandlers()
 
 }; // namespace jami
 
-namespace DRing {
+namespace libjami {
 
 void
 registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
@@ -175,4 +175,4 @@ unregisterSignalHandlers()
     }
 }
 
-} // namespace DRing
+} // namespace libjami
