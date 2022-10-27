@@ -114,9 +114,9 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     base.do_shutdown = [](pjsip_transport* transport) -> pj_status_t {
         auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
             reinterpret_cast<TransportData*>(transport)->self);
-        JAMI_DBG("ChanneledSIPTransport@%p {tr=%p {rc=%ld}}: shutdown",
-                 this_,
-                 transport,
+        JAMI_DEBUG("ChanneledSIPTransport@{} tr={} rc={:d}: shutdown",
+                 fmt::ptr(this_),
+                 fmt::ptr(transport),
                  pj_atomic_get(transport->ref_cnt));
         if (this_->socket_)
             this_->socket_->shutdown();
@@ -125,7 +125,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     base.destroy = [](pjsip_transport* transport) -> pj_status_t {
         auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
             reinterpret_cast<TransportData*>(transport)->self);
-        JAMI_DBG("ChanneledSIPTransport@%p: destroying", this_);
+        JAMI_DEBUG("ChanneledSIPTransport@{}: destroying", fmt::ptr(this_));
         delete this_;
         return PJ_SUCCESS;
     };

@@ -55,7 +55,7 @@ MessageEngine::sendMessage(const std::string& to,
         auto& peerMessages = messages_[to];
         auto previousIt = peerMessages.find(refreshToken);
         if (previousIt != peerMessages.end() && previousIt->second.status != MessageStatus::SENT) {
-            JAMI_DBG("[message %ld] Replace content", refreshToken);
+            JAMI_DEBUG("[message {:d}] Replace content", refreshToken);
             token = refreshToken;
             previousIt->second.to = to;
             previousIt->second.payloads = payloads;
@@ -111,7 +111,7 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
     }
     // avoid locking while calling callback
     for (const auto& p : pending) {
-        JAMI_DBG() << "[message " << p.token << "] Retry sending";
+        JAMI_DEBUG("[message {:d}] Retry sending", p.token);
         if (p.payloads.find("application/im-gitmessage-id") == p.payloads.end())
             emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                 account_.getAccountID(),
@@ -162,11 +162,11 @@ MessageEngine::cancel(MessageToken t)
 void
 MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok)
 {
-    JAMI_DBG() << "[message " << token << "] Message sent: " << (ok ? "success" : "failure");
+    JAMI_DEBUG("[message {:d}] Message sent: {:s}", token, ok ? "success"sv : "failure"sv);
     std::lock_guard<std::mutex> lock(messagesMutex_);
     auto p = messages_.find(peer);
     if (p == messages_.end()) {
-        JAMI_DBG() << "[message " << token << "] Can't find peer";
+        JAMI_DEBUG("[message {:d}] Can't find peer", token);
         return;
     }
     auto f = p->second.find(token);
@@ -198,13 +198,13 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                 save_();
             } else {
                 f->second.status = MessageStatus::IDLE;
-                JAMI_DBG() << "[message " << token << "] Status changed to IDLE";
+                JAMI_DEBUG("[message {:d}] Status changed to IDLE", token);
             }
         } else {
-            JAMI_DBG() << "[message " << token << "] State is not SENDING";
+            JAMI_DEBUG("[message {:d}] State is not SENDING", token);
         }
     } else {
-        JAMI_DBG() << "[message " << token << "] Can't find message";
+        JAMI_DEBUG("[message {:d}] Can't find message", token);
     }
 }
 
