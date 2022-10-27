@@ -179,32 +179,6 @@ public:
     const std::string& getLocalInterface() const { return interface_; }
 
     /**
-     * Get the public IP address set by the user for this account.
-     * If this setting is not provided, the local bound adddress
-     * will be used.
-     * @return std::string The public IPv4 or IPv6 address formatted in standard notation.
-     */
-    std::string getPublishedAddress() const { return publishedIpAddress_; }
-
-    IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
-
-    void setPublishedAddress(const IpAddr& ip_addr);
-
-    /**
-     * Get the published port, which is the port to be advertised as the port
-     * for the chosen SIP transport.
-     * @return pj_uint16 The port used for that account
-     */
-    pj_uint16_t getPublishedPort() const { return (pj_uint16_t) publishedPort_; }
-
-    /**
-     * Set the published port, which is the port to be advertised as the port
-     * for the chosen SIP transport.
-     * @pram port The port used by this account.
-     */
-    void setPublishedPort(pj_uint16_t port) { publishedPort_ = port; }
-
-    /**
      * Get a flag which determine the usage in sip headers of either the local
      * IP address and port (_localAddress and localPort_) or to an address set
      * manually (_publishedAddress and publishedPort_).
@@ -228,23 +202,6 @@ public:
     uint16_t generateVideoPort() const;
 #endif
     static void releasePort(uint16_t port) noexcept;
-
-    /**
-     * @return pj_str_t , filled from the configuration
-     * file, that can be used directly by PJSIP to initialize
-     * an alternate UDP transport.
-     */
-    std::string getStunServer() const
-    {
-        return stunServer_;
-    }
-
-    void setStunServer(const std::string& srv)
-    {
-        stunServer_ = srv;
-    }
-
-    IceTransportOptions getIceOptions() const noexcept;
 
     virtual void sendMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
@@ -305,9 +262,15 @@ public: // overloaded methods
         return result;
     }
 
+    /**
+     * Create and return ICE options.
+     */
+    virtual IceTransportOptions getIceOptions() const noexcept = 0;
+
+    virtual IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const = 0;
+
 protected:
     virtual void serialize(YAML::Emitter& out) const override;
-    virtual void serializeTls(YAML::Emitter& out) const;
     virtual void unserialize(const YAML::Node& node) override;
 
     virtual void setAccountDetails(const std::map<std::string, std::string>& details) override;
@@ -341,53 +304,6 @@ protected:
      * sip headers
      */
     bool publishedSameasLocal_ {true};
-
-    /**
-     * Published IPv4/IPv6 addresses, used only if defined by the user in account
-     * configuration
-     *
-     */
-    IpAddr publishedIp_[2] {};
-
-    // This will be stored in the configuration
-    std::string publishedIpAddress_ {};
-
-    /**
-     * Published port, used only if defined by the user
-     */
-    pj_uint16_t publishedPort_ {sip_utils::DEFAULT_SIP_PORT};
-
-    /**
-     * Determine if STUN public address resolution is required to register this account. In this
-     * case a STUN server hostname must be specified.
-     */
-    bool stunEnabled_ {false};
-
-    /**
-     * The STUN server hostname (optional), used to provide the public IP address in case the
-     * softphone stay behind a NAT.
-     */
-    std::string stunServer_ {};
-
-    /**
-     * Determine if TURN public address resolution is required to register this account. In this
-     * case a TURN server hostname must be specified.
-     */
-    bool turnEnabled_ {false};
-
-    /**
-     * The TURN server hostname (optional), used to provide the public IP address in case the
-     * softphone stay behind a NAT.
-     */
-    std::string turnServer_;
-    std::string turnServerUserName_;
-    std::string turnServerPwd_;
-    std::string turnServerRealm_;
-
-    std::string tlsCaListFile_;
-    std::string tlsCertificateFile_;
-    std::string tlsPrivateKeyFile_;
-    std::string tlsPassword_;
 
     /**
      * DTMF type used for this account SIPINFO or RTP
