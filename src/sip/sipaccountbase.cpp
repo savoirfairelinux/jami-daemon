@@ -186,30 +186,11 @@ SIPAccountBase::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange_.first;
     out << YAML::Key << Conf::DTMF_TYPE_KEY << YAML::Value << dtmfType_;
     out << YAML::Key << Conf::INTERFACE_KEY << YAML::Value << interface_;
-    out << YAML::Key << Conf::PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
-    out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
     out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
 
     out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
     out << YAML::Key << Conf::VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
     out << YAML::Key << Conf::VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
-
-    out << YAML::Key << Conf::STUN_ENABLED_KEY << YAML::Value << stunEnabled_;
-    out << YAML::Key << Conf::STUN_SERVER_KEY << YAML::Value << stunServer_;
-    out << YAML::Key << Conf::TURN_ENABLED_KEY << YAML::Value << turnEnabled_;
-    out << YAML::Key << Conf::TURN_SERVER_KEY << YAML::Value << turnServer_;
-    out << YAML::Key << Conf::TURN_SERVER_UNAME_KEY << YAML::Value << turnServerUserName_;
-    out << YAML::Key << Conf::TURN_SERVER_PWD_KEY << YAML::Value << turnServerPwd_;
-    out << YAML::Key << Conf::TURN_SERVER_REALM_KEY << YAML::Value << turnServerRealm_;
-}
-
-void
-SIPAccountBase::serializeTls(YAML::Emitter& out) const
-{
-    out << YAML::Key << Conf::CALIST_KEY << YAML::Value << tlsCaListFile_;
-    out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
-    out << YAML::Key << Conf::TLS_PASSWORD_KEY << YAML::Value << tlsPassword_;
-    out << YAML::Key << Conf::PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile_;
 }
 
 void
@@ -225,30 +206,11 @@ SIPAccountBase::unserialize(const YAML::Node& node)
 
     parseValue(node, Conf::INTERFACE_KEY, interface_);
     parseValue(node, Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal_);
-    parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress_);
-    IpAddr publishedIp {publishedIpAddress_};
-    if (publishedIp and not publishedSameasLocal_)
-        setPublishedAddress(publishedIp);
-
-    int port = sip_utils::DEFAULT_SIP_PORT;
-    parseValue(node, Conf::PUBLISH_PORT_KEY, port);
-    publishedPort_ = port;
 
     parseValue(node, Conf::DTMF_TYPE_KEY, dtmfType_);
 
     unserializeRange(node, Conf::AUDIO_PORT_MIN_KEY, Conf::AUDIO_PORT_MAX_KEY, audioPortRange_);
     unserializeRange(node, Conf::VIDEO_PORT_MIN_KEY, Conf::VIDEO_PORT_MAX_KEY, videoPortRange_);
-
-    // ICE - STUN/TURN
-    if (not isIP2IP()) {
-        parseValue(node, Conf::STUN_ENABLED_KEY, stunEnabled_);
-        parseValue(node, Conf::STUN_SERVER_KEY, stunServer_);
-        parseValue(node, Conf::TURN_ENABLED_KEY, turnEnabled_);
-        parseValue(node, Conf::TURN_SERVER_KEY, turnServer_);
-        parseValue(node, Conf::TURN_SERVER_UNAME_KEY, turnServerUserName_);
-        parseValue(node, Conf::TURN_SERVER_PWD_KEY, turnServerPwd_);
-        parseValue(node, Conf::TURN_SERVER_REALM_KEY, turnServerRealm_);
-    }
 }
 
 void
@@ -261,11 +223,6 @@ SIPAccountBase::setAccountDetails(const std::map<std::string, std::string>& deta
     // general sip settings
     parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
     parseBool(details, Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
-    parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
-    parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort_);
-    IpAddr publishedIp {publishedIpAddress_};
-    if (publishedIp and not publishedSameasLocal_)
-        setPublishedAddress(publishedIp);
 
     parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
 
@@ -281,17 +238,6 @@ SIPAccountBase::setAccountDetails(const std::map<std::string, std::string>& deta
     parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
-
-    // ICE - STUN
-    parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
-    parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
-
-    // ICE - TURN
-    parseBool(details, Conf::CONFIG_TURN_ENABLE, turnEnabled_);
-    parseString(details, Conf::CONFIG_TURN_SERVER, turnServer_);
-    parseString(details, Conf::CONFIG_TURN_SERVER_UNAME, turnServerUserName_);
-    parseString(details, Conf::CONFIG_TURN_SERVER_PWD, turnServerPwd_);
-    parseString(details, Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm_);
 }
 
 std::map<std::string, std::string>
@@ -313,16 +259,6 @@ SIPAccountBase::getAccountDetails() const
 
     a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
     a.emplace(Conf::CONFIG_LOCAL_INTERFACE, interface_);
-    a.emplace(Conf::CONFIG_PUBLISHED_PORT, std::to_string(publishedPort_));
-    a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
-    a.emplace(Conf::CONFIG_STUN_ENABLE, stunEnabled_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_STUN_SERVER, stunServer_);
-    a.emplace(Conf::CONFIG_TURN_ENABLE, turnEnabled_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_TURN_SERVER, turnServer_);
-    a.emplace(Conf::CONFIG_TURN_SERVER_UNAME, turnServerUserName_);
-    a.emplace(Conf::CONFIG_TURN_SERVER_PWD, turnServerPwd_);
-    a.emplace(Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm_);
 
     return a;
 }
@@ -415,46 +351,6 @@ SIPAccountBase::generateVideoPort() const
 }
 #endif
 
-IceTransportOptions
-SIPAccountBase::getIceOptions() const noexcept
-{
-    IceTransportOptions opts;
-    opts.upnpEnable = getUPnPActive();
-
-    if (stunEnabled_)
-        opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
-    if (turnEnabled_) {
-        auto cached = false;
-        std::lock_guard<std::mutex> lk(cachedTurnMutex_);
-        cached = cacheTurnV4_ || cacheTurnV6_;
-        if (cacheTurnV4_ && *cacheTurnV4_) {
-            opts.turnServers.emplace_back(TurnServerInfo()
-                                              .setUri(cacheTurnV4_->toString(true))
-                                              .setUsername(turnServerUserName_)
-                                              .setPassword(turnServerPwd_)
-                                              .setRealm(turnServerRealm_));
-        }
-        // NOTE: first test with ipv6 turn was not concluant and resulted in multiple
-        // co issues. So this needs some debug. for now just disable
-        // if (cacheTurnV6_ && *cacheTurnV6_) {
-        //    opts.turnServers.emplace_back(TurnServerInfo()
-        //                                      .setUri(cacheTurnV6_->toString(true))
-        //                                      .setUsername(turnServerUserName_)
-        //                                      .setPassword(turnServerPwd_)
-        //                                      .setRealm(turnServerRealm_));
-        //}
-        // Nothing cached, so do the resolution
-        if (!cached) {
-            opts.turnServers.emplace_back(TurnServerInfo()
-                                              .setUri(turnServer_)
-                                              .setUsername(turnServerUserName_)
-                                              .setPassword(turnServerPwd_)
-                                              .setRealm(turnServerRealm_));
-        }
-    }
-    return opts;
-}
-
 void
 SIPAccountBase::onTextMessage(const std::string& id,
                               const std::string& from,
@@ -490,35 +386,6 @@ SIPAccountBase::onTextMessage(const std::string& id,
     lastMessages_.emplace_back(std::move(message));
     while (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
         lastMessages_.pop_front();
-    }
-}
-
-IpAddr
-SIPAccountBase::getPublishedIpAddress(uint16_t family) const
-{
-    if (family == AF_INET)
-        return publishedIp_[0];
-    if (family == AF_INET6)
-        return publishedIp_[1];
-
-    assert(family == AF_UNSPEC);
-
-    // If family is not set, prefere IPv4 if available. It's more
-    // likely to succeed behind NAT.
-    if (publishedIp_[0])
-        return publishedIp_[0];
-    if (publishedIp_[1])
-        return publishedIp_[1];
-    return {};
-}
-
-void
-SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
-{
-    if (ip_addr.getFamily() == AF_INET) {
-        publishedIp_[0] = ip_addr;
-    } else {
-        publishedIp_[1] = ip_addr;
     }
 }
 
