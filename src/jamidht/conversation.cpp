@@ -806,12 +806,6 @@ Conversation::lastCommitId() const
     return messages.front().at(ConversationMapKeys::ID);
 }
 
-bool
-Conversation::fetchFrom(const std::string& uri)
-{
-    return pimpl_->repository_->fetch(uri);
-}
-
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::mergeHistory(const std::string& uri)
 {
