@@ -41,7 +41,7 @@ public:
 
 %feature("director") VideoCallback;
 
-namespace DRing {
+namespace libjami {
 
 void setDefaultDevice(const std::string& name);
 std::string getDefaultDevice();
@@ -51,7 +51,7 @@ void stopAudioDevice();
 std::map<std::string, std::string> getSettings(const std::string& name);
 void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
 
-void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
+void registerSinkTarget(const std::string& sinkId, const libjami::SinkTarget& target);
 bool getDecodingAccelerated();
 void setDecodingAccelerated(bool state);
 bool getEncodingAccelerated();

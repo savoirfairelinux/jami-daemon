@@ -480,9 +480,9 @@ SIPAccountBase::onTextMessage(const std::string& id,
             std::make_shared<JamiMessage>(accountID_, from, true, payloads, false));
     }
 #endif
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, id, payloads);
+    emitSignal<libjami::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, id, payloads);
 
-    DRing::Message message;
+    libjami::Message message;
     message.from = from;
     message.payloads = payloads;
     message.received = std::time(nullptr);
@@ -522,7 +522,7 @@ SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
     }
 }
 
-std::vector<DRing::Message>
+std::vector<libjami::Message>
 SIPAccountBase::getLastMessages(const uint64_t& base_timestamp)
 {
     std::lock_guard<std::mutex> lck(mutexLastMessages_);

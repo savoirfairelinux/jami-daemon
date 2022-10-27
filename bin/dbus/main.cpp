@@ -40,7 +40,7 @@ static void
 print_title()
 {
     std::cout
-        << "Jami Daemon " << DRing::version()
+        << "Jami Daemon " << libjami::version()
         << ", by Savoir-faire Linux 2004-2020" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
@@ -134,13 +134,13 @@ parse_args(int argc, char *argv[], bool& persistent)
     }
 
     if (consoleFlag)
-        ringFlags |= DRing::DRING_FLAG_CONSOLE_LOG;
+        ringFlags |= libjami::LIBJAMI_FLAG_CONSOLE_LOG;
 
     if (debugFlag)
-        ringFlags |= DRing::DRING_FLAG_DEBUG;
+        ringFlags |= libjami::LIBJAMI_FLAG_DEBUG;
 
     if (autoAnswer)
-        ringFlags |= DRing::DRING_FLAG_AUTOANSWER;
+        ringFlags |= libjami::LIBJAMI_FLAG_AUTOANSWER;
 
     return false;
 }

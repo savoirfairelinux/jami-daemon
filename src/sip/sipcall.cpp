@@ -69,7 +69,7 @@
 namespace jami {
 
 using sip_utils::CONST_PJ_STR;
-using namespace DRing::Call;
+using namespace libjami::Call;
 
 #ifdef ENABLE_VIDEO
 static DeviceParams
@@ -102,7 +102,7 @@ static const std::vector<unsigned> REUSE_ICE_IN_REINVITE_REQUIRED_VERSION
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
                  Call::CallType type,
-                 const std::vector<DRing::MediaMap>& mediaList)
+                 const std::vector<libjami::MediaMap>& mediaList)
     : Call(account, callId, type)
     , sdp_(new Sdp(callId))
     , enableIce_(account->isIceForMediaEnabled())
@@ -842,7 +842,7 @@ SIPCall::answer()
 }
 
 void
-SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
+SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto account = getSIPAccount();
@@ -984,7 +984,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
 }
 
 void
-SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList, bool isRemote)
+SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
 
@@ -2132,7 +2132,7 @@ SIPCall::setupNegotiatedMedia()
     // TODO. Do we really use this?
     if (not isSubcall() and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
-        emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
+        emitSignal<libjami::CallSignal::PeerHold>(getCallId(), peerHolding_);
     }
 }
 
@@ -2354,7 +2354,7 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
         rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
         sendMuteState(mediaAttr->muted_);
         if (not isSubcall())
-            emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), mediaAttr->muted_);
+            emitSignal<libjami::CallSignal::AudioMuted>(getCallId(), mediaAttr->muted_);
         return;
     }
 
@@ -2364,7 +2364,7 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
         rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
 
         if (not isSubcall())
-            emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), mediaAttr->muted_);
+            emitSignal<libjami::CallSignal::VideoMuted>(getCallId(), mediaAttr->muted_);
     }
 #endif
 }
@@ -2490,7 +2490,7 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
 }
 
 bool
-SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
+SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
@@ -2647,8 +2647,8 @@ SIPCall::reportMediaNegotiationStatus()
 {
     // Notify using the parent Id if it's a subcall.
     auto callId = isSubcall() ? parent_->getCallId() : getCallId();
-    emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
-        callId, DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS, currentMediaList());
+    emitSignal<libjami::CallSignal::MediaNegotiationStatus>(
+        callId, libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS, currentMediaList());
 }
 
 void
@@ -2732,7 +2732,7 @@ SIPCall::onIceNegoSucceed()
 }
 
 bool
-SIPCall::checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList)
+SIPCall::checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList)
 {
     // The current media is considered to have changed if one of the
     // following condtions is true:
@@ -2759,7 +2759,7 @@ SIPCall::checkMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedia
 }
 
 void
-SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMediaList)
+SIPCall::handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList)
 {
     JAMI_DBG("[call:%s] Handling media change request", getCallId().c_str());
 
@@ -2784,7 +2784,7 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
         // the local camera will be enabled, unless the video is disabled
         // in the account settings.
 
-        std::vector<DRing::MediaMap> newMediaList;
+        std::vector<libjami::MediaMap> newMediaList;
         newMediaList.reserve(remoteMediaList.size());
         for (auto const& stream : rtpStreams_) {
             newMediaList.emplace_back(MediaAttribute::toMediaMap(*stream.mediaAttribute_));
@@ -2801,7 +2801,7 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
     }
 
     // Report the media change request.
-    emitSignal<DRing::CallSignal::MediaChangeRequested>(getAccountId(),
+    emitSignal<libjami::CallSignal::MediaChangeRequested>(getAccountId(),
                                                         getCallId(),
                                                         remoteMediaList);
 }
@@ -2975,25 +2975,25 @@ SIPCall::getDetails() const
 
     auto details = Call::getDetails();
 
-    details.emplace(DRing::Call::Details::PEER_HOLDING, peerHolding_ ? TRUE_STR : FALSE_STR);
+    details.emplace(libjami::Call::Details::PEER_HOLDING, peerHolding_ ? TRUE_STR : FALSE_STR);
 
 #ifdef ENABLE_VIDEO
     for (auto const& stream : rtpStreams_) {
         if (stream.mediaAttribute_->type_ != MediaType::MEDIA_VIDEO)
             continue;
-        details.emplace(DRing::Call::Details::VIDEO_SOURCE, stream.mediaAttribute_->sourceUri_);
+        details.emplace(libjami::Call::Details::VIDEO_SOURCE, stream.mediaAttribute_->sourceUri_);
         if (auto const& rtpSession = stream.rtpSession_) {
             if (auto codec = rtpSession->getCodec())
-                details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
+                details.emplace(libjami::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
             else
-                details.emplace(DRing::Call::Details::VIDEO_CODEC, "");
+                details.emplace(libjami::Call::Details::VIDEO_CODEC, "");
         }
     }
 #endif
 
 #if HAVE_RINGNS
     if (not peerRegisteredName_.empty())
-        details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegisteredName_);
+        details.emplace(libjami::Call::Details::REGISTERED_NAME, peerRegisteredName_);
 #endif
 
 #ifdef ENABLE_CLIENT_CERT
@@ -3002,24 +3002,24 @@ SIPCall::getDetails() const
         const auto& tlsInfos = transport_->getTlsInfos();
         if (tlsInfos.cipher != PJ_TLS_UNKNOWN_CIPHER) {
             const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
-            details.emplace(DRing::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
+            details.emplace(libjami::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
         } else {
-            details.emplace(DRing::TlsTransport::TLS_CIPHER, "");
+            details.emplace(libjami::TlsTransport::TLS_CIPHER, "");
         }
         if (tlsInfos.peerCert) {
-            details.emplace(DRing::TlsTransport::TLS_PEER_CERT, tlsInfos.peerCert->toString());
+            details.emplace(libjami::TlsTransport::TLS_PEER_CERT, tlsInfos.peerCert->toString());
             auto ca = tlsInfos.peerCert->issuer;
             unsigned n = 0;
             while (ca) {
                 std::ostringstream name_str;
-                name_str << DRing::TlsTransport::TLS_PEER_CA_ << n++;
+                name_str << libjami::TlsTransport::TLS_PEER_CA_ << n++;
                 details.emplace(name_str.str(), ca->toString());
                 ca = ca->issuer;
             }
-            details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM, std::to_string(n));
+            details.emplace(libjami::TlsTransport::TLS_PEER_CA_NUM, std::to_string(n));
         } else {
-            details.emplace(DRing::TlsTransport::TLS_PEER_CERT, "");
-            details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM, "");
+            details.emplace(libjami::TlsTransport::TLS_PEER_CERT, "");
+            details.emplace(libjami::TlsTransport::TLS_PEER_CA_NUM, "");
         }
     }
 #endif
@@ -3483,10 +3483,10 @@ SIPCall::peerRecording(bool state)
     const std::string& id = conference ? conference->getConfId() : getCallId();
     if (state) {
         JAMI_WARN("[call:%s] Peer is recording", getCallId().c_str());
-        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
+        emitSignal<libjami::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
     } else {
         JAMI_WARN("Peer stopped recording");
-        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
+        emitSignal<libjami::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
     peerRecording_ = state;
     if (auto conf = conf_.lock())

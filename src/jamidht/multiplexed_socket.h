@@ -137,7 +137,7 @@ public:
     IpAddr getLocalAddress() const;
     IpAddr getRemoteAddress() const;
 
-#ifdef DRING_TESTABLE
+#ifdef LIBJAMI_TESTABLE
     /**
      * Check if we can send beacon on the socket
      */
@@ -244,7 +244,7 @@ public:
      */
     std::shared_ptr<dht::crypto::Certificate> peerCertificate() const;
 
-#ifdef DRING_TESTABLE
+#ifdef LIBJAMI_TESTABLE
     std::shared_ptr<MultiplexedSocket> underlyingSocket() const;
 #endif
 

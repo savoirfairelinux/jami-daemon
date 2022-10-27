@@ -23,7 +23,7 @@
 #include "jami/plugin_manager_interface.h"
 %}
 
-namespace DRing {
+namespace libjami {
 bool loadPlugin(const std::string& path);
 bool unloadPlugin(const std::string& path);
 std::map<std::string,std::string> getPluginDetails(const std::string& path);

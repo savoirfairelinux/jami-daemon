@@ -39,8 +39,8 @@ namespace jami {
 
 //==============================================================================
 
-FtpServer::FtpServer(const DRing::DataTransferInfo& info,
-                     const DRing::DataTransferId& id,
+FtpServer::FtpServer(const libjami::DataTransferInfo& info,
+                     const libjami::DataTransferId& id,
                      const InternalCompletionCb& cb)
     : Stream()
     , info_ {info}
@@ -48,7 +48,7 @@ FtpServer::FtpServer(const DRing::DataTransferInfo& info,
     , cb_(cb)
 {}
 
-DRing::DataTransferId
+libjami::DataTransferId
 FtpServer::getId() const
 {
     // Because FtpServer is just the protocol on the top of a stream so the id

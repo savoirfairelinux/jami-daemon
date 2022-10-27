@@ -25,7 +25,7 @@
 #include <libguile.h>
 
 extern "C" {
-DRING_PUBLIC void bootstrap();
+LIBJAMI_PUBLIC void bootstrap();
 }
 
 void

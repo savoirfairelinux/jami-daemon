@@ -341,7 +341,7 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
 {
     notify(frame_p);
 
-    DRing::FrameBuffer outFrame(av_frame_alloc());
+    libjami::FrameBuffer outFrame(av_frame_alloc());
     av_frame_ref(outFrame.get(), std::static_pointer_cast<VideoFrame>(frame_p)->pointer());
     if (crop_.w || crop_.h) {
         outFrame->crop_top = crop_.y;
@@ -476,7 +476,7 @@ SinkClient::setFrameSize(int width, int height)
                  width,
                  height,
                  mixer_ ? "Yes" : "No");
-        emitSignal<DRing::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
+        emitSignal<libjami::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
         started_ = true;
     } else if (started_) {
         JAMI_DBG("[Sink:%p] Stopped - size=%dx%d, mixer=%s",
@@ -484,7 +484,7 @@ SinkClient::setFrameSize(int width, int height)
                  width,
                  height,
                  mixer_ ? "Yes" : "No");
-        emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
+        emitSignal<libjami::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }
 }

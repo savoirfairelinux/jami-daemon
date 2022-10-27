@@ -32,7 +32,7 @@ static SCM set_details_binding(SCM accountID_str, SCM details_alist)
 {
     LOG_BINDING();
 
-    DRing::setAccountDetails(from_guile(accountID_str),
+    libjami::setAccountDetails(from_guile(accountID_str),
                              from_guile(details_alist));
     return SCM_UNDEFINED;
 }
@@ -41,14 +41,14 @@ static SCM get_details_binding(SCM accountID_str)
 {
     LOG_BINDING();
 
-    return to_guile(DRing::getAccountDetails(from_guile(accountID_str)));
+    return to_guile(libjami::getAccountDetails(from_guile(accountID_str)));
 }
 
 static SCM send_register_binding(SCM accountID_str, SCM enable_boolean)
 {
     LOG_BINDING();
 
-    DRing::sendRegister(from_guile(accountID_str),
+    libjami::sendRegister(from_guile(accountID_str),
                         from_guile(enable_boolean));
 
     return SCM_UNDEFINED;
@@ -59,11 +59,11 @@ static SCM export_to_file_binding(SCM accountID_str, SCM path_str, SCM passwd_st
     LOG_BINDING();
 
     if (SCM_UNBNDP(passwd_str_optional)) {
-        return to_guile(DRing::exportToFile(from_guile(accountID_str),
+        return to_guile(libjami::exportToFile(from_guile(accountID_str),
                                             from_guile(path_str)));
     }
 
-    return to_guile(DRing::exportToFile(from_guile(accountID_str),
+    return to_guile(libjami::exportToFile(from_guile(accountID_str),
                                         from_guile(path_str),
                                         from_guile(passwd_str_optional)));
 }
@@ -74,10 +74,10 @@ add_account_binding(SCM details_alist, SCM accountID_str_optional)
     LOG_BINDING();
 
     if (SCM_UNBNDP(accountID_str_optional)) {
-        return to_guile(DRing::addAccount(from_guile(details_alist)));
+        return to_guile(libjami::addAccount(from_guile(details_alist)));
     }
 
-    return to_guile(DRing::addAccount(from_guile(details_alist),
+    return to_guile(libjami::addAccount(from_guile(details_alist),
                                       from_guile(accountID_str_optional)));
 }
 
@@ -86,7 +86,7 @@ accept_trust_request_binding(SCM accountID_str, SCM from_uri_str)
 {
     LOG_BINDING();
 
-    return to_guile(DRing::acceptTrustRequest(from_guile(accountID_str),
+    return to_guile(libjami::acceptTrustRequest(from_guile(accountID_str),
                                               from_guile(from_uri_str)));
 }
 
@@ -99,7 +99,7 @@ send_trust_request_binding(SCM accountID_str, SCM to_uri_str, SCM payload_vector
         payload_vector_uint8_optional = scm_c_make_vector(0, SCM_UNDEFINED);
     }
 
-    DRing::sendTrustRequest(from_guile(accountID_str),
+    libjami::sendTrustRequest(from_guile(accountID_str),
                             from_guile(to_uri_str),
                             from_guile(payload_vector_uint8_optional));
     return SCM_UNDEFINED;
@@ -110,7 +110,7 @@ get_contacts_binding(SCM accountID_str)
 {
     LOG_BINDING();
 
-    return to_guile(DRing::getContacts(from_guile(accountID_str)));
+    return to_guile(libjami::getContacts(from_guile(accountID_str)));
 }
 
 static SCM
@@ -118,7 +118,7 @@ subscribe_buddy_binding(SCM accountID_str, SCM peer_uri_str, SCM flag_bool)
 {
     LOG_BINDING();
 
-    DRing::subscribeBuddy(from_guile(accountID_str),
+    libjami::subscribeBuddy(from_guile(accountID_str),
                           from_guile(peer_uri_str),
                           from_guile(flag_bool));
 
@@ -130,7 +130,7 @@ add_contact_binding(SCM accountID_str, SCM uri_str)
 {
     LOG_BINDING();
 
-    DRing::addContact(from_guile(accountID_str),
+    libjami::addContact(from_guile(accountID_str),
                       from_guile(uri_str));
 
     return SCM_UNDEFINED;
@@ -141,7 +141,7 @@ remove_contact_binding(SCM accountID_str, SCM uri_str, SCM ban_optional_bool)
 {
     LOG_BINDING();
 
-    DRing::removeContact(from_guile(accountID_str),
+    libjami::removeContact(from_guile(accountID_str),
                          from_guile(uri_str),
                          from_guile(ban_optional_bool));
 

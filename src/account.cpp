@@ -176,12 +176,12 @@ Account::setRegistrationState(RegistrationState state,
                          detail_code,
                          detail_str,
                          details = getVolatileAccountDetails()] {
-            emitSignal<DRing::ConfigurationSignal::RegistrationStateChanged>(accountId,
+            emitSignal<libjami::ConfigurationSignal::RegistrationStateChanged>(accountId,
                                                                              state,
                                                                              detail_code,
                                                                              detail_str);
 
-            emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountId, details);
+            emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountId, details);
         });
     }
 }
@@ -319,7 +319,7 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
     parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
     parseBool(details, Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt_);
     parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_);
-    parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
+    parseInt(details, libjami::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
     parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
     parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
     if (ringtonePath_.empty()) {
@@ -354,7 +354,7 @@ Account::getAccountDetails() const
             {Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_ ? TRUE_STR : FALSE_STR},
-            {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit_)},
+            {libjami::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit_)},
             {Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_RINGTONE_PATH, ringtonePath_},
             {Conf::CONFIG_UPNP_ENABLED, upnpEnabled_ ? TRUE_STR : FALSE_STR},
@@ -367,7 +367,7 @@ std::map<std::string, std::string>
 Account::getVolatileAccountDetails() const
 {
     return {{Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, mapStateNumberToString(registrationState_)},
-            {DRing::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR}};
+            {libjami::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR}};
 }
 
 bool
@@ -461,7 +461,7 @@ Account::mapStateNumberToString(RegistrationState state)
         CASE_STATE(ERROR_NEED_MIGRATION);
         CASE_STATE(INITIALIZING);
     default:
-        return DRing::Account::States::ERROR_GENERIC;
+        return libjami::Account::States::ERROR_GENERIC;
     }
 
 #undef CASE_STATE
@@ -682,9 +682,9 @@ Account::setDefaultUserAgent()
     std::string defaultUA;
     defaultUA.append(PACKAGE_NAME);
     defaultUA.append(" ");
-    defaultUA.append(DRing::version());
+    defaultUA.append(libjami::version());
     defaultUA.append(" (");
-    defaultUA.append(DRing::platform());
+    defaultUA.append(libjami::platform());
     defaultUA.append(")");
 
     return defaultUA;

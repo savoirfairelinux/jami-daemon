@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-"""DRing controlling class through DBUS"""
+"""libjami controlling class through DBUS"""
 
 import sys
 import os
@@ -29,24 +29,24 @@ import hashlib
 
 from threading import Thread
 from functools import partial
-from errorsDring import DRingCtrlAccountError, DRingCtrlError, DRingCtrlDBusError, DRingCtrlDeamonError
+from errorsDring import libjamiCtrlAccountError, libjamiCtrlError, libjamiCtrlDBusError, libjamiCtrlDeamonError
 from gi.repository import GLib
 
 try:
     import dbus
     from dbus.mainloop.glib import DBusGMainLoop
 except ImportError as e:
-    raise DRingCtrlError(str(e))
+    raise libjamiCtrlError(str(e))
 
 
 DBUS_DEAMON_OBJECT = 'cx.ring.Ring'
 DBUS_DEAMON_PATH = '/cx/ring/Ring'
 
 
-class DRingCtrl(Thread):
+class libjamiCtrl(Thread):
     def __init__(self, name, autoAnswer):
         if sys.version_info[0] < 3:
-            super(DRingCtrl, self).__init__()
+            super(libjamiCtrl, self).__init__()
         else:
             super().__init__()
 
@@ -85,10 +85,10 @@ class DRingCtrl(Thread):
             bus = dbus.SessionBus()
 
         except dbus.DBusException as e:
-            raise DRingCtrlDBusError(str(e))
+            raise libjamiCtrlDBusError(str(e))
 
         if not bus.name_has_owner(DBUS_DEAMON_OBJECT) :
-            raise DRingCtrlDBusError(("Unable to find %s in DBUS." % DBUS_DEAMON_OBJECT)
+            raise libjamiCtrlDBusError(("Unable to find %s in DBUS." % DBUS_DEAMON_OBJECT)
                                      + " Check if jami is running")
 
         try:
@@ -112,14 +112,14 @@ class DRingCtrl(Thread):
                     DBUS_DEAMON_OBJECT+'.VideoManager')
 
         except dbus.DBusException as e:
-            raise DRingCtrlDBusError("Unable to bind to jami DBus API")
+            raise libjamiCtrlDBusError("Unable to bind to jami DBus API")
 
         try:
             self.instance.Register(os.getpid(), self.name)
             self.registered = True
 
         except dbus.DBusException as e:
-            raise DRingCtrlDeamonError("Client registration failed")
+            raise libjamiCtrlDeamonError("Client registration failed")
 
         try:
             proxy_callmgr.connect_to_signal('incomingCall', self.onIncomingCall)
@@ -133,7 +133,7 @@ class DRingCtrl(Thread):
             proxy_confmgr.connect_to_signal('messageReceived', self.onMessageReceived)
 
         except dbus.DBusException as e:
-            raise DRingCtrlDBusError("Unable to connect to jami DBus signals")
+            raise libjamiCtrlDBusError("Unable to connect to jami DBus signals")
 
 
     def unregister(self):
@@ -145,7 +145,7 @@ class DRingCtrl(Thread):
             self.registered = False
 
         except:
-            raise DRingCtrlDeamonError("Client unregistration failed")
+            raise libjamiCtrlDeamonError("Client unregistration failed")
 
     def isRegistered(self):
         return self.registered
@@ -330,7 +330,7 @@ class DRingCtrl(Thread):
     def _valid_account(self, account):
         account = account or self.account
         if account is None:
-            raise DRingCtrlError("No provided or current account!")
+            raise libjamiCtrlError("No provided or current account!")
         return account
 
     def isAccountExists(self, account):
@@ -407,7 +407,7 @@ class DRingCtrl(Thread):
         """
 
         if details is None:
-            raise DRingCtrlAccountError("Must specifies type, alias, hostname, \
+            raise libjamiCtrlAccountError("Must specifies type, alias, hostname, \
                                   username and password in \
                                   order to create a new account")
 
@@ -417,7 +417,7 @@ class DRingCtrl(Thread):
         """Remove an account from internal list"""
 
         if accountID is None:
-            raise DRingCtrlAccountError("Account ID must be specified")
+            raise libjamiCtrlAccountError("Account ID must be specified")
 
         self.configurationmanager.removeAccount(accountID)
 
@@ -430,7 +430,7 @@ class DRingCtrl(Thread):
                 details['Account.alias'] == alias):
                 self.account = testedaccount
                 return
-        raise DRingCtrlAccountError("No enabled account matched with alias")
+        raise libjamiCtrlAccountError("No enabled account matched with alias")
 
     def getAccountByAlias(self, alias):
         """Get account name having its alias"""
@@ -440,7 +440,7 @@ class DRingCtrl(Thread):
             if details['Account.alias'] == alias:
                 return account
 
-        raise DRingCtrlAccountError("No account matched with alias")
+        raise libjamiCtrlAccountError("No account matched with alias")
 
     def setAccount(self, account):
         """Define the active account
@@ -452,14 +452,14 @@ class DRingCtrl(Thread):
             self.account = account
         else:
             print(account)
-            raise DRingCtrlAccountError("Not a valid account")
+            raise libjamiCtrlAccountError("Not a valid account")
 
     def setFirstRegisteredAccount(self):
         """Find the first enabled account and define it as active"""
 
         rAccounts = self.getAllRegisteredAccounts()
         if 0 == len(rAccounts):
-            raise DRingCtrlAccountError("No registered account !")
+            raise libjamiCtrlAccountError("No registered account !")
         self.account = rAccounts[0]
 
     def setFirstActiveAccount(self):
@@ -467,7 +467,7 @@ class DRingCtrl(Thread):
 
         aAccounts = self.getAllEnabledAccounts()
         if 0 == len(aAccounts):
-            raise DRingCtrlAccountError("No active account !")
+            raise libjamiCtrlAccountError("No active account !")
         self.account = aAccounts[0]
 
     def getAccount(self):
@@ -565,14 +565,14 @@ class DRingCtrl(Thread):
         """
 
         if dest is None or dest == "":
-            raise DRingCtrlError("Invalid call destination")
+            raise libjamiCtrlError("Invalid call destination")
 
         # Set the account to be used for this call
         if not self.account:
             self.setFirstRegisteredAccount()
 
         if self.account != "IP2IP" and not self.isAccountRegistered():
-            raise DRingCtrlAccountError("Can't place a call without a registered account")
+            raise libjamiCtrlAccountError("Can't place a call without a registered account")
 
         # Send the request to the CallManager
         callid = self.callmanager.placeCall(self.account, dest)
@@ -599,7 +599,7 @@ class DRingCtrl(Thread):
         """Transfert a call identified by a CallID"""
 
         if callid is None or callid == "":
-            raise DRingCtrlError("Invalid callID")
+            raise libjamiCtrlError("Invalid callID")
 
         self.callmanager.transfert(callid, to)
 
@@ -609,7 +609,7 @@ class DRingCtrl(Thread):
         print("Refuse call " + callid)
 
         if callid is None or callid == "":
-            raise DRingCtrlError("Invalid callID")
+            raise libjamiCtrlError("Invalid callID")
 
         self.callmanager.refuse(callid)
 
@@ -622,10 +622,10 @@ class DRingCtrl(Thread):
             self.setFirstRegisteredAccount()
 
         if not self.isAccountRegistered():
-            raise DRingCtrlAccountError("Can't accept a call without a registered account")
+            raise libjamiCtrlAccountError("Can't accept a call without a registered account")
 
         if callid is None or callid == "":
-            raise DRingCtrlError("Invalid callID")
+            raise libjamiCtrlError("Invalid callID")
 
         self.callmanager.accept(callid)
 
@@ -634,7 +634,7 @@ class DRingCtrl(Thread):
         """Hold a call identified by a CallID"""
 
         if callid is None or callid == "":
-            raise DRingCtrlError("Invalid callID")
+            raise libjamiCtrlError("Invalid callID")
 
         self.callmanager.hold(callid)
 
@@ -643,7 +643,7 @@ class DRingCtrl(Thread):
         """Unhold an incoming call identified by a CallID"""
 
         if callid is None or callid == "":
-            raise DRingCtrlError("Invalid callID")
+            raise libjamiCtrlError("Invalid callID")
 
         self.callmanager.unhold(callid)
 

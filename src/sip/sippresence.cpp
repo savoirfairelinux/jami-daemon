@@ -196,7 +196,7 @@ SIPPresence::reportPresSubClientNotification(std::string_view uri, pjsip_pres_st
         note_ = note;
     }
     // report status to client signal
-    emitSignal<DRing::PresenceSignal::NewBuddyNotification>(acc_ID,
+    emitSignal<libjami::PresenceSignal::NewBuddyNotification>(acc_ID,
                                                             std::string(uri),
                                                             status->info[0].basic_open,
                                                             note);
@@ -371,7 +371,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam* param)
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));
             JAMI_ERR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
-            emitSignal<DRing::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(),
+            emitSignal<libjami::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(),
                                                            error,
                                                            errmsg);
 
@@ -385,7 +385,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam* param)
                    || (param->code == PJSIP_SC_NOT_IMPLEMENTED)) { // 489 or 501
             JAMI_WARN("Client (PUBLISH) failed (%s)", error.c_str());
 
-            emitSignal<DRing::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(),
+            emitSignal<libjami::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(),
                                                            error,
                                                            "Publish not supported.");
 

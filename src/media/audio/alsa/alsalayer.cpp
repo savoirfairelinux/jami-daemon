@@ -139,7 +139,7 @@ AlsaLayer::startStream(AudioDeviceType type)
                                        SND_PCM_STREAM_PLAYBACK,
                                        audioFormat_);
         if (not is_playback_open_)
-            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
+            emitSignal<libjami::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
 
         hardwareFormatAvailable(getFormat());
         startPlaybackStream();
@@ -151,7 +151,7 @@ AlsaLayer::startStream(AudioDeviceType type)
                         buildDeviceTopo(dsnop ? PCM_DMIX : audioPlugin_, indexRing_),
                         SND_PCM_STREAM_PLAYBACK,
                         audioFormat_))
-            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
+            emitSignal<libjami::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
     }
 
     if (type == AudioDeviceType::CAPTURE and not is_capture_open_) {
@@ -161,7 +161,7 @@ AlsaLayer::startStream(AudioDeviceType type)
                                       audioInputFormat_);
 
         if (not is_capture_open_)
-            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_CAPTURE_DEVICE);
+            emitSignal<libjami::ConfigurationSignal::Error>(ALSA_CAPTURE_DEVICE);
         prepareCaptureStream();
         startCaptureStream();
     }

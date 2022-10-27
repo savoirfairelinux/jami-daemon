@@ -52,7 +52,7 @@
 
 using RingDBusMessage = DBus::Struct<std::string, std::map<std::string, std::string>, uint64_t>;
 
-class DRING_PUBLIC DBusConfigurationManager : public cx::ring::Ring::ConfigurationManager_adaptor,
+class LIBJAMI_PUBLIC DBusConfigurationManager : public cx::ring::Ring::ConfigurationManager_adaptor,
                                               public DBus::IntrospectableAdaptor,
                                               public DBus::ObjectAdaptor
 {
@@ -215,7 +215,7 @@ public:
     void connectivityChanged();
     void sendFileLegacy(const RingDBusDataTransferInfo& info,
                         uint32_t& error,
-                        DRing::DataTransferId& id);
+                        libjami::DataTransferId& id);
     void sendFile(const std::string& accountId,
                   const std::string& conversationId,
                   const std::string& path,

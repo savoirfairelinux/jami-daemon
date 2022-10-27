@@ -113,7 +113,7 @@ struct ConversationMember
 /**
  * This class gives access to the git repository that represents the conversation
  */
-class DRING_TESTABLE ConversationRepository
+class LIBJAMI_TESTABLE ConversationRepository
 {
 public:
     /**
@@ -123,7 +123,7 @@ public:
      * @param otherMember   The other uri
      * @return  the conversation repository object
      */
-    static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
+    static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
         const std::weak_ptr<JamiAccount>& account,
         ConversationMode mode = ConversationMode::INVITES_ONLY,
         const std::string& otherMember = "");
@@ -136,7 +136,7 @@ public:
      * @param conversationId    Conversation to clone
      * @param socket            Socket used to clone
      */
-    static DRING_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
+    static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
         const std::weak_ptr<JamiAccount>& account,
         const std::string& deviceId,
         const std::string& conversationId);
