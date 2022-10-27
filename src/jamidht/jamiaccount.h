@@ -319,6 +319,11 @@ public:
                             const std::map<std::string, std::string>& msg);
     void onIsComposing(const std::string& conversationId, const std::string& peer, bool isWriting);
 
+    /**
+     * Create and return ICE options.
+     */
+    IceTransportOptions getIceOptions() const noexcept;
+
     /* Devices */
     void addDevice(const std::string& password);
     /**
@@ -436,16 +441,6 @@ public:
      * Get current discovered peers account id and display name
      */
     std::map<std::string, std::string> getNearbyPeers() const override;
-
-    /**
-     * Store the local/public addresses used to register
-     */
-    void storeActiveIpAddress(std::function<void()>&& cb = {});
-
-    /**
-     * Create and return ICE options.
-     */
-    void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
 
 #ifdef LIBJAMI_TESTABLE
     ConnectionManager& connectionManager()
@@ -702,8 +697,6 @@ private:
                                const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                                const dht::InfoHash& from);
 
-    static tls::DhParams loadDhParams(std::string path);
-
     void loadCachedUrl(const std::string& url,
                        const std::string& cachePath,
                        const std::chrono::seconds& cacheDuration,
@@ -787,6 +780,7 @@ private:
     std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
     mutable std::mutex connManagerMtx_ {};
     std::unique_ptr<ConnectionManager> connectionManager_;
+    std::shared_ptr<ConnectionManager::Config> connectionManagerConfig_;
     GitSocketList gitSocketList_ {};
 
     std::mutex discoveryMapMtx_;

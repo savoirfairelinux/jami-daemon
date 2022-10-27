@@ -60,6 +60,8 @@ public:
 
     static DhParams generate();
 
+    static DhParams loadDhParams(const std::string& path);
+
 private:
     std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)*>
         params_ {nullptr, gnutls_dh_params_deinit};
