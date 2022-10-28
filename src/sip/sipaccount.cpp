@@ -2219,8 +2219,6 @@ SIPAccount::sendMessage(const std::string& to,
     t->id = id;
 
     /* Initialize Auth header. */
-    auto cred = getCredInfo();
-    const_cast<pjsip_cred_info*>(cred)->realm = CONST_PJ_STR(hostname_);
     status = pjsip_auth_clt_init(t->auth_sess.get(), link_.getEndpoint(), tdata->pool, 0);
 
     if (status != PJ_SUCCESS) {
@@ -2229,7 +2227,7 @@ SIPAccount::sendMessage(const std::string& to,
         return;
     }
 
-    status = pjsip_auth_clt_set_credentials(t->auth_sess.get(), getCredentialCount(), cred);
+    status = pjsip_auth_clt_set_credentials(t->auth_sess.get(), getCredentialCount(), getCredInfo());
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to set auth session data: %s", sip_utils::sip_strerror(status).c_str());
