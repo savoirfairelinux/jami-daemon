@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f8e693cc_5ecc36a8",
+        "filename": "src/account.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-28T18:26:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "77eb45a8_21c85976",
+      "revId": "cf287a8ea059bb472b530491d38f6a2ec0d64b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "36d066fc_c0667a9c",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-10-27T22:02:28Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nan exception may be thrown in function \u0027isEnabled\u0027 which should not throw exceptions\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-exception-escape",
+      "revId": "cf287a8ea059bb472b530491d38f6a2ec0d64b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a4568ed3_ff7b096c",
+        "filename": "src/account.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-28T18:26:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "36d066fc_c0667a9c",
       "revId": "cf287a8ea059bb472b530491d38f6a2ec0d64b45",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fa7e041b_868a2233",
+        "filename": "src/account.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-28T18:26:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1121b43e_c4f8eaae",
+      "revId": "cf287a8ea059bb472b530491d38f6a2ec0d64b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2dea6edb_a1fd09ad",
@@ -65,6 +119,24 @@
       "writtenOn": "2022-10-27T22:02:28Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nan exception may be thrown in function \u0027isVideoEnabled\u0027 which should not throw exceptions\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-exception-escape",
+      "revId": "cf287a8ea059bb472b530491d38f6a2ec0d64b45",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cb3cbf43_09bac802",
+        "filename": "src/account.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-28T18:26:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2dea6edb_a1fd09ad",
       "revId": "cf287a8ea059bb472b530491d38f6a2ec0d64b45",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
