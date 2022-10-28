@@ -3017,6 +3017,20 @@ JamiAccount::updateConvForContact(const std::string& uri,
         if (auto info = accountManager_->getInfo()) {
             auto urih = dht::InfoHash(uri);
             auto details = getContactDetails(uri);
+
+            // NOTE: the following if is veeeeeeeery unlikely, but if for some reason "contacts" got
+            // malformed, details.size() will be 0 and we should try to re-add the contact
+            if (details.size() == 0) {
+                JAMI_ERROR("Contact {:s} not found (This should never happen)! Re-adding contact", uri);
+                if (accountManager_)
+                    accountManager_->addContact(uri, true, newConv);
+                auto details = getContactDetails(uri);
+                if (details.size() == 0) {
+                    JAMI_ERROR("Contact {:s} seems completely malfored. This is bad.", uri);
+                    return false;
+                }
+            }
+
             auto itDetails = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
             if (itDetails != details.end() && itDetails->second != oldConv) {
                 JAMI_DBG("Old conversation is not found in details %s", oldConv.c_str());
