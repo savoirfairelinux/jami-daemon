@@ -355,9 +355,6 @@ IceMediaCandExchangeTest::setupSipAccount(CallData& user)
     details = account->getAccountDetails();
     user.userName_ = details[ConfProperties::USERNAME];
     user.alias_ = details[ConfProperties::ALIAS];
-
-    account->enableIceForMedia(true);
-
     user.dest_ = ip_utils::getLocalAddr(AF_INET);
     user.dest_.setPort(user.listeningPort_);
 }
