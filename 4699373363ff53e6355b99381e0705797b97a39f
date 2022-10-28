@@ -41,6 +41,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "49b6100e_c9219b56",
+        "filename": "src/account.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-28T18:36:56Z",
+      "side": 0,
+      "message": "can\u0027t reproduce",
+      "parentUuid": "bb273a43_6648501c",
+      "revId": "4699373363ff53e6355b99381e0705797b97a39f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0dae12f6_c2d79ea1",
@@ -54,6 +72,30 @@
       "writtenOn": "2022-10-27T19:46:09Z",
       "side": 0,
       "message": "On jamiaccount, default nameserver is resetted to ns.ring.cx",
+      "range": {
+        "startLine": 77,
+        "startChar": 41,
+        "endLine": 78,
+        "endChar": 53
+      },
+      "revId": "4699373363ff53e6355b99381e0705797b97a39f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "27df008d_dc293940",
+        "filename": "src/account.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-10-28T18:36:56Z",
+      "side": 0,
+      "message": "can\u0027t reproduce",
+      "parentUuid": "0dae12f6_c2d79ea1",
       "range": {
         "startLine": 77,
         "startChar": 41,
