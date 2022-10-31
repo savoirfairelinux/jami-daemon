@@ -46,6 +46,30 @@
       },
       "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "914b259f_b44100ef",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 5
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2022-10-31T01:47:26Z",
+      "side": 1,
+      "message": "We don\u0027t want to build unpure tests when not needed.  We also don\u0027t want to execute them.  The clean way would be to seperate the tests into different directories like Maxime suggested.\n\nHowever, this simple logic also do the trick.",
+      "parentUuid": "6fd66148_1cb8360a",
+      "range": {
+        "startLine": 9,
+        "startChar": 0,
+        "endLine": 9,
+        "endChar": 52
+      },
+      "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
