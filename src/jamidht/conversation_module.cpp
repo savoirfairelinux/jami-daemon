@@ -1369,6 +1369,19 @@ ConversationModule::editMessage(const std::string& conversationId,
 }
 
 void
+ConversationModule::reactToMessage(const std::string& conversationId,
+                                   const std::string& newBody,
+                                   const std::string& reactToId)
+{
+    // Commit message edition
+    Json::Value json;
+    json["body"] = newBody;
+    json["react-to"] = reactToId;
+    json["type"] = "text/plain";
+    pimpl_->sendMessage(conversationId, std::move(json));
+}
+
+void
 ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
 {
     auto finalUri = uri.substr(0, uri.find("@ring.dht"));
