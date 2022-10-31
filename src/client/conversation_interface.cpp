@@ -169,6 +169,8 @@ sendMessage(const std::string& accountId,
                 convModule->sendMessage(conversationId, message, commitId);
             } else if (flag == 1 /* message edition */) {
                 convModule->editMessage(conversationId, message, commitId);
+            } else if (flag == 2 /* reaction */) {
+                convModule->reactToMessage(conversationId, message, commitId);
             }
         }
 }

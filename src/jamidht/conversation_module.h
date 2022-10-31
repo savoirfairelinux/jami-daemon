@@ -42,7 +42,8 @@ struct SyncMsg
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
-using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
+using NeedSocketCb
+    = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
 using SengMsgCb
     = std::function<uint64_t(const std::string&, std::map<std::string, std::string>, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
@@ -163,6 +164,9 @@ public:
     void editMessage(const std::string& conversationId,
                      const std::string& newBody,
                      const std::string& editedId);
+    void reactToMessage(const std::string& conversationId,
+                        const std::string& newBody,
+                        const std::string& reactToId);
 
     /**
      * Add to the related conversation the call history message
