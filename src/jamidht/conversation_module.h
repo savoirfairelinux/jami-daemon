@@ -167,6 +167,9 @@ public:
     void editMessage(const std::string& conversationId,
                      const std::string& newBody,
                      const std::string& editedId);
+    void reactToMessage(const std::string& conversationId,
+                        const std::string& newBody,
+                        const std::string& reactToId);
 
     /**
      * Add to the related conversation the call history message

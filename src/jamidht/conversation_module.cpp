@@ -1026,7 +1026,7 @@ ConversationModule::loadConversations()
                              pimpl_->accountId_,
                              info.id);
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_,
-                                                                           info.id);
+                                                                             info.id);
                 itInfo = pimpl_->convInfos_.erase(itInfo);
                 continue;
             }
@@ -1129,10 +1129,10 @@ ConversationModule::onTrustRequest(const std::string& uri,
         return;
     }
     emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(pimpl_->accountId_,
-                                                                 conversationId,
-                                                                 uri,
-                                                                 payload,
-                                                                 received);
+                                                                   conversationId,
+                                                                   uri,
+                                                                   payload,
+                                                                   received);
     ConversationRequest req;
     req.from = uri;
     req.conversationId = conversationId;
@@ -1142,8 +1142,8 @@ ConversationModule::onTrustRequest(const std::string& uri,
     auto reqMap = req.toMap();
     pimpl_->addConversationRequest(conversationId, std::move(req));
     emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
-                                                                       conversationId,
-                                                                       reqMap);
+                                                                         conversationId,
+                                                                         reqMap);
 }
 
 void
@@ -1170,8 +1170,8 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     // the same conversation request. Will sync when the conversation will be added
 
     emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
-                                                                       convId,
-                                                                       reqMap);
+                                                                         convId,
+                                                                         reqMap);
 }
 
 void
@@ -1224,7 +1224,7 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
         pimpl_->saveConvRequests();
     }
     emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
-                                                                       conversationId);
+                                                                         conversationId);
     pimpl_->needsSyncingCb_({});
 }
 
@@ -1369,6 +1369,19 @@ ConversationModule::editMessage(const std::string& conversationId,
 }
 
 void
+ConversationModule::reactToMessage(const std::string& conversationId,
+                                   const std::string& newBody,
+                                   const std::string& reactToId)
+{
+    // Commit message edition
+    Json::Value json;
+    json["body"] = newBody;
+    json["react-to"] = reactToId;
+    json["type"] = "text/plain";
+    pimpl_->sendMessage(conversationId, std::move(json));
+}
+
+void
 ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
 {
     auto finalUri = uri.substr(0, uri.find("@ring.dht"));
@@ -1411,9 +1424,9 @@ ConversationModule::loadConversationMessages(const std::string& conversationId,
         conversation->second->loadMessages(
             [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                 emitSignal<libjami::ConversationSignal::ConversationLoaded>(id,
-                                                                          accountId,
-                                                                          conversationId,
-                                                                          messages);
+                                                                            accountId,
+                                                                            conversationId,
+                                                                            messages);
             },
             options);
         return id;
@@ -1438,9 +1451,9 @@ ConversationModule::loadConversationUntil(const std::string& conversationId,
         conversation->second->loadMessages(
             [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                 emitSignal<libjami::ConversationSignal::ConversationLoaded>(id,
-                                                                          accountId,
-                                                                          conversationId,
-                                                                          messages);
+                                                                            accountId,
+                                                                            conversationId,
+                                                                            messages);
             },
             options);
         return id;
@@ -1547,7 +1560,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 auto itConv = pimpl_->conversations_.find(convId);
                 if (itConv != pimpl_->conversations_.end() && !itConv->second->isRemoving()) {
                     emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_,
-                                                                               convId);
+                                                                                 convId);
                     itConv->second->setRemovingFlag();
                 }
             }
@@ -1584,7 +1597,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                       convId.c_str(),
                       deviceId.c_str());
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
-                                                                               convId);
+                                                                                 convId);
             continue;
         }
 
@@ -1594,8 +1607,8 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                   deviceId.c_str());
 
         emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
-                                                                           convId,
-                                                                           req.toMap());
+                                                                             convId,
+                                                                             req.toMap());
     }
 
     // Updates preferences for conversations
@@ -1906,8 +1919,8 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
         auto it = pimpl_->conversationsRequests_.begin();
         while (it != pimpl_->conversationsRequests_.end()) {
             if (it->second.from == uri) {
-                emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
-                                                                                   it->first);
+                emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(
+                    pimpl_->accountId_, it->first);
                 update = true;
                 it = pimpl_->conversationsRequests_.erase(it);
             } else {
@@ -2063,7 +2076,7 @@ ConversationModule::call(const std::string& url,
                     return false;
                 if (auto acc = shared->account_.lock())
                     emitSignal<libjami::ConfigurationSignal::NeedsHost>(acc->getAccountID(),
-                                                                      conversationId);
+                                                                        conversationId);
                 return true;
             }
             return true;
@@ -2165,8 +2178,8 @@ ConversationModule::hostConference(const std::string& conversationId,
         conf->attachLocalParticipant();
         conf->reportMediaNegotiationStatus();
         emitSignal<libjami::CallSignal::ConferenceChanged>(acc->getAccountID(),
-                                                         conf->getConfId(),
-                                                         conf->getStateStr());
+                                                           conf->getConfId(),
+                                                           conf->getStateStr());
         return;
     }
 
