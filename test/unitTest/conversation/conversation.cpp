@@ -117,6 +117,7 @@ private:
     void testFixContactDetails();
     void testRemoveOneToOneNotInDetails();
     void testMessageEdition();
+    void testMessageReaction();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -164,6 +165,7 @@ private:
     CPPUNIT_TEST(testFixContactDetails);
     CPPUNIT_TEST(testRemoveOneToOneNotInDetails);
     CPPUNIT_TEST(testMessageEdition);
+    CPPUNIT_TEST(testMessageReaction);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -3516,6 +3518,50 @@ ConversationTest::testMessageEdition()
     errorDetected = false;
     libjami::sendMessage(aliceId, convId, "trigger"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return errorDetected; }));
+}
+
+void
+ConversationTest::testMessageReaction()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::vector<std::map<std::string, std::string>> messageAliceReceived;
+    bool conversationReady = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId)
+                messageAliceReceived.emplace_back(message);
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == aliceId)
+                conversationReady = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+    auto convId = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+    auto msgSize = messageAliceReceived.size();
+    libjami::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return messageAliceReceived.size() == msgSize + 1; }));
+    msgSize = messageAliceReceived.size();
+
+    auto reactId = messageAliceReceived.rbegin()->at("id");
+
+    libjami::sendMessage(aliceId, convId, "👋"s, reactId, 2);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 10s, [&]() { return messageAliceReceived.size() == msgSize + 1; }));
+    CPPUNIT_ASSERT(messageAliceReceived.rbegin()->at("react-to") == reactId);
+    CPPUNIT_ASSERT(messageAliceReceived.rbegin()->at("body") == "👋");
 }
 
 } // namespace test
