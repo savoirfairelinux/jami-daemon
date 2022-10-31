@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "51c39cda_77e51e1e",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-31T17:33:56Z",
+      "side": 0,
+      "message": "used by ut_auto_answer, may be removed in the test as probably useless",
+      "range": {
+        "startLine": 268,
+        "startChar": 9,
+        "endLine": 268,
+        "endChar": 21
+      },
+      "revId": "0d8dfebb05f5b50097b7bcf73639cd3e971f27e6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69df809f_5cd262f7",
+        "filename": "src/account.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-31T17:33:56Z",
+      "side": 1,
+      "message": "destroy SIP accounts (If I create one, stop jami and relaunch -\u003e the account is deleted)",
+      "range": {
+        "startLine": 61,
+        "startChar": 11,
+        "endLine": 61,
+        "endChar": 14
+      },
+      "revId": "3c6160131940d96e8a1e554437c2fc98ddaed46e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63e715e2_1f36fa30",
+        "filename": "src/account.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-31T17:33:56Z",
+      "side": 1,
+      "message": "wanted?",
+      "range": {
+        "startLine": 288,
+        "startChar": 49,
+        "endLine": 288,
+        "endChar": 89
+      },
+      "revId": "3c6160131940d96e8a1e554437c2fc98ddaed46e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57db4b03_1f14b74f",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 1583,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-31T17:33:56Z",
+      "side": 1,
+      "message": "may be removed?",
+      "range": {
+        "startLine": 1582,
+        "startChar": 22,
+        "endLine": 1583,
+        "endChar": 20
+      },
+      "revId": "3c6160131940d96e8a1e554437c2fc98ddaed46e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78155802_6d67ac97",
+        "filename": "src/sip/sipaccount_config.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-31T17:33:56Z",
+      "side": 1,
+      "message": "date",
+      "range": {
+        "startLine": 2,
+        "startChar": 18,
+        "endLine": 2,
+        "endChar": 27
+      },
+      "revId": "3c6160131940d96e8a1e554437c2fc98ddaed46e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c243e306_a6158206",
+        "filename": "src/sip/sipaccountbase_config.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-31T17:33:56Z",
+      "side": 1,
+      "message": "seems no clang-format and no ide config for trailing ;)",
+      "range": {
+        "startLine": 124,
+        "startChar": 0,
+        "endLine": 124,
+        "endChar": 4
+      },
+      "revId": "3c6160131940d96e8a1e554437c2fc98ddaed46e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
