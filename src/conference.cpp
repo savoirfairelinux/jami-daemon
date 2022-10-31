@@ -601,8 +601,10 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         }
     }
 
+#ifdef ENABLE_VIDEO
     if (videoMixer_)
         videoMixer_->switchInputs(newVideoInputs);
+#endif
     hostSources_ = mediaAttrList; // New medias
 
     // It's host medias, so no need to negotiate anything, but inform the client.
