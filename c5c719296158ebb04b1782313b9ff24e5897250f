@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b661c28f_08852d3b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 2992,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-10-31T18:28:37Z",
+      "side": 1,
+      "message": "actually you need the \"videoBitrateCurrent\" in \"VideoRtpSession\" ; .bitrate here is not the current value, but just a configuration for the default bitrate",
+      "range": {
+        "startLine": 2992,
+        "startChar": 74,
+        "endLine": 2992,
+        "endChar": 81
+      },
+      "revId": "c5c719296158ebb04b1782313b9ff24e5897250f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
