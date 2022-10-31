@@ -50,7 +50,7 @@ struct RTCPInfo
 class AudioRtpSession : public RtpSession
 {
 public:
-    AudioRtpSession(const std::string& callId, const std::string& streamId);
+    AudioRtpSession(const std::string& callId, const std::string& streamId, const std::string& audioInputId);
     virtual ~AudioRtpSession();
 
     void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
@@ -83,6 +83,7 @@ private:
     bool muteState_ {false};
     unsigned packetLoss_ {10};
     DeviceParams localAudioParams_;
+    std::string audioInputId_;
 
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
