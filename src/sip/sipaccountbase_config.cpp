@@ -17,7 +17,7 @@
 #include "sipaccountbase_config.h"
 #include "account_const.h"
 #include "account_schema.h"
-#include "yamlparser.h"
+#include "config/account_config_utils.h"
 
 namespace jami {
 
@@ -75,32 +75,23 @@ addRangeToDetails(std::map<std::string, std::string>& a,
 }
 
 void
-SipAccountBaseConfig::serialize(YAML::Emitter& out) const
+SipAccountBaseConfig::serializeDiff(YAML::Emitter& out, const SipAccountBaseConfig& DEFAULT_CONFIG) const
 {
-    AccountConfig::serialize(out);
-    out << YAML::Key << Conf::AUDIO_PORT_MAX_KEY << YAML::Value << audioPortRange.second;
-    out << YAML::Key << Conf::AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange.first;
-    out << YAML::Key << Conf::DTMF_TYPE_KEY << YAML::Value << dtmfType;
-    out << YAML::Key << Conf::INTERFACE_KEY << YAML::Value << interface;
-    out << YAML::Key << Conf::PUBLISH_ADDR_KEY << YAML::Value << publishedIp;
-    //out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort;
-    out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal;
-
-    out << YAML::Key << Conf::VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange.second;
-    out << YAML::Key << Conf::VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange.first;
-
-    out << YAML::Key << Conf::TURN_ENABLED_KEY << YAML::Value << turnEnabled;
-    out << YAML::Key << Conf::TURN_SERVER_KEY << YAML::Value << turnServer;
-    out << YAML::Key << Conf::TURN_SERVER_UNAME_KEY << YAML::Value << turnServerUserName;
-    out << YAML::Key << Conf::TURN_SERVER_PWD_KEY << YAML::Value << turnServerPwd;
-    out << YAML::Key << Conf::TURN_SERVER_REALM_KEY << YAML::Value << turnServerRealm;
-
-    /*out << YAML::Key << Conf::CALIST_KEY << YAML::Value << tlsCaListFile;
-    out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << tlsCertificateFile;
-    out << YAML::Key << Conf::TLS_PASSWORD_KEY << YAML::Value << tlsPassword;
-    out << YAML::Key << Conf::PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile;*/
+    AccountConfig::serializeDiff(out, DEFAULT_CONFIG);
+    SERIALIZE_CONFIG(Conf::DTMF_TYPE_KEY, dtmfType);
+    SERIALIZE_CONFIG(Conf::INTERFACE_KEY, interface);
+    SERIALIZE_CONFIG(Conf::PUBLISH_ADDR_KEY, publishedIp);
+    SERIALIZE_CONFIG(Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal);
+    SERIALIZE_CONFIG(Conf::AUDIO_PORT_MAX_KEY, audioPortRange.second);
+    SERIALIZE_CONFIG(Conf::AUDIO_PORT_MAX_KEY, audioPortRange.first);
+    SERIALIZE_CONFIG(Conf::VIDEO_PORT_MAX_KEY, videoPortRange.second);
+    SERIALIZE_CONFIG(Conf::VIDEO_PORT_MIN_KEY, videoPortRange.first);
+    SERIALIZE_CONFIG(Conf::TURN_ENABLED_KEY, turnEnabled);
+    SERIALIZE_CONFIG(Conf::TURN_SERVER_KEY, turnServer);
+    SERIALIZE_CONFIG(Conf::TURN_SERVER_UNAME_KEY, turnServerUserName);
+    SERIALIZE_CONFIG(Conf::TURN_SERVER_PWD_KEY, turnServerPwd);
+    SERIALIZE_CONFIG(Conf::TURN_SERVER_REALM_KEY, turnServerRealm);
 }
-
 
 void
 SipAccountBaseConfig::unserialize(const YAML::Node& node)
