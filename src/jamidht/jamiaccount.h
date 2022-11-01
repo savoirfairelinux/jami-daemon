@@ -35,6 +35,7 @@
 #include "multiplexed_socket.h"
 #include "data_transfer.h"
 #include "uri.h"
+#include "peer_connection.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -551,8 +552,8 @@ public:
 
     // non-swarm version
     libjami::DataTransferId sendFile(const std::string& peer,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                     const std::string& path,
+                                     const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,
@@ -855,7 +856,13 @@ private:
      * This will cache the turn server resolution each time we launch
      * Jami, or for each connectivityChange()
      */
+    // TODO move in separate class
+    // TODO rebase on config change
+    void testTurn(IpAddr server);
     void cacheTurnServers();
+    std::unique_ptr<TurnTransport> testTurnV4_;
+    std::unique_ptr<TurnTransport> testTurnV6_;
+    void refreshTurnDelay(bool scheduleNext);
 
     std::chrono::duration<int> turnRefreshDelay_ {std::chrono::seconds(10)};
 

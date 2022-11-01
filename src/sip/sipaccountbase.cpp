@@ -446,14 +446,6 @@ SIPAccountBase::getIceOptions() const noexcept
         //                                      .setPassword(turnServerPwd_)
         //                                      .setRealm(turnServerRealm_));
         //}
-        // Nothing cached, so do the resolution
-        if (!cached) {
-            opts.turnServers.emplace_back(TurnServerInfo()
-                                              .setUri(turnServer_)
-                                              .setUsername(turnServerUserName_)
-                                              .setPassword(turnServerPwd_)
-                                              .setRealm(turnServerRealm_));
-        }
     }
     return opts;
 }
