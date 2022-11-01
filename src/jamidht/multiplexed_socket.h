@@ -216,14 +216,9 @@ public:
 
     void shutdown() override;
 
-    std::size_t read(ValueType* buf,
-                     std::size_t len,
-                     std::error_code& ec) override;
-    std::size_t write(const ValueType* buf,
-                      std::size_t len,
-                      std::error_code& ec) override;
-    int waitForData(std::chrono::milliseconds timeout,
-                    std::error_code&) const override;
+    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
+    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
     void setOnRecv(RecvCb&&) override;
     void onRecv(std::vector<uint8_t>&& pkt) override;
 
@@ -247,7 +242,8 @@ private:
     const std::string pimpl_name;
     const uint16_t pimpl_channel;
     std::weak_ptr<ChannelSocketTest> remote;
-    OnShutdownCb shutdownCb_ { [&] {} };
+    OnShutdownCb shutdownCb_ {[&] {
+    }};
     std::atomic_bool isShutdown_ {false};
 
     void eventLoop();
@@ -257,7 +253,7 @@ private:
 /**
  * Represents a channel of the multiplexed socket (channel, name)
  */
-class ChannelSocket : ChannelSocketInterface
+class ChannelSocket : public ChannelSocketInterface
 {
 public:
     ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,

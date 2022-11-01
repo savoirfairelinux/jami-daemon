@@ -1390,8 +1390,7 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
 {
     pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
                                             this](const std::string& deviceId, ChannelCb&& cb) {
-        return needSocket(id(), deviceId, std::move(cb),
-                               "application/im-gitmessage-id");
+        return needSocket(id(), deviceId, std::move(cb), "application/im-gitmessage-id");
     };
     std::vector<DeviceId> devices;
     for (const auto& m : pimpl_->repository_->devices())
