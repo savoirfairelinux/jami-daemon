@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af90d452_6f21d5fe",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 1143,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-01T21:19:45Z",
+      "side": 1,
+      "message": "seems this deeply change something. Pretty all tests are broken on patchset 21, getUsername() seems to return nothing\n\n\u001b[0m\u001b[22;36m[1667335352.150|47778|call.cpp                :192 ] \u001b[0mStart call between alice and Bob\n\u001b[0m\u001b[22;36m[1667335352.150|47778|callmanager.cpp         :65  ] \u001b[0mNo number entered - Call aborted\n\nhttps://jenkins.jami.net/job/daemon-tests/",
+      "range": {
+        "startLine": 1143,
+        "startChar": 20,
+        "endLine": 1143,
+        "endChar": 30
+      },
+      "revId": "07a6978100fdbddcfceafb959541c33c1637a4e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
