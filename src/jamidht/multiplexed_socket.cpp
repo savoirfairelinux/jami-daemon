@@ -654,7 +654,7 @@ MultiplexedSocket::monitor() const
     JAMI_DEBUG("- Socket with device: {:s} - account: {:s}", deviceId().to_c_str(), userUri);
     auto now = clock::now();
     JAMI_DEBUG("- Duration: {}",
-             std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_));
+               std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_));
     pimpl_->endpoint->monitor();
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (const auto& [_, channel] : pimpl_->sockets) {
@@ -892,6 +892,7 @@ ChannelSocketTest::onRecv(std::vector<uint8_t>&& pkt)
         cb(&pkt[0], pkt.size());
         return;
     }
+    // JAMI_ERROR("DEVICE ID ONRECV {:s}", this->deviceId().toString());
     buf.insert(buf.end(), std::make_move_iterator(pkt.begin()), std::make_move_iterator(pkt.end()));
 }
 
@@ -917,10 +918,13 @@ ChannelSocketTest::eventLoop()
     while (!isShutdown_) {
         // wait for new data before reading
         std::unique_lock<std::mutex> lk {mutex};
+
         cv.wait(lk, [&] { return !this->buf.empty() or isShutdown_; });
+
         lk.unlock();
 
         int size = read(reinterpret_cast<uint8_t*>(buf.data()), IO_BUFFER_SIZE, ec);
+
         if (size < 0) {
             if (ec)
                 JAMI_ERR("Read error detected: %s", ec.message().c_str());
