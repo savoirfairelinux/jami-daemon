@@ -10,6 +10,10 @@ libsiplink_la_SOURCES = \
 	./sip/sipvoiplink.cpp \
 	./sip/siptransport.cpp \
 	./sip/sipaccountbase.h \
+	./sip/sipaccountbase_config.h \
+	./sip/sipaccountbase_config.cpp \
+	./sip/sipaccount_config.h \
+	./sip/sipaccount_config.cpp \
 	./sip/sdp.h \
 	./sip/sipaccount.h \
 	./sip/sipcall.h \

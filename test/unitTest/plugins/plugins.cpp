@@ -210,7 +210,6 @@ PluginsTest::setUp()
             aliceData.accountId_);
         aliceData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableIceForMedia(true);
     }
 
     // Configure Bob
@@ -220,7 +219,6 @@ PluginsTest::setUp()
             bobData.accountId_);
         bobData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableIceForMedia(true);
     }
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;

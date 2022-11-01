@@ -439,7 +439,6 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         aliceData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
         account->setLocalPort(aliceData.listeningPort_);
-        account->enableIceForMedia(true);
         account->enableIceCompIdRfc5245Compliance(aliceData.compliancyEnabled_);
     }
 
