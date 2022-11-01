@@ -27,12 +27,12 @@
 
 #include <ciso646> // fix windows compiler bug
 
-#ifndef RING_REVISION
-#define RING_REVISION ""
+#ifndef JAMI_REVISION
+#define JAMI_REVISION ""
 #endif
 
-#ifndef RING_DIRTY_REPO
-#define RING_DIRTY_REPO ""
+#ifndef JAMI_DIRTY_REPO
+#define JAMI_DIRTY_REPO ""
 #endif
 
 #ifndef PACKAGE_VERSION
@@ -44,9 +44,9 @@ namespace libjami {
 const char*
 version() noexcept
 {
-    return RING_REVISION[0] and RING_DIRTY_REPO[0]
-               ? PACKAGE_VERSION "-" RING_REVISION "-" RING_DIRTY_REPO
-               : (RING_REVISION[0] ? PACKAGE_VERSION "-" RING_REVISION : PACKAGE_VERSION);
+    return JAMI_REVISION[0] and JAMI_DIRTY_REPO[0]
+               ? PACKAGE_VERSION "-" JAMI_REVISION "-" JAMI_DIRTY_REPO
+               : (JAMI_REVISION[0] ? PACKAGE_VERSION "-" JAMI_REVISION : PACKAGE_VERSION);
 }
 
 const char*
