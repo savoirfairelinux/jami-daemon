@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a097158d_43e03ac2",
+        "filename": "globals.mk",
+        "patchSetId": 1
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-01T20:09:42Z",
+      "side": 1,
+      "message": "why not modifying this?",
+      "range": {
+        "startLine": 5,
+        "startChar": 7,
+        "endLine": 6,
+        "endChar": 9
+      },
+      "revId": "622f1d11b6ad428b34228cc7d78ff1e4fb8ca463",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
