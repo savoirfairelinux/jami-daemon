@@ -36,6 +36,7 @@
 #include "data_transfer.h"
 #include "uri.h"
 #include "jamiaccount_config.h"
+#include "connectivity/peer_connection.h"
 
 #include "noncopyable.h"
 #include "connectivity/ip_utils.h"
@@ -126,7 +127,8 @@ public:
 
     const std::string& getPath() const { return idPath_; }
 
-    const JamiAccountConfig& config() const {
+    const JamiAccountConfig& config() const
+    {
         return *static_cast<const JamiAccountConfig*>(&Account::config());
     }
 
@@ -146,7 +148,8 @@ public:
      */
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
-    std::unique_ptr<AccountConfig> buildConfig() const override {
+    std::unique_ptr<AccountConfig> buildConfig() const override
+    {
         return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_);
     }
 
@@ -422,10 +425,10 @@ public:
 
     void saveConfig() const override;
 
-    inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit) {
-        Account::editConfig([&](AccountConfig& conf) {
-            edit(*static_cast<JamiAccountConfig*>(&conf));
-        });
+    inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit)
+    {
+        Account::editConfig(
+            [&](AccountConfig& conf) { edit(*static_cast<JamiAccountConfig*>(&conf)); });
     }
 
     /**
@@ -523,8 +526,8 @@ public:
 
     // non-swarm version
     libjami::DataTransferId sendFile(const std::string& peer,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                     const std::string& path,
+                                     const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,
@@ -792,7 +795,12 @@ private:
      * This will cache the turn server resolution each time we launch
      * Jami, or for each connectivityChange()
      */
+    // TODO move in separate class
+    void testTurn(IpAddr server);
     void cacheTurnServers();
+    std::unique_ptr<TurnTransport> testTurnV4_;
+    std::unique_ptr<TurnTransport> testTurnV6_;
+    void refreshTurnDelay(bool scheduleNext);
 
     std::chrono::seconds turnRefreshDelay_ {std::chrono::seconds(10)};
 
