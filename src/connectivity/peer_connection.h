@@ -52,8 +52,27 @@ using OnStateChangeCb = std::function<bool(tls::TlsSessionState state)>;
 using OnReadyCb = std::function<void(bool ok)>;
 using onShutdownCb = std::function<void(void)>;
 
-class TurnTransport;
-class ConnectedTurnTransport;
+struct TurnTransportParams
+{
+    IpAddr server;
+    // Plain Credentials
+    std::string realm;
+    std::string username;
+    std::string password;
+};
+
+class TurnTransport
+{
+public:
+    TurnTransport(const TurnTransportParams& param, std::function<void(bool)>&& cb);
+    ~TurnTransport();
+    void shutdown();
+
+private:
+    TurnTransport() = delete;
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
+};
 
 //==============================================================================
 

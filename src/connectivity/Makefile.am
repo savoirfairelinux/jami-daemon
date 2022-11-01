@@ -18,6 +18,8 @@ libconnectivity_la_SOURCES = \
 		./connectivity/peer_connection.h \
 		./connectivity/sip_utils.cpp \
 		./connectivity/sip_utils.h \
+		./connectivity/turn_transport.cpp \
+		./connectivity/turn_transport.h \
 		./connectivity/utf8_utils.cpp \
 		./connectivity/utf8_utils.h \
 		./connectivity/transport/peer_channel.h
