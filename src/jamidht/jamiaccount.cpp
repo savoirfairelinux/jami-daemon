@@ -1138,47 +1138,40 @@ JamiAccount::loadAccount(const std::string& archive_password,
 
                     fileutils::check_dir(idPath_.c_str(), 0700);
 
-                    auto& conf = *static_cast<JamiAccountConfig*>(config_.get());
-                    // save the chain including CA
                     auto id = info.identity;
-                    std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile) = saveIdentity(id,
-                                                                                     idPath_,
-                                                                                     DEVICE_ID_PATH);
                     id_ = std::move(id);
-                    conf.tlsPassword = {};
-                    conf.archiveHasPassword = hasPassword;
+                    editConfig([&](JamiAccountConfig& conf){
+                        std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile) = saveIdentity(id,
+                                                                                        idPath_,
+                                                                                        DEVICE_ID_PATH);
+                        conf.tlsPassword = {};
+                        conf.archiveHasPassword = hasPassword;
+                        if (not conf.managerUri.empty()) {
+                            conf.registeredName = conf.managerUsername;
+                            registeredName_ = conf.managerUsername;
+                        }
+                        conf.deviceName = accountManager_->getAccountDeviceName();
 
-                    conf.username = info.accountId;
-                    if (not conf.managerUri.empty()) {
-                        conf.registeredName = conf.managerUsername;
-                        registeredName_ = conf.managerUsername;
-                    }
-                    conf.deviceName = accountManager_->getAccountDeviceName();
-
-                    auto nameServerIt = config.find(libjami::Account::ConfProperties::RingNS::URI);
-                    if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
-                        conf.nameServer = nameServerIt->second;
-                    }
-                    auto displayNameIt = config.find(libjami::Account::ConfProperties::DISPLAYNAME);
-                    if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
-                        conf.displayName = displayNameIt->second;
-                    }
-
-                    conf.receipt = std::move(receipt);
-                    conf.receiptSignature = std::move(receipt_signature);
+                        auto nameServerIt = config.find(libjami::Account::ConfProperties::RingNS::URI);
+                        if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
+                            conf.nameServer = nameServerIt->second;
+                        }
+                        auto displayNameIt = config.find(libjami::Account::ConfProperties::DISPLAYNAME);
+                        if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
+                            conf.displayName = displayNameIt->second;
+                        }
+                        conf.receipt = std::move(receipt);
+                        conf.receiptSignature = std::move(receipt_signature);
+                        conf.fromMap(config);
+                    });
                     if (migrating) {
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
-
-                    // Use the provided config by JAMS instead of default one
-                    conf.fromMap(config);
-
                     if (not info.photo.empty() or not conf.displayName.empty())
                         emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
                                                                                        conf.displayName,
                                                                                        info.photo);
                     setRegistrationState(RegistrationState::UNREGISTERED);
-                    saveConfig();
                     convModule()->loadConversations();
                     doRegister();
                 },

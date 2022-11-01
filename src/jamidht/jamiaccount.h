@@ -425,6 +425,11 @@ public:
     void startAccountDiscovery();
 
     void saveConfig() const override;
+    inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit) {
+        Account::editConfig([&](AccountConfig& conf) {
+            edit(*static_cast<JamiAccountConfig*>(&conf));
+        });
+    }
 
     /**
      * Get current discovered peers account id and display name
