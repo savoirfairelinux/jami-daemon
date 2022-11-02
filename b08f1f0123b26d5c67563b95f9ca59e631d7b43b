@@ -1,0 +1,510 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16d60a50_d4a34d6c",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "Should be initialized in constructor",
+      "range": {
+        "startLine": 111,
+        "startChar": 12,
+        "endLine": 111,
+        "endChar": 40
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "62c15143_6d596807",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "emplace_back({NodeId::zero()})",
+      "range": {
+        "startLine": 160,
+        "startChar": 6,
+        "endLine": 160,
+        "endChar": 41
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "acde5871_72e1255d",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 181,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "remove debug logs",
+      "range": {
+        "startLine": 181,
+        "startChar": 31,
+        "endLine": 181,
+        "endChar": 40
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2043915c_f4f77cee",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "std::find_if exists, also avoid while(true) we can check buckets.end() here",
+      "range": {
+        "startLine": 193,
+        "startChar": 21,
+        "endLine": 193,
+        "endChar": 26
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "636bbdf2_20046206",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 351,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "no toString()?",
+      "range": {
+        "startLine": 351,
+        "startChar": 48,
+        "endLine": 351,
+        "endChar": 58
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "204d6d97_f79ba9db",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "only needed in cpp?",
+      "range": {
+        "startLine": 31,
+        "startChar": 25,
+        "endLine": 32,
+        "endChar": 54
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c25b42d0_4299a7f6",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "should not be in a .h",
+      "range": {
+        "startLine": 33,
+        "startChar": 1,
+        "endLine": 33,
+        "endChar": 34
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aae4085f_80714957",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "if you want a copy constructor, you should at least follow the rule of three https://en.cppreference.com/w/cpp/language/rule_of_three",
+      "range": {
+        "startLine": 45,
+        "startChar": 0,
+        "endLine": 45,
+        "endChar": 3
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "37d68bb5_6d9ec148",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "Question about multi-threading. Do we want this case to support multi-threading? If yes we will need mutex, else it will be protected in upper-layers\n\n(e.g. calling getKnownNodesRandom while erasing can lead to a crash)",
+      "range": {
+        "startLine": 79,
+        "startChar": 49,
+        "endLine": 79,
+        "endChar": 60
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa36d540_8c584c64",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "empty line (same for hasConnectingNodes)",
+      "range": {
+        "startLine": 125,
+        "startChar": 7,
+        "endLine": 127,
+        "endChar": 12
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2f56db14_418e1844",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "we generally add \"_\" at the end of class members",
+      "range": {
+        "startLine": 168,
+        "startChar": 42,
+        "endLine": 168,
+        "endChar": 52
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2f0d111c_087cecc7",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "size is always positive, so should be an unsigned",
+      "range": {
+        "startLine": 187,
+        "startChar": 15,
+        "endLine": 189,
+        "endChar": 15
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "354f823d_bf80703e",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "missing doc strings",
+      "range": {
+        "startLine": 176,
+        "startChar": 15,
+        "endLine": 189,
+        "endChar": 16
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a732d5d_4e987617",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "const?",
+      "range": {
+        "startLine": 242,
+        "startChar": 66,
+        "endLine": 242,
+        "endChar": 70
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "153289fa_8c7cdd38",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "public?",
+      "range": {
+        "startLine": 264,
+        "startChar": 22,
+        "endLine": 264,
+        "endChar": 29
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b274101_0db3e69b",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "unsigned",
+      "range": {
+        "startLine": 274,
+        "startChar": 4,
+        "endLine": 274,
+        "endChar": 7
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50f707f2_d38365a0",
+        "filename": "src/jamidht/swarm/swarm_channel_handler.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "sure about this?",
+      "range": {
+        "startLine": 4,
+        "startChar": 5,
+        "endLine": 5,
+        "endChar": 2
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50c32da0_3473c83e",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "i would add the brackets to the for loop for clarity",
+      "range": {
+        "startLine": 38,
+        "startChar": 40,
+        "endLine": 38,
+        "endChar": 42
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7839ce26_f2420588",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "remove debug logs",
+      "range": {
+        "startLine": 48,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 48
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7312b0e3_433cc277",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "\"[SwarmManager {:s}] Request...\" instead SM",
+      "range": {
+        "startLine": 66,
+        "startChar": 16,
+        "endLine": 66,
+        "endChar": 24
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f14315b6_c4532df5",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "lot of temp code there",
+      "range": {
+        "startLine": 163,
+        "startChar": 33,
+        "endLine": 166,
+        "endChar": 28
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3d297a0_3e5ce146",
+        "filename": "src/jamidht/swarm/swarm_manager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T15:33:59Z",
+      "side": 1,
+      "message": "id_?",
+      "range": {
+        "startLine": 45,
+        "startChar": 36,
+        "endLine": 45,
+        "endChar": 40
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
