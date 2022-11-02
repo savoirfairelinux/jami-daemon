@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a49d00d8_1b1aa159",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 1309,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-02T20:36:30Z",
+      "side": 0,
+      "message": "the problem detected by the tests is there. Here username_ was set after the initAuth, here it\u0027s not the case anymore causing the username to be empty",
+      "range": {
+        "startLine": 1307,
+        "startChar": 0,
+        "endLine": 1309,
+        "endChar": 74
+      },
+      "revId": "b7fc01f932833b9270464aae2b0353e1d5c1666f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
