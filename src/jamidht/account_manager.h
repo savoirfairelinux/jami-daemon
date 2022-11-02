@@ -225,10 +225,6 @@ public:
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
 
     virtual bool findCertificate(
-        const dht::InfoHash& h,
-        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
-
-    virtual bool findCertificate(
         const dht::PkId& h,
         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 

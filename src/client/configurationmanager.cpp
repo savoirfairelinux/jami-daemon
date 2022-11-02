@@ -179,8 +179,10 @@ unpinCertificatePath(const std::string& path)
 bool
 pinRemoteCertificate(const std::string& accountId, const std::string& certId)
 {
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        return acc->findCertificate(certId);
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        acc->dht()->findCertificate(dht::InfoHash(certId), {});
+        return true;
+    }
     return false;
 }
 
