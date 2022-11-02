@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fbc95a5e_d75a19e4",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1696,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-11-02T17:59:12Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027idPath_\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "73ccf028e39decd7f37e9227ecce132f9bc09707",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1510acd6_b9e2a729",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 351,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-11-02T17:59:12Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027getIceOptions\u0027 overrides a member function but is not marked \u0027override\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-inconsistent-missing-override",
+      "revId": "73ccf028e39decd7f37e9227ecce132f9bc09707",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac5478da_654b17d5",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2022-11-02T17:59:12Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027getPublishedIpAddress\u0027 overrides a member function but is not marked \u0027override\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-inconsistent-missing-override",
+      "revId": "73ccf028e39decd7f37e9227ecce132f9bc09707",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
