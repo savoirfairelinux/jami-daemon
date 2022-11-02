@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "44cbb390_5fd4bb41",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 1696,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "02d3dcf8_18d97add",
+      "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e617e257_b8efb206",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-11-02T19:13:14Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027tlsCaListFile_\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7ce537a8_49b1e279",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 1748,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e617e257_b8efb206",
       "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "877898f5_3ac0fab3",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 1754,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9aa1e940_f8bf8bd3",
+      "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2d5485e6_34abeb33",
@@ -65,6 +119,24 @@
       "writtenOn": "2022-11-02T19:13:14Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027tlsPrivateKeyFile_\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bfda719c_62d22241",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 1760,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "2d5485e6_34abeb33",
       "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -86,6 +158,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3b85fbe0_6e5aa1c3",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 1766,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "6d7ba244_9937b9af",
+      "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "69c2018f_59dd091b",
@@ -103,6 +193,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "74a6e27f_a601b11e",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 351,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "69c2018f_59dd091b",
+      "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "79af8e92_d9d58916",
@@ -116,6 +224,24 @@
       "writtenOn": "2022-11-02T19:13:14Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\n\u0027getPublishedIpAddress\u0027 overrides a member function but is not marked \u0027override\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-inconsistent-missing-override",
+      "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "238d3cff_a69519b7",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "79af8e92_d9d58916",
       "revId": "31c22a6e3942a9447fe97257adc520cae34bad13",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

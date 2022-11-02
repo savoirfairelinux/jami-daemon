@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f5b30837_1315f6ac",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1696,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "fbc95a5e_d75a19e4",
+      "revId": "73ccf028e39decd7f37e9227ecce132f9bc09707",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1510acd6_b9e2a729",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "00f2d583_d0d36b5c",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 351,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "1510acd6_b9e2a729",
+      "revId": "73ccf028e39decd7f37e9227ecce132f9bc09707",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ac5478da_654b17d5",
@@ -48,6 +84,24 @@
       "writtenOn": "2022-11-02T17:59:12Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\n\u0027getPublishedIpAddress\u0027 overrides a member function but is not marked \u0027override\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-inconsistent-missing-override",
+      "revId": "73ccf028e39decd7f37e9227ecce132f9bc09707",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4950d656_bd0c259d",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 353,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-02T21:10:09Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ac5478da_654b17d5",
       "revId": "73ccf028e39decd7f37e9227ecce132f9bc09707",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
