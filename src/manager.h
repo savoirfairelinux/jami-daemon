@@ -766,10 +766,6 @@ public:
     void unregisterAccounts();
 
     /**
-     * Call periodically to poll for VoIP events */
-    void pollEvents();
-
-    /**
      * Create a new outgoing call
      * @param toUrl Destination address
      * @param accountId local account
@@ -788,10 +784,6 @@ public:
     ScheduledExecutor& scheduler();
 
     std::shared_ptr<asio::io_context> ioContext() const;
-
-    void addTask(std::function<bool()>&& task,
-                 const char* filename = CURRENT_FILENAME(),
-                 uint32_t linum = CURRENT_LINE());
 
     std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
                                        std::chrono::steady_clock::time_point when,
