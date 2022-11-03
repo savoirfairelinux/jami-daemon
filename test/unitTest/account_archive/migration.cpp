@@ -78,7 +78,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MigrationTest, MigrationTest::name());
 void
 MigrationTest::setUp()
 {
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
+    auto actors = load_actors("actors/alice-bob.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
 }
@@ -98,6 +98,7 @@ MigrationTest::tearDown()
 void
 MigrationTest::testLoadExpiredAccount()
 {
+    wait_for_announcement_of({aliceId, bobId});
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceUri = aliceAccount->getUsername();
     auto aliceDevice = std::string(aliceAccount->currentDeviceId());
@@ -160,6 +161,7 @@ MigrationTest::testLoadExpiredAccount()
 void
 MigrationTest::testMigrationAfterRevokation()
 {
+    wait_for_announcement_of({aliceId, bobId});
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
@@ -217,6 +219,8 @@ MigrationTest::testMigrationAfterRevokation()
     auto bob2Device = std::string(bob2Account->currentDeviceId());
     bobAccount->revokeDevice("", bob2Device);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return deviceRevoked; }));
+    // Note: bob2 will need some seconds to get the revokation list
+    std::this_thread::sleep_for(10s);
 
     // Check migration is triggered and expiration updated
     bob2Account->forceReloadAccount();
@@ -229,9 +233,6 @@ void
 MigrationTest::testExpiredDeviceInSwarm()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto aliceDevice = std::string(aliceAccount->currentDeviceId());
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -274,7 +275,7 @@ MigrationTest::testExpiredDeviceInSwarm()
             }
             cv.notify_one();
         }));
-    bool aliceStopped = false, aliceAnnounced = false, aliceRegistered = false;
+    bool aliceStopped = false, aliceAnnounced = false, aliceRegistered = false, aliceRegistering = false;
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
@@ -284,6 +285,8 @@ MigrationTest::testExpiredDeviceInSwarm()
                     aliceStopped = true;
                 else if (daemonStatus == "REGISTERED")
                     aliceRegistered = true;
+                else if (daemonStatus == "TRYING")
+                    aliceRegistering = true;
                 auto announced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 if (announced == "true")
                     aliceAnnounced = true;
@@ -291,6 +294,11 @@ MigrationTest::testExpiredDeviceInSwarm()
             }));
     libjami::registerSignalHandlers(confHandlers);
 
+    // NOTE: We must update certificate before announcing, else, there will be several
+    // certificates on the DHT
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceRegistering; }));
+    auto aliceDevice = std::string(aliceAccount->currentDeviceId());
     CPPUNIT_ASSERT(aliceAccount->setValidity("", {}, 90));
     auto now = std::chrono::system_clock::now();
     aliceRegistered = false;
@@ -310,6 +318,8 @@ MigrationTest::testExpiredDeviceInSwarm()
     // Create conversation
     auto convId = libjami::startConversation(aliceId);
 
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return requestReceived; }));
 

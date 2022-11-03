@@ -30,7 +30,6 @@
 #include "noncopyable.h"
 #include "compiler_intrinsics.h"
 #include "manager.h"
-#include "certstore.h"
 #include "scheduled_executor.h"
 
 #include <gnutls/gnutls.h>
@@ -716,7 +715,7 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
     sendOcspRequest(aia_uri,
                     std::move(ocsp_req.first),
                     OCSP_REQUEST_TIMEOUT,
-                    [cb = std::move(cb), &cert, nonce = std::move(ocsp_req.second)](
+                    [cb = std::move(cb), &cert, nonce = std::move(ocsp_req.second), this](
                         const dht::http::Response& r) {
                         // Prepare response data
                         // Verify response validity
@@ -750,7 +749,11 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
                             JAMI_ERR("OCSP verification: certificate is revoked!");
                         }
                         // Save response into the certificate store
-                        tls::CertificateStore::instance().pinOcspResponse(cert);
+                        try {
+                            params_.certStore.pinOcspResponse(cert);
+                        } catch (std::exception& e) {
+                            JAMI_ERROR("{}", e.what());
+                        }
                         if (cb)
                             cb(status);
                     });

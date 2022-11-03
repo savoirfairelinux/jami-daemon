@@ -111,6 +111,12 @@ ConnectionManagerTest::setUp()
     auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
+
+    // Pin certificate from one to another certstore (because we do not perform any DHT operation in this test)
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    bobAccount->certStore().pinCertificate(aliceAccount->identity().second);
+    aliceAccount->certStore().pinCertificate(bobAccount->identity().second);
 }
 
 void
