@@ -22,6 +22,7 @@
 #include "jami/account_const.h"
 #include "account_schema.h"
 #include "archiver.h"
+#include "manager.h"
 
 #include "libdevcrypto/Common.h"
 
@@ -49,8 +50,14 @@ AccountManager::buildRequest(PrivateKey fDeviceKey)
         });
 }
 
+AccountManager::~AccountManager() {
+    if (dht_)
+        dht_->join();
+}
+
 dht::crypto::Identity
-AccountManager::loadIdentity(const std::string& crt_path,
+AccountManager::loadIdentity(const std::string& accountId,
+                             const std::string& crt_path,
                              const std::string& key_path,
                              const std::string& key_pwd) const
 {
@@ -66,12 +73,13 @@ AccountManager::loadIdentity(const std::string& crt_path,
             JAMI_ERR("Device certificate not matching public key!");
             return {};
         }
-        if (not dht_cert.issuer) {
-            JAMI_ERR("Device certificate %s has no issuer", dht_cert.getId().to_c_str());
+        auto& issuer = dht_cert.issuer;
+        if (not issuer) {
+            JAMI_ERROR("Device certificate {:s} has no issuer", dht_cert.getId().toString());
             return {};
         }
         // load revocation lists for device authority (account certificate).
-        tls::CertificateStore::instance().loadRevocations(*dht_cert.issuer);
+        Manager::instance().certStoreFromId(accountId).loadRevocations(*issuer);
 
         return {std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
                 std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))};
@@ -110,7 +118,8 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
 }
 
 const AccountInfo*
-AccountManager::useIdentity(const dht::crypto::Identity& identity,
+AccountManager::useIdentity(const std::string& accountId,
+                            const dht::crypto::Identity& identity,
                             const std::string& receipt,
                             const std::vector<uint8_t>& receiptSignature,
                             const std::string& username,
@@ -131,7 +140,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
     }
 
     // match certificate chain
-    auto contactList = std::make_unique<ContactList>(accountCertificate, path_, onChange);
+    auto contactList = std::make_unique<ContactList>(accountId, accountCertificate, path_, onChange);
     auto result = contactList->isValidAccountDevice(*identity.second);
     if (not result) {
         JAMI_ERR("[Auth] can't use identity: device certificate chain can't be verified: %s",
@@ -230,7 +239,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         dht_->listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {
             if (crl.isSignedBy(*info_->identity.second->issuer)) {
                 JAMI_DBG("found CRL for account.");
-                tls::CertificateStore::instance()
+                Manager::instance().certStore(info_->accountId)
                     .pinRevocationList(info_->accountId,
                                        std::make_shared<dht::crypto::RevocationList>(
                                            std::move(crl)));
@@ -488,15 +497,15 @@ AccountManager::findCertificate(
     const dht::InfoHash& h,
     std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
-    if (auto cert = tls::CertificateStore::instance().getCertificate(h.toString())) {
+    if (auto cert = Manager::instance().certStore(info_->accountId).getCertificate(h.toString())) {
         if (cb)
             cb(cert);
     } else {
         dht_->findCertificate(h,
-                              [cb = std::move(cb)](
+                              [cb = std::move(cb), this](
                                   const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                                  if (crt)
-                                      tls::CertificateStore::instance().pinCertificate(crt);
+                                  if (crt && info_)
+                                      Manager::instance().certStore(info_->accountId).pinCertificate(crt);
                                   if (cb)
                                       cb(crt);
                               });
@@ -508,7 +517,7 @@ bool
 AccountManager::findCertificate(
     const dht::PkId& id, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
-    if (auto cert = tls::CertificateStore::instance().getCertificate(id.toString())) {
+    if (auto cert = Manager::instance().certStore(info_->accountId).getCertificate(id.toString())) {
         if (cb)
             cb(cert);
     } else if (cb)
@@ -646,8 +655,8 @@ AccountManager::forEachDevice(
             end(false);
         return;
     }
-    dht_->get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl) {
-        tls::CertificateStore::instance().pinRevocationList(to.toString(), std::move(crl));
+    dht_->get<dht::crypto::RevocationList>(to, [to, this](dht::crypto::RevocationList&& crl) {
+        Manager::instance().certStore(info_->accountId).pinRevocationList(to.toString(), std::move(crl));
         return true;
     });
 
