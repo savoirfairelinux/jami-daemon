@@ -48,15 +48,14 @@ const char* statusToStr(TrustStatus s);
 class CertificateStore
 {
 public:
-    static CertificateStore& instance();
-
-    CertificateStore();
+    explicit CertificateStore(const std::string& accountId);
 
     std::vector<std::string> getPinnedCertificates() const;
     /**
      * Return certificate (with full chain)
      */
     std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id);
+    std::shared_ptr<crypto::Certificate> getCertificateLegacy(const std::string& cert_id);
 
     std::shared_ptr<crypto::Certificate> findCertificateByName(
         const std::string& name, crypto::NameType type = crypto::NameType::UNKNOWN) const;
@@ -119,7 +118,9 @@ private:
 class TrustStore
 {
 public:
-    TrustStore() = default;
+    explicit TrustStore(CertificateStore& certStore)
+        : certStore_(certStore)
+    {}
 
     enum class PermissionStatus { UNDEFINED = 0, ALLOWED, BANNED };
 
@@ -175,6 +176,7 @@ private:
     std::map<std::string, Status> unknownCertStatus_;
     std::map<std::string, std::pair<std::shared_ptr<crypto::Certificate>, Status>> certStatus_;
     dht::crypto::TrustList allowed_;
+    CertificateStore& certStore_;
 };
 
 } // namespace tls

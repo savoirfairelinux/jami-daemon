@@ -168,6 +168,7 @@ public:
     static constexpr auto TLS_TIMEOUT = std::chrono::seconds(40);
 
     Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
+         tls::CertificateStore& certStore,
          const dht::crypto::Certificate& peer_cert,
          const Identity& local_identity,
          const std::shared_future<tls::DhParams>& dh_params)
@@ -191,6 +192,7 @@ public:
             /*.cert = */ local_identity.second,
             /*.cert_key = */ local_identity.first,
             /*.dh_params = */ dh_params,
+            /*.certStore = */ certStore,
             /*.timeout = */ TLS_TIMEOUT,
             /*.cert_check = */ nullptr,
         };
@@ -198,6 +200,7 @@ public:
     }
 
     Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
+         tls::CertificateStore& certStore,
          std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
          const Identity& local_identity,
          const std::shared_future<tls::DhParams>& dh_params)
@@ -222,6 +225,7 @@ public:
             /*.cert = */ local_identity.second,
             /*.cert_key = */ local_identity.first,
             /*.dh_params = */ dh_params,
+            /*.certStore = */ certStore,
             /*.timeout = */ std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
             /*.cert_check = */ nullptr,
         };
@@ -312,19 +316,21 @@ TlsSocketEndpoint::Impl::onTlsCertificatesUpdate(UNUSED const gnutls_datum_t* lo
 {}
 
 TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<IceSocketEndpoint>&& tr,
+                                     tls::CertificateStore& certStore,
                                      const Identity& local_identity,
                                      const std::shared_future<tls::DhParams>& dh_params,
                                      const dht::crypto::Certificate& peer_cert)
-    : pimpl_ {std::make_unique<Impl>(std::move(tr), peer_cert, local_identity, dh_params)}
+    : pimpl_ {std::make_unique<Impl>(std::move(tr), certStore, peer_cert, local_identity, dh_params)}
 {}
 
 TlsSocketEndpoint::TlsSocketEndpoint(
     std::unique_ptr<IceSocketEndpoint>&& tr,
+    tls::CertificateStore& certStore,
     const Identity& local_identity,
     const std::shared_future<tls::DhParams>& dh_params,
     std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
     : pimpl_ {
-        std::make_unique<Impl>(std::move(tr), std::move(cert_check), local_identity, dh_params)}
+        std::make_unique<Impl>(std::move(tr), certStore, std::move(cert_check), local_identity, dh_params)}
 {}
 
 TlsSocketEndpoint::~TlsSocketEndpoint() {}

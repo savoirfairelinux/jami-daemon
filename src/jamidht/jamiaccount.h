@@ -268,6 +268,9 @@ public:
     virtual bool getSrtpFallback() const override { return false; }
 
     bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status);
+    bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
+                              tls::TrustStore::PermissionStatus status,
+                              bool local = true);
     std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
 
     bool findCertificate(const std::string& id);
@@ -595,6 +598,11 @@ public:
     };
 #endif
 
+    tls::CertificateStore& certStore() const
+    {
+        return *certStore_;
+    }
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -729,8 +737,6 @@ private:
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
-
-    std::string bootstrapListUrl_;
 
     /**
      * DHT port preference
@@ -892,6 +898,8 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
+
+    std::unique_ptr<tls::CertificateStore> certStore_;
 };
 
 static inline std::ostream&

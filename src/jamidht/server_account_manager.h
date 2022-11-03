@@ -40,7 +40,8 @@ public:
         std::shared_ptr<dht::crypto::Certificate> ca;
     };
 
-    void initAuthentication(PrivateKey request,
+    void initAuthentication(const std::string& accountId,
+                            PrivateKey request,
                             std::string deviceName,
                             std::unique_ptr<AccountCredentials> credentials,
                             AuthSuccessCallback onSuccess,
@@ -67,6 +68,7 @@ public:
 private:
     struct AuthContext
     {
+        std::string accountId;
         PrivateKey key;
         CertRequest request;
         std::string deviceName;
