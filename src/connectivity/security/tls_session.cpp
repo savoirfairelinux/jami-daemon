@@ -713,10 +713,14 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
         return;
     }
 
+    std::string accountUri;
+    if (params_.cert && params_.cert->issuer)
+        accountUri = params_.cert->issuer->getId().toString();
+
     sendOcspRequest(aia_uri,
                     std::move(ocsp_req.first),
                     OCSP_REQUEST_TIMEOUT,
-                    [cb = std::move(cb), &cert, nonce = std::move(ocsp_req.second)](
+                    [cb = std::move(cb), &cert, nonce = std::move(ocsp_req.second), accountUri](
                         const dht::http::Response& r) {
                         // Prepare response data
                         // Verify response validity
@@ -750,7 +754,11 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
                             JAMI_ERR("OCSP verification: certificate is revoked!");
                         }
                         // Save response into the certificate store
-                        tls::CertificateStore::instance().pinOcspResponse(cert);
+                        try {
+                            Manager::instance().certStore(accountUri).pinOcspResponse(cert);
+                        } catch (std::exception& e) {
+                            JAMI_ERROR("{}", e.what());
+                        }
                         if (cb)
                             cb(status);
                     });
