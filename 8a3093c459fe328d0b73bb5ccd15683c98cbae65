@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c05c60f9_3f1140bb",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 887,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-03T16:43:42Z",
+      "side": 1,
+      "message": "seems that loadAccount() if certificate is expired doesn\u0027t update the receipt (testMergeAfterMigration/ut_migration)",
+      "range": {
+        "startLine": 884,
+        "startChar": 8,
+        "endLine": 887,
+        "endChar": 7
+      },
+      "revId": "8a3093c459fe328d0b73bb5ccd15683c98cbae65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
