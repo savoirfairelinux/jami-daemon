@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "48d3a78b_dd758770",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 17
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-03T15:04:28Z",
+      "side": 1,
+      "message": "Seems a good split to me. Will depends on patch behind and the next one",
+      "revId": "89bb04917023f8390851d54d4fa19bd21c7f8e35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
