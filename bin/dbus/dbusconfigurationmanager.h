@@ -53,8 +53,8 @@
 using RingDBusMessage = DBus::Struct<std::string, std::map<std::string, std::string>, uint64_t>;
 
 class LIBJAMI_PUBLIC DBusConfigurationManager : public cx::ring::Ring::ConfigurationManager_adaptor,
-                                              public DBus::IntrospectableAdaptor,
-                                              public DBus::ObjectAdaptor
+                                                public DBus::IntrospectableAdaptor,
+                                                public DBus::ObjectAdaptor
 {
 public:
     using RingDBusDataTransferInfo = DBus::Struct<std::string,
@@ -185,16 +185,19 @@ public:
                                                                const std::string& privateKey,
                                                                const std::string& privateKeyPass,
                                                                const std::string& caList);
-    std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-    std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificatePath,
+    std::map<std::string, std::string> getCertificateDetails(const std::string& accountId,
+                                                             const std::string& certificate);
+    std::map<std::string, std::string> getCertificateDetailsPath(const std::string& accountId,
+                                                                 const std::string& certificatePath,
                                                                  const std::string& privateKey,
                                                                  const std::string& privateKeyPass);
-    std::vector<std::string> getPinnedCertificates();
-    std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate,
+    std::vector<std::string> getPinnedCertificates(const std::string& accountId);
+    std::vector<std::string> pinCertificate(const std::string& accountId,
+                                            const std::vector<uint8_t>& certificate,
                                             const bool& local);
-    bool unpinCertificate(const std::string& certId);
-    void pinCertificatePath(const std::string& path);
-    unsigned unpinCertificatePath(const std::string& path);
+    bool unpinCertificate(const std::string& accountId.const std::string& certId);
+    void pinCertificatePath(const std::string& accountId, const std::string& path);
+    unsigned unpinCertificatePath(const std::string& accountId, const std::string& path);
     bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
     bool setCertificateStatus(const std::string& account,
                               const std::string& certId,

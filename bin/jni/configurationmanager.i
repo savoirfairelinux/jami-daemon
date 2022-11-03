@@ -190,16 +190,16 @@ std::map<std::string, std::string> validateCertificatePath(const std::string& ac
 
 std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate);
 
-std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPass);
+std::map<std::string, std::string> getCertificateDetails(const std::string& accountId, const std::string& certificate);
+std::map<std::string, std::string> getCertificateDetailsPath(const std::string& accountId, const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPass);
 
-std::vector<std::string> getPinnedCertificates();
+std::vector<std::string> getPinnedCertificates(const std::string& accountId);
 
-std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate, bool local);
-bool unpinCertificate(const std::string& certId);
+std::vector<std::string> pinCertificate(const std::string& accountId, const std::vector<uint8_t>& certificate, bool local);
+bool unpinCertificate(const std::string& accountId, const std::string& certId);
 
-void pinCertificatePath(const std::string& path);
-unsigned unpinCertificatePath(const std::string& path);
+void pinCertificatePath(const std::string& accountId, const std::string& path);
+unsigned unpinCertificatePath(const std::string& accountId, const std::string& path);
 
 bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
 bool setCertificateStatus(const std::string& account, const std::string& certId, const std::string& status);

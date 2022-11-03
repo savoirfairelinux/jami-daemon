@@ -173,7 +173,8 @@ void
 ConversationTest::setUp()
 {
     // Init daemon
-    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    libjami::init(
+        libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
@@ -425,15 +426,16 @@ ConversationTest::testReplaceWithBadCertificate()
             }
         }));
     auto errorDetected = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     auto convId = libjami::startConversation(aliceId);
@@ -615,7 +617,8 @@ ConversationTest::testMergeAfterMigration()
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto details = carlaAccount->getVolatileAccountDetails();
-                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                auto deviceAnnounced
+                    = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 if (deviceAnnounced == "true") {
                     carlaConnected = true;
                     cv.notify_one();
@@ -694,7 +697,8 @@ ConversationTest::testSendMessageToMultipleParticipants()
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto details = carlaAccount->getVolatileAccountDetails();
-                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                auto deviceAnnounced
+                    = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 if (deviceAnnounced == "true") {
                     carlaConnected = true;
                     cv.notify_one();
@@ -1498,7 +1502,8 @@ ConversationTest::testVoteNonEmpty()
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto details = carlaAccount->getVolatileAccountDetails();
-                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                auto deviceAnnounced
+                    = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 if (deviceAnnounced == "true") {
                     carlaConnected = true;
                     cv.notify_one();
@@ -1518,15 +1523,16 @@ ConversationTest::testVoteNonEmpty()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaConnected; }));
@@ -1594,21 +1600,23 @@ ConversationTest::testNoBadFileInInitialCommit()
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto details = carlaAccount->getVolatileAccountDetails();
-                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                auto deviceAnnounced
+                    = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 if (deviceAnnounced == "true") {
                     carlaConnected = true;
                     cv.notify_one();
                 }
             }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     Manager::instance().sendRegister(carlaId, true);
@@ -1627,9 +1635,9 @@ ConversationTest::testNoBadCertInInitialCommit()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto fakeCert = jami::tls::CertificateStore::instance().getCertificate(
+    auto fakeCert = aliceAccount->certStore().getCertificate(
         std::string(aliceAccount->currentDeviceId()));
-    auto carlaCert = jami::tls::CertificateStore::instance().getCertificate(
+    auto carlaCert = carlaAccount->certStore().getCertificate(
         std::string(carlaAccount->currentDeviceId()));
 
     CPPUNIT_ASSERT(fakeCert);
@@ -1667,21 +1675,23 @@ ConversationTest::testNoBadCertInInitialCommit()
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto details = carlaAccount->getVolatileAccountDetails();
-                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                auto deviceAnnounced
+                    = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 if (deviceAnnounced == "true") {
                     carlaConnected = true;
                     cv.notify_one();
                 }
             }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     Manager::instance().sendRegister(carlaId, true);
@@ -1737,15 +1747,16 @@ ConversationTest::testPlainTextNoBadFile()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
@@ -1807,7 +1818,8 @@ ConversationTest::testVoteNoBadFile()
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto details = carlaAccount->getVolatileAccountDetails();
-                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                auto deviceAnnounced
+                    = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
                 if (deviceAnnounced == "true") {
                     carlaConnected = true;
                     cv.notify_one();
@@ -1907,15 +1919,16 @@ ConversationTest::testETooBigClone()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     auto convId = libjami::startConversation(aliceId);
@@ -1981,15 +1994,16 @@ ConversationTest::testETooBigFetch()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     auto convId = libjami::startConversation(aliceId);
@@ -2068,15 +2082,16 @@ ConversationTest::testUnknownModeDetected()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 2)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 2)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
@@ -2285,18 +2300,19 @@ VERSION:2.1\n\
 FN:TITLE\n\
 DESCRIPTION:DESC\n\
 END:VCARD";
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-        [&](const std::string& account_id,
-            const std::string& /*from*/,
-            const std::string& /*conversationId*/,
-            const std::vector<uint8_t>& payload,
-            time_t /*received*/) {
-            auto pstr = std::string(payload.begin(), payload.begin() + payload.size());
-            if (account_id == bobId
-                && std::string(payload.data(), payload.data() + payload.size()) == vcard)
-                requestReceived = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+            [&](const std::string& account_id,
+                const std::string& /*from*/,
+                const std::string& /*conversationId*/,
+                const std::vector<uint8_t>& payload,
+                time_t /*received*/) {
+                auto pstr = std::string(payload.begin(), payload.begin() + payload.size());
+                if (account_id == bobId
+                    && std::string(payload.data(), payload.data() + payload.size()) == vcard)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
@@ -2356,15 +2372,16 @@ ConversationTest::testMemberCannotUpdateProfile()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            int code,
-            const std::string& /* what */) {
-            if (accountId == bobId && conversationId == convId && code == 4)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                const std::string& /* what */) {
+                if (accountId == bobId && conversationId == convId && code == 4)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
@@ -2424,15 +2441,16 @@ ConversationTest::testUpdateProfileWithBadFile()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            int code,
-            const std::string& /* what */) {
-            if (accountId == bobId && conversationId == convId && code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                const std::string& /* what */) {
+                if (accountId == bobId && conversationId == convId && code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
@@ -2503,15 +2521,16 @@ ConversationTest::testFetchProfileUnauthorized()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            int code,
-            const std::string& /* what */) {
-            if (accountId == aliceId && conversationId == convId && code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                const std::string& /* what */) {
+                if (accountId == aliceId && conversationId == convId && code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
@@ -2577,16 +2596,17 @@ ConversationTest::testSyncingWhileAccepting()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false;
     std::string convId = "";
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-        [&](const std::string& account_id,
-            const std::string& /*from*/,
-            const std::string& /*conversationId*/,
-            const std::vector<uint8_t>& /*payload*/,
-            time_t /*received*/) {
-            if (account_id == bobId)
-                requestReceived = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+            [&](const std::string& account_id,
+                const std::string& /*from*/,
+                const std::string& /*conversationId*/,
+                const std::vector<uint8_t>& /*payload*/,
+                time_t /*received*/) {
+                if (account_id == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
@@ -2665,16 +2685,17 @@ ConversationTest::testReplayConversation()
          conversationRemoved = false, messageReceived = false;
     std::vector<std::string> bobMessages;
     std::string convId = "";
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-        [&](const std::string& account_id,
-            const std::string& /*from*/,
-            const std::string& /*conversationId*/,
-            const std::vector<uint8_t>& /*payload*/,
-            time_t /*received*/) {
-            if (account_id == bobId)
-                requestReceived = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+            [&](const std::string& account_id,
+                const std::string& /*from*/,
+                const std::string& /*conversationId*/,
+                const std::vector<uint8_t>& /*payload*/,
+                time_t /*received*/) {
+                if (account_id == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
@@ -2684,12 +2705,13 @@ ConversationTest::testReplayConversation()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string&) {
-            if (accountId == aliceId)
-                conversationRemoved = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == aliceId)
+                    conversationRemoved = true;
+                cv.notify_one();
+            }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& conversationId,
@@ -2750,16 +2772,17 @@ ConversationTest::testSyncWithoutPinnedCert()
     std::string convId = "";
     auto requestReceived = false, conversationReady = false, memberMessageGenerated = false,
          aliceMessageReceived = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-        [&](const std::string& account_id,
-            const std::string& /*from*/,
-            const std::string& /*conversationId*/,
-            const std::vector<uint8_t>& /*payload*/,
-            time_t /*received*/) {
-            if (account_id == bobId)
-                requestReceived = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+            [&](const std::string& account_id,
+                const std::string& /*from*/,
+                const std::string& /*conversationId*/,
+                const std::vector<uint8_t>& /*payload*/,
+                time_t /*received*/) {
+                if (account_id == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
@@ -2945,14 +2968,15 @@ END:VCARD";
                 cv.notify_one();
             }));
     auto conversationRmBob = false, conversationRmBob2 = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string&) {
-            if (accountId == bobId)
-                conversationRmBob = true;
-            else if (accountId == bob2Id)
-                conversationRmBob2 = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == bobId)
+                    conversationRmBob = true;
+                else if (accountId == bob2Id)
+                    conversationRmBob2 = true;
+                cv.notify_one();
+            }));
     auto aliceProfileReceivedBob = false, aliceProfileReceivedBob2 = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ProfileReceived>(
         [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
@@ -3102,16 +3126,17 @@ ConversationTest::testSearchInConv()
          messageReceived = false;
     std::vector<std::string> bobMessages;
     std::string convId = "";
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-        [&](const std::string& account_id,
-            const std::string& /*from*/,
-            const std::string& /*conversationId*/,
-            const std::vector<uint8_t>& /*payload*/,
-            time_t /*received*/) {
-            if (account_id == bobId)
-                requestReceived = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+            [&](const std::string& account_id,
+                const std::string& /*from*/,
+                const std::string& /*conversationId*/,
+                const std::vector<uint8_t>& /*payload*/,
+                time_t /*received*/) {
+                if (account_id == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
@@ -3192,12 +3217,13 @@ ConversationTest::testConversationPreferences()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string&) {
-            if (accountId == aliceId)
-                conversationRemoved = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == aliceId)
+                    conversationRemoved = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
     // Start conversation and set preferences
     auto convId = libjami::startConversation(aliceId);
@@ -3369,12 +3395,13 @@ ConversationTest::testRemoveOneToOneNotInDetails()
             cv.notify_one();
         }));
     bool conversationRemoved = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string& cid) {
-            if (accountId == aliceId && cid == secondConv)
-                conversationRemoved = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+            [&](const std::string& accountId, const std::string& cid) {
+                if (accountId == aliceId && cid == secondConv)
+                    conversationRemoved = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     aliceAccount->addContact(bobUri);
@@ -3439,15 +3466,16 @@ ConversationTest::testMessageEdition()
             }
         }));
     auto errorDetected = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& /* accountId */,
-            const std::string& /* conversationId */,
-            int code,
-            const std::string& /* what */) {
-            if (code == 3)
-                errorDetected = true;
-            cv.notify_one();
-        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 3)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
     auto convId = libjami::startConversation(aliceId);
     libjami::addConversationMember(aliceId, convId, bobUri);

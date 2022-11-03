@@ -865,7 +865,7 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
             auto shared = w.lock();
             if (!shared)
                 return false;
-            auto crt = tls::CertificateStore::instance().getCertificate(ph.toString());
+            auto crt = shared->account.certStore().getCertificate(ph.toString());
             if (!crt)
                 return false;
             return crt->getPacked() == cert.getPacked();
@@ -1076,7 +1076,7 @@ ConnectionManager::closeConnectionsWith(const std::string& peerUri)
         for (auto iter = pimpl_->infos_.begin(); iter != pimpl_->infos_.end();) {
             auto const& [key, value] = *iter;
             auto deviceId = key.first;
-            auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
+            auto cert = pimpl_->account.certStore().getCertificate(deviceId.toString());
             if (cert && cert->issuer && peerUri == cert->issuer->getId().toString()) {
                 connInfos.emplace_back(value);
                 peersDevices.emplace(deviceId);

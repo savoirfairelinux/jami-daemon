@@ -1187,6 +1187,7 @@
        </method>
 
        <method name="getCertificateDetails" tp:name-for-bindings="getCertificateDetails">
+           <arg type="s" name="accountId" direction="in"></arg>
            <arg type="s" name="certificate" direction="in">
               <tp:docstring>
                <p>A certificate ID</p>
@@ -1202,6 +1203,7 @@
        </method>
 
        <method name="getCertificateDetailsPath" tp:name-for-bindings="getCertificateDetails">
+           <arg type="s" name="accountId" direction="in"></arg>
            <arg type="s" name="certificatePath" direction="in">
               <tp:docstring>
                <p>A certificate path</p>
@@ -1228,6 +1230,7 @@
 
        <method name="getPinnedCertificates" tp:name-for-bindings="getPinnedCertificates">
            <tp:added version="2.2.0"/>
+           <arg type="s" name="accountId" direction="in"></arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="certIds" direction="out">
                <tp:docstring>
@@ -1238,6 +1241,7 @@
 
        <method name="pinCertificate" tp:name-for-bindings="pinCertificate">
            <tp:added version="2.2.0"/>
+           <arg type="s" name="accountId" direction="in"></arg>
            <arg type="ay" name="certificateRaw" direction="in">
                <tp:docstring>
                    <p>A raw certificate (PEM or DER encoded) to be pinned.</p>
@@ -1258,6 +1262,7 @@
 
        <method name="unpinCertificate" tp:name-for-bindings="unpinCertificate">
            <tp:added version="2.2.0"/>
+           <arg type="s" name="accountId" direction="in"></arg>
            <arg type="s" name="certId" direction="in">
                <tp:docstring>
                    <p>A certificate ID to unpin.</p>
@@ -1272,6 +1277,7 @@
 
        <method name="pinCertificatePath" tp:name-for-bindings="pinCertificatePath">
            <tp:added version="2.2.0"/>
+           <arg type="s" name="accountId" direction="in"></arg>
            <arg type="s" name="certPath" direction="in">
                <tp:docstring>
                    <p>A certificate path to be pinned (assumed non-local).</p>
@@ -1281,6 +1287,7 @@
 
        <method name="unpinCertificatePath" tp:name-for-bindings="unpinCertificatePath">
            <tp:added version="2.2.0"/>
+           <arg type="s" name="accountId" direction="in"></arg>
            <arg type="s" name="certPath" direction="in">
                <tp:docstring>
                    <p>Certificates path.</p>

@@ -126,7 +126,8 @@ public:
 
     const std::string& getPath() const { return idPath_; }
 
-    const JamiAccountConfig& config() const {
+    const JamiAccountConfig& config() const
+    {
         return *static_cast<const JamiAccountConfig*>(&Account::config());
     }
 
@@ -146,7 +147,8 @@ public:
      */
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
-    std::unique_ptr<AccountConfig> buildConfig() const override {
+    std::unique_ptr<AccountConfig> buildConfig() const override
+    {
         return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_);
     }
 
@@ -422,10 +424,10 @@ public:
 
     void saveConfig() const override;
 
-    inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit) {
-        Account::editConfig([&](AccountConfig& conf) {
-            edit(*static_cast<JamiAccountConfig*>(&conf));
-        });
+    inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit)
+    {
+        Account::editConfig(
+            [&](AccountConfig& conf) { edit(*static_cast<JamiAccountConfig*>(&conf)); });
     }
 
     /**
@@ -523,8 +525,8 @@ public:
 
     // non-swarm version
     libjami::DataTransferId sendFile(const std::string& peer,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                     const std::string& path,
+                                     const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,
@@ -606,6 +608,11 @@ public:
     void unlinkConversations(const std::set<std::string>& removedConv);
 
     bool isValidAccountDevice(const dht::crypto::Certificate& cert) const;
+
+    tls::CertificateStore& certStore() const
+    {
+        return *certStore_;
+    }
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -898,6 +905,8 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
+
+    std::unique_ptr<tls::CertificateStore> certStore_;
 };
 
 static inline std::ostream&

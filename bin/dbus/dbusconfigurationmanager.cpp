@@ -303,7 +303,8 @@ DBusConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
 }
 
 auto
-DBusConfigurationManager::getAudioOutputDeviceList() -> decltype(libjami::getAudioOutputDeviceList())
+DBusConfigurationManager::getAudioOutputDeviceList()
+    -> decltype(libjami::getAudioOutputDeviceList())
 {
     return libjami::getAudioOutputDeviceList();
 }
@@ -547,56 +548,68 @@ DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
     -> decltype(libjami::validateCertificatePath(
         accountId, certificate, privateKey, privateKeyPass, caList))
 {
-    return libjami::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
+    return libjami::validateCertificatePath(accountId,
+                                            certificate,
+                                            privateKey,
+                                            privateKeyPass,
+                                            caList);
 }
 
 auto
-DBusConfigurationManager::getCertificateDetails(const std::string& certificate)
-    -> decltype(libjami::getCertificateDetails(certificate))
+DBusConfigurationManager::getCertificateDetails(const std::string& accountId,
+                                                const std::string& certificate)
+    -> decltype(libjami::getCertificateDetails(accountId, certificate))
 {
-    return libjami::getCertificateDetails(certificate);
+    return libjami::getCertificateDetails(accountId, certificate);
 }
 
 auto
-DBusConfigurationManager::getCertificateDetailsPath(const std::string& certificate,
+DBusConfigurationManager::getCertificateDetailsPath(const std::string& accountId,
+                                                    const std::string& certificate,
                                                     const std::string& privateKey,
                                                     const std::string& privateKeyPass)
-    -> decltype(libjami::getCertificateDetailsPath(certificate, privateKey, privateKeyPass))
+    -> decltype(libjami::getCertificateDetailsPath(
+        accountId, certificate, privateKey, privateKeyPass))
 {
-    return libjami::getCertificateDetailsPath(certificate, privateKey, privateKeyPass);
+    return libjami::getCertificateDetailsPath(accountId, certificate, privateKey, privateKeyPass);
 }
 
 auto
-DBusConfigurationManager::getPinnedCertificates() -> decltype(libjami::getPinnedCertificates())
+DBusConfigurationManager::getPinnedCertificates(const std::string& accountId)
+    -> decltype(libjami::getPinnedCertificates(accountId))
 {
-    return libjami::getPinnedCertificates();
+    return libjami::getPinnedCertificates(accountId);
 }
 
 auto
-DBusConfigurationManager::pinCertificate(const std::vector<uint8_t>& certificate, const bool& local)
-    -> decltype(libjami::pinCertificate(certificate, local))
+DBusConfigurationManager::pinCertificate(const std::string& accountId,
+                                         const std::vector<uint8_t>& certificate,
+                                         const bool& local)
+    -> decltype(libjami::pinCertificate(accountId, certificate, local))
 {
-    return libjami::pinCertificate(certificate, local);
+    return libjami::pinCertificate(accountId, certificate, local);
 }
 
 void
-DBusConfigurationManager::pinCertificatePath(const std::string& certPath)
+DBusConfigurationManager::pinCertificatePath(const std::string& accountIdconst std::string& certPath)
 {
-    return libjami::pinCertificatePath(certPath);
+    libjami::pinCertificatePath(accountId, certPath);
 }
 
 auto
-DBusConfigurationManager::unpinCertificate(const std::string& certId)
-    -> decltype(libjami::unpinCertificate(certId))
+DBusConfigurationManager::unpinCertificate(const std::string& accountId, const std::string& certId)
+    -> decltype(libjami::unpinCertificate(accountId, certId))
 {
-    return libjami::unpinCertificate(certId);
+    return libjami::unpinCertificate(accountId, certId);
 }
 
 auto
-DBusConfigurationManager::unpinCertificatePath(const std::string& p)
-    -> decltype(libjami::unpinCertificatePath(p))
+DBusConfigurationManager::unpinCertificatePath(const std::string& accountId,
+                                               const std::string& accountId,
+                                               const std::string& p)
+    -> decltype(libjami::unpinCertificatePath(accountId, p))
 {
-    return libjami::unpinCertificatePath(p);
+    return libjami::unpinCertificatePath(accountId, p);
 }
 
 auto
@@ -721,7 +734,8 @@ DBusConfigurationManager::setVolume(const std::string& device, const double& val
 }
 
 auto
-DBusConfigurationManager::getVolume(const std::string& device) -> decltype(libjami::getVolume(device))
+DBusConfigurationManager::getVolume(const std::string& device)
+    -> decltype(libjami::getVolume(device))
 {
     return libjami::getVolume(device);
 }
@@ -967,14 +981,14 @@ DBusConfigurationManager::searchConversation(const std::string& accountId,
                                              const uint32_t& maxResult)
 {
     return libjami::searchConversation(accountId,
-                                     conversationId,
-                                     author,
-                                     lastId,
-                                     regexSearch,
-                                     type,
-                                     after,
-                                     before,
-                                     maxResult);
+                                       conversationId,
+                                       author,
+                                       lastId,
+                                       regexSearch,
+                                       type,
+                                       after,
+                                       before,
+                                       maxResult);
 }
 
 bool
