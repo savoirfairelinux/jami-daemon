@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7691c648_5d90d21d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1838,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-03T15:02:39Z",
+      "side": 1,
+      "message": "The patch seems to call some bad function calls and cause some segfault (e.g. ut_auto_answer, ut_call, etc)",
+      "range": {
+        "startLine": 1837,
+        "startChar": 45,
+        "endLine": 1838,
+        "endChar": 48
+      },
+      "revId": "b1282f352130941ae703d87a217b7b80d3e5302f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
