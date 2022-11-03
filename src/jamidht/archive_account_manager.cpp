@@ -24,6 +24,7 @@
 #include "jami/account_const.h"
 #include "account_schema.h"
 #include "jamidht/conversation_module.h"
+#include "manager.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/thread_pool.h>
@@ -799,9 +800,9 @@ ArchiveAccountManager::revokeDevice(const std::string& password,
                             a.revoked->revoke(*crt);
                             a.revoked->sign(a.id);
                             // add to CRL cache
-                            tls::CertificateStore::instance()
-                                .pinRevocationList(a.id.second->getId().toString(), a.revoked);
-                            tls::CertificateStore::instance().loadRevocations(*a.id.second);
+                            auto& certStore = Manager::instance().certStoreFromId(this_.info_->accountId);
+                            certStore.pinRevocationList(a.id.second->getId().toString(), a.revoked);
+                            certStore.loadRevocations(*a.id.second);
 
                             this_.saveArchive(a, password);
                             this_.info_->contacts->removeAccountDevice(crt->getLongId());
