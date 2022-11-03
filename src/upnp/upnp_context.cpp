@@ -168,10 +168,9 @@ UPnPContext::stopUpnp(bool forceRelease)
         preferredIgd_.reset();
         validIgdList_.clear();
     }
-
     for (auto const& map : toRemoveList) {
         requestRemoveMapping(map);
-        updateMappingState(map, MappingState::FAILED);
+        updateMappingState(map, MappingState::FAILED, false);
         // We dont remove mappings with auto-update enabled,
         // unless forceRelease is true.
         if (not map->getAutoUpdate() or forceRelease) {
