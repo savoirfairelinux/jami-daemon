@@ -31,25 +31,15 @@
 
 #include <thread>
 #include <sstream>
+#include <fmt/format.h>
 
 namespace jami {
 namespace tls {
 
-CertificateStore&
-CertificateStore::instance()
-{
-    // Meyers singleton
-    static std::mutex instanceMtx_;
-
-    std::lock_guard<std::mutex> lock(instanceMtx_);
-    static CertificateStore instance_;
-    return instance_;
-}
-
-CertificateStore::CertificateStore()
-    : certPath_(fileutils::get_data_dir() + DIR_SEPARATOR_CH + "certificates")
-    , crlPath_(fileutils::get_data_dir() + DIR_SEPARATOR_CH + "crls")
-    , ocspPath_(fileutils::get_data_dir() + DIR_SEPARATOR_CH + "ocsp")
+CertificateStore::CertificateStore(const std::string& accountId)
+    : certPath_(fmt::format("{}/{}/certificates", fileutils::get_data_dir(), accountId))
+    , crlPath_(fmt::format("{}/{}/crls", fileutils::get_data_dir(), accountId))
+    , ocspPath_(fmt::format("{}/{}/oscp", fileutils::get_data_dir(), accountId))
 {
     fileutils::check_dir(certPath_.c_str());
     fileutils::check_dir(crlPath_.c_str());
@@ -82,18 +72,18 @@ CertificateStore::loadLocalCertificates()
                 ++n;
             }
         } catch (const std::exception& e) {
-            JAMI_WARN() << "Remove cert. " << e.what();
-            remove((certPath_ + DIR_SEPARATOR_CH + f).c_str());
+            JAMI_WARNING("Remove cert. {}", e.what());
+            remove((fmt::format("{}/{}", certPath_, f).c_str());
         }
     }
-    JAMI_DBG("CertificateStore: loaded %u local certificates.", n);
+    JAMI_DEBUG("CertificateStore: loaded {} local certificates.", n);
     return n;
 }
 
 void
 CertificateStore::loadRevocations(crypto::Certificate& crt) const
 {
-    auto dir = crlPath_ + DIR_SEPARATOR_CH + crt.getId().toString();
+    auto dir = fmt::format("{:s}/{:s}", crlPath_, crt.getId().toString());
     for (const auto& crl : fileutils::readDirectory(dir)) {
         try {
             crt.addRevocationList(std::make_shared<crypto::RevocationList>(
@@ -116,16 +106,16 @@ CertificateStore::loadRevocations(crypto::Certificate& crt) const
                                                                            ocspBlob.size());
             unsigned int status = crt.ocspResponse->getCertificateStatus();
             if (status == GNUTLS_OCSP_CERT_GOOD)
-                JAMI_DBG("Certificate %s has good OCSP status", crt.getId().to_c_str());
+                JAMI_DEBUG("Certificate {:s} has good OCSP status", crt.getId().toString());
             else if (status == GNUTLS_OCSP_CERT_REVOKED)
-                JAMI_ERR("Certificate %s has revoked OCSP status", crt.getId().to_c_str());
+                JAMI_ERROR("Certificate {:s} has revoked OCSP status", crt.getId().toString());
             else if (status == GNUTLS_OCSP_CERT_UNKNOWN)
-                JAMI_ERR("Certificate %s has unknown OCSP status", crt.getId().to_c_str());
+                JAMI_ERROR("Certificate {:s} has unknown OCSP status", crt.getId().toString());
             else
-                JAMI_ERR("Certificate %s has invalid OCSP status", crt.getId().to_c_str());
+                JAMI_ERROR("Certificate {:s} has invalid OCSP status", crt.getId().toString());
 
         } catch (const std::exception& e) {
-            JAMI_WARN("Can't load OCSP revocation status: %s", e.what());
+            JAMI_WARNING("Can't load OCSP revocation status: {:s}", e.what());
         }
     }
 }
@@ -164,7 +154,7 @@ CertificateStore::getCertificate(const std::string& k)
             top_issuer = cert;
         } else {
             // In this case, a certificate was not found
-            JAMI_WARN("Incomplete certificate detected %s", k.c_str());
+            JAMI_WARNING("Incomplete certificate detected {:s}", k);
             break;
         }
     }
@@ -219,7 +209,7 @@ CertificateStore::findIssuer(const std::shared_ptr<crypto::Certificate>& crt) co
     unsigned verify_out = 0;
     int err = gnutls_x509_crt_verify(crt->cert, &ret->cert, 1, 0, &verify_out);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_WARN("gnutls_x509_crt_verify failed: %s", gnutls_strerror(err));
+        JAMI_WARNING("gnutls_x509_crt_verify failed: {:s}", gnutls_strerror(err));
         return {};
     }
     if (verify_out & GNUTLS_CERT_INVALID)
@@ -429,7 +419,7 @@ CertificateStore::pinOcspResponse(const dht::crypto::Certificate& cert)
     try {
         cert.ocspResponse->getCertificateStatus();
     } catch (dht::crypto::CryptoException& e) {
-        JAMI_ERR("Failed to read certificate status of OCSP response: %s", e.what());
+        JAMI_ERROR("Failed to read certificate status of OCSP response: {:s}", e.what());
         return;
     }
     auto id = cert.getId().toString();

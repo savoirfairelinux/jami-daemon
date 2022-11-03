@@ -48,9 +48,7 @@ const char* statusToStr(TrustStatus s);
 class CertificateStore
 {
 public:
-    static CertificateStore& instance();
-
-    CertificateStore();
+    explicit CertificateStore(const std::string& accountId);
 
     std::vector<std::string> getPinnedCertificates() const;
     /**

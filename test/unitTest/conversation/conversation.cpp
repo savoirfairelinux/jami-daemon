@@ -1637,9 +1637,9 @@ ConversationTest::testNoBadCertInInitialCommit()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto fakeCert = jami::tls::CertificateStore::instance().getCertificate(
+    auto fakeCert = aliceAccount->certStore().getCertificate(
         std::string(aliceAccount->currentDeviceId()));
-    auto carlaCert = jami::tls::CertificateStore::instance().getCertificate(
+    auto carlaCert = carlaAccount->certStore().getCertificate(
         std::string(carlaAccount->currentDeviceId()));
 
     CPPUNIT_ASSERT(fakeCert);

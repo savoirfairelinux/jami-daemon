@@ -218,6 +218,9 @@ public:
      */
     std::string uriFromDevice(const std::string& deviceId) const
     {
+        auto acc = account_.lock();
+        if (!acc)
+            return {};
         std::lock_guard<std::mutex> lk(deviceToUriMtx_);
         auto it = deviceToUri_.find(deviceId);
         if (it != deviceToUri_.end())
@@ -227,7 +230,7 @@ public:
         if (!repo)
             return {};
 
-        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+        auto cert = acc.certStore().getCertificate(deviceId);
         if (!cert || !cert->issuer) {
             // Not pinned, so load certificate from repo
             std::string deviceFile = git_repository_workdir(repo.get())
@@ -1399,7 +1402,10 @@ bool
 ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    auto acc = account_.lock();
+    if (!acc)
+        return false;
+    auto cert = acc.certStore().getCertificate(userDevice);
     auto hasPinnedCert = cert and cert->issuer;
     auto repo = repository();
     if (not repo)
@@ -1469,8 +1475,8 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
 
     auto res = parentCert.getId().toString() == userUri;
     if (res && not hasPinnedCert) {
-        tls::CertificateStore::instance().pinCertificate(std::move(deviceCert));
-        tls::CertificateStore::instance().pinCertificate(std::move(parentCert));
+        acc.certStore().pinCertificate(std::move(deviceCert));
+        acc.certStore().pinCertificate(std::move(parentCert));
     }
     return res;
 }
@@ -1749,9 +1755,9 @@ ConversationRepository::Impl::mode() const
     if (lastMsg.size() == 0) {
         if (auto shared = account_.lock()) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                       id_,
-                                                                       EINVALIDMODE,
-                                                                       "No initial commit");
+                                                                         id_,
+                                                                         EINVALIDMODE,
+                                                                         "No initial commit");
         }
         throw std::logic_error("Can't retrieve first commit");
     }
@@ -1764,18 +1770,18 @@ ConversationRepository::Impl::mode() const
     if (!reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &root, &err)) {
         if (auto shared = account_.lock()) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                       id_,
-                                                                       EINVALIDMODE,
-                                                                       "No initial commit");
+                                                                         id_,
+                                                                         EINVALIDMODE,
+                                                                         "No initial commit");
         }
         throw std::logic_error("Can't retrieve first commit");
     }
     if (!root.isMember("mode")) {
         if (auto shared = account_.lock()) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                       id_,
-                                                                       EINVALIDMODE,
-                                                                       "No mode detected");
+                                                                         id_,
+                                                                         EINVALIDMODE,
+                                                                         "No mode detected");
         }
         throw std::logic_error("No mode detected for initial commit");
     }
@@ -1797,9 +1803,9 @@ ConversationRepository::Impl::mode() const
     default:
         if (auto shared = account_.lock()) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                       id_,
-                                                                       EINVALIDMODE,
-                                                                       "Incorrect mode detected");
+                                                                         id_,
+                                                                         EINVALIDMODE,
+                                                                         "Incorrect mode detected");
         }
         throw std::logic_error("Incorrect mode detected");
     }
@@ -2195,6 +2201,9 @@ ConversationRepository::Impl::getCommitType(const std::string& commitMsg) const
 std::vector<std::string>
 ConversationRepository::Impl::getInitialMembers() const
 {
+    auto acc = account_.lock();
+    if (!acc)
+        return {};
     LogOptions options;
     options.from = id_;
     options.nbOfCommits = 1;
@@ -2205,7 +2214,7 @@ ConversationRepository::Impl::getInitialMembers() const
     auto commit = firstCommit[0];
 
     auto authorDevice = commit.author.email;
-    auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
+    auto cert = acc.certStore().getCertificate(authorDevice);
     if (!cert || !cert->issuer)
         return {};
     auto authorId = cert->issuer->getId().toString();
@@ -2715,10 +2724,8 @@ ConversationRepository::Impl::validCommits(
                     validUserAtCommit.c_str(),
                     commit.commit_msg.c_str());
                 if (auto shared = account_.lock()) {
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                               id_,
-                                                                               EVALIDFETCH,
-                                                                               "Malformed commit");
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        shared->getAccountID(), id_, EVALIDFETCH, "Malformed commit");
                 }
                 return false;
             }
@@ -2730,10 +2737,8 @@ ConversationRepository::Impl::validCommits(
                           "that your contact is not doing unwanted stuff.",
                           validUserAtCommit.c_str());
                 if (auto shared = account_.lock()) {
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                               id_,
-                                                                               EVALIDFETCH,
-                                                                               "Malformed commit");
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        shared->getAccountID(), id_, EVALIDFETCH, "Malformed commit");
                 }
                 return false;
             }
@@ -3248,8 +3253,8 @@ ConversationRepository::leave()
     auto uri = details[libjami::Account::ConfProperties::USERNAME];
     auto name = details[libjami::Account::ConfProperties::DISPLAYNAME];
     if (name.empty())
-        name = account
-                   ->getVolatileAccountDetails()[libjami::Account::VolatileProperties::REGISTERED_NAME];
+        name = account->getVolatileAccountDetails()
+                   [libjami::Account::VolatileProperties::REGISTERED_NAME];
     if (name.empty())
         name = deviceId;
 
@@ -3642,8 +3647,9 @@ ConversationRepository::refreshMembers() const
 void
 ConversationRepository::pinCertificates(bool blocking)
 {
+    auto acc = pimpl_->account_.lock();
     auto repo = pimpl_->repository();
-    if (!repo)
+    if (!repo or !acc)
         return;
 
     std::string repoPath = git_repository_workdir(repo.get());
@@ -3655,12 +3661,10 @@ ConversationRepository::pinCertificates(bool blocking)
         if (blocking) {
             std::promise<bool> p;
             std::future<bool> f = p.get_future();
-            tls::CertificateStore::instance().pinCertificatePath(path, [&](auto /* certs */) {
-                p.set_value(true);
-            });
+            acc.certStore().pinCertificatePath(path, [&](auto /* certs */) { p.set_value(true); });
             f.wait();
         } else {
-            tls::CertificateStore::instance().pinCertificatePath(path, {});
+            acc.certStore().pinCertificatePath(path, {});
         }
     }
 }

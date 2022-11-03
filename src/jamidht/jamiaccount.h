@@ -551,8 +551,8 @@ public:
 
     // non-swarm version
     libjami::DataTransferId sendFile(const std::string& peer,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                     const std::string& path,
+                                     const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,
@@ -641,6 +641,11 @@ public:
      * @param destination   conversation/uri/device/confId to join
      */
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
+
+    const CertificateStore& certStore() const
+    {
+        return *certStore_;
+    }
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -961,6 +966,8 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
+
+    std::unique_ptr<CertificateStore> certStore_;
 };
 
 static inline std::ostream&
