@@ -56,7 +56,8 @@ public:
         OnConfirmation onConfirmation;
     };
 
-    ContactList(const std::shared_ptr<crypto::Certificate>& cert,
+    ContactList(const std::string& accountId,
+                const std::shared_ptr<crypto::Certificate>& cert,
                 const std::string& path,
                 OnChangeCallback cb);
     ~ContactList();
@@ -82,17 +83,17 @@ public:
 
     tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const
     {
-        return trust_.getCertificateStatus(cert_id);
+        return trust_->getCertificateStatus(cert_id);
     }
 
     std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status) const
     {
-        return trust_.getCertificatesByStatus(status);
+        return trust_->getCertificatesByStatus(status);
     }
 
     bool isAllowed(const crypto::Certificate& crt, bool allowPublic)
     {
-        return trust_.isAllowed(crt, allowPublic);
+        return trust_->isAllowed(crt, allowPublic);
     }
 
     VerifyResult isValidAccountDevice(const crypto::Certificate& crt) const
@@ -155,10 +156,12 @@ private:
     // Trust store with account main certificate as the only CA
     dht::crypto::TrustList accountTrust_;
     // Trust store for to match peer certificates
-    tls::TrustStore trust_;
+    std::unique_ptr<tls::TrustStore> trust_;
     std::string path_;
+    std::string accountUri_;
 
     OnChangeCallback callbacks_;
+    std::string accountId_;
 
     void loadContacts();
     void loadTrustRequests();

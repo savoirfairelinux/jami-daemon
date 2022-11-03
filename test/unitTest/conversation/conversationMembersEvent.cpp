@@ -95,38 +95,38 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
-    CPPUNIT_TEST(testRemoveConversationNoMember);
-    CPPUNIT_TEST(testRemoveConversationWithMember);
-    CPPUNIT_TEST(testAddMember);
-    CPPUNIT_TEST(testMemberAddedNoBadFile);
-    CPPUNIT_TEST(testAddOfflineMemberThenConnects);
-    CPPUNIT_TEST(testGetMembers);
-    CPPUNIT_TEST(testRemoveMember);
+    //CPPUNIT_TEST(testRemoveConversationNoMember);
+    //CPPUNIT_TEST(testRemoveConversationWithMember);
+    //CPPUNIT_TEST(testAddMember);
+    //CPPUNIT_TEST(testMemberAddedNoBadFile);
+    //CPPUNIT_TEST(testAddOfflineMemberThenConnects);
+    //CPPUNIT_TEST(testGetMembers);
+    //CPPUNIT_TEST(testRemoveMember);
     CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
-    CPPUNIT_TEST(testRemoveInvitedMember);
-    CPPUNIT_TEST(testMemberBanNoBadFile);
-    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAdminCanReAddMember);
-    CPPUNIT_TEST(testMemberCannotBanOther);
-    CPPUNIT_TEST(testMemberCannotUnBanOther);
-    CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
-    CPPUNIT_TEST(testCommitUnauthorizedUser);
-    CPPUNIT_TEST(testMemberJoinsNoBadFile);
-    CPPUNIT_TEST(testMemberAddedNoCertificate);
-    CPPUNIT_TEST(testMemberJoinsInviteRemoved);
-    CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
-    CPPUNIT_TEST(testConversationMemberEvent);
-    CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
-    CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
-    CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
-    CPPUNIT_TEST(testBanUnbanMultiDevice);
-    CPPUNIT_TEST(testBanUnbanGotFirstConv);
-    CPPUNIT_TEST(testBanHostWhileHosting);
+    //CPPUNIT_TEST(testRemoveInvitedMember);
+    //CPPUNIT_TEST(testMemberBanNoBadFile);
+    //CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+    //CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+    //CPPUNIT_TEST(testAdminCanReAddMember);
+    //CPPUNIT_TEST(testMemberCannotBanOther);
+    //CPPUNIT_TEST(testMemberCannotUnBanOther);
+    //CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
+    //CPPUNIT_TEST(testAdminCannotKickTheirself);
+    //CPPUNIT_TEST(testCommitUnauthorizedUser);
+    //CPPUNIT_TEST(testMemberJoinsNoBadFile);
+    //CPPUNIT_TEST(testMemberAddedNoCertificate);
+    //CPPUNIT_TEST(testMemberJoinsInviteRemoved);
+    //CPPUNIT_TEST(testFailAddMemberInOneToOne);
+    //CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    //CPPUNIT_TEST(testConversationMemberEvent);
+    //CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
+    //CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
+    //CPPUNIT_TEST(testAvoidTwoOneToOne);
+    //CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
+    //CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
+    //CPPUNIT_TEST(testBanUnbanMultiDevice);
+    /////////////CPPUNIT_TEST(testBanUnbanGotFirstConv);
+    //CPPUNIT_TEST(testBanHostWhileHosting);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -427,6 +427,8 @@ ConversationMembersEventTest::testMemberAddedNoBadFile()
             }));
     libjami::registerSignalHandlers(confHandlers);
     addFile(aliceAccount, convId, "BADFILE");
+    // NOTE: Add certificate because no DHT lookup
+    aliceAccount->certStore().pinCertificate(bobAccount->identity().second);
     generateFakeInvite(aliceAccount, convId, bobUri);
     // Generate conv request
     aliceAccount->sendTextMessage(bobUri,
@@ -1920,6 +1922,8 @@ ConversationMembersEventTest::testOneToOneFetchWithNewMemberRefused()
         cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
 
     errorDetected = false;
+    // NOTE: Add certificate because no DHT lookup
+    aliceAccount->certStore().pinCertificate(carlaAccount->identity().second);
     generateFakeInvite(aliceAccount, convId, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return errorDetected; }));
 }

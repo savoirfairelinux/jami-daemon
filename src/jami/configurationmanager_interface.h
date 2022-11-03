@@ -199,20 +199,22 @@ LIBJAMI_PUBLIC std::map<std::string, std::string> validateCertificatePath(
     const std::string& caList);
 
 LIBJAMI_PUBLIC std::map<std::string, std::string> getCertificateDetails(
-    const std::string& certificate);
+    const std::string& accountId, const std::string& certificate);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getCertificateDetailsPath(
+    const std::string& accountId,
     const std::string& certificatePath,
     const std::string& privateKey,
     const std::string& privateKeyPassword);
 
-LIBJAMI_PUBLIC std::vector<std::string> getPinnedCertificates();
+LIBJAMI_PUBLIC std::vector<std::string> getPinnedCertificates(const std::string& accountId);
 
-LIBJAMI_PUBLIC std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate,
+LIBJAMI_PUBLIC std::vector<std::string> pinCertificate(const std::string& accountId,
+                                                       const std::vector<uint8_t>& certificate,
                                                        bool local);
-LIBJAMI_PUBLIC bool unpinCertificate(const std::string& certId);
+LIBJAMI_PUBLIC bool unpinCertificate(const std::string& accountId, const std::string& certId);
 
-LIBJAMI_PUBLIC void pinCertificatePath(const std::string& path);
-LIBJAMI_PUBLIC unsigned unpinCertificatePath(const std::string& path);
+LIBJAMI_PUBLIC void pinCertificatePath(const std::string& accountId, const std::string& path);
+LIBJAMI_PUBLIC unsigned unpinCertificatePath(const std::string& accountId, const std::string& path);
 
 LIBJAMI_PUBLIC bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
 LIBJAMI_PUBLIC bool setCertificateStatus(const std::string& account,
