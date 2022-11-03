@@ -143,7 +143,7 @@ void
 UPnPContext::stopUpnp(bool forceRelease)
 {
     if (not isValidThread()) {
-        runOnUpnpContextQueue([this] { stopUpnp(); });
+        runOnUpnpContextQueue([this, forceRelease] { stopUpnp(forceRelease); });
         return;
     }
 
@@ -168,9 +168,14 @@ UPnPContext::stopUpnp(bool forceRelease)
         preferredIgd_.reset();
         validIgdList_.clear();
     }
-
     for (auto const& map : toRemoveList) {
         requestRemoveMapping(map);
+
+        /* To ensure proper closure of SIP registration, we must
+        prevent NotifyCallback from being called by updateMappingState.
+        NotifyCallback will trigger a new SIP registration and
+        create a false registered state upon program close.  */
+
         updateMappingState(map, MappingState::FAILED);
         // We dont remove mappings with auto-update enabled,
         // unless forceRelease is true.
