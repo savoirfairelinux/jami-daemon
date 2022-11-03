@@ -24,6 +24,7 @@
 #include "jami/account_const.h"
 #include "account_schema.h"
 #include "jamidht/conversation_module.h"
+#include "manager.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/thread_pool.h>
@@ -36,7 +37,8 @@ namespace jami {
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 
 void
-ArchiveAccountManager::initAuthentication(PrivateKey key,
+ArchiveAccountManager::initAuthentication(const std::string& accountId,
+                                          PrivateKey key,
                                           std::string deviceName,
                                           std::unique_ptr<AccountCredentials> credentials,
                                           AuthSuccessCallback onSuccess,
@@ -44,6 +46,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
                                           const OnChangeCallback& onChange)
 {
     auto ctx = std::make_shared<AuthContext>();
+    ctx->accountId = accountId;
     ctx->key = key;
     ctx->request = buildRequest(key);
     ctx->deviceName = std::move(deviceName);
@@ -387,7 +390,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
     auto usePreviousIdentity = false;
     // If updateIdentity got a valid certificate, there is no need for a new cert
     if (auto oldId = ctx.credentials->updateIdentity.second) {
-        contacts = std::make_unique<ContactList>(oldId, path_, onChange_);
+        contacts = std::make_unique<ContactList>(ctx.accountId, oldId, path_, onChange_);
         if (contacts->isValidAccountDevice(*oldId) && ctx.credentials->updateIdentity.first) {
             deviceCertificate = oldId;
             usePreviousIdentity = true;
@@ -428,7 +431,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
         ctx.deviceName = info->deviceId.substr(8);
 
     if (!contacts)
-        contacts = std::make_unique<ContactList>(a.id.second, path_, onChange_);
+        contacts = std::make_unique<ContactList>(ctx.accountId, a.id.second, path_, onChange_);
     info->contacts = std::move(contacts);
     info->contacts->setContacts(a.contacts);
     info->contacts->foundAccountDevice(deviceCertificate, ctx.deviceName, clock::now());
@@ -766,7 +769,8 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
 }
 
 bool
-ArchiveAccountManager::revokeDevice(const std::string& password,
+ArchiveAccountManager::revokeDevice(
+                                    const std::string& password,
                                     const std::string& device,
                                     RevokeDeviceCallback cb)
 {
@@ -799,9 +803,12 @@ ArchiveAccountManager::revokeDevice(const std::string& password,
                             a.revoked->revoke(*crt);
                             a.revoked->sign(a.id);
                             // add to CRL cache
-                            tls::CertificateStore::instance()
-                                .pinRevocationList(a.id.second->getId().toString(), a.revoked);
-                            tls::CertificateStore::instance().loadRevocations(*a.id.second);
+                            this_.certStore().pinRevocationList(a.id.second->getId().toString(), a.revoked);
+                            this_.certStore().loadRevocations(*a.id.second);
+
+                            // Announce CRL immediately
+                            auto h = a.id.second->getId();
+                            this_.dht_->put(h, a.revoked, dht::DoneCallback {}, {}, true);
 
                             this_.saveArchive(a, password);
                             this_.info_->contacts->removeAccountDevice(crt->getLongId());

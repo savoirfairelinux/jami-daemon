@@ -426,6 +426,8 @@ ConversationMembersEventTest::testMemberAddedNoBadFile()
             }));
     libjami::registerSignalHandlers(confHandlers);
     addFile(aliceAccount, convId, "BADFILE");
+    // NOTE: Add certificate because no DHT lookup
+    aliceAccount->certStore().pinCertificate(bobAccount->identity().second);
     generateFakeInvite(aliceAccount, convId, bobUri);
     // Generate conv request
     aliceAccount->sendTextMessage(bobUri,
@@ -1942,6 +1944,8 @@ ConversationMembersEventTest::testOneToOneFetchWithNewMemberRefused()
         cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
 
     errorDetected = false;
+    // NOTE: Add certificate because no DHT lookup
+    aliceAccount->certStore().pinCertificate(carlaAccount->identity().second);
     generateFakeInvite(aliceAccount, convId, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return errorDetected; }));
 }

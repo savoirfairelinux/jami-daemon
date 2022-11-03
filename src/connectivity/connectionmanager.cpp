@@ -425,6 +425,7 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
                << "Start TLS session - Initied by connectDevice(). Launched by channel: " << name
                << " - device:" << deviceId << " - vid: " << vid;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(std::move(endpoint),
+                                                     account.certStore(),
                                                      account.identity(),
                                                      account.dhParams(),
                                                      *cert);
@@ -921,13 +922,14 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
                << " - vid: " << req.id;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(
         std::move(endpoint),
+        account.certStore(),
         account.identity(),
         account.dhParams(),
         [ph, w = weak()](const dht::crypto::Certificate& cert) {
             auto shared = w.lock();
             if (!shared)
                 return false;
-            auto crt = tls::CertificateStore::instance().getCertificate(ph.toString());
+            auto crt = shared->account.certStore().getCertificate(cert.getLongId().toString());
             if (!crt)
                 return false;
             return crt->getPacked() == cert.getPacked();
@@ -1135,7 +1137,7 @@ ConnectionManager::closeConnectionsWith(const std::string& peerUri)
         for (auto iter = pimpl_->infos_.begin(); iter != pimpl_->infos_.end();) {
             auto const& [key, value] = *iter;
             auto deviceId = key.first;
-            auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
+            auto cert = pimpl_->account.certStore().getCertificate(deviceId.toString());
             if (cert && cert->issuer && peerUri == cert->issuer->getId().toString()) {
                 connInfos.emplace_back(value);
                 peersDevices.emplace(deviceId);
