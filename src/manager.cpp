@@ -3240,4 +3240,13 @@ Manager::eraseGitTransport(git_smart_subtransport* tr)
     pimpl_->gitTransports_.erase(tr);
 }
 
+tls::CertificateStore&
+Manager::certStore(const std::string& accountId) const
+{
+    if (const auto& account = getAccount<JamiAccount>(accountId)) {
+        return account->certStore();
+    }
+    throw std::runtime_error("No account found");
+}
+
 } // namespace jami

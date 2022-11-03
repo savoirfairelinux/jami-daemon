@@ -251,6 +251,9 @@ public:
      */
     std::string uriFromDevice(const std::string& deviceId) const
     {
+        auto acc = account_.lock();
+        if (!acc)
+            return {};
         std::lock_guard<std::mutex> lk(deviceToUriMtx_);
         auto it = deviceToUri_.find(deviceId);
         if (it != deviceToUri_.end())
@@ -260,7 +263,7 @@ public:
         if (!repo)
             return {};
 
-        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+        auto cert = acc->certStore().getCertificate(deviceId);
         if (!cert || !cert->issuer) {
             // Not pinned, so load certificate from repo
             std::string deviceFile = git_repository_workdir(repo.get())
@@ -1430,7 +1433,10 @@ bool
 ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
-    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    auto acc = account_.lock();
+    if (!acc)
+        return false;
+    auto cert = acc->certStore().getCertificate(userDevice);
     auto hasPinnedCert = cert and cert->issuer;
     auto repo = repository();
     if (not repo)
@@ -1500,8 +1506,8 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
 
     auto res = parentCert.getId().toString() == userUri;
     if (res && not hasPinnedCert) {
-        tls::CertificateStore::instance().pinCertificate(std::move(deviceCert));
-        tls::CertificateStore::instance().pinCertificate(std::move(parentCert));
+        acc->certStore().pinCertificate(std::move(deviceCert));
+        acc->certStore().pinCertificate(std::move(parentCert));
     }
     return res;
 }
@@ -2241,6 +2247,9 @@ ConversationRepository::Impl::getCommitType(const std::string& commitMsg) const
 std::vector<std::string>
 ConversationRepository::Impl::getInitialMembers() const
 {
+    auto acc = account_.lock();
+    if (!acc)
+        return {};
     LogOptions options;
     options.from = id_;
     options.nbOfCommits = 1;
@@ -2251,7 +2260,7 @@ ConversationRepository::Impl::getInitialMembers() const
     auto commit = firstCommit[0];
 
     auto authorDevice = commit.author.email;
-    auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
+    auto cert = acc->certStore().getCertificate(authorDevice);
     if (!cert || !cert->issuer)
         return {};
     auto authorId = cert->issuer->getId().toString();
@@ -3687,8 +3696,9 @@ ConversationRepository::refreshMembers() const
 void
 ConversationRepository::pinCertificates(bool blocking)
 {
+    auto acc = pimpl_->account_.lock();
     auto repo = pimpl_->repository();
-    if (!repo)
+    if (!repo or !acc)
         return;
 
     std::string repoPath = git_repository_workdir(repo.get());
@@ -3700,12 +3710,10 @@ ConversationRepository::pinCertificates(bool blocking)
         if (blocking) {
             std::promise<bool> p;
             std::future<bool> f = p.get_future();
-            tls::CertificateStore::instance().pinCertificatePath(path, [&](auto /* certs */) {
-                p.set_value(true);
-            });
+            acc->certStore().pinCertificatePath(path, [&](auto /* certs */) { p.set_value(true); });
             f.wait();
         } else {
-            tls::CertificateStore::instance().pinCertificatePath(path, {});
+            acc->certStore().pinCertificatePath(path, {});
         }
     }
 }
