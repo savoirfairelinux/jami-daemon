@@ -290,12 +290,14 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
-{}
+    , certStore_ {std::make_unique<tls::CertificateStore>(accountId)}
+{
+}
 
 JamiAccount::~JamiAccount() noexcept
 {
-    if (auto dht = dht_)
-        dht->join();
+    if (dht_)
+        dht_->join();
 }
 
 void
@@ -1080,7 +1082,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
-    JAMI_DEBUG("[Account {}] loading account", getAccountID());
+    JAMI_DEBUG("[Account {:s}] loading account", getAccountID());
     AccountManager::OnChangeCallback callbacks {
         [this](const std::string& uri, bool confirmed) {
             if (!id_.first)
@@ -1196,11 +1198,13 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 new ServerAccountManager(getPath(), onAsync, conf.managerUri, conf.nameServer));
         }
 
-        auto id = accountManager_->loadIdentity(conf.tlsCertificateFile,
+        auto id = accountManager_->loadIdentity(getAccountID(),
+                                                conf.tlsCertificateFile,
                                                 conf.tlsPrivateKeyFile,
                                                 conf.tlsPassword);
 
-        if (auto info = accountManager_->useIdentity(id,
+        if (auto info = accountManager_->useIdentity(getAccountID(),
+                                                     id,
                                                      conf.receipt,
                                                      conf.receiptSignature,
                                                      conf.managerUsername,
@@ -1208,7 +1212,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             // normal loading path
             id_ = std::move(id);
             config_->username = info->accountId;
-            JAMI_WARN("[Account %s] loaded account identity", getAccountID().c_str());
+            JAMI_WARNING("[Account {:s}] loaded account identity", getAccountID());
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
@@ -1262,6 +1266,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             bool hasPassword = !archive_password.empty();
 
             accountManager_->initAuthentication(
+                getAccountID(),
                 fDeviceKey,
                 ip_utils::getDeviceName(),
                 std::move(creds),
@@ -1884,9 +1889,9 @@ JamiAccount::doRegister_()
 #endif
             // logger_ = std::make_shared<dht::Logger>(log_error, log_warn, log_debug);
         }
-        context.certificateStore = [](const dht::InfoHash& pk_id) {
+        context.certificateStore = [&](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
-            if (auto cert = tls::CertificateStore::instance().getCertificate(pk_id.toString()))
+            if (auto cert = certStore().getCertificate(pk_id.toString()))
                 ret.emplace_back(std::move(cert));
             JAMI_LOG("Query for local certificate store: {}: {} found.",
                      pk_id.toString(),
@@ -2419,6 +2424,20 @@ JamiAccount::setCertificateStatus(const std::string& cert_id,
         findCertificate(cert_id);
         emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
             getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
+    }
+    return done;
+}
+
+bool
+JamiAccount::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
+                              tls::TrustStore::PermissionStatus status,
+                              bool local)
+{
+    bool done = accountManager_ ? accountManager_->setCertificateStatus(cert, status, local) : false;
+    if (done) {
+        findCertificate(cert->getId().toString());
+        emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
+            getAccountID(), cert->getId().toString(), tls::TrustStore::statusToStr(status));
     }
     return done;
 }
