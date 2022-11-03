@@ -595,6 +595,11 @@ public:
     };
 #endif
 
+    tls::CertificateStore& certStore() const
+    {
+        return *certStore_;
+    }
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -892,6 +897,8 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
+
+    std::unique_ptr<tls::CertificateStore> certStore_;
 };
 
 static inline std::ostream&

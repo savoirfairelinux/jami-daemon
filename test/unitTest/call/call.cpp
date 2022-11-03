@@ -72,13 +72,13 @@ private:
     void testInvalidTurn();
 
     CPPUNIT_TEST_SUITE(CallTest);
-    CPPUNIT_TEST(testCall);
+    //CPPUNIT_TEST(testCall);
     CPPUNIT_TEST(testCachedCall);
-    CPPUNIT_TEST(testStopSearching);
-    CPPUNIT_TEST(testDeclineMultiDevice);
-    CPPUNIT_TEST(testTlsInfosPeerCertificate);
-    CPPUNIT_TEST(testSocketInfos);
-    CPPUNIT_TEST(testInvalidTurn);
+    //CPPUNIT_TEST(testStopSearching);
+    //CPPUNIT_TEST(testDeclineMultiDevice);
+    //CPPUNIT_TEST(testTlsInfosPeerCertificate);
+    //CPPUNIT_TEST(testSocketInfos);
+    //CPPUNIT_TEST(testInvalidTurn);
     CPPUNIT_TEST_SUITE_END();
 };
 

@@ -33,7 +33,7 @@ public:
                           const std::string& nameServer)
         : AccountManager(path, std::move(onAsync), nameServer)
         , onExportConfig_(std::move(onExportConfig))
-        , archivePath_(std::move(archivePath)) {};
+        , archivePath_(std::move(archivePath)) {}
 
     struct ArchiveAccountCredentials : AccountCredentials
     {
@@ -42,7 +42,8 @@ public:
         dht::crypto::Identity updateIdentity;
     };
 
-    void initAuthentication(PrivateKey request,
+    void initAuthentication(const std::string& accountId,
+                            PrivateKey request,
                             std::string deviceName,
                             std::unique_ptr<AccountCredentials> credentials,
                             AuthSuccessCallback onSuccess,
@@ -83,6 +84,7 @@ private:
     struct DhtLoadContext;
     struct AuthContext
     {
+        std::string accountId;
         PrivateKey key;
         CertRequest request;
         std::string deviceName;

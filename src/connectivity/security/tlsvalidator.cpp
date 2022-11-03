@@ -220,15 +220,17 @@ const Matrix2D<TlsValidator::CheckValuesType, TlsValidator::CheckValues, bool>
         /* NUMBER   */ {{false, false, true, false, false, true}},
     }};
 
-TlsValidator::TlsValidator(const std::vector<std::vector<uint8_t>>& crtChain)
-    : TlsValidator(std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
+TlsValidator::TlsValidator(const tls::CertificateStore& certStore, const std::vector<std::vector<uint8_t>>& crtChain)
+    : TlsValidator(certStore, std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
 {}
 
-TlsValidator::TlsValidator(const std::string& certificate,
+TlsValidator::TlsValidator(const tls::CertificateStore& certStore,
+                           const std::string& certificate,
                            const std::string& privatekey,
                            const std::string& privatekeyPasswd,
                            const std::string& caList)
-    : certificatePath_(certificate)
+    : certStore_(certStore)
+    , certificatePath_(certificate)
     , privateKeyPath_(privatekey)
     , caListPath_(caList)
     , certificateFound_(false)
@@ -266,7 +268,8 @@ TlsValidator::TlsValidator(const std::string& certificate,
     }
 }
 
-TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
+TlsValidator::TlsValidator(const tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw)
+    : certStore_(certStore)
 {
     try {
         x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
@@ -277,8 +280,9 @@ TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
     }
 }
 
-TlsValidator::TlsValidator(const std::shared_ptr<dht::crypto::Certificate>& crt)
-    : certificateFound_(true)
+TlsValidator::TlsValidator(const tls::CertificateStore& certStore, const std::shared_ptr<dht::crypto::Certificate>& crt)
+    : certStore_(certStore)
+    , certificateFound_(true)
 {
     try {
         if (not crt)
@@ -467,7 +471,7 @@ TlsValidator::compareToCa()
     gnutls_x509_trust_list_t trust;
     gnutls_x509_trust_list_init(&trust, 0);
 
-    auto root_cas = CertificateStore::instance().getTrustedCertificates();
+    auto root_cas = certStore_.getTrustedCertificates();
     auto err = gnutls_x509_trust_list_add_cas(trust, root_cas.data(), root_cas.size(), 0);
     if (err)
         JAMI_WARN("gnutls_x509_trust_list_add_cas failed: %s", gnutls_strerror(err));
@@ -1167,7 +1171,7 @@ TlsValidator::CheckResult
 TlsValidator::getIssuer()
 {
     if (not x509crt_->issuer) {
-        auto icrt = CertificateStore::instance().findIssuer(x509crt_);
+        auto icrt = certStore_.findIssuer(x509crt_);
         if (icrt)
             return TlsValidator::CheckResult(CheckValues::CUSTOM, icrt->getId().toString());
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");

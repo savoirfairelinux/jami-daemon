@@ -67,8 +67,8 @@ private:
     void testExpiredDeviceInSwarm();
 
     CPPUNIT_TEST_SUITE(MigrationTest);
-    CPPUNIT_TEST(testLoadExpiredAccount);
-    CPPUNIT_TEST(testMigrationAfterRevokation);
+    //CPPUNIT_TEST(testLoadExpiredAccount);
+    //CPPUNIT_TEST(testMigrationAfterRevokation);
     CPPUNIT_TEST(testExpiredDeviceInSwarm);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -314,6 +314,7 @@ MigrationTest::testExpiredDeviceInSwarm()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return requestReceived; }));
 
     messageAliceReceived = 0;
+    JAMI_ERROR("@@@@@@@@@@ ACCEPT");
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return conversationReady; }));
 

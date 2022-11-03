@@ -32,14 +32,20 @@
 
 namespace jami {
 
-ContactList::ContactList(const std::shared_ptr<crypto::Certificate>& cert,
+ContactList::ContactList(const std::string& accountId,
+                         const std::shared_ptr<crypto::Certificate>& cert,
                          const std::string& path,
                          OnChangeCallback cb)
     : path_(path)
     , callbacks_(std::move(cb))
 {
-    if (cert)
+    if (cert) {
+        auto accountId = cert->getId().toString();
+        // TODO share with account.
+        certStore_ = std::make_unique<tls::CertificateStore>(accountId);
+        trust_ = std::make_unique<tls::TrustStore>(*certStore_);
         accountTrust_.add(*cert);
+    }
 }
 
 ContactList::~ContactList() {}
@@ -68,7 +74,7 @@ ContactList::setCertificateStatus(const std::string& cert_id,
         JAMI_DBG("Can't set certificate status for existing contacts %s", cert_id.c_str());
         return false;
     }
-    return trust_.setCertificateStatus(cert_id, status);
+    return trust_->setCertificateStatus(cert_id, status);
 }
 
 bool
@@ -88,7 +94,7 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
     c->second.conversationId = conversationId;
     c->second.confirmed |= confirmed;
     auto hStr = h.toString();
-    trust_.setCertificateStatus(hStr, tls::TrustStore::PermissionStatus::ALLOWED);
+    trust_->setCertificateStatus(hStr, tls::TrustStore::PermissionStatus::ALLOWED);
     saveContacts();
     callbacks_.contactAdded(hStr, c->second.confirmed);
     return true;
@@ -117,7 +123,7 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     c->second.confirmed = false;
     c->second.banned = ban;
     auto uri = h.toString();
-    trust_.setCertificateStatus(uri,
+    trust_->setCertificateStatus(uri,
                                 ban ? tls::TrustStore::PermissionStatus::BANNED
                                     : tls::TrustStore::PermissionStatus::UNDEFINED);
     if (trustRequests_.erase(h) > 0)
@@ -202,11 +208,11 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
         if (trustRequests_.erase(id) > 0)
             saveTrustRequests();
         if (c->second.isActive()) {
-            trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::ALLOWED);
+            trust_->setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::ALLOWED);
             callbacks_.contactAdded(id.toString(), c->second.confirmed);
         } else {
             if (c->second.banned)
-                trust_.setCertificateStatus(id.toString(),
+                trust_->setCertificateStatus(id.toString(),
                                             tls::TrustStore::PermissionStatus::BANNED);
             callbacks_.contactRemoved(id.toString(), c->second.banned);
         }
@@ -412,10 +418,7 @@ ContactList::loadKnownDevices()
         std::map<dht::PkId, std::pair<std::string, uint64_t>> knownDevices;
         oh.get().convert(knownDevices);
         for (const auto& d : knownDevices) {
-            /*JAMI_DBG("[Contacts] loading known account device %s %s",
-                    d.second.first.c_str(),
-                    d.first.toString().c_str());*/
-            if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString())) {
+            if (auto crt = certStore_->getCertificate(d.first.toString())) {
                 if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
                     JAMI_WARN("[Contacts] can't add device %s", d.first.toString().c_str());
             } else {
@@ -431,8 +434,7 @@ ContactList::loadKnownDevices()
             std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
             oh.get().convert(knownDevices);
             for (const auto& d : knownDevices) {
-                if (auto crt = tls::CertificateStore::instance().getCertificate(
-                        d.first.toString())) {
+                if (auto crt = certStore_->getCertificate(d.first.toString())) {
                     if (not foundAccountDevice(crt,
                                                d.second.first,
                                                clock::from_time_t(d.second.second)))
@@ -506,12 +508,12 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     auto it = knownDevices_.emplace(id, KnownDevice {crt, name, updated});
     if (it.second) {
         JAMI_DBG("[Contacts] Found account device: %s %s", name.c_str(), id.toString().c_str());
-        tls::CertificateStore::instance().pinCertificate(crt);
+        certStore_->pinCertificate(crt);
         if (crt->ocspResponse) {
             unsigned int status = crt->ocspResponse->getCertificateStatus();
             if (status == GNUTLS_OCSP_CERT_REVOKED) {
                 JAMI_ERR("Certificate %s has revoked OCSP status", id.to_c_str());
-                trust_.setCertificateStatus(crt, tls::TrustStore::PermissionStatus::BANNED, false);
+                trust_->setCertificateStatus(crt, tls::TrustStore::PermissionStatus::BANNED, false);
             }
         }
         saveKnownDevices();
