@@ -290,6 +290,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
+    , certStore_ {std::make_unique<tls::CertificateStore>(accountId)}
 {
 }
 
@@ -1859,9 +1860,9 @@ JamiAccount::doRegister_()
 #endif
             // logger_ = std::make_shared<dht::Logger>(log_error, log_warn, log_debug);
         }
-        context.certificateStore = [](const dht::InfoHash& pk_id) {
+        context.certificateStore = [&](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
-            if (auto cert = tls::CertificateStore::instance().getCertificate(pk_id.toString()))
+            if (auto cert = certStore().getCertificate(pk_id.toString()))
                 ret.emplace_back(std::move(cert));
             JAMI_DBG("Query for local certificate store: %s: %zu found.",
                      pk_id.toString().c_str(),
