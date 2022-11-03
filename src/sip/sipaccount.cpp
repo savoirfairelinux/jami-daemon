@@ -777,11 +777,12 @@ SIPAccount::mapPortUPnP()
                               accPtr->getAccountID().c_str(),
                               newPort);
                 accPtr->publishedPortUsed_ = newPort;
-            } else {
+            }
+            else{
                 accPtr->connectivityChanged();
             }
-
             accPtr->doRegister1_();
+
         }
     });
 
