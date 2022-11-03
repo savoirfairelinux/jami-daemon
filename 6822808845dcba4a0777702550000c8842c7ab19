@@ -16,6 +16,24 @@
       "message": "MAJOR SonarQube violation:\n\n\n\u0027getPublishedIpAddress\u0027 overrides a member function but is not marked \u0027override\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-inconsistent-missing-override",
       "revId": "6822808845dcba4a0777702550000c8842c7ab19",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "39924d5e_235154c4",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 22
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-03T20:13:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f9f6bbf5_739d7f96",
+      "revId": "6822808845dcba4a0777702550000c8842c7ab19",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
