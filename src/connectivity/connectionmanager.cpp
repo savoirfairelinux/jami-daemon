@@ -922,7 +922,7 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
             auto shared = w.lock();
             if (!shared)
                 return false;
-            auto crt = tls::CertificateStore::instance().getCertificate(ph.toString());
+            auto crt = shared->account.certStore().getCertificate(cert.getLongId().toString());
             if (!crt)
                 return false;
             return crt->getPacked() == cert.getPacked();
@@ -1029,7 +1029,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         }
         // We need to detect any shutdown if the ice session is destroyed before going to the TLS session;
         info->ice_->setOnShutdown([eraseInfo]() {
-            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+            dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
         });
         info->ice_->initIceInstance(ice_config);
     });
@@ -1133,7 +1133,7 @@ ConnectionManager::closeConnectionsWith(const std::string& peerUri)
         for (auto iter = pimpl_->infos_.begin(); iter != pimpl_->infos_.end();) {
             auto const& [key, value] = *iter;
             auto deviceId = key.first;
-            auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
+            auto cert = pimpl_->account.certStore().getCertificate(deviceId.toString());
             if (cert && cert->issuer && peerUri == cert->issuer->getId().toString()) {
                 connInfos.emplace_back(value);
                 peersDevices.emplace(deviceId);

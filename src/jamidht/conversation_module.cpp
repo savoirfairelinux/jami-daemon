@@ -252,7 +252,7 @@ public:
                      const std::string& newBody,
                      const std::string& editedId);
 
-    void boostrapCb(const std::string& convId);
+    void bootstrapCb(const std::string& convId);
 
     // The following informations are stored on the disk
     mutable std::mutex convInfosMtx_; // Note, should be locked after conversationsMtx_ if needed
@@ -598,7 +598,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         conversation->onBootstrapStatus(bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
         conversation->bootstrap(
-            std::bind(&ConversationModule::Impl::boostrapCb, this, conversation->id()));
+            std::bind(&ConversationModule::Impl::bootstrapCb, this, conversation->id()));
         auto removeRepo = false;
         {
             std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -672,8 +672,11 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         auto askForProfile = isOneOne;
         if (!isOneOne) {
             // If not 1:1 only download profiles from self (to avoid non checked files)
-            auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
-            askForProfile = cert && cert->issuer && cert->issuer->getId().toString() == username_;
+            if (auto acc = account_.lock()) {
+                auto cert = acc->certStore().getCertificate(deviceId);
+                askForProfile = cert && cert->issuer
+                                && cert->issuer->getId().toString() == username_;
+            }
         }
         if (askForProfile) {
             if (auto acc = account_.lock()) {
@@ -901,10 +904,12 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         auto members = conversation.memberUris(username_, {MemberRole::BANNED});
         std::vector<std::string> connectedMembers;
         // print all members
-        for (const auto& device : devices) {
-            auto cert = tls::CertificateStore::instance().getCertificate(device.toString());
-            if (cert && cert->issuer)
-                connectedMembers.emplace_back(cert->issuer->getId().toString());
+        if (auto acc = account_.lock()) {
+            for (const auto& device : devices) {
+                auto cert = acc->certStore().getCertificate(device.toString());
+                if (cert && cert->issuer)
+                    connectedMembers.emplace_back(cert->issuer->getId().toString());
+            }
         }
         std::sort(std::begin(members), std::end(members));
         std::sort(std::begin(connectedMembers), std::end(connectedMembers));
@@ -1027,7 +1032,7 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
 }
 
 void
-ConversationModule::Impl::boostrapCb(const std::string& convId)
+ConversationModule::Impl::bootstrapCb(const std::string& convId)
 {
     std::string commitId;
     {
@@ -1264,16 +1269,26 @@ ConversationModule::loadConversations()
 }
 
 void
-ConversationModule::bootstrap()
+ConversationModule::bootstrap(const std::string& convId)
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    for (auto& [_, conv] : pimpl_->conversations_) {
+    auto bootstrap = [&](auto& conv) {
         if (conv) {
 #ifdef LIBJAMI_TESTABLE
             conv->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
             conv->bootstrap(
-                std::bind(&ConversationModule::Impl::boostrapCb, pimpl_.get(), conv->id()));
+                std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conv->id()));
+        }
+    };
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    if (convId.empty()) {
+        for (auto& [_, conv] : pimpl_->conversations_) {
+            bootstrap(conv);
+        }
+    } else {
+        auto it = pimpl_->conversations_.find(convId);
+        if (it != pimpl_->conversations_.end()) {
+            bootstrap(it->second);
         }
     }
 }
@@ -1500,7 +1515,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
         conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
         conversation->bootstrap(
-            std::bind(&ConversationModule::Impl::boostrapCb, pimpl_.get(), conversation->id()));
+            std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conversation->id()));
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] Error while generating a conversation %s",
                  pimpl_->accountId_.c_str(),
@@ -2219,12 +2234,22 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
 }
 
 bool
-ConversationModule::isBannedDevice(const std::string& convId, const std::string& deviceId) const
+ConversationModule::isBanned(const std::string& convId, const std::string& uri) const
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    auto conversation = pimpl_->conversations_.find(convId);
-    return conversation == pimpl_->conversations_.end() || !conversation->second
-           || conversation->second->isBanned(deviceId);
+    {
+        std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+        auto conversation = pimpl_->conversations_.find(convId);
+        if (conversation == pimpl_->conversations_.end() || !conversation->second)
+            return true;
+        if (conversation->second->mode() != ConversationMode::ONE_TO_ONE) {
+            return conversation->second->isBanned(uri);
+        }
+    }
+    // If 1:1 we check the certificate status
+    if (auto acc = pimpl_->account_.lock()) {
+        return acc->accountManager()->getCertificateStatus(uri) == tls::TrustStore::PermissionStatus::BANNED;
+    }
+    return true;
 }
 
 void

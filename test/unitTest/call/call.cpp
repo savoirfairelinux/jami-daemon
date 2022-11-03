@@ -158,6 +158,10 @@ CallTest::testCachedCall()
     auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
     auto aliceUri = aliceAccount->getUsername();
 
+    // Pin certificate from one to another certstore (because we do not perform any DHT operation in this test)
+    bobAccount->certStore().pinCertificate(aliceAccount->identity().second);
+    aliceAccount->certStore().pinCertificate(bobAccount->identity().second);
+
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
@@ -292,6 +296,7 @@ CallTest::testDeclineMultiDevice()
     libjami::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
+    auto bobAccount2 = Manager::instance().getAccount<JamiAccount>(bob2Id);
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callReceived == 2 && !callIdBob.empty(); }));
