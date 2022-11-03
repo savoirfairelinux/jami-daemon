@@ -85,9 +85,7 @@ UPnPContext::shutdown()
     std::unique_lock<std::mutex> lk(mappingMutex_);
     std::condition_variable cv;
 
-    runOnUpnpContextQueue([&, this] {
-        shutdown(cv);
-    });
+    runOnUpnpContextQueue([&, this] { shutdown(cv); });
 
     JAMI_DBG("Waiting for shutdown ...");
 
@@ -143,7 +141,7 @@ void
 UPnPContext::stopUpnp(bool forceRelease)
 {
     if (not isValidThread()) {
-        runOnUpnpContextQueue([this] { stopUpnp(); });
+        runOnUpnpContextQueue([this, forceRelease] { stopUpnp(forceRelease); });
         return;
     }
 
@@ -168,10 +166,16 @@ UPnPContext::stopUpnp(bool forceRelease)
         preferredIgd_.reset();
         validIgdList_.clear();
     }
-
     for (auto const& map : toRemoveList) {
         requestRemoveMapping(map);
-        updateMappingState(map, MappingState::FAILED);
+
+        // Notify is not needed in updateMappingState when
+        // shutting down (hence set it to false). NotifyCallback
+        // would trigger a new SIP registration and create a
+        // false registered state upon program close.
+        // It's handled by upper layers.
+
+        updateMappingState(map, MappingState::FAILED, false);
         // We dont remove mappings with auto-update enabled,
         // unless forceRelease is true.
         if (not map->getAutoUpdate() or forceRelease) {
@@ -923,9 +927,9 @@ UPnPContext::onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event)
     // Reset to start search for a new best IGD.
     preferredIgd_.reset();
 
-    char const* IgdState = event == UpnpIgdEvent::ADDED
-                               ? "ADDED"
-                               : event == UpnpIgdEvent::REMOVED ? "REMOVED" : "INVALID";
+    char const* IgdState = event == UpnpIgdEvent::ADDED     ? "ADDED"
+                           : event == UpnpIgdEvent::REMOVED ? "REMOVED"
+                                                            : "INVALID";
 
     auto const& igdLocalAddr = igd->getLocalIp();
     auto protocolName = igd->getProtocolName();
