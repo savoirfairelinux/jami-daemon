@@ -24,6 +24,7 @@
 #ifndef TLS_VALIDATOR_H
 #define TLS_VALIDATOR_H
 
+#include "certstore.h"
 #include "enumclass_utils.h"
 
 #include <string>
@@ -183,16 +184,17 @@ public:
      * @param privatekeyPasswd An optional private key password
      * @param caList An optional CA list to use for certificate validation
      */
-    TlsValidator(const std::string& certificate,
+    TlsValidator(const tls::CertificateStore& certStore,
+                 const std::string& certificate,
                  const std::string& privatekey = "",
                  const std::string& privatekeyPasswd = "",
                  const std::string& caList = "");
 
-    TlsValidator(const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
+    TlsValidator(const tls::CertificateStore& certStore, const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
 
-    TlsValidator(const std::vector<uint8_t>& certificate_raw);
+    TlsValidator(const tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw);
 
-    TlsValidator(const std::shared_ptr<dht::crypto::Certificate>&);
+    TlsValidator(const tls::CertificateStore& certStore, const std::shared_ptr<dht::crypto::Certificate>&);
 
     ~TlsValidator();
 
@@ -278,6 +280,7 @@ private:
 
     static const Matrix1D<CertificateCheck, CheckValuesType> enforcedCheckType;
 
+    const tls::CertificateStore&  certStore_;
     std::string certificatePath_;
     std::string privateKeyPath_;
     std::string caListPath_ {};

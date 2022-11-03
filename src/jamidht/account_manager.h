@@ -112,7 +112,8 @@ public:
         virtual ~AccountCredentials() {};
     };
 
-    virtual void initAuthentication(PrivateKey request,
+    virtual void initAuthentication(const std::string& accountId,
+                                    PrivateKey request,
                                     std::string deviceName,
                                     std::unique_ptr<AccountCredentials> credentials,
                                     AuthSuccessCallback onSuccess,
@@ -126,11 +127,13 @@ public:
 
     virtual bool isPasswordValid(const std::string& /*password*/) { return false; };
 
-    dht::crypto::Identity loadIdentity(const std::string& crt_path,
+    dht::crypto::Identity loadIdentity(const std::string& accountId,
+                                       const std::string& crt_path,
                                        const std::string& key_path,
                                        const std::string& key_pwd) const;
 
-    const AccountInfo* useIdentity(const dht::crypto::Identity& id,
+    const AccountInfo* useIdentity(const std::string& accountId,
+                                   const dht::crypto::Identity& id,
                                    const std::string& receipt,
                                    const std::vector<uint8_t>& receiptSignature,
                                    const std::string& username,

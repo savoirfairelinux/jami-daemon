@@ -62,7 +62,8 @@ ServerAccountManager::setAuthHeaderFields(Request& request) const
 }
 
 void
-ServerAccountManager::initAuthentication(PrivateKey key,
+ServerAccountManager::initAuthentication(const std::string& accountId,
+                                         PrivateKey key,
                                          std::string deviceName,
                                          std::unique_ptr<AccountCredentials> credentials,
                                          AuthSuccessCallback onSuccess,
@@ -70,6 +71,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                          const OnChangeCallback& onChange)
 {
     auto ctx = std::make_shared<AuthContext>();
+    ctx->accountId = accountId;
     ctx->key = key;
     ctx->request = buildRequest(key);
     ctx->deviceName = std::move(deviceName);
@@ -150,7 +152,9 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                         cert->getPublicKey());
                                     info->deviceId = info->devicePk->getLongId().toString();
                                     info->accountId = accountCert->getId().toString();
-                                    info->contacts = std::make_unique<ContactList>(accountCert,
+                                    JAMI_ERROR("@@@ {}", ctx->accountId);
+                                    info->contacts = std::make_unique<ContactList>(ctx->accountId,
+                                                                                   accountCert,
                                                                                    this_.path_,
                                                                                    this_.onChange_);
                                     // info->contacts->setContacts(a.contacts);

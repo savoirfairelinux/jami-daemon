@@ -597,8 +597,11 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         auto askForProfile = isOneOne;
         if (!isOneOne) {
             // If not 1:1 only download profiles from self (to avoid non checked files)
-            auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
-            askForProfile = cert && cert->issuer && cert->issuer->getId().toString() == username_;
+            if (auto acc = account_.lock()) {
+                auto cert = acc->certStore().getCertificate(deviceId);
+                askForProfile = cert && cert->issuer
+                                && cert->issuer->getId().toString() == username_;
+            }
         }
         if (askForProfile) {
             if (auto acc = account_.lock()) {
