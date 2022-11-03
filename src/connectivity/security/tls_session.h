@@ -25,6 +25,7 @@
 
 #include "noncopyable.h"
 #include "connectivity/generic_io.h"
+#include "certstore.h"
 #include "diffie-hellman.h"
 
 #include <gnutls/gnutls.h>
@@ -73,6 +74,8 @@ struct TlsParams
 
     // Diffie-Hellman computed by gnutls_dh_params_init/gnutls_dh_params_generateX
     std::shared_future<DhParams> dh_params;
+
+    tls::CertificateStore& certStore;
 
     // handshake timeout
     duration timeout;

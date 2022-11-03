@@ -672,8 +672,11 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         auto askForProfile = isOneOne;
         if (!isOneOne) {
             // If not 1:1 only download profiles from self (to avoid non checked files)
-            auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
-            askForProfile = cert && cert->issuer && cert->issuer->getId().toString() == username_;
+            if (auto acc = account_.lock()) {
+                auto cert = acc->certStore().getCertificate(deviceId);
+                askForProfile = cert && cert->issuer
+                                && cert->issuer->getId().toString() == username_;
+            }
         }
         if (askForProfile) {
             if (auto acc = account_.lock()) {
@@ -901,10 +904,12 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         auto members = conversation.memberUris(username_, {MemberRole::BANNED});
         std::vector<std::string> connectedMembers;
         // print all members
-        for (const auto& device : devices) {
-            auto cert = tls::CertificateStore::instance().getCertificate(device.toString());
-            if (cert && cert->issuer)
-                connectedMembers.emplace_back(cert->issuer->getId().toString());
+        if (auto acc = account_.lock()) {
+            for (const auto& device : devices) {
+                auto cert = acc->certStore().getCertificate(device.toString());
+                if (cert && cert->issuer)
+                    connectedMembers.emplace_back(cert->issuer->getId().toString());
+            }
         }
         std::sort(std::begin(members), std::end(members));
         std::sort(std::begin(connectedMembers), std::end(connectedMembers));

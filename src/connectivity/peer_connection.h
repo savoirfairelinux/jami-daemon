@@ -25,6 +25,7 @@
 #include "data_transfer.h"
 #include "connectivity/ip_utils.h"
 #include "connectivity/generic_io.h"
+#include "connectivity/security/certstore.h"
 #include "connectivity/security/diffie-hellman.h"
 #include "opendht/crypto.h"
 #include "connectivity/ice_transport.h"
@@ -113,10 +114,12 @@ public:
                                std::shared_ptr<dht::crypto::Certificate>>;
 
     TlsSocketEndpoint(std::unique_ptr<IceSocketEndpoint>&& tr,
+                      tls::CertificateStore& certStore,
                       const Identity& local_identity,
                       const std::shared_future<tls::DhParams>& dh_params,
                       const dht::crypto::Certificate& peer_cert);
     TlsSocketEndpoint(std::unique_ptr<IceSocketEndpoint>&& tr,
+                      tls::CertificateStore& certStore,
                       const Identity& local_identity,
                       const std::shared_future<tls::DhParams>& dh_params,
                       std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
