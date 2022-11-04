@@ -281,6 +281,9 @@ public:
     };
 
     std::shared_ptr<AudioRtpSession> getAudioRtp() const;
+
+    std::vector<std::string> getAudioStreamNames() override;
+
 #ifdef ENABLE_VIDEO
     void setRotation(int streamIdx, int rotation);
 #endif
