@@ -472,7 +472,7 @@ closeVideoInput(const std::string& id)
 void
 startAudioDevice()
 {
-    auto newPreview = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID);
+    auto newPreview = jami::getAudioInput(jami::RingBufferPool::AUDIO_LAYER_ID);
     jami::Manager::instance().getVideoManager().audioPreview = newPreview;
     newPreview->switchInput("");
 }
@@ -727,7 +727,7 @@ getAudioInput(const std::string& id)
         }
     }
 
-    auto input = std::make_shared<AudioInput>(id);
+    auto input = std::make_shared<AudioInput>(id); // what should be used here?
     vmgr.audioInputs[id] = input;
     return input;
 }

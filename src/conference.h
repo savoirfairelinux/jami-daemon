@@ -302,6 +302,8 @@ public:
      */
     void detachLocalParticipant();
 
+    std::vector<std::string> getAudioStreams(const std::string& call_id);
+
     /**
      * Bind a participant to the conference
      */

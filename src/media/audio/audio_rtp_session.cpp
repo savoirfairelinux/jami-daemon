@@ -48,15 +48,17 @@
 
 namespace jami {
 
-AudioRtpSession::AudioRtpSession(const std::string& callId, const std::string& streamId)
+AudioRtpSession::AudioRtpSession(const std::string& callId, const std::string& streamId, const std::string& audioInputId)
     : RtpSession(callId, streamId, MediaType::MEDIA_AUDIO)
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
+    , audioInputId_(audioInputId)
+    , streamId_(streamId)
 
 {
     JAMI_DBG("Created Audio RTP session: %p - call Id %s", this, callId_.c_str());
 
     // don't move this into the initializer list or Cthulus will emerge
-    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(callId_);
+    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(streamId);
 }
 
 AudioRtpSession::~AudioRtpSession()
@@ -91,7 +93,7 @@ AudioRtpSession::startSender()
         audioInput_->detach(sender_.get());
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
-    audioInput_ = jami::getAudioInput(callId_);
+    audioInput_ = jami::getAudioInput(audioInputId_);
     audioInput_->setMuted(muteState_);
     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
     auto newParams = audioInput_->switchInput(input_);
@@ -165,7 +167,7 @@ AudioRtpSession::startReceiver()
         JAMI_WARN("Restarting audio receiver");
 
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
-    receiveThread_.reset(new AudioReceiveThread(callId_,
+    receiveThread_.reset(new AudioReceiveThread(streamId_,
                                                 accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp,
                                                 mtu_));
@@ -347,7 +349,7 @@ AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (receiveThread_)
         receiveThread_->attach(rec->addStream(receiveThread_->getInfo()));
-    if (auto input = jami::getAudioInput(callId_))
+    if (auto input = jami::getAudioInput(audioInputId_))
         input->attach(rec->addStream(input->getInfo()));
 }
 
@@ -359,7 +361,7 @@ AudioRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
             receiveThread_->detach(ob);
         }
     }
-    if (auto input = jami::getAudioInput(callId_)) {
+    if (auto input = jami::getAudioInput(audioInputId_)) {
         if (auto ob = rec->getStream(input->getInfo().name)) {
             input->detach(ob);
         }

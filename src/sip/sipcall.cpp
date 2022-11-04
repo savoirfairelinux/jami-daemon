@@ -181,9 +181,11 @@ SIPCall::createRtpSession(RtpStream& stream)
         throw std::runtime_error("Missing media attribute");
 
     // To get audio_0 ; video_0
+    
     auto streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
+    JAMI_DBG("createRtpSession: streamId %s, sourceUri %s", streamId.c_str(), stream.mediaAttribute_->sourceUri_.c_str());
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
-        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId);
+        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId, stream.mediaAttribute_->sourceUri_);
     }
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
@@ -3078,8 +3080,8 @@ SIPCall::exitConference()
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
     if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
         auto& rbPool = Manager::instance().getRingBufferPool();
-        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
-        rbPool.flush(RingBufferPool::DEFAULT_ID);
+        rbPool.bindRingbuffers(sip_utils::streamId(getCallId(), "audio_0" /* TODO: lookup streamId*/), RingBufferPool::AUDIO_LAYER_ID);
+        rbPool.flush(RingBufferPool::AUDIO_LAYER_ID);
     }
 #ifdef ENABLE_VIDEO
     for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
@@ -3138,6 +3140,18 @@ SIPCall::getAudioRtp() const
     for (const auto& rtp : getRtpSessionList(MediaType::MEDIA_AUDIO))
         return std::dynamic_pointer_cast<AudioRtpSession>(rtp);
     return nullptr;
+}
+
+std::vector<std::string>
+SIPCall::getAudioStreamNames()
+{
+    std::vector<std::string> audioStreams;
+    std::vector<MediaAttribute> mediaList = getMediaAttributeList();
+    for (const auto& media : mediaList){
+        if (media.type_ == MediaType::MEDIA_AUDIO)
+            audioStreams.push_back(sip_utils::streamId(getCallId(), media.label_));
+    }
+    return audioStreams;
 }
 
 std::vector<std::shared_ptr<RtpSession>>
