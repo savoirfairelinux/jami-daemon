@@ -186,6 +186,30 @@
       },
       "revId": "3c6160131940d96e8a1e554437c2fc98ddaed46e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b4260d84_4b99a7b3",
+        "filename": "src/sip/sipaccountbase_config.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-04T14:08:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c243e306_a6158206",
+      "range": {
+        "startLine": 124,
+        "startChar": 0,
+        "endLine": 124,
+        "endChar": 4
+      },
+      "revId": "3c6160131940d96e8a1e554437c2fc98ddaed46e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
