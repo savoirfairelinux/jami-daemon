@@ -346,6 +346,8 @@ public:
 
     virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
 
+    virtual std::vector<std::string> getAudioStreamNames() = 0;
+
     virtual void switchInput(const std::string& = {}) {};
 
     /**

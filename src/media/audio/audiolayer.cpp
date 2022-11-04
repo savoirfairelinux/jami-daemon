@@ -48,7 +48,7 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
     , mainRingBuffer_(
-          Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
+          Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::AUDIO_LAYER_ID))
     , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , audioInputFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
@@ -56,7 +56,7 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
     , lastNotificationTime_()
     , pref_(pref)
 {
-    urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
+    urgentRingBuffer_.createReadOffset(RingBufferPool::AUDIO_LAYER_ID);
 
     JAMI_INFO("[audiolayer] AGC: %d, noiseReduce: %s, VAD: %d, echoCancel: %s, audioProcessor: %s",
               pref_.isAGCEnabled(),
@@ -317,12 +317,12 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
     while (!(playbackBuf = playbackQueue_->dequeue())) {
         std::shared_ptr<AudioFrame> resampled;
 
-        if (auto urgentSamples = urgentRingBuffer_.get(RingBufferPool::DEFAULT_ID)) {
-            bufferPool.discard(1, RingBufferPool::DEFAULT_ID);
+        if (auto urgentSamples = urgentRingBuffer_.get(RingBufferPool::AUDIO_LAYER_ID)) {
+            bufferPool.discard(1, RingBufferPool::AUDIO_LAYER_ID);
             resampled = resampler_->resample(std::move(urgentSamples), format);
         } else if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
             resampled = resampler_->resample(toneToPlay->getNext(), format);
-        } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
+        } else if (auto buf = bufferPool.getData(RingBufferPool::AUDIO_LAYER_ID)) {
             resampled = resampler_->resample(std::move(buf), format);
         } else {
             std::lock_guard<std::mutex> lock(audioProcessorMutex);
