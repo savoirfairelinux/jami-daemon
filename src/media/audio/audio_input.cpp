@@ -64,7 +64,7 @@ AudioInput::AudioInput(const std::string& id, const std::string& resource)
 AudioInput::~AudioInput()
 {
     if (playingFile_) {
-        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::AUDIO_LAYER_ID, id_);
     }
     loop_.join();
 }
@@ -194,7 +194,7 @@ AudioInput::configureFilePlayback(const std::string& path,
                                   int index)
 {
     decoder_.reset();
-    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::AUDIO_LAYER_ID, id_);
     fileBuf_.reset();
     devOpts_ = {};
     devOpts_.input = path;
@@ -218,10 +218,10 @@ void
 AudioInput::setPaused(bool paused)
 {
     if (paused) {
-        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::AUDIO_LAYER_ID, id_);
         deviceGuard_.reset();
     } else {
-        Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+        Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::AUDIO_LAYER_ID, id_);
         deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
     }
     paused_ = paused;
@@ -256,7 +256,7 @@ AudioInput::initFile(const std::string& path)
     // have file audio mixed into the call buffer so it gets sent to the peer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
     // have file audio mixed into the local buffer so it gets played
-    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::AUDIO_LAYER_ID, fileId_);
     decodingFile_ = true;
     deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
     return true;
@@ -276,7 +276,7 @@ AudioInput::switchInput(const std::string& resource)
     if (decodingFile_) {
         decodingFile_ = false;
         Manager::instance().getRingBufferPool().unBindHalfDuplexOut(id_, fileId_);
-        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID,
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::AUDIO_LAYER_ID,
                                                                     fileId_);
     }
     fileBuf_.reset();
