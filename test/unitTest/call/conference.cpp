@@ -35,6 +35,7 @@
 #include "video/sinkclient.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
+#include "audio/ringbufferpool.h"
 
 using namespace libjami::Account;
 using namespace std::literals::chrono_literals;
@@ -105,6 +106,7 @@ private:
     void testPropagateRecording();
     void testBrokenParticipantAudioAndVideo();
     void testBrokenParticipantAudioOnly();
+    void testRingbufferPool();
     void testRemoveConferenceInOneOne();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
@@ -128,6 +130,7 @@ private:
     CPPUNIT_TEST(testPropagateRecording);
     CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
+    CPPUNIT_TEST(testRingbufferPool);
     CPPUNIT_TEST(testRemoveConferenceInOneOne);
     CPPUNIT_TEST_SUITE_END();
 
@@ -1003,6 +1006,33 @@ ConferenceTest::testRemoveConferenceInOneOne()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty() && bobCall.state == "OVER"; }));
     Manager::instance().hangupCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCall.state == "OVER"; }));
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testRingbufferPool()
+{
+    registerSignalHandlers();
+
+    startConference();
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    auto bobAudioStreamNames
+        = Manager::instance().getCallFromCallID(bobCall.callId)->getAudioStreamNames();
+    auto carlaAudioStreamNames
+        = Manager::instance().getCallFromCallID(carlaCall.callId)->getAudioStreamNames();
+
+    CPPUNIT_ASSERT(bobAudioStreamNames.size() == 1);
+    CPPUNIT_ASSERT(carlaAudioStreamNames.size() == 1);
+
+    auto rbufAudioLayer = rbPool.getRingBuffer(RingBufferPool::AUDIO_LAYER_ID);
+
+    CPPUNIT_ASSERT(rbufAudioLayer->readOffsetCount() == 4);
+    CPPUNIT_ASSERT(rbPool.getRingBuffer(bobAudioStreamNames[0])->readOffsetCount() == 1);
+    CPPUNIT_ASSERT(rbPool.getRingBuffer(carlaAudioStreamNames[0])->readOffsetCount() == 1);
+
+    hangupConference();
+
     libjami::unregisterSignalHandlers();
 }
 

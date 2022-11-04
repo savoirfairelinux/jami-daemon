@@ -70,7 +70,7 @@ private:
     /*-----------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. process()) only! */
     /*-----------------------------------------------------------------*/
-    const std::string id_;
+    const std::string streamId_;
     const AudioFormat& format_;
 
     DeviceParams args_;

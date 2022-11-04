@@ -134,6 +134,12 @@ check_PROGRAMS += ut_audio_frame_resizer
 ut_audio_frame_resizer_SOURCES = media/audio/test_audio_frame_resizer.cpp common.cpp
 
 #
+# ringbuffer_pool
+#
+check_PROGRAMS += ut_ringbufferpool
+ut_ringbufferpool_SOURCES = media/audio/test_ringbufferpool.cpp common.cpp
+
+#
 # call
 #
 check_PROGRAMS += ut_call

@@ -540,7 +540,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
         for (const auto& p : participants)
             base_.getRingBufferPool().flush(p);
 
-        base_.getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
+        base_.getRingBufferPool().flush(RingBufferPool::AUDIO_LAYER_ID);
     } else if (n == 1) {
         // this call is the last participant, hence
         // the conference is over
@@ -684,7 +684,9 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
              confId.c_str(),
              state.c_str());
 
-    base_.getRingBufferPool().unBindAll(callId);
+    for (const auto& audioStream : call.getAudioStreamNames()) {
+        base_.getRingBufferPool().unBindAll(audioStream);
+    }
 
     conf.addParticipant(callId);
 
@@ -1622,7 +1624,10 @@ Manager::addAudio(Call& call)
         JAMI_DBG("[call:%s] Attach audio", callId.c_str());
 
         // bind to main
-        getRingBufferPool().bindCallID(callId, RingBufferPool::DEFAULT_ID);
+        for (const auto& audioStream : call.getAudioStreamNames()) {
+            getRingBufferPool().bindRingbuffers(audioStream, RingBufferPool::AUDIO_LAYER_ID);
+        }
+
         auto oldGuard = std::move(call.audioGuard);
         call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
 
@@ -1641,7 +1646,9 @@ Manager::removeAudio(Call& call)
 {
     const auto& callId = call.getCallId();
     JAMI_DBG("[call:%s] Remove local audio", callId.c_str());
-    getRingBufferPool().unBindAll(callId);
+    for (const auto& audioStream : call.getAudioStreamNames()) {
+        getRingBufferPool().unBindAll(audioStream);
+    }
     call.audioGuard.reset();
 }
 
