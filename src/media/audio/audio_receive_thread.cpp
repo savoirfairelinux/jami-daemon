@@ -34,7 +34,7 @@
 
 namespace jami {
 
-AudioReceiveThread::AudioReceiveThread(const std::string& id,
+AudioReceiveThread::AudioReceiveThread(const RingBufferId& id,
                                        const AudioFormat& format,
                                        const std::string& sdp,
                                        const uint16_t mtu)

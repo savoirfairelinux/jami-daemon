@@ -50,7 +50,7 @@ struct RTCPInfo
 class AudioRtpSession : public RtpSession
 {
 public:
-    AudioRtpSession(const std::string& callId, const std::string& streamId);
+    AudioRtpSession(const std::string& callId, const std::string& streamId, const std::string& audioInputId);
     virtual ~AudioRtpSession();
 
     void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
@@ -78,6 +78,8 @@ private:
     std::unique_ptr<AudioSender> sender_;
     std::unique_ptr<AudioReceiveThread> receiveThread_;
     std::shared_ptr<AudioInput> audioInput_;
+    std::string audioInputId_;
+    RingBufferId audioRingbufferId_;
     std::shared_ptr<RingBuffer> ringbuffer_;
     uint16_t initSeqVal_ {0};
     bool muteState_ {false};

@@ -3078,8 +3078,8 @@ SIPCall::exitConference()
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
     if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
         auto& rbPool = Manager::instance().getRingBufferPool();
-        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
-        rbPool.flush(RingBufferPool::DEFAULT_ID);
+        rbPool.bindCallID(getCallId(), RingBufferPool::AUDIO_LAYER_ID);
+        rbPool.flush(RingBufferPool::AUDIO_LAYER_ID);
     }
 #ifdef ENABLE_VIDEO
     for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))

@@ -42,7 +42,7 @@ class RingBuffer;
 class AudioReceiveThread : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
-    AudioReceiveThread(const std::string& id,
+    AudioReceiveThread(const RingBufferId& id,
                        const AudioFormat& format,
                        const std::string& sdp,
                        const uint16_t mtu);
@@ -70,7 +70,7 @@ private:
     /*-----------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. process()) only! */
     /*-----------------------------------------------------------------*/
-    const std::string id_;
+    const RingBufferId id_;
     const AudioFormat& format_;
 
     DeviceParams args_;

@@ -894,6 +894,31 @@ Conference::removeParticipant(const std::string& participant_id)
 }
 
 void
+Conference::bindCallID(std::string& call_id1, std::string& call_id2)
+{
+    auto& rbPool = Manager.instance().getRingBufferPool();
+
+    auto callId1Buffers = rbPool.ringbufferLookup(call_id1);
+    auto callId2Buffers = rbPool.ringBufferLookup(call_id2);
+
+    // bind buffers
+
+}
+
+void
+Conference::unBindCallID(std::string& call_id1, std::string& call_id2)
+{
+    auto& rbPool = Manager.instance().getRingBufferPool();
+
+    auto callId1Buffers = rbPool.ringbufferLookup(call_id1);
+    auto callId2Buffers = rbPool.ringBufferLookup(call_id2);
+
+    // unbind buffers
+
+}
+
+
+void
 Conference::attachLocalParticipant()
 {
     JAMI_INFO("Attach local participant to conference %s", id_.c_str());
@@ -906,16 +931,16 @@ Conference::attachLocalParticipant()
         for (const auto& participant : getParticipantList()) {
             if (auto call = Manager::instance().getCallFromCallID(participant)) {
                 if (isMuted(call->getCallId()))
-                    rbPool.bindHalfDuplexOut(participant, RingBufferPool::DEFAULT_ID);
+                // lookup all buffers linked to participant callId
+                    rbPool.bindHalfDuplexOut(participant, RingBufferPool::AUDIO_LAYER_ID);
                 else
-                    rbPool.bindCallID(participant, RingBufferPool::DEFAULT_ID);
+                    bindCallID(participant, RingBufferPool::AUDIO_LAYER_ID);
                 rbPool.flush(participant);
             }
-
             // Reset ringbuffer's readpointers
             rbPool.flush(participant);
         }
-        rbPool.flush(RingBufferPool::DEFAULT_ID);
+        rbPool.flush(RingBufferPool::AUDIO_LAYER_ID);
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
@@ -942,8 +967,7 @@ Conference::detachLocalParticipant()
 
     if (getState() == State::ACTIVE_ATTACHED) {
         foreachCall([&](auto call) {
-            Manager::instance().getRingBufferPool().unBindCallID(call->getCallId(),
-                                                                 RingBufferPool::DEFAULT_ID);
+            unBindCallID(call->getCallId(), RingBufferPool::AUDIO_LAYER_ID);
         });
 
 #ifdef ENABLE_VIDEO
@@ -974,7 +998,7 @@ Conference::bindParticipant(const std::string& participant_id)
                 if (isMuted(call->getCallId()))
                     rbPool.bindHalfDuplexOut(item, participant_id);
                 else
-                    rbPool.bindCallID(participant_id, item);
+                    bindCallID(participant_id, item);
             }
         }
         rbPool.flush(item);
@@ -984,10 +1008,10 @@ Conference::bindParticipant(const std::string& participant_id)
     // local is attached to the conference.
     if (getState() == State::ACTIVE_ATTACHED) {
         if (isMediaSourceMuted(MediaType::MEDIA_AUDIO))
-            rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, participant_id);
+            rbPool.bindHalfDuplexOut(RingBufferPool::AUDIO_LAYER_ID, participant_id);
         else
-            rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
-        rbPool.flush(RingBufferPool::DEFAULT_ID);
+            bindCallID(participant_id, RingBufferPool::AUDIO_LAYER_ID);
+        rbPool.flush(RingBufferPool::AUDIO_LAYER_ID);
     }
 }
 
@@ -1005,12 +1029,12 @@ Conference::bindHost()
 
     auto& rbPool = Manager::instance().getRingBufferPool();
 
-    for (const auto& item : getParticipantList()) {
-        if (auto call = Manager::instance().getCallFromCallID(item)) {
+    for (const auto& participant : getParticipantList()) {
+        if (auto call = Manager::instance().getCallFromCallID(participant)) {
             if (isMuted(call->getCallId()))
                 continue;
-            rbPool.bindCallID(item, RingBufferPool::DEFAULT_ID);
-            rbPool.flush(RingBufferPool::DEFAULT_ID);
+            bindCallID(participant, RingBufferPool::AUDIO_LAYER_ID);
+            rbPool.flush(RingBufferPool::AUDIO_LAYER_ID);
         }
     }
 }
@@ -1019,7 +1043,7 @@ void
 Conference::unbindHost()
 {
     JAMI_INFO("Unbind host from conference %s", id_.c_str());
-    Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::DEFAULT_ID);
+    Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::AUDIO_LAYER_ID);
 }
 
 ParticipantSet

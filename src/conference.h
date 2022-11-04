@@ -302,6 +302,9 @@ public:
      */
     void detachLocalParticipant();
 
+    void bindCallID(std::string& call_id1, std::string& call_id2);
+
+    void unBindCallID(std::string& call_id1, std::string& call_id2);
     /**
      * Bind a participant to the conference
      */

@@ -23,6 +23,7 @@
 
 #include "audiobuffer.h"
 #include "noncopyable.h"
+#include "ringbuffer.h"
 
 #include <map>
 #include <set>
@@ -37,7 +38,7 @@ class RingBuffer;
 class RingBufferPool
 {
 public:
-    static const char* const DEFAULT_ID;
+    static const RingBufferId AUDIO_LAYER_ID {"audiolayer_id", "audio_0"};
 
     RingBufferPool();
     ~RingBufferPool();
@@ -51,44 +52,47 @@ public:
     void setInternalAudioFormat(AudioFormat format);
 
     /**
-     * Bind together two audio streams so that a client will be able
-     * to put and get data specifying its callid only.
+     * Bind together two lists of audio streams
      */
-    void bindCallID(const std::string& call_id1, const std::string& call_id2);
+    void bindRingbuffers(const std::vector<RingBufferId>& ringbuffer_ids1, const std::vector<RingBufferId>& ringbuffer_ids2);
 
     /**
-     * Add a new call_id to unidirectional outgoing stream
-     * \param call_id New call id to be added for this stream
+     * Add a new ringbuffer_id to unidirectional outgoing stream
+     * \param ringbuffer_id New call id to be added for this stream
      * \param process_id Process that require this stream
      */
-    void bindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
+    void bindHalfDuplexOut(const RingBufferId& process_id, const RingBufferId& ringbuffer_id);
 
     /**
-     * Unbind two calls
+     * Unbind between two lists of ringbuffers
      */
-    void unBindCallID(const std::string& call_id1, const std::string& call_id2);
+    // void unBindCallID(const RingBufferId& ringbuffer_id1, const RingBufferId& ringbuffer_id2);
+
+    void unBindRingbuffers(const std::vector<RingBufferId>& ringbuffer_ids1, const std::vector<RingBufferId>& ringbuffer_ids2);
 
     /**
      * Unbind a unidirectional stream
      */
-    void unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
+    void unBindHalfDuplexOut(const RingBufferId& ringbuffer_id1, const RingBufferId& ringbuffer_id2);
 
-    void unBindAllHalfDuplexOut(const std::string& call_id);
+    void unBindAllHalfDuplexOut(const RingBufferId& ringbuffer_id);
 
-    void unBindAll(const std::string& call_id);
+    void unBindAll(const RingBufferId& ringbuffer_id);
 
-    bool waitForDataAvailable(const std::string& call_id,
+    std::vector<RingBufferId> ringbufferLookup(std::string& call_id);
+
+    bool waitForDataAvailable(const RingBufferId& ringbuffer_id,
                               const std::chrono::microseconds& max_wait) const;
 
-    std::shared_ptr<AudioFrame> getData(const std::string& call_id);
+    std::shared_ptr<AudioFrame> getData(const RingBufferId& ringbuffer_id);
 
-    std::shared_ptr<AudioFrame> getAvailableData(const std::string& call_id);
+    std::shared_ptr<AudioFrame> getAvailableData(const RingBufferId& ringbuffer_id);
 
-    size_t availableForGet(const std::string& call_id) const;
+    size_t availableForGet(const RingBufferId& ringbuffer_id) const;
 
-    size_t discard(size_t toDiscard, const std::string& call_id);
+    size_t discard(size_t toDiscard, const RingBufferId& ringbuffer_id);
 
-    void flush(const std::string& call_id);
+    void flush(const RingBufferId& ringbuffer_id);
 
     void flushAllBuffers();
 
@@ -97,7 +101,7 @@ public:
      * This class keeps a weak reference on returned pointer,
      * so the caller is responsible of the referred instance.
      */
-    std::shared_ptr<RingBuffer> createRingBuffer(const std::string& id);
+    std::shared_ptr<RingBuffer> createRingBuffer(const RingBufferId& id);
 
     /**
      * Obtain a shared pointer on a RingBuffer given by its ID.
@@ -105,15 +109,15 @@ public:
      * is empty. This non-const version flushes internal weak pointers
      * if the ID was used and the associated RingBuffer has been deleted.
      */
-    std::shared_ptr<RingBuffer> getRingBuffer(const std::string& id);
+    std::shared_ptr<RingBuffer> getRingBuffer(const RingBufferId& id);
 
     /**
      * Works as non-const getRingBuffer, without the weak reference flush.
      */
-    std::shared_ptr<RingBuffer> getRingBuffer(const std::string& id) const;
+    std::shared_ptr<RingBuffer> getRingBuffer(const RingBufferId& id) const;
 
-    bool isAudioMeterActive(const std::string& id);
-    void setAudioMeterState(const std::string& id, bool state);
+    bool isAudioMeterActive(const RingBufferId& id);
+    void setAudioMeterState(const RingBufferId& id, bool state);
 
 private:
     NON_COPYABLE(RingBufferPool);
@@ -122,21 +126,21 @@ private:
     using ReadBindings
         = std::set<std::shared_ptr<RingBuffer>, std::owner_less<std::shared_ptr<RingBuffer>>>;
 
-    const ReadBindings* getReadBindings(const std::string& call_id) const;
-    ReadBindings* getReadBindings(const std::string& call_id);
+    const ReadBindings* getReadBindings(const RingBufferId& ringbuffer_id) const;
+    ReadBindings* getReadBindings(const RingBufferId& ringbuffer_id);
 
-    void removeReadBindings(const std::string& call_id);
+    void removeReadBindings(const RingBufferId& ringbuffer_id);
 
-    void addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf, const std::string& call_id);
+    void addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf, const RingBufferId& ringbuffer_id);
 
     void removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
-                                    const std::string& call_id);
+                                    const RingBufferId& ringbuffer_id);
 
     // A cache of created RingBuffers listed by IDs.
-    std::map<std::string, std::weak_ptr<RingBuffer>> ringBufferMap_ {};
+    std::map<RingBufferId, std::weak_ptr<RingBuffer>> ringBufferMap_ {};
 
     // A map of which RingBuffers a call has some ReadOffsets
-    std::map<std::string, ReadBindings> readBindingsMap_ {};
+    std::map<RingBufferId, ReadBindings> readBindingsMap_ {};
 
     mutable std::recursive_mutex stateLock_ {};
 
