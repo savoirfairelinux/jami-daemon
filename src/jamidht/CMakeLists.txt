@@ -30,6 +30,8 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/jami_contact.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/jamiaccount.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/jamiaccount.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/jamiaccount_config.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/jamiaccount_config.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/multiplexed_socket.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/multiplexed_socket.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/channel_handler.h"
