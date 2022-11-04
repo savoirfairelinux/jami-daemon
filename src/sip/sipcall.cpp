@@ -3098,8 +3098,9 @@ SIPCall::exitConference()
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
     if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
         auto& rbPool = Manager::instance().getRingBufferPool();
-        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
-        rbPool.flush(RingBufferPool::DEFAULT_ID);
+        for (const auto& audioStream : getAudioStreamNames())
+            rbPool.bindRingbuffers(audioStream, RingBufferPool::AUDIO_LAYER_ID);
+        rbPool.flush(RingBufferPool::AUDIO_LAYER_ID);
     }
 #ifdef ENABLE_VIDEO
     for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
@@ -3150,6 +3151,18 @@ SIPCall::createSinks(const ConfInfo& infos)
     Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_);
 }
 #endif
+
+std::vector<std::string>
+SIPCall::getAudioStreamNames()
+{
+    std::vector<std::string> audioStreams;
+    std::vector<MediaAttribute> mediaList = getMediaAttributeList();
+    for (const auto& media : mediaList) {
+        if (media.type_ == MediaType::MEDIA_AUDIO)
+            audioStreams.push_back(sip_utils::streamId(getCallId(), media.label_));
+    }
+    return audioStreams;
+}
 
 std::vector<std::shared_ptr<RtpSession>>
 SIPCall::getRtpSessionList(MediaType type) const

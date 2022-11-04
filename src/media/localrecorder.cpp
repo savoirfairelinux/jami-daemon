@@ -75,7 +75,7 @@ LocalRecorder::startRecording()
 
     // audio recording
     // create read offset in RingBuffer
-    Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::AUDIO_LAYER_ID);
 
     audioInput_ = getAudioInput(path_);
     audioInput_->setFormat(AudioFormat::STEREO());
@@ -108,7 +108,7 @@ LocalRecorder::stopRecording()
         if (auto ob = recorder_->getStream(videoInput_->getInfo().name))
             videoInput_->detach(ob);
 #endif
-    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::AUDIO_LAYER_ID);
     // NOTE stopRecording should be last call to avoid data races
     Recordable::stopRecording();
 }

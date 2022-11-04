@@ -266,6 +266,9 @@ public:
         void operator()(pjsip_inv_session*) const noexcept;
     };
 
+
+    std::vector<std::string> getAudioStreamNames() override;
+
 #ifdef ENABLE_VIDEO
     void setRotation(int streamIdx, int rotation);
 #endif

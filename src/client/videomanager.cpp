@@ -472,7 +472,7 @@ closeVideoInput(const std::string& id)
 void
 startAudioDevice()
 {
-    auto newPreview = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID);
+    auto newPreview = jami::getAudioInput(jami::RingBufferPool::AUDIO_LAYER_ID);
     jami::Manager::instance().getVideoManager().audioPreview = newPreview;
     newPreview->switchInput("");
 }
