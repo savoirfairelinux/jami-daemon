@@ -51,12 +51,13 @@ namespace jami {
 AudioRtpSession::AudioRtpSession(const std::string& callId, const std::string& streamId)
     : RtpSession(callId, streamId, MediaType::MEDIA_AUDIO)
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
+    , streamId_(streamId)
 
 {
     JAMI_DBG("Created Audio RTP session: %p - call Id %s", this, callId_.c_str());
 
     // don't move this into the initializer list or Cthulus will emerge
-    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(callId_);
+    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(streamId);
 }
 
 AudioRtpSession::~AudioRtpSession()
@@ -165,7 +166,7 @@ AudioRtpSession::startReceiver()
         JAMI_WARN("Restarting audio receiver");
 
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
-    receiveThread_.reset(new AudioReceiveThread(callId_,
+    receiveThread_.reset(new AudioReceiveThread(streamId_,
                                                 accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp,
                                                 mtu_));
