@@ -78,6 +78,7 @@ private:
     std::unique_ptr<AudioSender> sender_;
     std::unique_ptr<AudioReceiveThread> receiveThread_;
     std::shared_ptr<AudioInput> audioInput_;
+    std::string streamId_;
     std::shared_ptr<RingBuffer> ringbuffer_;
     uint16_t initSeqVal_ {0};
     bool muteState_ {false};
