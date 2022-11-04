@@ -37,7 +37,8 @@ class RingBuffer;
 class RingBufferPool
 {
 public:
-    static const char* const DEFAULT_ID;
+    static const std::string AUDIO_LAYER_ID;
+    static const std::string RECORDER_ID;
 
     RingBufferPool();
     ~RingBufferPool();
@@ -51,44 +52,43 @@ public:
     void setInternalAudioFormat(AudioFormat format);
 
     /**
-     * Bind together two audio streams so that a client will be able
-     * to put and get data specifying its callid only.
+     * Bind together two audio streams
      */
-    void bindCallID(const std::string& call_id1, const std::string& call_id2);
+    void bindRingbuffers(const std::string& ringbuffer_ids1, const std::string& ringbuffer_ids2);
 
     /**
-     * Add a new call_id to unidirectional outgoing stream
-     * \param call_id New call id to be added for this stream
+     * Add a new ringbuffer_id to unidirectional outgoing stream
+     * \param ringbuffer_id New call id to be added for this stream
      * \param process_id Process that require this stream
      */
-    void bindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
+    void bindHalfDuplexOut(const std::string& process_id, const std::string& ringbuffer_id);
 
     /**
-     * Unbind two calls
+     * Unbind two ringbuffers
      */
-    void unBindCallID(const std::string& call_id1, const std::string& call_id2);
+    void unBindRingbuffers(const std::string& ringbuffer_id1, const std::string& ringbuffer_id2);
 
     /**
      * Unbind a unidirectional stream
      */
-    void unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
+    void unBindHalfDuplexOut(const std::string& ringbuffer_id1, const std::string& ringbuffer_id2);
 
-    void unBindAllHalfDuplexOut(const std::string& call_id);
+    void unBindAllHalfDuplexOut(const std::string& ringbuffer_id);
 
-    void unBindAll(const std::string& call_id);
+    void unBindAll(const std::string& ringbuffer_id);
 
-    bool waitForDataAvailable(const std::string& call_id,
+    bool waitForDataAvailable(const std::string& ringbuffer_id,
                               const std::chrono::microseconds& max_wait) const;
 
-    std::shared_ptr<AudioFrame> getData(const std::string& call_id);
+    std::shared_ptr<AudioFrame> getData(const std::string& ringbuffer_id);
 
-    std::shared_ptr<AudioFrame> getAvailableData(const std::string& call_id);
+    std::shared_ptr<AudioFrame> getAvailableData(const std::string& ringbuffer_id);
 
-    size_t availableForGet(const std::string& call_id) const;
+    size_t availableForGet(const std::string& ringbuffer_id) const;
 
-    size_t discard(size_t toDiscard, const std::string& call_id);
+    size_t discard(size_t toDiscard, const std::string& ringbuffer_id);
 
-    void flush(const std::string& call_id);
+    void flush(const std::string& ringbuffer_id);
 
     void flushAllBuffers();
 
@@ -122,15 +122,15 @@ private:
     using ReadBindings
         = std::set<std::shared_ptr<RingBuffer>, std::owner_less<std::shared_ptr<RingBuffer>>>;
 
-    const ReadBindings* getReadBindings(const std::string& call_id) const;
-    ReadBindings* getReadBindings(const std::string& call_id);
+    const ReadBindings* getReadBindings(const std::string& ringbuffer_id) const;
+    ReadBindings* getReadBindings(const std::string& ringbuffer_id);
 
-    void removeReadBindings(const std::string& call_id);
+    void removeReadBindings(const std::string& ringbuffer_id);
 
-    void addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf, const std::string& call_id);
+    void addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf, const std::string& ringbuffer_id);
 
     void removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
-                                    const std::string& call_id);
+                                    const std::string& ringbuffer_id);
 
     // A cache of created RingBuffers listed by IDs.
     std::map<std::string, std::weak_ptr<RingBuffer>> ringBufferMap_ {};
