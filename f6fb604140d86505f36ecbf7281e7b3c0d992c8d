@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "08e54517_7ffebc68",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-04T17:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a8aeecdf_8e7a46be",
+      "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "702c2240_e2956757",
@@ -31,6 +49,24 @@
       "writtenOn": "2022-11-04T16:18:49Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027upnpCtrl_\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "210a9973_2d788569",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-04T17:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "702c2240_e2956757",
       "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c775587_a426d1d2",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-04T17:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d752c123_c7f7870a",
+      "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8639ba84_b0c3a321",
@@ -65,6 +119,24 @@
       "writtenOn": "2022-11-04T16:18:49Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027upnpCtrl_\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7ac1431a_95259261",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-04T17:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8639ba84_b0c3a321",
       "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -86,6 +158,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f3d0bf8_7c283845",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-04T17:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e36ef430_c05bb3db",
+      "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4625cc01_e05d4d50",
@@ -99,6 +189,24 @@
       "writtenOn": "2022-11-04T16:18:49Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027turnServerUserName_\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d149e8d1_c59be3b0",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-04T17:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4625cc01_e05d4d50",
       "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -120,6 +228,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c2af0d32_269d1986",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-04T17:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4b4a1d2e_25446efc",
+      "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b4785848_9dbcaa05",
@@ -133,6 +259,24 @@
       "writtenOn": "2022-11-04T16:18:49Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027turnServerRealm_\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26bebb4b_48ba5323",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 253,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-04T17:37:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b4785848_9dbcaa05",
       "revId": "f6fb604140d86505f36ecbf7281e7b3c0d992c8d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
