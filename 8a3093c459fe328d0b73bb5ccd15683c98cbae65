@@ -22,6 +22,30 @@
       },
       "revId": "8a3093c459fe328d0b73bb5ccd15683c98cbae65",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3afc274e_c7bc133f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 887,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-06T10:43:06Z",
+      "side": 1,
+      "message": "-2 removed but migration still seems not fixed",
+      "parentUuid": "c05c60f9_3f1140bb",
+      "range": {
+        "startLine": 884,
+        "startChar": 8,
+        "endLine": 887,
+        "endChar": 7
+      },
+      "revId": "8a3093c459fe328d0b73bb5ccd15683c98cbae65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
