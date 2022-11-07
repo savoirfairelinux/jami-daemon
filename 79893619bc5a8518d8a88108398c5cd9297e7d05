@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89bc0886_bd62fac2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3082,
+      "author": {
+        "id": 975
+      },
+      "writtenOn": "2022-11-07T22:48:42Z",
+      "side": 1,
+      "message": "Changed to unbind as that is what I\u0027d expect to happen in exitConference() but I may be missing something. Can someone confirm that unbind is the expected behaviour?",
+      "revId": "79893619bc5a8518d8a88108398c5cd9297e7d05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
