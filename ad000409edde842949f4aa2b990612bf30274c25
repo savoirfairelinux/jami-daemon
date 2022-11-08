@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "354c8cf7_bdcb60f0",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 5
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-11-08T19:32:48Z",
+      "side": 1,
+      "message": "It\u0027s surprising that UPNP would cause a bug when unregistering.  Could you expound the rationale why avoiding to send a notification fixes the issue?  The explanation can live as a comment next to your fix since it\u0027s not obvious.",
+      "revId": "ad000409edde842949f4aa2b990612bf30274c25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
