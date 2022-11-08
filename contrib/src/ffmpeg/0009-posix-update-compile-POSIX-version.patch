@@ -1,0 +1,69 @@
+From bab101f8b77b0bf36b47eee2a4830e1a03e50452 Mon Sep 17 00:00:00 2001
+From: Jerome Lamy <jerome.lamy@savoirfairelinux.com>
+Date: Mon, 7 Nov 2022 09:31:54 -0500
+Subject: [PATCH 9/9] posix: update compile POSIX version
+
+pipewire's spa plugin is requesting locale_t extension to compile.
+Which was added in POSIX 2008.
+
+Change-Id: Iff626dbd5d591dc35f062610bda98526d1a43529
+---
+ configure | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/configure b/configure
+index b4eaaad971..511c824d4d 100755
+--- a/configure
++++ b/configure
+@@ -5634,7 +5634,7 @@ case $target_os in
+         enabled x86_64 && objformat="win64" || objformat="win32"
+         enable dos_paths
+         enabled shared && ! enabled small && test_cmd $windres --version && enable gnu_windres
+-        add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
++        add_cppflags -D_POSIX_C_SOURCE=200809 -D_XOPEN_SOURCE=600
+         ;;
+     *-dos|freedos|opendos)
+         network_extralibs="-lsocket"
+@@ -5732,10 +5732,10 @@ probe_libc(){
+     # uclibc defines __GLIBC__, so it needs to be checked before glibc.
+     if test_${pfx}cpp_condition features.h "defined __UCLIBC__"; then
+         eval ${pfx}libc_type=uclibc
+-        add_${pfx}cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
++        add_${pfx}cppflags -D_POSIX_C_SOURCE=200809 -D_XOPEN_SOURCE=600
+     elif test_${pfx}cpp_condition features.h "defined __GLIBC__"; then
+         eval ${pfx}libc_type=glibc
+-        add_${pfx}cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
++        add_${pfx}cppflags -D_POSIX_C_SOURCE=200809 -D_XOPEN_SOURCE=600
+     # MinGW headers can be installed on Cygwin, so check for newlib first.
+     elif test_${pfx}cpp_condition newlib.h "defined _NEWLIB_VERSION"; then
+         eval ${pfx}libc_type=newlib
+@@ -5752,7 +5752,7 @@ probe_libc(){
+             add_${pfx}cppflags -D__printf__=__gnu_printf__
+         test_${pfx}cpp_condition windows.h "!defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600" &&
+             add_${pfx}cppflags -D_WIN32_WINNT=0x0600
+-        add_${pfx}cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
++        add_${pfx}cppflags -D_POSIX_C_SOURCE=200809 -D_XOPEN_SOURCE=600
+     elif test_${pfx}cpp_condition _mingw.h "defined __MINGW_VERSION"  ||
+          test_${pfx}cpp_condition _mingw.h "defined __MINGW32_VERSION"; then
+         eval ${pfx}libc_type=mingw32
+@@ -5766,7 +5766,7 @@ probe_libc(){
+             add_${pfx}cppflags -D_WIN32_WINNT=0x0600
+         eval test \$${pfx_no_}cc_type = "gcc" &&
+             add_${pfx}cppflags -D__printf__=__gnu_printf__
+-        add_${pfx}cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
++        add_${pfx}cppflags -D_POSIX_C_SOURCE=200809 -D_XOPEN_SOURCE=600
+     elif test_${pfx}cpp_condition crtversion.h "defined _VC_CRT_MAJOR_VERSION"; then
+         eval ${pfx}libc_type=msvcrt
+         if test_${pfx}cpp_condition crtversion.h "_VC_CRT_MAJOR_VERSION < 14"; then
+@@ -5820,7 +5820,7 @@ EOF
+ #include <time.h>
+ void *v = localtime_r;
+ EOF
+-test "$?" != 0 && test_${pfx}cc -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600 <<EOF && add_${pfx}cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
++test "$?" != 0 && test_${pfx}cc -D_POSIX_C_SOURCE=200809 -D_XOPEN_SOURCE=600 <<EOF && add_${pfx}cppflags -D_POSIX_C_SOURCE=200809 -D_XOPEN_SOURCE=600
+ #include <time.h>
+ void *v = localtime_r;
+ EOF
+-- 
+2.38.1
+

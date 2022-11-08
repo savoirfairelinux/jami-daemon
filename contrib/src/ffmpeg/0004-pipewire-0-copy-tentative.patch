@@ -1,0 +1,221 @@
+From 7499a63e350ae0597b6d3a0f04e0a95a9ccfa5ce Mon Sep 17 00:00:00 2001
+From: Charles Perry <charles.perry@savoirfairelinux.com>
+Date: Thu, 23 Dec 2021 11:19:00 -0500
+Subject: [PATCH 4/9] pipewire: 0 copy tentative
+
+Change-Id: I7f1f85f5cd6c17d4aecc9a9d7ba109de4baf7bea
+---
+ libavdevice/pipewiregrab.c | 90 +++++++++++++++++++-------------------
+ 1 file changed, 46 insertions(+), 44 deletions(-)
+
+diff --git a/libavdevice/pipewiregrab.c b/libavdevice/pipewiregrab.c
+index fbf5499202..af8bef2c0b 100644
+--- a/libavdevice/pipewiregrab.c
++++ b/libavdevice/pipewiregrab.c
+@@ -123,7 +123,6 @@ typedef struct PipewireGrabContext {
+     struct pw_stream *stream;
+     struct spa_hook stream_listener;
+     struct spa_video_info format;
+-    struct pw_buffer *current_pw_buffer;
+ 
+     pw_capture_type capture_type;
+     bool negotiated;
+@@ -422,26 +421,6 @@ spa_pixel_format_to_av_pixel_format(uint32_t spa_format)
+     return ret;
+ }
+ 
+-/**
+- * helper function: queue/free current pipewire buffer
+- *
+- * @ctx AVFormatContext that contains PipeWire Grab main structure
+- */
+-static void maybe_queue_buffer(AVFormatContext *ctx)
+-{
+-    PipewireGrabContext *pw_ctx = ctx->priv_data;
+-    if (!pw_ctx) {
+-        av_log(ctx, AV_LOG_ERROR,
+-               "[pipewiregrab] Invalid private context data!\n");
+-        return;
+-    }
+-
+-    if (pw_ctx->current_pw_buffer) {
+-        pw_stream_queue_buffer(pw_ctx->stream, pw_ctx->current_pw_buffer);
+-        pw_ctx->current_pw_buffer = NULL;
+-    }
+-}
+-
+ /**
+  * helper function: gracefully stop/destroy of pipewire objects
+  *
+@@ -456,8 +435,6 @@ static void teardown_pipewire(AVFormatContext *ctx)
+         return;
+     }
+ 
+-    maybe_queue_buffer(ctx);
+-
+     if (pw_ctx->thread_loop) {
+         pw_thread_loop_unlock(pw_ctx->thread_loop);
+         pw_thread_loop_stop(pw_ctx->thread_loop);
+@@ -702,16 +679,34 @@ static void on_stream_trigger_done_callback(void *user_data)
+     /* nothing to do for now */
+ }
+ 
++struct PwStreamAndBuffer {
++    AVFormatContext *ctx;
++    struct pw_stream *pw_stream;
++    struct pw_buffer *pw_buf;
++};
++
++static void pw_recycle(void *opaque, uint8_t *data)
++{
++    struct PwStreamAndBuffer *buffer = (struct PwStreamAndBuffer *)opaque;
++    struct spa_buffer *spa_buf = buffer->pw_buf->buffer;
++    struct spa_data *d = &spa_buf->datas[0];
++
++    if (d->type == SPA_DATA_MemFd || d->type == SPA_DATA_DmaBuf) {
++        munmap(buffer->pw_buf->user_data, d->maxsize + d->mapoffset);
++    }
++
++    pw_stream_queue_buffer(buffer->pw_stream, buffer->pw_buf);
++    free(buffer);
++}
++
+ static void on_stream_process_callback(void *user_data)
+ {
+     struct spa_buffer *spa_buf = NULL;
+     struct pw_buffer *pw_buf = NULL;
+     uint8_t *map = NULL;
+     void *sdata = NULL;
+-    bool has_buffer;
+     AVFormatContext *ctx = user_data;
+     PipewireGrabContext *pw_ctx = NULL;
+-    int64_t pts = av_gettime();
+ 
+     ctx = user_data;
+     if (!ctx) {
+@@ -725,6 +720,8 @@ static void on_stream_process_callback(void *user_data)
+         return;
+     }
+ 
++    pthread_mutex_lock(&pw_ctx->read_packet_mutex);
++
+     /* Find the most recent buffer */
+     pw_buf = NULL;
+     while (true) {
+@@ -738,26 +735,22 @@ static void on_stream_process_callback(void *user_data)
+ 
+     if (pw_buf == NULL) {
+         av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] Out of buffers!\n");
++        pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+         return;
+     }
+ 
+     spa_buf = pw_buf->buffer;
+-    has_buffer = spa_buf->datas[0].chunk->size != 0;
+ 
+     // av_log( ctx, AV_LOG_DEBUG, "got new buffer @ %p\n", spa_buf );
+ 
+-    pw_ctx->current_pw_buffer = pw_buf;
+-
+     if (pw_ctx->av_pxl_format == AV_PIX_FMT_NONE) {
+         av_log(ctx, AV_LOG_WARNING,
+                "[pipewiregrab] unsupported buffer format: %d\n",
+                pw_ctx->format.info.raw.format);
+-        goto end;
++        pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
++        return;
+     }
+ 
+-    if (!has_buffer)
+-        goto end;
+-
+     // av_log( ctx, AV_LOG_DEBUG, "[pipewiregrab] datas[0].type %u \n", spa_buf->datas[0].type );
+ 
+     if (spa_buf->datas[0].type == SPA_DATA_MemFd ||
+@@ -768,19 +761,22 @@ static void on_stream_process_callback(void *user_data)
+         if (map == MAP_FAILED) {
+             av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] mmap failed! error %s\n",
+                    g_strerror(errno));
++            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+             return;
+         }
+-
++        pw_buf->user_data = map;
+         sdata = SPA_PTROFF(map, spa_buf->datas[0].mapoffset, uint8_t);
+     } else if (spa_buf->datas[0].type == SPA_DATA_MemPtr) {
+         if (spa_buf->datas[0].data == NULL) {
+             av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] no data!\n");
++            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+             return;
+         }
+         map = NULL;
+         sdata = spa_buf->datas[0].data;
+     } else {
+         av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] Buffer is not valid!\n");
++        pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+         return;
+     }
+ 
+@@ -788,33 +784,40 @@ static void on_stream_process_callback(void *user_data)
+     if (atomic_load(&pw_ctx->circular_queue_size) < CQ_MAX_SIZE) {
+         struct avpacket_entry *pkte = NULL;
+         AVPacket *pkt = NULL;
+-        int ret = 0;
++        struct PwStreamAndBuffer* buffer = NULL;
+ 
+         pkt = av_packet_alloc();
+         if (pkt == NULL) {
+             av_log(ctx, AV_LOG_ERROR,
+                    "[pipewiregrab] Failed to allocate new av packet\n");
++            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+             return;
+         }
+ 
+-        /* create buf and reset packet size to frame_size */
+-        ret = av_new_packet(pkt, pw_ctx->frame_size);
+-        if (ret < 0) {
++        buffer = (struct PwStreamAndBuffer*)malloc(sizeof(struct PwStreamAndBuffer));
++        if (!buffer) {
+             av_log(ctx, AV_LOG_ERROR,
+-                   "[pipewiregrab] Failed to create new av packet, error: %s\n",
+-                   av_err2str(ret));
++                   "[pipewiregrab] Failed to allocate PwStreamAndBuffer entry\n");
++            av_packet_free(&pkt);
++            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+             return;
+         }
+-
+-        pkt->dts = pkt->pts = pts;
++        buffer->ctx = ctx;
++        buffer->pw_stream = pw_ctx->stream;
++        buffer->pw_buf = pw_buf;
++
++        pkt->buf = av_buffer_create(sdata, pw_ctx->frame_size, pw_recycle, buffer, 0);
++        pkt->data = sdata;
++        pkt->size = pw_ctx->frame_size;
++        pkt->dts = pkt->pts = av_gettime();
+         pkt->duration = pw_ctx->frame_duration;
+-        memcpy(pkt->data, sdata, pw_ctx->frame_size);
+ 
+         pkte = malloc(sizeof(struct avpacket_entry));
+         if (pkte == NULL) {
+             av_log(ctx, AV_LOG_ERROR,
+                    "[pipewiregrab] Failed to allocate new packet CQ entry\n");
+             av_packet_free(&pkt);
++            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+             return;
+         }
+ 
+@@ -824,8 +827,7 @@ static void on_stream_process_callback(void *user_data)
+         pthread_cond_signal(&pw_ctx->read_packet_cond_var);
+     }
+ 
+-end:
+-    maybe_queue_buffer(ctx);
++    pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+ }
+ 
+ static const struct pw_stream_events stream_events = {
+-- 
+2.38.1
+

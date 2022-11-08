@@ -1,0 +1,41 @@
+From e90c70e9305fcda17aaf28967c6bf24005bd2b4c Mon Sep 17 00:00:00 2001
+From: Charles Perry <charles.perry@savoirfairelinux.com>
+Date: Wed, 22 Dec 2021 21:31:09 -0500
+Subject: [PATCH 2/9] pipewire: check spa_buf data pointer only when type is
+ SPA_DATA_MemPtr
+
+Change-Id: Ie8f3c1a11c62107491112d37e7b3b8bdf643646d
+---
+ libavdevice/pipewiregrab.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/libavdevice/pipewiregrab.c b/libavdevice/pipewiregrab.c
+index 18b4c5c8f1..b850e7e2d8 100644
+--- a/libavdevice/pipewiregrab.c
++++ b/libavdevice/pipewiregrab.c
+@@ -776,11 +776,6 @@ static void on_stream_process_callback(void *user_data)
+ 
+     // av_log( ctx, AV_LOG_DEBUG, "got new buffer @ %p\n", spa_buf );
+ 
+-    if (spa_buf->datas[0].data == NULL) {
+-        av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] no data!\n");
+-        return;
+-    }
+-
+     pw_ctx->current_pw_buffer = pw_buf;
+ 
+     if (pw_ctx->av_pxl_format == AV_PIX_FMT_NONE) {
+@@ -808,6 +803,10 @@ static void on_stream_process_callback(void *user_data)
+ 
+         sdata = SPA_PTROFF(map, spa_buf->datas[0].mapoffset, uint8_t);
+     } else if (spa_buf->datas[0].type == SPA_DATA_MemPtr) {
++        if (spa_buf->datas[0].data == NULL) {
++            av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] no data!\n");
++            return;
++        }
+         map = NULL;
+         sdata = spa_buf->datas[0].data;
+     } else {
+-- 
+2.38.1
+

@@ -1,0 +1,330 @@
+From b3058230867e3ccd149a66cb3640ae0f2fff0a89 Mon Sep 17 00:00:00 2001
+From: Charles Perry <charles.perry@savoirfairelinux.com>
+Date: Thu, 23 Dec 2021 15:16:59 -0500
+Subject: [PATCH 7/9] pipewiregrab: only keep the most recent frame
+
+Use a mechanism similar to what's found in xcbgrab.c where the
+read_packet function is in charge of waiting using the wait_frame()
+function and assigning "pkt->dts" and "pkt->pts".
+
+This makes it so that we don't need a ring buffer. The downside is that
+we will lose frames if the pipewire thread goes faster than the ffmpeg
+thread.
+
+On my machine, I found that this works better and I don't have choppy
+lag when things aren't moving around.
+
+Change-Id: I50f0b5ae8ab497990075db802f18658f5ca69870
+---
+ libavdevice/pipewiregrab.c | 181 +++++++++++++++----------------------
+ 1 file changed, 74 insertions(+), 107 deletions(-)
+
+diff --git a/libavdevice/pipewiregrab.c b/libavdevice/pipewiregrab.c
+index cefbfd1b95..5229e7af8d 100644
+--- a/libavdevice/pipewiregrab.c
++++ b/libavdevice/pipewiregrab.c
+@@ -67,20 +67,6 @@ typedef enum {
+     WINDOW_CAPTURE = 2,
+ } pw_capture_type;
+ 
+-#define CQ_MAX_SIZE 10
+-
+-/**
+- * CircularQueue instance
+- * This instance contains the dynamically allocated AVPacket struct
+- */
+-struct avpacket_entry {
+-    AVPacket *cq_pkt;
+-    CIRCLEQ_ENTRY(avpacket_entry)
+-    entries; /* Queue */
+-};
+-
+-CIRCLEQ_HEAD(circularqueue, avpacket_entry);
+-
+ /**
+  * PipeWire Grab main structure
+  * Contains all necessary data that hold current state
+@@ -96,11 +82,12 @@ typedef struct PipewireGrabContext {
+      * thread and libavdevice thread.
+      */
+     pthread_cond_t avstream_codec_cond_var;
+-    pthread_cond_t read_packet_cond_var;
+     pthread_mutex_t avstream_codec_mutex;
+-    pthread_mutex_t read_packet_mutex;
+     atomic_int avstream_codec_flag;
+ 
++    pthread_mutex_t current_pkt_mutex;
++    AVPacket* current_pkt;
++
+     GDBusConnection *connection;
+     GDBusProxy *proxy;
+     GCancellable *cancellable;
+@@ -149,9 +136,6 @@ typedef struct PipewireGrabContext {
+ 
+     const char *framerate;
+ 
+-    struct circularqueue circular_queue_head; /* CircularQueue head */
+-    atomic_uint_fast8_t circular_queue_size;
+-
+ } PipewireGrabContext;
+ 
+ /**
+@@ -256,9 +240,6 @@ static void pipewiregrab_abort(void *user_data, const char *message)
+     atomic_store(&pw_ctx->avstream_codec_flag, 1);
+     pthread_cond_signal(&pw_ctx->avstream_codec_cond_var);
+ 
+-    atomic_store(&pw_ctx->circular_queue_size, 1);
+-    pthread_cond_signal(&pw_ctx->read_packet_cond_var);
+-
+     av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] Aborting: %s\n", message);
+ 
+     if (pw_ctx->thread_loop != NULL)
+@@ -736,12 +717,9 @@ static void on_stream_process_callback(void *user_data)
+         return;
+     }
+ 
+-    pthread_mutex_lock(&pw_ctx->read_packet_mutex);
+-
+     pw_buf = find_most_recent_buffer_and_recycle_olders(pw_ctx);
+     if (pw_buf == NULL) {
+         av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] Out of buffers!\n");
+-        pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+         return;
+     }
+ 
+@@ -753,7 +731,6 @@ static void on_stream_process_callback(void *user_data)
+         av_log(ctx, AV_LOG_WARNING,
+                "[pipewiregrab] unsupported buffer format: %d\n",
+                pw_ctx->format.info.raw.format);
+-        pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+         return;
+     }
+ 
+@@ -767,7 +744,6 @@ static void on_stream_process_callback(void *user_data)
+         if (map == MAP_FAILED) {
+             av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] mmap failed! error %s\n",
+                    g_strerror(errno));
+-            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+             return;
+         }
+         pw_buf->user_data = map;
+@@ -775,65 +751,49 @@ static void on_stream_process_callback(void *user_data)
+     } else if (spa_buf->datas[0].type == SPA_DATA_MemPtr) {
+         if (spa_buf->datas[0].data == NULL) {
+             av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] no data!\n");
+-            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+             return;
+         }
+         map = NULL;
+         sdata = spa_buf->datas[0].data;
+     } else {
+         av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] Buffer is not valid!\n");
+-        pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+         return;
+     }
+ 
+-    /* transfer new captured buffer to pkt circular queue */
+-    if (atomic_load(&pw_ctx->circular_queue_size) < CQ_MAX_SIZE) {
+-        struct avpacket_entry *pkte = NULL;
+-        AVPacket *pkt = NULL;
+-        struct PwStreamAndBuffer* buffer = NULL;
+-
+-        pkt = av_packet_alloc();
+-        if (pkt == NULL) {
+-            av_log(ctx, AV_LOG_ERROR,
+-                   "[pipewiregrab] Failed to allocate new av packet\n");
+-            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+-            return;
+-        }
++    AVPacket *pkt = NULL;
++    struct PwStreamAndBuffer* buffer = NULL;
+ 
+-        buffer = (struct PwStreamAndBuffer*)malloc(sizeof(struct PwStreamAndBuffer));
+-        if (!buffer) {
+-            av_log(ctx, AV_LOG_ERROR,
+-                   "[pipewiregrab] Failed to allocate PwStreamAndBuffer entry\n");
+-            av_packet_free(&pkt);
+-            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+-            return;
+-        }
+-        buffer->ctx = ctx;
+-        buffer->pw_stream = pw_ctx->stream;
+-        buffer->pw_buf = pw_buf;
+-
+-        pkt->buf = av_buffer_create(sdata, pw_ctx->frame_size, pw_recycle, buffer, 0);
+-        pkt->data = sdata;
+-        pkt->size = pw_ctx->frame_size;
+-        pkt->dts = pkt->pts = av_gettime();
+-        pkt->duration = pw_ctx->frame_duration;
+-
+-        pkte = malloc(sizeof(struct avpacket_entry));
+-        if (pkte == NULL) {
+-            av_log(ctx, AV_LOG_ERROR,
+-                   "[pipewiregrab] Failed to allocate new packet CQ entry\n");
+-            av_packet_free(&pkt);
+-            pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+-            return;
+-        }
++    /* Create a new AVPacket on top of the pw buffer */
++    pkt = av_packet_alloc();
++    if (pkt == NULL) {
++        av_log(ctx, AV_LOG_ERROR,
++                "[pipewiregrab] Failed to allocate new av packet\n");
++        return;
++    }
+ 
+-        pkte->cq_pkt = pkt;
+-        CIRCLEQ_INSERT_TAIL(&pw_ctx->circular_queue_head, pkte, entries);
+-        atomic_fetch_add(&pw_ctx->circular_queue_size, 1);
+-        pthread_cond_signal(&pw_ctx->read_packet_cond_var);
++    buffer = (struct PwStreamAndBuffer*)malloc(sizeof(struct PwStreamAndBuffer));
++    if (!buffer) {
++        av_log(ctx, AV_LOG_ERROR,
++                "[pipewiregrab] Failed to allocate PwStreamAndBuffer entry\n");
++        av_packet_free(&pkt);
++        return;
+     }
++    buffer->ctx = ctx;
++    buffer->pw_stream = pw_ctx->stream;
++    buffer->pw_buf = pw_buf;
++
++    pkt->buf = av_buffer_create(sdata, pw_ctx->frame_size, pw_recycle, buffer, 0);
++    pkt->data = sdata;
++    pkt->size = pw_ctx->frame_size;
+ 
+-    pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
++    /* Free the last current_pkt and make the new frame available */
++    pthread_mutex_lock(&pw_ctx->current_pkt_mutex);
++    av_packet_unref(pw_ctx->current_pkt);
++    av_packet_ref(pw_ctx->current_pkt, pkt);
++    pthread_mutex_unlock(&pw_ctx->current_pkt_mutex);
++
++    av_packet_free(&pkt);
++    return;
+ }
+ 
+ static const struct pw_stream_events stream_events = {
+@@ -1449,8 +1409,6 @@ static int init_pipewiregrab(AVFormatContext *ctx)
+ 
+     pw_ctx->capture_type = DESKTOP_CAPTURE;
+     pw_ctx->cancellable = g_cancellable_new();
+-    CIRCLEQ_INIT(
+-        &pw_ctx->circular_queue_head); /* Initialize the avpacket circular queue */
+ 
+     pw_ctx->connection = g_bus_get_sync(G_BUS_TYPE_SESSION, NULL, &error);
+     if (error) {
+@@ -1485,9 +1443,35 @@ static const AVClass pipewiregrab = {
+     .category = AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT,
+ };
+ 
++static int64_t wait_frame(AVFormatContext *s)
++{
++    PipewireGrabContext *c = s->priv_data;
++    int64_t curtime, delay;
++
++    c->time_frame += c->frame_duration;
++
++    for (;;) {
++        curtime = av_gettime_relative();
++        delay   = c->time_frame - curtime;
++        if (delay <= 0)
++            break;
++        av_usleep(delay);
++    }
++
++    return curtime;
++}
++
++static void grab_frame(AVFormatContext *ctx, AVPacket *pkt)
++{
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++
++    pthread_mutex_lock(&pw_ctx->current_pkt_mutex);
++    av_packet_ref(pkt, pw_ctx->current_pkt);
++    pthread_mutex_unlock(&pw_ctx->current_pkt_mutex);
++}
++
+ static int pipewiregrab_read_packet(AVFormatContext *ctx, AVPacket *pkt)
+ {
+-    struct avpacket_entry *pkte = NULL;
+     PipewireGrabContext *pw_ctx = ctx->priv_data;
+     if (!pw_ctx) {
+         av_log(ctx, AV_LOG_ERROR,
+@@ -1495,34 +1479,16 @@ static int pipewiregrab_read_packet(AVFormatContext *ctx, AVPacket *pkt)
+         return AVERROR(EINVAL);
+     }
+ 
+-    pthread_mutex_lock(&pw_ctx->read_packet_mutex);
+-    while (atomic_load(&pw_ctx->circular_queue_size) == 0) {
+-        pthread_cond_wait(&pw_ctx->read_packet_cond_var,
+-                          &pw_ctx->read_packet_mutex);
+-    }
+-    pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+-
+-    pkte = CIRCLEQ_FIRST(&pw_ctx->circular_queue_head);
+-    if (pkte == NULL) {
+-        av_log(ctx, AV_LOG_ERROR,
+-               "[pipewiregrab] Invalid packet circular queue entry!\n");
+-        return AVERROR(EINVAL);
+-    }
+-
+-    CIRCLEQ_REMOVE(&pw_ctx->circular_queue_head, pkte, entries);
+-
+-    av_packet_ref(pkt, pkte->cq_pkt);
+-
+-    av_packet_free(&pkte->cq_pkt);
+-    free(pkte);
+-    atomic_fetch_sub(&pw_ctx->circular_queue_size, 1);
++    wait_frame(ctx);
++    grab_frame(ctx, pkt);
++    pkt->dts = pkt->pts = av_gettime();
++    pkt->duration = pw_ctx->frame_duration;
+ 
+     return 0;
+ }
+ 
+ static int pipewiregrab_read_close(AVFormatContext *ctx)
+ {
+-    struct avpacket_entry *pkte = NULL;
+     PipewireGrabContext *pw_ctx = ctx->priv_data;
+     if (!pw_ctx) {
+         av_log(ctx, AV_LOG_ERROR,
+@@ -1540,12 +1506,8 @@ static int pipewiregrab_read_close(AVFormatContext *ctx)
+ 
+     pthread_join(pw_ctx->pipewire_pthread, NULL);
+ 
+-    /* free/removal forward traversal */
+-    CIRCLEQ_FOREACH(pkte, &pw_ctx->circular_queue_head, entries)
+-    {
+-        CIRCLEQ_REMOVE(&pw_ctx->circular_queue_head, pkte, entries);
+-        av_packet_free(&pkte->cq_pkt);
+-        free(pkte);
++    if (pw_ctx->current_pkt) {
++        av_packet_free(&pw_ctx->current_pkt);
+     }
+ 
+     return 0;
+@@ -1605,12 +1567,17 @@ static int pipewiregrab_read_header(AVFormatContext *ctx)
+     }
+ 
+     atomic_init(&pw_ctx->avstream_codec_flag, 0);
+-    atomic_init(&pw_ctx->circular_queue_size, 0);
+ 
+     pthread_cond_init(&pw_ctx->avstream_codec_cond_var, NULL);
+-    pthread_cond_init(&pw_ctx->read_packet_cond_var, NULL);
+     pthread_mutex_init(&pw_ctx->avstream_codec_mutex, NULL);
+-    pthread_mutex_init(&pw_ctx->read_packet_mutex, NULL);
++    pthread_mutex_init(&pw_ctx->current_pkt_mutex, NULL);
++
++    pw_ctx->current_pkt = av_packet_alloc();
++    if (pw_ctx->current_pkt == NULL) {
++        av_log(ctx, AV_LOG_ERROR,
++                "[pipewiregrab] Failed to allocate new av packet\n");
++        return -1;
++    }
+ 
+     ret = av_parse_video_rate(&pw_ctx->user_frame_rate, pw_ctx->framerate);
+     if (ret < 0) {
+-- 
+2.38.1
+

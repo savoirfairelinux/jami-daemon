@@ -1,0 +1,52 @@
+From 7442422fce3dc26cb31d50e17dea876286afe6cd Mon Sep 17 00:00:00 2001
+From: Charles Perry <charles.perry@savoirfairelinux.com>
+Date: Thu, 23 Dec 2021 12:16:07 -0500
+Subject: [PATCH 8/9] pipewire: time debug
+
+Change-Id: Ic5666839c4d4b1145b453eb9c1f6dc395eabf96f
+---
+ libavdevice/pipewiregrab.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/libavdevice/pipewiregrab.c b/libavdevice/pipewiregrab.c
+index 5229e7af8d..c5437133eb 100644
+--- a/libavdevice/pipewiregrab.c
++++ b/libavdevice/pipewiregrab.c
+@@ -660,6 +660,21 @@ static void on_stream_trigger_done_callback(void *user_data)
+     /* nothing to do for now */
+ }
+ 
++static struct timespec tprev;
++
++static struct timespec diffie(struct timespec start, struct timespec end)
++{
++	struct timespec temp;
++	if ((end.tv_nsec-start.tv_nsec)<0) {
++		temp.tv_sec = end.tv_sec-start.tv_sec-1;
++		temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
++	} else {
++		temp.tv_sec = end.tv_sec-start.tv_sec;
++		temp.tv_nsec = end.tv_nsec-start.tv_nsec;
++	}
++	return temp;
++}
++
+ struct PwStreamAndBuffer {
+     AVFormatContext *ctx;
+     struct pw_stream *pw_stream;
+@@ -705,6 +720,12 @@ static void on_stream_process_callback(void *user_data)
+     AVFormatContext *ctx = user_data;
+     PipewireGrabContext *pw_ctx = NULL;
+ 
++    struct timespec now, differ;
++    clock_gettime(CLOCK_MONOTONIC, &now);
++    differ = diffie(tprev, now);
++    av_log(ctx, AV_LOG_INFO, "time elapsed: %ld ms\n", differ.tv_sec*1000 + differ.tv_nsec/1000000);
++    tprev = now;
++
+     ctx = user_data;
+     if (!ctx) {
+         return;
+-- 
+2.38.1
+

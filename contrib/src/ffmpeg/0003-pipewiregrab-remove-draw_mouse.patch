@@ -1,0 +1,157 @@
+From b9886322207f869e3e33d23edcec35b3000e9e03 Mon Sep 17 00:00:00 2001
+From: Charles Perry <charles.perry@savoirfairelinux.com>
+Date: Wed, 22 Dec 2021 22:13:01 -0500
+Subject: [PATCH 3/9] pipewiregrab: remove draw_mouse
+
+for debugging purposes
+
+Change-Id: I873e766e83207ffaf104c4df2547eb13815f18ae
+---
+ libavdevice/pipewiregrab.c | 93 ++------------------------------------
+ 1 file changed, 3 insertions(+), 90 deletions(-)
+
+diff --git a/libavdevice/pipewiregrab.c b/libavdevice/pipewiregrab.c
+index b850e7e2d8..fbf5499202 100644
+--- a/libavdevice/pipewiregrab.c
++++ b/libavdevice/pipewiregrab.c
+@@ -148,7 +148,6 @@ typedef struct PipewireGrabContext {
+ 
+     const AVClass *class;
+ 
+-    int draw_mouse;
+     const char *framerate;
+ 
+     struct circularqueue circular_queue_head; /* CircularQueue head */
+@@ -179,14 +178,6 @@ static const AVOption options[] = {
+       0,
+       0,
+       D },
+-    { "draw_mouse",
+-      "Draw the mouse pointer.",
+-      OFFSET(draw_mouse),
+-      AV_OPT_TYPE_INT,
+-      { .i64 = 1 },
+-      0,
+-      1,
+-      D },
+     { NULL },
+ };
+ 
+@@ -409,26 +400,6 @@ static void new_session_path(AVFormatContext *ctx, char **out_path,
+     }
+ }
+ 
+-/**
+- * helper function: convert pixel in buffer to bgrx
+- *
+- * @buffer buffer containing RGBX pixels
+- * @size size of the buffer
+- */
+-static void convert_rgbx2bgrx_format(uint8_t *buffer, uint32_t size)
+-{
+-    if (!buffer) {
+-        return;
+-    }
+-
+-    for (uint32_t i = 0; i < size; i += 4) {
+-        uint8_t tempR = buffer[i];
+-        uint8_t tempB = buffer[i + 2];
+-        buffer[i] = tempB;
+-        buffer[i + 2] = tempR;
+-    }
+-}
+-
+ static enum AVPixelFormat
+ spa_pixel_format_to_av_pixel_format(uint32_t spa_format)
+ {
+@@ -733,7 +704,6 @@ static void on_stream_trigger_done_callback(void *user_data)
+ 
+ static void on_stream_process_callback(void *user_data)
+ {
+-    struct spa_meta_cursor *cursor;
+     struct spa_buffer *spa_buf = NULL;
+     struct pw_buffer *pw_buf = NULL;
+     uint8_t *map = NULL;
+@@ -782,11 +752,11 @@ static void on_stream_process_callback(void *user_data)
+         av_log(ctx, AV_LOG_WARNING,
+                "[pipewiregrab] unsupported buffer format: %d\n",
+                pw_ctx->format.info.raw.format);
+-        goto draw_cursor;
++        goto end;
+     }
+ 
+     if (!has_buffer)
+-        goto draw_cursor;
++        goto end;
+ 
+     // av_log( ctx, AV_LOG_DEBUG, "[pipewiregrab] datas[0].type %u \n", spa_buf->datas[0].type );
+ 
+@@ -854,64 +824,7 @@ static void on_stream_process_callback(void *user_data)
+         pthread_cond_signal(&pw_ctx->read_packet_cond_var);
+     }
+ 
+-draw_cursor:
+-
+-    /* get cursor metadata */
+-    if (pw_ctx->draw_mouse) {
+-        cursor = spa_buffer_find_meta_data(spa_buf, SPA_META_Cursor,
+-                                           sizeof(*cursor));
+-        if (cursor != NULL) {
+-            pw_ctx->cursor.valid = spa_meta_cursor_is_valid(cursor);
+-            if (pw_ctx->cursor.visible && pw_ctx->cursor.valid) {
+-                struct spa_meta_bitmap *bitmap = NULL;
+-                enum AVPixelFormat cursor_format =
+-                    spa_pixel_format_to_av_pixel_format(bitmap->format);
+-
+-                if (cursor->bitmap_offset)
+-                    bitmap = SPA_MEMBER(cursor, cursor->bitmap_offset,
+-                                        struct spa_meta_bitmap);
+-
+-                if (bitmap && bitmap->size.width > 0 &&
+-                    bitmap->size.height > 0 &&
+-                    cursor_format != AV_PIX_FMT_NONE) {
+-                    uint8_t *cursor_sdata;
+-                    uint32_t cursor_stride;
+-                    uint32_t cursor_x_fixed_offset;
+-                    uint32_t gstride = pw_ctx->width * pw_ctx->Bpp;
+-
+-                    av_log(ctx, AV_LOG_WARNING,
+-                           "[pipewiregrab] cursor size:%dx%d\n",
+-                           bitmap->size.width, bitmap->size.height);
+-
+-                    cursor_sdata = SPA_MEMBER(bitmap, bitmap->offset, uint8_t);
+-                    pw_ctx->cursor.hotspot_x = cursor->hotspot.x;
+-                    pw_ctx->cursor.hotspot_y = cursor->hotspot.y;
+-                    pw_ctx->cursor.width = bitmap->size.width;
+-                    pw_ctx->cursor.height = bitmap->size.height;
+-
+-                    cursor_stride = pw_ctx->cursor.width * pw_ctx->Bpp;
+-
+-                    if (cursor_format != pw_ctx->av_pxl_format)
+-                        convert_rgbx2bgrx_format(cursor_sdata,
+-                                                 cursor_stride *
+-                                                     pw_ctx->cursor.height);
+-
+-                    /* map cursor bitmap onto sdata */
+-                    cursor_x_fixed_offset =
+-                        pw_ctx->cursor.hotspot_x * pw_ctx->Bpp;
+-                    for (uint32_t y = 0; y < pw_ctx->cursor.height; ++y) {
+-                        uint32_t y_sdata_offset =
+-                            ((cursor->hotspot.y + y) * gstride) +
+-                            cursor_x_fixed_offset;
+-                        memcpy((uint8_t *)sdata + y_sdata_offset,
+-                               cursor_sdata + (y * cursor_stride),
+-                               cursor_stride);
+-                    }
+-                }
+-            }
+-        }
+-    }
+-
++end:
+     maybe_queue_buffer(ctx);
+ }
+ 
+-- 
+2.38.1
+

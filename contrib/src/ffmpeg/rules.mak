@@ -367,6 +367,15 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
+	$(APPLY) $(SRC)/ffmpeg/0001-libavdevice-add-pipewire-based-grab.patch
+	$(APPLY) $(SRC)/ffmpeg/0002-pipewire-check-spa_buf-data-pointer-only-when-type-i.patch
+	$(APPLY) $(SRC)/ffmpeg/0003-pipewiregrab-remove-draw_mouse.patch
+	$(APPLY) $(SRC)/ffmpeg/0004-pipewire-0-copy-tentative.patch
+	$(APPLY) $(SRC)/ffmpeg/0005-pipewiregrab-protect-against-spurious-wakeups.patch
+	$(APPLY) $(SRC)/ffmpeg/0006-factor-out-find_most_recent_buffer_and_recycle_older.patch
+	$(APPLY) $(SRC)/ffmpeg/0007-pipewiregrab-only-keep-the-most-recent-frame.patch
+	$(APPLY) $(SRC)/ffmpeg/0008-pipewire-time-debug.patch
+	$(APPLY) $(SRC)/ffmpeg/0009-posix-update-compile-POSIX-version.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

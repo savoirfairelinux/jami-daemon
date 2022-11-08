@@ -166,7 +166,11 @@ VideoRtpSession::startSender()
         // Current implementation does not handle resolution change
         // (needed by window sharing feature) with HW codecs, so HW
         // codecs will be disabled for now.
-        bool allowHwAccel = (localVideoParams_.format != "x11grab");
+        bool allowHwAccel = true;
+        if(localVideoParams_.format == "x11grab" || localVideoParams_.format != "pipewiregrab")
+        {
+            allowHwAccel = false;
+        }
 
         if (socketPair_)
             initSeqVal_ = socketPair_->lastSeqValOut();

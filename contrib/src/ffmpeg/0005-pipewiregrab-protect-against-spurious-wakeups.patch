@@ -1,0 +1,41 @@
+From 21fcfdce5bec3a04853d565e9936160a37676a80 Mon Sep 17 00:00:00 2001
+From: Charles Perry <charles.perry@savoirfairelinux.com>
+Date: Thu, 23 Dec 2021 11:52:18 -0500
+Subject: [PATCH 5/9] pipewiregrab: protect against spurious wakeups
+
+Change-Id: Ia2d12a5080a9429167faa6ed726703c9b4ca8973
+---
+ libavdevice/pipewiregrab.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/libavdevice/pipewiregrab.c b/libavdevice/pipewiregrab.c
+index af8bef2c0b..851216988e 100644
+--- a/libavdevice/pipewiregrab.c
++++ b/libavdevice/pipewiregrab.c
+@@ -1490,9 +1490,10 @@ static int pipewiregrab_read_packet(AVFormatContext *ctx, AVPacket *pkt)
+     }
+ 
+     pthread_mutex_lock(&pw_ctx->read_packet_mutex);
+-    if (atomic_load(&pw_ctx->circular_queue_size) == 0)
++    while (atomic_load(&pw_ctx->circular_queue_size) == 0) {
+         pthread_cond_wait(&pw_ctx->read_packet_cond_var,
+                           &pw_ctx->read_packet_mutex);
++    }
+     pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+ 
+     pkte = CIRCLEQ_FIRST(&pw_ctx->circular_queue_head);
+@@ -1615,9 +1616,10 @@ static int pipewiregrab_read_header(AVFormatContext *ctx)
+     ret = pthread_create(&pw_ctx->pipewire_pthread, NULL,
+                          &pipewire_gdbus_init_pthread, ctx);
+     pthread_mutex_lock(&pw_ctx->avstream_codec_mutex);
+-    if (atomic_load(&pw_ctx->avstream_codec_flag) == 0)
++    while (atomic_load(&pw_ctx->avstream_codec_flag) == 0) {
+         pthread_cond_wait(&pw_ctx->avstream_codec_cond_var,
+                           &pw_ctx->avstream_codec_mutex);
++    }
+     // wait until signaled
+     pthread_mutex_unlock(&pw_ctx->avstream_codec_mutex);
+ 
+-- 
+2.38.1
+

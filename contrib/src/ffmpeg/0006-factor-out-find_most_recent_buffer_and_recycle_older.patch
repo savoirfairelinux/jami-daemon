@@ -1,0 +1,59 @@
+From 6278ea2e68680341dcfc74066a30a208fa742633 Mon Sep 17 00:00:00 2001
+From: Charles Perry <charles.perry@savoirfairelinux.com>
+Date: Thu, 23 Dec 2021 12:43:40 -0500
+Subject: [PATCH 6/9] factor out find_most_recent_buffer_and_recycle_olders
+
+Change-Id: I43ed25d4388ff959d046b2aa30795047eb525ac2
+---
+ libavdevice/pipewiregrab.c | 28 +++++++++++++++++-----------
+ 1 file changed, 17 insertions(+), 11 deletions(-)
+
+diff --git a/libavdevice/pipewiregrab.c b/libavdevice/pipewiregrab.c
+index 851216988e..cefbfd1b95 100644
+--- a/libavdevice/pipewiregrab.c
++++ b/libavdevice/pipewiregrab.c
+@@ -699,6 +699,22 @@ static void pw_recycle(void *opaque, uint8_t *data)
+     free(buffer);
+ }
+ 
++static struct pw_buffer* find_most_recent_buffer_and_recycle_olders(PipewireGrabContext *pw_ctx)
++{
++    struct pw_buffer* pw_buf = NULL;
++    while (true) {
++        struct pw_buffer *aux = pw_stream_dequeue_buffer(pw_ctx->stream);
++        if (!aux) {
++            break;
++        }
++        if (pw_buf) {
++            pw_stream_queue_buffer(pw_ctx->stream, pw_buf);
++        }
++        pw_buf = aux;
++    }
++    return pw_buf;
++}
++
+ static void on_stream_process_callback(void *user_data)
+ {
+     struct spa_buffer *spa_buf = NULL;
+@@ -722,17 +738,7 @@ static void on_stream_process_callback(void *user_data)
+ 
+     pthread_mutex_lock(&pw_ctx->read_packet_mutex);
+ 
+-    /* Find the most recent buffer */
+-    pw_buf = NULL;
+-    while (true) {
+-        struct pw_buffer *aux = pw_stream_dequeue_buffer(pw_ctx->stream);
+-        if (!aux)
+-            break;
+-        if (pw_buf)
+-            pw_stream_queue_buffer(pw_ctx->stream, pw_buf);
+-        pw_buf = aux;
+-    }
+-
++    pw_buf = find_most_recent_buffer_and_recycle_olders(pw_ctx);
+     if (pw_buf == NULL) {
+         av_log(ctx, AV_LOG_ERROR, "[pipewiregrab] Out of buffers!\n");
+         pthread_mutex_unlock(&pw_ctx->read_packet_mutex);
+-- 
+2.38.1
+
