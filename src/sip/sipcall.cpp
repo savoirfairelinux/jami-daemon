@@ -3130,14 +3130,13 @@ SIPCall::createSinks(const ConfInfo& infos)
 }
 #endif
 
-std::shared_ptr<AudioRtpSession>
-SIPCall::getAudioRtp() const
+std::vector<std::shared_ptr<AudioRtpSession>>
+SIPCall::getAudioRtpList() const
 {
-    // For the moment, the clients support only one audio stream, so we
-    // return the first audio stream.
+    std::vector<std::shared_ptr<AudioRtpSession>> audioRtpList;
     for (const auto& rtp : getRtpSessionList(MediaType::MEDIA_AUDIO))
-        return std::dynamic_pointer_cast<AudioRtpSession>(rtp);
-    return nullptr;
+        audioRtpList.push_back(std::dynamic_pointer_cast<AudioRtpSession>(rtp));
+    return audioRtpList;
 }
 
 std::vector<std::shared_ptr<RtpSession>>
