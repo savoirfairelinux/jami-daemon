@@ -16,6 +16,24 @@
       "message": "Changed to unbind as that is what I\u0027d expect to happen in exitConference() but I may be missing something. Can someone confirm that unbind is the expected behaviour?",
       "revId": "79893619bc5a8518d8a88108398c5cd9297e7d05",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0fc7e8a_ed9f1f43",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3082,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-11-09T18:27:37Z",
+      "side": 1,
+      "message": "we exit a conference to a 1:1 call, so we need the streams to be connected to the local audio. the conference unbind participant should hanlde what you have in mind here.",
+      "parentUuid": "89bc0886_bd62fac2",
+      "revId": "79893619bc5a8518d8a88108398c5cd9297e7d05",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
