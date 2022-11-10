@@ -293,7 +293,6 @@ std::string getHostname();
 
 int getHostName(char* out, size_t out_len);
 std::string getGateway(char* localHost, ip_utils::subnet_mask prefix);
-std::string getDeviceName();
 IpAddr getLocalGateway();
 
 /**
