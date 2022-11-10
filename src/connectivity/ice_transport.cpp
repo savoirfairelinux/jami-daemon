@@ -25,8 +25,6 @@
 #include "manager.h"
 #include "connectivity/upnp/upnp_control.h"
 #include "connectivity/transport/peer_channel.h"
-#include "jami/callmanager_interface.h"
-#include "tracepoint.h"
 
 #include <pjlib.h>
 
