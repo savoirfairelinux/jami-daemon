@@ -1098,6 +1098,19 @@ JamiAccount::saveIdentity(const dht::crypto::Identity id,
     return names;
 }
 
+std::string
+JamiAccount::getDeviceName()
+{
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    std::vector<std::string> deviceNames;
+    emitSignal<libjami::ConfigurationSignal::GetDeviceName>(&deviceNames);
+    if (not deviceNames.empty()) {
+        return deviceNames[0];
+    }
+#endif
+    return getHostname();
+}
+
 // must be called while configurationMutex_ is locked
 void
 JamiAccount::loadAccount(const std::string& archive_password,
@@ -1283,7 +1296,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
 
             accountManager_->initAuthentication(
                 fDeviceKey,
-                ip_utils::getDeviceName(),
+                getDeviceName(),
                 std::move(creds),
                 [this, migrating](const AccountInfo& info,
                                   const std::map<std::string, std::string>& config,
