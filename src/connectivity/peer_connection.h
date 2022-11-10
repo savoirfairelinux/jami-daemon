@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "jami/datatransfer_interface.h"
 #include "data_transfer.h"
 #include "connectivity/ip_utils.h"
 #include "connectivity/generic_io.h"
