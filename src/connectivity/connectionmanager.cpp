@@ -16,8 +16,6 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "connectionmanager.h"
-#include "account_const.h"
-#include "manager.h"
 #include "peer_connection.h"
 #include "logger.h"
 #include "fileutils.h"
