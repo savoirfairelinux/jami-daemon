@@ -23,7 +23,6 @@
 
 #include "data_transfer.h"
 #include "manager.h"
-#include "jamidht/jamiaccount.h"
 #include "connectivity/security/tls_session.h"
 
 #include <opendht/thread_pool.h>

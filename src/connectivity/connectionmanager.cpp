@@ -17,7 +17,6 @@
  */
 #include "connectionmanager.h"
 #include "account_const.h"
-#include "manager.h"
 #include "peer_connection.h"
 #include "logger.h"
 #include "fileutils.h"
