@@ -3,6 +3,7 @@ noinst_LTLIBRARIES += libsecurity.la
 libsecurity_la_CXXFLAGS = -I$(top_srcdir)/src $(AM_CXXFLAGS)
 
 libsecurity_la_SOURCES = \
+		./connectivity/security/security_const.h \
 		./connectivity/security/tls_session.cpp \
 		./connectivity/security/tls_session.h \
 		./connectivity/security/tlsvalidator.cpp \
