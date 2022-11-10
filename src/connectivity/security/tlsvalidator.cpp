@@ -23,10 +23,6 @@
 
 #include "tlsvalidator.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "certstore.h"
 
 #include "fileutils.h"

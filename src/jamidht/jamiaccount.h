@@ -676,6 +676,8 @@ private:
                      const std::string& archive_pin = {},
                      const std::string& archive_path = {});
 
+    std::string getDeviceName();
+
     std::vector<std::string> loadBootstrap() const;
 
     static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id,

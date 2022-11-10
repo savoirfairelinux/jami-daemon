@@ -362,7 +362,7 @@ if get_option('interfaces').contains('library')
         'jami/media_const.h',
         'jami/presence_const.h',
         'jami/presencemanager_interface.h',
-        'jami/security_const.h',
+        'connectivity/security/security_const.h',
         'jami/trace-tools.h',
         subdir: 'jami'
     )

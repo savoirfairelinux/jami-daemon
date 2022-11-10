@@ -128,6 +128,7 @@ libjami_la_SOURCES += \
 endif
 
 nobase_include_HEADERS += \
+	./connectivity/security/security_const.h \
 	./jami/account_const.h \
 	./jami/call_const.h \
 	./jami/callmanager_interface.h \
@@ -139,7 +140,6 @@ nobase_include_HEADERS += \
 	./jami/media_const.h \
 	./jami/presence_const.h \
 	./jami/presencemanager_interface.h \
-	./jami/security_const.h \
 	./jami/trace-tools.h
 
 if ENABLE_PLUGIN

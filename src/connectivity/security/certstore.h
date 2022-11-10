@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "jami/security_const.h"
+#include "security_const.h"
 #include "noncopyable.h"
 
 #include <opendht/crypto.h>
