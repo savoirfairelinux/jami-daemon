@@ -32,6 +32,7 @@
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
 #include "connectivity/sip_utils.h"
+#include "connectivity/security/security_const.h"
 
 #include "call_factory.h"
 
