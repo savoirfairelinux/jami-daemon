@@ -194,19 +194,6 @@ ip_utils::getGateway(char* localHost, ip_utils::subnet_mask prefix)
     return defaultGw;
 }
 
-std::string
-ip_utils::getDeviceName()
-{
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-    std::vector<std::string> deviceNames;
-    emitSignal<libjami::ConfigurationSignal::GetDeviceName>(&deviceNames);
-    if (not deviceNames.empty()) {
-        return deviceNames[0];
-    }
-#endif
-    return getHostname();
-}
-
 IpAddr
 ip_utils::getLocalGateway()
 {
