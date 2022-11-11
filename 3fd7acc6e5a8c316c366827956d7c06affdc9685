@@ -261,6 +261,30 @@
       },
       "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a1c5566c_942ad350",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-11T21:18:14Z",
+      "side": 1,
+      "message": "daemon-tests doesn\u0027t run make check, but tests one by one to get a better output, but indeed `make check` should work, however nobody tested it for years I guess. (maybe with meson)",
+      "parentUuid": "7c127c8c_04f3fc61",
+      "range": {
+        "startLine": 43,
+        "startChar": 15,
+        "endLine": 43,
+        "endChar": 39
+      },
+      "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
