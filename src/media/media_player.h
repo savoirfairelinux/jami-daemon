@@ -32,6 +32,7 @@ class MediaPlayer
 {
 public:
     MediaPlayer(const std::string& path);
+    MediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId);
     ~MediaPlayer();
 
     void pause(bool pause);
@@ -45,6 +46,8 @@ public:
 private:
     std::string path_;
     std::string id_;
+    std::string audioStreamId_;
+    std::string videoStreamId_;
 
     // media inputs
 #ifdef ENABLE_VIDEO

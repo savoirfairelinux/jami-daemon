@@ -575,6 +575,12 @@ createMediaPlayer(const std::string& path)
     return jami::createMediaPlayer(path);
 }
 
+std::string
+createMediaPlayer(const std::string& path, const std::string& audioInputId, const std::string& videoInputId)
+{
+    return jami::createMediaPlayer(path, audioInputId, videoInputId);
+}
+
 bool
 pausePlayer(const std::string& id, bool pause)
 {
@@ -726,6 +732,7 @@ getAudioInput(const std::string& id)
             return input;
         }
     }
+    JAMI_DBG("Audio input not found, creating: %s", id.c_str());
 
     auto input = std::make_shared<AudioInput>(id);
     vmgr.audioInputs[id] = input;
@@ -754,6 +761,18 @@ std::string
 createMediaPlayer(const std::string& path)
 {
     auto player = std::make_shared<MediaPlayer>(path);
+    if (!player->isInputValid()) {
+        return "";
+    }
+    auto playerId = player.get()->getId();
+    Manager::instance().getVideoManager().mediaPlayers[playerId] = player;
+    return playerId;
+}
+
+std::string
+createMediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId)
+{
+    auto player = std::make_shared<MediaPlayer>(path, audioStreamId, videoStreamId);
     if (!player->isInputValid()) {
         return "";
     }

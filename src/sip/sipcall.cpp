@@ -1996,7 +1996,9 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
         }
 
         addMediaStream(mediaAttr);
+        
         auto& stream = rtpStreams_.back();
+        JAMI_DBG("initMedia Stream: %s", stream.mediaAttribute_->label_.c_str());
         createRtpSession(stream);
 
         JAMI_DEBUG("[call:{:s}] Added media @{:d}: {:s}",
@@ -2398,6 +2400,7 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
             addMediaStream(newAttr);
             auto& stream = rtpStreams_.back();
             // If the remote asks for a new stream, our side sends nothing
+            
             stream.mediaAttribute_->muted_ = isRemote ? true : stream.mediaAttribute_->muted_;
             createRtpSession(stream);
             JAMI_DBG("[call:%s] Added a new media stream [%s] @ index %i",
@@ -2522,7 +2525,7 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 
     // If peer doesn't support multiple ice, keep only the last audio/video
     // This keep the old behaviour (if sharing both camera + sharing a file, will keep the shared file)
-    if (!peerSupportMultiIce_) {
+    if (!peerSupportMultiIce_) { /* check which audio stream should be used here*/
         if (mediaList.size() > 2)
             JAMI_WARN("[call:%s] Peer does not support more than 2 ICE medias. Media change "
                       "request modified",

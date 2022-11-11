@@ -44,7 +44,38 @@ MediaPlayer::MediaPlayer(const std::string& path)
 
     path_ = path;
     id_ = std::to_string(rand());
+    audioStreamId_ = id_;
+    videoStreamId_ = id_;
     audioInput_ = jami::getAudioInput(id_);
+    audioInput_->setPaused(paused_);
+#ifdef ENABLE_VIDEO
+    videoInput_ = jami::getVideoInput(id_, video::VideoInputMode::ManagedByDaemon);
+    videoInput_->setPaused(paused_);
+#endif
+
+    demuxer_ = std::make_shared<MediaDemuxer>();
+    loop_.start();
+}
+
+MediaPlayer::MediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId)
+    : loop_(std::bind(&MediaPlayer::configureMediaInputs, this),
+            std::bind(&MediaPlayer::process, this),
+            [] {})
+    , audioStreamId_(audioStreamId)
+    , videoStreamId_(videoStreamId)
+{
+        static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+    const auto pos = path.find(sep);
+    const auto suffix = path.substr(pos + sep.size());
+
+    if (access(suffix.c_str(), R_OK) != 0) {
+        JAMI_ERR() << "File '" << path << "' not available";
+        return;
+    }
+
+    path_ = path;
+    id_ = std::to_string(rand());
+    audioInput_ = jami::getAudioInput(audioStreamId_);
     audioInput_->setPaused(paused_);
 #ifdef ENABLE_VIDEO
     videoInput_ = jami::getVideoInput(id_, video::VideoInputMode::ManagedByDaemon);
@@ -92,7 +123,7 @@ MediaPlayer::configureMediaInputs()
     try {
         videoStream_ = demuxer_->selectStream(AVMEDIA_TYPE_VIDEO);
         if (hasVideo()) {
-            videoInput_->setSink(id_);
+            videoInput_->setSink(videoStreamId_);
             videoInput_->configureFilePlayback(path_, demuxer_, videoStream_);
             videoInput_->updateStartTime(startTime_);
             muteAudio(true);

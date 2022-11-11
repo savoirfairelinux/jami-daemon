@@ -189,6 +189,7 @@ LIBJAMI_PUBLIC std::string openVideoInput(const std::string& path);
 LIBJAMI_PUBLIC bool closeVideoInput(const std::string& id);
 
 LIBJAMI_PUBLIC std::string createMediaPlayer(const std::string& path);
+LIBJAMI_PUBLIC std::string createMediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId);
 LIBJAMI_PUBLIC bool closeMediaPlayer(const std::string& id);
 LIBJAMI_PUBLIC bool pausePlayer(const std::string& id, bool pause);
 LIBJAMI_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
