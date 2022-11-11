@@ -117,6 +117,30 @@
       },
       "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "535fc8c1_922ca803",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-11T20:27:08Z",
+      "side": 1,
+      "message": "the first users of the tests is us. All tests are important and are executed by default.\n\nIf people want to run only some tests, it\u0027s a bit their thing",
+      "parentUuid": "95286858_5af56f29",
+      "range": {
+        "startLine": 43,
+        "startChar": 15,
+        "endLine": 43,
+        "endChar": 39
+      },
+      "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
