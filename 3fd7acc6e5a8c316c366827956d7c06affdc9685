@@ -213,6 +213,54 @@
       },
       "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a2d8246_7b1ab0ac",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-11-11T21:08:23Z",
+      "side": 1,
+      "message": "I can try to run all tests in the guix build container and report of my results; `make check` should suffice, right?",
+      "parentUuid": "cd1839d7_442e3072",
+      "range": {
+        "startLine": 43,
+        "startChar": 15,
+        "endLine": 43,
+        "endChar": 39
+      },
+      "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c127c8c_04f3fc61",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-11-11T21:08:23Z",
+      "side": 1,
+      "message": "I think the issue is that some tests",
+      "parentUuid": "cd1839d7_442e3072",
+      "range": {
+        "startLine": 43,
+        "startChar": 15,
+        "endLine": 43,
+        "endChar": 39
+      },
+      "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
