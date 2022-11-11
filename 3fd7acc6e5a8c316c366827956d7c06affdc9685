@@ -141,6 +141,30 @@
       },
       "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd40e231_97ff29ae",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-11-11T20:35:36Z",
+      "side": 1,
+      "message": "Well, if nobody is able to run the test suite in their CI, it\u0027s a real problem.",
+      "parentUuid": "535fc8c1_922ca803",
+      "range": {
+        "startLine": 43,
+        "startChar": 15,
+        "endLine": 43,
+        "endChar": 39
+      },
+      "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
