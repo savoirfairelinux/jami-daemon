@@ -93,6 +93,30 @@
       },
       "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95286858_5af56f29",
+        "filename": "configure.ac",
+        "patchSetId": 5
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-11-11T20:02:28Z",
+      "side": 1,
+      "message": "I think the point of this patch is to *not* run so called \"integration\" tests by default, because they need setup not handled by the test itself, or the internet, or ?  Perhaps Olivier can expound on the reasons.",
+      "parentUuid": "f9f5f5b8_f902c684",
+      "range": {
+        "startLine": 43,
+        "startChar": 15,
+        "endLine": 43,
+        "endChar": 39
+      },
+      "revId": "3fd7acc6e5a8c316c366827956d7c06affdc9685",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
