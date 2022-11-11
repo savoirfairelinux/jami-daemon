@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "52899432_0560c7a7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2022-11-11T16:47:23Z",
+      "side": 1,
+      "message": "Tested with my voip.ms account, I confirm it works.",
+      "revId": "c1e6d664601b35a466f4e02e86a2c8181fdcca12",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
