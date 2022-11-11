@@ -263,7 +263,7 @@ public:
      * @note Accepts several urls:
      *          + jami:uri for calling someone
      *          + swarm:id for calling a group (will host or join if an active call is detected)
-     *          + swarm:id/uri/device/confId to join a specific conference hosted on (uri, device)
+     *          + rdv:id/uri/device/confId to join a specific conference hosted on (uri, device)
      * @param[in] toUrl The address to call
      * @param[in] mediaList list of medias
      * @return A shared pointer on the created call.
@@ -551,8 +551,8 @@ public:
 
     // non-swarm version
     libjami::DataTransferId sendFile(const std::string& peer,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                     const std::string& path,
+                                     const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,

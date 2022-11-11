@@ -2056,16 +2056,20 @@ ConversationModule::call(const std::string& url,
             return;
         }
         conversationId = parameters[0];
+        JAMI_ERR("@@@ %s", conversationId.c_str());
         uri = parameters[1];
+        JAMI_ERR("@@@ %s", uri.c_str());
         deviceId = parameters[2];
+        JAMI_ERR("@@@ %s", deviceId.c_str());
         confId = parameters[3];
+        JAMI_ERR("@@@ %s", confId.c_str());
     }
 
     std::string callUri;
     auto sendCall = [&]() {
         call->setState(Call::ConnectionState::TRYING);
         call->setPeerNumber(callUri);
-        call->setPeerUri("swarm:" + callUri);
+        call->setPeerUri("rdv:" + callUri);
         call->addStateListener([w = pimpl_->weak(), conversationId](Call::CallState call_state,
                                                                     Call::ConnectionState cnx_state,
                                                                     int) {
