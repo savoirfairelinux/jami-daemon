@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "90431470_5b6e44ee",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-14T14:08:24Z",
+      "side": 1,
+      "message": "Calling an android, it seems there is no outgoing sound.",
+      "revId": "9f893209c8c0b1d73dfc5e1226b0f5bd91e94081",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
