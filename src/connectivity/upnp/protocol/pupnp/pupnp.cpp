@@ -798,8 +798,6 @@ PUPnP::processDiscoverySearchResult(const std::string& cpDeviceId,
         return;
     }
 
-    dht::http::Url url(igdLocationUrl);
-
     // Use the device ID and the URL as ID. This is necessary as some
     // IGDs may have the same device ID but different URLs.
 
@@ -818,6 +816,7 @@ PUPnP::processDiscoverySearchResult(const std::string& cpDeviceId,
     // will cause some timeout.
 
     // Only check the IP address (ignore the port number).
+    dht::http::Url url(igdLocationUrl);
     if (IpAddr(url.host).toString(false) != dstAddr.toString(false)) {
         JAMI_DBG("PUPnP: Returned location %s does not match the source address %s",
                  IpAddr(url.host).toString(true, true).c_str(),
