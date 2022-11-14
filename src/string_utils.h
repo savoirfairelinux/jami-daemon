@@ -56,6 +56,18 @@ uint64_t from_hex_string(const std::string& str);
 
 template<typename T>
 T
+to_int(std::string_view str, T defaultValue)
+{
+    T result;
+    auto [p, ec] = std::from_chars(str.data(), str.data()+str.size(), result);
+    if (ec == std::errc())
+        return result;
+    else
+        return defaultValue;
+}
+
+template<typename T>
+T
 to_int(std::string_view str)
 {
     T result;
