@@ -35,14 +35,12 @@ const char* const AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYP
 
 AccountFactory::AccountFactory()
 {
-    auto sipfunc = [](const std::string& id) {
+    generators_.emplace(SIPAccount::ACCOUNT_TYPE, [](const std::string& id) {
         return std::make_shared<SIPAccount>(id, true);
-    };
-    generators_.emplace(SIPAccount::ACCOUNT_TYPE, sipfunc);
-    auto dhtfunc = [](const std::string& id) {
-        return std::make_shared<JamiAccount>(id, false);
-    };
-    generators_.emplace(JamiAccount::ACCOUNT_TYPE, dhtfunc);
+    });
+    generators_.emplace(JamiAccount::ACCOUNT_TYPE, [](const std::string& id) {
+        return std::make_shared<JamiAccount>(id);
+    });
 }
 
 std::shared_ptr<Account>
@@ -66,7 +64,7 @@ AccountFactory::createAccount(const char* const accountType, const std::string& 
 }
 
 bool
-AccountFactory::isSupportedType(const char* const name) const
+AccountFactory::isSupportedType(std::string_view name) const
 {
     return generators_.find(name) != generators_.cend();
 }
@@ -74,14 +72,15 @@ AccountFactory::isSupportedType(const char* const name) const
 void
 AccountFactory::removeAccount(Account& account)
 {
-    const auto* account_type = account.getAccountType();
-
+    std::string_view account_type = account.getAccountType();
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto& id = account.getAccountID();
     JAMI_DEBUG("Removing account {:s}", id);
-    auto& map = accountMaps_.at(account_type);
-    map.erase(id);
-    JAMI_DEBUG("Remaining {:d} {:s} account(s)", map.size(), account_type);
+    auto m = accountMaps_.find(account_type);
+    if (m != accountMaps_.end()) {
+        m->second.erase(id);
+        JAMI_DEBUG("Remaining {:d} {:s} account(s)", m->second.size(), account_type);
+    }
 }
 
 void
