@@ -102,9 +102,7 @@ setAvLogLevel()
     signed level = AV_LOG_WARNING;
 
     if (envvar != nullptr) {
-        if (not(std::istringstream(envvar) >> level))
-            level = AV_LOG_ERROR;
-
+        level = to_int<int>(envvar, AV_LOG_ERROR);
         level = std::max(AV_LOG_QUIET, std::min(level, AV_LOG_DEBUG));
     }
     av_log_set_level(level);
