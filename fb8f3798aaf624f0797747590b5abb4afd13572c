@@ -22,6 +22,29 @@
       },
       "revId": "fb8f3798aaf624f0797747590b5abb4afd13572c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7905b986_2784241e",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 283,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-14T18:46:52Z",
+      "side": 1,
+      "message": "could be removed, duplicate with getRtpSessionList",
+      "range": {
+        "startLine": 283,
+        "startChar": 4,
+        "endLine": 283,
+        "endChar": 74
+      },
+      "revId": "fb8f3798aaf624f0797747590b5abb4afd13572c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
