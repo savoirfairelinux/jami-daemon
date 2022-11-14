@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f0575aad_8a9cdc5a",
+        "filename": "src/account_config.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-14T16:53:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9328c9ad_621a4ab3",
+      "range": {
+        "startLine": 20,
+        "startChar": 11,
+        "endLine": 20,
+        "endChar": 23
+      },
+      "revId": "ea364fe3c7d2539d5177b01c4856b2b4ea170622",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9e2649c3_c911c783",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "61f941cf_54681def",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-14T16:53:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9e2649c3_c911c783",
+      "range": {
+        "startLine": 21,
+        "startChar": 10,
+        "endLine": 21,
+        "endChar": 20
+      },
+      "revId": "ea364fe3c7d2539d5177b01c4856b2b4ea170622",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2cc629ed_058c2ae0",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-11-14T16:40:17Z",
       "side": 1,
       "message": "config/yamlparser.h",
+      "range": {
+        "startLine": 20,
+        "startChar": 9,
+        "endLine": 20,
+        "endChar": 17
+      },
+      "revId": "ea364fe3c7d2539d5177b01c4856b2b4ea170622",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f5fe886b_4f45851a",
+        "filename": "src/sip/sipaccountbase_config.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-14T16:53:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2cc629ed_058c2ae0",
       "range": {
         "startLine": 20,
         "startChar": 9,
