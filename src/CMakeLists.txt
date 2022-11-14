@@ -7,6 +7,8 @@
 list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/account.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/account.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/account_config.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/account_config.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/account_factory.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/account_factory.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/account_schema.h"

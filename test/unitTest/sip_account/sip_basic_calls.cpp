@@ -402,7 +402,6 @@ SipBasicCallTest::configureTest()
         auto const& account = Manager::instance().getAccount<SIPAccount>(
             callDataMap_["ALICE"].accountId_);
         account->setLocalPort(callDataMap_["ALICE"].listeningPort_);
-        account->enableIceForMedia(true);
     }
 
     {
