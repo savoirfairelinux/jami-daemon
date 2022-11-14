@@ -35,6 +35,23 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "28f9c127_5e68e007",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-14T15:53:49Z",
+      "side": 1,
+      "message": "Sound is working, just a crash",
+      "revId": "9f893209c8c0b1d73dfc5e1226b0f5bd91e94081",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "53692073_99eedf8a",
@@ -125,6 +142,23 @@
         "endLine": 976,
         "endChar": 42
       },
+      "revId": "9f893209c8c0b1d73dfc5e1226b0f5bd91e94081",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e41e2cd_b7039145",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-14T15:53:49Z",
+      "side": 1,
+      "message": "ut_conference seems to segfault:\n\n0m\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\u003d\u003d23338\u003d\u003dERROR: AddressSanitizer: heap-use-after-free on address 0x6080000f01b0 at pc 0x561c374b922e bp 0x7ffdbb7a3f20 sp 0x7ffdbb7a3f10\nREAD of size 4 at 0x6080000f01b0 thread T0\n\u001b[22;36m[1668441107.510|25604|media_encoder.cpp       :927 ] \u001b[0mH264 encoder setup: crf\u003d33, maxrate\u003d839 kbit/s, bufsize\u003d419 kbit\n\u001b[0m\u001b[22;36m[1668441107.682|25722|accel.cpp               :206 ] \u001b[0m\u001b[01;33m-- Starting decoding init for cuda with default device.\n\u001b[0m\u001b[22;36m[1668441107.682|25722|accel.cpp               :206 ] \u001b[0m\u001b[01;33m-- Starting decoding init for vaapi with default device.\n\u001b[0m\u001b[22;36m[1668441107.682|25722|accel.cpp               :206 ] \u001b[0m\u001b[01;33m-- Starting decoding init for vdpau with default device.\n\u001b[0m\u001b[22;36m[1668441107.682|25722|media_decoder.cpp       :553 ] \u001b[0mDecoding video using H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 (h264)\n\u001b[0m\u001b[22;36m[1668441107.682|25722|media_decoder.cpp       :563 ] \u001b[0m\u001b[01;33mNot using hardware decoding for h264\n\u001b[0m    #0 0x561c374b922d in jami::MediaAttribute::MediaAttribute(jami::MediaAttribute const\u0026) media/media_attribute.h:31\n    #1 0x561c375a269a in void __gnu_cxx::new_allocator\u003cjami::MediaAttribute\u003e::construct\u003cjami::MediaAttribute, jami::MediaAttribute\u0026\u003e(jami::MediaAttribute*, jami::MediaAttribute\u0026) /usr/include/c++/9/ext/new_allocator.h:146\n    #2 0x561c3758c222 in void std::allocator_traits\u003cstd::allocator\u003cjami::MediaAttribute\u003e \u003e::construct\u003cjami::MediaAttribute, jami::MediaAttribute\u0026\u003e(std::allocator\u003cjami::MediaAttribute\u003e\u0026, jami::MediaAttribute*, jami::MediaAttribute\u0026) /usr/include/c++/9/bits/alloc_traits.h:483\n    #3 0x561c375797c7 in jami::MediaAttribute\u0026 std::vector\u003cjami::MediaAttribute, std::allocator\u003cjami::MediaAttribute\u003e \u003e::emplace_back\u003cjami::MediaAttribute\u0026\u003e(jami::MediaAttribute\u0026) /usr/include/c++/9/bits/vector.tcc:115\n    #4 0x561c37c26e1a in jami::SIPCall::getMediaAttributeList() const sip/sipcall.cpp:2593\n    #5 0x561c37c32d58 in jami::SIPCall::getAudioStreamNames[abi:cxx11]() sip/sipcall.cpp:3148\n    #6 0x561c37615b3e in jami::Manager::removeAudio(jami::Call\u0026) /foo/src/manager.cpp:1647\n    #7 0x561c3760959d in jami::Manager::hangupCall(std::__cxx11::basic_string\u003cchar, std::char_traits\u003cchar\u003e, std::allocator\u003cchar\u003e \u003e const\u0026, std::__cxx11::basic_string\u003cchar, std::char_traits\u003cchar\u003e, std::allocator\u003cchar\u003e \u003e const\u0026) /foo/src/manager.cpp:1098\n    #8 0x561c3760f226 in jami::Manager::ManagerPimpl::hangupConference(jami::Conference\u0026) /foo/src/manager.cpp:1366\n    #9 0x561c37609cac in jami::Manager::hangupConference(std::__cxx11::basic_string\u003cchar, std::char_traits\u003cchar\u003e, std::allocator\u003cchar\u003e \u003e const\u0026, std::__cxx11::basic_string\u003cchar, std::char_traits\u003cchar\u003e, std::allocator\u003cchar\u003e \u003e const\u0026) /foo/src/manager.cpp:1123\n\u001b[22;36m[1668441107.777|25562|sipvoiplink.cpp         :1375] \u001b[0m[INVITE:0x619000313da8] RX SIP method 6 (MESSAGE)\n\u001b[0m\u001b[22;36m[1668441107.778|25562|sipvoiplink.cpp         :1375] \u001b[0m[INVITE:0x619000313da8] RX SIP method 6 (MESSAGE)\n\u001b[0m\u001b[22;36m[1668441107.778|25562|sipvoiplink.cpp         :1375] \u001b[0m[INVITE:0x619000313da8] RX SIP method 6 (MESSAGE)\n\u001b[0m    #10 0x561c3743d24a in jami::test::ConferenceTest::hangupConference() call/conference.cpp:344\n    #11 0x561c3747acac in jami::test::ConferenceTest::testParticipantAddRmSecondVideo() call/conference.cpp:896\n    #12 0x561c374eaa87 in void std::__invoke_impl\u003cvoid, void (jami::test::ConferenceTest::*\u0026)(), jami::test::ConferenceTest*\u0026\u003e(std::__invoke_memfun_deref, void (jami::test::ConferenceTest::*\u0026)(), jami::test::ConferenceTest*\u0026) (/foo/test/unitTest/ut_conference+0x2d8ea87)\n    #13 0x561c374e72e5 in std::__invoke_result\u003cvoid (jami::test::ConferenceTest::*\u0026)(), jami::test::ConferenceTest*\u0026\u003e::type std::__invoke\u003cvoid (jami::test::ConferenceTest::*\u0026)(), jami::test::ConferenceTest*\u0026\u003e(void (jami::test::ConferenceTest::*\u0026)(), jami::test::ConferenceTest*\u0026) (/foo/test/unitTest/ut_conference+0x2d8b2e5)\n    #14 0x561c374e3211 in void std::_Bind\u003cvoid (jami::test::ConferenceTest::*(jami::test::ConferenceTest*))()\u003e::__call\u003cvoid, , 0ul\u003e(std::tuple\u003c\u003e\u0026\u0026, std::_Index_tuple\u003c0ul\u003e) (/foo/test/unitTest/ut_conference+0x2d87211)\n    #15 0x561c374dce14 in void std::_Bind\u003cvoid (jami::test::ConferenceTest::*(jami::test::ConferenceTest*))()\u003e::operator()\u003c, void\u003e() (/foo/test/unitTest/ut_conference+0x2d80e14)\n    #16 0x561c374d39db in std::_Function_handler\u003cvoid (), std::_Bind\u003cvoid (jami::test::ConferenceTest::*(jami::test::ConferenceTest*))()\u003e \u003e::_M_invoke(std::_Any_data const\u0026) (/foo/test/unitTest/ut_conference+0x2d779db)\n    #17 0x561c374bbb6d in std::function\u003cvoid ()\u003e::operator()() const /usr/include/c++/9/bits/std_function.h:688\n    #18 0x561c374f3ffb in CppUnit::TestCaller\u003cjami::test::ConferenceTest\u003e::runTest() /usr/include/cppunit/TestCaller.h:175\n    #19 0x7f3ec34db614 in CppUnit::TestCaseMethodFunctor::operator()() const (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x24614)\n    #20 0x7f3ec34d2d75 in CppUnit::DefaultProtector::protect(CppUnit::Functor const\u0026, CppUnit::ProtectorContext const\u0026) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x1bd75)\n    #21 0x7f3ec34d938f in CppUnit::ProtectorChain::protect(CppUnit::Functor const\u0026, CppUnit::ProtectorContext const\u0026) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x2238f)\n    #22 0x7f3ec34e0d8a in CppUnit::TestResult::protect(CppUnit::Functor const\u0026, CppUnit::Test*, std::__cxx11::basic_string\u003cchar, std::char_traits\u003cchar\u003e, std::allocator\u003cchar\u003e \u003e const\u0026) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x29d8a)\n    #23 0x7f3ec34db3f8 in CppUnit::TestCase::run(CppUnit::TestResult*) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x243f8)\n    #24 0x7f3ec34db972 in CppUnit::TestComposite::doRunChildTests(CppUnit::TestResult*) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x24972)\n    #25 0x7f3ec34db873 in CppUnit::TestComposite::run(CppUnit::TestResult*) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x24873)\n    #26 0x7f3ec34db972 in CppUnit::TestComposite::doRunChildTests(CppUnit::TestResult*) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x24972)\n    #27 0x7f3ec34db873 in CppUnit::TestComposite::run(CppUnit::TestResult*) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x24873)\n    #28 0x7f3ec34e0cb6 in CppUnit::TestResult::runTest(CppUnit::Test*) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x29cb6)\n    #29 0x7f3ec34e3442 in CppUnit::TestRunner::run(CppUnit::TestResult\u0026, std::__cxx11::basic_string\u003cchar, std::char_traits\u003cchar\u003e, std::allocator\u003cchar\u003e \u003e const\u0026) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x2c442)\n    #30 0x7f3ec34e5062 in CppUnit::TextTestRunner::run(std::__cxx11::basic_string\u003cchar, std::char_traits\u003cchar\u003e, std::allocator\u003cchar\u003e \u003e, bool, bool, bool) (/lib/x86_64-linux-gnu/libcppunit-1.15.so.1+0x2e062)\n    #31 0x561c37485fcc in main call/conference.cpp:1008\n    #32 0x7f3ec2380082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)\n    #33 0x561c3742c80d in _start (/foo/test/unitTest/ut_conference+0x2cd080d)",
       "revId": "9f893209c8c0b1d73dfc5e1226b0f5bd91e94081",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
