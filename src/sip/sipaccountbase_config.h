@@ -26,7 +26,7 @@ constexpr static unsigned HALF_MAX_PORT {MAX_PORT / 2};
 struct SipAccountBaseConfig: public AccountConfig {
     SipAccountBaseConfig(const std::string& type, const std::string& id, const std::string& path): AccountConfig(type, id, path) {}
 
-    void serialize(YAML::Emitter& out) const override;
+    void serializeDiff(YAML::Emitter& out, const SipAccountBaseConfig& def) const;
     void unserialize(const YAML::Node& node) override;
 
     std::map<std::string, std::string> toMap() const override;
