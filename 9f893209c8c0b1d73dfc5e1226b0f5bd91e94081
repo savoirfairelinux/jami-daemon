@@ -16,6 +16,69 @@
       "message": "Calling an android, it seems there is no outgoing sound.",
       "revId": "9f893209c8c0b1d73dfc5e1226b0f5bd91e94081",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8ce1faf_edc6cc9c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-14T14:13:11Z",
+      "side": 1,
+      "message": "small nitpicks ",
+      "revId": "9f893209c8c0b1d73dfc5e1226b0f5bd91e94081",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "53692073_99eedf8a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 908,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-14T14:13:11Z",
+      "side": 1,
+      "message": "if (auto call \u003d getCall(participant))",
+      "range": {
+        "startLine": 907,
+        "startChar": 11,
+        "endLine": 908,
+        "endChar": 23
+      },
+      "revId": "9f893209c8c0b1d73dfc5e1226b0f5bd91e94081",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "56ecfc1c_d1ccf296",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 976,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-14T14:13:11Z",
+      "side": 1,
+      "message": "I would split or add a comment for this triple for loop",
+      "range": {
+        "startLine": 973,
+        "startChar": 40,
+        "endLine": 976,
+        "endChar": 42
+      },
+      "revId": "9f893209c8c0b1d73dfc5e1226b0f5bd91e94081",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
