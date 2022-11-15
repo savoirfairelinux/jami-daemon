@@ -44,7 +44,7 @@ public:
 
     AccountFactory();
 
-    bool isSupportedType(const char* const accountType) const;
+    bool isSupportedType(std::string_view accountType) const;
 
     std::shared_ptr<Account> createAccount(const char* const accountType, const std::string& id);
 

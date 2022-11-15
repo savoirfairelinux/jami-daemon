@@ -676,7 +676,6 @@ MediaNegotiationTest::configureScenario()
             callDataMap_["ALICE"].accountId_);
         callDataMap_["ALICE"].userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         callDataMap_["ALICE"].alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableIceForMedia(true);
         if (isSipAccount_) {
             auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);
             CPPUNIT_ASSERT(sipAccount);
@@ -691,7 +690,6 @@ MediaNegotiationTest::configureScenario()
             callDataMap_["BOB"].accountId_);
         callDataMap_["BOB"].userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         callDataMap_["BOB"].alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableIceForMedia(true);
 
         if (isSipAccount_) {
             auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);

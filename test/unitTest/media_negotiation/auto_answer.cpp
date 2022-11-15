@@ -599,7 +599,6 @@ AutoAnswerMediaNegoTest::configureScenario()
         auto const& account = Manager::instance().getAccount<Account>(aliceData_.accountId_);
         aliceData_.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         aliceData_.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableIceForMedia(true);
         if (isSipAccount_) {
             auto sipAccount = std::dynamic_pointer_cast<SIPAccount>(account);
             CPPUNIT_ASSERT(sipAccount);
@@ -613,7 +612,6 @@ AutoAnswerMediaNegoTest::configureScenario()
         auto const& account = Manager::instance().getAccount<Account>(bobData_.accountId_);
         bobData_.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData_.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-        account->enableIceForMedia(true);
         CPPUNIT_ASSERT(account->isAutoAnswerEnabled());
 
         if (isSipAccount_) {

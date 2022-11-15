@@ -37,6 +37,8 @@
 #include "connectivity/ip_utils.h"
 #include "sip/sipaccount.h"
 #include "jamidht/jamiaccount.h"
+#include "sip/sipaccount_config.h"
+#include "jamidht/jamiaccount_config.h"
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "account_const.h"
@@ -347,10 +349,7 @@ changeAccountPassword(const std::string& accountID,
                       const std::string& password_new)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID))
-        if (acc->changeArchivePassword(password_old, password_new)) {
-            jami::Manager::instance().saveConfig(acc);
-            return true;
-        }
+        return acc->changeArchivePassword(password_old, password_new);
     return false;
 }
 
@@ -425,9 +424,9 @@ std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
     if (accountType == Account::ProtocolNames::RING)
-        return jami::JamiAccount("dummy", false).getAccountDetails();
+        return jami::JamiAccountConfig().toMap();
     else if (accountType == Account::ProtocolNames::SIP)
-        return jami::SIPAccount("dummy", false).getAccountDetails();
+        return jami::SipAccountConfig().toMap();
     return {};
 }
 
@@ -923,10 +922,14 @@ setCredentials(const std::string& accountID,
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         sipaccount->doUnregister([&](bool /* transport_free */) {
-            sipaccount->setCredentials(details);
+            sipaccount->editConfig([&](jami::SipAccountConfig& config){
+                config.setCredentials(details);
+            });
+            sipaccount->loadConfig();
             if (sipaccount->isEnabled())
                 sipaccount->doRegister();
         });
+        jami::Manager::instance().saveConfig(sipaccount);
     }
 }
 

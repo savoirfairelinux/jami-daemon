@@ -35,6 +35,7 @@
 #include "connectivity/multiplexed_socket.h"
 #include "data_transfer.h"
 #include "uri.h"
+#include "jamiaccount_config.h"
 
 #include "noncopyable.h"
 #include "connectivity/ip_utils.h"
@@ -66,11 +67,6 @@
 #if HAVE_RINGNS
 #include "namedirectory.h"
 #endif
-
-namespace YAML {
-class Node;
-class Emitter;
-} // namespace YAML
 
 namespace dev {
 template<unsigned N>
@@ -104,16 +100,8 @@ using GitSocketList = std::map<DeviceId,                               /* device
 class JamiAccount : public SIPAccountBase
 {
 public:
-    constexpr static const char* const ACCOUNT_TYPE = "RING";
-    constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
-    constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
-    constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80-95]";
-    constexpr static const char* const DHT_DEFAULT_BOOTSTRAP_LIST_URL
-        = "https://config.jami.net/boostrapList";
-    constexpr static const char* const DHT_DEFAULT_PROXY_LIST_URL
-        = "https://config.jami.net/proxyList";
-
-    /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
+    constexpr static auto ACCOUNT_TYPE = ACCOUNT_TYPE_JAMI;
+    constexpr static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE {4000, 8888};
     constexpr static int ICE_STREAMS_COUNT {1};
     constexpr static int ICE_COMP_COUNT_PER_STREAM {1};
 
@@ -138,32 +126,19 @@ public:
 
     const std::string& getPath() const { return idPath_; }
 
+    const JamiAccountConfig& config() const {
+        return *static_cast<const JamiAccountConfig*>(&Account::config());
+    }
+
+    void loadConfig() override;
+
     /**
      * Constructor
      * @param accountID The account identifier
      */
-    JamiAccount(const std::string& accountID, bool presenceEnabled);
+    JamiAccount(const std::string& accountId);
 
     ~JamiAccount() noexcept;
-
-    /**
-     * Serialize internal state of this account for configuration
-     * @param YamlEmitter the configuration engine which generate the configuration file
-     */
-    virtual void serialize(YAML::Emitter& out) const override;
-
-    /**
-     * Populate the internal state for this account based on info stored in the configuration file
-     * @param The configuration node for this account
-     */
-    virtual void unserialize(const YAML::Node& node) override;
-
-    /**
-     * Return an map containing the internal state of this account. Client application can use this
-     * method to manage account info.
-     * @return A map containing the account information.
-     */
-    virtual std::map<std::string, std::string> getAccountDetails() const override;
 
     /**
      * Retrieve volatile details such as recent registration errors
@@ -171,10 +146,9 @@ public:
      */
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
-    /**
-     * Actually useless, since config loading is done in init()
-     */
-    void loadConfig() override {}
+    std::unique_ptr<AccountConfig> buildConfig() const override {
+        return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_);
+    }
 
     /**
      * Adds an account id to the list of accounts to track on the DHT for
@@ -446,7 +420,13 @@ public:
      */
     void startAccountDiscovery();
 
-    void saveConfig() const;
+    void saveConfig() const override;
+
+    inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit) {
+        Account::editConfig([&](AccountConfig& conf) {
+            edit(*static_cast<JamiAccountConfig*>(&conf));
+        });
+    }
 
     /**
      * Get current discovered peers account id and display name
@@ -661,13 +641,6 @@ private:
                                  IpAddr target);
 
     /**
-     * Set the internal state for this account, mainly used to manage account details from the
-     * client application.
-     * @param The map containing the account information.
-     */
-    virtual void setAccountDetails(const std::map<std::string, std::string>& details) override;
-
-    /**
      * Start a SIP Call
      * @param call  The current call
      * @return true if all is correct
@@ -741,7 +714,6 @@ private:
     void updateContactHeader();
 
 #if HAVE_RINGNS
-    std::string nameServer_;
     std::string registeredName_;
 #endif
     std::shared_ptr<dht::Logger> logger_;
@@ -754,16 +726,9 @@ private:
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
     std::set<std::string, std::less<>> treatedMessages_ {};
 
-    std::string deviceName_ {};
     std::string idPath_ {};
     std::string cachePath_ {};
     std::string dataPath_ {};
-
-    std::string archivePath_ {};
-    bool archiveHasPassword_ {true};
-
-    std::string receipt_ {};
-    std::vector<uint8_t> receiptSignature_ {};
 
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;
@@ -793,26 +758,14 @@ private:
     /* Current UPNP mapping */
     upnp::Mapping dhtUpnpMapping_ {upnp::PortType::UDP};
 
-    bool dhtPeerDiscovery_ {false};
-
     /**
      * Proxy
      */
-    std::string proxyListUrl_;
-    bool proxyEnabled_ {false};
-    std::string proxyServer_ {};
     std::string proxyServerCached_ {};
 
     std::mutex dhParamsMtx_ {};
     std::shared_future<tls::DhParams> dhParams_;
     std::condition_variable dhParamsCv_;
-
-    bool allowPeersFromHistory_ {true};
-    bool allowPeersFromContact_ {true};
-    bool allowPeersFromTrusted_ {true};
-
-    std::string managerUri_ {};
-    std::string managerUsername_ {};
 
     /**
      * Optional: via_addr construct from received parameters
@@ -830,8 +783,6 @@ private:
     std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
     std::map<dht::InfoHash, DiscoveredPeer> discoveredPeers_;
     std::map<std::string, std::string> discoveredPeerMap_;
-    bool accountPeerDiscovery_ {false};
-    bool accountPublish_ {false};
 
     /**
      * Avoid to refresh the cache multiple times
@@ -843,7 +794,7 @@ private:
      */
     void cacheTurnServers();
 
-    std::chrono::duration<int> turnRefreshDelay_ {std::chrono::seconds(10)};
+    std::chrono::seconds turnRefreshDelay_ {std::chrono::seconds(10)};
 
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 
