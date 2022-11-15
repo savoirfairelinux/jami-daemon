@@ -18,8 +18,8 @@
 #include "account_const.h"
 #include "account_schema.h"
 #include "configkeys.h"
-#include "config/yamlparser.h"
 #include "fileutils.h"
+#include "config/account_config_utils.h"
 
 namespace jami {
 
@@ -31,53 +31,43 @@ const char* const TLS_PASSWORD_KEY = "password";
 const char* const PRIVATE_KEY_KEY = "privateKey";
 } // namespace Conf
 
+static const JamiAccountConfig DEFAULT_CONFIG {};
+
 void
 JamiAccountConfig::serialize(YAML::Emitter& out) const
 {
     out << YAML::BeginMap;
-    SipAccountBaseConfig::serialize(out);
-    out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtPort;
-    out << YAML::Key << Conf::DHT_PUBLIC_IN_CALLS << YAML::Value << allowPublicIncoming;
-    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory;
-    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact;
-    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted;
-    out << YAML::Key << libjami::Account::ConfProperties::DHT_PEER_DISCOVERY << YAML::Value
-        << dhtPeerDiscovery;
-    out << YAML::Key << libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY << YAML::Value
-        << accountPeerDiscovery;
-    out << YAML::Key << libjami::Account::ConfProperties::ACCOUNT_PUBLISH << YAML::Value
-        << accountPublish;
+    SipAccountBaseConfig::serializeDiff(out, DEFAULT_CONFIG);
+    SERIALIZE_CONFIG(Conf::DHT_PORT_KEY, dhtPort);
+    SERIALIZE_CONFIG(Conf::DHT_PUBLIC_IN_CALLS, allowPublicIncoming);
+    SERIALIZE_CONFIG(Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory);
+    SERIALIZE_CONFIG(Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact);
+    SERIALIZE_CONFIG(Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish);
+    SERIALIZE_CONFIG(Conf::PROXY_ENABLED_KEY, proxyEnabled);
+    SERIALIZE_CONFIG(Conf::PROXY_SERVER_KEY, proxyServer);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::RingNS::URI, nameServer);
+    SERIALIZE_CONFIG(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
+    SERIALIZE_PATH(libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
 
-    out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled;
-    out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer;
-    out << YAML::Key << libjami::Account::ConfProperties::DHT_PROXY_LIST_URL << YAML::Value
-        << proxyListUrl;
-
-#if HAVE_RINGNS
-    out << YAML::Key << libjami::Account::ConfProperties::RingNS::URI << YAML::Value << nameServer;
-    if (not registeredName.empty())
-        out << YAML::Key << libjami::Account::VolatileProperties::REGISTERED_NAME << YAML::Value
-            << registeredName;
-#endif
-
-    out << YAML::Key << libjami::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << fileutils::getCleanPath(path, archivePath);
-    out << YAML::Key << libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD << YAML::Value
-        << archiveHasPassword;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt;
     if (receiptSignature.size() > 0)
         out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value
             << YAML::Binary(receiptSignature.data(), receiptSignature.size());
-    out << YAML::Key << libjami::Account::ConfProperties::DEVICE_NAME << YAML::Value << deviceName;
-    out << YAML::Key << libjami::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri;
-    out << YAML::Key << libjami::Account::ConfProperties::MANAGER_USERNAME << YAML::Value
-        << managerUsername;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << Conf::CALIST_KEY << YAML::Value << fileutils::getCleanPath(path, tlsCaListFile);
-    out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << fileutils::getCleanPath(path, tlsCertificateFile);;
-    out << YAML::Key << Conf::TLS_PASSWORD_KEY << YAML::Value << tlsPassword;
-    out << YAML::Key << Conf::PRIVATE_KEY_KEY << YAML::Value << fileutils::getCleanPath(path, tlsPrivateKeyFile);;
+    SERIALIZE_PATH(Conf::CALIST_KEY, tlsCaListFile);
+    SERIALIZE_PATH(Conf::CERTIFICATE_KEY, tlsCertificateFile);
+    SERIALIZE_CONFIG(Conf::TLS_PASSWORD_KEY, tlsPassword);
+    SERIALIZE_PATH(Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile);
     out << YAML::EndMap;
 
     out << YAML::EndMap;
@@ -87,7 +77,6 @@ void
 JamiAccountConfig::unserialize(const YAML::Node& node)
 {
     using yaml_utils::parseValueOptional;
-    using yaml_utils::parsePath;
     using yaml_utils::parsePathOptional;
     SipAccountBaseConfig::unserialize(node);
 
