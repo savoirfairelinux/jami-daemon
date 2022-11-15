@@ -62,19 +62,6 @@
 #endif /* APP_NAME */
 #endif
 
-#define BLACK         "\033[22;30m"
-#define GREEN         "\033[22;32m"
-#define BROWN         "\033[22;33m"
-#define BLUE          "\033[22;34m"
-#define MAGENTA       "\033[22;35m"
-#define GREY          "\033[22;37m"
-#define DARK_GREY     "\033[01;30m"
-#define LIGHT_RED     "\033[01;31m"
-#define LIGHT_SCREEN  "\033[01;32m"
-#define LIGHT_BLUE    "\033[01;34m"
-#define LIGHT_MAGENTA "\033[01;35m"
-#define LIGHT_CYAN    "\033[01;36m"
-#define WHITE         "\033[01;37m"
 #define END_COLOR     "\033[0m"
 
 #ifndef _WIN32
@@ -133,13 +120,14 @@ strErr()
 static const char*
 stripDirName(const char* path)
 {
-    const char* occur = strrchr(path, DIR_SEPARATOR_CH);
-
-    return occur ? occur + 1 : path;
+    if (path) {
+        const char* occur = strrchr(path, DIR_SEPARATOR_CH);
+        return occur ? occur + 1 : path;
+    } else return nullptr;
 }
 
-static std::string
-contextHeader(const char* const file, int line)
+std::string
+formatHeader(const char* const file, int line)
 {
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
@@ -202,29 +190,37 @@ struct Logger::Msg
     Msg() = delete;
 
     Msg(int level, const char* file, int line, bool linefeed, std::string&& message)
-        : payload_(std::move(message))
-        , header_(contextHeader(file, line))
+        : file_(stripDirName(file))
+        , line_(line)
+        , payload_(std::move(message))
         , level_(level)
         , linefeed_(linefeed)
     {}
 
     Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
-        : payload_(formatPrintfArgs(fmt, ap))
-        , header_(contextHeader(file, line))
+        : file_(stripDirName(file))
+        , line_(line)
+        , payload_(formatPrintfArgs(fmt, ap))
         , level_(level)
         , linefeed_(linefeed)
     {}
 
     Msg(Msg&& other)
     {
+        file_ = other.file_;
+        line_ = other.line_;
         payload_ = std::move(other.payload_);
-        header_ = std::move(other.header_);
         level_ = other.level_;
         linefeed_ = other.linefeed_;
     }
 
+    inline std::string header() const {
+        return formatHeader(file_, line_);
+    }
+
+    const char* file_;
+    unsigned line_;
     std::string payload_;
-    std::string header_;
     int level_;
     bool linefeed_;
 };
@@ -255,7 +251,7 @@ public:
     }
 
 #ifdef _WIN32
-    void printLogImpl(jami::Logger::Msg& msg, bool with_color)
+    void printLogImpl(Logger::Msg& msg, bool with_color)
     {
         // If we are using Visual Studio, we can use OutputDebugString to print
         // to the "Output" window. Otherwise, we just use fputs to stderr.
@@ -274,6 +270,7 @@ public:
 
         WORD saved_attributes;
         static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        auto header = msg.header();
         if (with_color) {
             static WORD color_header = CYAN;
             WORD color_prefix = LIGHT_GREEN;
@@ -293,12 +290,12 @@ public:
             saved_attributes = consoleInfo.wAttributes;
             SetConsoleTextAttribute(hConsole, color_header);
 
-            printFunc(msg.header_.c_str());
+            printFunc(header.c_str());
 
             SetConsoleTextAttribute(hConsole, saved_attributes);
             SetConsoleTextAttribute(hConsole, color_prefix);
         } else {
-            printFunc(msg.header_.c_str());
+            printFunc(header.c_str());
         }
 
         printFunc(msg.payload_.c_str());
@@ -312,8 +309,9 @@ public:
         }
     }
 #else
-    void printLogImpl(jami::Logger::Msg& msg, bool with_color)
+    void printLogImpl(const Logger::Msg& msg, bool with_color)
     {
+        auto header = msg.header();
         if (with_color) {
             const char* color_header = CYAN;
             const char* color_prefix = "";
@@ -329,26 +327,25 @@ public:
             }
 
             fputs(color_header, stderr);
-            fputs(msg.header_.c_str(), stderr);
+            fwrite(header.c_str(), 1, header.size(), stderr);
             fputs(END_COLOR, stderr);
             fputs(color_prefix, stderr);
         } else {
-            fputs(msg.header_.c_str(), stderr);
+            fwrite(header.c_str(), 1, header.size(), stderr);
         }
 
         fputs(msg.payload_.c_str(), stderr);
 
-        if (msg.linefeed_) {
-            putc(ENDL, stderr);
-        }
-
         if (with_color) {
             fputs(END_COLOR, stderr);
+        }
+        if (msg.linefeed_) {
+            putc(ENDL, stderr);
         }
     }
 #endif /* _WIN32 */
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    void consume(Logger::Msg& msg) override
     {
         static bool with_color = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR")
                                    || getenv("NO_COLOURS"));
@@ -406,10 +403,10 @@ public:
 #endif /* _WIN32 */
     }
 
-    virtual void consume(Logger::Msg& msg) override
+    void consume(Logger::Msg& msg) override
     {
 #ifdef __ANDROID__
-        __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.c_str());
+        __android_log_write(msg.level_, msg.file_, msg.payload_.c_str());
 #else
         ::syslog(msg.level_, "%.*s", (int) msg.payload_.size(), msg.payload_.data());
 #endif
@@ -433,15 +430,10 @@ public:
         return *self;
     }
 
-    virtual void consume(jami::Logger::Msg& msg) override
+    void consume(Logger::Msg& msg) override
     {
-        /*
-         * TODO - Maybe change the MessageSend sigature to avoid copying
-         * of message payload?
-         */
-        auto tmp = msg.header_ + msg.payload_;
-
-        jami::emitSignal<libjami::ConfigurationSignal::MessageSend>(tmp);
+        auto message = msg.header() + msg.payload_;
+        emitSignal<libjami::ConfigurationSignal::MessageSend>(message);
     }
 };
 
@@ -493,6 +485,7 @@ public:
                 do_consume(file, pendingQ_);
                 pendingQ_.clear();
             }
+            file.close();
         });
     }
 
@@ -503,7 +496,7 @@ public:
             thread_.join();
     }
 
-    virtual void consume(Logger::Msg& msg) override
+    void consume(Logger::Msg& msg) override
     {
         notify([&, this] { currentQ_.emplace_back(std::move(msg)); });
     }
@@ -520,8 +513,7 @@ private:
     void do_consume(std::ofstream& file, const std::vector<Logger::Msg>& messages)
     {
         for (const auto& msg : messages) {
-            file << msg.header_ << msg.payload_;
-
+            file << msg.header() << msg.payload_;
             if (msg.linefeed_)
                 file << ENDL;
         }
