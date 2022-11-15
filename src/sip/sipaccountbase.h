@@ -74,6 +74,7 @@ const char* const PRESENCE_PUBLISH_SUPPORTED_KEY = "presencePublishSupported";
 const char* const PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSupported";
 const char* const PRESENCE_STATUS_KEY = "presenceStatus";
 const char* const PRESENCE_NOTE_KEY = "presenceNote";
+const char* const REMOVE_ICE_SDP_ATTRIBUTES = "removeICEFromSDPAttributes";
 
 // TODO: write an object to store tls params which implement serializable
 const char* const TLS_KEY = "tls";

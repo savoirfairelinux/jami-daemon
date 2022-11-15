@@ -150,6 +150,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , allowIPAutoRewrite_(true)
     , via_tp_(nullptr)
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
+    , removeICEFromSDPAttributes_(false)
 {
     via_addr_.host.ptr = 0;
     via_addr_.host.slen = 0;
@@ -358,8 +359,9 @@ SIPAccount::getTransportSelector()
 bool
 SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 {
-    // Add Ice headers to local SDP if ice transport exist
-    call->addLocalIceAttributes();
+    // Add Ice headers to local SDP if ice transport exist + if toggle is OFF
+    if(!removeICEFromSDPAttributes_)
+        call->addLocalIceAttributes();
 
     const std::string& toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
@@ -457,6 +459,7 @@ SIPAccount::serialize(YAML::Emitter& out) const
         << registrationExpire_;
     out << YAML::Key << Conf::SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
     out << YAML::Key << Conf::ALLOW_IP_AUTO_REWRITE << YAML::Value << allowIPAutoRewrite_;
+    out << YAML::Key << Conf::CONFIG_ACCOUNT_REMOVE_ICE_SDP_ATTRIBUTES << YAML::Value << removeICEFromSDPAttributes_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -546,6 +549,8 @@ SIPAccount::unserialize(const YAML::Node& node)
                                        Conf::CONFIG_ACCOUNT_PASSWORD}));
     }
 
+    parseValueOptional(node, Conf::REMOVE_ICE_SDP_ATTRIBUTES, removeICEFromSDPAttributes_);
+
     bool presEnabled = false;
     parseValue(node, PRESENCE_MODULE_ENABLED_KEY, presEnabled);
     enablePresence(presEnabled);
@@ -617,6 +622,7 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     parseString(details, Conf::CONFIG_BIND_ADDRESS, bindAddress_);
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
     parseBool(details, Conf::CONFIG_ACCOUNT_IP_AUTO_REWRITE, allowIPAutoRewrite_);
+    parseBool(details, Conf::CONFIG_ACCOUNT_REMOVE_ICE_SDP_ATTRIBUTES, removeICEFromSDPAttributes_);
 
     unsigned expire = 0;
     parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, expire);
@@ -692,6 +698,7 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_LOCAL_PORT, std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
     a.emplace(Conf::CONFIG_ACCOUNT_IP_AUTO_REWRITE, allowIPAutoRewrite_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_ACCOUNT_REMOVE_ICE_SDP_ATTRIBUTES, removeICEFromSDPAttributes_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, std::to_string(registrationExpire_));
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED, registrationRefreshEnabled_ ? TRUE_STR : FALSE_STR);
 

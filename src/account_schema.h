@@ -55,6 +55,7 @@ static const char* const CONFIG_ACCOUNT_HOSTNAME = "Account.hostname";
 static const char* const CONFIG_ACCOUNT_USERNAME = "Account.username";
 static const char* const CONFIG_ACCOUNT_ROUTESET = "Account.routeset";
 static const char* const CONFIG_ACCOUNT_IP_AUTO_REWRITE = "Account.allowIPAutoRewrite";
+static const char* const CONFIG_ACCOUNT_REMOVE_ICE_SDP_ATTRIBUTES = "Account.removeICEFromSDPAttributes";
 static const char* const CONFIG_ACCOUNT_PASSWORD = "Account.password";
 static const char* const CONFIG_ACCOUNT_REALM = "Account.realm";
 static const char* const CONFIG_ACCOUNT_USERAGENT = "Account.useragent";

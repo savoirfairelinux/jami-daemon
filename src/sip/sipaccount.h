@@ -749,6 +749,12 @@ private:
     SIPPresence* presence_;
 
     /**
+     * SDP Session Negotiation
+     *
+    */
+    bool removeICEFromSDPAttributes_;
+
+    /**
      * SIP port actually used,
      * this holds the actual port used for SIP, which may not be the port
      * selected in the configuration in the case that UPnP is used and the
