@@ -62,6 +62,30 @@
       },
       "revId": "414071df2102ff5202c97bc69b0751f52eea7308",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "66917e29_ec6965e9",
+        "filename": "src/sip/sipaccount_config.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-15T15:47:31Z",
+      "side": 1,
+      "message": "Just uncommenting this line seems to be ok ;)",
+      "parentUuid": "a08e12a5_a70e9b99",
+      "range": {
+        "startLine": 101,
+        "startChar": 59,
+        "endLine": 102,
+        "endChar": 58
+      },
+      "revId": "414071df2102ff5202c97bc69b0751f52eea7308",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
