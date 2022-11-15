@@ -64,6 +64,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "20b6c8b5_ee6d6f4f",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 1391,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-15T19:50:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "470becc1_c1639145",
+      "range": {
+        "startLine": 1391,
+        "startChar": 0,
+        "endLine": 1391,
+        "endChar": 26
+      },
+      "revId": "414071df2102ff5202c97bc69b0751f52eea7308",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a08e12a5_a70e9b99",
