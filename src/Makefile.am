@@ -82,6 +82,7 @@ libjami_la_SOURCES = \
 		call.cpp \
 		gittransport.cpp \
 		account.cpp \
+		account_config.cpp \
 		logger.cpp \
 		fileutils.cpp \
 		archiver.cpp \
