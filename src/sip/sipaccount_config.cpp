@@ -99,7 +99,7 @@ SipAccountConfig::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::USERNAME_KEY << YAML::Value << username;
 
     // each credential is a map, and we can have multiple credentials
-    // out << YAML::Key << Conf::CRED_KEY << YAML::Value << getCredentials();
+    out << YAML::Key << Conf::CRED_KEY << YAML::Value << getCredentials();
 
     out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << registrationRefreshEnabled;
 
