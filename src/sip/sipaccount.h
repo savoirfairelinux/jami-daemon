@@ -96,7 +96,7 @@ public:
         });
     }
 
-    const char* getAccountType() const override { return ACCOUNT_TYPE; }
+    std::string_view getAccountType() const override { return ACCOUNT_TYPE; }
 
     pjsip_host_port getHostPortFromSTUN(pj_pool_t* pool);
 

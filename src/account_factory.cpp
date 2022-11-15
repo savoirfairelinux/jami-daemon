@@ -31,7 +31,7 @@
 
 namespace jami {
 
-const char* const AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;
+const std::string_view AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;
 
 AccountFactory::AccountFactory()
 {
@@ -44,7 +44,7 @@ AccountFactory::AccountFactory()
 }
 
 std::shared_ptr<Account>
-AccountFactory::createAccount(const char* const accountType, const std::string& id)
+AccountFactory::createAccount(std::string_view accountType, const std::string& id)
 {
     if (hasAccount(id)) {
         JAMI_ERROR("Existing account {}", id);
@@ -58,7 +58,10 @@ AccountFactory::createAccount(const char* const accountType, const std::string& 
     std::shared_ptr<Account> account = it->second(id);
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
-        accountMaps_[accountType].emplace(id, account);
+        auto m = accountMaps_.find(accountType);
+        if (m == accountMaps_.end())
+            m = accountMaps_.emplace(std::string(accountType), AccountMap<Account>{}).first;
+        m->second.emplace(id, account);
     }
     return account;
 }

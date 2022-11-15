@@ -90,7 +90,6 @@ using sip_utils::CONST_PJ_STR;
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
 static const char* const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
-constexpr const char* const SIPAccount::ACCOUNT_TYPE;
 
 struct ctx
 {

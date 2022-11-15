@@ -18,10 +18,10 @@
 #include "sipaccountbase_config.h"
 
 namespace jami {
-constexpr static const char* ACCOUNT_TYPE_SIP = "SIP";
+constexpr static std::string_view ACCOUNT_TYPE_SIP = "SIP";
 
 struct SipAccountConfig : public SipAccountBaseConfig {
-    SipAccountConfig(const std::string& id = {}, const std::string& path = {}): SipAccountBaseConfig(ACCOUNT_TYPE_SIP, id, path) {}
+    SipAccountConfig(const std::string& id = {}, const std::string& path = {}): SipAccountBaseConfig(std::string(ACCOUNT_TYPE_SIP), id, path) {}
     void serialize(YAML::Emitter& out) const override;
     void unserialize(const YAML::Node& node) override;
     std::map<std::string, std::string> toMap() const override;

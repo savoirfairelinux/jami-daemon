@@ -40,13 +40,13 @@ using AccountMap = std::map<std::string, std::shared_ptr<T>, std::less<>>;
 class AccountFactory
 {
 public:
-    static const char* const DEFAULT_ACCOUNT_TYPE;
+    static const std::string_view DEFAULT_ACCOUNT_TYPE;// = SIPAccount::ACCOUNT_TYPE;
 
     AccountFactory();
 
     bool isSupportedType(std::string_view accountType) const;
 
-    std::shared_ptr<Account> createAccount(const char* const accountType, const std::string& id);
+    std::shared_ptr<Account> createAccount(std::string_view accountType, const std::string& id);
 
     void removeAccount(Account& account);
 
