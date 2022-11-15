@@ -1960,7 +1960,6 @@ SIPAccount::createBindingAddress()
 void
 SIPAccount::setActiveCodecs(const std::vector<unsigned>& list)
 {
-    JAMI_WARNING("SIPAccount::setActiveCodecs {}", list);
     Account::setActiveCodecs(list);
     if (!hasActiveCodec(MEDIA_AUDIO)) {
         JAMI_WARN("All audio codecs disabled, enabling all");
