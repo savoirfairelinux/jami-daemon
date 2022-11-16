@@ -37,8 +37,8 @@ AS_IF([test "x$enable_debug" = "xyes"],
 -Wno-unknown-pragmas -Wformat=2 -O0"
    DAEMONCXXFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-deprecated -Wno-deprecated-declarations \
 -Wno-unknown-pragmas -Wformat=2 -O0"],
-  [DAEMONCFLAGS+=" -DNDEBUG=1 -O3"
-   DAEMONCXXFLAGS+=" -DNDEBUG=1 -O3 -Wno-deprecated"])
+  [DAEMONCFLAGS+=" -g -DNDEBUG=1 -O3"
+   DAEMONCXXFLAGS+=" -g -DNDEBUG=1 -O3 -Wno-deprecated"])
 
 AC_ARG_ENABLE([fuzzing],
   AS_HELP_STRING([--enable-fuzzing],
