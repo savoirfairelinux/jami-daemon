@@ -52,6 +52,29 @@
       "parentUuid": "002c20c0_b1b48987",
       "revId": "f6b1c8a1d3469a996cbca7b3696ffd5a160ec839",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fba88c00_531c6ac9",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 29
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-16T18:54:49Z",
+      "side": 1,
+      "message": "Does this work for you? It seems all the values are still stored?",
+      "range": {
+        "startLine": 58,
+        "startChar": 4,
+        "endLine": 58,
+        "endChar": 20
+      },
+      "revId": "f6b1c8a1d3469a996cbca7b3696ffd5a160ec839",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
