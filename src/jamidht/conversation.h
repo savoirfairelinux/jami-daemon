@@ -437,7 +437,6 @@ public:
     std::vector<std::map<std::string, std::string>> currentCalls() const;
 
     std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const;
-    // bool hasGitSocket(const DeviceId& deviceId) const;
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
     void removeGitSocket(const DeviceId& deviceId);
     void removeGitSockets();

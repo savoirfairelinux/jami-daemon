@@ -122,7 +122,6 @@ public:
         : repository_(ConversationRepository::createConversation(account, mode, otherMember))
         , account_(account)
     {
-        repository_ = ConversationRepository::createConversation(account, mode, otherMember);
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
@@ -526,10 +525,7 @@ public:
         auto deviceSockets = gitSocketList_.find(deviceId);
         return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr;
     }
-    /*bool hasGitSocket(const DeviceId& deviceId) const
-    {
-        return gitSocket(deviceId) != nullptr;
-    }*/
+
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
     {
         gitSocketList_[deviceId] = socket;
@@ -539,7 +535,7 @@ public:
         auto deviceSockets = gitSocketList_.find(deviceId);
         if (deviceSockets != gitSocketList_.end()) {
             gitSocketList_.erase(deviceSockets);
-            // matabledht.remove(deviceId);
+            // swarmManager_->removeNode(deviceId);
         }
     }
     std::mutex writeMtx_ {};
@@ -1622,8 +1618,7 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
 {
     pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
                                             this](const std::string& deviceId, ChannelCb&& cb) {
-        return needSocket(id(), deviceId, std::move(cb),
-                               "application/im-gitmessage-id");
+        return needSocket(id(), deviceId, std::move(cb), "application/im-gitmessage-id");
     };
     std::vector<DeviceId> devices;
     for (const auto& m : pimpl_->repository_->devices())
