@@ -507,7 +507,7 @@ public:
 
     void voteUnban(const std::string& contactUri, const std::string& type, const OnDoneCb& cb);
 
-    std::string bannedType(const std::string& uri) const
+    std::string bannedType(std::string_view uri) const
     {
         auto bannedMember = fmt::format("{}/banned/members/{}.crt", repoPath(), uri);
         if (fileutils::isFile(bannedMember))
@@ -881,21 +881,23 @@ Conversation::join()
 bool
 Conversation::isMember(const std::string& uri, bool includeInvited) const
 {
-    auto invitedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "invited";
-    auto adminsPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "admins";
-    auto membersPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "members";
+    auto repoPath = pimpl_->repoPath();
+    auto invitedPath = repoPath + DIR_SEPARATOR_STR "invited";
+    auto adminsPath = repoPath + DIR_SEPARATOR_STR "admins";
+    auto membersPath = repoPath + DIR_SEPARATOR_STR "members";
     std::vector<std::string> pathsToCheck = {adminsPath, membersPath};
     if (includeInvited)
         pathsToCheck.emplace_back(invitedPath);
     for (const auto& path : pathsToCheck) {
         for (const auto& certificate : fileutils::readDirectory(path)) {
-            if (path != invitedPath && certificate.find(".crt") == std::string::npos) {
-                JAMI_WARN("Incorrect file found: %s/%s", path.c_str(), certificate.c_str());
+            std::string_view crtUri = certificate;
+            auto crtIt = crtUri.find(".crt");
+            if (path != invitedPath && crtIt == std::string_view::npos) {
+                JAMI_WARNING("Incorrect file found: {}/{}", path, certificate);
                 continue;
             }
-            auto crtUri = certificate;
-            if (crtUri.find(".crt") != std::string::npos)
-                crtUri = crtUri.substr(0, crtUri.size() - std::string(".crt").size());
+            if (crtIt != std::string_view::npos)
+                crtUri = crtUri.substr(0, crtIt);
             if (crtUri == uri)
                 return true;
         }

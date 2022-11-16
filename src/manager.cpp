@@ -632,21 +632,17 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
     std::string accountid;
     parseValue(node, "id", accountid);
 
-    std::string accountType = ACCOUNT_TYPE_SIP;
+    std::string accountType(ACCOUNT_TYPE_SIP);
     parseValueOptional(node, "type", accountType);
 
     if (!accountid.empty()) {
-        if (base_.accountFactory.isSupportedType(accountType)) {
-            if (auto a = base_.accountFactory.createAccount(accountType.c_str(), accountid)) {
-                auto config = a->buildConfig();
-                config->unserialize(node);
-                a->setConfig(std::move(config));
-            } else {
-                JAMI_ERROR("Failed to create account of type \"{:s}\"", accountType);
-                ++errorCount;
-            }
+        if (auto a = base_.accountFactory.createAccount(accountType, accountid)) {
+            auto config = a->buildConfig();
+            config->unserialize(node);
+            a->setConfig(std::move(config));
         } else {
-            JAMI_WARNING("Ignoring unknown account type \"{:s}\"", accountType);
+            JAMI_ERROR("Failed to create account of type \"{:s}\"", accountType);
+            ++errorCount;
         }
     }
 }
@@ -2695,13 +2691,14 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     auto newAccountID = accountId.empty() ? getNewAccountId() : accountId;
 
     // Get the type
-    const char* accountType;
-    if (details.find(Conf::CONFIG_ACCOUNT_TYPE) != details.end())
-        accountType = (*details.find(Conf::CONFIG_ACCOUNT_TYPE)).second.c_str();
+    std::string_view accountType;
+    auto typeIt = details.find(Conf::CONFIG_ACCOUNT_TYPE);
+    if (typeIt != details.end())
+        accountType = typeIt->second;
     else
         accountType = AccountFactory::DEFAULT_ACCOUNT_TYPE;
 
-    JAMI_DEBUG("Adding account {:s}", newAccountID);
+    JAMI_DEBUG("Adding account {:s} with type {}", newAccountID, accountType);
 
     auto newAccount = accountFactory.createAccount(accountType, newAccountID);
     if (!newAccount) {

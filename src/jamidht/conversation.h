@@ -19,18 +19,19 @@
  */
 #pragma once
 
+#include "jamidht/conversationrepository.h"
+#include "jami/datatransfer_interface.h"
+#include "conversationrepository.h"
+
+#include <json/json.h>
+#include <msgpack.hpp>
+
 #include <functional>
 #include <string>
 #include <vector>
 #include <map>
 #include <memory>
-#include <json/json.h>
-#include <msgpack.hpp>
 #include <set>
-
-#include "jamidht/conversationrepository.h"
-#include "jami/datatransfer_interface.h"
-#include "conversationrepository.h"
 
 namespace jami {
 
