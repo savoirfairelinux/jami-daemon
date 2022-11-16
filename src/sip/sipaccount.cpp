@@ -89,8 +89,9 @@ using sip_utils::CONST_PJ_STR;
 
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
-static const char* const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
-constexpr const char* const SIPAccount::ACCOUNT_TYPE;
+static constexpr std::string_view VALID_TLS_PROTOS[] = {"Default"sv, "TLSv1.2"sv, "TLSv1.1"sv, "TLSv1"sv};
+static constexpr std::string_view PN_FCM = "fcm"sv;
+static constexpr std::string_view PN_APNS = "apns"sv;
 
 struct ctx
 {
@@ -1330,7 +1331,7 @@ SIPAccount::printContactHeader(const std::string& username,
 
     if (not deviceKey.empty()) {
         contact
-#if defined(__ANDROID__) || defined(ANDROID)
+#if defined(__ANDROID__)
             << ";pn-provider=" << PN_FCM
 #elif defined(__Apple__)
             << ";pn-provider=" << PN_APNS

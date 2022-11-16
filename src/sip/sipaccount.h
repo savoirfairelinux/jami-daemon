@@ -55,8 +55,6 @@ class SIPAccount : public SIPAccountBase
 {
 public:
     constexpr static auto ACCOUNT_TYPE = ACCOUNT_TYPE_SIP;
-    constexpr static const char* const PN_FCM = "fcm";
-    constexpr static const char* const PN_APNS = "apns";
 
     std::shared_ptr<SIPAccount> shared()
     {
@@ -96,7 +94,7 @@ public:
         });
     }
 
-    const char* getAccountType() const override { return ACCOUNT_TYPE; }
+    std::string_view getAccountType() const override { return ACCOUNT_TYPE; }
 
     pjsip_host_port getHostPortFromSTUN(pj_pool_t* pool);
 

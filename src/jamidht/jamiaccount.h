@@ -105,7 +105,7 @@ public:
     constexpr static int ICE_STREAMS_COUNT {1};
     constexpr static int ICE_COMP_COUNT_PER_STREAM {1};
 
-    const char* getAccountType() const override { return ACCOUNT_TYPE; }
+    std::string_view getAccountType() const override { return ACCOUNT_TYPE; }
 
     std::shared_ptr<JamiAccount> shared()
     {
