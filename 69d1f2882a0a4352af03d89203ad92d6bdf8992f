@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a844dc9d_e4c262a5",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-16T18:13:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dda57ac8_b7cca8e5",
+      "range": {
+        "startLine": 93,
+        "startChar": 0,
+        "endLine": 93,
+        "endChar": 4
+      },
+      "revId": "69d1f2882a0a4352af03d89203ad92d6bdf8992f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0437bc4d_e05dd2ea",
@@ -49,6 +73,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "83dc4974_0530870e",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-16T18:13:34Z",
+      "side": 1,
+      "message": "this function parses the yaml so it should be parsePathOptional",
+      "parentUuid": "0437bc4d_e05dd2ea",
+      "range": {
+        "startLine": 116,
+        "startChar": 4,
+        "endLine": 116,
+        "endChar": 21
+      },
+      "revId": "69d1f2882a0a4352af03d89203ad92d6bdf8992f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3ce4e484_f788c81f",
         "filename": "src/jamidht/jamiaccount_config.cpp",
         "patchSetId": 39
@@ -60,6 +108,30 @@
       "writtenOn": "2022-11-16T13:08:36Z",
       "side": 1,
       "message": "parseString as it can be filled by client and they don\u0027t know about idPath_",
+      "range": {
+        "startLine": 213,
+        "startChar": 4,
+        "endLine": 213,
+        "endChar": 13
+      },
+      "revId": "69d1f2882a0a4352af03d89203ad92d6bdf8992f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f13bc676_b6872df9",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-16T18:13:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3ce4e484_f788c81f",
       "range": {
         "startLine": 213,
         "startChar": 4,
