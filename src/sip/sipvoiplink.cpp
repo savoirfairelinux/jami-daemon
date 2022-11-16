@@ -282,7 +282,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                                                                  remote_hostname);
         if (not account)
             return PJ_FALSE;
-        if (not transport and not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
+        if (not transport and account->getAccountType() == SIPAccount::ACCOUNT_TYPE) {
             if (not(transport = std::static_pointer_cast<SIPAccount>(account)->getTransport())) {
                 JAMI_ERR("No suitable transport to answer this call.");
                 return PJ_FALSE;
