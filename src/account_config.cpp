@@ -17,7 +17,7 @@
 #include "account_config.h"
 #include "account_const.h"
 #include "account_schema.h"
-#include "yamlparser.h"
+#include "config/yamlparser.h"
 #include "string_utils.h"
 #include "fileutils.h"
 
@@ -171,7 +171,7 @@ parsePath(const std::map<std::string, std::string>& details,
 {
     auto it = details.find(key);
     if (it != details.end())
-        s = fileutils::getCleanPath(base, it->second);
+        s = fileutils::getFullPath(base, it->second);
 }
 
 }

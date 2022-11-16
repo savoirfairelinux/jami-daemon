@@ -8,6 +8,8 @@ libjamiacc_la_SOURCES = \
 	./jamidht/abstract_sip_transport.h \
 	./jamidht/jamiaccount.cpp \
 	./jamidht/jamiaccount.h \
+	./jamidht/jamiaccount_config.cpp \
+	./jamidht/jamiaccount_config.h \
 	./jamidht/channeled_transport.h \
 	./jamidht/channeled_transport.cpp \
 	./jamidht/channeled_transfers.h \

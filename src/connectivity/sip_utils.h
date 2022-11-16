@@ -39,16 +39,18 @@
 namespace jami {
 namespace sip_utils {
 
+using namespace std::literals;
+
 // SIP methods. Only list methods that need to be explicitly
 // handled
 
 namespace SIP_METHODS {
-constexpr std::string_view MESSAGE = "MESSAGE";
-constexpr std::string_view INFO = "INFO";
-constexpr std::string_view OPTIONS = "OPTIONS";
-constexpr std::string_view PUBLISH = "PUBLISH";
-constexpr std::string_view REFER = "REFER";
-constexpr std::string_view NOTIFY = "NOTIFY";
+constexpr std::string_view MESSAGE = "MESSAGE"sv;
+constexpr std::string_view INFO = "INFO"sv;
+constexpr std::string_view OPTIONS = "OPTIONS"sv;
+constexpr std::string_view PUBLISH = "PUBLISH"sv;
+constexpr std::string_view REFER = "REFER"sv;
+constexpr std::string_view NOTIFY = "NOTIFY"sv;
 } // namespace SIP_METHODS
 
 static constexpr int DEFAULT_SIP_PORT {5060};
@@ -87,9 +89,9 @@ getKeyExchangeName(KeyExchangeProtocol kx)
 }
 
 static inline KeyExchangeProtocol
-getKeyExchangeProtocol(const char* name)
+getKeyExchangeProtocol(std::string_view name)
 {
-    return !std::strcmp("sdes", name) ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
+    return name == "sdes"sv ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
 }
 
 /**
