@@ -316,6 +316,7 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::createCallAVStreams()
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
 #ifdef ENABLE_VIDEO
     for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
         if (std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->hasConference()) {
@@ -861,11 +862,12 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     }
 
     auto newMediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
-
-    if (newMediaAttrList.empty() and rtpStreams_.empty()) {
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
+    if (newMediaAttrList.empty() and (rtpStreams_.size() == 0)) {
         JAMI_ERR("[call:%s] Media list must not be empty!", getCallId().c_str());
         return;
     }
+
 
     // If the media list is empty, use the current media (this could happen
     // with auto-answer for instance), otherwise update the current media.
@@ -879,7 +881,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
                    rtpStreams_.size());
         return;
     }
-
+    rtpLk.unlock();
     auto const& mediaAttrList = newMediaAttrList.empty() ? getMediaAttributeList()
                                                          : newMediaAttrList;
 
@@ -890,9 +892,11 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     }
 
     // Apply the media attributes.
+    rtpLk.lock();
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         updateMediaStream(mediaAttrList[idx], idx);
     }
+    rtpLk.unlock();
 
     // Create the SDP answer
     sdp_->processIncomingOffer(mediaAttrList);
@@ -983,7 +987,6 @@ void
 SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
-
     auto account = getSIPAccount();
     if (not account) {
         JAMI_ERR("[call:%s] No account detected", getCallId().c_str());
@@ -1014,6 +1017,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
     }
 
     JAMI_DBG("[call:%s] Current media", getCallId().c_str());
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     unsigned idx = 0;
     for (auto const& rtp : rtpStreams_) {
         JAMI_DBG("[call:%s] Media @%u: %s",
@@ -1021,6 +1025,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
                  idx++,
                  rtp.mediaAttribute_->toString(true).c_str());
     }
+    rtpLk.unlock();
 
     JAMI_DBG("[call:%s] Answering to media change request with new media", getCallId().c_str());
     idx = 0;
@@ -1087,6 +1092,7 @@ void
 SIPCall::hangup(int reason)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    JAMI_DBG("hang up");
     pendingRecord_ = false;
     if (inviteSession_ and inviteSession_->dlg) {
         pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
@@ -1129,6 +1135,7 @@ SIPCall::detachAudioFromConference()
 #ifdef ENABLE_VIDEO
     if (auto conf = getConference()) {
         if (auto mixer = conf->getVideoMixer()) {
+            std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
             for (auto& stream : getRtpSessionList(MediaType::MEDIA_AUDIO)) {
                 mixer->removeAudioOnlySource(getCallId(), stream->streamId());
             }
@@ -1353,11 +1360,11 @@ SIPCall::hold()
     }
 
     stopAllMedia();
-
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     for (auto& stream : rtpStreams_) {
         stream.mediaAttribute_->onHold_ = true;
     }
-
+    rtpLk.unlock();
     if (SIPSessionReinvite() != PJ_SUCCESS) {
         JAMI_WARN("[call:%s] Reinvite failed", getCallId().c_str());
         return false;
@@ -1427,9 +1434,11 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
     sdp_cb();
 
     {
+        std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
         for (auto& stream : rtpStreams_) {
             stream.mediaAttribute_->onHold_ = false;
         }
+        rtpLk.unlock();
         // For now, call resume will always require new ICE negotiation.
         if (SIPSessionReinvite(getMediaAttributeList(), true) != PJ_SUCCESS) {
             JAMI_WARN("[call:%s] resuming hold", getCallId().c_str());
@@ -1449,12 +1458,12 @@ void
 SIPCall::switchInput(const std::string& source)
 {
     JAMI_DBG("[call:%s] Set selected source to %s", getCallId().c_str(), source.c_str());
-
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     for (auto const& stream : rtpStreams_) {
         auto mediaAttr = stream.mediaAttribute_;
         mediaAttr->sourceUri_ = source;
     }
-
+    rtpLk.unlock();
     // Check if the call is being recorded in order to continue
     // ... the recording after the switch
     bool isRec = Call::isRecording();
@@ -1667,6 +1676,7 @@ SIPCall::sendKeyframe(int streamIdx)
     dht::ThreadPool::computation().run([w = weak(), streamIdx] {
         if (auto sthis = w.lock()) {
             JAMI_DBG("handling picture fast update request");
+            std::lock_guard<std::mutex> rtpLk {sthis->rtpStreamsMutex_};
             if (streamIdx == -1) {
                 for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
                     std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
@@ -1872,7 +1882,7 @@ SIPCall::addLocalIceAttributes()
              iceMedia.get());
 
     sdp_->addIceAttributes(iceMedia->getLocalAttributes());
-
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     if (account->isIceCompIdRfc5245Compliant()) {
         unsigned streamIdx = 0;
         for (auto const& stream : rtpStreams_) {
@@ -1929,6 +1939,7 @@ SIPCall::addLocalIceAttributes()
 std::vector<IceCandidate>
 SIPCall::getAllRemoteCandidates(IceTransport& transport) const
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     std::vector<IceCandidate> rem_candidates;
     for (unsigned mediaIdx = 0; mediaIdx < static_cast<unsigned>(rtpStreams_.size()); mediaIdx++) {
         IceCandidate cand;
@@ -1951,6 +1962,7 @@ SIPCall::getVideoCodec() const
     // Return first video codec as we negotiate only one codec for the call
     // Note: with multistream we can negotiate codecs/stream, but it's not the case
     // in practice (same for audio), so just return the first video codec.
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
         return videoRtp->getCodec();
 #endif
@@ -1961,6 +1973,7 @@ std::shared_ptr<AccountCodecInfo>
 SIPCall::getAudioCodec() const
 {
     // Return first video codec as we negotiate only one codec for the call
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     for (const auto& audioRtp : getRtpSessionList(MediaType::MEDIA_AUDIO))
         return audioRtp->getCodec();
     return {};
@@ -1981,13 +1994,13 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
             = Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
     }
 #endif
-
     rtpStreams_.emplace_back(std::move(stream));
 }
 
 size_t
 SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         auto const& mediaAttr = mediaAttrList.at(idx);
         if (mediaAttr.type_ != MEDIA_AUDIO && mediaAttr.type_ != MEDIA_VIDEO) {
@@ -2004,7 +2017,6 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
                    idx,
                    stream.mediaAttribute_->toString(true));
     }
-
     JAMI_DEBUG("[call:{:s}] Created {:d} Media streams", getCallId(), rtpStreams_.size());
 
     return rtpStreams_.size();
@@ -2013,6 +2025,7 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::hasVideo() const
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
 #ifdef ENABLE_VIDEO
     std::function<bool(const RtpStream& stream)> videoCheck = [](auto const& stream) {
         return stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO;
@@ -2029,6 +2042,7 @@ SIPCall::hasVideo() const
 bool
 SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     // Return true only if all media of type 'mediaType' that use capture devices
     // source, are muted.
     std::function<bool(const RtpStream& stream)> mutedCheck = [&mediaType](auto const& stream) {
@@ -2051,7 +2065,8 @@ SIPCall::setupNegotiatedMedia()
     auto slots = sdp_->getMediaSlots();
     bool peer_holding {true};
     int streamIdx = -1;
-
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     for (const auto& slot : slots) {
         streamIdx++;
         const auto& local = slot.first;
@@ -2152,6 +2167,8 @@ SIPCall::startAllMedia()
     // reset
     readyToRecord_ = false;
     resetMediaReady();
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
 
     for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
         if (not iter->mediaAttribute_) {
@@ -2160,6 +2177,7 @@ SIPCall::startAllMedia()
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
         // because of the audio loop
+
         if (getState() != CallState::HOLD) {
             if (isIceRunning()) {
                 iter->rtpSession_->start(std::move(iter->rtpSocket_), std::move(iter->rtcpSocket_));
@@ -2168,7 +2186,8 @@ SIPCall::startAllMedia()
             }
         }
     }
-
+    rtpLk.unlock();
+    isAudioOnly_ = !hasVideo();
     // Media is restarted, we can process the last holding request.
     isWaitingForIceAndMedia_ = false;
     if (remainingRequest_ != Request::NoRequest) {
@@ -2209,6 +2228,7 @@ void
 SIPCall::restartMediaSender()
 {
     JAMI_DBG("[call:%s] restarting TX media streams", getCallId().c_str());
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     for (const auto& rtpSession : getRtpSessionList())
         rtpSession->restartSender();
 }
@@ -2220,7 +2240,7 @@ SIPCall::stopAllMedia()
     deinitRecorder();
     if (Call::isRecording())
         stopRecording(); // if call stops, finish recording
-
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
 #ifdef ENABLE_VIDEO
     {
         std::lock_guard<std::mutex> lk(sinksMtx_);
@@ -2240,7 +2260,7 @@ SIPCall::stopAllMedia()
 #endif
     for (const auto& rtpSession : getRtpSessionList())
         rtpSession->stop();
-
+    rtpLk.unlock();
 #ifdef ENABLE_PLUGIN
     {
         clearCallAVStreams();
@@ -2254,10 +2274,12 @@ SIPCall::stopAllMedia()
 void
 SIPCall::updateRemoteMedia()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+
     JAMI_DBG("[call:%s] Updating remote media", getCallId().c_str());
 
     auto remoteMediaList = Sdp::getMediaAttributeListFromSdp(sdp_->getActiveRemoteSdpSession());
-
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     if (remoteMediaList.size() != rtpStreams_.size()) {
         JAMI_ERR("[call:%s] Media size mismatch!", getCallId().c_str());
         return;
@@ -2316,6 +2338,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
 void
 SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     assert(streamIdx < rtpStreams_.size());
 
     auto const& rtpStream = rtpStreams_[streamIdx];
@@ -2370,6 +2393,8 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 bool
 SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList, bool isRemote)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+
     JAMI_DBG("[call:%s] New local media", getCallId().c_str());
 
     if (mediaAttrList.size() > PJ_ICE_MAX_COMP / 2) {
@@ -2389,7 +2414,7 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
     }
 
     JAMI_DBG("[call:%s] Updating local media streams", getCallId().c_str());
-
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     for (auto const& newAttr : mediaAttrList) {
         auto streamIdx = findRtpStreamIndex(newAttr.label_);
 
@@ -2427,6 +2452,7 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
 bool
 SIPCall::isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList)
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     if (mediaAttrList.size() != rtpStreams_.size())
         return true;
 
@@ -2464,7 +2490,7 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
     // re-invite without ICE renegotiation
     if (not peerSupportReuseIceInReinv_)
         return true;
-
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     // Always needs a new ICE media when the number of media changes.
     if (mediaAttrList.size() != rtpStreams_.size())
         return true;
@@ -2490,6 +2516,7 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     // Disable video if disabled in the account.
@@ -2514,12 +2541,13 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     // If the peer does not support multi-stream and the size of the new
     // media list is different from the current media list, the media
     // change request will be ignored.
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     if (not peerSupportMultiStream_ and rtpStreams_.size() != mediaAttrList.size()) {
         JAMI_WARN("[call:%s] Peer does not support multi-stream. Media change request ignored",
                   getCallId().c_str());
         return false;
     }
-
+    rtpLk.unlock();
     // If peer doesn't support multiple ice, keep only the last audio/video
     // This keep the old behaviour (if sharing both camera + sharing a file, will keep the shared file)
     if (!peerSupportMultiIce_) {
@@ -2587,10 +2615,12 @@ SIPCall::currentMediaList() const
 std::vector<MediaAttribute>
 SIPCall::getMediaAttributeList() const
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     std::vector<MediaAttribute> mediaList;
     mediaList.reserve(rtpStreams_.size());
-    for (auto const& stream : rtpStreams_)
+    for (auto const& stream : rtpStreams_) {
         mediaList.emplace_back(*stream.mediaAttribute_);
+    }
     return mediaList;
 }
 
@@ -2712,7 +2742,7 @@ SIPCall::onIceNegoSucceed()
     // the ICE media transport.
     if (isIceEnabled())
         switchToIceReinviteIfNeeded();
-
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     for (unsigned int idx = 0, compId = 1; idx < rtpStreams_.size(); idx++, compId += 2) {
         // Create sockets for RTP and RTCP, and start the session.
         auto& rtpStream = rtpStreams_[idx];
@@ -2722,7 +2752,7 @@ SIPCall::onIceNegoSucceed()
             rtpStream.rtcpSocket_ = newIceSocket(compId + 1);
         }
     }
-
+    rtpLk.unlock();
     // Start/Restart the media using the new transport
     stopAllMedia();
     startAllMedia();
@@ -2744,6 +2774,7 @@ SIPCall::checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMed
 
     auto remoteMediaAttrList = MediaAttribute::buildMediaAttributesList(remoteMediaList,
                                                                         isSrtpEnabled());
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     if (remoteMediaAttrList.size() != rtpStreams_.size())
         return true;
 
@@ -2760,6 +2791,8 @@ SIPCall::checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMed
 void
 SIPCall::handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+
     JAMI_DBG("[call:%s] Handling media change request", getCallId().c_str());
 
     auto account = getAccount().lock();
@@ -2786,10 +2819,11 @@ SIPCall::handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMe
 
         std::vector<libjami::MediaMap> newMediaList;
         newMediaList.reserve(remoteMediaList.size());
+        std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
         for (auto const& stream : rtpStreams_) {
             newMediaList.emplace_back(MediaAttribute::toMediaMap(*stream.mediaAttribute_));
         }
-
+        rtpLk.unlock();
         assert(remoteMediaList.size() > 0);
         if (remoteMediaList.size() > newMediaList.size()) {
             for (auto idx = newMediaList.size(); idx < remoteMediaList.size(); idx++) {
@@ -2870,11 +2904,12 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
 void
 SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
 {
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     if (not rtpStreams_.empty()) {
         JAMI_ERR("[call:%s] Unexpected offer in '200 OK' answer", getCallId().c_str());
         return;
     }
-
+    rtpLk.unlock();
     auto acc = getSIPAccount();
     if (not acc) {
         JAMI_ERR("No account detected");
@@ -2967,6 +3002,7 @@ SIPCall::openPortsUPnP()
 std::map<std::string, std::string>
 SIPCall::getDetails() const
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto acc = getSIPAccount();
     if (!acc) {
         JAMI_ERR("No account detected");
@@ -2976,7 +3012,7 @@ SIPCall::getDetails() const
     auto details = Call::getDetails();
 
     details.emplace(libjami::Call::Details::PEER_HOLDING, peerHolding_ ? TRUE_STR : FALSE_STR);
-
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     for (auto const& stream : rtpStreams_) {
         if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
             details.emplace(libjami::Call::Details::VIDEO_SOURCE,
@@ -3010,14 +3046,13 @@ SIPCall::getDetails() const
             }
         }
     }
-
+    rtpLk.unlock();
 #if HAVE_RINGNS
     if (not peerRegisteredName_.empty())
         details.emplace(libjami::Call::Details::REGISTERED_NAME, peerRegisteredName_);
 #endif
 
 #ifdef ENABLE_CLIENT_CERT
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         if (tlsInfos.cipher != PJ_TLS_UNKNOWN_CIPHER) {
@@ -3059,9 +3094,12 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
     conf_ = conference;
 
 #ifdef ENABLE_VIDEO
-    if (conference->isVideoEnabled())
+    if (conference->isVideoEnabled()){
+        std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
         for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
             std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->enterConference(*conference);
+        rtpLk.unlock();
+    }
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -3073,16 +3111,19 @@ void
 SIPCall::exitConference()
 {
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
-
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
+    rtpLk.unlock();
     if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
         auto& rbPool = Manager::instance().getRingBufferPool();
         rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 #ifdef ENABLE_VIDEO
+    rtpLk.lock();
     for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
         std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->exitConference();
+    rtpLk.unlock();
 #endif
 #ifdef ENABLE_PLUGIN
     createCallAVStreams();
@@ -3094,6 +3135,7 @@ SIPCall::exitConference()
 void
 SIPCall::setRotation(int streamIdx, int rotation)
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     rotation_ = rotation;
     if (streamIdx == -1) {
         for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
@@ -3112,7 +3154,7 @@ SIPCall::createSinks(const ConfInfo& infos)
 {
     if (!hasVideo())
         return;
-
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     std::lock_guard<std::mutex> lk(sinksMtx_);
     std::vector<std::shared_ptr<video::VideoFrameActiveWriter>> sinks;
     for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
@@ -3123,6 +3165,7 @@ SIPCall::createSinks(const ConfInfo& infos)
         sinks.emplace_back(
             std::static_pointer_cast<video::VideoFrameActiveWriter>(videoReceive->getSink()));
     }
+    rtpLk.unlock();
     auto conf = conf_.lock();
     const auto& id = conf ? conf->getConfId() : getCallId();
     Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_);
@@ -3153,8 +3196,10 @@ SIPCall::monitor() const
     }
     JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
     JAMI_DBG("\t- Duration: %s", dht::print_duration(getCallDuration()).c_str());
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     for (const auto& stream : rtpStreams_)
         JAMI_DBG("\t- Media: %s", stream.mediaAttribute_->toString(true).c_str());
+    rtpLk.unlock();
 #ifdef ENABLE_VIDEO
     if (auto codec = getVideoCodec())
         JAMI_DBG("\t- Video codec: %s", codec->systemCodecInfo.name.c_str());
@@ -3183,8 +3228,10 @@ SIPCall::toggleRecording()
                                  account->getUserUri(),
                                  peerUri_);
         recorder_->setMetadata(title, ""); // use default description
+        std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
         for (const auto& rtpSession : getRtpSessionList())
             rtpSession->initRecorder(recorder_);
+        rtpLk.unlock();
     } else {
         updateRecState(false);
         deinitRecorder();
@@ -3199,6 +3246,7 @@ SIPCall::toggleRecording()
 void
 SIPCall::deinitRecorder()
 {
+    std::lock_guard<std::mutex> rtpLk {rtpStreamsMutex_};
     for (const auto& rtpSession : getRtpSessionList())
         rtpSession->deinitRecorder(recorder_);
 }
@@ -3291,7 +3339,9 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     };
 
     iceOptions.master = master;
+    std::unique_lock<std::mutex> rtpLk {rtpStreamsMutex_};
     iceOptions.streamsCount = static_cast<unsigned>(rtpStreams_.size());
+    rtpLk.unlock();
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
     iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
 
@@ -3481,13 +3531,17 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
             mediaReady_.at("v:local") = true;
     }
 
-    isAudioOnly_ = !hasVideo();
 #ifdef ENABLE_VIDEO
     readyToRecord_ = true; // We're ready to record whenever a stream is ready
 #endif
 
-    if (pendingRecord_ && readyToRecord_)
-        toggleRecording();
+    if (pendingRecord_ && readyToRecord_){
+        runOnMainThread([w = weak()] {
+            if (auto shared = w.lock()) {
+                shared->toggleRecording();
+            }
+        });
+    }
 }
 
 void
