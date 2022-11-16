@@ -90,11 +90,13 @@ SwarmManager::addChannel(const std::shared_ptr<ChannelSocketInterface>& channel)
 void
 SwarmManager::removeNode(const NodeId& nodeId)
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex);
-        removeNodeInternal(nodeId);
+    if (isConnectedWith(nodeId)) {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            removeNodeInternal(nodeId);
+        }
+        maintainBuckets();
     }
-    maintainBuckets();
 }
 
 void
@@ -269,10 +271,12 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
     });
 
     socket->onShutdown([w = weak(), deviceId = socket->deviceId()] {
-        auto shared = w.lock();
-        if (shared && !shared->isShutdown_) {
-            shared->removeNode(deviceId);
-        }
+        dht::ThreadPool::io().run([w, deviceId] {
+            auto shared = w.lock();
+            if (shared && !shared->isShutdown_) {
+                shared->removeNode(deviceId);
+            }
+        });
     });
 }
 
