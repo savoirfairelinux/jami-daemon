@@ -95,6 +95,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "387dce59_c2b042c8",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-16T18:18:01Z",
+      "side": 1,
+      "message": "true the other should be the issue indeed",
+      "parentUuid": "83dc4974_0530870e",
+      "range": {
+        "startLine": 116,
+        "startChar": 4,
+        "endLine": 116,
+        "endChar": 21
+      },
+      "revId": "69d1f2882a0a4352af03d89203ad92d6bdf8992f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3ce4e484_f788c81f",
