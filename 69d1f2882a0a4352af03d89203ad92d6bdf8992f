@@ -3,6 +3,75 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "dda57ac8_b7cca8e5",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-16T13:08:36Z",
+      "side": 1,
+      "message": "trailing",
+      "range": {
+        "startLine": 93,
+        "startChar": 0,
+        "endLine": 93,
+        "endChar": 4
+      },
+      "revId": "69d1f2882a0a4352af03d89203ad92d6bdf8992f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0437bc4d_e05dd2ea",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-16T13:08:36Z",
+      "side": 1,
+      "message": "parseValueOptional as it can be filled by client and they don\u0027t know about idPath_",
+      "range": {
+        "startLine": 116,
+        "startChar": 4,
+        "endLine": 116,
+        "endChar": 21
+      },
+      "revId": "69d1f2882a0a4352af03d89203ad92d6bdf8992f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ce4e484_f788c81f",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-16T13:08:36Z",
+      "side": 1,
+      "message": "parseString as it can be filled by client and they don\u0027t know about idPath_",
+      "range": {
+        "startLine": 213,
+        "startChar": 4,
+        "endLine": 213,
+        "endChar": 13
+      },
+      "revId": "69d1f2882a0a4352af03d89203ad92d6bdf8992f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ce6bb27c_08d7c09d",
         "filename": "src/sip/sipaccount.h",
         "patchSetId": 39
