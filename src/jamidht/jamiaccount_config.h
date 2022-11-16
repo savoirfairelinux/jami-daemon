@@ -18,7 +18,7 @@
 #include "sip/sipaccountbase_config.h"
 
 namespace jami {
-constexpr static const char* ACCOUNT_TYPE_JAMI = "RING";
+constexpr static std::string_view ACCOUNT_TYPE_JAMI = "RING";
 constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
 constexpr static const char* DEFAULT_TURN_SERVER = "turn.jami.net";
 constexpr static const char* DEFAULT_TURN_USERNAME = "ring";
@@ -26,7 +26,7 @@ constexpr static const char* DEFAULT_TURN_PWD = "ring";
 constexpr static const char* DEFAULT_TURN_REALM = "ring";
 
 struct JamiAccountConfig : public SipAccountBaseConfig {
-    JamiAccountConfig(const std::string& id = {}, const std::string& path = {}): SipAccountBaseConfig(ACCOUNT_TYPE_JAMI, id, path) {
+    JamiAccountConfig(const std::string& id = {}, const std::string& path = {}): SipAccountBaseConfig(std::string(ACCOUNT_TYPE_JAMI), id, path) {
         // Default values specific to Jami accounts
         hostname = DHT_DEFAULT_BOOTSTRAP;
         turnServer = DEFAULT_TURN_SERVER;

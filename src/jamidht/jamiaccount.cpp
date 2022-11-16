@@ -2088,11 +2088,9 @@ JamiAccount::doRegister_()
                                     }
                                     std::map<std::string, std::string> payloads = {
                                         {datatype, utf8_make_valid(v.msg)}};
-                                    auto pk = std::make_shared<dht::crypto::PublicKey>(
-                                        cert->getPublicKey());
                                     onTextMessage(msgId,
                                                   peer_account.toString(),
-                                                  pk->getLongId().toString(),
+                                                  cert->getPublicKey().getLongId().toString(),
                                                   payloads);
                                     JAMI_DBG() << "Sending message confirmation " << v.id;
                                     dht_->putEncrypted(inboxDeviceKey,

@@ -148,7 +148,7 @@ public:
      */
     const std::string& getAccountID() const { return accountID_; }
 
-    virtual const char* getAccountType() const = 0;
+    virtual std::string_view getAccountType() const = 0;
 
     /**
      * Returns true if this is the IP2IP account
