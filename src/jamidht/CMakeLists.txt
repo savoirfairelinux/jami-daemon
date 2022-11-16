@@ -48,8 +48,10 @@ list (APPEND Source_Files__jamidht
 
 set (Source_Files__jamidht ${Source_Files__jamidht} PARENT_SCOPE)
 
+add_subdirectory("swarm")
 add_subdirectory("eth/libdevcore")
 add_subdirectory("eth/libdevcrypto")
 
+set (Source_Files__jamidht__swarm ${Source_Files__jamidht__swarm} PARENT_SCOPE)
 set (Source_Files__jamidht__eth__libdevcore ${Source_Files__jamidht__eth__libdevcore} PARENT_SCOPE)
 set (Source_Files__jamidht__eth__libdevcrypto ${Source_Files__jamidht__eth__libdevcrypto} PARENT_SCOPE)
