@@ -41,6 +41,7 @@
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "transfer_channel_handler.h"
+#include "swarm/swarm_channel_handler.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -74,7 +75,6 @@
 #include "string_utils.h"
 #include "archiver.h"
 #include "data_transfer.h"
-#include "conversation.h"
 
 #include "config/yamlparser.h"
 #include "connectivity/security/certstore.h"
@@ -172,7 +172,7 @@ void
 setState(const std::string& accountID, const State migrationState)
 {
     emitSignal<libjami::ConfigurationSignal::MigrationEnded>(accountID,
-                                                           mapStateNumberToString(migrationState));
+                                                             mapStateNumberToString(migrationState));
 }
 
 } // namespace Migration
@@ -360,7 +360,9 @@ JamiAccount::shutdownConnections()
         channelHandlers_.clear();
         connectionManager_.reset();
     }
-    gitSocketList_.clear();
+    if (convModule_)
+        convModule_->shutdownConnections();
+
     dhtPeerConnector_.reset();
     std::lock_guard<std::mutex> lk(sipConnsMtx_);
     sipConns_.clear();
@@ -859,7 +861,8 @@ JamiAccount::serialize(YAML::Emitter& out) const
             << registeredName_;
 #endif
 
-    out << YAML::Key << libjami::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
+    out << YAML::Key << libjami::Account::ConfProperties::ARCHIVE_PATH << YAML::Value
+        << archivePath_;
     out << YAML::Key << libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD << YAML::Value
         << archiveHasPassword_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
@@ -915,7 +918,9 @@ JamiAccount::unserialize(const YAML::Node& node)
 
     try {
         parsePath(node, libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
-        parseValue(node, libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_);
+        parseValue(node,
+                   libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,
+                   archiveHasPassword_);
     } catch (const std::exception& e) {
         JAMI_WARN("can't read archive path: %s", e.what());
         archiveHasPassword_ = true;
@@ -938,7 +943,9 @@ JamiAccount::unserialize(const YAML::Node& node)
     if (not dhtDefaultPort_)
         dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
 
-    parseValueOptional(node, libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
+    parseValueOptional(node,
+                       libjami::Account::ConfProperties::DHT_PEER_DISCOVERY,
+                       dhtPeerDiscovery_);
     parseValueOptional(node,
                        libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
                        accountPeerDiscovery_);
@@ -974,13 +981,13 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
         if (password_old.empty()) {
             archiveHasPassword_ = true;
             emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
-                                                                          getAccountDetails());
+                                                                            getAccountDetails());
         }
         return false;
     }
     if (password_old != password_new)
         emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
-                                                                      getAccountDetails());
+                                                                        getAccountDetails());
     return true;
 }
 
@@ -1082,8 +1089,9 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
     return accountManager_
         ->revokeDevice(password, device, [this, device](AccountManager::RevokeDeviceResult result) {
             emitSignal<libjami::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
-                                                                          device,
-                                                                          static_cast<int>(result));
+                                                                            device,
+                                                                            static_cast<int>(
+                                                                                result));
         });
     return true;
 }
@@ -1134,8 +1142,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     }
                     // Update client.
                     emitSignal<libjami::ConfigurationSignal::ContactRemoved>(shared->getAccountID(),
-                                                                           uri,
-                                                                           banned);
+                                                                             uri,
+                                                                             banned);
                 }
             });
         },
@@ -1149,10 +1157,10 @@ JamiAccount::loadAccount(const std::string& archive_password,
             if (conversationId.empty()) {
                 // Old path
                 emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
-                                                                             conversationId,
-                                                                             uri,
-                                                                             payload,
-                                                                             received);
+                                                                               conversationId,
+                                                                               uri,
+                                                                               payload,
+                                                                               received);
                 return;
             }
             // Here account can be initializing
@@ -1330,9 +1338,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     setAccountDetails(details);
 
                     if (not info.photo.empty() or not displayName_.empty())
-                        emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
-                                                                                       displayName_,
-                                                                                       info.photo);
+                        emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(
+                            getAccountID(), displayName_, info.photo);
                     setRegistrationState(RegistrationState::UNREGISTERED);
                     saveConfig();
                     convModule()->loadConversations();
@@ -1554,9 +1561,9 @@ JamiAccount::lookupAddress(const std::string& addr)
         accountManager_->lookupAddress(
             addr, [acc, addr](const std::string& result, NameDirectory::Response response) {
                 emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc,
-                                                                            (int) response,
-                                                                            addr,
-                                                                            result);
+                                                                              (int) response,
+                                                                              addr,
+                                                                              result);
             });
 }
 
@@ -1602,9 +1609,9 @@ JamiAccount::searchUser(const std::string& query)
             [acc = getAccountID(), query](const jami::NameDirectory::SearchResult& result,
                                           jami::NameDirectory::Response response) {
                 jami::emitSignal<libjami::ConfigurationSignal::UserSearchEnded>(acc,
-                                                                              (int) response,
-                                                                              query,
-                                                                              result);
+                                                                                (int) response,
+                                                                                query,
+                                                                                result);
             });
     return false;
 }
@@ -1909,9 +1916,9 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 {
     JAMI_DBG("Buddy %s offline", contactId.toString().c_str());
     emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
-                                                            contactId.toString(),
-                                                            0,
-                                                            "");
+                                                              contactId.toString(),
+                                                              0,
+                                                              "");
 }
 
 void
@@ -2021,8 +2028,8 @@ JamiAccount::doRegister_()
                 auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                                std::chrono::steady_clock::now().time_since_epoch())
                                .count();
-                jami::emitSignal<libjami::ConfigurationSignal::MessageSend>(std::to_string(now) + " "
-                                                                          + std::string(tmp));
+                jami::emitSignal<libjami::ConfigurationSignal::MessageSend>(
+                    std::to_string(now) + " " + std::string(tmp));
             };
             context.logger = std::make_shared<dht::Logger>(log_all, log_all, silent);
 #else
@@ -2192,8 +2199,8 @@ JamiAccount::doRegister_()
                     if (isVCard)
                         cb = [peerId, accountId = getAccountID()](const std::string& path) {
                             emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId,
-                                                                                    peerId,
-                                                                                    path);
+                                                                                      peerId,
+                                                                                      path);
                         };
 
                     libjami::DataTransferInfo info;
@@ -2230,8 +2237,8 @@ JamiAccount::doRegister_()
                         return;
                     }
 
-                    auto sock = gitSocket(deviceId, conversationId);
-                    if (sock != std::nullopt && sock->lock() == channel) {
+                    auto sock = convModule()->gitSocket(deviceId.toString(), conversationId);
+                    if (sock == channel) {
                         // The onConnectionReady is already used as client (for retrieving messages)
                         // So it's not the server socket
                         return;
@@ -2356,37 +2363,46 @@ JamiAccount::convModule()
                     auto shared = w.lock();
                     if (!shared)
                         return;
-                    auto gs = shared->gitSocket(DeviceId(deviceId), convId);
-                    if (gs != std::nullopt) {
-                        if (auto socket = gs->lock()) {
-                            if (!cb(socket))
-                                socket->shutdown();
-                            else
-                                cb({});
-                            return;
-                        }
+                    if (auto socket = shared->convModule()->gitSocket(deviceId, convId)) {
+                        if (!cb(socket))
+                            socket->shutdown();
+                        else
+                            cb({});
+                        return;
                     }
                     std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_) {
                         cb({});
                         return;
                     }
-                    shared->connectionManager_
-                        ->connectDevice(DeviceId(deviceId),
-                                        "git://" + deviceId + "/" + convId,
-                                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId&) {
-                                            if (socket) {
-                                                socket->onShutdown(
-                                                    [shared, deviceId = socket->deviceId(), convId] {
-                                                        shared->removeGitSocket(deviceId, convId);
-                                                    });
-                                                if (!cb(socket))
-                                                    socket->shutdown();
-                                            } else
-                                                cb({});
-                                        }, false, false, type);
+                    shared->connectionManager_->connectDevice(
+                        DeviceId(deviceId),
+                        fmt::format("git://{}/{}", deviceId, convId),
+                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
+                                             const DeviceId&) {
+                            if (socket) {
+                                socket->onShutdown([shared, deviceId = socket->deviceId(), convId] {
+                                    shared->convModule()->removeGitSocket(deviceId.toString(),
+                                                                          convId);
+                                });
+                                if (!cb(socket))
+                                    socket->shutdown();
+                            } else
+                                cb({});
+                        });
                 });
+            },
+            [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType) {
+                std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+                if (!connectionManager_) {
+                    Manager::instance().ioContext()->post([cb = std::move(cb)] { cb({}); });
+                    return;
+                }
+                connectionManager_->connectDevice(DeviceId(deviceId),
+                                                  fmt::format("swarm://{}", convId),
+                                                  [cb = std::move(
+                                                       cb)](std::shared_ptr<ChannelSocket> socket,
+                                                            const DeviceId&) { cb(socket); });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
                 // NOTE: do not reschedule as the conversation's requests
@@ -2539,11 +2555,10 @@ JamiAccount::setCertificateStatus(const std::string& cert_id,
 {
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
     if (done) {
-        dht_->findCertificate(dht::InfoHash(cert_id), [](const std::shared_ptr<dht::crypto::Certificate>& crt) {});
-        emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
-                                                                        cert_id,
-                                                                        tls::TrustStore::statusToStr(
-                                                                            status));
+        dht_->findCertificate(dht::InfoHash(cert_id),
+                              [](const std::shared_ptr<dht::crypto::Certificate>& crt) {});
+        emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
+            getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
     }
     return done;
 }
@@ -3204,19 +3219,24 @@ JamiAccount::sendMessage(const std::string& to,
         ctx->confirmation = confirm;
 
         try {
-            auto res = sendSIPMessage(
-                conn, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
-                    std::shared_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
-                    auto code = event->body.tsx_state.tsx->status_code;
-                    runOnMainThread([c=std::move(c), code]() {
-                        if (c) {
-                            auto acc = c->acc.lock();
-                            if (not acc)
-                                return;
-                            acc->onSIPMessageSent(std::move(c), code);
-                        }
-                    });
-                });
+            auto res = sendSIPMessage(conn,
+                                      to,
+                                      ctx.release(),
+                                      token,
+                                      payloads,
+                                      [](void* token, pjsip_event* event) {
+                                          std::shared_ptr<TextMessageCtx> c {
+                                              (TextMessageCtx*) token};
+                                          auto code = event->body.tsx_state.tsx->status_code;
+                                          runOnMainThread([c = std::move(c), code]() {
+                                              if (c) {
+                                                  auto acc = c->acc.lock();
+                                                  if (not acc)
+                                                      return;
+                                                  acc->onSIPMessageSent(std::move(c), code);
+                                              }
+                                          });
+                                      });
             if (!res) {
                 if (!onlyConnected)
                     messageEngine_.onMessageSent(to, token, false);
@@ -3406,9 +3426,9 @@ JamiAccount::onIsComposing(const std::string& conversationId,
     try {
         const std::string fromUri {parseJamiUri(peer)};
         emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountID_,
-                                                                       conversationId,
-                                                                       peer,
-                                                                       isWriting ? 1 : 0);
+                                                                         conversationId,
+                                                                         peer,
+                                                                         isWriting ? 1 : 0);
     } catch (...) {
         JAMI_ERR("[Account %s] Can't parse URI: %s", getAccountID().c_str(), peer.c_str());
     }
@@ -3569,9 +3589,10 @@ JamiAccount::startAccountDiscovery()
                               v.accountId.to_c_str());
                     // Send Added Peer and corrsponding accoundID
                     emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(getAccountID(),
-                                                                              v.accountId.toString(),
-                                                                              0,
-                                                                              v.displayName);
+                                                                                v.accountId
+                                                                                    .toString(),
+                                                                                0,
+                                                                                v.displayName);
                 }
                 dp.cleanupTask = Manager::instance().scheduler().scheduleIn(
                     [w = weak(), p = v.accountId, a = v.displayName] {
@@ -4108,7 +4129,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 
     // Convert to SIP transport
     auto onShutdown = [w = weak(), peerId, key, socket]() {
-        runOnMainThread([w=std::move(w), peerId, key, socket] {
+        runOnMainThread([w = std::move(w), peerId, key, socket] {
             auto shared = w.lock();
             if (!shared)
                 return;
@@ -4239,10 +4260,8 @@ JamiAccount::sendFile(const std::string& conversationId,
                               std::move(value),
                               replyTo,
                               true,
-                              [accId = shared->getAccountID(),
-                               conversationId,
-                               tid,
-                               path](const std::string& commitId) {
+                              [accId = shared->getAccountID(), conversationId, tid, path](
+                                  const std::string& commitId) {
                                   // Create a symlink to answer to re-ask
                                   auto filelinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR
                                                       + accId + DIR_SEPARATOR_STR
@@ -4409,6 +4428,8 @@ JamiAccount::initConnectionManager()
 {
     if (!connectionManager_) {
         connectionManager_ = std::make_unique<ConnectionManager>(*this);
+        channelHandlers_[Uri::Scheme::SWARM]
+            = std::make_unique<SwarmChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::GIT]
             = std::make_unique<ConversationChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::SYNC]
