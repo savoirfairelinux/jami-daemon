@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2ca116ff_a49c18e3",
+        "filename": "src/config/account_config_utils.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-16T18:26:04Z",
+      "side": 1,
+      "message": ":dance:",
+      "range": {
+        "startLine": 21,
+        "startChar": 12,
+        "endLine": 21,
+        "endChar": 26
+      },
+      "revId": "e4879e2ab743826efe5d2c82270346952d82221f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

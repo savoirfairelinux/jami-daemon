@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2f94f92_28c216bf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 29
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-16T18:26:04Z",
+      "side": 1,
+      "message": "From my current jami config\n\n```\n[1668623025.883|19957|manager.cpp       :809  ] Configuration file path: /home/amarok/.config/jami/dring.yml\n[1668623025.886|19957|manager.cpp       :2798 ] Preferences node unserialize YAML exception: invalid node; first invalid key: \"disableSecureDlgCheck\"\n[1668623025.886|19957|system_codec_container.cpp:220  ] Can\u0027t find a usable accelerated H265/HEVC codec, disabling.\n[1668623025.887|19957|system_codec_container.cpp:250  ] Encoders found: H264 VP8 MP4V-ES H263-1998 opus G722 G726-32 speex speex speex PCMA PCMU \n[1668623025.887|19957|system_codec_container.cpp:251  ] Decoders found: H264 VP8 MP4V-ES H263-1998 opus G722 G726-32 speex speex speex PCMA PCMU \n[1668623025.887|19957|sipaccount.cpp    :2338 ] All audio codecs disabled, enabling all\n[1668623025.887|19957|sipaccount.cpp    :2342 ] All video codecs disabled, enabling all\n[1668623025.888|19957|manager.cpp       :819  ] invalid node; first invalid key: \"hasCustomUserAgent\"\n[1668623025.888|19957|manager.cpp       :834  ] Restoring last working configuration\n[1668623025.888|19957|account_factory.cpp:84   ] Removing account 2620a5009d335fc1\n[1668623025.888|19957|account_factory.cpp:87   ] Remaining 0 SIP account(s)\n[1668623025.888|19957|manager.cpp       :1700 ] Saving Configuration to XDG directory /home/amarok/.config/jami/dring.yml\n[1668623025.888|19957|preferences.cpp   :176  ] Dropping nonexistent account f37c40066656dd06\n[1668623025.888|19957|preferences.cpp   :176  ] Dropping nonexistent account 41770b0473f2ff4f\n[1668623025.888|19957|preferences.cpp   :176  ] Dropping nonexistent account 1449942a8c3d373e\n[1668623025.888|19957|preferences.cpp   :176  ] Dropping nonexistent account 7d9284b49a2ef013\n[1668623025.888|19957|preferences.cpp   :176  ] Dropping nonexistent account 9f1088371067551c\n[1668623025.888|19957|preferences.cpp   :176  ] Dropping nonexistent account 1f6a08e3f987fa34\n[1668623025.889|19957|manager.cpp       :2798 ] Preferences node unserialize YAML exception: invalid node; first invalid key: \"disableSecureDlgCheck\"\n[1668623025.889|19957|system_codec_container.cpp:220  ] Can\u0027t find a usable accelerated H265/HEVC codec, disabling.\n[1668623025.889|19957|system_codec_container.cpp:250  ] Encoders found: H264 VP8 MP4V-ES H263-1998 opus G722 G726-32 speex speex speex PCMA PCMU \n[1668623025.889|19957|system_codec_container.cpp:251  ] Decoders found: H264 VP8 MP4V-ES H263-1998 opus G722 G726-32 speex speex speex PCMA PCMU \n[1668623025.890|19957|sipaccount.cpp    :2338 ] All audio codecs disabled, enabling all\n[1668623025.890|19957|sipaccount.cpp    :2342 ] All video codecs disabled, enabling all\n[1668623025.890|19957|manager.cpp       :842  ] invalid node; first invalid key: \"hasCustomUserAgent\"\n[1668623025.890|19957|manager.cpp       :843  ] Restoring backup failed\n```",
+      "revId": "f6b1c8a1d3469a996cbca7b3696ffd5a160ec839",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
