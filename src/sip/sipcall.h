@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <condition_variable>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -518,6 +519,8 @@ private:
     void detachAudioFromConference();
 
     std::mutex setupSuccessMutex_;
+    std::condition_variable setupSuccessCv_;
+    mutable std::mutex rtpStreamsMutex_;
 #ifdef ENABLE_VIDEO
     int rotation_ {0};
 #endif
