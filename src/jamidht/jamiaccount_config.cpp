@@ -90,7 +90,7 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     using yaml_utils::parsePath;
     using yaml_utils::parsePathOptional;
     SipAccountBaseConfig::unserialize(node);
-    
+
     // get tls submap
     try {
         const auto& tlsMap = node[Conf::TLS_KEY];
@@ -113,7 +113,7 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
 
-    parsePathOptional(node, libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath, path);
+    parseValueOptional(node, libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath);
     parseValueOptional(node, libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword);
 
     try {
@@ -210,7 +210,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PIN, archive_pin);
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
-    parsePath(details, libjami::Account::ConfProperties::ARCHIVE_PATH, archive_path, path);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PATH, archive_path);
     parseString(details, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
 
     auto oldProxyServer = proxyServer, oldProxyServerList = proxyListUrl;

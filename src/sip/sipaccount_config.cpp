@@ -200,6 +200,13 @@ std::map<std::string, std::string>
 SipAccountConfig::toMap() const
 {
     auto a = SipAccountBaseConfig::toMap();
+    std::string password {};
+    for (const auto& cred : credentials)
+        if (cred.username == username) {
+            password = cred.password;
+            break;
+        }
+    a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD, std::move(password));
     a.emplace(Conf::CONFIG_ACCOUNT_USERNAME, username);
     a.emplace(Conf::CONFIG_LOCAL_PORT, std::to_string(localPort));
     a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType);
