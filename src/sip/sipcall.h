@@ -518,6 +518,7 @@ private:
     void detachAudioFromConference();
 
     std::mutex setupSuccessMutex_;
+    mutable std::mutex rtpStreamsMutex_;
 #ifdef ENABLE_VIDEO
     int rotation_ {0};
 #endif
