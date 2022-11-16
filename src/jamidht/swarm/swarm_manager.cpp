@@ -90,11 +90,17 @@ SwarmManager::addChannel(const std::shared_ptr<ChannelSocketInterface>& channel)
 void
 SwarmManager::removeNode(const NodeId& nodeId)
 {
+    auto remove = isConnectedWith(nodeId);
     {
-        std::lock_guard<std::mutex> lock(mutex);
-        removeNodeInternal(nodeId);
+        if (remove) {
+            std::lock_guard<std::mutex> lock(mutex);
+            removeNodeInternal(nodeId);
+        }
     }
-    maintainBuckets();
+
+    if (remove) {
+        maintainBuckets();
+    }
 }
 
 void

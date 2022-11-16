@@ -217,6 +217,8 @@ ConversationTest::tearDown()
 void
 ConversationTest::testCreateConversation()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceDeviceId = aliceAccount->currentDeviceId();
     auto uri = aliceAccount->getUsername();
@@ -267,6 +269,8 @@ ConversationTest::testCreateConversation()
 void
 ConversationTest::testGetConversation()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
@@ -279,6 +283,8 @@ ConversationTest::testGetConversation()
 void
 ConversationTest::testGetConversationsAfterRm()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
 
@@ -310,6 +316,8 @@ ConversationTest::testGetConversationsAfterRm()
 void
 ConversationTest::testRemoveInvalidConversation()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
 
@@ -341,6 +349,8 @@ ConversationTest::testRemoveInvalidConversation()
 void
 ConversationTest::testSendMessage()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -402,6 +412,8 @@ ConversationTest::testSendMessage()
 void
 ConversationTest::testSendMessageWithBadDisplayName()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -479,6 +491,8 @@ ConversationTest::testSendMessageWithBadDisplayName()
 void
 ConversationTest::testReplaceWithBadCertificate()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -573,6 +587,8 @@ ConversationTest::testReplaceWithBadCertificate()
 void
 ConversationTest::testSendMessageTriggerMessageReceived()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -606,6 +622,8 @@ ConversationTest::testSendMessageTriggerMessageReceived()
 void
 ConversationTest::testMergeTwoDifferentHeads()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto aliceUri = aliceAccount->getUsername();
@@ -671,6 +689,8 @@ ConversationTest::testMergeTwoDifferentHeads()
 void
 ConversationTest::testMergeAfterMigration()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto aliceUri = aliceAccount->getUsername();
@@ -780,6 +800,8 @@ ConversationTest::testMergeAfterMigration()
 void
 ConversationTest::testSendMessageToMultipleParticipants()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -877,6 +899,8 @@ ConversationTest::testSendMessageToMultipleParticipants()
 void
 ConversationTest::testPingPongMessages()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -948,6 +972,8 @@ ConversationTest::testPingPongMessages()
 void
 ConversationTest::testIsComposing()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+ 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1019,6 +1045,8 @@ ConversationTest::testIsComposing()
 void
 ConversationTest::testMessageStatus()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1096,6 +1124,8 @@ ConversationTest::testMessageStatus()
 void
 ConversationTest::testSetMessageDisplayed()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1210,6 +1240,8 @@ ConversationTest::testSetMessageDisplayed()
 void
 ConversationTest::testSetMessageDisplayedTwice()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1292,6 +1324,8 @@ ConversationTest::testSetMessageDisplayedTwice()
 void
 ConversationTest::testSetMessageDisplayedPreference()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1400,6 +1434,8 @@ ConversationTest::testSetMessageDisplayedPreference()
 void
 ConversationTest::testSetMessageDisplayedAfterClone()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1511,6 +1547,8 @@ std::string
 ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
                                          const std::string& fakeCert)
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + "tmp";
 
@@ -1677,6 +1715,8 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
 void
 ConversationTest::testVoteNonEmpty()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -1772,6 +1812,8 @@ ConversationTest::testVoteNonEmpty()
 void
 ConversationTest::testNoBadFileInInitialCommit()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -1841,6 +1883,8 @@ ConversationTest::testNoBadFileInInitialCommit()
 void
 ConversationTest::testNoBadCertInInitialCommit()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
@@ -1916,6 +1960,8 @@ ConversationTest::testNoBadCertInInitialCommit()
 void
 ConversationTest::testPlainTextNoBadFile()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -1992,6 +2038,8 @@ ConversationTest::testPlainTextNoBadFile()
 void
 ConversationTest::testVoteNoBadFile()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto aliceUri = aliceAccount->getUsername();
@@ -2091,6 +2139,8 @@ ConversationTest::testVoteNoBadFile()
 void
 ConversationTest::testETooBigClone()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+ 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2166,6 +2216,8 @@ ConversationTest::testETooBigClone()
 void
 ConversationTest::testETooBigFetch()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2250,6 +2302,8 @@ ConversationTest::testETooBigFetch()
 void
 ConversationTest::testUnknownModeDetected()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2313,6 +2367,8 @@ ConversationTest::testUnknownModeDetected()
 void
 ConversationTest::testUpdateProfile()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2394,6 +2450,8 @@ ConversationTest::testUpdateProfile()
 void
 ConversationTest::testGetProfileRequest()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2441,6 +2499,8 @@ ConversationTest::testGetProfileRequest()
 void
 ConversationTest::testCheckProfileInConversationRequest()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2495,6 +2555,8 @@ ConversationTest::testCheckProfileInConversationRequest()
 void
 ConversationTest::testCheckProfileInTrustRequest()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2542,6 +2604,8 @@ END:VCARD";
 void
 ConversationTest::testMemberCannotUpdateProfile()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2612,6 +2676,8 @@ ConversationTest::testMemberCannotUpdateProfile()
 void
 ConversationTest::testUpdateProfileWithBadFile()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2692,6 +2758,8 @@ END:VCARD";
 void
 ConversationTest::testFetchProfileUnauthorized()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2771,6 +2839,8 @@ END:VCARD";
 void
 ConversationTest::testDoNotLoadIncorrectConversation()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
@@ -2796,6 +2866,8 @@ ConversationTest::testDoNotLoadIncorrectConversation()
 void
 ConversationTest::testSyncingWhileAccepting()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2848,6 +2920,8 @@ ConversationTest::testSyncingWhileAccepting()
 void
 ConversationTest::testCountInteractions()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto convId = libjami::startConversation(aliceId);
     std::mutex mtx;
@@ -2884,6 +2958,8 @@ ConversationTest::testCountInteractions()
 void
 ConversationTest::testReplayConversation()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -2971,6 +3047,8 @@ ConversationTest::testReplayConversation()
 void
 ConversationTest::testSyncWithoutPinnedCert()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3083,6 +3161,8 @@ ConversationTest::testSyncWithoutPinnedCert()
 void
 ConversationTest::testImportMalformedContacts()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto malformedContacts = fileutils::loadFile(std::filesystem::current_path().string()
                                                  + "/conversation/rsc/incorrectContacts");
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
@@ -3106,6 +3186,8 @@ ConversationTest::testImportMalformedContacts()
 void
 ConversationTest::testRemoveReaddMultipleDevice()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3253,6 +3335,8 @@ END:VCARD";
 void
 ConversationTest::testSendReply()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3325,6 +3409,8 @@ ConversationTest::testSendReply()
 void
 ConversationTest::testSearchInConv()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3419,6 +3505,8 @@ ConversationTest::testSearchInConv()
 void
 ConversationTest::testConversationPreferences()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
     std::mutex mtx;
@@ -3464,6 +3552,8 @@ ConversationTest::testConversationPreferences()
 void
 ConversationTest::testConversationPreferencesBeforeClone()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3559,6 +3649,8 @@ ConversationTest::testConversationPreferencesBeforeClone()
 void
 ConversationTest::testConversationPreferencesMultiDevices()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3650,6 +3742,8 @@ ConversationTest::testConversationPreferencesMultiDevices()
 void
 ConversationTest::testFixContactDetails()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3687,6 +3781,8 @@ ConversationTest::testFixContactDetails()
 void
 ConversationTest::testRemoveOneToOneNotInDetails()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3740,6 +3836,8 @@ ConversationTest::testRemoveOneToOneNotInDetails()
 void
 ConversationTest::testMessageEdition()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -3833,6 +3931,8 @@ ConversationTest::testMessageEdition()
 void
 ConversationTest::testMessageReaction()
 {
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
