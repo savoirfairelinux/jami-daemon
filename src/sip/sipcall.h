@@ -431,6 +431,7 @@ private:
                              const MediaDescription& remoteMedia);
     // Find the stream index with the matching label
     int findRtpStreamIndex(const std::string& label) const;
+    size_t getRtpStreamsSize() const;
 
     std::vector<IceCandidate> getAllRemoteCandidates(IceTransport& transport) const;
 
@@ -519,6 +520,7 @@ private:
     void detachAudioFromConference();
 
     std::mutex setupSuccessMutex_;
+    mutable std::recursive_mutex rtpStreamsMutex_;
 #ifdef ENABLE_VIDEO
     int rotation_ {0};
 #endif
