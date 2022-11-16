@@ -122,7 +122,6 @@ public:
         : repository_(ConversationRepository::createConversation(account, mode, otherMember))
         , account_(account)
     {
-        repository_ = ConversationRepository::createConversation(account, mode, otherMember);
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
@@ -234,10 +233,8 @@ public:
                             action = 4;
                         if (action != -1) {
                             announceMember = true;
-                            emitSignal<libjami::ConversationSignal::ConversationMemberEvent>(accountId_,
-                                                                                           convId,
-                                                                                           uri,
-                                                                                           action);
+                            emitSignal<libjami::ConversationSignal::ConversationMemberEvent>(
+                                accountId_, convId, uri, action);
                         }
                     }
                 }
@@ -370,10 +367,7 @@ public:
         auto deviceSockets = gitSocketList_.find(deviceId);
         return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr;
     }
-    /*bool hasGitSocket(const DeviceId& deviceId) const
-    {
-        return gitSocket(deviceId) != nullptr;
-    }*/
+
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
     {
         gitSocketList_[deviceId] = socket;
@@ -383,7 +377,7 @@ public:
         auto deviceSockets = gitSocketList_.find(deviceId);
         if (deviceSockets != gitSocketList_.end()) {
             gitSocketList_.erase(deviceSockets);
-            // matabledht.remove(deviceId);
+            // swarmManager_->removeNode(deviceId);
         }
     }
     std::mutex writeMtx_ {};
@@ -1141,8 +1135,8 @@ Conversation::updatePreferences(const std::map<std::string, std::string>& map)
     std::ofstream file(filePath, std::ios::trunc | std::ios::binary);
     msgpack::pack(file, prefs);
     emitSignal<libjami::ConversationSignal::ConversationPreferencesUpdated>(pimpl_->accountId_,
-                                                                          id(),
-                                                                          std::move(prefs));
+                                                                            id(),
+                                                                            std::move(prefs));
 }
 
 std::map<std::string, std::string>
@@ -1390,8 +1384,7 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
 {
     pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
                                             this](const std::string& deviceId, ChannelCb&& cb) {
-        return needSocket(id(), deviceId, std::move(cb),
-                               "application/im-gitmessage-id");
+        return needSocket(id(), deviceId, std::move(cb), "application/im-gitmessage-id");
     };
     std::vector<DeviceId> devices;
     for (const auto& m : pimpl_->repository_->devices())
@@ -1434,9 +1427,9 @@ Conversation::search(uint32_t req,
             auto commits = sthis->pimpl_->repository_->search(filter);
             if (commits.size() > 0)
                 emitSignal<libjami::ConversationSignal::MessagesFound>(req,
-                                                                     acc->getAccountID(),
-                                                                     sthis->id(),
-                                                                     std::move(commits));
+                                                                       acc->getAccountID(),
+                                                                       sthis->id(),
+                                                                       std::move(commits));
             // If we're the latest thread, inform client that the search is finished
             if ((*flag)-- == 1 /* decrement return the old value */) {
                 emitSignal<libjami::ConversationSignal::MessagesFound>(

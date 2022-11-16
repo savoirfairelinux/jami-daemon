@@ -395,7 +395,6 @@ public:
                 const std::shared_ptr<std::atomic_int>& flag) const;
 
     std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const;
-    // bool hasGitSocket(const DeviceId& deviceId) const;
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
     void removeGitSocket(const DeviceId& deviceId);
     void removeGitSockets();

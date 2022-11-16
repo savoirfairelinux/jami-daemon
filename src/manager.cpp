@@ -1682,11 +1682,6 @@ Manager::scheduleTaskIn(std::function<void()>&& task,
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout, filename, linum);
 }
 
-// Must be invoked periodically by a timer from the main event loop
-void
-Manager::pollEvents()
-{}
-
 // THREAD=Main
 
 void
@@ -1843,9 +1838,9 @@ Manager::incomingCall(const std::string& accountId, Call& call)
     }
 
     JAMI_DEBUG("Incoming call {:s} on account {:s} with {:d} media",
-              call.getCallId(),
-              accountId,
-              mediaList.size());
+               call.getCallId(),
+               accountId,
+               mediaList.size());
 
     // Report the call using new API.
     emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId,
@@ -3158,14 +3153,15 @@ Manager::getJamiPluginManager() const
 }
 #endif
 
-std::optional<std::weak_ptr<ChannelSocket>>
-Manager::gitSocket(const std::string& accountId,
-                   const std::string& deviceId,
-                   const std::string& conversationId)
+std::shared_ptr<ChannelSocket>
+Manager::gitSocket(std::string_view accountId,
+                   std::string_view deviceId,
+                   std::string_view conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
-        return acc->gitSocket(DeviceId(deviceId), conversationId);
-    return std::nullopt;
+        if (auto convModule = acc->convModule())
+            return convModule->gitSocket(deviceId, conversationId);
+    return nullptr;
 }
 
 std::map<std::string, std::string>
