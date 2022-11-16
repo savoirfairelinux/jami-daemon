@@ -39,7 +39,16 @@ libjamiacc_la_SOURCES = \
 	./jamidht/sync_module.h \
 	./jamidht/sync_module.cpp \
 	./jamidht/transfer_channel_handler.h \
-	./jamidht/transfer_channel_handler.cpp
+	./jamidht/transfer_channel_handler.cpp \
+	./jamidht/swarm/routing_table.h \
+	./jamidht/swarm/routing_table.cpp \
+	./jamidht/swarm/swarm_protocol.h \
+	./jamidht/swarm/swarm_protocol.cpp \
+	./jamidht/swarm/swarm_channel_handler.h \
+	./jamidht/swarm/swarm_channel_handler.cpp \
+	./jamidht/swarm/swarm_manager.h \
+	./jamidht/swarm/swarm_manager.cpp
+
 
 if RINGNS
 libjamiacc_la_SOURCES += \
