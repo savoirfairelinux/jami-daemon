@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "902a95ad_9c0703db",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 39
+      },
+      "lineNbr": 689,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-16T15:17:41Z",
+      "side": 0,
+      "message": "https://review.jami.net/c/jami-daemon/+/23057\n\nMissing this part, causing no password to be sent to the client.",
+      "range": {
+        "startLine": 681,
+        "startChar": 0,
+        "endLine": 689,
+        "endChar": 66
+      },
+      "revId": "6e00bf9b5e5379c3aae2cbd363e3b6e260539796",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
