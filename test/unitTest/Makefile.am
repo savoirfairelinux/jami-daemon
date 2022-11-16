@@ -9,6 +9,8 @@ AM_TESTS_ENVIRONMENT =                    \
 # against a static version of libjami instead.
 AM_CXXFLAGS += -I$(top_srcdir)/src
 AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libjami.la -static
+# Following line is a hack
+AM_LDFLAGS += -lopendht -lupnp -lgnutls -lwebrtc_audio_processing -lsecp256k1
 check_PROGRAMS =
 
 ####### Unit Test ########
