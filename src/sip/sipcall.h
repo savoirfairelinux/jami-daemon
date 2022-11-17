@@ -280,7 +280,6 @@ public:
         void operator()(pjsip_inv_session*) const noexcept;
     };
 
-    std::shared_ptr<AudioRtpSession> getAudioRtp() const;
 #ifdef ENABLE_VIDEO
     void setRotation(int streamIdx, int rotation);
 #endif
