@@ -2916,10 +2916,10 @@ Manager::sendTextMessage(const std::string& accountID,
             if (pluginChatManager.hasHandlers()) {
                 auto cm = std::make_shared<JamiMessage>(accountID, to, false, payloads, fromPlugin);
                 pluginChatManager.publishMessage(cm);
-                return acc->sendTextMessage(cm->peerId, cm->data);
+                return acc->sendTextMessage(cm->peerId, "", cm->data);
             } else
 #endif // ENABLE_PLUGIN
-                return acc->sendTextMessage(to, payloads);
+                return acc->sendTextMessage(to, "", payloads);
         } catch (const std::exception& e) {
             JAMI_ERR("Exception during text message sending: %s", e.what());
         }
