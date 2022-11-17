@@ -292,15 +292,6 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
 {
-    try {
-        std::istringstream is(fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
-                                                           std::chrono::hours(24 * 7)));
-        std::getline(is, proxyServerCached_);
-    } catch (const std::exception& e) {
-        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s",
-                 getAccountID().c_str(),
-                 e.what());
-    }
 }
 
 JamiAccount::~JamiAccount() noexcept
@@ -893,6 +884,23 @@ JamiAccount::loadConfig()
 {
     SIPAccountBase::loadConfig();
     registeredName_ = config().registeredName;
+    try {
+        auto str = fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
+                                                           std::chrono::hours(24 * 7));
+        std::string err;
+        Json::Value root;
+        Json::CharReaderBuilder rbuilder;
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        if (reader->parse(str.data(), str.data() + str.size(), &root, &err)) {
+            auto key = root[getProxyConfigKey()];
+            if (key.isString())
+                proxyServerCached_ = key.asString();
+        }
+    } catch (const std::exception& e) {
+        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s",
+                 getAccountID().c_str(),
+                 e.what());
+    }
     loadAccount(config().archive_password, config().archive_pin, config().archive_path);
 }
 
@@ -2609,11 +2617,13 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
         fileutils::check_dir(cachePath_.c_str(), 0700);
         std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
         std::ofstream file = fileutils::ofstream(proxyCachePath);
-        JAMI_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
+        JAMI_DEBUG("Cache DHT proxy server: {}", proxyServerCached_);
+        Json::Value node(Json::objectValue);
+        node[getProxyConfigKey()] = proxyServerCached_;
         if (file.is_open())
-            file << proxyServerCached_;
+            file << node;
         else
-            JAMI_WARN("Cannot write into %s", proxyCachePath.c_str());
+            JAMI_WARNING("Cannot write into {}", proxyCachePath);
     }
     return proxyServerCached_;
 }
