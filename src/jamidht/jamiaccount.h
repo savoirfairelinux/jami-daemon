@@ -313,8 +313,11 @@ public:
                      const std::map<std::string, std::string>& payloads,
                      uint64_t id,
                      bool retryOnTimeout = true,
-                     bool onlyConnected = false) override;
+                     bool onlyConnected = false,
+                     const std::string& deviceId = {}) override;
+
     uint64_t sendTextMessage(const std::string& to,
+                             const std::string& deviceId,
                              const std::map<std::string, std::string>& payloads,
                              uint64_t refreshToken = 0) override;
     void sendInstantMessage(const std::string& convId,
@@ -458,7 +461,7 @@ public:
     bool handleMessage(const std::string& from,
                        const std::pair<std::string, std::string>& message) override;
 
-    void monitor() const;
+    void monitor();
 
     // File transfer
     void sendFile(const std::string& conversationId,
@@ -512,7 +515,9 @@ public:
      * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
      */
-    void sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId);
+    void sendProfile(const std::string& convId,
+                     const std::string& peerUri,
+                     const std::string& deviceId);
     /**
      * Send profile via cached SIP connection
      * @param peerUri       Uri that will receive the profile
@@ -573,6 +578,13 @@ public:
     bool isMobile() const {
         return config().proxyEnabled and not config().deviceKey.empty();
     }
+
+#ifdef LIBJAMI_TESTABLE
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
+    {
+        return channelHandlers_;
+    };
+#endif
 
 private:
     NON_COPYABLE(JamiAccount);
