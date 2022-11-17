@@ -237,4 +237,10 @@ ut_sip_srtp_SOURCES = sip_account/sip_srtp.cpp
 check_PROGRAMS += ut_plugins
 ut_plugins_SOURCES = plugins/plugins.cpp common.cpp
 
+#
+# Routing Table
+#
+check_PROGRAMS += ut_routing_table
+ut_routing_table_SOURCES = swarm/routing_table.cpp
+
 TESTS = $(check_PROGRAMS)

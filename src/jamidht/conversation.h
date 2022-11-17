@@ -20,8 +20,8 @@
 #pragma once
 
 #include "jamidht/conversationrepository.h"
-#include "jami/datatransfer_interface.h"
 #include "conversationrepository.h"
+#include "swarm/swarm_protocol.h"
 
 #include <json/json.h>
 #include <msgpack.hpp>
@@ -117,6 +117,11 @@ using OnLoadMessages
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
+using DeviceId = dht::PkId;
+using GitSocketList = std::map<DeviceId, std::shared_ptr<ChannelSocket>>;
+using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
+using NeedSocketCb
+    = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -129,6 +134,12 @@ public:
                  const std::string& remoteDevice,
                  const std::string& conversationId);
     ~Conversation();
+
+    /**
+     * Bootstrap swarm manager to other peers
+     * @param onBootstrapped    Callback called when connection is successfully established
+     */
+    void bootstrap(std::function<void()> onBootstraped);
 
     /**
      * Refresh active calls.
@@ -146,6 +157,21 @@ public:
     void onLastDisplayedUpdated(
         std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb);
 
+    /**
+     * Set the callback that will be called whenever a new socket will be needed
+     * @param cb
+     */
+    void onNeedSocket(NeedSocketCb cb);
+    /**
+     * Add swarm connection to the DRT
+     * @param channel       Related channel
+     */
+    void addSwarmChannel(std::shared_ptr<ChannelSocket> channel);
+
+    /**
+     * Get conversation's id
+     * @return conversation Id
+     */
     std::string id() const;
 
     // Member management
@@ -182,6 +208,24 @@ public:
         const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
                                                      MemberRole::LEFT,
                                                      MemberRole::BANNED}) const;
+
+    /**
+     * Get peers to sync with. This is mostly managed by the DRT
+     * @return some mobile nodes and all connected nodes
+     */
+    std::vector<NodeId> peersToSyncWith() const;
+    /**
+     * Check if we're at least connected to one node
+     * @return if the DRT is connected
+     */
+    bool isBoostraped() const;
+    /**
+     * Retrieve the uri from a deviceId
+     * @note used by swarm manager (peersToSyncWith)
+     * @param deviceId
+     * @return corresponding issuer
+     */
+    std::string uriFromDevice(const std::string& deviceId) const;
 
     /**
      * Join a conversation
@@ -430,6 +474,11 @@ public:
      * @return a vector of map with the following keys: "id", "uri", "device"
      */
     std::vector<std::map<std::string, std::string>> currentCalls() const;
+
+    std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const;
+    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
+    void removeGitSocket(const DeviceId& deviceId);
+    void removeGitSockets();
 
 private:
     std::shared_ptr<Conversation> shared()
