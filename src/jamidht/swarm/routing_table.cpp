@@ -52,6 +52,7 @@ Bucket::addNode(NodeInfo&& info)
     if (nodes.try_emplace(nodeId, std::move(info)).second) {
         connecting_nodes.erase(nodeId);
         known_nodes.erase(nodeId);
+        mobile_nodes.erase(nodeId);
         return true;
     }
     return false;
@@ -63,8 +64,11 @@ Bucket::removeNode(const NodeId& nodeId)
     auto node = nodes.find(nodeId);
     if (node == nodes.end())
         return false;
-    node->second.isPersistent ? addKnownNode(nodeId) : addMobileNode(nodeId);
     nodes.erase(nodeId);
+    if (node->second.isMobile_)
+        addMobileNode(nodeId);
+    else
+        addKnownNode(nodeId);
     return true;
 }
 
@@ -80,21 +84,16 @@ Bucket::getNodeIds() const
 bool
 Bucket::hasNode(const NodeId& nodeId) const
 {
-    auto found = nodes.find(nodeId);
-    if (found != nodes.end()) {
-        return true;
-    }
-
-    return false;
+    return nodes.find(nodeId) != nodes.end();
 }
 
 bool
 Bucket::addKnownNode(const NodeId& nodeId)
 {
-    if (known_nodes.emplace(nodeId).second) {
-        connecting_nodes.erase(nodeId);
-        mobile_nodes.erase(nodeId);
-        return true;
+    if (!hasNode(nodeId)) {
+        if (known_nodes.emplace(nodeId).second) {
+            return true;
+        }
     }
     return false;
 }
@@ -114,11 +113,24 @@ Bucket::getKnownNode(unsigned index) const
 bool
 Bucket::addMobileNode(const NodeId& nodeId)
 {
-    if (mobile_nodes.emplace(nodeId).second) {
-        connecting_nodes.erase(nodeId);
-        known_nodes.erase(nodeId);
-        // nodes.erase(nodeId);
-        return true;
+    if (!hasNode(nodeId)) {
+        if (mobile_nodes.emplace(nodeId).second) {
+            known_nodes.erase(nodeId);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+Bucket::addConnectingNode(const NodeId& nodeId)
+{
+    if (!hasNode(nodeId)) {
+        if (connecting_nodes.emplace(nodeId).second) {
+            known_nodes.erase(nodeId);
+            mobile_nodes.erase(nodeId); // not supposed to happen
+            return true;
+        }
     }
     return false;
 }
@@ -160,12 +172,19 @@ Bucket::printBucket(unsigned number) const
         JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), it->first.toString());
         nodeNum++;
     }
-    /*     JAMI_ERROR("Mobile Nodes");
-        nodeNum = 0;
-        for (auto it = mobile_nodes.begin(); it != mobile_nodes.end(); ++it) {
-            JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
-            nodeNum++;
-        } */
+    JAMI_ERROR("Mobile Nodes");
+    nodeNum = 0;
+    for (auto it = mobile_nodes.begin(); it != mobile_nodes.end(); ++it) {
+        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
+        nodeNum++;
+    }
+
+    JAMI_ERROR("Known Nodes");
+    nodeNum = 0;
+    for (auto it = known_nodes.begin(); it != known_nodes.end(); ++it) {
+        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
+        nodeNum++;
+    }
 };
 
 bool
@@ -187,28 +206,20 @@ void
 Bucket::shutdownAllNodes()
 {
     while (not nodes.empty()) {
-        JAMI_ERROR("HERE");
-
         auto it = nodes.begin();
         auto socket = it->second.socket;
         auto nodeId = socket->deviceId();
-
-        JAMI_ERROR("Sending shutdown to {}", nodeId.toString());
         socket->shutdown();
         removeNode(nodeId);
     }
-
-    JAMI_ERROR("#########################EMPTY {} "
-               "#############################################################",
-               fmt::ptr(this));
 }
 
 void
-Bucket::changePersistency(const NodeId& nodeId, bool isPersistent)
+Bucket::changeMobility(const NodeId& nodeId, bool isMobile)
 {
     auto itn = nodes.find(nodeId);
     if (itn != nodes.end()) {
-        itn->second.isPersistent = isPersistent;
+        itn->second.isMobile_ = isMobile;
     }
 }
 
@@ -234,9 +245,9 @@ bool
 RoutingTable::addNode(std::shared_ptr<ChannelSocketInterface> socket)
 {
     auto bucket = findBucket(socket->deviceId());
-    bucket->removeConnectingNode(socket->deviceId());
-    bucket->removeKnownNode(socket->deviceId());
-    bucket->removeMobileNode(socket->deviceId());
+    /*     bucket->removeConnectingNode(socket->deviceId());
+        bucket->removeKnownNode(socket->deviceId());
+        bucket->removeMobileNode(socket->deviceId()); */
     return addNode(socket, bucket);
 }
 
@@ -277,42 +288,37 @@ RoutingTable::addKnownNode(const NodeId& nodeId)
 {
     auto bucket = findBucket(nodeId);
 
-    if (bucket->hasNode(nodeId) || bucket == buckets.end() || id_ == nodeId) {
+    if (bucket == buckets.end() || id_ == nodeId) {
         return 0;
     }
 
     else {
         bucket->addKnownNode(nodeId);
-        bucket->removeConnectingNode(nodeId); //?
-        return 1;
     }
+
+    return 1;
 }
+
 bool
 RoutingTable::addMobileNode(const NodeId& nodeId)
 {
     auto bucket = findBucket(nodeId);
+
     if (bucket == buckets.end() || id_ == nodeId) {
         return 0;
     }
 
     else {
         bucket->addMobileNode(nodeId);
-        return 1;
     }
+
+    return 1;
 }
 
-bool
+void
 RoutingTable::removeMobileNode(const NodeId& nodeId)
 {
-    auto bucket = findBucket(nodeId);
-    if (bucket == buckets.end() || id_ == nodeId) {
-        return 0;
-    }
-
-    else {
-        bucket->removeMobileNode(nodeId);
-        return 1;
-    }
+    return findBucket(nodeId)->removeMobileNode(nodeId);
 }
 
 bool
@@ -330,11 +336,15 @@ RoutingTable::addConnectingNode(const NodeId& nodeId)
     }
 
     else {
-        bucket->removeKnownNode(nodeId);
         bucket->addConnectingNode(nodeId);
-
         return 1;
     }
+}
+
+void
+RoutingTable::removeConnectingNode(const NodeId& nodeId)
+{
+    findBucket(nodeId)->removeConnectingNode(nodeId);
 }
 
 /**
@@ -352,6 +362,20 @@ RoutingTable::getNodes() const
 }
 
 /**
+ * Returns all routing table's known nodes
+ */
+std::vector<NodeId>
+RoutingTable::getKnownNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getKnownNodes();
+        ret.insert(ret.end(), nodes.begin(), nodes.end());
+    }
+    return ret;
+}
+
+/**
  * Returns all routing table's mobile nodes
  */
 std::vector<NodeId>
@@ -360,6 +384,20 @@ RoutingTable::getMobileNodes() const
     std::vector<NodeId> ret;
     for (const auto& b : buckets) {
         const auto& nodes = b.getMobileNodes();
+        ret.insert(ret.end(), nodes.begin(), nodes.end());
+    }
+    return ret;
+}
+
+/**
+ * Returns all routing table's connecting nodes
+ */
+std::vector<NodeId>
+RoutingTable::getConnectingNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getConnectingNodes();
         ret.insert(ret.end(), nodes.begin(), nodes.end());
     }
     return ret;

@@ -67,31 +67,34 @@ public:
     void addChannel(std::shared_ptr<ChannelSocketInterface> channel);
 
     void removeNode(const NodeId& nodeId);
-    void changePersistency(const NodeId& nodeId, bool isPersistent);
+    void changeMobility(const NodeId& nodeId, bool isMobile);
 
     /** For testing */
     RoutingTable& getRoutingTable() { return routing_table; };
     std::list<Bucket>& getBuckets() { return routing_table.getBuckets(); };
 
-    void shutdown()
-    {
-        JAMI_ERROR("SENDING SD {}", id_.toString());
-        routing_table.shutdownAllNodes();
-    }
+    void shutdown();
 
     void display()
     {
         JAMI_DEBUG("SwarmManager {:s} has {:d} nodes in table [P = {}]",
                    getId().to_c_str(),
                    routing_table.getRoutingTableNodeCount(),
-                   isPersistent);
+                   isMobile_);
     }
 
     void onConnectionChanged(OnConnectionChanged cb) { onConnectionChanged_ = std::move(cb); }
 
-    void setPersistency(bool isPersistent_) { isPersistent = isPersistent_; }
+    void setMobility(bool isMobile) { isMobile_ = isMobile; }
 
-    const bool isPersist() const { return isPersistent; }
+    bool isMobile() const { return isMobile_; }
+
+    /**
+     * Maintain/Update buckets
+     */
+    void maintainBuckets();
+
+    bool hasChannel(const NodeId& deviceId);
 
 private:
     /**
@@ -131,11 +134,6 @@ private:
     void receiveMessage(const std::shared_ptr<ChannelSocketInterface>& socket);
 
     /**
-     * Maintain/Update buckets
-     */
-    void maintainBuckets();
-
-    /**
      * Add list of nodes to the known nodes list
      * @param asio::error_code& ec
      * @param shared_ptr<ChannelSocketInterface>& socket
@@ -154,10 +152,14 @@ private:
     void removeNodeInternal(const NodeId& nodeId);
 
     const NodeId id_;
-    bool isPersistent;
+    bool isMobile_ {false};
     mutable std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+
+    std::atomic_bool isShutdown_ {false};
+
+    OnConnectionChanged onConnectionChanged_ {};
 };
 
 } // namespace jami
