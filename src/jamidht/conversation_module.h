@@ -36,9 +36,9 @@ class SIPCall;
 
 struct SyncMsg
 {
-    jami::DeviceSync ds;
-    std::map<std::string, jami::ConvInfo> c;
-    std::map<std::string, jami::ConversationRequest> cr;
+    DeviceSync ds;
+    std::map<std::string, ConvInfo> c;
+    std::map<std::string, ConversationRequest> cr;
     // p is conversation's preferences. It's not stored in c, as
     // we can update the preferences without touching any confInfo.
     std::map<std::string, std::map<std::string, std::string>> p;
@@ -60,6 +60,7 @@ public:
                        NeedsSyncingCb&& needsSyncingCb,
                        SengMsgCb&& sendMsgCb,
                        NeedSocketCb&& onNeedSocket,
+                       NeedSocketCb&& onNeedSwarmSocket,
                        UpdateConvReq&& updateConvReqCb);
     ~ConversationModule() = default;
 
@@ -425,6 +426,13 @@ public:
     static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::string& path);
     void addConvInfo(const ConvInfo& info);
     void setConversationMembers(const std::string& convId, const std::vector<std::string>& members);
+
+    std::shared_ptr<Conversation> getConversation(const std::string& convId);
+    std::shared_ptr<ChannelSocket> gitSocket(std::string_view deviceId,
+                                             std::string_view convId) const;
+    void removeGitSocket(std::string_view deviceId, std::string_view convId);
+    void shutdownConnections();
+    void addSwarmChannel(const std::string& conversationId, std::shared_ptr<ChannelSocket>);
 
 private:
     class Impl;
