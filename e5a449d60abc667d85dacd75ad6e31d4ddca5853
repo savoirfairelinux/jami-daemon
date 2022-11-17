@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "386ebecb_d18476e1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 3494,
+      "author": {
+        "id": 975
+      },
+      "writtenOn": "2022-11-17T20:12:35Z",
+      "side": 0,
+      "message": "Moved from this callback (being used by RTPSession) into updateMediaStream(), updateAllMediaStreams \u0026 initMediaStreams() to avoid the RTPSession thread having to hold the rtpStreamsMutex_.",
+      "revId": "e5a449d60abc667d85dacd75ad6e31d4ddca5853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
