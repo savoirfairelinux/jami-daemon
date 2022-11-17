@@ -632,6 +632,11 @@ private:
     struct BuddyInfo;
     struct DiscoveredPeer;
 
+    inline std::string getProxyConfigKey() const {
+        const auto& conf = config();
+        return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl).toString();
+    }
+
     /**
      * Compute archive encryption key and DHT storage location from password and PIN.
      */
