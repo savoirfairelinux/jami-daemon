@@ -20,6 +20,7 @@
 
 #include "swarm_manager.h"
 #include "connectivity/multiplexed_socket.h"
+#include <opendht/thread_pool.h>
 
 constexpr const std::chrono::minutes FIND_PERIOD {10};
 
@@ -48,10 +49,7 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
         addKnownNodes(std::move(NodeId));
     }
 
-    dht::ThreadPool::io().run([w = weak()] {
-        if (auto shared = w.lock())
-            shared->maintainBuckets();
-    });
+    maintainBuckets();
 }
 
 void
@@ -62,8 +60,6 @@ SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
     for (const auto& NodeId : mobile_nodes) {
         addMobileNodes(std::move(NodeId));
     }
-
-    maintainBuckets();
 }
 
 void
@@ -183,6 +179,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
         auto socket = wsocket.lock();
         if (shared and socket) {
             shared->removeNode(socket->deviceId());
+            shared->routing_table.addKnownNode(socket->deviceId()); // TODO check if automatic
             shared->maintainBuckets();
         }
     });
@@ -200,7 +197,6 @@ SwarmManager::maintainBuckets()
         if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
             auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes,
                                                          rd);
-
             for (auto& node : nodesToTry) {
                 tryConnect(node);
             }
@@ -217,34 +213,46 @@ SwarmManager::tryConnect(const NodeId& nodeId)
     //    bucket->addConnectingNode(nodeId);
 
     if (needSocketCb_)
-        needSocketCb_(nodeId.toString(),
-                      [this, nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
-                          std::unique_lock<std::mutex> lock(mutex);
-                          if (socket) {
-                              // NodeInfo node(socket);
-                              if (routing_table.addNode(socket)) {
-                                  std::error_code ec;
-                                  resetNodeExpiry(ec, socket, id_);
-                                  lock.unlock();
-                                  receiveMessage(socket);
-                              }
-                          } else {
-                              // routing_table.addKnownNode(nodeId);
-                              // maintainBuckets();
-                          }
-                          return true;
-                      });
+        needSocketCb_(
+            nodeId.toString(),
+            [this, nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
+                if (socket) {
+                    addChannel(socket);
+                    return true;
+                }
+                std::unique_lock<std::mutex> lk(mutex);
+                routing_table.addKnownNode(nodeId);   // TODO move?
+                auto bucket = routing_table.findBucket(getId());
+                bucket->removeConnectingNode(nodeId); // TODO move?
+                if (bucket->getConnectingNodesSize() == 0 && bucket->getNodeIds().size() == 0
+                    && onConnectionChanged_) {
+                    lk.unlock();
+                    JAMI_WARNING("[SwarmManager {}] Bootstrap: all connections failed",
+                                    fmt::ptr(this));
+                    onConnectionChanged_(false);
+                }
+                return true;
+            });
 }
 
 void
 SwarmManager::addChannel(const std::shared_ptr<ChannelSocketInterface>& channel)
 {
+    auto emit = false;
     {
         std::lock_guard<std::mutex> lock(mutex);
+        emit = routing_table.findBucket(getId())->getNodeIds().size() == 0;
         auto bucket = routing_table.findBucket(channel->deviceId());
-        routing_table.addNode(channel, bucket);
+        if (routing_table.addNode(channel, bucket)) {
+            std::error_code ec;
+            resetNodeExpiry(ec, channel, id_);
+        }
     }
     receiveMessage(channel);
+    if (emit && onConnectionChanged_) {
+        JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
+        onConnectionChanged_(true);
+    }
 }
 
 void
