@@ -36,6 +36,10 @@ SwarmChannelHandler::connect(const DeviceId& deviceId,
                              const std::string& conversationId,
                              ConnectCb&& cb)
 {
+#ifdef LIBJAMI_TESTABLE
+    if (disableSwarmManager)
+        return;
+#endif
     connectionManager_.connectDevice(deviceId, fmt::format("swarm://{}", conversationId), cb);
 }
 
@@ -43,6 +47,10 @@ bool
 SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
                                const std::string& name)
 {
+#ifdef LIBJAMI_TESTABLE
+    if (disableSwarmManager)
+        return false;
+#endif
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
         return false;
