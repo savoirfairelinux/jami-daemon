@@ -20,8 +20,8 @@
 #pragma once
 
 #include "jamidht/conversationrepository.h"
-#include "jami/datatransfer_interface.h"
 #include "conversationrepository.h"
+#include "swarm/swarm_protocol.h"
 
 #include <json/json.h>
 #include <msgpack.hpp>
@@ -32,6 +32,8 @@
 #include <map>
 #include <memory>
 #include <set>
+
+
 
 namespace jami {
 
@@ -136,6 +138,11 @@ public:
     ~Conversation();
 
     /**
+     * TODO
+     */
+    void bootstrap(std::function<void()> onBootstraped);
+
+    /**
      * Refresh active calls.
      * @note: If the host crash during a call, when initializing, we need to update
      * and commit all the crashed calls
@@ -188,6 +195,8 @@ public:
         const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
                                                      MemberRole::LEFT,
                                                      MemberRole::BANNED}) const;
+
+    std::vector<NodeId> peersToSyncWith();
 
     /**
      * Join a conversation
