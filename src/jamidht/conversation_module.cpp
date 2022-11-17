@@ -122,9 +122,7 @@ public:
     void sendMessageNotification(const std::string& conversationId,
                                  const std::string& commitId,
                                  bool sync);
-    void sendMessageNotification(const Conversation& conversation,
-                                 const std::string& commitId,
-                                 bool sync);
+    void sendMessageNotification(Conversation& conversation, const std::string& commitId, bool sync);
 
     /**
      * @return if a convId is a valid conversation (repository cloned & usable)
@@ -463,6 +461,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         {
                             std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
                             pendingConversationsFetch_.erase(conversationId);
+                            // TODO notify peers that a new commit is there (DRT)
                         }
                         if (syncCnt.fetch_sub(1) == 1) {
                             if (auto account = account_.lock())
@@ -498,6 +497,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                   accountId_.c_str(),
                   conversationId.c_str());
         sendMsgCb_(peer,
+                   {},
                    std::map<std::string, std::string> {{"application/invite", conversationId}},
                    0);
     }
@@ -797,7 +797,7 @@ ConversationModule::Impl::sendMessageNotification(const std::string& conversatio
 }
 
 void
-ConversationModule::Impl::sendMessageNotification(const Conversation& conversation,
+ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                   const std::string& commitId,
                                                   bool sync)
 {
@@ -807,12 +807,27 @@ ConversationModule::Impl::sendMessageNotification(const Conversation& conversati
     message["deviceId"] = deviceId_;
     Json::StreamWriterBuilder builder;
     const auto text = Json::writeString(builder, message);
-    for (const auto& member : conversation.memberUris(sync ? "" : username_)) {
-        // Announce to all members that a new message is sent
-        refreshMessage[member] = sendMsgCb_(member,
-                                            std::map<std::string, std::string> {
-                                                {"application/im-gitmessage-id", text}},
-                                            refreshMessage[member]);
+
+    if (sync) {
+        // Announce to our devices
+        refreshMessage[username_] = sendMsgCb_(username_,
+                                               {},
+                                               std::map<std::string, std::string> {
+                                                   {"application/im-gitmessage-id", text}},
+                                               refreshMessage[username_]);
+    }
+    // Announce to some other devices that a new commit is available
+    for (const auto& device : conversation.peersToSyncWith()) {
+        auto deviceId = device.toString();
+        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+        if (!cert || !cert->issuer)
+            continue;
+        auto memberUri = cert->issuer->getId().toString();
+        refreshMessage[deviceId] = sendMsgCb_(memberUri,
+                                              device,
+                                              std::map<std::string, std::string> {
+                                                  {"application/im-gitmessage-id", text}},
+                                              refreshMessage[deviceId]);
     }
 }
 
@@ -1210,7 +1225,7 @@ ConversationModule::onNeedConversationRequest(const std::string& from,
         auto invite = itConv->second->generateInvitation();
         lk.unlock();
         JAMI_DBG("%s is asking a new invite for %s", from.c_str(), conversationId.c_str());
-        pimpl_->sendMsgCb_(from, std::move(invite), 0);
+        pimpl_->sendMsgCb_(from, {}, std::move(invite), 0);
     }
 }
 
@@ -1680,6 +1695,7 @@ ConversationModule::onNewCommit(const std::string& peer,
                   pimpl_->accountId_.c_str(),
                   conversationId.c_str());
         pimpl_->sendMsgCb_(peer,
+                           {},
                            std::map<std::string, std::string> {
                                {"application/invite", conversationId}},
                            0);
@@ -1715,7 +1731,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
         // we should not forbid new invites
         auto invite = it->second->generateInvitation();
         lk.unlock();
-        pimpl_->sendMsgCb_(contactUri, std::move(invite), 0);
+        pimpl_->sendMsgCb_(contactUri, {}, std::move(invite), 0);
         return;
     }
 
@@ -1733,7 +1749,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                                 if (sendRequest) {
                                     auto invite = it->second->generateInvitation();
                                     lk.unlock();
-                                    pimpl_->sendMsgCb_(contactUri, std::move(invite), 0);
+                                    pimpl_->sendMsgCb_(contactUri, {}, std::move(invite), 0);
                                 }
                             }
                         }

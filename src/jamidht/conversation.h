@@ -31,6 +31,7 @@
 #include "jamidht/conversationrepository.h"
 #include "jami/datatransfer_interface.h"
 #include "conversationrepository.h"
+#include "swarm/swarm_protocol.h"
 
 namespace jami {
 
@@ -183,6 +184,8 @@ public:
         const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
                                                      MemberRole::LEFT,
                                                      MemberRole::BANNED}) const;
+
+    std::vector<NodeId> peersToSyncWith();
 
     /**
      * Join a conversation

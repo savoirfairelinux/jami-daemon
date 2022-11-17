@@ -906,7 +906,7 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
             JAMI_ERR("[Account %s] Can't change archive password", getAccountID().c_str());
             return false;
         }
-        editConfig([&](JamiAccountConfig& config){
+        editConfig([&](JamiAccountConfig& config) {
             config.archiveHasPassword = not password_new.empty();
         });
     } catch (const std::exception& ex) {
@@ -914,9 +914,7 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
                  getAccountID().c_str(),
                  ex.what());
         if (password_old.empty()) {
-            editConfig([&](JamiAccountConfig& config){
-                config.archiveHasPassword = true;
-            });
+            editConfig([&](JamiAccountConfig& config) { config.archiveHasPassword = true; });
             emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                             getAccountDetails());
         }
@@ -981,7 +979,7 @@ JamiAccount::setValidity(const std::string& pwd, const dht::InfoHash& id, int64_
 void
 JamiAccount::forceReloadAccount()
 {
-    editConfig([&](JamiAccountConfig& conf){
+    editConfig([&](JamiAccountConfig& conf) {
         conf.receipt.clear();
         conf.receiptSignature.clear();
     });
@@ -1235,18 +1233,17 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 ip_utils::getDeviceName(),
                 std::move(creds),
                 [this, migrating, hasPassword](const AccountInfo& info,
-                                  const std::map<std::string, std::string>& config,
-                                  std::string&& receipt,
-                                  std::vector<uint8_t>&& receipt_signature) {
+                                               const std::map<std::string, std::string>& config,
+                                               std::string&& receipt,
+                                               std::vector<uint8_t>&& receipt_signature) {
                     JAMI_INFO("[Account %s] Auth success!", getAccountID().c_str());
 
                     fileutils::check_dir(idPath_.c_str(), 0700);
 
                     auto id = info.identity;
-                    editConfig([&](JamiAccountConfig& conf){
-                        std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile) = saveIdentity(id,
-                                                                                        idPath_,
-                                                                                        DEVICE_ID_PATH);
+                    editConfig([&](JamiAccountConfig& conf) {
+                        std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile)
+                            = saveIdentity(id, idPath_, DEVICE_ID_PATH);
                         conf.tlsPassword = {};
                         conf.archiveHasPassword = hasPassword;
                         if (not conf.managerUri.empty()) {
@@ -1256,11 +1253,13 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         conf.username = info.accountId;
                         conf.deviceName = accountManager_->getAccountDeviceName();
 
-                        auto nameServerIt = config.find(libjami::Account::ConfProperties::RingNS::URI);
+                        auto nameServerIt = config.find(
+                            libjami::Account::ConfProperties::RingNS::URI);
                         if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
                             conf.nameServer = nameServerIt->second;
                         }
-                        auto displayNameIt = config.find(libjami::Account::ConfProperties::DISPLAYNAME);
+                        auto displayNameIt = config.find(
+                            libjami::Account::ConfProperties::DISPLAYNAME);
                         if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
                             conf.displayName = displayNameIt->second;
                         }
@@ -1273,9 +1272,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
                     if (not info.photo.empty() or not config_->displayName.empty())
-                        emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
-                                                                                       config_->displayName,
-                                                                                       info.photo);
+                        emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(
+                            getAccountID(), config_->displayName, info.photo);
                     setRegistrationState(RegistrationState::UNREGISTERED);
                     convModule()->loadConversations();
                     doRegister();
@@ -1382,9 +1380,8 @@ JamiAccount::registerName(const std::string& password, const std::string& name)
                 if (response == NameDirectory::RegistrationResponse::success) {
                     if (auto this_ = w.lock()) {
                         this_->registeredName_ = name;
-                        this_->editConfig([&](JamiAccountConfig& config){
-                            config.registeredName = name;
-                        });
+                        this_->editConfig(
+                            [&](JamiAccountConfig& config) { config.registeredName = name; });
                         emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                             this_->accountID_, this_->getVolatileAccountDetails());
                     }
@@ -1746,18 +1743,16 @@ JamiAccount::doRegister_()
                     if (response == NameDirectory::Response::found) {
                         if (this_->registeredName_ != result) {
                             this_->registeredName_ = result;
-                            this_->editConfig([&](JamiAccountConfig& config){
-                                config.registeredName = result;
-                            });
+                            this_->editConfig(
+                                [&](JamiAccountConfig& config) { config.registeredName = result; });
                             emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                                 this_->accountID_, this_->getVolatileAccountDetails());
                         }
                     } else if (response == NameDirectory::Response::notFound) {
                         if (not this_->registeredName_.empty()) {
                             this_->registeredName_.clear();
-                            this_->editConfig([&](JamiAccountConfig& config){
-                                config.registeredName.clear();
-                            });
+                            this_->editConfig(
+                                [&](JamiAccountConfig& config) { config.registeredName.clear(); });
                             emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                                 this_->accountID_, this_->getVolatileAccountDetails());
                         }
@@ -2151,11 +2146,15 @@ JamiAccount::convModule()
                         shared->syncModule()->syncWithConnected(syncMsg);
                 });
             },
-            [this](auto&& uri, auto&& msg, auto token = 0) {
+            [this](auto&& uri, auto&& device, auto&& msg, auto token = 0) {
                 // No need to retrigger, sendTextMessage will call
                 // messageEngine_.sendMessage, already retriggering on
                 // main thread.
-                return sendTextMessage(uri, msg, token);
+                if (!device)
+                    return sendTextMessage(uri, msg, token);
+                JAMI_ERROR("@@@ SEND TEXT MESSAGE TO: {:s} device: {:s}", uri, device.toString());
+                sendMessageToDevice(uri, device, msg);
+                return 0ul;
             },
             [this](const auto& convId, const auto& deviceId, auto cb, const auto& type) {
                 runOnMainThread([w = weak(), convId, deviceId, cb = std::move(cb), type] {
@@ -2562,9 +2561,7 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
 {
     const auto& conf = config();
     if (conf.proxyEnabled and proxyServerCached_.empty()) {
-        JAMI_DEBUG("[Account {:s}] loading DHT proxy URL: {:s}",
-                 getAccountID(),
-                 conf.proxyListUrl);
+        JAMI_DEBUG("[Account {:s}] loading DHT proxy URL: {:s}", getAccountID(), conf.proxyListUrl);
         if (conf.proxyListUrl.empty()) {
             cb(getDhtProxyServer(conf.proxyServer));
         } else {
@@ -3179,7 +3176,8 @@ JamiAccount::sendMessage(const std::string& to,
             std::unique_lock<std::mutex> l(confirm->lock);
             if (not confirm->replied) {
                 if (auto this_ = w.lock()) {
-                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Timeout";
+                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
+                               << "] Timeout";
                     for (auto& t : confirm->listenTokens)
                         this_->dht_->cancelListen(t.first, std::move(t.second));
                     confirm->listenTokens.clear();
@@ -3190,6 +3188,87 @@ JamiAccount::sendMessage(const std::string& to,
             }
         },
         std::chrono::minutes(1));
+}
+
+void
+JamiAccount::sendMessageToDevice(const std::string& to,
+                                 const DeviceId& device,
+                                 const std::map<std::string, std::string>& payloads,
+                                 bool onlyConnected)
+{
+    // TODO message Engine needed to retry on failure?
+    /////if (token == 0)
+    /////    token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
+
+    std::string toUri;
+    try {
+        toUri = parseJamiUri(to);
+    } catch (...) {
+        JAMI_ERROR("Failed to send a text message due to an invalid URI {:s}", to);
+        /////if (!onlyConnected)
+        /////    messageEngine_.onMessageSent(to, token, false);
+        return;
+    }
+
+    std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
+    std::unique_lock<std::mutex> lk(sipConnsMtx_);
+    SipConnectionKey key(to, device);
+    auto itConn = sipConns_.find(key);
+    if (itConn != sipConns_.end()) {
+        auto& conn = itConn->second.back();
+        auto& channel = conn.channel;
+
+        // Set input token into callback
+        /////std::unique_ptr<TextMessageCtx> ctx {std::make_unique<TextMessageCtx>()};
+        /////ctx->acc = weak();
+        /////ctx->to = to;
+        /////ctx->deviceId = device;
+        /////ctx->id = token;
+        /////ctx->onlyConnected = onlyConnected;
+        /////ctx->retryOnTimeout = retryOnTimeout;
+        /////ctx->channel = channel;
+        /////ctx->confirmation = confirm;
+
+        try {
+            auto res = sendSIPMessage(conn,
+                                      to,
+                                      nullptr, /////ctx.release(),
+                                      0,       /////token,
+                                      payloads,
+                                      [](void* token, pjsip_event* event) {
+                                          //////std::shared_ptr<TextMessageCtx> c {
+                                          //////    (TextMessageCtx*) token};
+                                          auto code = event->body.tsx_state.tsx->status_code;
+                                          JAMI_ERROR("Message sent with code: {}", code);
+                                          //////runOnMainThread([c = std::move(c), code]() {
+                                          //////    if (c) {
+                                          //////        auto acc = c->acc.lock();
+                                          //////        if (not acc)
+                                          //////            return;
+                                          //////        acc->onSIPMessageSent(std::move(c), code);
+                                          //////    }
+                                          //////});
+                                      });
+            if (!res) {
+                /////if (!onlyConnected)
+                /////    messageEngine_.onMessageSent(to, token, false);
+            }
+        } catch (const std::runtime_error& ex) {
+            JAMI_WARNING("{:s}", ex.what());
+            /////if (!onlyConnected)
+            /////    messageEngine_.onMessageSent(to, token, false); // TODO msgengine per device
+            // Remove connection in incorrect state
+            shutdownSIPConnection(channel, to, device);
+        }
+    }
+    lk.unlock();
+
+    if (onlyConnected)
+        return;
+
+    // Else, ask for a channel and send a DHT message
+    auto payload_type = payloads.cbegin()->first;
+    requestSIPConnection(to, device, payload_type);
 }
 
 void
@@ -3743,7 +3822,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         deviceId,
         "sip",
         [w = weak(), id = std::move(id), pc = std::move(pc)](std::shared_ptr<ChannelSocket> socket,
-                                             const DeviceId&) {
+                                                             const DeviceId&) {
             if (socket)
                 return;
             auto shared = w.lock();
