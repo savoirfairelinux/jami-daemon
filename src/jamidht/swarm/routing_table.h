@@ -218,6 +218,7 @@ private:
     std::map<std::shared_ptr<ChannelSocketInterface>, asio::steady_timer> nodes; // (channel, expired)
     std::set<NodeId> known_nodes;
     std::set<NodeId> connecting_nodes;
+    std::set<NodeId> mobile_nodes;
 };
 
 //####################################################################################################
