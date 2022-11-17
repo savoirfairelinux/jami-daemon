@@ -20,8 +20,8 @@
 #pragma once
 
 #include "jamidht/conversationrepository.h"
-#include "jami/datatransfer_interface.h"
 #include "conversationrepository.h"
+#include "swarm/swarm_protocol.h"
 
 #include <json/json.h>
 #include <msgpack.hpp>
@@ -32,6 +32,8 @@
 #include <map>
 #include <memory>
 #include <set>
+
+
 
 namespace jami {
 
@@ -135,6 +137,21 @@ public:
                  const std::string& conversationId);
     ~Conversation();
 
+#ifdef LIBJAMI_TESTABLE
+    enum class BootstrapStatus {
+        FAILED,
+        FALLBACK,
+        SUCCESS
+    };
+    void onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb);
+#endif
+
+    /**
+     * Bootstrap swarm manager to other peers
+     * @param onBootstraped     Callback called when connection is successfully established
+     */
+    void bootstrap(std::function<void()> onBootstraped);
+
     /**
      * Refresh active calls.
      * @note: If the host crash during a call, when initializing, we need to update
@@ -188,6 +205,8 @@ public:
         const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
                                                      MemberRole::LEFT,
                                                      MemberRole::BANNED}) const;
+
+    std::vector<NodeId> peersToSyncWith();
 
     /**
      * Join a conversation
