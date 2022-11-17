@@ -23,8 +23,9 @@
 #include "ice_transport.h"
 #include "connectivity/security/certstore.h"
 
-#include <deque>
 #include <opendht/thread_pool.h>
+#include <asio/io_context.hpp>
+#include <deque>
 
 static constexpr std::size_t IO_BUFFER_SIZE {8192}; ///< Size of char buffer used by IO operations
 static constexpr int MULTIPLEXED_SOCKET_VERSION {1};
@@ -663,7 +664,7 @@ MultiplexedSocket::monitor() const
     JAMI_DEBUG("- Socket with device: {:s} - account: {:s}", deviceId().to_c_str(), userUri);
     auto now = clock::now();
     JAMI_DEBUG("- Duration: {}",
-             std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_));
+               std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_));
     pimpl_->endpoint->monitor();
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (const auto& [_, channel] : pimpl_->sockets) {
@@ -787,31 +788,28 @@ ChannelSocketTest::ChannelSocketTest(const DeviceId& deviceId,
     : pimpl_deviceId(deviceId)
     , pimpl_name(name)
     , pimpl_channel(channel)
-    , eventLoopThread_ {[this] {
-        try {
-            eventLoop();
-        } catch (const std::exception& e) {
-            JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
-            shutdown();
-        }
-    }}
+    , ioCtx_(*Manager::instance().ioContext())
+/*, eventLoopThread_ {[this] {
+    try {
+        eventLoop();
+    } catch (const std::exception& e) {
+        JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
+        shutdown();
+    }
+}}*/
 {}
 
 ChannelSocketTest::~ChannelSocketTest()
 {
-    eventLoopThread_.join();
+    // eventLoopThread_.join();
 }
 
 void
-ChannelSocketTest::link(const std::weak_ptr<ChannelSocketTest>& socket1,
-                        const std::weak_ptr<ChannelSocketTest>& socket2)
+ChannelSocketTest::link(const std::shared_ptr<ChannelSocketTest>& socket1,
+                        const std::shared_ptr<ChannelSocketTest>& socket2)
 {
-    if (auto peer = socket1.lock()) {
-        peer->remote = socket2;
-    }
-    if (auto peer = socket2.lock()) {
-        peer->remote = socket1;
-    }
+    socket1->remote = socket2;
+    socket2->remote = socket1;
 }
 
 DeviceId
@@ -835,14 +833,17 @@ ChannelSocketTest::channel() const
 void
 ChannelSocketTest::shutdown()
 {
-    if (!isShutdown_) {
-        isShutdown_ = true;
-        shutdownCb_();
+    {
+        std::unique_lock<std::mutex> lk {mutex};
+        if (!isShutdown_.exchange(true)) {
+            lk.unlock();
+            shutdownCb_();
+        }
+        cv.notify_all();
     }
-    cv.notify_all();
+
     if (auto peer = remote.lock()) {
-        if (!peer->isShutdown_) {
-            peer->isShutdown_ = true;
+        if (!peer->isShutdown_.exchange(true)) {
             peer->shutdownCb_();
         }
         peer->cv.notify_all();
@@ -852,15 +853,17 @@ ChannelSocketTest::shutdown()
 std::size_t
 ChannelSocketTest::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
-    std::lock_guard<std::mutex> lkSockets(mutex);
-    std::size_t size = std::min(len, this->buf.size());
+    std::size_t size = std::min(len, this->rx_buf.size());
 
     for (std::size_t i = 0; i < size; ++i)
-        buf[i] = this->buf[i];
+        buf[i] = this->rx_buf[i];
 
-    this->buf.erase(this->buf.begin(), this->buf.begin() + size);
+    if (size == this->rx_buf.size()) {
+        this->rx_buf.clear();
+    } else
+        this->rx_buf.erase(this->rx_buf.begin(), this->rx_buf.begin() + size);
     return size;
-};
+}
 
 std::size_t
 ChannelSocketTest::write(const ValueType* buf, std::size_t len, std::error_code& ec)
@@ -869,29 +872,21 @@ ChannelSocketTest::write(const ValueType* buf, std::size_t len, std::error_code&
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
     }
-    if (auto peer = remote.lock()) {
-        std::vector<uint8_t> bufToSend(buf, buf + len);
-        std::size_t sent = 0;
-        do {
-            std::size_t lenToSend = std::min(static_cast<std::size_t>(UINT16_MAX), len - sent);
-            peer->buf.insert(peer->buf.end(),
-                             bufToSend.begin() + sent,
-                             bufToSend.begin() + sent + lenToSend);
-            sent += lenToSend;
-            peer->cv.notify_all();
-        } while (sent < len);
-        return sent;
-    }
-    ec = std::make_error_code(std::errc::broken_pipe);
-    return -1;
+    ec = {};
+    dht::ThreadPool::computation().run(
+        [r = remote, data = std::vector<uint8_t>(buf, buf + len)]() mutable {
+            if (auto peer = r.lock())
+                peer->onRecv(std::move(data));
+        });
+    return len;
 }
 
 int
 ChannelSocketTest::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     std::unique_lock<std::mutex> lk {mutex};
-    cv.wait_for(lk, timeout, [&] { return !buf.empty() or isShutdown_; });
-    return buf.size();
+    cv.wait_for(lk, timeout, [&] { return !rx_buf.empty() or isShutdown_; });
+    return rx_buf.size();
 }
 
 void
@@ -899,9 +894,9 @@ ChannelSocketTest::setOnRecv(RecvCb&& cb)
 {
     std::lock_guard<std::mutex> lkSockets(mutex);
     this->cb = std::move(cb);
-    if (!buf.empty() && this->cb) {
-        this->cb(buf.data(), buf.size());
-        buf.clear();
+    if (!rx_buf.empty() && this->cb) {
+        this->cb(rx_buf.data(), rx_buf.size());
+        rx_buf.clear();
     }
 }
 
@@ -910,10 +905,14 @@ ChannelSocketTest::onRecv(std::vector<uint8_t>&& pkt)
 {
     std::lock_guard<std::mutex> lkSockets(mutex);
     if (cb) {
-        cb(&pkt[0], pkt.size());
+        cb(pkt.data(), pkt.size());
         return;
     }
-    buf.insert(buf.end(), std::make_move_iterator(pkt.begin()), std::make_move_iterator(pkt.end()));
+    // JAMI_WARNING("{} Buffering {} bytes", fmt::ptr(this), pkt.size());
+    rx_buf.insert(rx_buf.end(),
+                  std::make_move_iterator(pkt.begin()),
+                  std::make_move_iterator(pkt.end()));
+    cv.notify_all();
 }
 
 void
@@ -923,38 +922,13 @@ ChannelSocketTest::onReady(ChannelReadyCb&& cb)
 void
 ChannelSocketTest::onShutdown(OnShutdownCb&& cb)
 {
+    std::unique_lock<std::mutex> lk {mutex};
     shutdownCb_ = std::move(cb);
+
+    // JAMI_ERROR("ONSHUTDOWNCALLBACK FOR DEVICE: {}", deviceId().toString());
     if (isShutdown_) {
-        shutdownCb_();
-    }
-}
-
-void
-ChannelSocketTest::eventLoop()
-{
-    std::error_code ec;
-    std::vector<uint8_t> buf(IO_BUFFER_SIZE);
-
-    while (!isShutdown_) {
-        // wait for new data before reading
-        std::unique_lock<std::mutex> lk {mutex};
-        cv.wait(lk, [&] { return !this->buf.empty() or isShutdown_; });
         lk.unlock();
-
-        int size = read(reinterpret_cast<uint8_t*>(buf.data()), IO_BUFFER_SIZE, ec);
-        if (size < 0) {
-            if (ec)
-                JAMI_ERR("Read error detected: %s", ec.message().c_str());
-            break;
-        }
-
-        if (size == 0) {
-            shutdown();
-        }
-
-        if (size != 0) {
-            onRecv(std::move(buf));
-        }
+        shutdownCb_();
     }
 }
 
