@@ -76,16 +76,6 @@ static constexpr unsigned MIN_REGISTRATION_TIME = 60;                  // second
 using yaml_utils::parseValueOptional;
 using yaml_utils::parseVectorMap;
 
-static void
-addRangeToDetails(std::map<std::string, std::string>& a,
-                  const char* minKey,
-                  const char* maxKey,
-                  const std::pair<uint16_t, uint16_t>& range)
-{
-    a.emplace(minKey, std::to_string(range.first));
-    a.emplace(maxKey, std::to_string(range.second));
-}
-
 void
 SipAccountConfig::serialize(YAML::Emitter& out) const
 {
@@ -220,6 +210,7 @@ SipAccountConfig::toMap() const
             }
     }
     a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD, std::move(password));
+    a.emplace(Conf::CONFIG_SRTP_KEY_EXCHANGE, sip_utils::getKeyExchangeName(srtpKeyExchange));
 
     a.emplace(Conf::CONFIG_TLS_ENABLE, tlsEnable ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_LISTENER_PORT, std::to_string(tlsListenerPort));
@@ -279,6 +270,9 @@ SipAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     // ICE - STUN
     parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled);
     parseString(details, Conf::CONFIG_STUN_SERVER, stunServer);
+    std::string tmpKey;
+    parseString(details, Conf::CONFIG_SRTP_KEY_EXCHANGE, tmpKey);
+    srtpKeyExchange = sip_utils::getKeyExchangeProtocol(tmpKey.c_str());
 
     // TLS
     parseBool(details, Conf::CONFIG_TLS_ENABLE, tlsEnable);
