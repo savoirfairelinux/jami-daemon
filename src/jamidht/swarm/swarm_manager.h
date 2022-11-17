@@ -33,6 +33,7 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
 {
     using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocketInterface>&)>;
     using NeedSocketCb = std::function<void(const std::string&, ChannelCb&&)>;
+    using OnDisconnected = std::function<void()>;
 
 public:
     SwarmManager(const NodeId&);
@@ -72,6 +73,10 @@ public:
         JAMI_DEBUG("SwarmManager {:s} has {:d} nodes in table",
                    getId().to_c_str(),
                    routing_table.getRoutingTableNodeCount());
+    }
+
+    void onDisconnected(OnDisconnected cb) {
+        onDisconnected_ = std::move(cb);
     }
 
 private:
@@ -131,6 +136,8 @@ private:
     mutable std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+
+    OnDisconnected onDisconnected_;
 };
 
 } // namespace jami
