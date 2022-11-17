@@ -91,7 +91,7 @@ public:
 
     void setPersistency(bool isPersistent_) { isPersistent = isPersistent_; }
 
-    const bool isPersist() const { return isPersistent; }
+    bool isPersist() const { return isPersistent; }
 
 private:
     /**
@@ -158,6 +158,8 @@ private:
     mutable std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+
+    OnConnectionChanged onConnectionChanged_;
 };
 
 } // namespace jami

@@ -41,6 +41,10 @@ public:
     SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc, ConnectionManager& cm);
     ~SwarmChannelHandler();
 
+#ifdef LIBJAMI_TESTABLE
+    std::atomic_bool disableSwarmManager {false};
+#endif
+
     /**
      * Ask for a new git channel
      * @param nodeId      The node to connect
