@@ -165,7 +165,51 @@ public:
     void init()
     {
         if (auto shared = account_.lock()) {
-            swarmManager_ = std::make_unique<SwarmManager>(NodeId(shared->currentDeviceId()));
+            swarmManager_ = std::make_shared<SwarmManager>(NodeId(shared->currentDeviceId()));
+            // TODO move
+            swarmManager_->onConnectionChanged([&] (bool ok) {
+                if (ok) {
+                    // Bootstrap succeeded!
+                    checkedMembers_.clear();
+                    if (bootstrapCb_)
+                        bootstrapCb_();
+                    return;
+                }
+                // Fallback
+                auto acc = account_.lock();
+                if (!acc)
+                    return;
+                auto members = getMembers(false, false);
+                std::shuffle(members.begin(), members.end(), acc->rand);
+                // TODO if peer shutdown, rebootstrap???
+                for (const auto& member : members) {
+                    // Check for members we didn't checked
+                    auto& uri = member.at("uri");
+                    if (uri == acc->getUsername() || checkedMembers_.find(uri) != checkedMembers_.end())
+                        continue;
+                    checkedMembers_.emplace(uri);
+                    std::vector<NodeId> devices;
+                    std::promise<bool> finished;
+                    std::future<bool> fut = finished.get_future();
+                    acc->accountManager()->forEachDevice(dht::InfoHash(uri),[&](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+                        // Test if already sent
+                        if (!swarmManager_->getRoutingTable().hasKnownNode(dev->getLongId()))
+                            devices.emplace_back(dev->getLongId());
+                    }, [&](bool) {
+                        finished.set_value(true);
+                    });
+                    fut.get();
+                    if (devices.size() != 0) {
+                        JAMI_WARNING("[SwarmManager {}] Bootstrap: Fallback with member: {}", fmt::ptr(swarmManager_.get()), uri);
+                        dht::ThreadPool::io().run([w = swarmManager_->weak(), devices = std::move(devices)] {
+                            if (auto sm = w.lock())
+                                sm->setKnownNodes(devices);
+                        });
+                        return;
+                    }
+                }
+                JAMI_WARNING("[SwarmManager {}] Bootstrap: Fallback failed. Wait for remote connections.", fmt::ptr(swarmManager_.get()));
+            });
             accountId_ = shared->getAccountID();
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
                                                                  repository_->id());
@@ -538,9 +582,15 @@ public:
             // swarmManager_->removeNode(deviceId);
         }
     }
+
+    std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited, bool includeLeft) const;
+
+    std::shared_ptr<SwarmManager> swarmManager_;
+    std::set<std::string> checkedMembers_; // Store members we tried
+    std::function<void()> bootstrapCb_;
+
     std::mutex writeMtx_ {};
     std::unique_ptr<ConversationRepository> repository_;
-    std::unique_ptr<SwarmManager> swarmManager_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options);
@@ -592,6 +642,31 @@ Conversation::Impl::isAdmin() const
         return false;
     auto uri = cert->issuer->getId().toString();
     return fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::Impl::getMembers(bool includeInvited, bool includeLeft) const
+{
+    std::vector<std::map<std::string, std::string>> result;
+    auto members = repository_->members();
+    std::lock_guard<std::mutex> lk(lastDisplayedMtx_);
+    for (const auto& member : members) {
+        if (member.role == MemberRole::BANNED)
+            continue;
+        if (member.role == MemberRole::INVITED && !includeInvited)
+            continue;
+        if (member.role == MemberRole::LEFT && !includeLeft)
+            continue;
+        auto mm = member.map();
+        std::string lastDisplayed;
+        auto itDisplayed = lastDisplayed_.find(member.uri);
+        if (itDisplayed != lastDisplayed_.end()) {
+            lastDisplayed = itDisplayed->second;
+        }
+        mm[ConversationMapKeys::LAST_DISPLAYED] = std::move(lastDisplayed);
+        result.emplace_back(std::move(mm));
+    }
+    return result;
 }
 
 std::vector<std::string>
@@ -888,32 +963,19 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
 std::vector<std::map<std::string, std::string>>
 Conversation::getMembers(bool includeInvited, bool includeLeft) const
 {
-    std::vector<std::map<std::string, std::string>> result;
-    auto members = pimpl_->repository_->members();
-    std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
-    for (const auto& member : members) {
-        if (member.role == MemberRole::BANNED)
-            continue;
-        if (member.role == MemberRole::INVITED && !includeInvited)
-            continue;
-        if (member.role == MemberRole::LEFT && !includeLeft)
-            continue;
-        auto mm = member.map();
-        std::string lastDisplayed;
-        auto itDisplayed = pimpl_->lastDisplayed_.find(member.uri);
-        if (itDisplayed != pimpl_->lastDisplayed_.end()) {
-            lastDisplayed = itDisplayed->second;
-        }
-        mm[ConversationMapKeys::LAST_DISPLAYED] = std::move(lastDisplayed);
-        result.emplace_back(std::move(mm));
-    }
-    return result;
+    return pimpl_->getMembers(includeInvited, includeLeft);
 }
 
 std::vector<std::string>
 Conversation::memberUris(std::string_view filter, const std::set<MemberRole>& filteredRoles) const
 {
     return pimpl_->repository_->memberUris(filter, filteredRoles);
+}
+
+std::vector<NodeId>
+Conversation::peersToSyncWith()
+{
+    return pimpl_->swarmManager_->getRoutingTable().getNodes();
 }
 
 std::string
@@ -1600,6 +1662,25 @@ Conversation::updateLastDisplayed(const std::string& lastDisplayed)
         updateLastDisplayed();
 }
 
+void
+Conversation::bootstrap(std::function<void()> onBootstraped)
+{
+    if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
+        return;
+    pimpl_->bootstrapCb_ = std::move(onBootstraped);
+    std::vector<DeviceId> devices;
+    for (const auto& m : pimpl_->repository_->devices())
+        devices.insert(devices.end(), m.second.begin(), m.second.end());
+    // Add known devices
+    if (auto acc = pimpl_->account_.lock()) {
+        for (const auto& [id, _] : acc->accountManager()->getKnownDevices()) {
+            devices.emplace_back(id);
+        }
+    }
+    JAMI_DEBUG("[SwarmManager {}] Bootstrap with {} devices", fmt::ptr(pimpl_->swarmManager_.get()), devices.size());
+    pimpl_->swarmManager_->setKnownNodes(devices);
+}
+
 std::vector<std::string>
 Conversation::refreshActiveCalls()
 {
@@ -1620,10 +1701,6 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
                                             this](const std::string& deviceId, ChannelCb&& cb) {
         return needSocket(id(), deviceId, std::move(cb), "application/im-gitmessage-id");
     };
-    std::vector<DeviceId> devices;
-    for (const auto& m : pimpl_->repository_->devices())
-        devices.insert(devices.end(), m.second.begin(), m.second.end());
-    pimpl_->swarmManager_->setKnownNodes(devices);
 }
 void
 Conversation::addSwarmChannel(std::shared_ptr<ChannelSocket> channel)
