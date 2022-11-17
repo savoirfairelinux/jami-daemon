@@ -33,6 +33,8 @@
 #include <memory>
 #include <set>
 
+#include <asio.hpp>
+
 namespace jami {
 
 namespace ConversationMapKeys {
@@ -126,18 +128,32 @@ using NeedSocketCb
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
 public:
-    Conversation(const std::weak_ptr<JamiAccount>& account,
+    Conversation(const std::shared_ptr<JamiAccount>& account,
                  ConversationMode mode,
                  const std::string& otherMember = "");
-    Conversation(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId = "");
-    Conversation(const std::weak_ptr<JamiAccount>& account,
+    Conversation(const std::shared_ptr<JamiAccount>& account,
+                 const std::string& conversationId = "");
+    Conversation(const std::shared_ptr<JamiAccount>& account,
                  const std::string& remoteDevice,
                  const std::string& conversationId);
     ~Conversation();
 
     /**
+     * Print the state of the DRT linked to the conversation
+     */
+    void monitor();
+
+#ifdef LIBJAMI_TESTABLE
+    enum class BootstrapStatus { FAILED, FALLBACK, SUCCESS };
+    /**
+     * Used by the tests to get whenever the DRT is connected/disconnected
+     */
+    void onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb);
+#endif
+
+    /**
      * Bootstrap swarm manager to other peers
-     * @param onBootstrapped    Callback called when connection is successfully established
+     * @param onBootstraped     Callback called when connection is successfully established
      */
     void bootstrap(std::function<void()> onBootstraped);
 
@@ -475,11 +491,25 @@ public:
      */
     std::vector<std::map<std::string, std::string>> currentCalls() const;
 
+    /**
+     * Git operations will need a ChannelSocket for cloning/fetching commits
+     * Because libgit2 is a C library, we store the pointer in the corresponding conversation
+     * and the GitTransport will inject to libgit2 whenever needed
+     */
     std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const;
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
     void removeGitSocket(const DeviceId& deviceId);
     void removeGitSockets();
+    /**
+     * Used to avoid multiple connections, we just check if we got a swarm channel with a specific device
+     * @param deviceId
+     */
+    bool hasSwarmChannel(const std::string& deviceId);
 
+    /**
+     * If we change from one network to one another, we will need to update the state of the connections
+     */
+    void connectivityChanged();
 private:
     std::shared_ptr<Conversation> shared()
     {
@@ -497,6 +527,15 @@ private:
     {
         return std::static_pointer_cast<Conversation const>(shared_from_this());
     }
+
+    // Private because of weak()
+    /**
+     * Used by bootstrap() to launch the fallback
+     * @param ec
+     * @param members       Members to try to connect
+     */
+    void checkBootstrapMember(const asio::error_code& ec,
+                              std::vector<std::map<std::string, std::string>> members);
 
     class Impl;
     std::unique_ptr<Impl> pimpl_;
