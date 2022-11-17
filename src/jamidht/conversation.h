@@ -112,6 +112,11 @@ using OnLoadMessages
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
+using DeviceId = dht::PkId;
+using GitSocketList = std::map<DeviceId, std::shared_ptr<ChannelSocket>>;
+using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
+using NeedSocketCb
+    = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -140,6 +145,9 @@ public:
      */
     void onLastDisplayedUpdated(
         std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb);
+
+    void onNeedSocket(NeedSocketCb);
+    void addSwarmChannel(std::shared_ptr<ChannelSocket> channel);
 
     std::string id() const;
 
@@ -423,6 +431,12 @@ public:
      * @return a vector of map with the following keys: "id", "uri", "device"
      */
     std::vector<std::map<std::string, std::string>> currentCalls() const;
+
+    std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const;
+    // bool hasGitSocket(const DeviceId& deviceId) const;
+    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
+    void removeGitSocket(const DeviceId& deviceId);
+    void removeGitSockets();
 
 private:
     std::shared_ptr<Conversation> shared()
