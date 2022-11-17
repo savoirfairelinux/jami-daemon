@@ -228,7 +228,7 @@ SwarmManager::maintainBuckets()
         tryConnect(node);
 }
 bool
-SwarmManager::hasChannel(const NodeId& deviceId)
+SwarmManager::isConnectedWith(const NodeId& deviceId)
 {
     return routing_table.hasNode(deviceId);
 }
