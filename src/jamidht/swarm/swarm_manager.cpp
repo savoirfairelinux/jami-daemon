@@ -20,6 +20,7 @@
 
 #include "swarm_manager.h"
 #include "connectivity/multiplexed_socket.h"
+#include <opendht/thread_pool.h>
 
 constexpr const std::chrono::minutes FIND_PERIOD {10};
 
@@ -284,7 +285,12 @@ SwarmManager::addChannel(std::shared_ptr<ChannelSocketInterface> channel)
 
         std::lock_guard<std::mutex> lock(mutex);
         auto bucket = routing_table.findBucket(channel->deviceId());
+        auto emit = bucket->getNodeIds().size() == 0;
         routing_table.addNode(channel, bucket);
+        if (emit && onConnectionChanged_) {
+            JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
+            onConnectionChanged_(true);
+        }
     }
     receiveMessage(channel);
 }
