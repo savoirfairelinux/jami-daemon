@@ -60,7 +60,7 @@ struct LogOptions
     std::string from {};
     std::string to {};
     uint64_t nbOfCommits {0}; // maximum number of commits wanted
-
+    bool skipMerge {false};    // Do not include merge commits in the log. Used by the module to get last interaction without potential merges
     bool includeTo {false};    // If we want or not the "to" commit [from-to] or [from-to)
     bool fastLog {false};      // Do not parse content, used mostly to count
     bool logIfNotFound {true}; // Add a warning in the log if commit is not found
@@ -140,7 +140,7 @@ public:
      * @return  the conversation repository object
      */
     static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
-        const std::weak_ptr<JamiAccount>& account,
+        const std::shared_ptr<JamiAccount>& account,
         ConversationMode mode = ConversationMode::INVITES_ONLY,
         const std::string& otherMember = "");
 
@@ -153,7 +153,7 @@ public:
      * @param socket            Socket used to clone
      */
     static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
-        const std::weak_ptr<JamiAccount>& account,
+        const std::shared_ptr<JamiAccount>& account,
         const std::string& deviceId,
         const std::string& conversationId);
 
@@ -372,6 +372,13 @@ public:
      * @param blocking      if we need to wait that certificates are pinned
      */
     void pinCertificates(bool blocking = false);
+    /**
+     * Retrieve the uri from a deviceId
+     * @note used by swarm manager (peersToSyncWith)
+     * @param deviceId
+     * @return corresponding issuer
+     */
+    std::string uriFromDevice(const std::string& deviceId) const;
 
     /**
      * Change repository's infos
