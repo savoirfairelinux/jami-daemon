@@ -916,6 +916,12 @@ Conversation::memberUris(std::string_view filter, const std::set<MemberRole>& fi
     return pimpl_->repository_->memberUris(filter, filteredRoles);
 }
 
+std::vector<NodeId>
+Conversation::peersToSyncWith()
+{
+    return pimpl_->swarmManager_->getRoutingTable().getNodes();
+}
+
 std::string
 Conversation::join()
 {
@@ -1600,6 +1606,18 @@ Conversation::updateLastDisplayed(const std::string& lastDisplayed)
         updateLastDisplayed();
 }
 
+void
+Conversation::bootstrap()
+{
+    if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
+        return;
+    std::vector<DeviceId> devices;
+    for (const auto& m : pimpl_->repository_->devices())
+        devices.insert(devices.end(), m.second.begin(), m.second.end());
+    pimpl_->swarmManager_->setKnownNodes(devices);
+    JAMI_ERROR("@@@ SWARM MANAGER ADD {} devices", devices.size());
+}
+
 std::vector<std::string>
 Conversation::refreshActiveCalls()
 {
@@ -1620,10 +1638,6 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
                                             this](const std::string& deviceId, ChannelCb&& cb) {
         return needSocket(id(), deviceId, std::move(cb), "application/im-gitmessage-id");
     };
-    std::vector<DeviceId> devices;
-    for (const auto& m : pimpl_->repository_->devices())
-        devices.insert(devices.end(), m.second.begin(), m.second.end());
-    pimpl_->swarmManager_->setKnownNodes(devices);
 }
 void
 Conversation::addSwarmChannel(std::shared_ptr<ChannelSocket> channel)

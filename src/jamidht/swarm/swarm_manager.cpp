@@ -167,6 +167,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
 void
 SwarmManager::maintainBuckets()
 {
+    JAMI_DEBUG("@@@ {} maintainBuckets", fmt::ptr(this));
     auto& buckets = routing_table.getBuckets();
     for (auto it = buckets.begin(); it != buckets.end(); ++it) {
         auto& bucket = *it;
@@ -205,7 +206,9 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                               }
                           } else {
                               routing_table.addKnownNode(nodeId);
-                              maintainBuckets();
+                              // TODO => Infite loop here: maintainBuckets();
+                              //  maintainBuckets();->tryConnect
+                              //  (failure)->maintainBuckets()->tryConnect ->etc
                           }
                           return true;
                       });
