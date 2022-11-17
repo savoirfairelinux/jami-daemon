@@ -178,14 +178,16 @@ public:
                              const std::map<std::string, std::string>& payloads,
                              uint64_t id,
                              bool retryOnTimeout = true,
-                             bool onlyConnected = false)
+                             bool onlyConnected = false,
+                             const std::string& deviceId = {})
         = 0;
 
     virtual uint64_t sendTextMessage(const std::string& to,
+                                     const std::string& deviceId,
                                      const std::map<std::string, std::string>& payloads,
                                      uint64_t refreshToken = 0) override
     {
-        return messageEngine_.sendMessage(to, payloads, refreshToken);
+        return messageEngine_.sendMessage(to, deviceId, payloads, refreshToken);
     }
 
     im::MessageStatus getMessageStatus(uint64_t id) const override

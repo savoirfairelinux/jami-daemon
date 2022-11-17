@@ -185,6 +185,7 @@ public:
      * @return a token to query the message status
      */
     virtual uint64_t sendTextMessage(const std::string& /*to*/,
+                                     const std::string& /*deviceId*/,
                                      const std::map<std::string, std::string>& /*payloads*/,
                                      uint64_t /*refreshToken*/ = 0)
     {
@@ -498,4 +499,3 @@ operator<<(std::ostream& os, const Account& acc)
 }
 
 } // namespace jami
-
