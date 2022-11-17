@@ -45,6 +45,7 @@ struct PendingConversationFetch
     std::string deviceId {};
     std::string removeId {};
     std::set<std::string> connectingTo {};
+    std::shared_ptr<ChannelSocket> socket {};
 };
 
 class ConversationModule::Impl : public std::enable_shared_from_this<Impl>
@@ -54,6 +55,7 @@ public:
          NeedsSyncingCb&& needsSyncingCb,
          SengMsgCb&& sendMsgCb,
          NeedSocketCb&& onNeedSocket,
+         NeedSocketCb&& onNeedSwarmSocket,
          UpdateConvReq&& updateConvReqCb);
 
     // Retrieving recent commits
@@ -176,6 +178,7 @@ public:
     NeedsSyncingCb needsSyncingCb_;
     SengMsgCb sendMsgCb_;
     NeedSocketCb onNeedSocket_;
+    NeedSocketCb onNeedSwarmSocket_;
     UpdateConvReq updateConvReqCb_;
 
     std::string accountId_ {};
@@ -188,9 +191,9 @@ public:
 
     // Conversations
     mutable std::mutex conversationsMtx_ {};
-    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
+    std::map<std::string, std::shared_ptr<Conversation>, std::less<>> conversations_;
     std::mutex pendingConversationsFetchMtx_ {};
-    std::map<std::string, PendingConversationFetch> pendingConversationsFetch_;
+    std::map<std::string, PendingConversationFetch, std::less<>> pendingConversationsFetch_;
 
     bool startFetch(const std::string& convId, const std::string& deviceId)
     {
@@ -293,11 +296,13 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
                                NeedsSyncingCb&& needsSyncingCb,
                                SengMsgCb&& sendMsgCb,
                                NeedSocketCb&& onNeedSocket,
+                               NeedSocketCb&& onNeedSwarmSocket,
                                UpdateConvReq&& updateConvReqCb)
     : account_(account)
     , needsSyncingCb_(needsSyncingCb)
     , sendMsgCb_(sendMsgCb)
     , onNeedSocket_(onNeedSocket)
+    , onNeedSwarmSocket_(onNeedSwarmSocket)
     , updateConvReqCb_(updateConvReqCb)
 {
     if (auto shared = account.lock()) {
@@ -346,8 +351,8 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                     if (channel) {
                         pending.ready = true;
                         pending.deviceId = channel->deviceId().toString();
+                        pending.socket = channel;
                         lk.unlock();
-                        acc->addGitSocket(channel->deviceId(), convId, channel);
                         checkConversationsEvents();
                         return true;
                     } else {
@@ -442,7 +447,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     syncCnt.fetch_sub(1);
                     return false;
                 }
-                acc->addGitSocket(channel->deviceId(), conversationId, channel);
+                conversation->second->addGitSocket(channel->deviceId(), channel);
                 conversation->second->sync(
                     peer,
                     deviceId,
@@ -538,7 +543,11 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
+        std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+        auto oldFetch = pendingConversationsFetch_.find(conversationId);
         auto conversation = std::make_shared<Conversation>(account_, deviceId, conversationId);
+        if (oldFetch != pendingConversationsFetch_.end() && oldFetch->second.socket)
+            conversation->addGitSocket(DeviceId(deviceId), std::move(oldFetch->second.socket));
         conversation->onLastDisplayedUpdated(
             [&](auto convId, auto lastId) { onLastDisplayedUpdated(convId, lastId); });
         if (!conversation->isMember(username_, true)) {
@@ -547,7 +556,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             erasePending();
             return;
         }
+        conversation->onNeedSocket(onNeedSwarmSocket_);
         auto removeRepo = false;
+
         {
             std::lock_guard<std::mutex> lk(conversationsMtx_);
             // Note: a removeContact while cloning. In this case, the conversation
@@ -934,11 +945,13 @@ ConversationModule::ConversationModule(std::weak_ptr<JamiAccount>&& account,
                                        NeedsSyncingCb&& needsSyncingCb,
                                        SengMsgCb&& sendMsgCb,
                                        NeedSocketCb&& onNeedSocket,
+                                       NeedSocketCb&& onNeedSwarmSocket,
                                        UpdateConvReq&& updateConvReqCb)
     : pimpl_ {std::make_unique<Impl>(std::move(account),
                                      std::move(needsSyncingCb),
                                      std::move(sendMsgCb),
                                      std::move(onNeedSocket),
+                                     std::move(onNeedSwarmSocket),
                                      std::move(updateConvReqCb))}
 {
     loadConversations();
@@ -962,6 +975,9 @@ ConversationModule::loadConversations()
     for (const auto& repository : conversationsRepositories) {
         try {
             auto conv = std::make_shared<Conversation>(pimpl_->account_, repository);
+            conv->onLastDisplayedUpdated(
+                [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); });
+            conv->onNeedSocket(pimpl_->onNeedSwarmSocket_);
             auto members = conv->memberUris(uri, {});
             // NOTE: The following if is here to protect against any incorrect state
             // that can be introduced
@@ -1289,6 +1305,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
         conversation = std::make_shared<Conversation>(pimpl_->account_, mode, otherMember);
         conversation->onLastDisplayedUpdated(
             [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); });
+        conversation->onNeedSocket(pimpl_->onNeedSwarmSocket_);
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] Error while generating a conversation %s",
                  pimpl_->accountId_.c_str(),
@@ -1334,7 +1351,6 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                            auto deviceId = pk->getLongId().toString();
                            if (!sthis or deviceId == sthis->deviceId_)
                                return;
-
                            if (!sthis->startFetch(conversationId, deviceId)) {
                                JAMI_WARN("[Account %s] Already fetching %s",
                                          sthis->accountId_.c_str(),
@@ -1354,11 +1370,8 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                        if (channel) {
                                            pending.ready = true;
                                            pending.deviceId = channel->deviceId().toString();
+                                           pending.socket = channel;
                                            lk.unlock();
-                                           // Save the git socket
-                                           acc->addGitSocket(channel->deviceId(),
-                                                             conversationId,
-                                                             channel);
                                            sthis->checkConversationsEvents();
                                            return true;
                                        } else {
@@ -1952,6 +1965,7 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
 
     return it->second->vCard();
 }
+
 bool
 ConversationModule::isBannedDevice(const std::string& convId, const std::string& deviceId) const
 {
@@ -2364,6 +2378,62 @@ ConversationModule::setConversationMembers(const std::string& convId,
         convIt->second.members = members;
         pimpl_->saveConvInfos();
     }
+}
+
+std::shared_ptr<Conversation>
+ConversationModule::getConversation(const std::string& convId)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto convIt = pimpl_->conversations_.find(convId);
+    if (convIt != pimpl_->conversations_.end())
+        return convIt->second;
+    return nullptr;
+}
+std::shared_ptr<ChannelSocket>
+ConversationModule::gitSocket(std::string_view deviceId, std::string_view convId) const
+{
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        auto convIt = pimpl_->conversations_.find(convId);
+        if (convIt != pimpl_->conversations_.end())
+            return convIt->second->gitSocket(DeviceId(deviceId));
+    }
+    std::lock_guard<std::mutex> lk(pimpl_->pendingConversationsFetchMtx_);
+    auto it = pimpl_->pendingConversationsFetch_.find(convId);
+    if (it == pimpl_->pendingConversationsFetch_.end())
+        return it->second.socket;
+    return nullptr;
+}
+void
+ConversationModule::removeGitSocket(std::string_view deviceId, std::string_view convId)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto convIt = pimpl_->conversations_.find(convId);
+    if (convIt != pimpl_->conversations_.end())
+        return convIt->second->removeGitSocket(DeviceId(deviceId));
+}
+void
+ConversationModule::shutdownConnections()
+{
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        for (auto& [k, conversation] : pimpl_->conversations_)
+            conversation->removeGitSockets();
+    }
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->pendingConversationsFetchMtx_);
+        for (auto& [k, pending] : pimpl_->pendingConversationsFetch_)
+            pending.socket = {};
+    }
+}
+void
+ConversationModule::addSwarmChannel(const std::string& conversationId,
+                                    std::shared_ptr<ChannelSocket> channel)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto convIt = pimpl_->conversations_.find(conversationId);
+    if (convIt != pimpl_->conversations_.end())
+        convIt->second->addSwarmChannel(channel);
 }
 
 } // namespace jami

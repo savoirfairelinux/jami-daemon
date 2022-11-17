@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2023 Savoir-faire Linux Inc.
  *
  *  Author: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
  *
@@ -40,6 +40,10 @@ class SwarmChannelHandler : public ChannelHandlerInterface
 public:
     SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc, ConnectionManager& cm);
     ~SwarmChannelHandler();
+
+#ifdef LIBJAMI_TESTABLE
+    std::atomic_bool disableSwarmManager {false};
+#endif
 
     /**
      * Ask for a new git channel

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2023 Savoir-faire Linux Inc.
  *  Author: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -48,15 +48,18 @@ struct Response
 {
     Query q;
     std::vector<NodeId> nodes;
-    MSGPACK_DEFINE_MAP(q, nodes);
+    std::vector<NodeId> mobile_nodes;
+
+    MSGPACK_DEFINE_MAP(q, nodes, mobile_nodes);
 };
 
 struct Message
 {
     int v = version;
+    bool is_mobile {false};
     std::optional<Request> request;
     std::optional<Response> response;
-    MSGPACK_DEFINE_MAP(v, request, response);
+    MSGPACK_DEFINE_MAP(v, is_mobile, request, response);
 };
 
 }; // namespace swarm_protocol
