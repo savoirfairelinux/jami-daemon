@@ -90,10 +90,6 @@ class SyncModule;
 struct TextMessageCtx;
 
 using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
-using GitSocketList = std::map<DeviceId,                               /* device Id */
-                               std::map<std::string,                   /* conversation */
-                                        std::shared_ptr<ChannelSocket> /* related socket */
-                                        >>;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -451,43 +447,6 @@ public:
      * ConnectionManager needs the account to exists
      */
     void shutdownConnections();
-    std::optional<std::weak_ptr<ChannelSocket>> gitSocket(const DeviceId& deviceId,
-                                                          const std::string& conversationId) const
-    {
-        auto deviceSockets = gitSocketList_.find(deviceId);
-        if (deviceSockets == gitSocketList_.end()) {
-            return std::nullopt;
-        }
-        auto socketIt = deviceSockets->second.find(conversationId);
-        if (socketIt == deviceSockets->second.end()) {
-            return std::nullopt;
-        }
-        return socketIt->second;
-    }
-    bool hasGitSocket(const DeviceId& deviceId, const std::string& conversationId) const
-    {
-        return gitSocket(deviceId, conversationId) != std::nullopt;
-    }
-
-    void addGitSocket(const DeviceId& deviceId,
-                      const std::string& conversationId,
-                      const std::shared_ptr<ChannelSocket>& socket)
-    {
-        auto& deviceSockets = gitSocketList_[deviceId];
-        deviceSockets[conversationId] = socket;
-    }
-
-    void removeGitSocket(const DeviceId& deviceId, const std::string& conversationId)
-    {
-        auto deviceSockets = gitSocketList_.find(deviceId);
-        if (deviceSockets == gitSocketList_.end()) {
-            return;
-        }
-        deviceSockets->second.erase(conversationId);
-        if (deviceSockets->second.empty()) {
-            gitSocketList_.erase(deviceSockets);
-        }
-    }
 
     std::string_view currentDeviceId() const;
 
@@ -606,6 +565,15 @@ public:
      * @param destination   conversation/uri/device/confId to join
      */
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
+
+    /**
+     * The DRT component is composed on some special nodes, that are usually present but not connected.
+     * This kind of node corresponds to devices with push notifications & proxy and are
+     * stored in the mobile nodes
+     */
+    bool isMobile() const {
+        return config().proxyEnabled and not config().deviceKey.empty();
+    }
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -781,7 +749,6 @@ private:
 
     mutable std::mutex connManagerMtx_ {};
     std::unique_ptr<ConnectionManager> connectionManager_;
-    GitSocketList gitSocketList_ {};
 
     std::mutex discoveryMapMtx_;
     std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
