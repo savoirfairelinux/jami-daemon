@@ -178,7 +178,8 @@ public:
                              const std::map<std::string, std::string>& payloads,
                              uint64_t id,
                              bool retryOnTimeout = true,
-                             bool onlyConnected = false)
+                             bool onlyConnected = false,
+                             const std::string& deviceId = {})
         = 0;
 
     virtual uint64_t sendTextMessage(const std::string& to,

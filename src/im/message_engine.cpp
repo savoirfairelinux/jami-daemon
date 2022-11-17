@@ -45,14 +45,16 @@ MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path)
 MessageToken
 MessageEngine::sendMessage(const std::string& to,
                            const std::map<std::string, std::string>& payloads,
-                           uint64_t refreshToken)
+                           uint64_t refreshToken,
+                           const std::string& deviceId)
 {
     if (payloads.empty() or to.empty())
         return 0;
     MessageToken token;
     {
         std::lock_guard<std::mutex> lock(messagesMutex_);
-        auto& peerMessages = messages_[to];
+
+        auto& peerMessages = deviceId.empty() ? messages_[to] : messagesDevices_[deviceId];
         auto previousIt = peerMessages.find(refreshToken);
         if (previousIt != peerMessages.end() && previousIt->second.status != MessageStatus::SENT) {
             JAMI_DEBUG("[message {:d}] Replace content", refreshToken);
@@ -70,18 +72,20 @@ MessageEngine::sendMessage(const std::string& to,
         }
         save_();
     }
-    runOnMainThread([this, to]() { retrySend(to); });
+    runOnMainThread([this, to, deviceId]() { retrySend(to, true, deviceId); });
     return token;
 }
 
 void
-MessageEngine::onPeerOnline(const std::string& peer, bool retryOnTimeout)
+MessageEngine::onPeerOnline(const std::string& peer,
+                            bool retryOnTimeout,
+                            const std::string& deviceId)
 {
-    retrySend(peer, retryOnTimeout);
+    retrySend(peer, retryOnTimeout, deviceId);
 }
 
 void
-MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
+MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout, const std::string& deviceId)
 {
     if (account_.getRegistrationState() != RegistrationState::REGISTERED)
         return;
@@ -94,10 +98,13 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
     std::vector<PendingMsg> pending {};
     {
         std::lock_guard<std::mutex> lock(messagesMutex_);
-        auto p = messages_.find(peer);
-        if (p == messages_.end())
+
+        auto& m = deviceId.empty() ? messages_ : messagesDevices_;
+        auto p = m.find(deviceId.empty() ? peer : deviceId);
+        if (p == m.end())
             return;
         auto& messages = p->second;
+
         for (auto m = messages.begin(); m != messages.end(); ++m) {
             if (m->second.status == MessageStatus::UNKNOWN
                 || m->second.status == MessageStatus::IDLE) {
@@ -159,15 +166,19 @@ MessageEngine::cancel(MessageToken t)
 }
 
 void
-MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok)
+MessageEngine::onMessageSent(const std::string& peer,
+                             MessageToken token,
+                             bool ok,
+                             const std::string& deviceId)
 {
     JAMI_DEBUG("[message {:d}] Message sent: {:s}", token, ok ? "success"sv : "failure"sv);
     std::lock_guard<std::mutex> lock(messagesMutex_);
-    auto p = messages_.find(peer);
-    if (p == messages_.end()) {
-        JAMI_DEBUG("[message {:d}] Can't find peer", token);
+    auto& m = deviceId.empty() ? messages_ : messagesDevices_;
+
+    auto p = m.find(deviceId.empty() ? peer : deviceId);
+    if (p == m.end())
         return;
-    }
+
     auto f = p->second.find(token);
     if (f != p->second.end()) {
         auto emit = f->second.payloads.find("application/im-gitmessage-id")
@@ -304,7 +315,8 @@ MessageEngine::save_() const
                     payloads[p.first] = p.second;
                 peerRoot[to_hex_string(m.first)] = std::move(msg);
             }
-            if (peerRoot.size() == 0) continue;
+            if (peerRoot.size() == 0)
+                continue;
             root[c.first] = std::move(peerRoot);
         }
 
@@ -325,14 +337,11 @@ MessageEngine::save_() const
                     writer->write(root, &file);
             } catch (const std::exception& e) {
                 JAMI_ERROR("[Account {:s}] Couldn't save messages to {:s}: {:s}",
-                         accountID,
-                         path,
-                         e.what());
+                           accountID,
+                           path,
+                           e.what());
             }
-            JAMI_DEBUG("[Account {:s}] saved {:d} messages to {:s}",
-                     accountID,
-                     root.size(),
-                     path);
+            JAMI_DEBUG("[Account {:s}] saved {:d} messages to {:s}", accountID, root.size(), path);
         });
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] couldn't save messages to %s: %s",

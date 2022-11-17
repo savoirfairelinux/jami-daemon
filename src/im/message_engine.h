@@ -43,7 +43,8 @@ public:
 
     MessageToken sendMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
-                             uint64_t refreshToken);
+                             uint64_t refreshToken,
+                             const std::string& deviceId = {});
 
     MessageStatus getStatus(MessageToken t) const;
 
@@ -51,14 +52,20 @@ public:
 
     bool isSent(MessageToken t) const { return getStatus(t) == MessageStatus::SENT; }
 
-    void onMessageSent(const std::string& peer, MessageToken t, bool success);
+    void onMessageSent(const std::string& peer,
+                       MessageToken t,
+                       bool success,
+                       const std::string& deviceId = {});
+
     void onMessageDisplayed(const std::string& peer, MessageToken t, bool displayed);
 
     /**
      * @TODO change MessageEngine by a queue,
      * @NOTE retryOnTimeout is used for failing SIP messages (jamiAccount::sendTextMessage)
      */
-    void onPeerOnline(const std::string& peer, bool retryOnTimeout = true);
+    void onPeerOnline(const std::string& peer,
+                      bool retryOnTimeout = true,
+                      const std::string& deviceId = {});
 
     /**
      * Load persisted messages
@@ -75,7 +82,10 @@ private:
     static const std::chrono::minutes RETRY_PERIOD;
     using clock = std::chrono::steady_clock;
 
-    void retrySend(const std::string& peer, bool retryOnTimeout = true);
+    void retrySend(const std::string& peer,
+                   bool retryOnTimeout = true,
+                   const std::string& deviceId = {});
+
     void save_() const;
 
     struct Message
@@ -91,6 +101,8 @@ private:
     const std::string savePath_;
 
     std::map<std::string, std::map<MessageToken, Message>> messages_;
+    std::map<std::string, std::map<MessageToken, Message>> messagesDevices_;
+
     std::set<MessageToken> sentMessages_;
 
     mutable std::mutex messagesMutex_ {};

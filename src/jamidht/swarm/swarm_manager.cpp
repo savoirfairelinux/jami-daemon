@@ -169,7 +169,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
             auto shared = w.lock();
             auto socket = wsocket.lock();
             if (!shared || !socket)
-                return 0;
+                return 0lu;
 
             try {
                 Message msg;
