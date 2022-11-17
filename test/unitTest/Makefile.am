@@ -104,6 +104,12 @@ check_PROGRAMS += ut_media_filter
 ut_media_filter_SOURCES = media/test_media_filter.cpp common.cpp
 
 #
+# media_player
+#
+check_PROGRAMS += ut_media_player
+ut_media_player_SOURCES = media/test_media_player.cpp common.cpp
+
+#
 # resampler
 #
 check_PROGRAMS += ut_resampler
