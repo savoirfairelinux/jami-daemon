@@ -28,7 +28,8 @@
 #include <json/json.h>
 #include <string_view>
 #include <opendht/thread_pool.h>
-
+#include <tuple>
+#include "swarm/swarm_manager.h"
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
 #include "plugin/jamipluginmanager.h"
@@ -38,7 +39,7 @@
 namespace jami {
 
 static const char* const LAST_MODIFIED = "lastModified";
-static const auto jsonBuilder =  []{
+static const auto jsonBuilder = [] {
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
@@ -121,19 +122,19 @@ ConversationRequest::toMap() const
 class Conversation::Impl
 {
 public:
-    Impl(const std::weak_ptr<JamiAccount>& account,
+    Impl(const std::shared_ptr<JamiAccount>& account,
          ConversationMode mode,
          const std::string& otherMember = "")
-        : account_(account)
+        : repository_(ConversationRepository::createConversation(account, mode, otherMember))
+        , account_(account)
     {
-        repository_ = ConversationRepository::createConversation(account, mode, otherMember);
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
         init();
     }
 
-    Impl(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId)
+    Impl(const std::shared_ptr<JamiAccount>& account, const std::string& conversationId)
         : account_(account)
     {
         repository_ = std::make_unique<ConversationRepository>(account, conversationId);
@@ -143,7 +144,7 @@ public:
         init();
     }
 
-    Impl(const std::weak_ptr<JamiAccount>& account,
+    Impl(const std::shared_ptr<JamiAccount>& account,
          const std::string& remoteDevice,
          const std::string& conversationId)
         : account_(account)
@@ -152,10 +153,8 @@ public:
                                                                 remoteDevice,
                                                                 conversationId);
         if (!repository_) {
-            if (auto shared = account.lock()) {
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    shared->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
-            }
+            emitSignal<libjami::ConversationSignal::OnConversationError>(
+                account->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
             throw std::logic_error("Couldn't clone repository");
         }
         init();
@@ -170,6 +169,11 @@ public:
     void init()
     {
         if (auto shared = account_.lock()) {
+            ioContext_ = Manager::instance().ioContext();
+            fallbackTimer_ = std::make_unique<asio::steady_timer>(*ioContext_);
+            swarmManager_ = std::make_shared<SwarmManager>(NodeId(shared->currentDeviceId()));
+            swarmManager_->setMobility(shared->isMobile());
+            JAMI_ERROR("{} IS MOBILE {}", shared->getAccountID(), shared->isMobile());
             accountId_ = shared->getAccountID();
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
                                                                  repository_->id());
@@ -192,6 +196,27 @@ public:
         }
     }
 
+    const std::string& toString() const
+    {
+        if (fmtStr_.empty()) {
+            if (repository_->mode() == ConversationMode::ONE_TO_ONE) {
+                if (auto acc = account_.lock()) {
+                    auto peer = acc->getUsername();
+                    for (const auto& member : repository_->getInitialMembers()) {
+                        if (member != acc->getUsername()) {
+                            peer = member;
+                        }
+                    }
+                    fmtStr_ = fmt::format("[Conversation (1:1) {}]", peer);
+                }
+            } else {
+                fmtStr_ = fmt::format("[Conversation {}]", repository_->id());
+            }
+        }
+        return fmtStr_;
+    }
+    mutable std::string fmtStr_;
+
     /**
      * If, for whatever reason, the daemon is stopped while hosting a conference,
      * we need to announce the end of this call when restarting.
@@ -199,15 +224,20 @@ public:
      */
     std::vector<std::string> announceEndedCalls();
 
-    ~Impl() = default;
+    ~Impl()
+    {
+        try {
+            if (fallbackTimer_)
+                fallbackTimer_->cancel();
+        } catch (const std::exception& e) {
+            JAMI_ERROR("[Conversation {:s}] {:s}", toString(), e.what());
+        }
+    }
 
     std::vector<std::string> refreshActiveCalls();
     bool isAdmin() const;
     std::string repoPath() const;
 
-    // Protect against parallel commits in the repo
-    // As the index can add files to the commit we want.
-    std::mutex writeMtx_ {};
     void announce(const std::string& commitId) const
     {
         std::vector<std::string> vec;
@@ -405,10 +435,7 @@ public:
             }
 
             if (announceMember) {
-                std::vector<std::string> members;
-                for (const auto& m : repository_->members())
-                    members.emplace_back(m.uri);
-                shared->saveMembers(convId, members);
+                shared->saveMembers(convId, repository_->memberUris("", {}));
             }
         }
     }
@@ -511,26 +538,54 @@ public:
         msgpack::pack(file, hostedCalls_);
     }
 
-    void voteUnban(const std::string& contactUri, const std::string& type, const OnDoneCb& cb);
+    void voteUnban(const std::string& contactUri, const std::string_view type, const OnDoneCb& cb);
 
-    std::string bannedType(std::string_view uri) const
+    std::string_view bannedType(const std::string& uri) const
     {
         auto bannedMember = fmt::format("{}/banned/members/{}.crt", repoPath(), uri);
         if (fileutils::isFile(bannedMember))
-            return "members";
+            return "members"sv;
         auto bannedAdmin = fmt::format("{}/banned/admins/{}.crt", repoPath(), uri);
         if (fileutils::isFile(bannedAdmin))
-            return "admins";
+            return "admins"sv;
         auto bannedInvited = fmt::format("{}/banned/invited/{}", repoPath(), uri);
         if (fileutils::isFile(bannedInvited))
-            return "invited";
+            return "invited"sv;
         auto bannedDevice = fmt::format("{}/banned/devices/{}.crt", repoPath(), uri);
         if (fileutils::isFile(bannedDevice))
-            return "devices";
+            return "devices"sv;
         return {};
     }
 
+    std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const
+    {
+        auto deviceSockets = gitSocketList_.find(deviceId);
+        return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr;
+    }
+
+    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+    {
+        gitSocketList_[deviceId] = socket;
+    }
+    void removeGitSocket(const DeviceId& deviceId)
+    {
+        auto deviceSockets = gitSocketList_.find(deviceId);
+        if (deviceSockets != gitSocketList_.end())
+            gitSocketList_.erase(deviceSockets);
+    }
+
+    std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited,
+                                                               bool includeLeft) const;
+
+    std::set<std::string> checkedMembers_; // Store members we tried
+    std::function<void()> bootstrapCb_;
+#ifdef LIBJAMI_TESTABLE
+    std::function<void(std::string, BootstrapStatus)> bootstrapCbTest_;
+#endif
+
+    std::mutex writeMtx_ {};
     std::unique_ptr<ConversationRepository> repository_;
+    std::shared_ptr<SwarmManager> swarmManager_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options);
@@ -565,6 +620,14 @@ public:
     std::string activeCallsPath_ {};
     mutable std::mutex activeCallsMtx_ {};
     mutable std::vector<std::map<std::string, std::string>> activeCalls_ {};
+
+    GitSocketList gitSocketList_ {};
+
+    // Bootstrap
+    std::shared_ptr<asio::io_context> ioContext_;
+    std::unique_ptr<asio::steady_timer> fallbackTimer_;
+
+    bool isMobile {false};
 };
 
 bool
@@ -580,6 +643,31 @@ Conversation::Impl::isAdmin() const
         return false;
     auto uri = cert->issuer->getId().toString();
     return fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::Impl::getMembers(bool includeInvited, bool includeLeft) const
+{
+    std::vector<std::map<std::string, std::string>> result;
+    auto members = repository_->members();
+    std::lock_guard<std::mutex> lk(lastDisplayedMtx_);
+    for (const auto& member : members) {
+        if (member.role == MemberRole::BANNED)
+            continue;
+        if (member.role == MemberRole::INVITED && !includeInvited)
+            continue;
+        if (member.role == MemberRole::LEFT && !includeLeft)
+            continue;
+        auto mm = member.map();
+        std::string lastDisplayed;
+        auto itDisplayed = lastDisplayed_.find(member.uri);
+        if (itDisplayed != lastDisplayed_.end()) {
+            lastDisplayed = itDisplayed->second;
+        }
+        mm[ConversationMapKeys::LAST_DISPLAYED] = std::move(lastDisplayed);
+        result.emplace_back(std::move(mm));
+    }
+    return result;
 }
 
 std::vector<std::string>
@@ -654,18 +742,18 @@ Conversation::Impl::loadMessages(const LogOptions& options)
     return repository_->convCommitToMap(convCommits);
 }
 
-Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
+Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
                            ConversationMode mode,
                            const std::string& otherMember)
     : pimpl_ {new Impl {account, mode, otherMember}}
 {}
 
-Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
+Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
                            const std::string& conversationId)
     : pimpl_ {new Impl {account, conversationId}}
 {}
 
-Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
+Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
                            const std::string& remoteDevice,
                            const std::string& conversationId)
     : pimpl_ {new Impl {account, remoteDevice, conversationId}}
@@ -709,7 +797,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
                 [w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
                     if (auto sthis = w.lock()) {
                         auto members = sthis->pimpl_->repository_->members();
-                        std::string type = sthis->pimpl_->bannedType(contactUri);
+                        auto type = sthis->pimpl_->bannedType(contactUri);
                         if (type.empty()) {
                             cb(false, {});
                             return;
@@ -737,9 +825,47 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
     });
 }
 
+std::shared_ptr<ChannelSocket>
+Conversation::gitSocket(const DeviceId& deviceId) const
+{
+    return pimpl_->gitSocket(deviceId);
+}
+
+void
+Conversation::addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+{
+    pimpl_->addGitSocket(deviceId, socket);
+}
+
+void
+Conversation::removeGitSocket(const DeviceId& deviceId)
+{
+    pimpl_->removeGitSocket(deviceId);
+}
+
+void
+Conversation::removeGitSockets()
+{
+    pimpl_->gitSocketList_.clear();
+    pimpl_->swarmManager_->shutdown();
+    pimpl_->checkedMembers_.clear();
+}
+
+void
+Conversation::maintainRoutingTable()
+{
+    pimpl_->swarmManager_->maintainBuckets();
+}
+
+bool
+Conversation::hasChannel(const std::string& deviceId)
+{
+    return pimpl_->swarmManager_->hasChannel(DeviceId(deviceId));
+}
+
 void
 Conversation::Impl::voteUnban(const std::string& contactUri,
-                              const std::string& type,
+                              const std::string_view type,
                               const OnDoneCb& cb)
 {
     // Check if admin
@@ -846,32 +972,72 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
 std::vector<std::map<std::string, std::string>>
 Conversation::getMembers(bool includeInvited, bool includeLeft) const
 {
-    std::vector<std::map<std::string, std::string>> result;
-    auto members = pimpl_->repository_->members();
-    std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
-    for (const auto& member : members) {
-        if (member.role == MemberRole::BANNED)
-            continue;
-        if (member.role == MemberRole::INVITED && !includeInvited)
-            continue;
-        if (member.role == MemberRole::LEFT && !includeLeft)
-            continue;
-        auto mm = member.map();
-        std::string lastDisplayed;
-        auto itDisplayed = pimpl_->lastDisplayed_.find(member.uri);
-        if (itDisplayed != pimpl_->lastDisplayed_.end()) {
-            lastDisplayed = itDisplayed->second;
-        }
-        mm[ConversationMapKeys::LAST_DISPLAYED] = std::move(lastDisplayed);
-        result.emplace_back(std::move(mm));
-    }
-    return result;
+    return pimpl_->getMembers(includeInvited, includeLeft);
 }
 
 std::vector<std::string>
 Conversation::memberUris(std::string_view filter, const std::set<MemberRole>& filteredRoles) const
 {
     return pimpl_->repository_->memberUris(filter, filteredRoles);
+}
+
+std::vector<NodeId>
+Conversation::peersToSyncWith() const
+{
+    const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
+    const auto& nodes = routingTable.getNodes();
+    const auto& mobiles = routingTable.getMobileNodes();
+    std::vector<NodeId> s;
+    s.reserve(nodes.size() + mobiles.size());
+    s.insert(s.end(), nodes.begin(), nodes.end());
+    s.insert(s.end(), mobiles.begin(), mobiles.end());
+    for (const auto& [deviceId, _] : pimpl_->gitSocketList_)
+        if (std::find(s.cbegin(), s.cend(), deviceId) == s.cend())
+            s.emplace_back(deviceId);
+    return s;
+}
+
+bool
+Conversation::isBoostraped() const
+{
+    const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
+    return !routingTable.getNodes().empty();
+}
+
+std::string
+Conversation::uriFromDevice(const std::string& deviceId) const
+{
+    return pimpl_->repository_->uriFromDevice(deviceId);
+}
+
+void
+Conversation::monitor()
+{
+    const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
+    routingTable.printRoutingTable();
+    /*     const auto& nodes = routingTable.getNodes();
+        const auto& mobiles = routingTable.getMobileNodes();
+        const auto& known = routingTable.getKnownNodes();
+        const auto& connecting = routingTable.getConnectingNodes();
+
+        if (mobiles.size() + nodes.size() + known.size() > 0) {
+            JAMI_ERROR("{:s} Monitor:", pimpl_->toString());
+            auto selfId = pimpl_->swarmManager_->getId().toString();
+            for (const auto& node : nodes) {
+                JAMI_ERROR("    {:s}        Node: {}", selfId, node.toString());
+            }
+            for (const auto& node : mobiles) {
+                JAMI_ERROR("    {:s} Mobile Node: {}", selfId, node.toString());
+            }
+
+            for (const auto& node : known) {
+                JAMI_ERROR("    {:s} Known Node: {}", selfId, node.toString());
+            }
+
+            for (const auto& node : connecting) {
+                JAMI_ERROR("    {:s} Connecting Node: {}", selfId, node.toString());
+            }
+        } */
 }
 
 std::string
@@ -1024,6 +1190,7 @@ Conversation::lastCommitId() const
 {
     LogOptions options;
     options.nbOfCommits = 1;
+    options.skipMerge = true;
     auto messages = pimpl_->loadMessages(options);
     if (messages.empty())
         return {};
@@ -1192,11 +1359,9 @@ Conversation::sync(const std::string& member,
     if (auto account = pimpl_->account_.lock()) {
         // For waiting request, downloadFile
         for (const auto& wr : dataTransfer()->waitingRequests()) {
-            auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                        + account->getAccountID() + DIR_SEPARATOR_STR
-                        + "conversation_data" + DIR_SEPARATOR_STR
-                        + id() + DIR_SEPARATOR_STR
-                        + wr.fileId;
+            auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
+                        + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + id()
+                        + DIR_SEPARATOR_STR + wr.fileId;
             auto start = fileutils::size(path);
             if (start < 0)
                 start = 0;
@@ -1554,6 +1719,139 @@ Conversation::updateLastDisplayed(const std::string& lastDisplayed)
         updateLastDisplayed();
 }
 
+#ifdef LIBJAMI_TESTABLE
+void
+Conversation::onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb)
+{
+    pimpl_->bootstrapCbTest_ = cb;
+}
+#endif
+
+void
+Conversation::checkBootstrapMember(const asio::error_code& ec,
+                                   std::vector<std::map<std::string, std::string>> members)
+{
+    if (ec == asio::error::operation_aborted
+        or pimpl_->swarmManager_->getRoutingTable().getNodes().size() > 0)
+        return;
+    auto acc = pimpl_->account_.lock();
+    std::string uri;
+    while (!members.empty()) {
+        auto member = members.back();
+        members.pop_back();
+        auto& uri = member.at("uri");
+        if (uri != acc->getUsername()
+            && pimpl_->checkedMembers_.find(uri) == pimpl_->checkedMembers_.end())
+            break;
+    }
+    // If members is empty, we finished the fallback un-successfully
+    if (members.empty() && uri.empty()) {
+        JAMI_WARNING("{}[SwarmManager {}] Bootstrap: Fallback failed. Wait for remote connections.",
+                     pimpl_->toString(),
+                     fmt::ptr(pimpl_->swarmManager_.get()));
+#ifdef LIBJAMI_TESTABLE
+        if (pimpl_->bootstrapCbTest_)
+            pimpl_->bootstrapCbTest_(id(), BootstrapStatus::FAILED);
+#endif
+        return;
+    }
+
+    pimpl_->checkedMembers_.emplace(uri);
+    auto devices = std::make_shared<std::vector<NodeId>>();
+    acc->accountManager()->forEachDevice(
+        dht::InfoHash(uri),
+        [w = weak(), devices](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+            // Test if already sent
+            if (auto sthis = w.lock()) {
+                if (!sthis->pimpl_->swarmManager_->getRoutingTable().hasKnownNode(dev->getLongId()))
+                    devices->emplace_back(dev->getLongId());
+            }
+        },
+        [w = weak(), devices, members = std::move(members), uri](bool ok) {
+            auto sthis = w.lock();
+            if (!sthis)
+                return;
+            if (ok && devices->size() != 0) {
+#ifdef LIBJAMI_TESTABLE
+                if (sthis->pimpl_->bootstrapCbTest_)
+                    sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FALLBACK);
+#endif
+                JAMI_WARNING("{}[SwarmManager {}] Bootstrap: Fallback with member: {}",
+                             sthis->pimpl_->toString(),
+                             fmt::ptr(sthis->pimpl_->swarmManager_.get()),
+                             uri);
+                sthis->pimpl_->swarmManager_->setKnownNodes(*devices);
+            } else {
+                // Check next member
+                sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now());
+                sthis->pimpl_->fallbackTimer_->async_wait(
+                    std::bind(&Conversation::checkBootstrapMember,
+                              sthis.get(),
+                              std::placeholders::_1,
+                              std::move(members)));
+            }
+        });
+}
+
+void
+Conversation::bootstrap(std::function<void()> onBootstraped)
+{
+    if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
+        return;
+    pimpl_->bootstrapCb_ = std::move(onBootstraped);
+    std::vector<DeviceId> devices;
+    for (const auto& m : pimpl_->repository_->devices())
+        devices.insert(devices.end(), m.second.begin(), m.second.end());
+    // Add known devices
+    if (auto acc = pimpl_->account_.lock()) {
+        for (const auto& [id, _] : acc->accountManager()->getKnownDevices()) {
+            devices.emplace_back(id);
+        }
+    }
+    JAMI_DEBUG("{}[SwarmManager {}] Bootstrap with {} devices",
+               pimpl_->toString(),
+               fmt::ptr(pimpl_->swarmManager_.get()),
+               devices.size());
+    // set callback
+    pimpl_->swarmManager_->onConnectionChanged([w = weak()](bool ok) {
+        // This will call methods from accounts, so trigger on another thread.
+        dht::ThreadPool::io().run([w, ok] {
+            auto sthis = w.lock();
+            if (ok) {
+                // Bootstrap succeeded!
+                sthis->pimpl_->checkedMembers_.clear();
+                if (sthis->pimpl_->bootstrapCb_)
+                    sthis->pimpl_->bootstrapCb_();
+#ifdef LIBJAMI_TESTABLE
+                if (sthis->pimpl_->bootstrapCbTest_)
+                    sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::SUCCESS);
+#endif
+                return;
+            }
+            // Fallback
+            auto acc = sthis->pimpl_->account_.lock();
+            if (!acc)
+                return;
+            auto members = sthis->getMembers(false, false);
+            std::shuffle(members.begin(), members.end(), acc->rand);
+            // TODO decide a formula
+            auto timeForBootstrap = std::min(static_cast<size_t>(8), members.size());
+            JAMI_DEBUG("{}[SwarmManager {}] Fallback in {} seconds",
+                       sthis->pimpl_->toString(),
+                       fmt::ptr(sthis->pimpl_->swarmManager_.get()),
+                       (20 - timeForBootstrap));
+            sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now() + 20s
+                                                      - std::chrono::seconds(timeForBootstrap));
+            sthis->pimpl_->fallbackTimer_->async_wait(std::bind(&Conversation::checkBootstrapMember,
+                                                                sthis.get(),
+                                                                std::placeholders::_1,
+                                                                std::move(members)));
+        });
+    });
+    pimpl_->checkedMembers_.clear();
+    pimpl_->swarmManager_->setKnownNodes(devices);
+}
+
 std::vector<std::string>
 Conversation::refreshActiveCalls()
 {
@@ -1565,6 +1863,24 @@ Conversation::onLastDisplayedUpdated(
     std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb)
 {
     pimpl_->lastDisplayedUpdatedCb_ = std::move(lastDisplayedUpdatedCb);
+}
+
+void
+Conversation::onNeedSocket(NeedSocketCb needSocket)
+{
+    pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket),
+                                            this](const std::string& deviceId, ChannelCb&& cb) {
+        return needSocket(id(), deviceId, std::move(cb), "application/im-gitmessage-id");
+    };
+    std::vector<DeviceId> devices;
+    for (const auto& m : pimpl_->repository_->devices())
+        devices.insert(devices.end(), m.second.begin(), m.second.end());
+    // pimpl_->swarmManager_->setKnownNodes(devices);
+}
+void
+Conversation::addSwarmChannel(std::shared_ptr<ChannelSocket> channel)
+{
+    pimpl_->swarmManager_->addChannel(std::move(channel));
 }
 
 uint32_t

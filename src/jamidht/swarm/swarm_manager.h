@@ -33,6 +33,7 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
 {
     using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocketInterface>&)>;
     using NeedSocketCb = std::function<void(const std::string&, ChannelCb&&)>;
+    using OnConnectionChanged = std::function<void(bool ok)>;
 
 public:
     SwarmManager(const NodeId&);
@@ -54,33 +55,59 @@ public:
     void setKnownNodes(const std::vector<NodeId>& known_nodes);
 
     /**
+     * Add list of nodes to the mobile nodes list
+     * @param vector<NodeId>& mobile_nodes
+     */
+    void setMobileNodes(const std::vector<NodeId>& mobile_nodes);
+
+    /**
      * Add channel to routing table
      * @param shared_ptr<ChannelSocketInterface>& channel
      */
-    void addChannel(const std::shared_ptr<ChannelSocketInterface>& channel);
+    void addChannel(std::shared_ptr<ChannelSocketInterface> channel);
 
     void removeNode(const NodeId& nodeId);
+    void changeMobility(const NodeId& nodeId, bool isMobile);
 
     /** For testing */
     RoutingTable& getRoutingTable() { return routing_table; };
     std::list<Bucket>& getBuckets() { return routing_table.getBuckets(); };
 
-    void shutdown() { routing_table.shutdownAllNodes(); };
+    void shutdown();
 
     void display()
     {
-        JAMI_DEBUG("SwarmManager {:s} has {:d} nodes in table",
+        JAMI_DEBUG("SwarmManager {:s} has {:d} nodes in table [P = {}]",
                    getId().to_c_str(),
-                   routing_table.getRoutingTableNodeCount());
+                   routing_table.getRoutingTableNodeCount(),
+                   isMobile_);
     }
+
+    void onConnectionChanged(OnConnectionChanged cb) { onConnectionChanged_ = std::move(cb); }
+
+    void setMobility(bool isMobile) { isMobile_ = isMobile; }
+
+    bool isMobile() const { return isMobile_; }
+
+    /**
+     * Maintain/Update buckets
+     */
+    void maintainBuckets();
+
+    bool hasChannel(const NodeId& deviceId);
 
 private:
     /**
-     * Add node to the known_Nodes list
+     * Add node to the known_nodes list
      * @param NodeId nodeId
      */
     void addKnownNodes(const NodeId& nodeId);
 
+    /**
+     * Add node to the mobile_nodes list
+     * @param NodeId nodeId
+     */
+    void addMobileNodes(const NodeId& nodeId);
     /**
      * Send nodes request to fill known_nodes list
      * @param shared_ptr<ChannelSocketInterface>& socket
@@ -107,11 +134,6 @@ private:
     void receiveMessage(const std::shared_ptr<ChannelSocketInterface>& socket);
 
     /**
-     * Maintain/Update buckets
-     */
-    void maintainBuckets();
-
-    /**
      * Add list of nodes to the known nodes list
      * @param asio::error_code& ec
      * @param shared_ptr<ChannelSocketInterface>& socket
@@ -127,10 +149,17 @@ private:
      */
     void tryConnect(const NodeId& nodeId);
 
+    void removeNodeInternal(const NodeId& nodeId);
+
     const NodeId id_;
+    bool isMobile_ {false};
     mutable std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+
+    std::atomic_bool isShutdown_ {false};
+
+    OnConnectionChanged onConnectionChanged_ {};
 };
 
 } // namespace jami

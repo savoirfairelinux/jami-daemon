@@ -90,10 +90,6 @@ class SyncModule;
 struct TextMessageCtx;
 
 using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
-using GitSocketList = std::map<DeviceId,                               /* device Id */
-                               std::map<std::string,                   /* conversation */
-                                        std::shared_ptr<ChannelSocket> /* related socket */
-                                        >>;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -319,7 +315,9 @@ public:
                      const std::map<std::string, std::string>& payloads,
                      uint64_t id,
                      bool retryOnTimeout = true,
-                     bool onlyConnected = false) override;
+                     bool onlyConnected = false,
+                     const std::string& deviceId = {}) override;
+
     uint64_t sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
                              uint64_t refreshToken = 0) override;
@@ -452,43 +450,6 @@ public:
      * ConnectionManager needs the account to exists
      */
     void shutdownConnections();
-    std::optional<std::weak_ptr<ChannelSocket>> gitSocket(const DeviceId& deviceId,
-                                                          const std::string& conversationId) const
-    {
-        auto deviceSockets = gitSocketList_.find(deviceId);
-        if (deviceSockets == gitSocketList_.end()) {
-            return std::nullopt;
-        }
-        auto socketIt = deviceSockets->second.find(conversationId);
-        if (socketIt == deviceSockets->second.end()) {
-            return std::nullopt;
-        }
-        return socketIt->second;
-    }
-    bool hasGitSocket(const DeviceId& deviceId, const std::string& conversationId) const
-    {
-        return gitSocket(deviceId, conversationId) != std::nullopt;
-    }
-
-    void addGitSocket(const DeviceId& deviceId,
-                      const std::string& conversationId,
-                      const std::shared_ptr<ChannelSocket>& socket)
-    {
-        auto& deviceSockets = gitSocketList_[deviceId];
-        deviceSockets[conversationId] = socket;
-    }
-
-    void removeGitSocket(const DeviceId& deviceId, const std::string& conversationId)
-    {
-        auto deviceSockets = gitSocketList_.find(deviceId);
-        if (deviceSockets == gitSocketList_.end()) {
-            return;
-        }
-        deviceSockets->second.erase(conversationId);
-        if (deviceSockets->second.empty()) {
-            gitSocketList_.erase(deviceSockets);
-        }
-    }
 
     std::string_view currentDeviceId() const;
 
@@ -501,7 +462,7 @@ public:
     bool handleMessage(const std::string& from,
                        const std::pair<std::string, std::string>& message) override;
 
-    void monitor() const;
+    void monitor();
 
     // File transfer
     void sendFile(const std::string& conversationId,
@@ -555,7 +516,9 @@ public:
      * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
      */
-    void sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId);
+    void sendProfile(const std::string& convId,
+                     const std::string& peerUri,
+                     const std::string& deviceId);
     /**
      * Send profile via cached SIP connection
      * @param peerUri       Uri that will receive the profile
@@ -607,6 +570,21 @@ public:
      * @param destination   conversation/uri/device/confId to join
      */
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
+
+    bool isMobile()
+    {
+        // JAMI_ERROR("{} MOBILE {}", getAccountID(), isMobile_);
+        return config().proxyEnabled and not config().deviceKey.empty();
+    }
+
+    void syncSwarmChannel(const std::string& deviceId, const std::string& convId);
+
+#ifdef LIBJAMI_TESTABLE
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
+    {
+        return channelHandlers_;
+    };
+#endif
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -782,7 +760,6 @@ private:
 
     mutable std::mutex connManagerMtx_ {};
     std::unique_ptr<ConnectionManager> connectionManager_;
-    GitSocketList gitSocketList_ {};
 
     std::mutex discoveryMapMtx_;
     std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
