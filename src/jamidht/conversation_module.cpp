@@ -122,9 +122,7 @@ public:
     void sendMessageNotification(const std::string& conversationId,
                                  const std::string& commitId,
                                  bool sync);
-    void sendMessageNotification(const Conversation& conversation,
-                                 const std::string& commitId,
-                                 bool sync);
+    void sendMessageNotification(Conversation& conversation, const std::string& commitId, bool sync);
 
     /**
      * @return if a convId is a valid conversation (repository cloned & usable)
@@ -331,6 +329,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
             }
             return;
         }
+        // TODO do not use swarm manager here, no repository!
         onNeedSocket_(
             convId,
             deviceId,
@@ -463,6 +462,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         {
                             std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
                             pendingConversationsFetch_.erase(conversationId);
+                            // TODO notify peers that a new commit is there (DRT)
                         }
                         if (syncCnt.fetch_sub(1) == 1) {
                             if (auto account = account_.lock())
@@ -498,6 +498,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                   accountId_.c_str(),
                   conversationId.c_str());
         sendMsgCb_(peer,
+                   {},
                    std::map<std::string, std::string> {{"application/invite", conversationId}},
                    0);
     }
@@ -535,11 +536,13 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
-        std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-        auto oldFetch = pendingConversationsFetch_.find(conversationId);
         auto conversation = std::make_shared<Conversation>(account_, deviceId, conversationId);
-        if (oldFetch != pendingConversationsFetch_.end() && oldFetch->second.socket)
-            conversation->addGitSocket(DeviceId(deviceId), std::move(oldFetch->second.socket));
+        {
+            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+            auto oldFetch = pendingConversationsFetch_.find(conversationId);
+            if (oldFetch != pendingConversationsFetch_.end() && oldFetch->second.socket)
+                conversation->addGitSocket(DeviceId(deviceId), std::move(oldFetch->second.socket));
+        }
         conversation->onLastDisplayedUpdated(
             [&](auto convId, auto lastId) { onLastDisplayedUpdated(convId, lastId); });
         if (!conversation->isMember(username_, true)) {
@@ -797,7 +800,7 @@ ConversationModule::Impl::sendMessageNotification(const std::string& conversatio
 }
 
 void
-ConversationModule::Impl::sendMessageNotification(const Conversation& conversation,
+ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                   const std::string& commitId,
                                                   bool sync)
 {
@@ -807,12 +810,31 @@ ConversationModule::Impl::sendMessageNotification(const Conversation& conversati
     message["deviceId"] = deviceId_;
     Json::StreamWriterBuilder builder;
     const auto text = Json::writeString(builder, message);
-    for (const auto& member : conversation.memberUris(sync ? "" : username_)) {
-        // Announce to all members that a new message is sent
-        refreshMessage[member] = sendMsgCb_(member,
-                                            std::map<std::string, std::string> {
-                                                {"application/im-gitmessage-id", text}},
-                                            refreshMessage[member]);
+
+    JAMI_ERROR("@@@ SYNC {} {}", commitId, sync);
+    if (sync) {
+        // Announce to our devices
+        refreshMessage[username_] = sendMsgCb_(username_,
+                                               {},
+                                               std::map<std::string, std::string> {
+                                                   {"application/im-gitmessage-id", text}},
+                                               refreshMessage[username_]);
+    }
+    // Announce to some other devices that a new commit is available
+    auto devices = conversation.peersToSyncWith();
+    JAMI_ERROR("@@@ DEVICES SIZE: {}", devices.size());
+    for (const auto& device : devices) {
+        JAMI_ERROR("@@@ SYNC WITH {}", device.toString());
+        auto deviceId = device.toString();
+        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+        if (!cert || !cert->issuer)
+            continue;
+        auto memberUri = cert->issuer->getId().toString();
+        refreshMessage[deviceId] = sendMsgCb_(memberUri,
+                                              device,
+                                              std::map<std::string, std::string> {
+                                                  {"application/im-gitmessage-id", text}},
+                                              refreshMessage[deviceId]);
     }
 }
 
@@ -1067,6 +1089,16 @@ ConversationModule::loadConversations()
 }
 
 void
+ConversationModule::bootstrap()
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (auto& [_, conv] : pimpl_->conversations_) {
+        if (conv)
+            conv->bootstrap();
+    }
+}
+
+void
 ConversationModule::clearPendingFetch()
 {
     if (!pimpl_->pendingConversationsFetch_.empty()) {
@@ -1210,7 +1242,7 @@ ConversationModule::onNeedConversationRequest(const std::string& from,
         auto invite = itConv->second->generateInvitation();
         lk.unlock();
         JAMI_DBG("%s is asking a new invite for %s", from.c_str(), conversationId.c_str());
-        pimpl_->sendMsgCb_(from, std::move(invite), 0);
+        pimpl_->sendMsgCb_(from, {}, std::move(invite), 0);
     }
 }
 
@@ -1306,6 +1338,9 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                          conversationId.c_str());
                                return;
                            }
+
+                           // TODO: do not use swarm manager here, as there is no repo!
+                           // We need a onNeedSocket_ with old logic.
                            sthis->onNeedSocket_(
                                conversationId,
                                pk->getLongId().toString(),
@@ -1680,6 +1715,7 @@ ConversationModule::onNewCommit(const std::string& peer,
                   pimpl_->accountId_.c_str(),
                   conversationId.c_str());
         pimpl_->sendMsgCb_(peer,
+                           {},
                            std::map<std::string, std::string> {
                                {"application/invite", conversationId}},
                            0);
@@ -1715,7 +1751,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
         // we should not forbid new invites
         auto invite = it->second->generateInvitation();
         lk.unlock();
-        pimpl_->sendMsgCb_(contactUri, std::move(invite), 0);
+        pimpl_->sendMsgCb_(contactUri, {}, std::move(invite), 0);
         return;
     }
 
@@ -1733,7 +1769,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                                 if (sendRequest) {
                                     auto invite = it->second->generateInvitation();
                                     lk.unlock();
-                                    pimpl_->sendMsgCb_(contactUri, std::move(invite), 0);
+                                    pimpl_->sendMsgCb_(contactUri, {}, std::move(invite), 0);
                                 }
                             }
                         }

@@ -20,6 +20,7 @@
 
 #include "swarm_manager.h"
 #include "connectivity/multiplexed_socket.h"
+#include <opendht/thread_pool.h>
 
 constexpr const std::chrono::minutes FIND_PERIOD {10};
 
@@ -48,7 +49,10 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
         addKnownNodes(nodeId);
     }
 
-    maintainBuckets();
+    dht::ThreadPool::io().run([w = weak()] {
+        if (auto shared = w.lock())
+            shared->maintainBuckets();
+    });
 }
 
 void
@@ -167,6 +171,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
 void
 SwarmManager::maintainBuckets()
 {
+    JAMI_DEBUG("@@@ {} maintainBuckets", fmt::ptr(this));
     auto& buckets = routing_table.getBuckets();
     for (auto it = buckets.begin(); it != buckets.end(); ++it) {
         auto& bucket = *it;
@@ -205,7 +210,9 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                               }
                           } else {
                               routing_table.addKnownNode(nodeId);
-                              maintainBuckets();
+                              // TODO => Infite loop here: maintainBuckets();
+                              //  maintainBuckets();->tryConnect
+                              //  (failure)->maintainBuckets()->tryConnect ->etc
                           }
                           return true;
                       });
