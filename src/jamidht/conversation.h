@@ -32,6 +32,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <asio.hpp>
 
 namespace jami {
 
@@ -135,8 +136,14 @@ public:
                  const std::string& conversationId);
     ~Conversation();
 
+#ifdef LIBJAMI_TESTABLE
+    enum class BootstrapStatus { FAILED, FALLBACK, SUCCESS };
+    void onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb);
+#endif
+
     /**
-     * TODO
+     * Bootstrap swarm manager to other peers
+     * @param onBootstraped     Callback called when connection is successfully established
      */
     void bootstrap(std::function<void()> onBootstraped);
 
@@ -466,6 +473,15 @@ private:
     {
         return std::static_pointer_cast<Conversation const>(shared_from_this());
     }
+
+    // Private because of weak()
+    /**
+     * Used by bootstrap() to launch the fallback
+     * @param ec
+     * @param members       Members to try to connect
+     */
+    void checkBootstrapMember(const asio::error_code& ec,
+                              std::vector<std::map<std::string, std::string>> members);
 
     class Impl;
     std::unique_ptr<Impl> pimpl_;
