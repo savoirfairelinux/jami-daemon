@@ -315,7 +315,9 @@ public:
                      const std::map<std::string, std::string>& payloads,
                      uint64_t id,
                      bool retryOnTimeout = true,
-                     bool onlyConnected = false) override;
+                     bool onlyConnected = false,
+                     const std::string& deviceId = {}) override;
+
     uint64_t sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
                              uint64_t refreshToken = 0) override;
@@ -460,7 +462,7 @@ public:
     bool handleMessage(const std::string& from,
                        const std::pair<std::string, std::string>& message) override;
 
-    void monitor() const;
+    void monitor();
 
     // File transfer
     void sendFile(const std::string& conversationId,
@@ -514,7 +516,9 @@ public:
      * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
      */
-    void sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId);
+    void sendProfile(const std::string& convId,
+                     const std::string& peerUri,
+                     const std::string& deviceId);
     /**
      * Send profile via cached SIP connection
      * @param peerUri       Uri that will receive the profile
@@ -567,10 +571,20 @@ public:
      */
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
 
-    bool getPersistency()
+    bool isMobile()
     {
-        return isPersistent;
+        // JAMI_ERROR("{} MOBILE {}", getAccountID(), isMobile_);
+        return config().proxyEnabled and not config().deviceKey.empty();
     }
+
+    void syncSwarmChannel(const std::string& deviceId, const std::string& convId);
+
+#ifdef LIBJAMI_TESTABLE
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
+    {
+        return channelHandlers_;
+    };
+#endif
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -869,8 +883,6 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
-
-    bool isPersistent {true};
 };
 
 static inline std::ostream&
