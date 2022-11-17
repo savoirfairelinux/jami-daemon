@@ -10,7 +10,6 @@ AM_TESTS_ENVIRONMENT =                    \
 AM_CXXFLAGS += -I$(top_srcdir)/src
 AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libjami.la -static
 check_PROGRAMS =
-
 ####### Unit Test ########
 
 #
@@ -242,5 +241,17 @@ ut_plugins_SOURCES = plugins/plugins.cpp common.cpp
 #
 check_PROGRAMS += ut_routing_table
 ut_routing_table_SOURCES = swarm/routing_table.cpp
+
+#
+# Bootstrap
+#
+check_PROGRAMS += ut_bootstrap
+ut_bootstrap_SOURCES = swarm/bootstrap.cpp common.cpp
+
+#
+# SwarmConversation
+#
+check_PROGRAMS += ut_swarm_conversation
+ut_swarm_conversation_SOURCES = swarm/swarm_conversation.cpp common.cpp
 
 TESTS = $(check_PROGRAMS)
