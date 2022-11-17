@@ -98,7 +98,7 @@ struct SipAccountConfig : public SipAccountBaseConfig {
      * Specifies the type of key exchange used for SRTP, if any.
      * This only determine if the media channel is secured.
      */
-    KeyExchangeProtocol srtpKeyExchange {KeyExchangeProtocol::NONE};
+    KeyExchangeProtocol srtpKeyExchange {KeyExchangeProtocol::SDES};
 
     bool presenceEnabled {false};
     bool publishSupported {false};

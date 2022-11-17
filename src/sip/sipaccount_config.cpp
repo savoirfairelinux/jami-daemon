@@ -267,6 +267,12 @@ SipAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, videoPortRange);
 
+    // srtp settings
+    parseBool(details, Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback);
+    auto iter = details.find(Conf::CONFIG_SRTP_KEY_EXCHANGE);
+    if (iter != details.end())
+        srtpKeyExchange = sip_utils::getKeyExchangeProtocol(iter->second);
+
     if (credentials.empty()) { // credentials not set, construct 1 entry
         JAMI_WARN("No credentials set, inferring them...");
         std::map<std::string, std::string> map;
