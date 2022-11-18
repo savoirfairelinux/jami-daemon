@@ -687,7 +687,7 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                 shared->onPeerResponse(req);
             } else {
                 // Async certificate checking
-                shared->account.dht()->findCertificate(
+                shared->account.findCertificate(
                     req.from,
                     [w, req = std::move(req)](
                         const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
