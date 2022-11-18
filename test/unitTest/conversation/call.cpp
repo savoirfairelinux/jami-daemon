@@ -821,8 +821,9 @@ ConversationCallTest::testJoinWhileActiveCall()
                && data.messages.rbegin()->at("type") == "application/call-history+json";
     };
     // should get message
-    cv.wait_for(lk, 30s, [&]() { return lastCommitIsCall(aliceData_); });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return lastCommitIsCall(aliceData_); }));
 
+    auto confId = aliceData_.messages.rbegin()->at("confId");
     libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData_.requestReceived; }));
 
@@ -834,13 +835,12 @@ ConversationCallTest::testJoinWhileActiveCall()
 
     CPPUNIT_ASSERT(libjami::getActiveCalls(bobId, bobData_.id).size() == 1);
 
-    // hangup bob MUST NOT stop the conference
     aliceData_.messages.clear();
     bobData_.messages.clear();
     aliceData_.conferenceChanged = false;
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().hangupConference(aliceId, confId);
 
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData_.conferenceRemoved; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData_.conferenceRemoved; }));
 }
 
 void
