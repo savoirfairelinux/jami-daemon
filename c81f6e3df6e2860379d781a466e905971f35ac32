@@ -132,6 +132,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1dd476bc_56a36406",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 28
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-18T17:06:02Z",
+      "side": 1,
+      "message": "I don\u0027t think the Config should be the only one managing the dhtrunner, so it\u0027s ok to have a shared ptr",
+      "parentUuid": "759b8d69_44f4deea",
+      "revId": "c81f6e3df6e2860379d781a466e905971f35ac32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1c9cb13b_c97642dd",
         "filename": "src/connectivity/connectionmanager.h",
         "patchSetId": 28
