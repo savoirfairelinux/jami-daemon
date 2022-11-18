@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7d833392_4c1024ad",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 181,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-18T19:39:04Z",
+      "side": 1,
+      "message": "I\u0027m not a big fan of recursive mutex because it\u0027s still error prone.\n\nWe agree that if we consider that every caller of \"SIPCall::getRtpStreamsSize()\" already lock rtpStreamsMutex_, there is no need for this mutex to be a recursive_mutex.\n\nBy quickly checking, I think \"getAllRemoteCandidates\" is the only method where you call getRtpStreamsSize() without locking rtpStreamsMutex_ first.",
+      "range": {
+        "startLine": 181,
+        "startChar": 25,
+        "endLine": 181,
+        "endChar": 40
+      },
+      "revId": "04640465c892a514d8f3384b280fd20ba4f5b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
