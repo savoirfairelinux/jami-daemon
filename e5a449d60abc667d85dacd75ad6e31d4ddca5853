@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3a04c52_221e7513",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3133,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-18T02:52:09Z",
+      "side": 0,
+      "message": "remove in the .h too",
+      "range": {
+        "startLine": 3133,
+        "startChar": 9,
+        "endLine": 3133,
+        "endChar": 20
+      },
+      "revId": "e5a449d60abc667d85dacd75ad6e31d4ddca5853",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
