@@ -1646,7 +1646,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
             if (not expired) {
                 // Retry messages every time a new device announce its presence
                 sthis->messageEngine_.onPeerOnline(h.toString());
-                sthis->dht_->findCertificate(
+                sthis->findCertificate(
                     dev.dev, [sthis, h](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                         if (cert) {
                             auto pk = std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey());
@@ -2350,10 +2350,28 @@ JamiAccount::connectivityChanged()
 
 bool
 JamiAccount::findCertificate(
+    const dht::InfoHash& h,
+    std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
+{
+    if (accountManager_)
+        return accountManager_->findCertificate(h, std::move(cb));
+    return false;
+}
+
+bool
+JamiAccount::findCertificate(
     const dht::PkId& id, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
     if (accountManager_)
         return accountManager_->findCertificate(id, std::move(cb));
+    return false;
+}
+
+bool
+JamiAccount::findCertificate(const std::string& crt_id)
+{
+    if (accountManager_)
+        return accountManager_->findCertificate(dht::InfoHash(crt_id));
     return false;
 }
 
@@ -2363,10 +2381,11 @@ JamiAccount::setCertificateStatus(const std::string& cert_id,
 {
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
     if (done) {
-        dht_->findCertificate(dht::InfoHash(cert_id),
-                              [](const std::shared_ptr<dht::crypto::Certificate>& crt) {});
-        emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
-            getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
+        findCertificate(cert_id);
+        emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
+                                                                        cert_id,
+                                                                        tls::TrustStore::statusToStr(
+                                                                            status));
     }
     return done;
 }
