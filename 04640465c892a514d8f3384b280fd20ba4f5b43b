@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "1ff020c8_0d919f35",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-18T19:43:49Z",
+      "side": 1,
+      "message": "this method returns an index in rtpStreams_, however this index would become invalid as soon as this function returns and the mutex is unlocked.\n\nThe only safe way to use this function is with the mutex already locked by the caller, so the caller can safely use the result before it\u0027s invalidated. So the lock_guard should be removed.",
+      "range": {
+        "startLine": 161,
+        "startChar": 9,
+        "endLine": 161,
+        "endChar": 27
+      },
+      "revId": "04640465c892a514d8f3384b280fd20ba4f5b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7d833392_4c1024ad",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 7
