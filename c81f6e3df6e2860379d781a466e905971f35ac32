@@ -148,6 +148,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ec50237a_f1157b5a",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 28
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2022-11-18T18:52:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1dd476bc_56a36406",
+      "revId": "c81f6e3df6e2860379d781a466e905971f35ac32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1c9cb13b_c97642dd",
