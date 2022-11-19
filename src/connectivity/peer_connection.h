@@ -52,6 +52,9 @@ using OnStateChangeCb = std::function<bool(tls::TlsSessionState state)>;
 using OnReadyCb = std::function<void(bool ok)>;
 using onShutdownCb = std::function<void(void)>;
 
+class TurnTransport;
+class ConnectedTurnTransport;
+
 //==============================================================================
 
 class Stream

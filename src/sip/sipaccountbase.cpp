@@ -143,20 +143,6 @@ SIPAccountBase::loadConfig()
     IpAddr publishedIp {conf.publishedIp};
     if (not conf.publishedSameasLocal and publishedIp)
         setPublishedAddress(publishedIp);
-    TurnTransportParams turnParams;
-    turnParams.domain = conf.turnServer;
-    turnParams.username = conf.turnServerUserName;
-    turnParams.password = conf.turnServerPwd;
-    turnParams.realm = conf.turnServerRealm;
-    if (!turnCache_) {
-        auto cachePath = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID();
-        turnCache_ = std::make_unique<TurnCache>(getAccountID(),
-                                                 cachePath,
-                                                 turnParams,
-                                                 conf.turnEnabled);
-    } else {
-        turnCache_->reconfigure(turnParams, conf.turnEnabled);
-    }
 }
 
 std::map<std::string, std::string>
@@ -255,11 +241,13 @@ SIPAccountBase::getIceOptions() const noexcept
 
     // if (config().stunEnabled)
     //     opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
-    if (config().turnEnabled && turnCache_) {
-        auto turnAddr = turnCache_->getResolvedTurn();
-        if (turnAddr != std::nullopt) {
+    if (config().turnEnabled) {
+        auto cached = false;
+        std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+        cached = cacheTurnV4_ || cacheTurnV6_;
+        if (cacheTurnV4_ && *cacheTurnV4_) {
             opts.turnServers.emplace_back(TurnServerInfo()
-                                              .setUri(turnAddr->toString(true))
+                                              .setUri(cacheTurnV4_->toString(true))
                                               .setUsername(config().turnServerUserName)
                                               .setPassword(config().turnServerPwd)
                                               .setRealm(config().turnServerRealm));
@@ -273,6 +261,14 @@ SIPAccountBase::getIceOptions() const noexcept
         //                                      .setPassword(turnServerPwd_)
         //                                      .setRealm(turnServerRealm_));
         //}
+        // Nothing cached, so do the resolution
+        if (!cached) {
+            opts.turnServers.emplace_back(TurnServerInfo()
+                                              .setUri(config().turnServer)
+                                              .setUsername(config().turnServerUserName)
+                                              .setPassword(config().turnServerPwd)
+                                              .setRealm(config().turnServerRealm));
+        }
     }
     return opts;
 }

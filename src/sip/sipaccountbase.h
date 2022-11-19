@@ -28,7 +28,6 @@
 
 #include "connectivity/sip_utils.h"
 #include "connectivity/ip_utils.h"
-#include "connectivity/turn_cache.h"
 #include "noncopyable.h"
 #include "im/message_engine.h"
 #include "sipaccountbase_config.h"
@@ -86,8 +85,7 @@ public:
 
     virtual ~SIPAccountBase() noexcept;
 
-    const SipAccountBaseConfig& config() const
-    {
+    const SipAccountBaseConfig& config() const {
         return *static_cast<const SipAccountBaseConfig*>(&Account::config());
     }
 
@@ -218,6 +216,21 @@ public:
 public: // overloaded methods
     virtual void flush() override;
 
+    /**
+     * Return current turn resolved addresses
+     * @return {unique_ptr(v4 resolved), unique_ptr(v6 resolved)}
+     */
+    std::array<std::unique_ptr<IpAddr>, 2> turnCache()
+    {
+        std::lock_guard<std::mutex> lk {cachedTurnMutex_};
+        std::array<std::unique_ptr<IpAddr>, 2> result = {};
+        if (cacheTurnV4_ && *cacheTurnV4_)
+            result[0] = std::make_unique<IpAddr>(*cacheTurnV4_);
+        if (cacheTurnV6_ && *cacheTurnV6_)
+            result[1] = std::make_unique<IpAddr>(*cacheTurnV6_);
+        return result;
+    }
+
 protected:
     /**
      * Retrieve volatile details such as recent registration errors
@@ -266,7 +279,9 @@ protected:
         std::chrono::steady_clock::time_point::min()};
     std::shared_ptr<Task> composingTimeout_;
 
-    std::unique_ptr<TurnCache> turnCache_;
+    mutable std::mutex cachedTurnMutex_ {};
+    std::unique_ptr<IpAddr> cacheTurnV4_ {};
+    std::unique_ptr<IpAddr> cacheTurnV6_ {};
 
 private:
     NON_COPYABLE(SIPAccountBase);

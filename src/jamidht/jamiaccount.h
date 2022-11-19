@@ -36,7 +36,6 @@
 #include "data_transfer.h"
 #include "uri.h"
 #include "jamiaccount_config.h"
-#include "connectivity/peer_connection.h"
 
 #include "noncopyable.h"
 #include "connectivity/ip_utils.h"
@@ -612,8 +611,7 @@ private:
     struct BuddyInfo;
     struct DiscoveredPeer;
 
-    inline std::string getProxyConfigKey() const
-    {
+    inline std::string getProxyConfigKey() const {
         const auto& conf = config();
         return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl).toString();
     }
@@ -787,12 +785,7 @@ private:
      * This will cache the turn server resolution each time we launch
      * Jami, or for each connectivityChange()
      */
-    // TODO move in separate class
-    void testTurn(IpAddr server);
     void cacheTurnServers();
-    std::unique_ptr<TurnTransport> testTurnV4_;
-    std::unique_ptr<TurnTransport> testTurnV6_;
-    void refreshTurnDelay(bool scheduleNext);
 
     std::chrono::seconds turnRefreshDelay_ {std::chrono::seconds(10)};
 

@@ -29,8 +29,6 @@ libjami_sources = files(
     'connectivity/multiplexed_socket.cpp',
     'connectivity/peer_connection.cpp',
     'connectivity/sip_utils.cpp',
-    'connectivity/turn_cache.cpp',
-    'connectivity/turn_transport.cpp',
     'connectivity/utf8_utils.cpp',
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
