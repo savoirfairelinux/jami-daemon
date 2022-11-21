@@ -222,7 +222,14 @@ MediaPlayer::seekToTime(int64_t time)
     }
     flushMediaBuffers();
     demuxer_->updateCurrentState(MediaDemuxer::CurrentState::Demuxing);
-    startTime_ = av_gettime() - pauseInterval_ - time;
+
+    int64_t currentTime = av_gettime();
+    if (paused_){
+        pauseInterval_ += currentTime - lastPausedTime_;
+        lastPausedTime_ = currentTime;
+    }
+
+    startTime_ = currentTime - pauseInterval_ - time;
     if (hasAudio()) {
         audioInput_->setSeekTime(time);
         audioInput_->updateStartTime(startTime_);
