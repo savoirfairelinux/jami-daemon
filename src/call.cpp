@@ -124,7 +124,7 @@ Call::Call(const std::shared_ptr<Account>& account,
                 if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
                     // TODO: This will be removed when 1:1 swarm will have a conference.
                     // For now, only commit for 1:1 calls
-                    if (toUsername().find('/') == std::string::npos) {
+                    if (toUsername().find('/') == std::string::npos && getCallType() == CallType::OUTGOING) {
                         jamiAccount->convModule()->addCallHistoryMessage(getPeerNumber(),
                                                                          getCallDuration().count());
                     }
