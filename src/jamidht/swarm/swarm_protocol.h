@@ -47,8 +47,10 @@ struct Request
 struct Response
 {
     Query q;
+    bool is_mobile {false};
     std::vector<NodeId> nodes;
-    MSGPACK_DEFINE_MAP(q, nodes);
+    std::vector<NodeId> mobile_nodes;
+    MSGPACK_DEFINE_MAP(is_mobile, q, nodes, mobile_nodes);
 };
 
 struct Message

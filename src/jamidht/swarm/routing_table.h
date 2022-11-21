@@ -36,35 +36,50 @@ namespace jami {
 class ChannelSocketInterface;
 class io_context;
 
+static constexpr const std::chrono::minutes FIND_PERIOD {10};
+
+struct NodeInfo
+{
+    bool isPersistent {true};
+    std::shared_ptr<ChannelSocketInterface> socket {};
+    asio::steady_timer refresh_timer {*Manager::instance().ioContext(), FIND_PERIOD};
+    // time_point last_failed;
+    NodeInfo() = delete;
+    NodeInfo(NodeInfo&&) = default;
+    NodeInfo(std::shared_ptr<ChannelSocketInterface> socket_)
+        : socket(socket_)
+    {}
+};
+
 class Bucket
 {
 public:
     static constexpr int BUCKET_MAX_SIZE = 2;
 
+    Bucket() = delete;
+    Bucket(const Bucket&) = delete;
     Bucket(const NodeId&);
 
     /**
      * Add Node socket to bucket
-     * @param shared_ptr<ChannelSocket> socket
      */
     bool addNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+    /**
+     * Add Node socket to bucket
+     * @param NodeInfo& nodeInfo
+     */
+    bool addNode(NodeInfo&& info);
 
     /**
      * Delete Node socket from bucket
-     * @param NodeId nodeId
+     * @param NodeId& nodeId
      */
-    bool deleteNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+    bool deleteNode(const NodeId& nodeId);
 
     /**
-     * Delete Node socket from bucket
-     * @param shared_ptr<ChannelSocket> socket
+     * Get Nodes from bucket
      */
-    bool deleteNodeId(const NodeId& nodeId);
-
-    /**
-     * Get Node sockets from bucket
-     */
-    std::set<std::shared_ptr<ChannelSocketInterface>> getNodes() const;
+    std::map<NodeId, NodeInfo>& getNodes() { return nodes; }
 
     /**
      * Get NodeIds from bucket as set
@@ -75,7 +90,7 @@ public:
      * Add NodeId to known_nodes
      * @param NodeId nodeId
      */
-    void addKnownNode(const NodeId& nodeId) { known_nodes.insert(nodeId); }
+    bool addKnownNode(const NodeId& nodeId);
 
     /**
      * Remove NodeId from known_nodes
@@ -89,20 +104,31 @@ public:
     const std::set<NodeId>& getKnownNodes() const { return known_nodes; }
 
     /**
+     * Get NodeIds of mobile_nodes
+     */
+    const std::set<NodeId>& getMobileNodes() const { return mobile_nodes; }
+
+    /**
      * Add NodeId to connecting_nodes
      * @param NodeId nodeId
      */
-    void addConnectingNode(const NodeId& nodeId) { connecting_nodes.insert(nodeId); }
+    bool addConnectingNode(const NodeId& nodeId, NodeInfo&& nodeInfo)
+    {
+        return true;
+        // return connecting_nodes.try_emplace(nodeId, std::move(nodeInfo)).second;
+    }
 
     /**
      * Remove NodeId from connecting_nodes
      * @param NodeId nodeId
      */
-    void removeConnectingNode(const NodeId& nodeId) { connecting_nodes.erase(nodeId); }
+    void removeConnectingNode(const NodeId& nodeId)
+    { /*connecting_nodes.erase(nodeId);*/
+    }
 
     /** Get NodeIds of connecting_nodes
      */
-    const std::set<NodeId>& getConnectingNodes() const { return connecting_nodes; };
+    std::map<NodeId, NodeInfo>& getConnectingNodes() { return connecting_nodes; };
 
     /**
      * Indicate if bucket is full
@@ -113,22 +139,13 @@ public:
      * Returns indexed NodeId from known_nodes
      * @param unsigned index
      */
-    NodeId getKnownNodeId(unsigned index) const;
-
-    /**
-     * Test if socket exists in nodes
-     * @param shared_ptr<ChannelSocketInterface> socket
-     */
-    bool hasNode(const std::shared_ptr<ChannelSocketInterface>& socket) const
-    {
-        return nodes.find(socket) != nodes.end();
-    }
+    NodeId getKnownNode(unsigned index) const;
 
     /**
      * Test if socket exists in nodes as Id
      * @param const NodeId& nodeId
      */
-    bool hasNodeId(const NodeId& nodeId) const;
+    bool hasNode(const NodeId& nodeId) const;
 
     /**
      * Test if NodeId exist in known_nodes
@@ -145,7 +162,8 @@ public:
      */
     bool hasConnectingNode(const NodeId& nodeId) const
     {
-        return connecting_nodes.find(nodeId) != connecting_nodes.end();
+        return false;
+        // return connecting_nodes.find(nodeId) != connecting_nodes.end();
     }
 
     /**
@@ -186,7 +204,7 @@ public:
      * Shutdowns node
      * @param shared_ptr<ChannelSocketInterface>& socket
      */
-    bool shutdownNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+    bool shutdownNode(const NodeId& nodeId);
 
     /**
      * Shutdowns all nodes
@@ -213,15 +231,17 @@ public:
      */
     unsigned getConnectingNodesSize() const { return connecting_nodes.size(); }
 
+    bool swap(std::list<Bucket>::iterator& bucket, const NodeId& nodeId) { return true; };
+
 private:
     NodeId lowerLimit_;
-    std::map<std::shared_ptr<ChannelSocketInterface>, asio::steady_timer> nodes; // (channel, expired)
+    std::map<NodeId, NodeInfo> nodes;
+    std::map<NodeId, NodeInfo> connecting_nodes;
     std::set<NodeId> known_nodes;
-    std::set<NodeId> connecting_nodes;
     std::set<NodeId> mobile_nodes;
 };
 
-//####################################################################################################
+// ####################################################################################################
 
 class RoutingTable
 {
@@ -233,7 +253,7 @@ public:
      * @param list<Bucket>::iterator it
      * @param NodeId nodeId
      */
-    bool contains(std::list<Bucket>::iterator& it, const NodeId& nodeId);
+    bool contains(const std::list<Bucket>::iterator& it, const NodeId& nodeId) const;
 
     /**
      * Add socket to bucket
@@ -246,7 +266,7 @@ public:
      * @param shared_ptr<ChannelSocketInterface> socket
      * @param list<Bucket>::iterator bucket
      */
-    bool addNode(const std::shared_ptr<ChannelSocketInterface>& socket,
+    bool addNode(const std::shared_ptr<ChannelSocketInterface>& channel,
                  std::list<Bucket>::iterator& bucket);
 
     /**
@@ -259,22 +279,22 @@ public:
      * Deletes node from routing table
      * @param shared_ptr<ChannelSocketInterface>& socket
      */
-    bool deleteNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+    bool deleteNode(const NodeId& nodeId);
 
     /**
      * Check if node in routing table
      * @param shared_ptr<ChannelSocketInterface>& socket
      */
-    bool hasNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+    bool hasNode(const NodeId& nodeId);
 
     /**
      * Check if node in routing table through its id
      * @param NodeId nodeId
      */
-    bool hasNodeId(const NodeId nodeId)
+    bool hasNodeId(const NodeId& nodeId)
     {
         auto bucket = findBucket(nodeId);
-        return bucket->hasNodeId(nodeId);
+        return bucket->hasNode(nodeId);
     }
 
     /**
@@ -341,7 +361,7 @@ public:
      * Shutdowns a node
      * @param shared_ptr<ChannelSocketInterface>& socket
      */
-    void shutdownNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+    void shutdownNode(const NodeId& nodeId);
 
     /**
      * Shutdowns all nodes

@@ -43,52 +43,38 @@ Bucket::Bucket(const NodeId& id)
 bool
 Bucket::addNode(const std::shared_ptr<ChannelSocketInterface>& socket)
 {
-    if (nodes.try_emplace(socket, *Manager::instance().ioContext(), FIND_PERIOD).second) {
-        connecting_nodes.erase(socket->deviceId());
-        known_nodes.erase(socket->deviceId());
+    return addNode(NodeInfo(socket));
+}
+/**
+ * Add Node socket to bucket
+ * @param NodeInfo& nodeInfo
+ */
+bool
+Bucket::addNode(NodeInfo&& info)
+{
+    auto nodeId = info.socket->deviceId();
+    if (nodes.try_emplace(nodeId, std::move(info)).second) {
+        connecting_nodes.erase(nodeId);
+        known_nodes.erase(nodeId);
         return true;
     }
     return false;
 }
 
 bool
-Bucket::deleteNode(const std::shared_ptr<ChannelSocketInterface>& socket)
+Bucket::deleteNode(const NodeId& nodeId)
 {
-    addKnownNode(socket->deviceId());
-    return nodes.erase(socket);
-}
-
-bool
-Bucket::deleteNodeId(const NodeId& nodeId)
-{
-    std::shared_ptr<ChannelSocketInterface> socketToDelete;
-    for (const auto& node : nodes) {
-        if (node.first->deviceId() == nodeId) {
-            return deleteNode(node.first);
-        }
-    }
-
-    return 0;
+    return nodes.erase(nodeId);
 }
 
 asio::steady_timer&
 Bucket::getNodeTimer(const std::shared_ptr<ChannelSocketInterface>& socket)
 {
-    auto node = nodes.find(socket);
+    auto node = nodes.find(socket->deviceId());
     if (node == nodes.end()) {
         throw std::range_error("Can't find timer " + socket->deviceId().toString());
     }
-    return node->second;
-}
-
-std::set<std::shared_ptr<ChannelSocketInterface>>
-Bucket::getNodes() const
-{
-    std::set<std::shared_ptr<ChannelSocketInterface>> sockets;
-    for (auto const& key : nodes) {
-        sockets.insert(key.first);
-    }
-    return sockets;
+    return node->second.refresh_timer;
 }
 
 std::set<NodeId>
@@ -97,14 +83,25 @@ Bucket::getNodeIds() const
     std::set<NodeId> nodesId;
 
     for (auto const& key : nodes) {
-        nodesId.insert(key.first->deviceId());
+        nodesId.insert(key.first);
     }
 
     return nodesId;
 }
 
+bool
+Bucket::addKnownNode(const NodeId& nodeId)
+{
+    if (known_nodes.emplace(nodeId).second) {
+        connecting_nodes.erase(nodeId);
+        nodes.erase(nodeId);
+        return true;
+    }
+    return false;
+}
+
 NodeId
-Bucket::getKnownNodeId(unsigned index) const
+Bucket::getKnownNode(unsigned index) const
 {
     if (index > known_nodes.size()) {
         throw std::out_of_range("End of table for get known Node Id " + std::to_string(index));
@@ -126,11 +123,23 @@ Bucket::getKnownNodesRandom(unsigned numberNodes, std::mt19937_64& rd) const
     std::uniform_int_distribution<unsigned> distrib(0, getKnownNodesSize() - 1);
 
     while (nodesToReturn.size() < numberNodes) {
-        nodesToReturn.insert(getKnownNodeId(distrib(rd)));
+        nodesToReturn.emplace(getKnownNode(distrib(rd)));
     }
 
     return nodesToReturn;
 }
+
+/*
+std::vector<NodeId>
+Bucket::getMobileNodes() const
+{
+    std::vector<NodeId> toReturn;
+    for (auto const& nm : mobile_nodes) {
+        toReturn.insert(toReturn.begin(), nm);
+    }
+
+    return toReturn;
+}*/
 
 void
 Bucket::printBucket(unsigned number) const
@@ -139,54 +148,55 @@ Bucket::printBucket(unsigned number) const
 
     unsigned nodeNum = 1;
     for (auto it = nodes.begin(); it != nodes.end(); ++it) {
-        JAMI_DEBUG("Node {:s}   Id: {:s}",
-                   std::to_string(nodeNum),
-                   it->first->deviceId().to_c_str());
+        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), it->first.toString());
         nodeNum++;
     }
 };
 
 bool
-Bucket::shutdownNode(const std::shared_ptr<ChannelSocketInterface>& socket)
+Bucket::shutdownNode(const NodeId& nodeId)
 {
-    auto node = nodes.find(socket);
+    auto node = nodes.find(nodeId);
 
     if (node != nodes.end()) {
-        node->first->shutdown();
-        deleteNode(socket);
-        return 1;
+        auto socket = node->second.socket;
+        auto node = socket->deviceId();
+        socket->shutdown();
+        deleteNode(node);
+        return true;
     }
-    return 0;
+    return false;
 }
 
 void
 Bucket::shutdownAllNodes()
 {
     while (not nodes.empty()) {
-        auto socket = nodes.begin()->first;
+        auto it = nodes.begin();
+        auto socket = it->second.socket;
+        auto nodeId = socket->deviceId();
+
         socket->shutdown();
-        deleteNode(socket);
+        deleteNode(nodeId);
     }
 }
 
 bool
-Bucket::hasNodeId(const NodeId& nodeId) const
+Bucket::hasNode(const NodeId& nodeId) const
 {
-    for (const auto& sockets : nodes) {
-        if (sockets.first->deviceId() == nodeId) {
-            return 1;
-        }
+    auto found = nodes.find(nodeId);
+    if (found != nodes.end()) {
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
-//####################################################################################################
+// ####################################################################################################
 
 RoutingTable::RoutingTable()
 {
-    Bucket bucket(NodeId::zero());
-    buckets.emplace_back(std::move(bucket));
+    buckets.emplace_back(NodeId::zero());
 }
 
 bool
@@ -204,7 +214,7 @@ RoutingTable::addKnownNode(const NodeId& nodeId)
 }
 
 bool
-RoutingTable::contains(std::list<Bucket>::iterator& bucket, const NodeId& nodeId)
+RoutingTable::contains(const std::list<Bucket>::iterator& bucket, const NodeId& nodeId) const
 {
     return NodeId::cmp(bucket->getLowerLimit(), nodeId) <= 0
            && (std::next(bucket) == buckets.end()
@@ -254,49 +264,73 @@ bool
 RoutingTable::split(std::list<Bucket>::iterator& bucket)
 {
     NodeId id = middle(bucket);
-    Bucket newBucket(id);
-    auto newBucketIt = buckets.insert(std::next(bucket), std::move(newBucket));
+    auto newBucketIt = buckets.emplace(std::next(bucket), id);
 
     // Re-assign nodes
-    auto nodeSwap = bucket->getNodes();
-
-    while (!nodeSwap.empty()) {
-        auto n = nodeSwap.begin();
-
-        if (!contains(bucket, (*n)->deviceId())) {
-            bucket->deleteNode(*n);
-            newBucketIt->addNode(*n);
+    auto& nodeSwap = bucket->getNodes();
+    for (auto it = nodeSwap.begin(); it != nodeSwap.end();) {
+        auto& node = *it;
+        auto nodeId = it->first;
+        if (!contains(bucket, nodeId)) {
+            newBucketIt->addNode(std::move(node.second));
+            bucket->deleteNode(nodeId);
+        } else {
+            ++it;
         }
-
-        nodeSwap.erase(n);
     }
 
-    auto knownSwap = bucket->getKnownNodes();
+    auto& connectingSwap = bucket->getConnectingNodes();
+    for (auto it = connectingSwap.begin(); it != connectingSwap.end();) {
+        auto& node = *it;
+        auto nodeId = node.first;
 
-    while (!knownSwap.empty()) {
-        auto n = knownSwap.begin();
-
-        if (!contains(bucket, (*n))) {
-            bucket->removeKnownNode(*n);
-            newBucketIt->addKnownNode(*n);
+        if (!contains(bucket, nodeId)) {
+            newBucketIt->addConnectingNode(nodeId, std::move(node.second));
+            bucket->removeConnectingNode(nodeId);
+        } else {
+            ++it;
         }
-
-        knownSwap.erase(n);
     }
 
-    auto connectingNodes = bucket->getConnectingNodes();
-    std::set<NodeId> connectingSwap(connectingNodes.begin(), connectingNodes.end());
+    const auto& knownSwap = bucket->getKnownNodes();
+    for (auto it = knownSwap.begin(); it != knownSwap.end();) {
+        auto nodeId = *it;
 
-    while (!connectingSwap.empty()) {
-        auto n = connectingSwap.begin();
-
-        if (!contains(bucket, (*n))) {
-            bucket->removeConnectingNode(*n);
-            newBucketIt->addConnectingNode(*n);
+        if (!contains(bucket, nodeId)) {
+            bucket->removeKnownNode(nodeId);
+            newBucketIt->addKnownNode(nodeId);
+        } else {
+            ++it;
         }
-
-        connectingSwap.erase(n);
     }
+
+    const auto& mobileSwap = bucket->getMobileNodes();
+    for (auto it = mobileSwap.begin(); it != mobileSwap.end();) {
+        auto nodeId = *it;
+
+        if (!contains(bucket, nodeId)) {
+            // TODO adapt
+            bucket->removeKnownNode(nodeId);
+            newBucketIt->addKnownNode(nodeId);
+        } else {
+            ++it;
+        }
+    }
+    /*
+        auto connectingNodes = bucket->getConnectingNodes();
+        std::map<NodeId, NodeInfo> connectingSwap(connectingNodes.begin(), connectingNodes.end());
+
+        while (!connectingSwap.empty()) {
+            auto n = connectingSwap.begin();
+            auto nodeId = std::move(*n);
+
+            if (!contains(bucket, nodeId)) {
+                bucket->removeConnectingNode(nodeInfo);
+                newBucketIt->addConnectingNode(nodeInfo);
+            }
+
+            connectingSwap.erase(n);
+        } */
 
     return true;
 }
@@ -304,55 +338,55 @@ RoutingTable::split(std::list<Bucket>::iterator& bucket)
 bool
 RoutingTable::addNode(const std::shared_ptr<ChannelSocketInterface>& socket)
 {
-    auto nodeId = socket->deviceId();
-    auto bucket = findBucket(nodeId);
-    auto added = addNode(socket, bucket);
-    bucket->removeConnectingNode(nodeId);
-    return added;
-}
-
-bool
-RoutingTable::addNode(const std::shared_ptr<ChannelSocketInterface>& socket,
-                      std::list<Bucket>::iterator& bucket)
-{
-    if (bucket->hasNodeId(socket->deviceId()) || id_ == socket->deviceId()) {
-        return false;
-    }
-
-    while (bucket->isFull()) {
-        if (contains(bucket, id_)) {
-            split(bucket);
-            bucket = findBucket(socket->deviceId());
-        } else
-            return false;
-    }
+    auto bucket = findBucket(socket->deviceId());
     return bucket->addNode(socket);
 }
 
 bool
-RoutingTable::deleteNode(const std::shared_ptr<ChannelSocketInterface>& socket)
+RoutingTable::addNode(const std::shared_ptr<ChannelSocketInterface>& channel,
+                      std::list<Bucket>::iterator& bucket)
 {
-    auto bucket = findBucket(socket->deviceId());
+    NodeId nodeId = channel->deviceId();
+
+    if (bucket->hasNode(nodeId) || id_ == nodeId) {
+        return false;
+    }
+
+    while (bucket->isFull()) {
+        if (contains(bucket, nodeId)) {
+            split(bucket);
+            bucket = findBucket(nodeId);
+        } else
+            return false;
+    }
+
+    return bucket->addNode(channel);
+}
+
+bool
+RoutingTable::deleteNode(const NodeId& nodeId)
+{
+    auto bucket = findBucket(nodeId);
 
     if (bucket == buckets.end()) {
         return 0;
     }
 
-    return bucket->deleteNode(socket);
+    return bucket->deleteNode(nodeId);
 }
 
 bool
-RoutingTable::hasNode(const std::shared_ptr<ChannelSocketInterface>& socket)
+RoutingTable::hasNode(const NodeId& nodeId)
 {
-    auto bucket = findBucket(socket->deviceId());
-    return bucket->hasNode(socket);
+    auto bucket = findBucket(nodeId);
+    return bucket->hasNode(nodeId);
 };
 
 std::vector<NodeId>
 RoutingTable::closestNodes(const NodeId& nodeId, unsigned count)
 {
-    auto bucket = findBucket(nodeId);
     std::vector<NodeId> closestNodes;
+    auto bucket = findBucket(nodeId);
     if (bucket == buckets.end()) {
         return closestNodes;
     }
@@ -404,12 +438,12 @@ RoutingTable::printRoutingTable() const
 }
 
 void
-RoutingTable::shutdownNode(const std::shared_ptr<ChannelSocketInterface>& socket)
+RoutingTable::shutdownNode(const NodeId& nodeId)
 {
-    auto bucket = findBucket(socket->deviceId());
+    auto bucket = findBucket(nodeId);
 
     if (bucket != buckets.end()) {
-        bucket->shutdownNode(socket);
+        bucket->shutdownNode(nodeId);
     }
 }
 

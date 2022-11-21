@@ -44,8 +44,8 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
-    for (const auto& nodeId : known_nodes) {
-        addKnownNodes(nodeId);
+    for (const auto& nodeInfo : known_nodes) {
+        addKnownNodes(std::move(nodeInfo));
     }
 
     maintainBuckets();
@@ -83,20 +83,22 @@ void
 SwarmManager::sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, const Message& msg_)
 {
     std::lock_guard<std::mutex> lock(mutex);
-    Response toResponse;
-    Message msg;
-    std::vector<NodeId> nodesToSend;
 
     if (msg_.request->q == Query::FIND) {
-        nodesToSend = routing_table.closestNodes(msg_.request->nodeId, msg_.request->num);
+        auto nodes = routing_table.closestNodes(msg_.request->nodeId, msg_.request->num);
+        auto bucket = routing_table.findBucket(
+            msg_.request->nodeId); // MES MOBILES OU SES MOBILES ?
+        const auto& m_nodes = bucket->getMobileNodes();
+        Response toResponse;
         toResponse.q = Query::FOUND;
+        toResponse.nodes = nodes;
+        toResponse.mobile_nodes = {m_nodes.begin(), m_nodes.end()};
 
-        toResponse.nodes = nodesToSend;
-        msg.response = toResponse;
+        Message msg;
+        msg.response = std::move(toResponse);
 
-        msgpack::sbuffer buffer;
+        msgpack::sbuffer buffer((size_t) 1024);
         msgpack::packer<msgpack::sbuffer> pk(&buffer);
-
         pk.pack(msg);
 
         std::error_code ec;
@@ -174,11 +176,10 @@ SwarmManager::maintainBuckets()
         auto connecting_nodes = myBucket ? bucket.getConnectingNodesSize()
                                          : bucket.getConnectingNodesSize() + bucket.getNodesSize();
         if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
-            auto closest_nodes = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE
-                                                                - connecting_nodes,
-                                                            rd);
+            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes,
+                                                         rd);
 
-            for (auto node : closest_nodes) {
+            for (auto& node : nodesToTry) {
                 tryConnect(node);
             }
         }
@@ -190,13 +191,15 @@ SwarmManager::tryConnect(const NodeId& nodeId)
 {
     auto bucket = routing_table.findBucket(nodeId);
     bucket->removeKnownNode(nodeId);
-    bucket->addConnectingNode(nodeId);
+
+    //    bucket->addConnectingNode(nodeId);
 
     if (needSocketCb_)
         needSocketCb_(nodeId.toString(),
                       [this, nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
                           std::unique_lock<std::mutex> lock(mutex);
                           if (socket) {
+                              // NodeInfo node(socket);
                               if (routing_table.addNode(socket)) {
                                   std::error_code ec;
                                   resetNodeExpiry(ec, socket, id_);
@@ -204,8 +207,8 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                                   receiveMessage(socket);
                               }
                           } else {
-                              routing_table.addKnownNode(nodeId);
-                              maintainBuckets();
+                              // routing_table.addKnownNode(nodeId);
+                              // maintainBuckets();
                           }
                           return true;
                       });
@@ -259,7 +262,7 @@ SwarmManager::removeNode(const NodeId& nodeId)
 {
     std::lock_guard<std::mutex> lock(mutex);
     auto bucket = routing_table.findBucket(nodeId);
-    bucket->deleteNodeId(nodeId);
+    bucket->deleteNode(nodeId);
 }
 
 } // namespace jami

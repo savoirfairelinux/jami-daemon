@@ -1636,7 +1636,7 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
     std::vector<DeviceId> devices;
     for (const auto& m : pimpl_->repository_->devices())
         devices.insert(devices.end(), m.second.begin(), m.second.end());
-    pimpl_->swarmManager_->setKnownNodes(devices);
+    // pimpl_->swarmManager_->setKnownNodes(devices);
 }
 void
 Conversation::addSwarmChannel(std::shared_ptr<ChannelSocket> channel)
