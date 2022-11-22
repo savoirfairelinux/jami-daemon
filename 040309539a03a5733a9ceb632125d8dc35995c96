@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "387f1b39_b8b279eb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-11-22T09:54:57Z",
+      "side": 1,
+      "message": "The fix is ready: https://github.com/jbeder/yaml-cpp/pull/1155",
+      "revId": "040309539a03a5733a9ceb632125d8dc35995c96",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
