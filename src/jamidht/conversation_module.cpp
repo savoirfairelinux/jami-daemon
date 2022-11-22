@@ -1042,6 +1042,39 @@ ConversationModule::loadConversations()
         pimpl_->saveConvInfos();
 
     lk.unlock();
+
+    ////////////////////////////////////////////////////////////////
+    // Note: This is only to homogeneize trust and convRequests
+    std::vector<std::string> invalidPendingRequests;
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+        for (const auto& request: acc->getTrustRequests()) {
+            auto itConvId = request.find(libjami::Account::TrustRequest::CONVERSATIONID);
+            auto itConvFrom = request.find(libjami::Account::TrustRequest::FROM);
+            if (itConvId != request.end() && itConvFrom != request.end())
+            {
+                // Check if requests exists or is declined.
+                auto itReq = pimpl_->conversationsRequests_.find(itConvId->second);
+                auto declined = itReq  == pimpl_->conversationsRequests_.end() || itReq->second.declined;
+                if (declined) {
+                    JAMI_WARNING("Invalid trust request found: {:s}", itConvId->second);
+                    invalidPendingRequests.emplace_back(itConvFrom->second);
+                }
+            }
+        }
+    }
+    dht::ThreadPool::io().run([w=pimpl_->weak(), invalidPendingRequests = std::move(invalidPendingRequests)] () {
+        // Will lock account manager
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        if (auto acc = shared->account_.lock()) {
+            for (const auto& invalidPendingRequest : invalidPendingRequests)
+                acc->discardTrustRequest(invalidPendingRequest);
+        }
+    });
+
+    ////////////////////////////////////////////////////////////////
     for (const auto& conv : toRm) {
         JAMI_ERROR("Remove conversation ({})", conv);
         removeConversation(conv);
@@ -1172,6 +1205,17 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
                                                                          convId,
                                                                          reqMap);
+}
+
+std::string
+ConversationModule::peerFromConversationRequest(const std::string& convId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+    auto it = pimpl_->conversationsRequests_.find(convId);
+    if (it != pimpl_->conversationsRequests_.end()) {
+        return it->second.from;
+    }
+    return {};
 }
 
 void

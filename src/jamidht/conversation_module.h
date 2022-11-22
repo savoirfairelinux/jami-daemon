@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "conversation.h"
 #include "scheduled_executor.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/conversation.h"
@@ -107,6 +108,13 @@ public:
      * @param value     Conversation's request
      */
     void onConversationRequest(const std::string& from, const Json::Value& value);
+
+    /**
+     * Retrieve author of a conversation request
+     * @param convId    Conversation's id
+     * @return the author of the conversation request
+     */
+    std::string peerFromConversationRequest(const std::string& convId) const;
 
     /**
      * Called when a peer needs an invite for a conversation (generally after that they received

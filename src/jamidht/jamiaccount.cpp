@@ -2880,8 +2880,27 @@ JamiAccount::discardTrustRequest(const std::string& from)
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     if (accountManager_)
         return accountManager_->discardTrustRequest(from);
-    JAMI_WARN("[Account %s] discardTrustRequest: account not loaded", getAccountID().c_str());
+    JAMI_WARNING("[Account {:s}] discardTrustRequest: account not loaded", getAccountID());
     return false;
+}
+
+void
+JamiAccount::declineConversationRequest(const std::string& conversationId)
+{
+    auto peerId = convModule()->peerFromConversationRequest(conversationId);
+    convModule()->declineConversationRequest(conversationId);
+    if (!peerId.empty())  {
+        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        if (auto info = accountManager_->getInfo()) {
+            // Verify if we have a trust request with this peer + convId
+            auto req = info->contacts->getTrustRequest(dht::InfoHash(peerId));
+            if (req.find(libjami::Account::TrustRequest::CONVERSATIONID) != req.end()
+                && req.at(libjami::Account::TrustRequest::CONVERSATIONID) == conversationId) {
+                accountManager_->discardTrustRequest(peerId);
+                JAMI_DEBUG("[Account {:s}] declined trust request with {:s}", getAccountID(), peerId);
+            }
+        }
+    }
 }
 
 void
