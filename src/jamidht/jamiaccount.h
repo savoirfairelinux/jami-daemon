@@ -285,6 +285,7 @@ public:
     // Note: includeConversation used for compatibility test. Do not change
     bool acceptTrustRequest(const std::string& from, bool includeConversation = true);
     bool discardTrustRequest(const std::string& from);
+    void declineConversationRequest(const std::string& conversationId);
 
     /**
      * Add contact to the account contact list.
