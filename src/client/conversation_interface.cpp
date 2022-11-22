@@ -56,8 +56,7 @@ void
 declineConversationRequest(const std::string& accountId, const std::string& conversationId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto convModule = acc->convModule())
-            convModule->declineConversationRequest(conversationId);
+        acc->declineConversationRequest(conversationId);
 }
 
 bool
