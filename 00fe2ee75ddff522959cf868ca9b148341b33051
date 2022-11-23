@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b1b92c15_f0743cb6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 3541,
+      "author": {
+        "id": 975
+      },
+      "writtenOn": "2022-11-23T17:31:35Z",
+      "side": 1,
+      "message": "`rtpSetupSuccess()` can be called from the same thread as `startAllMedia()` so `toggleRecording()` should be run on a different thread as it also needs the rtpStreamsMutex. It shouldn\u0027t be moved outside of the callback because it can only be safely run after the AudioReceiveThread/VideoReceiveThread are done setting up.",
+      "range": {
+        "startLine": 3541,
+        "startChar": 24,
+        "endLine": 3541,
+        "endChar": 39
+      },
+      "revId": "00fe2ee75ddff522959cf868ca9b148341b33051",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
