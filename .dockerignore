@@ -6,4 +6,6 @@ contrib/arm*
 contrib/aarch64*
 contrib/i686*
 
+**/build/
+
 .git/
