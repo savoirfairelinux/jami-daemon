@@ -18,7 +18,6 @@
 #pragma once
 
 #include "manager.h"
-
 #include <opendht/infohash.h>
 #include <vector>
 #include <memory>
@@ -43,7 +42,6 @@ struct NodeInfo
     bool isPersistent {true};
     std::shared_ptr<ChannelSocketInterface> socket {};
     asio::steady_timer refresh_timer {*Manager::instance().ioContext(), FIND_PERIOD};
-    // time_point last_failed;
     NodeInfo() = delete;
     NodeInfo(NodeInfo&&) = default;
     NodeInfo(std::shared_ptr<ChannelSocketInterface> socket_)
@@ -62,19 +60,20 @@ public:
 
     /**
      * Add Node socket to bucket
+     * @param shared_ptr<ChannelSocketInterface>& socket
      */
     bool addNode(const std::shared_ptr<ChannelSocketInterface>& socket);
     /**
      * Add Node socket to bucket
-     * @param NodeInfo& nodeInfo
+     * @param NodeInfo&& nodeInfo
      */
     bool addNode(NodeInfo&& info);
 
     /**
-     * Delete Node socket from bucket
+     * Remove Node socket from bucket
      * @param NodeId& nodeId
      */
-    bool deleteNode(const NodeId& nodeId);
+    bool removeNode(const NodeId& nodeId) { return nodes.erase(nodeId); };
 
     /**
      * Get Nodes from bucket
@@ -85,6 +84,12 @@ public:
      * Get NodeIds from bucket as set
      */
     std::set<NodeId> getNodeIds() const;
+
+    /**
+     * Test if socket exists in nodes as Id
+     * @param const NodeId& nodeId
+     */
+    bool hasNode(const NodeId& nodeId) const;
 
     /**
      * Add NodeId to known_nodes
@@ -104,48 +109,10 @@ public:
     const std::set<NodeId>& getKnownNodes() const { return known_nodes; }
 
     /**
-     * Get NodeIds of mobile_nodes
-     */
-    const std::set<NodeId>& getMobileNodes() const { return mobile_nodes; }
-
-    /**
-     * Add NodeId to connecting_nodes
-     * @param NodeId nodeId
-     */
-    bool addConnectingNode(const NodeId& nodeId, NodeInfo&& nodeInfo)
-    {
-        return true;
-        // return connecting_nodes.try_emplace(nodeId, std::move(nodeInfo)).second;
-    }
-
-    /**
-     * Remove NodeId from connecting_nodes
-     * @param NodeId nodeId
-     */
-    void removeConnectingNode(const NodeId& nodeId)
-    { /*connecting_nodes.erase(nodeId);*/
-    }
-
-    /** Get NodeIds of connecting_nodes
-     */
-    std::map<NodeId, NodeInfo>& getConnectingNodes() { return connecting_nodes; };
-
-    /**
-     * Indicate if bucket is full
-     */
-    bool isFull() const { return nodes.size() == BUCKET_MAX_SIZE; };
-
-    /**
      * Returns indexed NodeId from known_nodes
      * @param unsigned index
      */
     NodeId getKnownNode(unsigned index) const;
-
-    /**
-     * Test if socket exists in nodes as Id
-     * @param const NodeId& nodeId
-     */
-    bool hasNode(const NodeId& nodeId) const;
 
     /**
      * Test if NodeId exist in known_nodes
@@ -157,14 +124,55 @@ public:
     }
 
     /**
+     * Add NodeId to mobile_nodes
+     * @param NodeId nodeId
+     */
+    bool addMobileNode(const NodeId& nodeId);
+
+    /**
+     * Remove NodeId from mobile_nodes
+     * @param NodeId nodeId
+     */
+    void removeMobileNode(const NodeId& nodeId) { mobile_nodes.erase(nodeId); }
+
+    /**
+     * Get NodeIds of mobile_nodes
+     */
+    const std::set<NodeId>& getMobileNodes() const { return mobile_nodes; }
+
+    /**
+     * Add NodeId to connecting_nodes
+     * @param NodeId& nodeId
+     * @param NodeInfo&& nodeInfo
+     */
+    bool addConnectingNode(const NodeId& nodeId, NodeInfo&& nodeInfo)
+    {
+        return connecting_nodes.try_emplace(nodeId, std::move(nodeInfo)).second;
+    }
+
+    /**
+     * Remove NodeId from connecting_nodes
+     * @param NodeId nodeId
+     */
+    void removeConnectingNode(const NodeId& nodeId) { connecting_nodes.erase(nodeId); }
+
+    /** Get NodeIds of connecting_nodes
+     */
+    std::map<NodeId, NodeInfo>& getConnectingNodes() { return connecting_nodes; };
+
+    /**
      * Test if NodeId exist in connecting_nodes
      * @param NodeId nodeId
      */
     bool hasConnectingNode(const NodeId& nodeId) const
     {
-        return false;
-        // return connecting_nodes.find(nodeId) != connecting_nodes.end();
+        return connecting_nodes.find(nodeId) != connecting_nodes.end();
     }
+
+    /**
+     * Indicate if bucket is full
+     */
+    bool isFull() const { return nodes.size() == BUCKET_MAX_SIZE; };
 
     /**
      * Returns random numberNodes NodeId from known_nodes
@@ -231,8 +239,6 @@ public:
      */
     unsigned getConnectingNodesSize() const { return connecting_nodes.size(); }
 
-    bool swap(std::list<Bucket>::iterator& bucket, const NodeId& nodeId) { return true; };
-
 private:
     NodeId lowerLimit_;
     std::map<NodeId, NodeInfo> nodes;
@@ -249,13 +255,6 @@ public:
     RoutingTable();
 
     /**
-     * Test if nodeId is in specific bucket
-     * @param list<Bucket>::iterator it
-     * @param NodeId nodeId
-     */
-    bool contains(const std::list<Bucket>::iterator& it, const NodeId& nodeId) const;
-
-    /**
      * Add socket to bucket
      * @param shared_ptr<ChannelSocketInterface>& socket
      */
@@ -270,16 +269,10 @@ public:
                  std::list<Bucket>::iterator& bucket);
 
     /**
-     * Add known node to bucket
-     * @param NodeId nodeId
-     */
-    bool addKnownNode(const NodeId& nodeId);
-
-    /**
-     * Deletes node from routing table
+     * Removes node from routing table
      * @param shared_ptr<ChannelSocketInterface>& socket
      */
-    bool deleteNode(const NodeId& nodeId);
+    bool removeNode(const NodeId& nodeId);
 
     /**
      * Check if node in routing table
@@ -288,21 +281,10 @@ public:
     bool hasNode(const NodeId& nodeId);
 
     /**
-     * Check if node in routing table through its id
+     * Add known node to bucket
      * @param NodeId nodeId
      */
-    bool hasNodeId(const NodeId& nodeId)
-    {
-        auto bucket = findBucket(nodeId);
-        return bucket->hasNode(nodeId);
-    }
-
-    /**
-     * Returns number nodes of closest nodes to specific nodeId
-     * @param NodeId nodeId
-     * @param int count
-     */
-    std::vector<NodeId> closestNodes(const NodeId& nodeId, unsigned count);
+    bool addKnownNode(const NodeId& nodeId);
 
     /**
      * Check if known node exists in routing table
@@ -313,6 +295,18 @@ public:
         auto bucket = findBucket(nodeId);
         return bucket->hasKnownNode(nodeId);
     }
+
+    /**
+     * Add mobile node to bucket
+     * @param NodeId nodeId
+     */
+    bool addMobileNode(const NodeId& nodeId);
+
+    /**
+     * Remove mobile node to bucket
+     * @param NodeId nodeId
+     */
+    bool removeMobileNode(const NodeId& nodeId);
 
     /**
      * Check if Connecting node exists in routing table
@@ -335,6 +329,13 @@ public:
         return std::list<Bucket>::const_iterator(
             const_cast<RoutingTable*>(this)->findBucket(nodeId));
     }
+
+    /**
+     * Returns number nodes of closest nodes to specific nodeId
+     * @param NodeId nodeId
+     * @param int count
+     */
+    std::vector<NodeId> closestNodes(const NodeId& nodeId, unsigned count);
 
     /**
      * Returns number of buckets in routing table
@@ -401,6 +402,13 @@ public:
         }
         return ret;
     }
+
+    /**
+     * Test if nodeId is in specific bucket
+     * @param list<Bucket>::iterator it
+     * @param NodeId nodeId
+     */
+    bool contains(const std::list<Bucket>::iterator& it, const NodeId& nodeId) const;
 
 private:
     /**
