@@ -54,6 +54,12 @@ public:
     void setKnownNodes(const std::vector<NodeId>& known_nodes);
 
     /**
+     * Add list of nodes to the mobile nodes list
+     * @param vector<NodeId>& mobile_nodes
+     */
+    void setMobileNodes(const std::vector<NodeId>& mobile_nodes);
+
+    /**
      * Add channel to routing table
      * @param shared_ptr<ChannelSocketInterface>& channel
      */
@@ -80,7 +86,7 @@ private:
      * @param NodeId nodeId
      */
     void addKnownNodes(const NodeId& nodeId);
-
+    void addMobileNodes(const NodeId& nodeId);
     /**
      * Send nodes request to fill known_nodes list
      * @param shared_ptr<ChannelSocketInterface>& socket
