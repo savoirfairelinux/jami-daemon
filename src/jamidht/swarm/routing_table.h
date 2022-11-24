@@ -104,6 +104,18 @@ public:
     const std::set<NodeId>& getKnownNodes() const { return known_nodes; }
 
     /**
+     * Add NodeId to known_nodes
+     * @param NodeId nodeId
+     */
+    bool addMobileNode(const NodeId& nodeId);
+
+    /**
+     * Remove NodeId from known_nodes
+     * @param NodeId nodeId
+     */
+    void removeMobileNode(const NodeId& nodeId) { mobile_nodes.erase(nodeId); }
+
+    /**
      * Get NodeIds of mobile_nodes
      */
     const std::set<NodeId>& getMobileNodes() const { return mobile_nodes; }
@@ -274,6 +286,9 @@ public:
      * @param NodeId nodeId
      */
     bool addKnownNode(const NodeId& nodeId);
+
+    bool addMobileNode(const NodeId& nodeId);
+    bool deleteMobileNode(const NodeId& nodeId);
 
     /**
      * Deletes node from routing table

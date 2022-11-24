@@ -94,6 +94,7 @@ Bucket::addKnownNode(const NodeId& nodeId)
 {
     if (known_nodes.emplace(nodeId).second) {
         connecting_nodes.erase(nodeId);
+        mobile_nodes.erase(nodeId);
         nodes.erase(nodeId);
         return true;
     }
@@ -112,6 +113,18 @@ Bucket::getKnownNode(unsigned index) const
     return *it;
 }
 
+bool
+Bucket::addMobileNode(const NodeId& nodeId)
+{
+    if (mobile_nodes.emplace(nodeId).second) {
+        connecting_nodes.erase(nodeId);
+        known_nodes.erase(nodeId);
+        nodes.erase(nodeId);
+        return true;
+    }
+    return false;
+}
+
 std::set<NodeId>
 Bucket::getKnownNodesRandom(unsigned numberNodes, std::mt19937_64& rd) const
 {
@@ -128,18 +141,6 @@ Bucket::getKnownNodesRandom(unsigned numberNodes, std::mt19937_64& rd) const
 
     return nodesToReturn;
 }
-
-/*
-std::vector<NodeId>
-Bucket::getMobileNodes() const
-{
-    std::vector<NodeId> toReturn;
-    for (auto const& nm : mobile_nodes) {
-        toReturn.insert(toReturn.begin(), nm);
-    }
-
-    return toReturn;
-}*/
 
 void
 Bucket::printBucket(unsigned number) const
@@ -209,6 +210,33 @@ RoutingTable::addKnownNode(const NodeId& nodeId)
 
     else {
         bucket->addKnownNode(nodeId);
+        return 1;
+    }
+}
+bool
+RoutingTable::addMobileNode(const NodeId& nodeId)
+{
+    auto bucket = findBucket(nodeId);
+    if (bucket == buckets.end() || id_ == nodeId) {
+        return 0;
+    }
+
+    else {
+        bucket->addMobileNode(nodeId);
+        return 1;
+    }
+}
+
+bool
+RoutingTable::deleteMobileNode(const NodeId& nodeId)
+{
+    auto bucket = findBucket(nodeId);
+    if (bucket == buckets.end() || id_ == nodeId) {
+        return 0;
+    }
+
+    else {
+        bucket->removeMobileNode(nodeId);
         return 1;
     }
 }
@@ -309,28 +337,12 @@ RoutingTable::split(std::list<Bucket>::iterator& bucket)
         auto nodeId = *it;
 
         if (!contains(bucket, nodeId)) {
-            // TODO adapt
-            bucket->removeKnownNode(nodeId);
-            newBucketIt->addKnownNode(nodeId);
+            bucket->removeMobileNode(nodeId);
+            newBucketIt->addMobileNode(nodeId);
         } else {
             ++it;
         }
     }
-    /*
-        auto connectingNodes = bucket->getConnectingNodes();
-        std::map<NodeId, NodeInfo> connectingSwap(connectingNodes.begin(), connectingNodes.end());
-
-        while (!connectingSwap.empty()) {
-            auto n = connectingSwap.begin();
-            auto nodeId = std::move(*n);
-
-            if (!contains(bucket, nodeId)) {
-                bucket->removeConnectingNode(nodeInfo);
-                newBucketIt->addConnectingNode(nodeInfo);
-            }
-
-            connectingSwap.erase(n);
-        } */
 
     return true;
 }

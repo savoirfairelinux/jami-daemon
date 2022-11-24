@@ -45,8 +45,23 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
-    for (const auto& nodeInfo : known_nodes) {
-        addKnownNodes(std::move(nodeInfo));
+    for (const auto& NodeId : known_nodes) {
+        addKnownNodes(std::move(NodeId));
+    }
+
+    dht::ThreadPool::io().run([w = weak()] {
+        if (auto shared = w.lock())
+            shared->maintainBuckets();
+    });
+}
+
+void
+SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+
+    for (const auto& NodeId : mobile_nodes) {
+        addMobileNodes(std::move(NodeId));
     }
 
     dht::ThreadPool::io().run([w = weak()] {
@@ -60,6 +75,14 @@ SwarmManager::addKnownNodes(const NodeId& nodeId)
 {
     if (id_ != nodeId) {
         routing_table.addKnownNode(nodeId);
+    }
+}
+
+void
+SwarmManager::addMobileNodes(const NodeId& nodeId)
+{
+    if (id_ != nodeId) {
+        routing_table.addMobileNode(nodeId);
     }
 }
 
@@ -90,8 +113,7 @@ SwarmManager::sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, 
 
     if (msg_.request->q == Query::FIND) {
         auto nodes = routing_table.closestNodes(msg_.request->nodeId, msg_.request->num);
-        auto bucket = routing_table.findBucket(
-            msg_.request->nodeId); // MES MOBILES OU SES MOBILES ?
+        auto bucket = routing_table.findBucket(msg_.request->nodeId);
         const auto& m_nodes = bucket->getMobileNodes();
         Response toResponse;
         toResponse.q = Query::FOUND;
