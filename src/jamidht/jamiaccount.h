@@ -377,6 +377,7 @@ public:
                        std::function<void(bool)>&& end = {});
 
     void setPushNotificationToken(const std::string& pushDeviceToken = "") override;
+    void setPushNotificationPlatform(const std::string& platform) override;
 
     void setPushNotificationTopic(const std::string& topic) override;
 
@@ -611,7 +612,8 @@ private:
     struct BuddyInfo;
     struct DiscoveredPeer;
 
-    inline std::string getProxyConfigKey() const {
+    inline std::string getProxyConfigKey() const
+    {
         const auto& conf = config();
         return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl).toString();
     }

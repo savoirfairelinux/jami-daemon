@@ -251,6 +251,11 @@ LIBJAMI_PUBLIC void connectivityChanged();
  * Set to empty to disable push notifications.
  */
 LIBJAMI_PUBLIC void setPushNotificationToken(const std::string& pushDeviceToken);
+/**
+ * Set the device push platform
+ * @param platform (android/ios/unifiedpush)
+ */
+LIBJAMI_PUBLIC void setPushNotificationPlatform(const std::string& platform);
 
 /**
  * Set the topic for ios

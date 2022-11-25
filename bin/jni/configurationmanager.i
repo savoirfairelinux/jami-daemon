@@ -224,6 +224,7 @@ std::map<std::string, std::string> getContactDetails(const std::string& accountI
 void connectivityChanged();
 
 void setPushNotificationToken(const std::string& pushDeviceToken);
+void setPushNotificationPlatform(const std::string& platform);
 void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
 bool isAudioMeterActive(const std::string& id);

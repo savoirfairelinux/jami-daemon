@@ -1,0 +1,73 @@
+ src/dht_proxy_client.cpp | 14 ++++++++++++--
+ src/dht_proxy_server.cpp |  3 +++
+ 2 files changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/src/dht_proxy_client.cpp b/src/dht_proxy_client.cpp
+index d53b7693..a052bab0 100644
+--- a/src/dht_proxy_client.cpp
++++ b/src/dht_proxy_client.cpp
+@@ -1009,7 +1009,7 @@ DhtProxyClient::sendListen(const restinio::http_request_header_t& header,
+                            Listener& listener, ListenMethod method)
+ {
+     if (logger_)
+-        logger_->e("[proxy:client] [listen] sendListen: %d", (int)method);
++        logger_->e("[proxy:client] [listen] sendListen: %d %d %d", (int)method, method == ListenMethod::LISTEN, method == ListenMethod::SUBSCRIBE);
+     try {
+         auto request = buildRequest();
+         listener.request = request;
+@@ -1020,9 +1020,16 @@ DhtProxyClient::sendListen(const restinio::http_request_header_t& header,
+             request->set_connection_type(restinio::http_connection_header_t::keep_alive);
+ #ifdef OPENDHT_PUSH_NOTIFICATIONS
+         std::string body;
+-        if (method != ListenMethod::LISTEN)
++        logger_->e("[proxy:client] [listen] @@@ fillBody? %d", (int)method);
++        if (method != ListenMethod::LISTEN) {
++            logger_->e("[proxy:client] [listen] @@@ fillBody: %d", (int)method);
++
+             body = fillBody(method == ListenMethod::RESUBSCRIBE);
++        }
+         request->set_body(body);
++#else
++        logger_->e("[proxy:client] [listen] @@@ NO PUSH!!!!");
++
+ #endif
+         auto rxBuf = std::make_shared<LineSplit>();
+         request->add_on_body_callback([this, reqid, opstate, rxBuf, cb](const char* at, size_t length){
+@@ -1327,6 +1334,8 @@ DhtProxyClient::getPushRequest(Json::Value& body) const
+     body["session_id"] = pushSessionId_;
+     body["topic"] = notificationTopic_;
+     body["platform"] = platform_;
++    logger_->e("@@@ %s", platform_.c_str());
++    logger_->e("@@@ %s", deviceKey_.c_str());
+ }
+
+ std::string
+@@ -1337,6 +1346,7 @@ DhtProxyClient::fillBody(bool resubscribe)
+     //   "key":"device_key",
+     // }
+     Json::Value body;
++    logger_->e("[proxy:client] [listen] @@@ getPushRequest: %d", (int)resubscribe);
+     getPushRequest(body);
+     if (resubscribe) {
+         // This is the first listen, we want to retrieve previous values.
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index c697fe73..beabc91d 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -806,6 +806,8 @@ DhtProxyServer::subscribe(restinio::request_handle_t request,
+         }
+         auto clientId = root["client_id"].asString();
+         auto sessionId = root["session_id"].asString();
++        printf("@@@GET %s\n", root["platform"].asString().c_str());
++
+
+         if (logger_)
+             logger_->d("[proxy:server] [subscribe %s] [client %s] [session %s]", infoHash.toString().c_str(), clientId.c_str(), sessionId.c_str());
+@@ -1032,6 +1034,7 @@ DhtProxyServer::sendPushNotification(const std::string& token, Json::Value&& jso
+         request->set_header_field(restinio::http_field_t::content_type, "application/json");
+
+         if (type == PushType::UnifiedPush) {
++            printf("@@@SEND\n");
+             Json::Value notification(Json::objectValue);
+             notification["message"] = Json::writeString(jsonBuilder_, std::move(json));
+             notification["topic"] = token;
