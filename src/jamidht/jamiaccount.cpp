@@ -290,8 +290,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
-{
-}
+{}
 
 JamiAccount::~JamiAccount() noexcept
 {
@@ -902,7 +901,7 @@ JamiAccount::loadConfig()
     registeredName_ = config().registeredName;
     try {
         auto str = fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
-                                                           std::chrono::hours(24 * 7));
+                                                std::chrono::hours(24 * 7));
         std::string err;
         Json::Value root;
         Json::CharReaderBuilder rbuilder;
@@ -1820,7 +1819,7 @@ JamiAccount::doRegister_()
         dht::DhtRunner::Context context {};
         context.peerDiscovery = peerDiscovery_;
 
-        auto dht_log_level = Manager::instance().dhtLogLevel.load();
+        auto dht_log_level = 3; // Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
             static auto silent = [](char const* /*m*/, va_list /*args*/) {
             };
@@ -2343,10 +2342,8 @@ JamiAccount::setCertificateStatus(const std::string& cert_id,
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
     if (done) {
         findCertificate(cert_id);
-        emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
-                                                                        cert_id,
-                                                                        tls::TrustStore::statusToStr(
-                                                                            status));
+        emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
+            getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
     }
     return done;
 }
@@ -3285,6 +3282,15 @@ JamiAccount::setPushNotificationToken(const std::string& token)
     SIPAccountBase::setPushNotificationToken(token);
     if (dht_)
         dht_->setPushNotificationToken(token);
+}
+
+void
+JamiAccount::setPushNotificationPlatform(const std::string& platform)
+{
+    JAMI_WARNING("[Account {:s}] setPushNotificationPlatform: {:s}", getAccountID(), platform);
+    SIPAccountBase::setPushNotificationPlatform(platform);
+    if (dht_)
+        dht_->setPushNotificationPlatform(platform);
 }
 
 void

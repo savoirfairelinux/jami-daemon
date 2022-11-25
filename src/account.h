@@ -82,7 +82,7 @@ public:
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */
 
-class Account: public std::enable_shared_from_this<Account>
+class Account : public std::enable_shared_from_this<Account>
 {
 public:
     Account(const std::string& accountID);
@@ -100,7 +100,8 @@ public:
 
     virtual std::unique_ptr<AccountConfig> buildConfig() const = 0;
 
-    void setConfig(std::unique_ptr<AccountConfig>&& config) {
+    void setConfig(std::unique_ptr<AccountConfig>&& config)
+    {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         config_ = std::move(config);
         loadConfig();
@@ -111,12 +112,16 @@ public:
      */
     virtual void loadConfig();
 
-    const AccountConfig& config() const {
-        if (config_) return *config_;
-        else throw std::runtime_error("Account doesn't have a configuration");
+    const AccountConfig& config() const
+    {
+        if (config_)
+            return *config_;
+        else
+            throw std::runtime_error("Account doesn't have a configuration");
     }
 
-    inline void editConfig(std::function<void(AccountConfig& config)>&& edit) {
+    inline void editConfig(std::function<void(AccountConfig& config)>&& edit)
+    {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         edit(*config_);
         saveConfig();
@@ -124,7 +129,8 @@ public:
 
     virtual void saveConfig() const;
 
-    void setAccountDetails(const std::map<std::string, std::string>& details) {
+    void setAccountDetails(const std::map<std::string, std::string>& details)
+    {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (not config_)
             config_ = buildConfig();
@@ -133,7 +139,8 @@ public:
         saveConfig();
     }
 
-    std::map<std::string, std::string> getAccountDetails() const {
+    std::map<std::string, std::string> getAccountDetails() const
+    {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         return config().toMap();
     }
@@ -219,16 +226,17 @@ public:
 
     virtual void setPushNotificationToken(const std::string& pushDeviceToken = "")
     {
-        editConfig([&](AccountConfig& config){
-            config.deviceKey = pushDeviceToken;
-        });
+        editConfig([&](AccountConfig& config) { config.deviceKey = pushDeviceToken; });
+    }
+
+    virtual void setPushNotificationPlatform(const std::string& platform)
+    {
+        editConfig([&](AccountConfig& config) { config.platform = platform; });
     }
 
     virtual void setPushNotificationTopic(const std::string& topic = "")
     {
-        editConfig([&](AccountConfig& config){
-            config.notificationTopic = topic;
-        });
+        editConfig([&](AccountConfig& config) { config.notificationTopic = topic; });
     }
 
     /**
@@ -249,10 +257,9 @@ public:
 
     bool isUsable() const { return config().enabled and active_; }
 
-    void enableVideo(bool enable) {
-        editConfig([&](AccountConfig& config){
-            config.videoEnabled = enable;
-        });
+    void enableVideo(bool enable)
+    {
+        editConfig([&](AccountConfig& config) { config.videoEnabled = enable; });
     }
     bool isVideoEnabled() const { return config().videoEnabled; }
 
@@ -490,4 +497,3 @@ operator<<(std::ostream& os, const Account& acc)
 }
 
 } // namespace jami
-
