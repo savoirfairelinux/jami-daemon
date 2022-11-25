@@ -240,29 +240,6 @@ public:
     virtual void answer(const std::vector<libjami::MediaMap>& mediaList) = 0;
 
     /**
-     * Check the media of an incoming media change request.
-     * This method checks the new media against the current media. It
-     * determines if the differences are significant enough to require
-     * more processing.
-     * For instance, this can be used to check if the a change request
-     * must be reported to the client for confirmation or can be handled
-     * by the daemon.
-     * The conditions that cause this method to return true are implementation
-     * specific.
-     *
-     * @param the new media list from the remote
-     * @return true if the new media differs from the current media
-     **/
-    virtual bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) = 0;
-
-    /**
-     * Process incoming media change request.
-     *
-     * @param the new media list from the remote
-     */
-    virtual void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) = 0;
-
-    /**
      * Answer to a media update request.
      * The media attributes set by the caller of this method will
      * determine the response to send to the peer and the configuration
@@ -326,17 +303,9 @@ public:
      */
     virtual void peerHungup();
 
-    virtual void removeCall();
-
-    /**
-     * Update recording state. Typically used to send notifications
-     * to peers about the local recording session state
-     */
-    virtual void updateRecState(bool state) = 0;
-
     void addStateListener(StateListenerCb&& listener)
     {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard<std::recursive_timed_mutex> lk {callMutex_};
         stateChangedListeners_.emplace_back(std::move(listener));
     }
 
@@ -351,7 +320,7 @@ public:
     ///
     bool isSubcall() const
     {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard<std::recursive_timed_mutex> lk {callMutex_};
         return parent_ != nullptr;
     }
 
@@ -369,11 +338,13 @@ public:
     // media management
     virtual bool toggleRecording();
 
-    virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
+    /**
+     * Update recording state. Typically used to send notifications
+     * to peers about the local recording session state
+     */
+    virtual void updateRecState(bool state) = 0;
 
-#ifdef ENABLE_VIDEO
-    virtual void createSinks(const ConfInfo& infos) = 0;
-#endif
+    virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
 
     virtual void switchInput(const std::string& = {}) {};
 
@@ -470,6 +441,7 @@ protected:
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
     virtual void merge(Call& scall);
+    virtual void removeCall();
 
     /**
      * Constructor of a call
@@ -498,13 +470,40 @@ protected:
     MsgList pendingOutMessages_;
 
     /** Protect every attribute that can be changed by two threads */
-    mutable std::recursive_mutex callMutex_ {};
+    mutable std::recursive_timed_mutex callMutex_ {};
 
     mutable std::mutex confInfoMutex_ {};
     mutable ConfInfo confInfo_ {};
     time_point duration_start_ {time_point::min()};
 
 private:
+    /**
+     * Process incoming media change request.
+     *
+     * @param the new media list from the remote
+     */
+    virtual void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) = 0;
+
+    /**
+     * Check the media of an incoming media change request.
+     * This method checks the new media against the current media. It
+     * determines if the differences are significant enough to require
+     * more processing.
+     * For instance, this can be used to check if the a change request
+     * must be reported to the client for confirmation or can be handled
+     * by the daemon.
+     * The conditions that cause this method to return true are implementation
+     * specific.
+     *
+     * @param the new media list from the remote
+     * @return true if the new media differs from the current media
+     **/
+    virtual bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) = 0;
+
+#ifdef ENABLE_VIDEO
+    virtual void createSinks(const ConfInfo& infos) = 0;
+#endif
+
     bool validStateTransition(CallState newState);
 
     void checkPendingIM();
