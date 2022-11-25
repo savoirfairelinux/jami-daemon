@@ -116,12 +116,18 @@ public:
     // Override of Call class
 private:
     void merge(Call& call) override; // not public - only called by Call
-
+    void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
+    bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
+#ifdef ENABLE_VIDEO
+    std::mutex sinksMtx_;
+    void createSinks(const ConfInfo& infos) override;
+    std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
+#endif
+protected:
+    void removeCall() override;
 public:
     void answer() override;
     void answer(const std::vector<libjami::MediaMap>& mediaList) override;
-    bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
-    void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList,
                                   bool isRemote = false) override;
     void hangup(int reason) override;
@@ -137,7 +143,6 @@ public:
     std::vector<libjami::MediaMap> currentMediaList() const override;
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
-    void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
     void restartMediaSender() override;
@@ -148,12 +153,8 @@ public:
     std::map<std::string, std::string> getDetails() const override;
     void enterConference(std::shared_ptr<Conference> conference) override;
     void exitConference() override;
-#ifdef ENABLE_VIDEO
-    std::mutex sinksMtx_;
-    void createSinks(const ConfInfo& infos) override;
-    std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
-#endif
     bool hasVideo() const override;
+    void updateRecState(bool state) override;
 
     // TODO: cleanup this (used by conference + Call::getDetails() (and clients can use this))
     bool isCaptureDeviceMuted(const MediaType& mediaType) const override;
@@ -241,12 +242,6 @@ public:
         return sipTransport_.get();
     }
 
-    void sendSIPInfo(std::string_view body, std::string_view subtype);
-
-    void requestKeyframe(int streamIdx = -1);
-
-    void updateRecState(bool state) override;
-
     std::shared_ptr<SIPAccountBase> getSIPAccount() const;
 
     bool remoteHasValidIceAttributes() const;
@@ -260,15 +255,6 @@ public:
 
     // Set ICE instance. Must be called only for sub-calls
     void setIceMedia(std::shared_ptr<IceTransport> ice, bool isReinvite = false);
-
-    // Switch to re-invite ICE media if needed
-    void switchToIceReinviteIfNeeded();
-
-    /**
-     * Setup ICE locally to answer to an ICE offer. The ICE session has
-     * the controlled role (slave)
-     */
-    void setupIceResponse(bool isReinvite = false);
 
     void terminateSipSession(int status);
 
@@ -286,7 +272,6 @@ public:
     // Get the list of current RTP sessions
     std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(
         MediaType type = MediaType::MEDIA_ALL) const;
-    static size_t getActiveMediaStreamCount(const std::vector<MediaAttribute>& mediaAttrList);
 
     void setPeerRegisteredName(const std::string& name)
     {
@@ -307,8 +292,6 @@ public:
     // may not be ready to use when this method returns.
     bool initIceMediaTransport(bool master,
                                std::optional<IceTransportOptions> options = std::nullopt);
-
-    std::vector<std::string> getLocalIceCandidates(unsigned compId) const;
 
     void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
 
@@ -430,6 +413,15 @@ private:
                              const MediaDescription& remoteMedia);
     // Find the stream index with the matching label
     int findRtpStreamIndex(const std::string& label) const;
+    void sendSIPInfo(std::string_view body, std::string_view subtype);
+    void requestKeyframe(int streamIdx = -1);
+    // Switch to re-invite ICE media if needed
+    void switchToIceReinviteIfNeeded();
+    /**
+     * Setup ICE locally to answer to an ICE offer. The ICE session has
+     * the controlled role (slave)
+     */
+    void setupIceResponse(bool isReinvite = false);
 
     std::vector<IceCandidate> getAllRemoteCandidates(IceTransport& transport) const;
 
@@ -491,6 +483,7 @@ private:
     bool enableIce_ {true};
     bool srtpEnabled_ {false};
     bool rtcpMuxEnabled_ {false};
+    bool stoppingRtp_ {false};
 
     // ICE media transport
     std::shared_ptr<IceTransport> iceMedia_;
@@ -509,12 +502,6 @@ private:
 
     std::atomic_bool waitForIceInit_ {false};
 
-    std::map<const std::string, bool> mediaReady_ {{"a:local", false},
-                                                   {"a:remote", false},
-                                                   {"v:local", false},
-                                                   {"v:remote", false}};
-
-    void resetMediaReady();
     void detachAudioFromConference();
 
     std::mutex setupSuccessMutex_;
