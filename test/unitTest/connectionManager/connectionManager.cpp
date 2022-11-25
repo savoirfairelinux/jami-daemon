@@ -750,7 +750,6 @@ ConnectionManagerTest::testShutdownCallbacks()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
     auto aliceUri = aliceAccount->getUsername();
-    auto aliceDeviceId = DeviceId(std::string(aliceAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
