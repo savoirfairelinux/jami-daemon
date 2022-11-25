@@ -109,7 +109,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , srtpEnabled_(account->isSrtpEnabled())
 {
     jami_tracepoint(call_start, callId.c_str());
-
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller());
 
@@ -233,9 +233,11 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     }
 
     rtpSession->setSuccessfulSetupCb([w = weak()](MediaType type, bool isRemote) {
-        if (auto thisPtr = w.lock())
-            thisPtr->rtpSetupSuccess(type, isRemote);
-    });
+        if (auto thisPtr = w.lock()){
+            // If the RTP sessions are currently being stopped, do nothing
+            if(!thisPtr->stoppingRtp_)
+                thisPtr->rtpSetupSuccess(type, isRemote);
+    }});
 
     if (localMedia.type == MediaType::MEDIA_AUDIO) {
         setupVoiceCallback(rtpSession);
@@ -482,6 +484,7 @@ SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport,
     sipTransport_->addStateListener(
         list_id, [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
             if (auto this_ = wthis_.lock()) {
+                std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
                 JAMI_DBG("[call:%s] SIP transport state [%i] - connection state [%u]",
                          this_->getCallId().c_str(),
                          state,
@@ -1140,6 +1143,7 @@ SIPCall::detachAudioFromConference()
 void
 SIPCall::refuse()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (!isIncoming() or getConnectionState() == ConnectionState::CONNECTED or !inviteSession_)
         return;
 
@@ -1272,7 +1276,7 @@ SIPCall::transfer(const std::string& to)
         JAMI_ERR("No account detected");
         return;
     }
-
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     deinitRecorder();
     if (Call::isRecording())
         stopRecording();
@@ -1330,9 +1334,9 @@ SIPCall::onhold(OnReadyCb&& cb)
         remainingRequest_ = Request::HoldingOn;
         return false;
     }
-
+    std::unique_lock<std::recursive_mutex> lk {callMutex_};
     auto result = hold();
-
+    lk.unlock();
     if (cb)
         cb(result);
 
@@ -1383,8 +1387,9 @@ SIPCall::offhold(OnReadyCb&& cb)
         return false;
     }
     JAMI_DBG("[call:%s] Resuming the call", getCallId().c_str());
+    std::unique_lock<std::recursive_mutex> lk {callMutex_};
     auto result = unhold();
-
+    lk.unlock();
     if (cb)
         cb(result);
 
@@ -1448,6 +1453,7 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 void
 SIPCall::switchInput(const std::string& source)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_DBG("[call:%s] Set selected source to %s", getCallId().c_str(), source.c_str());
 
     for (auto const& stream : rtpStreams_) {
@@ -1470,7 +1476,6 @@ SIPCall::switchInput(const std::string& source)
     }
     if (isRec) {
         readyToRecord_ = false;
-        resetMediaReady();
         pendingRecord_ = true;
     }
 }
@@ -1478,6 +1483,7 @@ SIPCall::switchInput(const std::string& source)
 void
 SIPCall::peerHungup()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     pendingRecord_ = false;
     // Stop all RTP streams
     stopAllMedia();
@@ -1533,7 +1539,6 @@ SIPCall::setVideoOrientation(int streamIdx, int rotation)
 void
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, const std::string& from)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     // TODO: for now we ignore the "from" (the previous implementation for sending this info was
     //      buggy and verbose), another way to send the original message sender will be implemented
     //      in the future
@@ -1666,6 +1671,7 @@ SIPCall::sendKeyframe(int streamIdx)
 #ifdef ENABLE_VIDEO
     dht::ThreadPool::computation().run([w = weak(), streamIdx] {
         if (auto sthis = w.lock()) {
+            std::lock_guard<std::recursive_mutex> lk {sthis->callMutex_};
             JAMI_DBG("handling picture fast update request");
             if (streamIdx == -1) {
                 for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
@@ -1813,6 +1819,7 @@ SIPCall::onPeerRinging()
 void
 SIPCall::addLocalIceAttributes()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (not isIceEnabled())
         return;
 
@@ -1948,6 +1955,7 @@ std::shared_ptr<AccountCodecInfo>
 SIPCall::getVideoCodec() const
 {
 #ifdef ENABLE_VIDEO
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     // Return first video codec as we negotiate only one codec for the call
     // Note: with multistream we can negotiate codecs/stream, but it's not the case
     // in practice (same for audio), so just return the first video codec.
@@ -1960,6 +1968,7 @@ SIPCall::getVideoCodec() const
 std::shared_ptr<AccountCodecInfo>
 SIPCall::getAudioCodec() const
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     // Return first video codec as we negotiate only one codec for the call
     for (const auto& audioRtp : getRtpSessionList(MediaType::MEDIA_AUDIO))
         return audioRtp->getCodec();
@@ -2014,6 +2023,7 @@ bool
 SIPCall::hasVideo() const
 {
 #ifdef ENABLE_VIDEO
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     std::function<bool(const RtpStream& stream)> videoCheck = [](auto const& stream) {
         return stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO;
     };
@@ -2029,6 +2039,7 @@ SIPCall::hasVideo() const
 bool
 SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     // Return true only if all media of type 'mediaType' that use capture devices
     // source, are muted.
     std::function<bool(const RtpStream& stream)> mutedCheck = [&mediaType](auto const& stream) {
@@ -2151,7 +2162,6 @@ SIPCall::startAllMedia()
 
     // reset
     readyToRecord_ = false;
-    resetMediaReady();
 
     for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
         if (not iter->mediaAttribute_) {
@@ -2168,7 +2178,7 @@ SIPCall::startAllMedia()
             }
         }
     }
-
+    isAudioOnly_ = !hasVideo();
     // Media is restarted, we can process the last holding request.
     isWaitingForIceAndMedia_ = false;
     if (remainingRequest_ != Request::NoRequest) {
@@ -2208,6 +2218,7 @@ SIPCall::startAllMedia()
 void
 SIPCall::restartMediaSender()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_DBG("[call:%s] restarting TX media streams", getCallId().c_str());
     for (const auto& rtpSession : getRtpSessionList())
         rtpSession->restartSender();
@@ -2216,6 +2227,7 @@ SIPCall::restartMediaSender()
 void
 SIPCall::stopAllMedia()
 {
+    stoppingRtp_ = true;
     JAMI_DBG("[call:%s] Stopping all media", getCallId().c_str());
     deinitRecorder();
     if (Call::isRecording())
@@ -2249,6 +2261,7 @@ SIPCall::stopAllMedia()
             getCallId());
     }
 #endif
+    stoppingRtp_ = false;
 }
 
 void
@@ -2283,6 +2296,7 @@ SIPCall::updateRemoteMedia()
 void
 SIPCall::muteMedia(const std::string& mediaType, bool mute)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto type = MediaAttribute::stringToMediaType(mediaType);
 
     if (type == MediaType::MEDIA_AUDIO) {
@@ -2490,6 +2504,7 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     // Disable video if disabled in the account.
@@ -2587,6 +2602,7 @@ SIPCall::currentMediaList() const
 std::vector<MediaAttribute>
 SIPCall::getMediaAttributeList() const
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     std::vector<MediaAttribute> mediaList;
     mediaList.reserve(rtpStreams_.size());
     for (auto const& stream : rtpStreams_)
@@ -2810,7 +2826,7 @@ pj_status_t
 SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
     JAMI_DBG("[call:%s] Received a re-invite", getCallId().c_str());
-
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     pj_status_t res = PJ_SUCCESS;
 
     if (not sdp_) {
@@ -2870,6 +2886,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
 void
 SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (not rtpStreams_.empty()) {
         JAMI_ERR("[call:%s] Unexpected offer in '200 OK' answer", getCallId().c_str());
         return;
@@ -2976,7 +2993,7 @@ SIPCall::getDetails() const
     auto details = Call::getDetails();
 
     details.emplace(libjami::Call::Details::PEER_HOLDING, peerHolding_ ? TRUE_STR : FALSE_STR);
-
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     for (auto const& stream : rtpStreams_) {
         if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
             details.emplace(libjami::Call::Details::VIDEO_SOURCE,
@@ -3053,6 +3070,7 @@ SIPCall::getDetails() const
 void
 SIPCall::enterConference(std::shared_ptr<Conference> conference)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_DBG("[call:%s] Entering conference [%s]",
              getCallId().c_str(),
              conference->getConfId().c_str());
@@ -3072,6 +3090,7 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
 void
 SIPCall::exitConference()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
@@ -3094,6 +3113,7 @@ SIPCall::exitConference()
 void
 SIPCall::setRotation(int streamIdx, int rotation)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     rotation_ = rotation;
     if (streamIdx == -1) {
         for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
@@ -3132,6 +3152,7 @@ SIPCall::createSinks(const ConfInfo& infos)
 std::vector<std::shared_ptr<RtpSession>>
 SIPCall::getRtpSessionList(MediaType type) const
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     std::vector<std::shared_ptr<RtpSession>> rtpList;
     rtpList.reserve(rtpStreams_.size());
     for (auto const& stream : rtpStreams_) {
@@ -3168,6 +3189,7 @@ SIPCall::monitor() const
 bool
 SIPCall::toggleRecording()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     pendingRecord_ = true;
     if (not readyToRecord_)
         return true;
@@ -3469,23 +3491,9 @@ void
 SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
 {
     std::lock_guard<std::mutex> lk {setupSuccessMutex_};
-    if (type == MEDIA_AUDIO) {
-        if (isRemote)
-            mediaReady_.at("a:remote") = true;
-        else
-            mediaReady_.at("a:local") = true;
-    } else {
-        if (isRemote)
-            mediaReady_.at("v:remote") = true;
-        else
-            mediaReady_.at("v:local") = true;
-    }
-
-    isAudioOnly_ = !hasVideo();
 #ifdef ENABLE_VIDEO
     readyToRecord_ = true; // We're ready to record whenever a stream is ready
 #endif
-
     if (pendingRecord_ && readyToRecord_)
         toggleRecording();
 }
@@ -3532,12 +3540,4 @@ SIPCall::peerVoice(bool voice)
         // maybe emit signal with partner voice activity
     }
 }
-
-void
-SIPCall::resetMediaReady()
-{
-    for (auto& m : mediaReady_)
-        m.second = false;
-}
-
 } // namespace jami
