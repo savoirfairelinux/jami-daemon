@@ -81,5 +81,7 @@ bool closeMediaPlayer(const std::string& id);
 bool mutePlayerAudio(const std::string& id, bool mute);
 bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
+bool getMediaPlayerHasAudio(const std::string& id);
+bool getMediaPlayerHasVideo(const std::string& id);
 
 } // namespace jami

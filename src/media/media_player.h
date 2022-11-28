@@ -42,6 +42,10 @@ public:
     int64_t getPlayerPosition() const;
     bool isPaused() const;
 
+    inline bool hasAudio() const { return audioStream_ >= 0; }
+
+    inline bool hasVideo() const { return videoStream_ >= 0; }
+
 private:
     std::string path_;
     std::string id_;
@@ -57,10 +61,6 @@ private:
     int64_t startTime_;
     int64_t lastPausedTime_;
     int64_t pauseInterval_;
-
-    inline bool hasAudio() const { return audioStream_ >= 0; }
-
-    inline bool hasVideo() const { return videoStream_ >= 0; }
 
     int audioStream_ = -1;
     int videoStream_ = -1;

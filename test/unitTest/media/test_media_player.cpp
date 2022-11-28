@@ -44,6 +44,8 @@ private:
     void testPause();
     void testSeekWhilePaused();
     void testSeekWhilePlaying();
+    void testHasAudioVideo();
+    void testClose();
 
     bool isWithinUsec(int64_t currentTime, int64_t seekTime, int64_t margin);
 
@@ -52,6 +54,8 @@ private:
     CPPUNIT_TEST(testPause);
     CPPUNIT_TEST(testSeekWhilePaused);
     CPPUNIT_TEST(testSeekWhilePlaying);
+    CPPUNIT_TEST(testHasAudioVideo);
+    CPPUNIT_TEST(testClose);
     CPPUNIT_TEST_SUITE_END();
 
     std::string playerId1_ {};
@@ -173,6 +177,21 @@ MediaPlayerTest::testSeekWhilePlaying()
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 50));
 
     CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(std::stoi(duration_)+1)));
+}
+
+void
+MediaPlayerTest::testHasAudioVideo()
+{
+    CPPUNIT_ASSERT(getMediaPlayerHasAudio(playerId1_));
+    CPPUNIT_ASSERT(getMediaPlayerHasVideo(playerId1_));
+}
+
+void
+MediaPlayerTest::testClose()
+{
+    libjami::closeMediaPlayer(playerId1_);
+    auto players = Manager::instance().getVideoManager().mediaPlayers;
+    CPPUNIT_ASSERT(players.find(playerId1_) == players.end());
 }
 
 }} // namespace jami::test

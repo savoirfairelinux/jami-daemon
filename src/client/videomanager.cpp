@@ -606,6 +606,18 @@ getPlayerPosition(const std::string& id)
 }
 
 bool
+getMediaPlayerHasAudio(const std::string &id)
+{
+    return jami::getMediaPlayerHasAudio(id);
+}
+
+bool
+getMediaPlayerHasVideo(const std::string &id)
+{
+    return jami::getMediaPlayerHasVideo(id);
+}
+
+bool
 getDecodingAccelerated()
 {
 #ifdef RING_ACCEL
@@ -802,6 +814,22 @@ getPlayerPosition(const std::string& id)
     if (auto player = getMediaPlayer(id))
         return player->getPlayerPosition();
     return -1;
+}
+
+bool
+getMediaPlayerHasAudio(const std::string& id)
+{
+    if (auto player = getMediaPlayer(id))
+        return player->hasAudio();
+    return false;
+}
+
+bool
+getMediaPlayerHasVideo(const std::string& id)
+{
+    if (auto player = getMediaPlayer(id))
+        return player->hasVideo();
+    return false;
 }
 
 } // namespace jami
