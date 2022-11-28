@@ -129,6 +129,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e4380d1f_933e52f1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 410,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T17:25:50Z",
+      "side": 1,
+      "message": "seems to break ut_call/ut_conversation/ut_conversation_call/convRequest/convMembersEvent",
+      "range": {
+        "startLine": 410,
+        "startChar": 8,
+        "endLine": 410,
+        "endChar": 9
+      },
+      "revId": "bb35948fc3bbab365dbea3b3fd8959603a49570d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "803ac8e4_51beab14",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 32
