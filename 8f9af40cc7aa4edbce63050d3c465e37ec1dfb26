@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8fcb9396_2080a5f6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 975
+      },
+      "writtenOn": "2022-11-28T22:40:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b60e8b10_5f53ac5b",
+      "range": {
+        "startLine": 112,
+        "startChar": 21,
+        "endLine": 112,
+        "endChar": 58
+      },
+      "revId": "8f9af40cc7aa4edbce63050d3c465e37ec1dfb26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8e63821d_f0348f37",
