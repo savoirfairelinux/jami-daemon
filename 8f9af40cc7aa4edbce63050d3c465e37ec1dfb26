@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b60e8b10_5f53ac5b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T20:54:13Z",
+      "side": 1,
+      "message": "should not be needed in constructor as it will be unused for other threads until the end",
+      "range": {
+        "startLine": 112,
+        "startChar": 21,
+        "endLine": 112,
+        "endChar": 58
+      },
+      "revId": "8f9af40cc7aa4edbce63050d3c465e37ec1dfb26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8e63821d_f0348f37",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1338,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T20:54:13Z",
+      "side": 1,
+      "message": "why not just lock in hold?",
+      "range": {
+        "startLine": 1338,
+        "startChar": 18,
+        "endLine": 1338,
+        "endChar": 22
+      },
+      "revId": "8f9af40cc7aa4edbce63050d3c465e37ec1dfb26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72277df3_46af038b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1391,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T20:54:13Z",
+      "side": 1,
+      "message": "same question",
+      "range": {
+        "startLine": 1391,
+        "startChar": 18,
+        "endLine": 1391,
+        "endChar": 24
+      },
+      "revId": "8f9af40cc7aa4edbce63050d3c465e37ec1dfb26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
