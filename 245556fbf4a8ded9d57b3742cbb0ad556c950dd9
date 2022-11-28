@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8d1cbce_7caaf4bb",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 488,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T18:00:44Z",
+      "side": 1,
+      "message": "atomic_bool",
+      "range": {
+        "startLine": 488,
+        "startChar": 4,
+        "endLine": 488,
+        "endChar": 8
+      },
+      "revId": "245556fbf4a8ded9d57b3742cbb0ad556c950dd9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

@@ -22,6 +22,30 @@
       },
       "revId": "3917b1875024b12a1e0413a7e5ebe4655541a770",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24dbb2e5_8fe5780b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T18:00:44Z",
+      "side": 1,
+      "message": "seems ok to me, else removing the callback before stopping would be ok, but, I don\u0027t think it\u0027s better.",
+      "parentUuid": "05b46939_54d62a0b",
+      "range": {
+        "startLine": 239,
+        "startChar": 25,
+        "endLine": 239,
+        "endChar": 37
+      },
+      "revId": "3917b1875024b12a1e0413a7e5ebe4655541a770",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
