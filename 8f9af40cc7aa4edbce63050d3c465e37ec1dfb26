@@ -71,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b662055d_05ec62ed",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1338,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T21:36:53Z",
+      "side": 1,
+      "message": "nah ok for me, easy to not forget.",
+      "parentUuid": "94f30b11_6abcb06c",
+      "range": {
+        "startLine": 1338,
+        "startChar": 18,
+        "endLine": 1338,
+        "endChar": 22
+      },
+      "revId": "8f9af40cc7aa4edbce63050d3c465e37ec1dfb26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "72277df3_46af038b",
@@ -84,6 +108,30 @@
       "writtenOn": "2022-11-28T20:54:13Z",
       "side": 1,
       "message": "same question",
+      "range": {
+        "startLine": 1391,
+        "startChar": 18,
+        "endLine": 1391,
+        "endChar": 24
+      },
+      "revId": "8f9af40cc7aa4edbce63050d3c465e37ec1dfb26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2bc722b9_d2b822c8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1391,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T21:36:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "72277df3_46af038b",
       "range": {
         "startLine": 1391,
         "startChar": 18,
