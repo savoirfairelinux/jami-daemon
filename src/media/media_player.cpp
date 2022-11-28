@@ -55,6 +55,36 @@ MediaPlayer::MediaPlayer(const std::string& path)
     loop_.start();
 }
 
+MediaPlayer::MediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId)
+    : audioStreamId_(audioStreamId),
+    videoStreamId_(videoStreamId),
+    loop_(std::bind(&MediaPlayer::configureMediaInputs, this),
+            std::bind(&MediaPlayer::process, this),
+            [] {})
+{
+    static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+    const auto pos = path.find(sep);
+    const auto suffix = path.substr(pos + sep.size());
+
+    if (access(suffix.c_str(), R_OK) != 0) {
+        JAMI_ERR() << "File '" << path << "' not available";
+        return;
+    }
+
+    path_ = path;
+    id_ = std::to_string(rand());
+    audioInput_ = jami::getAudioInput(audioStreamId);
+    audioInput_->setPaused(paused_);
+#ifdef ENABLE_VIDEO
+    videoInput_ = jami::getVideoInput(videoStreamId_, video::VideoInputMode::ManagedByDaemon);
+    videoInput_->setPaused(paused_);
+#endif
+
+    demuxer_ = std::make_shared<MediaDemuxer>();
+    loop_.start();
+}
+
+
 MediaPlayer::~MediaPlayer()
 {
     loop_.join();

@@ -75,11 +75,14 @@ std::shared_ptr<video::VideoInput> getVideoInput(
 #endif
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
 std::string createMediaPlayer(const std::string& path);
+std::string createMediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId);
 std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
 bool pausePlayer(const std::string& id, bool pause);
 bool closeMediaPlayer(const std::string& id);
 bool mutePlayerAudio(const std::string& id, bool mute);
 bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
+bool getMediaPlayerHasAudio(const std::string& id);
+bool getMediaPlayerHasVideo(const std::string& id);
 
 } // namespace jami

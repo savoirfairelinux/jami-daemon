@@ -32,6 +32,7 @@ class MediaPlayer
 {
 public:
     MediaPlayer(const std::string& path);
+    MediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId);
     ~MediaPlayer();
 
     void pause(bool pause);
@@ -42,9 +43,15 @@ public:
     int64_t getPlayerPosition() const;
     bool isPaused() const;
 
+    inline bool hasAudio() const { return audioStream_ >= 0; }
+
+    inline bool hasVideo() const { return videoStream_ >= 0; }
+
 private:
     std::string path_;
     std::string id_;
+    std::string audioStreamId_;
+    std::string videoStreamId_;
 
     // media inputs
 #ifdef ENABLE_VIDEO
@@ -57,10 +64,6 @@ private:
     int64_t startTime_;
     int64_t lastPausedTime_;
     int64_t pauseInterval_;
-
-    inline bool hasAudio() const { return audioStream_ >= 0; }
-
-    inline bool hasVideo() const { return videoStream_ >= 0; }
 
     int audioStream_ = -1;
     int videoStream_ = -1;

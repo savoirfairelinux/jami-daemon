@@ -575,6 +575,12 @@ createMediaPlayer(const std::string& path)
     return jami::createMediaPlayer(path);
 }
 
+std::string
+createMediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId)
+{
+    return jami::createMediaPlayer(path, audioStreamId, videoStreamId);
+}
+
 bool
 pausePlayer(const std::string& id, bool pause)
 {
@@ -603,6 +609,18 @@ int64_t
 getPlayerPosition(const std::string& id)
 {
     return jami::getPlayerPosition(id);
+}
+
+bool
+getMediaPlayerHasAudio(const std::string &id)
+{
+    return jami::getMediaPlayerHasAudio(id);
+}
+
+bool
+getMediaPlayerHasVideo(const std::string &id)
+{
+    return jami::getMediaPlayerHasVideo(id);
 }
 
 bool
@@ -762,6 +780,18 @@ createMediaPlayer(const std::string& path)
     return playerId;
 }
 
+std::string
+createMediaPlayer(const std::string& path, const std::string& audioStreamId, const std::string& videoStreamId)
+{
+    auto player = std::make_shared<MediaPlayer>(path, audioStreamId, videoStreamId);
+    if (!player->isInputValid()) {
+        return "";
+    }
+    auto playerId = player.get()->getId();
+    Manager::instance().getVideoManager().mediaPlayers[playerId] = player;
+    return playerId;
+}
+
 bool
 pausePlayer(const std::string& id, bool pause)
 {
@@ -802,6 +832,22 @@ getPlayerPosition(const std::string& id)
     if (auto player = getMediaPlayer(id))
         return player->getPlayerPosition();
     return -1;
+}
+
+bool
+getMediaPlayerHasAudio(const std::string& id)
+{
+    if (auto player = getMediaPlayer(id))
+        return player->hasAudio();
+    return false;
+}
+
+bool
+getMediaPlayerHasVideo(const std::string& id)
+{
+    if (auto player = getMediaPlayer(id))
+        return player->hasVideo();
+    return false;
 }
 
 } // namespace jami
