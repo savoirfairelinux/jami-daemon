@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05b46939_54d62a0b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 975
+      },
+      "writtenOn": "2022-11-28T15:05:48Z",
+      "side": 1,
+      "message": "I am not sure if this is the best fix but this is for the case where rtp sessions are stopped before the receiving threads of the sessions have finished setting up. Without this, there will be a deadlock when `stopAllMedia()` attempts to join the receiving threads that have not finished setting up. When they are done setting up they will call this callback and block while waiting for the callMutex_ (the cb calls `toggleRecording()` which requires the callMutex_). This will just ignore the successfulSetup callback if the rtp sessions are already being stopped.",
+      "range": {
+        "startLine": 239,
+        "startChar": 25,
+        "endLine": 239,
+        "endChar": 37
+      },
+      "revId": "3917b1875024b12a1e0413a7e5ebe4655541a770",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3cd80c4c_ba494013",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 975
+      },
+      "writtenOn": "2022-11-28T15:05:48Z",
+      "side": 0,
+      "message": "unused",
+      "range": {
+        "startLine": 289,
+        "startChar": 18,
+        "endLine": 289,
+        "endChar": 43
+      },
+      "revId": "bb20b50eab776449d30fd719d8055e7e2cfecd09",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d92ce933_d4504348",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 512,
+      "author": {
+        "id": 975
+      },
+      "writtenOn": "2022-11-28T15:05:48Z",
+      "side": 0,
+      "message": "unused",
+      "range": {
+        "startLine": 512,
+        "startChar": 38,
+        "endLine": 512,
+        "endChar": 49
+      },
+      "revId": "bb20b50eab776449d30fd719d8055e7e2cfecd09",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
