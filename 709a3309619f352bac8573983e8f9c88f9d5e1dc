@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "526eef0b_a7871772",
+        "filename": "src/client/videomanager.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-28T20:59:00Z",
+      "side": 1,
+      "message": "if we change the videomanager, do we want clients to change this? Because this will need more changes (API change - so in the .i ; videomanager.xml, etc)\n\nOr is it only for tests? (if so #ifdef JAMI_TESTABLE ; would be needed, but the tests will not be useful)",
+      "range": {
+        "startLine": 84,
+        "startChar": 5,
+        "endLine": 84,
+        "endChar": 27
+      },
+      "revId": "709a3309619f352bac8573983e8f9c88f9d5e1dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
