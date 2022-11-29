@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2d12abdc_50290a1f",
+        "filename": "src/connectivity/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-29T22:10:03Z",
+      "side": 1,
+      "message": "finally seems to only be less than 500ms even with 1200 certs :/",
+      "range": {
+        "startLine": 60,
+        "startChar": 0,
+        "endLine": 60,
+        "endChar": 29
+      },
+      "revId": "e2746ee5006fa0bb985cd6f163dabc4f2f777fd8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "927d504f_70d20ce7",
         "filename": "src/connectivity/security/certstore.cpp",
         "patchSetId": 1
