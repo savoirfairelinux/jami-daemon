@@ -57,36 +57,56 @@ CertificateStore::CertificateStore()
     loadLocalCertificates();
 }
 
+CertificateStore::CertFileContent
+CertificateStore::loadCertFile(std::string name) const
+{
+    CertFileContent ret;
+    try {
+        auto crt = std::make_shared<crypto::Certificate>(
+            fileutils::loadFile(certPath_ + DIR_SEPARATOR_CH + name));
+        auto id = crt->getId().toString();
+        auto longId = crt->getLongId().toString();
+        if (id != name && longId != name)
+            throw std::logic_error("Certificate id mismatch");
+        while (crt) {
+            id = crt->getId().toString();
+            longId = crt->getLongId().toString();
+            // certs_.emplace(std::move(id), crt);
+            // certs_.emplace(std::move(longId), crt);
+            loadRevocations(*crt);
+            ret.emplace_back(crt->getId().toString(), crt->getLongId().toString(), crt);
+            crt = crt->issuer;
+            //++n;
+        }
+    } catch (const std::exception& e) {
+        JAMI_WARN() << "Remove cert. " << e.what();
+        remove((certPath_ + DIR_SEPARATOR_CH + name).c_str());
+    }
+    return ret;
+}
+
 unsigned
 CertificateStore::loadLocalCertificates()
 {
     std::lock_guard<std::mutex> l(lock_);
-
-    auto dir_content = fileutils::readDirectory(certPath_);
+    auto start = std::chrono::steady_clock::now();
     unsigned n = 0;
-    for (const auto& f : dir_content) {
-        try {
-            auto crt = std::make_shared<crypto::Certificate>(
-                fileutils::loadFile(certPath_ + DIR_SEPARATOR_CH + f));
-            auto id = crt->getId().toString();
-            auto longId = crt->getLongId().toString();
-            if (id != f && longId != f)
-                throw std::logic_error("Certificate id mismatch");
-            while (crt) {
-                id = crt->getId().toString();
-                longId = crt->getLongId().toString();
-                certs_.emplace(std::move(id), crt);
-                certs_.emplace(std::move(longId), crt);
-                loadRevocations(*crt);
-                crt = crt->issuer;
-                ++n;
-            }
-        } catch (const std::exception& e) {
-            JAMI_WARN() << "Remove cert. " << e.what();
-            remove((certPath_ + DIR_SEPARATOR_CH + f).c_str());
+    std::vector<std::future<CertFileContent>> certs;
+    auto dir_content = fileutils::readDirectory(certPath_);
+    certs.reserve(dir_content.size());
+    for (const auto& f : dir_content)
+        certs.emplace_back(dht::ThreadPool::io().get<CertFileContent>(
+            std::bind(&CertificateStore::loadCertFile, this, f)));
+    for (auto&& fc : certs) {
+        for (auto&& c : fc.get()) {
+            certs_.emplace(std::move(std::get<0>(c)), std::get<2>(c));
+            certs_.emplace(std::move(std::get<1>(c)), std::get<2>(c));
+            ++n;
         }
     }
-    JAMI_DBG("CertificateStore: loaded %u local certificates.", n);
+    JAMI_DEBUG("CertificateStore: loaded {} local certificates in {}.",
+               n,
+               dht::print_duration(std::chrono::steady_clock::now() - start));
     return n;
 }
 
