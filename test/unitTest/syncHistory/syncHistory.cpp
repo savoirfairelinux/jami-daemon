@@ -969,7 +969,7 @@ END:VCARD";
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, bobProfileReceived = false,
-         aliceProfileReceived = false;
+         aliceProfileReceived = false, bobProfileReceivedAlice2 = false;
     std::string convId = "";
     std::string bobDest = aliceAccount->dataTransfer()->profilePath(bobUri);
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
@@ -996,12 +996,11 @@ END:VCARD";
             if (accountId == aliceId && peerId == bobUri) {
                 bobProfileReceived = true;
                 auto p = std::filesystem::path(bobDest);
-                fileutils::recursive_mkdir(p.parent_path());
-                std::rename(path.c_str(), bobDest.c_str());
+                auto res = std::rename(path.c_str(), bobDest.c_str());
             } else if (accountId == bobId && peerId == aliceUri) {
                 aliceProfileReceived = true;
             } else if (accountId == alice2Id && peerId == bobUri) {
-                bobProfileReceived = true;
+                bobProfileReceivedAlice2 = true;
             } else if (accountId == alice2Id && peerId == aliceUri) {
                 aliceProfileReceived = true;
             }
@@ -1030,7 +1029,7 @@ END:VCARD";
     bobProfileReceived = false, aliceProfileReceived = false;
     alice2Id = Manager::instance().addAccount(details);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return aliceProfileReceived && bobProfileReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return aliceProfileReceived && bobProfileReceivedAlice2; }));
     libjami::unregisterSignalHandlers();
 }
 
