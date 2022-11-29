@@ -204,9 +204,9 @@ IncomingFile::process()
         if (!shared)
             return;
         auto correct = shared->sha3Sum_.empty();
+        if (shared->stream_ && shared->stream_.is_open())
+            shared->stream_.close();
         if (!correct) {
-            if (shared->stream_ && shared->stream_.is_open())
-                shared->stream_.close();
             // Verify shaSum
             auto sha3Sum = fileutils::sha3File(shared->info_.path);
             if (shared->sha3Sum_ == sha3Sum) {
@@ -505,9 +505,10 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
     libjami::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
-    info.path = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_
-                + DIR_SEPARATOR_STR + "vcard" + DIR_SEPARATOR_STR + deviceId + "_" + uri + "_"
-                + std::to_string(tid);
+
+    auto recvDir = fmt::format("{:s}/{:s}/vcard/", fileutils::get_cache_dir(), pimpl_->accountId_);
+    fileutils::recursive_mkdir(recvDir);
+    info.path =  fmt::format("{:s}/{:s}_{:s}_{}", recvDir, deviceId, uri, tid);
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "");
     auto res = pimpl_->vcards_.emplace(idx, std::move(ifile));
