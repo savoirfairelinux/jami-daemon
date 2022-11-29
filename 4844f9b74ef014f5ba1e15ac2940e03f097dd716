@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ef1fb0b9_f51f6390",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-11-29T16:25:23Z",
+      "side": 1,
+      "message": "race condition is technically possible between the check of stoppingRtp_ and the call to rtpSetupSuccess",
+      "range": {
+        "startLine": 237,
+        "startChar": 12,
+        "endLine": 237,
+        "endChar": 38
+      },
+      "revId": "4844f9b74ef014f5ba1e15ac2940e03f097dd716",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
