@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16050471_5caf8e7a",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 355,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-11-30T21:40:48Z",
+      "side": 1,
+      "message": "todo operation_aborted",
+      "range": {
+        "startLine": 354,
+        "startChar": 12,
+        "endLine": 355,
+        "endChar": 11
+      },
+      "revId": "144657748b69e841c0d597c82e03d268d8a1d634",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
