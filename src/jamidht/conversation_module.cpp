@@ -1752,8 +1752,7 @@ ConversationModule::needsSyncingWith(const std::string& memberUri, const std::st
     for (const auto& [key, ci] : pimpl_->convInfos_) {
         auto it = pimpl_->conversations_.find(key);
         if (it != pimpl_->conversations_.end() && it->second) {
-            if (!it->second->isRemoving() && it->second->isMember(memberUri, false)
-                && it->second->needsFetch(deviceId))
+            if (!it->second->isRemoving() && it->second->isMember(memberUri, false))
                 return true;
         } else if (!ci.removed
                    && std::find(ci.members.begin(), ci.members.end(), memberUri)
