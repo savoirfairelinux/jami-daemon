@@ -15,7 +15,7 @@ A package can be defined with a json like this:
     "patches": ["some_patch.patch"],
     "win_patches": ["some_windows_line_ending_patch.patch"],
     "project_paths": ["mylibrary-static.vcxproj"],
-    "with_env" : "10.0.16299.0",
+    "with_env" : "10.0.18362.0",
     "custom_scripts": { "pre_build": [], "build": [], "post_build": [] }
 }
 """
@@ -66,7 +66,7 @@ git_apply_args = ['apply', '--reject',
 patch_args = ['-flp1', '-i']
 
 # vs help
-win_sdk_default = '10.0.16299.0'
+win_sdk_default = '10.0.18362.0'
 win_toolset_default = '142'
 
 vs_where_path = os.path.join(
