@@ -51,6 +51,7 @@ ifdef HAVE_ANDROID
 endif
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/pjproject/0003-disable-ios-pointtopoint.patch
+	$(APPLY) $(SRC)/pjproject/0004-ios-16.patch
 endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
