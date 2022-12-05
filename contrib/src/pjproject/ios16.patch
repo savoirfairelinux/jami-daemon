@@ -1,0 +1,17 @@
+diff --git a/pjlib/src/pj/activesock.c b/pjlib/src/pj/activesock.c
+index 61aed1c88..7e4288aff 100644
+--- a/pjlib/src/pj/activesock.c
++++ b/pjlib/src/pj/activesock.c
+@@ -150,10 +150,10 @@ static void activesock_create_iphone_os_stream(pj_activesock_t *asock)
+                                     &asock->readStream, NULL);
+ 
+        if (!asock->readStream ||
+-           CFReadStreamSetProperty(asock->readStream,
++           /*CFReadStreamSetProperty(asock->readStream,
+                                    kCFStreamNetworkServiceType,
+                                    kCFStreamNetworkServiceTypeVoIP)
+-           != TRUE ||
++           != TRUE ||*/
+            CFReadStreamOpen(asock->readStream) != TRUE)
+        {
+            PJ_LOG(2,("", "Failed to configure TCP transport for VoIP "
