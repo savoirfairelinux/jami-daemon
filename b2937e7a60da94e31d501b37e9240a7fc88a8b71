@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72f7f7bf_9515add1",
+        "filename": "compat/msvc/winmake.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-05T17:08:15Z",
+      "side": 0,
+      "message": "Change INSTALL.md in client-qt",
+      "range": {
+        "startLine": 18,
+        "startChar": 23,
+        "endLine": 18,
+        "endChar": 28
+      },
+      "revId": "b2937e7a60da94e31d501b37e9240a7fc88a8b71",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
