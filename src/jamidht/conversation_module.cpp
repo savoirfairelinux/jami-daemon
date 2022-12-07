@@ -1863,7 +1863,6 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
                                             bool sync)
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end()) {
         JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
@@ -1889,7 +1888,6 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
             return itReq->second.metadatas;
     }
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end() or not it->second) {
         std::lock_guard<std::mutex> lkCi(pimpl_->convInfosMtx_);
