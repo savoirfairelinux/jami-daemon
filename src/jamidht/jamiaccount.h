@@ -567,6 +567,11 @@ public:
      */
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
 
+    bool getPersistency()
+    {
+        return isPersistent;
+    }
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -864,6 +869,8 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
+
+    bool isPersistent {true};
 };
 
 static inline std::ostream&
