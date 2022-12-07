@@ -556,6 +556,11 @@ public:
      */
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
 
+    bool getPersistency()
+    {
+        return isPersistent;
+    }
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -570,7 +575,8 @@ private:
     struct BuddyInfo;
     struct DiscoveredPeer;
 
-    inline std::string getProxyConfigKey() const {
+    inline std::string getProxyConfigKey() const
+    {
         const auto& conf = config();
         return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl).toString();
     }
@@ -847,6 +853,8 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
+
+    bool isPersistent {true};
 };
 
 static inline std::ostream&
