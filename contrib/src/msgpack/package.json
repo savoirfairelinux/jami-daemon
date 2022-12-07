@@ -1,6 +1,6 @@
 {
     "name": "msgpack-c",
-    "version": "cpp-4.1.1",
+    "version": "cpp-4.1.3",
     "url": "https://github.com/msgpack/msgpack-c/archive/__VERSION__.tar.gz",
     "use_cmake" : true,
     "defines": [

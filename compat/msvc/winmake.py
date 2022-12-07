@@ -147,10 +147,25 @@ def getVSEnv(arch='x64', platform='', version=''):
 
 
 def getCMakeGenerator(vs_version):
-    if vs_version == '15':
+    if vs_version == '17':
+        return '\"Visual Studio 17 2022\" -A x64'
+    elif vs_version == '16':
+        return '\"Visual Studio 16 2019\" -A x64'
+    elif vs_version == '15':
         return '\"Visual Studio 15 2017 Win64\"'
+    elif vs_version == '14':
+        return '\"Visual Studio 14 2015 Win64\"'
+    elif vs_version == '12':
+        return '\"Visual Studio 12 2013 Win64\"'
+    elif vs_version == '11':
+        return '\"Visual Studio 11 2012 Win64\"'
+    elif vs_version == '10':
+        return '\"Visual Studio 10 2010 Win64\"'
+    elif vs_version == '9':
+        return '\"Visual Studio 9 2008 Win64\"'
     else:
-        return '\"Visual Studio ' + vs_version + ' 2019\" -A x64'
+        root_logger.critical("Can't return CMake generator for VS " + vs_version)
+        return ''
 
 
 def getVSEnvCmd(arch='x64', platform='', version=''):
