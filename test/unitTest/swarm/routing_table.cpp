@@ -38,10 +38,12 @@ using NodeId = dht::PkId;
 namespace jami {
 namespace test {
 
-constexpr size_t smNumber = 1000000;
-constexpr size_t kNodes = 1000000;
-constexpr size_t BOOTSTRAP_SIZE = 4;
-constexpr int time = 1600;
+constexpr size_t nNodes = 2;
+constexpr size_t mNodes = 0;
+constexpr size_t kNodes = 2;
+
+constexpr size_t BOOTSTRAP_SIZE = 1;
+constexpr int time = 10;
 
 struct Counter
 {
@@ -82,24 +84,29 @@ public:
     void tearDown();
 
 private:
-    //################# METHODS AND VARIABLES GENERATING DATA #################//
+    // ################# METHODS AND VARIABLES GENERATING DATA #################//
 
     std::mt19937_64 rd {dht::crypto::getSeededRandomEngine<std::mt19937_64>()};
     std::mutex channelSocketsMtx_;
     std::vector<NodeId> randomNodeIds;
     std::map<NodeId, std::map<NodeId, std::shared_ptr<jami::ChannelSocketTest>>> channelSockets_;
-    std::map<NodeId, std::shared_ptr<jami::SwarmManager>> swarmManagersRandom;
+    // std::mutex mngMtx_;
     std::map<NodeId, std::shared_ptr<jami::SwarmManager>> swarmManagers;
     std::map<NodeId, std::set<NodeId>> nodesToConnect;
     std::set<NodeId> messageNode;
 
     void generaterandomNodeIds();
     void generateSwarmManagers();
+    std::shared_ptr<jami::SwarmManager> getManager(const NodeId& id)
+    {
+        // std::lock_guard<std::mutex> lk(mngMtx_);
+        auto it = swarmManagers.find(id);
+        return it == swarmManagers.end() ? nullptr : it->second;
+    }
     void setKnownNodesToManager(const std::shared_ptr<SwarmManager>& sm);
-    void needSocketCallBackAcceptAllRandom(const std::shared_ptr<SwarmManager>& sm);
-    void needSocketCallBackAcceptAll(const std::shared_ptr<SwarmManager>& sm);
+    void needSocketCallBack(const std::shared_ptr<SwarmManager>& sm);
 
-    //################# METHODS AND VARIABLES TO TEST DATA #################//
+    // ################# METHODS AND VARIABLES TO TEST DATA #################//
 
     std::map<std::shared_ptr<jami::SwarmManager>, std::vector<NodeId>> knownNodesSwarmManager;
     std::map<NodeId, std::shared_ptr<jami::SwarmManager>> swarmManagersTest_;
@@ -107,43 +114,57 @@ private:
 
     void crossNodes(NodeId nodeId);
 
-    //################# UNIT TEST METHODES #################//
+    // ################# UNIT TEST METHODES #################//
 
     void testBucketMainFunctions();
     void testRoutingTableMainFunctions();
     void testBucketKnownNodes();
     void testSwarmManagerConnectingNodes_1b();
-    void testSwarmManagerKnowNodes_1b();
     void testClosestNodes_1b();
     void testClosestNodes_multipleb();
     void testSendKnownNodes_1b();
     void testSendKnownNodes_multipleb();
+    void testMobileNodeFunctions();
+    void testMobileNodeAnnouncement();
+    void testMobileNodeSplit();
+    void testSendMobileNodes();
     void testBucketSplit_1n();
-    void testSwarmManagers();
+    // void testSwarmManagers();
     void testSwarmManagersSmallBootstrapList();
     void testRoutingTableForConnectingNode();
     void testRoutingTableForShuttingNode();
     void testRoutingTableForMassShuttingsNodes();
+    void testSwarmManagersWMobileModes();
 
     CPPUNIT_TEST_SUITE(RoutingTableTest);
-    // CPPUNIT_TEST(testSwarmManagerKnowNodes_1b);
-    // CPPUNIT_TEST(testSwarmManagers);
 
-    // GOOD TESTS
-    /*     CPPUNIT_TEST(testBucketMainFunctions);
-        CPPUNIT_TEST(testBucketSplit_1n);
-        CPPUNIT_TEST(testBucketKnownNodes);
-        CPPUNIT_TEST(testClosestNodes_1b);
-        CPPUNIT_TEST(testClosestNodes_multipleb);
+    // TOP
+
+    /*
+        CPPUNIT_TEST(testBucketMainFunctions);
         CPPUNIT_TEST(testRoutingTableMainFunctions);
-        CPPUNIT_TEST(testSwarmManagerConnectingNodes_1b);
+        CPPUNIT_TEST(testBucketKnownNodes);
         CPPUNIT_TEST(testSendKnownNodes_1b);
+        CPPUNIT_TEST(testBucketSplit_1n);
+        CPPUNIT_TEST(testClosestNodes_multipleb);
         CPPUNIT_TEST(testSendKnownNodes_multipleb);
+        CPPUNIT_TEST(testClosestNodes_1b);
         CPPUNIT_TEST(testSwarmManagersSmallBootstrapList);
+        //CPPUNIT_TEST(testSwarmManagers);
+        CPPUNIT_TEST(testSwarmManagerConnectingNodes_1b);
         CPPUNIT_TEST(testRoutingTableForConnectingNode);
-        CPPUNIT_TEST(testRoutingTableForShuttingNode);
-        CPPUNIT_TEST(testRoutingTableForMassShuttingsNodes); */
-    CPPUNIT_TEST(testSwarmManagersSmallBootstrapList);
+        CPPUNIT_TEST(testMobileNodeFunctions);
+        CPPUNIT_TEST(testMobileNodeAnnouncement);
+        CPPUNIT_TEST(testMobileNodeSplit);
+        CPPUNIT_TEST(testSendMobileNodes);
+        */
+
+    // WORKING ON
+    CPPUNIT_TEST(testSwarmManagersWMobileModes);
+
+    // TO FIX
+    /*  CPPUNIT_TEST(testRoutingTableForMassShuttingsNodes);
+        CPPUNIT_TEST(testRoutingTableForShuttingNode); */
 
     CPPUNIT_TEST_SUITE_END();
 };
@@ -173,8 +194,9 @@ RoutingTableTest::tearDown()
 void
 RoutingTableTest::generaterandomNodeIds()
 {
-    randomNodeIds.reserve(kNodes);
-    for (size_t i = 0; i < kNodes; i++) {
+    auto total = nNodes + mNodes;
+    randomNodeIds.reserve(total);
+    for (size_t i = 0; i < total; i++) {
         NodeId node = Hash<32>::getRandom();
         randomNodeIds.emplace_back(node);
     }
@@ -183,9 +205,12 @@ RoutingTableTest::generaterandomNodeIds()
 void
 RoutingTableTest::generateSwarmManagers()
 {
-    for (size_t i = 0; i < kNodes; i++) {
+    auto total = nNodes + mNodes;
+    for (size_t i = 0; i < total; i++) {
         const NodeId& node = randomNodeIds.at(i);
-        swarmManagersRandom[node] = std::make_shared<SwarmManager>(node);
+        auto sm = std::make_shared<SwarmManager>(node);
+        i >= nNodes ? sm->setPersistency(false) : sm->setPersistency(true);
+        swarmManagers[node] = sm;
     }
 }
 
@@ -218,8 +243,8 @@ RoutingTableTest::setKnownNodesToManager(const std::shared_ptr<SwarmManager>& sm
     sm->setKnownNodes(kNodesToAdd);
 }
 
-void
-RoutingTableTest::needSocketCallBackAcceptAllRandom(const std::shared_ptr<SwarmManager>& sm)
+/* void
+RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
 {
     sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId,
                                                                       auto&& onSocket) {
@@ -228,7 +253,7 @@ RoutingTableTest::needSocketCallBackAcceptAllRandom(const std::shared_ptr<SwarmM
             if (!sm)
                 return;
             NodeId node = DeviceId(nodeId);
-            if (auto smRemote = swarmManagersRandom[node]) {
+            if (auto smRemote = swarmManagers[node]) {
                 auto myId = sm->getId();
                 std::unique_lock<std::mutex> lk(channelSocketsMtx_);
                 auto& cstRemote = channelSockets_[node][myId];
@@ -244,10 +269,10 @@ RoutingTableTest::needSocketCallBackAcceptAllRandom(const std::shared_ptr<SwarmM
             };
         });
     };
-};
+}; */
 
 void
-RoutingTableTest::needSocketCallBackAcceptAll(const std::shared_ptr<SwarmManager>& sm)
+RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
 {
     sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId,
                                                                       auto&& onSocket) {
@@ -257,23 +282,25 @@ RoutingTableTest::needSocketCallBackAcceptAll(const std::shared_ptr<SwarmManager
                 return;
 
             NodeId node = DeviceId(nodeId);
-            if (auto smRemote = swarmManagers[node]) {
+            std::lock_guard<std::mutex> lk(channelSocketsMtx_);
+            if (auto smRemote = getManager(node)) {
                 auto myId = sm->getId();
-
-                std::lock_guard<std::mutex> lk(channelSocketsMtx_);
                 auto& cstRemote = channelSockets_[node][myId];
                 auto& cstMe = channelSockets_[myId][node];
                 if (!cstRemote) {
+                    std::cout << " ###################!!###############" << std::endl;
                     cstRemote = std::make_shared<ChannelSocketTest>(myId, "test1", 0);
                 }
                 if (!cstMe) {
+                    std::cout << " ###################??###############" << std::endl;
+
                     cstMe = std::make_shared<ChannelSocketTest>(node, "test1", 0);
                 }
                 ChannelSocketTest::link(cstMe, cstRemote);
 
                 onSocket(cstMe);
                 smRemote->addChannel(cstRemote);
-            };
+            }
         });
     };
 }
@@ -300,11 +327,12 @@ RoutingTableTest::testBucketMainFunctions()
     bucket.addNode(sNode1);
     bucket.addNode(sNode2);
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node", true, bucket.hasNode(sNode1));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node", true, bucket.hasNode(sNode1->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node", true, bucket.hasNode(sNode2->deviceId()));
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have nodes",
                                  true,
-                                 bucket.hasNodeId(sNode2->deviceId()));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have nodes", true, socketsCheck == bucket.getNodes());
+                                 socketsCheck == bucket.getNodeSockets());
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have nodes", true, nodesCheck == bucket.getNodeIds());
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have nodes", true, bucket.isFull());
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have known node",
@@ -323,15 +351,13 @@ RoutingTableTest::testBucketMainFunctions()
                                  false,
                                  bucket.hasConnectingNode(node2));
 
-    bucket.deleteNode(sNode1);
-    bucket.deleteNodeId(sNode2->deviceId());
+    bucket.removeNode(sNode1->deviceId());
+    bucket.removeNode(sNode2->deviceId());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(sNode1));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(sNode2));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(node1));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(node2));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", true, bucket.hasKnownNode(node1));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", true, bucket.hasKnownNode(node2));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known node", node2, bucket.getKnownNodeId(0));
-    CPPUNIT_ASSERT_THROW(bucket.getKnownNodeId(10), std::out_of_range);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have known nodes",
                                  true,
                                  nodesCheck == bucket.getKnownNodes());
@@ -356,11 +382,11 @@ RoutingTableTest::testBucketMainFunctions()
                                  false,
                                  bucket.addNode(sNode2));
 
-    bucket.deleteNode(sNode1);
-    bucket.deleteNode(sNode2);
+    bucket.removeNode(node1);
+    bucket.removeNode(node2);
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(sNode1));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(sNode2));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(node1));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node", false, bucket.hasNode(node2));
 
     bucket.addKnownNode(node3);
 
@@ -420,10 +446,12 @@ RoutingTableTest::testBucketKnownNodes()
 void
 RoutingTableTest::testRoutingTableMainFunctions()
 {
+    std::cout << "\ntestRoutingTableMainFunctions" << std::endl;
+
     RoutingTable rt;
     NodeId node1 = nodeTestIds1.at(0);
     NodeId node2 = nodeTestIds1.at(1);
-    NodeId node3 = nodeTestIds1.at(3);
+    NodeId node3 = nodeTestIds1.at(2);
 
     rt.setId(node1);
 
@@ -441,21 +469,17 @@ RoutingTableTest::testRoutingTableMainFunctions()
     rt.addNode(nodeTestChannels1.at(1), bucket2);
     rt.addNode(nodeTestChannels1.at(2), bucket3);
 
-    CPPUNIT_ASSERT(!rt.hasNode(nodeTestChannels1.at(0)));
-    CPPUNIT_ASSERT(rt.hasNode(nodeTestChannels1.at(1)));
+    CPPUNIT_ASSERT(!rt.hasNode(node1));
+    CPPUNIT_ASSERT(rt.hasNode(node2));
+    CPPUNIT_ASSERT(rt.hasNode(node3));
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to exist",
-                                 false,
-                                 rt.deleteNode(nodeTestChannels1.at(0)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to exist",
-                                 true,
-                                 rt.deleteNode(nodeTestChannels1.at(1)));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to exist 0", false, rt.removeNode(node1));
 
-    rt.deleteNode(nodeTestChannels1.at(2));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to exist 1", true, rt.removeNode(node2));
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to exist",
-                                 false,
-                                 rt.hasNode(nodeTestChannels1.at(2)));
+    rt.removeNode(node3);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to exist 2", false, rt.hasNode(node3));
 }
 
 void
@@ -590,29 +614,49 @@ RoutingTableTest::testBucketSplit_1n()
 
     // SM1
     // Check if nodes don't exist
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt1.hasNode(nodeTestChannels2.at(0)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt1.hasNode(nodeTestChannels2.at(3)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt1.hasNode(nodeTestChannels2.at(4)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt1.hasNode(nodeTestChannels2.at(7)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt1.hasNode(nodeTestChannels2.at(8)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt1.hasNode(nodeTestChannels2.at(9)));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 0",
+                                 false,
+                                 rt1.hasNode(nodeTestChannels2.at(0)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 3",
+                                 false,
+                                 rt1.hasNode(nodeTestChannels2.at(3)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 4",
+                                 false,
+                                 rt1.hasNode(nodeTestChannels2.at(4)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 7",
+                                 false,
+                                 rt1.hasNode(nodeTestChannels2.at(7)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 8",
+                                 false,
+                                 rt1.hasNode(nodeTestChannels2.at(8)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 9",
+                                 false,
+                                 rt1.hasNode(nodeTestChannels2.at(9)->deviceId()));
 
     // for sm1, supposed to have 3 buckets
     int sm1BucketCounter = 1;
     for (const auto& buckIt : b1) {
         switch (sm1BucketCounter) {
         case 1:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", 0u, buckIt.getNodesSize());
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Size error", 0u, buckIt.getNodesSize());
             break;
 
         case 2:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(1)));
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(2)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 1",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(1)->deviceId()));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 2",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(2)->deviceId()));
             break;
 
         case 3:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(5)));
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(6)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 5",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(5)->deviceId()));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 6",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(6)->deviceId()));
             break;
         }
 
@@ -623,28 +667,48 @@ RoutingTableTest::testBucketSplit_1n()
 
     // SM2
     // Check if nodes don't exist
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt2.hasNode(nodeTestChannels2.at(2)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt2.hasNode(nodeTestChannels2.at(3)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt2.hasNode(nodeTestChannels2.at(4)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt2.hasNode(nodeTestChannels2.at(8)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt2.hasNode(nodeTestChannels2.at(9)));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 2",
+                                 false,
+                                 rt2.hasNode(nodeTestChannels2.at(2)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 3",
+                                 false,
+                                 rt2.hasNode(nodeTestChannels2.at(3)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 4",
+                                 false,
+                                 rt2.hasNode(nodeTestChannels2.at(4)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 8",
+                                 false,
+                                 rt2.hasNode(nodeTestChannels2.at(8)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Not supposed to have node ntc2 9",
+                                 false,
+                                 rt2.hasNode(nodeTestChannels2.at(9)->deviceId()));
 
     // for sm2, supposed to have 3 buckets
     int sm2BucketCounter = 1;
     for (const auto& buckIt : b2) {
         switch (sm2BucketCounter) {
         case 1:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(0)));
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(1)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 0",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(0)->deviceId()));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 1",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(1)->deviceId()));
             break;
 
         case 2:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(6)));
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(7)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 6",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(6)->deviceId()));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 7",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(7)->deviceId()));
             break;
 
         case 3:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(5)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have node ntc2 5",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(5)->deviceId()));
             break;
         }
 
@@ -655,27 +719,37 @@ RoutingTableTest::testBucketSplit_1n()
 
     // SM3
     // Check if nodes don't exist
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt3.hasNode(nodeTestChannels2.at(2)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt3.hasNode(nodeTestChannels2.at(3)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt3.hasNode(nodeTestChannels2.at(4)));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt3.hasNode(nodeTestChannels2.at(8)));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt3.hasNode(nodeTestChannels2.at(2)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt3.hasNode(nodeTestChannels2.at(3)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt3.hasNode(nodeTestChannels2.at(4)->deviceId()));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", false, rt3.hasNode(nodeTestChannels2.at(8)->deviceId()));
 
     // for sm3, supposed to have 3 buckets
     int sm3BucketCounter = 1;
     for (const auto& buckIt : b3) {
         switch (sm3BucketCounter) {
         case 1:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(0)));
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(1)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(0)->deviceId()));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(1)->deviceId()));
             break;
 
         case 2:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(6)));
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(7)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(6)->deviceId()));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(7)->deviceId()));
             break;
 
         case 3:
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, buckIt.hasNode(nodeTestChannels2.at(9)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR",
+                                         true,
+                                         buckIt.hasNode(nodeTestChannels2.at(9)->deviceId()));
             break;
         }
 
@@ -710,12 +784,13 @@ RoutingTableTest::testSendKnownNodes_1b()
 
     std::vector<NodeId> node2Co = {
         NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")};
-    needSocketCallBackAcceptAll(sm1);
+    needSocketCallBack(sm1);
 
     sm1->setKnownNodes(node2Co);
 
     auto start = std::chrono::steady_clock::now();
     bool cn1 {false}, cn2 {false};
+
     auto isGood = [&] {
         return (cn1 and cn2);
     };
@@ -757,7 +832,7 @@ RoutingTableTest::testSendKnownNodes_multipleb()
 
     std::vector<NodeId> node2Co = {
         NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")};
-    needSocketCallBackAcceptAll(sm1);
+    needSocketCallBack(sm1);
 
     sm1->setKnownNodes(node2Co);
 
@@ -780,29 +855,219 @@ RoutingTableTest::testSendKnownNodes_multipleb()
 }
 
 void
-RoutingTableTest::crossNodes(NodeId nodeId)
+RoutingTableTest::testMobileNodeFunctions()
 {
-    std::list<NodeId> pendingNodes {nodeId};
-    for (const auto& curNode : pendingNodes) {
-        if (discoveredNodes.emplace(curNode).second) {
-            for (auto const& node : swarmManagersRandom[curNode]->getRoutingTable().getNodes()) {
-                pendingNodes.emplace_back(node);
-            }
+    std::cout << "\ntestMobileNodeFunctions" << std::endl;
+
+    RoutingTable rt;
+    NodeId node1 = nodeTestIds1.at(0);
+    NodeId node2 = nodeTestIds1.at(1);
+    NodeId node3 = nodeTestIds1.at(2);
+
+    rt.setId(node1);
+    rt.addMobileNode(node1);
+    rt.addMobileNode(node2);
+    rt.addMobileNode(node3);
+
+    CPPUNIT_ASSERT(!rt.hasMobileNode(node1));
+    CPPUNIT_ASSERT(rt.hasMobileNode(node2));
+    CPPUNIT_ASSERT(rt.hasMobileNode(node3));
+
+    auto result = rt.removeMobileNode(node1);
+    rt.removeMobileNode(node2);
+    rt.removeMobileNode(node3);
+
+    CPPUNIT_ASSERT_EQUAL(false, result);
+    CPPUNIT_ASSERT(!rt.hasMobileNode(node2));
+    CPPUNIT_ASSERT(!rt.hasMobileNode(node3));
+}
+
+void
+RoutingTableTest::testMobileNodeAnnouncement()
+{
+    std::cout << "\ntestMobileNodeAnnouncement" << std::endl;
+
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0));
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds2.at(1));
+
+    swarmManagers.insert({sm1->getId(), sm1});
+    swarmManagers.insert({sm2->getId(), sm2});
+    sm2->setPersistency(false);
+
+    std::vector<NodeId> node2Co = {
+        NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")};
+
+    needSocketCallBack(sm1);
+
+    sm1->setKnownNodes(node2Co);
+    sleep(1);
+    auto& rt1 = sm1->getRoutingTable();
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Supposed to have",
+        true,
+        rt1.hasNode(NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")));
+
+    sm2->shutdown();
+
+    auto mb1 = rt1.getMobileNodes();
+
+    std::vector<NodeId> node2Test = {
+        NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")};
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be identical", true, node2Test == mb1);
+}
+
+void
+RoutingTableTest::testMobileNodeSplit()
+{
+    std::cout << "\ntestMobileNodeSplit" << std::endl;
+
+    SwarmManager sm1(nodeTestIds1.at(0));
+
+    auto& rt1 = sm1.getRoutingTable();
+
+    for (size_t i = 0; i < nodeTestIds1.size(); i++) {
+        rt1.addNode(nodeTestChannels1.at(i));
+    }
+
+    rt1.printRoutingTable();
+
+    sm1.setMobileNodes(nodeTestIds2);
+
+    auto& buckets = rt1.getBuckets();
+
+    unsigned counter = 1;
+
+    for (auto& b : buckets) {
+        switch (counter) {
+        case 1:
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         false,
+                                         b.hasMobileNode(nodeTestIds2.at(0)));
+            break;
+
+        case 4:
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(1)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(2)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(3)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(4)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(8)));
+            break;
+
+        case 5:
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(5)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(6)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(7)));
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                         true,
+                                         b.hasMobileNode(nodeTestIds2.at(9)));
+
+            break;
         }
+
+        counter++;
     }
 }
 
 void
+RoutingTableTest::testSendMobileNodes()
+{
+    std::cout << "\ntestSendMobileNodes" << std::endl;
+
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds2.at(8));
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(0));
+
+    std::cout << sm1->getId() << std::endl;
+
+    swarmManagers.insert({sm1->getId(), sm1});
+    swarmManagers.insert({sm2->getId(), sm2});
+
+    auto& rt1 = sm1->getRoutingTable();
+    auto& rt2 = sm2->getRoutingTable();
+
+    for (size_t i = 0; i < nodeTestIds2.size(); i++) {
+        if (i != 1 && i != 0) {
+            auto bucket1 = rt1.findBucket(nodeTestIds2.at(i));
+            rt1.addNode(nodeTestChannels2.at(i), bucket1);
+        }
+
+        auto bucket2 = rt2.findBucket(nodeTestIds3.at(i));
+        rt2.addNode(nodeTestChannels3.at(i), bucket2);
+    }
+
+    std::vector<NodeId> mobileNodes
+        = {NodeId("4000000000000000000000000000000000000000000000000000000000000000"),
+           NodeId("8000000000000000000000000000000000000000000000000000000000000000")};
+    sm2->setMobileNodes(mobileNodes);
+
+    std::vector<NodeId> node2Co = {
+        NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")};
+    needSocketCallBack(sm1);
+
+    sm1->setKnownNodes(node2Co);
+
+    sleep(4);
+
+    auto bucket1 = rt1.findBucket(sm1->getId());
+    auto bucket2 = rt2.findBucket(sm2->getId());
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                 true,
+                                 bucket1->hasMobileNode(mobileNodes.at(0)));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                 false,
+                                 bucket1->hasMobileNode(mobileNodes.at(1)));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have", false, rt1.hasMobileNode(mobileNodes.at(1)));
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have",
+                                 true,
+                                 bucket2->hasMobileNode(mobileNodes.at(0)));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to have", true, rt2.hasMobileNode(mobileNodes.at(1)));
+}
+
+void
+RoutingTableTest::crossNodes(NodeId nodeId)
+{
+    std::list<NodeId> pendingNodes {nodeId};
+
+    for (const auto& curNode : pendingNodes) {
+        if (discoveredNodes.emplace(curNode).second) {
+            if (auto sm = getManager(curNode))
+                for (auto const& node : sm->getRoutingTable().getNodes()) {
+                    pendingNodes.emplace_back(node);
+                }
+        }
+    }
+}
+
+/* void
 RoutingTableTest::testSwarmManagers()
 {
     std::cout << "testSwarmManagers" << std::endl;
 
-    for (const auto& sm : swarmManagersRandom) {
-        needSocketCallBackAcceptAllRandom(sm.second);
+    for (const auto& sm : swarmManagers) {
+        needSocketCallBack(sm.second);
     }
 
-    Counter counter(swarmManagersRandom.size());
-    for (const auto& sm : swarmManagersRandom) {
+    Counter counter(swarmManagers.size());
+    for (const auto& sm : swarmManagers) {
         dht::ThreadPool::computation().run([&] {
             sm.second->setKnownNodes(randomNodeIds);
             counter.count();
@@ -814,21 +1079,21 @@ RoutingTableTest::testSwarmManagers()
     std::cout << "Waiting 10s..." << std::endl;
     sleep(10);
 
-    crossNodes(swarmManagersRandom.begin()->first);
-    CPPUNIT_ASSERT_EQUAL(swarmManagersRandom.size(), discoveredNodes.size());
-}
+    crossNodes(swarmManagers.begin()->first);
+    CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
+} */
 
 void
 RoutingTableTest::testSwarmManagersSmallBootstrapList()
 {
     std::cout << "\ntestSwarmManagersSmallBootstrapList" << std::endl;
 
-    for (const auto& sm : swarmManagersRandom) {
-        needSocketCallBackAcceptAllRandom(sm.second);
+    for (const auto& sm : swarmManagers) {
+        needSocketCallBack(sm.second);
     }
 
-    Counter counter(swarmManagersRandom.size());
-    for (const auto& sm : swarmManagersRandom) {
+    Counter counter(swarmManagers.size());
+    for (const auto& sm : swarmManagers) {
         dht::ThreadPool::computation().run([&] {
             std::vector<NodeId> randIds(BOOTSTRAP_SIZE);
             std::uniform_int_distribution<size_t> distribution(0, randomNodeIds.size() - 1);
@@ -846,7 +1111,7 @@ RoutingTableTest::testSwarmManagersSmallBootstrapList()
     sleep(time);
 
     std::vector<unsigned> dist(8);
-    for (const auto& sm : swarmManagersRandom) {
+    for (const auto& sm : swarmManagers) {
         auto val = sm.second->getRoutingTable().getRoutingTableNodeCount();
         if (dist.size() <= val)
             dist.resize(val + 1);
@@ -856,9 +1121,9 @@ RoutingTableTest::testSwarmManagersSmallBootstrapList()
         std::cout << "Swarm Managers with " << i << " nodes: " << dist[i] << std::endl;
     }
 
-    crossNodes(swarmManagersRandom.begin()->first);
+    crossNodes(swarmManagers.begin()->first);
     sleep(10);
-    CPPUNIT_ASSERT_EQUAL(swarmManagersRandom.size(), discoveredNodes.size());
+    CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
 }
 
 void
@@ -866,12 +1131,12 @@ RoutingTableTest::testRoutingTableForConnectingNode()
 {
     std::cout << "\ntestRoutingTableForConnectingNode" << std::endl;
 
-    for (const auto& sm : swarmManagersRandom) {
-        needSocketCallBackAcceptAllRandom(sm.second);
+    for (const auto& sm : swarmManagers) {
+        needSocketCallBack(sm.second);
     }
 
-    Counter counter(swarmManagersRandom.size());
-    for (const auto& sm : swarmManagersRandom) {
+    Counter counter(swarmManagers.size());
+    for (const auto& sm : swarmManagers) {
         dht::ThreadPool::computation().run([&] {
             std::vector<NodeId> randIds(BOOTSTRAP_SIZE);
             std::uniform_int_distribution<size_t> distribution(0, randomNodeIds.size() - 1);
@@ -887,11 +1152,11 @@ RoutingTableTest::testRoutingTableForConnectingNode()
     auto sm1 = std::make_shared<SwarmManager>(nodeTestIds3.at(0));
     auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(1));
 
-    swarmManagersRandom.insert({sm1->getId(), sm1});
-    swarmManagersRandom.insert({sm2->getId(), sm2});
+    swarmManagers.insert({sm1->getId(), sm1});
+    swarmManagers.insert({sm2->getId(), sm2});
 
-    needSocketCallBackAcceptAllRandom(sm1);
-    needSocketCallBackAcceptAllRandom(sm2);
+    needSocketCallBack(sm1);
+    needSocketCallBack(sm2);
 
     std::vector<NodeId> knownNodesSm1({randomNodeIds.at(2), randomNodeIds.at(3)});
     std::vector<NodeId> knownNodesSm2({randomNodeIds.at(4), randomNodeIds.at(5)});
@@ -899,10 +1164,10 @@ RoutingTableTest::testRoutingTableForConnectingNode()
     sm1->setKnownNodes(knownNodesSm1);
     sm2->setKnownNodes(knownNodesSm2);
 
-    sleep(5);
+    sleep(10);
 
-    crossNodes(swarmManagersRandom.begin()->first);
-    CPPUNIT_ASSERT_EQUAL(swarmManagersRandom.size(), discoveredNodes.size());
+    crossNodes(swarmManagers.begin()->first);
+    CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
 }
 
 void
@@ -910,12 +1175,12 @@ RoutingTableTest::testRoutingTableForShuttingNode()
 {
     std::cout << "\ntestRoutingTableForShuttingNode" << std::endl;
 
-    for (const auto& sm : swarmManagersRandom) {
-        needSocketCallBackAcceptAllRandom(sm.second);
+    for (const auto& sm : swarmManagers) {
+        needSocketCallBack(sm.second);
     }
 
-    Counter counter(swarmManagersRandom.size());
-    for (const auto& sm : swarmManagersRandom) {
+    Counter counter(swarmManagers.size());
+    for (const auto& sm : swarmManagers) {
         dht::ThreadPool::computation().run([&] {
             std::vector<NodeId> randIds(BOOTSTRAP_SIZE);
             std::uniform_int_distribution<size_t> distribution(0, randomNodeIds.size() - 1);
@@ -932,25 +1197,25 @@ RoutingTableTest::testRoutingTableForShuttingNode()
     auto sm1 = std::make_shared<SwarmManager>(nodeTestIds3.at(0));
     auto sm1Id = sm1->getId();
 
-    swarmManagersRandom.emplace(sm1->getId(), sm1);
-    needSocketCallBackAcceptAllRandom(sm1);
+    swarmManagers.emplace(sm1->getId(), sm1);
+    needSocketCallBack(sm1);
 
     std::vector<NodeId> knownNodesSm1({randomNodeIds.at(2), randomNodeIds.at(3)});
     sm1->setKnownNodes(knownNodesSm1);
 
-    sleep(5);
+    sleep(10);
 
-    crossNodes(swarmManagersRandom.begin()->first);
-    CPPUNIT_ASSERT_EQUAL(swarmManagersRandom.size(), discoveredNodes.size());
+    crossNodes(swarmManagers.begin()->first);
+    CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
 
-    for (const auto& sm : swarmManagersRandom) {
+    for (const auto& sm : swarmManagers) {
         if (sm.first != nodeTestIds3.at(0)) {
             swarmManagersTest_.emplace(sm);
         }
     }
 
-    auto it1 = swarmManagersRandom.find(sm1Id);
-    swarmManagersRandom.erase(it1);
+    auto it1 = swarmManagers.find(sm1Id);
+    swarmManagers.erase(it1);
 
     auto it2 = channelSockets_.find(sm1Id);
     channelSockets_.erase(it2);
@@ -959,7 +1224,7 @@ RoutingTableTest::testRoutingTableForShuttingNode()
     sleep(5);
     for (const auto& sm : swarmManagersTest_) {
         auto& a = sm.second->getRoutingTable();
-        CPPUNIT_ASSERT(!a.hasNodeId(sm1Id));
+        CPPUNIT_ASSERT(!a.hasNode(sm1Id));
     }
 }
 
@@ -968,13 +1233,13 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
 {
     std::cout << "\ntestRoutingTableForMassShuttingsNodes" << std::endl;
 
-    for (const auto& sm : swarmManagersRandom) {
-        needSocketCallBackAcceptAllRandom(sm.second);
+    for (const auto& sm : swarmManagers) {
+        needSocketCallBack(sm.second);
         swarmManagersTest_.emplace(sm);
     }
 
-    Counter counter(swarmManagersRandom.size());
-    for (const auto& sm : swarmManagersRandom) {
+    Counter counter(swarmManagers.size());
+    for (const auto& sm : swarmManagers) {
         dht::ThreadPool::computation().run([&] {
             std::vector<NodeId> randIds(BOOTSTRAP_SIZE);
             std::uniform_int_distribution<size_t> distribution(0, randomNodeIds.size() - 1);
@@ -988,13 +1253,13 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
     }
     counter.wait();
     sleep(5);
-    for (const auto& sm : swarmManagersRandom) {
+    for (const auto& sm : swarmManagers) {
         sm.second->display();
     }
 
-    crossNodes(swarmManagersRandom.begin()->first);
+    crossNodes(swarmManagers.begin()->first);
 
-    CPPUNIT_ASSERT_EQUAL(swarmManagersRandom.size(), discoveredNodes.size());
+    CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
 
     discoveredNodes.clear();
 
@@ -1002,20 +1267,20 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
     for (size_t i = 0; i < nodeTestIds1.size(); i++) {
         auto sm = std::make_shared<SwarmManager>(nodeTestIds1.at(i));
         auto smId = sm->getId();
-        swarmManagersRandom.emplace(smId, sm);
-        needSocketCallBackAcceptAllRandom(sm);
+        swarmManagers.emplace(smId, sm);
+        needSocketCallBack(sm);
         std::vector<NodeId> knownNodesSm({randomNodeIds.at(2), randomNodeIds.at(3)});
         sm->setKnownNodes(knownNodesSm);
     }
 
     sleep(5);
-    for (const auto& sm : swarmManagersRandom) {
+    for (const auto& sm : swarmManagers) {
         sm.second->display();
     }
 
-    crossNodes(swarmManagersRandom.begin()->first);
+    crossNodes(swarmManagers.begin()->first);
 
-    CPPUNIT_ASSERT_EQUAL(swarmManagersRandom.size(), discoveredNodes.size());
+    CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
 
     discoveredNodes.clear();
     sleep(5);
@@ -1023,8 +1288,8 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
     // SHUTTING DOWN ADDED NODES
 
     for (size_t i = 0; i < nodeTestIds1.size(); i++) {
-        auto it1 = swarmManagersRandom.find(nodeTestIds1.at(i));
-        swarmManagersRandom.erase(it1);
+        auto it1 = swarmManagers.find(nodeTestIds1.at(i));
+        swarmManagers.erase(it1);
 
         auto it2 = channelSockets_.find(nodeTestIds1.at(i));
         channelSockets_.erase(it2);
@@ -1035,9 +1300,91 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
 
         for (size_t i = 0; i < nodeTestIds1.size(); i++) {
             auto& a = sm.second->getRoutingTable();
-            CPPUNIT_ASSERT(!a.hasNodeId(nodeTestIds1.at(i)));
+            CPPUNIT_ASSERT(!a.hasNode(nodeTestIds1.at(i)));
         }
     }
+}
+
+void
+RoutingTableTest::testSwarmManagersWMobileModes()
+{
+    std::cout << "\ntestSwarmManagersSmallBootstrapList" << std::endl;
+
+    for (const auto& sm : swarmManagers) {
+        needSocketCallBack(sm.second);
+    }
+
+    Counter counter(swarmManagers.size());
+    for (const auto& sm : swarmManagers) {
+        dht::ThreadPool::computation().run([&] {
+            std::vector<NodeId> randIds(BOOTSTRAP_SIZE);
+            std::uniform_int_distribution<size_t> distribution(0, randomNodeIds.size() - 1);
+            std::generate(randIds.begin(), randIds.end(), [&] {
+                return randomNodeIds[distribution(rd)];
+            });
+            sm.second->setKnownNodes(randIds);
+            counter.count();
+        });
+    }
+
+    counter.wait();
+
+    std::cout << "Waiting " << time << "s..." << std::endl;
+    sleep(time);
+
+    std::vector<unsigned> dist(8);
+    for (const auto& sm : swarmManagers) {
+        auto val = sm.second->getRoutingTable().getRoutingTableNodeCount();
+        if (dist.size() <= val)
+            dist.resize(val + 1);
+        dist[val]++;
+    }
+    for (size_t i = 0; i < dist.size(); i++) {
+        std::cout << "Swarm Managers with " << i << " nodes: " << dist[i] << std::endl;
+    }
+
+    crossNodes(swarmManagers.begin()->first);
+    sleep(10);
+    CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
+
+    discoveredNodes.clear();
+
+    std::cout << "Mobile nodes disconnected" << std::endl;
+
+    {
+        std::lock_guard<std::mutex> lk(channelSocketsMtx_);
+        for (auto it = swarmManagers.begin(); it != swarmManagers.end();) {
+            if (it->second->isPersist()) {
+                it->second->shutdown();
+                it = swarmManagers.erase(it);
+                channelSockets_.erase(it->second->getId());
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    sleep(4);
+
+    {
+        std::lock_guard<std::mutex> lk(channelSocketsMtx_);
+        crossNodes(swarmManagers.begin()->first);
+
+        dist.clear();
+        for (const auto& sm : swarmManagers) {
+            auto val = sm.second->getRoutingTable().getRoutingTableNodeCount();
+            if (dist.size() <= val)
+                dist.resize(val + 1);
+            dist[val]++;
+        }
+        for (size_t i = 0; i < dist.size(); i++) {
+            std::cout << "Swarm Managers with " << i << " nodes: " << dist[i] << std::endl;
+        }
+    }
+
+    sleep(4);
+
+    CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
 }
 
 }; // namespace test
