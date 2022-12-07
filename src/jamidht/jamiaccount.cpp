@@ -291,6 +291,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
 {}
+{}
 
 JamiAccount::~JamiAccount() noexcept
 {
@@ -3318,6 +3319,7 @@ void
 JamiAccount::setPushNotificationToken(const std::string& token)
 {
     JAMI_WARNING("[Account {:s}] setPushNotificationToken: {:s}", getAccountID(), token);
+    isPersistent = config().proxyEnabled;
     SIPAccountBase::setPushNotificationToken(token);
     if (dht_)
         dht_->setPushNotificationToken(token);
