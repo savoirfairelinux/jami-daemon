@@ -23,6 +23,10 @@
 #include "connectivity/generic_io.h"
 #include <condition_variable>
 
+namespace asio {
+class io_context;
+}
+
 namespace jami {
 
 class IceTransport;
@@ -206,8 +210,8 @@ public:
     ChannelSocketTest(const DeviceId& deviceId, const std::string& name, const uint16_t& channel);
     ~ChannelSocketTest();
 
-    static void link(const std::weak_ptr<ChannelSocketTest>& socket1,
-                     const std::weak_ptr<ChannelSocketTest>& socket2);
+    static void link(const std::shared_ptr<ChannelSocketTest>& socket1,
+                     const std::shared_ptr<ChannelSocketTest>& socket2);
 
     DeviceId deviceId() const override;
     std::string name() const override;
@@ -219,14 +223,9 @@ public:
 
     void shutdown() override;
 
-    std::size_t read(ValueType* buf,
-                     std::size_t len,
-                     std::error_code& ec) override;
-    std::size_t write(const ValueType* buf,
-                      std::size_t len,
-                      std::error_code& ec) override;
-    int waitForData(std::chrono::milliseconds timeout,
-                    std::error_code&) const override;
+    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
+    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
     void setOnRecv(RecvCb&&) override;
     void onRecv(std::vector<uint8_t>&& pkt) override;
 
@@ -240,7 +239,7 @@ public:
      */
     void onShutdown(OnShutdownCb&& cb) override;
 
-    std::vector<uint8_t> buf {};
+    std::vector<uint8_t> rx_buf {};
     mutable std::mutex mutex {};
     mutable std::condition_variable cv {};
     GenericSocket<uint8_t>::RecvCb cb {};
@@ -249,18 +248,17 @@ private:
     const DeviceId pimpl_deviceId;
     const std::string pimpl_name;
     const uint16_t pimpl_channel;
+    asio::io_context& ioCtx_;
     std::weak_ptr<ChannelSocketTest> remote;
-    OnShutdownCb shutdownCb_ { [&] {} };
+    OnShutdownCb shutdownCb_ {[&] {
+    }};
     std::atomic_bool isShutdown_ {false};
-
-    void eventLoop();
-    std::thread eventLoopThread_ {};
 };
 
 /**
  * Represents a channel of the multiplexed socket (channel, name)
  */
-class ChannelSocket : ChannelSocketInterface
+class ChannelSocket : public ChannelSocketInterface
 {
 public:
     ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
