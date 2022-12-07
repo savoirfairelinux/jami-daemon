@@ -21,7 +21,7 @@
     "win_patches": [
     ],
     "project_paths": [],
-    "with_env" : "10.0.18362.0",
+    "with_env" : "",
     "custom_scripts": {
         "pre_build": [],
         "build": [
