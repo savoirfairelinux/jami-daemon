@@ -65,13 +65,34 @@ git_apply_args = ['apply', '--reject',
                   '--ignore-whitespace', '--whitespace=fix']
 patch_args = ['-flp1', '-i']
 
-# vs help
-win_sdk_default = '10.0.18362.0'
-win_toolset_default = '142'
-
 vs_where_path = os.path.join(
     os.environ['ProgramFiles(x86)'], 'Microsoft Visual Studio', 'Installer', 'vswhere.exe'
 )
+
+
+def getLatestVSVersion():
+    args = [
+        '-latest',
+        '-products *',
+        '-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+        '-property installationVersion'
+    ]
+    cmd = [vs_where_path] + args
+    output = subprocess.check_output(' '.join(cmd)).decode('utf-8')
+    if output:
+        return output.splitlines()[0].split('.')[0]
+    else:
+        return
+
+# vs help
+win_sdk_default = '10.0.18362.0'
+VSVersion = getLatestVSVersion()
+if VSVersion == '17':
+    win_toolset_default = '143'
+elif VSVersion == '16':
+    win_toolset_default = '142'
+else:
+    win_toolset_default = '144'
 
 host_is_64bit = (False, True)[platform.machine().endswith('64')]
 python_is_64bit = (False, True)[8 * struct.calcsize("P") == 64]
@@ -93,21 +114,6 @@ def shellquote(s, windows=False):
         return "'" + s.replace("'", "'\''") + "'"
     else:
         return '\"' + s + '\"'
-
-
-def getLatestVSVersion():
-    args = [
-        '-latest',
-        '-products *',
-        '-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-        '-property installationVersion'
-    ]
-    cmd = [vs_where_path] + args
-    output = subprocess.check_output(' '.join(cmd)).decode('utf-8')
-    if output:
-        return output.splitlines()[0].split('.')[0]
-    else:
-        return
 
 
 def findVSLatestDir():
@@ -147,10 +153,13 @@ def getVSEnv(arch='x64', platform='', version=''):
 
 
 def getCMakeGenerator(vs_version):
-    if vs_version == '15':
-        return '\"Visual Studio 15 2017 Win64\"'
+    if vs_version == '17':
+        return '\"Visual Studio 17 2022\" -A x64'
+    elif vs_version == '16':
+        return '\"Visual Studio 16 2019\" -A x64'
     else:
-        return '\"Visual Studio ' + vs_version + ' 2019\" -A x64'
+        root_logger.critical("Can't return CMake generator for VS " + vs_version)
+        return ''
 
 
 def getVSEnvCmd(arch='x64', platform='', version=''):
@@ -763,6 +772,9 @@ def parse_args():
         if parsed_args.toolset[0] != 'v':
             parsed_args.toolset = 'v' + parsed_args.toolset
 
+    if parsed_args.toolset == '':
+        parsed_args.toolset = win_toolset_default
+
     return parsed_args
 
 
@@ -779,8 +791,8 @@ def main():
         log.error('These scripts will only run on a 64-bit Windows system for now!')
         sys.exit(1)
 
-    if int(getLatestVSVersion()) < 15:
-        log.error('These scripts require at least Visual Studio v15 2017!')
+    if int(getLatestVSVersion()) < 16:
+        log.error('These scripts require at least Visual Studio v16 2019!')
         sys.exit(1)
 
     if parsed_args.purge:
