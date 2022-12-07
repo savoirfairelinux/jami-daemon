@@ -2619,10 +2619,17 @@ Manager::getAccountList() const
 std::map<std::string, std::string>
 Manager::getAccountDetails(const std::string& accountID) const
 {
-    const auto account = getAccount(accountID);
+    const auto account = getAccount<JamiAccount>(accountID);
 
     if (account) {
-        return account->getAccountDetails();
+        auto details = account->getAccountDetails();
+        auto accManager = account->accountManager();
+        if (accManager) {
+            if (auto info = accManager->getInfo()) {
+                details.emplace(libjami::Account::ConfProperties::DEVICE_ID, info->deviceId);
+            }
+        }
+        return details;
     } else {
         JAMI_ERR("Could not get account details on a non-existing accountID %s", accountID.c_str());
         // return an empty map since we can't throw an exception to D-Bus
