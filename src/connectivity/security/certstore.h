@@ -95,6 +95,9 @@ private:
 
     unsigned loadLocalCertificates();
     void pinRevocationList(const std::string& id, const dht::crypto::RevocationList& crl);
+    using CertFileContent = std::vector<std::tuple<std::string, std::string, std::shared_ptr<crypto::Certificate>>>;
+
+    CertFileContent loadCertFile(std::string name) const;
 
     const std::string certPath_;
     const std::string crlPath_;
