@@ -49,6 +49,7 @@
 #include "conversation_module.h"
 #include "sync_module.h"
 #include "conversationrepository.h"
+#include "account_const.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -559,6 +560,16 @@ public:
     void clearProfileCache(const std::string& peerUri);
 
     std::string profilePath() const;
+
+    std::map<std::string, std::string> getAccountDetails() const {
+        auto details = Account::getAccountDetails();
+        if (accountManager_) {
+            if (auto info = accountManager_->getInfo()) {
+                details.emplace(libjami::Account::ConfProperties::DEVICE_ID, info->deviceId);
+            }
+        }
+        return details;
+    }
 
     AccountManager* accountManager()
     {

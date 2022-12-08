@@ -2622,6 +2622,9 @@ Manager::getAccountDetails(const std::string& accountID) const
     const auto account = getAccount(accountID);
 
     if (account) {
+        if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(account)) {
+            return jamiAcc->getAccountDetails();
+        }
         return account->getAccountDetails();
     } else {
         JAMI_ERR("Could not get account details on a non-existing accountID %s", accountID.c_str());

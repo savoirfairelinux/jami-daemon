@@ -21,17 +21,31 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <condition_variable>
+
 #include "account_factory.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
-
+#include "manager.h"
+#include "account_const.h"
+#include "account_schema.h"
+#include "common.h"
+#include "jamidht/jamiaccount.h"
 
 namespace jami { namespace test {
 
 class Account_factoryTest : public CppUnit::TestFixture {
 public:
-    static std::string name() { return "account_factory"; }
+    Account_factoryTest()
+    {
+        // Init daemon
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        if (not Manager::instance().initialized)
+            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+    }
+    ~Account_factoryTest() { libjami::fini(); }
+    static std::string name() { return "Account_factory"; }
     void setUp();
     void tearDown();
 
@@ -46,9 +60,14 @@ private:
     CPPUNIT_TEST(testClear);
     CPPUNIT_TEST_SUITE_END();
 
-    const std::string SIP_ID="SIP_ID";
-    const std::string RING_ID="RING_ID";
-    std::unique_ptr<AccountFactory> accountFactory;
+    const std::string SIP_ID = "SIP_ID";
+    const std::string RING_ID = "RING_ID";
+    bool sipReady, ringReady, accountsRemoved;
+    size_t initialAccounts;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Account_factoryTest, Account_factoryTest::name());
@@ -56,81 +75,110 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Account_factoryTest, Account_factoryTest::
 void
 Account_factoryTest::setUp()
 {
-    // Init daemon
-    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
-    CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
+    sipReady = false;
+    ringReady = false;
+    accountsRemoved = false;
+    initialAccounts = Manager::instance().accountCount();
 
-    accountFactory.reset(new AccountFactory);
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string& accountID,
+                const std::map<std::string, std::string>& details) {
+                if (accountID != RING_ID && accountID != SIP_ID) {
+                    return;
+                }
+                try {
+                    ringReady |= accountID == RING_ID
+                                && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
+                                && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
+                    sipReady |= accountID == SIP_ID
+                                && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "READY";
+                } catch (const std::out_of_range&) {}
+            }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
+            if (jami::Manager::instance().getAccountList().size() <= initialAccounts) {
+                accountsRemoved = true;
+            }
+        }));
+    libjami::registerSignalHandlers(confHandlers);
 }
 
 void
 Account_factoryTest::tearDown()
 {
-    // Stop daemon
-    libjami::fini();
+    libjami::unregisterSignalHandlers();
 }
-
 
 void
 Account_factoryTest::testAddRemoveSIPAccount()
 {
-    // verify if there is no account at the beginning
-    CPPUNIT_ASSERT(accountFactory->empty());
-    CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+    AccountFactory* accountFactory = &Manager::instance().accountFactory;
 
-    accountFactory->createAccount(libjami::Account::ProtocolNames::SIP, SIP_ID);
+    auto accDetails = libjami::getAccountTemplate("SIP");
+    auto newAccount = Manager::instance().addAccount(accDetails, SIP_ID);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return sipReady;
+    }));
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(SIP_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(RING_ID));
     CPPUNIT_ASSERT(!accountFactory->empty());
-    CPPUNIT_ASSERT(accountFactory->accountCount()==1);
+    CPPUNIT_ASSERT(accountFactory->accountCount() == 1 + initialAccounts);
 
-    accountFactory->removeAccount(SIP_ID);
+    auto details = Manager::instance().getAccountDetails(SIP_ID);
+    CPPUNIT_ASSERT(details.find(libjami::Account::ConfProperties::DEVICE_ID) == details.end());
 
-    CPPUNIT_ASSERT(accountFactory->empty());
-    CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+    Manager::instance().removeAccount(SIP_ID, true);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved; }));
 }
 
 void
 Account_factoryTest::testAddRemoveRINGAccount()
 {
-    // verify if there is no account at the beginning
-    CPPUNIT_ASSERT(accountFactory->empty());
-    CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+    AccountFactory* accountFactory = &Manager::instance().accountFactory;
 
-    accountFactory->createAccount(libjami::Account::ProtocolNames::RING, RING_ID);
+    auto accDetails = libjami::getAccountTemplate("RING");
+    auto newAccount = Manager::instance().addAccount(accDetails, RING_ID);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return ringReady;
+    }));
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(RING_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(SIP_ID));
     CPPUNIT_ASSERT(!accountFactory->empty());
-    CPPUNIT_ASSERT(accountFactory->accountCount()==1);
+    CPPUNIT_ASSERT(accountFactory->accountCount() == 1 + initialAccounts);
 
-    accountFactory->removeAccount(RING_ID);
+    auto details = Manager::instance().getAccountDetails(RING_ID);
+    CPPUNIT_ASSERT(details.find(libjami::Account::ConfProperties::DEVICE_ID) != details.end());
 
-    CPPUNIT_ASSERT(accountFactory->empty());
-    CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+    Manager::instance().removeAccount(RING_ID, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved; }));
 }
 
 void
 Account_factoryTest::testClear()
 {
+    AccountFactory accountFactory;
     // verify if there is no account at the beginning
-    CPPUNIT_ASSERT(accountFactory->empty());
-    CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+    CPPUNIT_ASSERT(accountFactory.empty());
+    CPPUNIT_ASSERT(accountFactory.accountCount()==0);
 
     const int nbrAccount = 5;
 
     for(int i = 0; i < nbrAccount ; ++i) {
-        accountFactory->createAccount(libjami::Account::ProtocolNames::RING, RING_ID+std::to_string(i));
+        accountFactory.createAccount(libjami::Account::ProtocolNames::RING, RING_ID+std::to_string(i));
     }
 
-    CPPUNIT_ASSERT(accountFactory->accountCount()==nbrAccount);
-    CPPUNIT_ASSERT(!accountFactory->empty());
+    CPPUNIT_ASSERT(accountFactory.accountCount()==nbrAccount);
+    CPPUNIT_ASSERT(!accountFactory.empty());
 
-    accountFactory->clear();
+    accountFactory.clear();
 
-    CPPUNIT_ASSERT(accountFactory->empty());
-    CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+    CPPUNIT_ASSERT(accountFactory.empty());
+    CPPUNIT_ASSERT(accountFactory.accountCount()==0);
 }
 
 }} // namespace jami::test
