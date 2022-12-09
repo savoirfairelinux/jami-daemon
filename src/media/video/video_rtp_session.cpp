@@ -27,6 +27,7 @@
 #include "video_mixer.h"
 #include "socket_pair.h"
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
+#include "sip/sipcall.h"
 #include "manager.h"
 #include "media_const.h"
 #ifdef ENABLE_PLUGIN
@@ -132,8 +133,8 @@ VideoRtpSession::startSender()
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
-            if (videoMixer_)
-                videoMixer_->detach(sender_.get());
+            if (conference_)
+                conference_->callStreamsMgr()->detach(sender_.get());
             JAMI_WARN("[%p] Restarting video sender", this);
         }
 
@@ -191,7 +192,7 @@ VideoRtpSession::startSender()
             sender_.reset();
             socketPair_->stopSendOp(false);
             MediaStream ms
-                = !videoMixer_
+                = !conference_
                       ? MediaStream("video sender",
                                     AV_PIX_FMT_YUV420P,
                                     1 / static_cast<rational<int>>(localVideoParams_.framerate),
@@ -199,7 +200,7 @@ VideoRtpSession::startSender()
                                     localVideoParams_.height,
                                     send_.bitrate,
                                     static_cast<rational<int>>(localVideoParams_.framerate))
-                      : videoMixer_->getStream("Video Sender");
+                      : conference_->callStreamsMgr()->getStream("Video Sender");
             sender_.reset(new VideoSender(
                 getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
             if (changeOrientationCallback_)
@@ -243,16 +244,16 @@ VideoRtpSession::stopSender()
 {
     // Concurrency protection must be done by caller.
 
-    JAMI_DBG("[%p] Stop video RTP sender: input [%s] - muted [%s]",
-             this,
-             conference_ ? "Video Mixer" : input_.c_str(),
+    JAMI_DEBUG("[{:p}] Stop video RTP sender: input [{}] - muted [{}]",
+             fmt::ptr(this),
+             conference_ ? "Video Mixer" : input_,
              send_.onHold ? "YES" : "NO");
 
     if (sender_) {
         if (videoLocal_)
             videoLocal_->detach(sender_.get());
-        if (videoMixer_)
-            videoMixer_->detach(sender_.get());
+        if (conference_)
+            conference_->callStreamsMgr()->detach(sender_.get());
         sender_.reset();
     }
 
@@ -264,12 +265,11 @@ void
 VideoRtpSession::startReceiver()
 {
     // Concurrency protection must be done by caller.
-
-    JAMI_DBG("[%p] Starting receiver", this);
+    JAMI_DEBUG("[{:p}] Starting receiver", fmt::ptr(this));
 
     if (receive_.enabled and not receive_.onHold) {
         if (receiveThread_)
-            JAMI_WARN("[%p] Already has a receiver, restarting", this);
+            JAMI_WARNING("[{:p}] Already has a receiver, restarting", fmt::ptr(this));
         receiveThread_.reset(
             new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
 
@@ -283,15 +283,6 @@ VideoRtpSession::startReceiver()
         receiveThread_->startLoop();
         receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
         receiveThread_->setRotation(rotation_.load());
-        if (videoMixer_ and conference_) {
-            // Note, this should be managed differently, this is a bit hacky
-            auto audioId = streamId_;
-            string_replace(audioId, "video", "audio");
-            auto activeStream = videoMixer_->verifyActive(audioId);
-            videoMixer_->removeAudioOnlySource(callId_, audioId);
-            if (activeStream)
-                videoMixer_->setActiveStream(streamId_);
-        }
         receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
             Manager::instance().ioContext()->post([w=std::move(w), ms]() {
                 if (auto shared = w.lock())
@@ -299,17 +290,9 @@ VideoRtpSession::startReceiver()
             });
         });
     } else {
-        JAMI_DBG("[%p] Video receiver disabled", this);
-        if (receiveThread_ and videoMixer_ and conference_) {
-            // Note, this should be managed differently, this is a bit hacky
-            auto audioId_ = streamId_;
-            string_replace(audioId_, "video", "audio");
-            auto activeStream = videoMixer_->verifyActive(streamId_);
-            videoMixer_->addAudioOnlySource(callId_, audioId_);
-            receiveThread_->detach(videoMixer_.get());
-            if (activeStream)
-                videoMixer_->setActiveStream(audioId_);
-        }
+        JAMI_DEBUG("[{:p}] Video receiver disabled", fmt::ptr(this));
+        if (receiveThread_ && conference_)
+            receiveThread_->detach(conference_->callStreamsMgr().get());
     }
     if (socketPair_)
         socketPair_->setReadBlockingMode(true);
@@ -320,20 +303,12 @@ VideoRtpSession::stopReceiver()
 {
     // Concurrency protection must be done by caller.
 
-    JAMI_DBG("[%p] Stopping receiver", this);
+    JAMI_DEBUG("[{:p}] Stopping receiver", fmt::ptr(this));
 
     if (not receiveThread_)
         return;
-
-    if (videoMixer_) {
-        auto activeStream = videoMixer_->verifyActive(streamId_);
-        auto audioId = streamId_;
-        string_replace(audioId, "video", "audio");
-        videoMixer_->addAudioOnlySource(callId_, audioId);
-        receiveThread_->detach(videoMixer_.get());
-        if (activeStream)
-            videoMixer_->setActiveStream(audioId);
-    }
+    if (conference_)
+        receiveThread_->detach(conference_->callStreamsMgr().get());
 
     // We need to disable the read operation, otherwise the
     // receiver thread will block since the peer stopped sending
@@ -429,6 +404,7 @@ VideoRtpSession::stop()
     storeVideoBitrateInfo();
 
     socketPair_.reset();
+    std::lock_guard<std::mutex> lk(recorderMtx_);
     videoLocal_.reset();
 }
 
@@ -520,29 +496,26 @@ void
 VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction dir)
 {
     if (dir == Direction::SEND) {
-        JAMI_DBG("[%p] Setup video sender pipeline on conference %s for call %s",
-                 this,
-                 conference.getConfId().c_str(),
-                 callId_.c_str());
-        videoMixer_ = conference.getVideoMixer();
+        JAMI_DEBUG("[{:p}] Setup video sender pipeline on conference {:s} for call {:s}",
+                 fmt::ptr(this),
+                 conference.getConfId(),
+                 callId_);
         if (sender_) {
             // Swap sender from local video to conference video mixer
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
-            if (videoMixer_)
-                videoMixer_->attach(sender_.get());
+            conference.callStreamsMgr()->attach(sender_.get());
         } else {
-            JAMI_WARN("[%p] no sender", this);
+            JAMI_WARNING("[{:p}] no sender", fmt::ptr(this));
         }
     } else {
-        JAMI_DBG("[%p] Setup video receiver pipeline on conference %s for call %s",
-                 this,
-                 conference.getConfId().c_str(),
-                 callId_.c_str());
+        JAMI_DEBUG("[{:p}] Setup video receiver pipeline on conference {:s} for call {:s}",
+                 fmt::ptr(this),
+                 conference.getConfId(),
+                 callId_);
         if (receiveThread_) {
             receiveThread_->stopSink();
-            if (videoMixer_)
-                videoMixer_->attachVideo(receiveThread_.get(), callId_, streamId_);
+        conference.callStreamsMgr()->attachVideo(receiveThread_.get(), callId_, streamId_);
         } else {
             JAMI_WARN("[%p] no receiver", this);
         }
@@ -557,16 +530,14 @@ VideoRtpSession::enterConference(Conference& conference)
     exitConference();
 
     conference_ = &conference;
-    videoMixer_ = conference.getVideoMixer();
-    JAMI_DBG("[%p] enterConference (conf: %s)", this, conference.getConfId().c_str());
+    JAMI_DEBUG("[{:p}] enterConference (conf: {:s})", fmt::ptr(this), conference.getConfId());
 
     if (send_.enabled or receiveThread_) {
         // Restart encoder with conference parameter ON in order to unlink HW encoder
         // from HW decoder.
         restartSender();
-        if (conference_) {
+        if (conference_)
             setupConferenceVideoPipeline(conference, Direction::RECV);
-        }
     }
 }
 
@@ -580,19 +551,14 @@ VideoRtpSession::exitConference()
 
     JAMI_DBG("[%p] exitConference (conf: %s)", this, conference_->getConfId().c_str());
 
-    if (videoMixer_) {
+    if (conference_) {
         if (sender_)
-            videoMixer_->detach(sender_.get());
+            conference_->callStreamsMgr()->detach(sender_.get());
 
         if (receiveThread_) {
-            auto activeStream = videoMixer_->verifyActive(streamId_);
-            videoMixer_->detachVideo(receiveThread_.get());
+            conference_->callStreamsMgr()->detachVideo(receiveThread_.get());
             receiveThread_->startSink();
-            if (activeStream)
-                videoMixer_->setActiveStream(streamId_);
         }
-
-        videoMixer_.reset();
     }
 
     conference_ = nullptr;
@@ -795,9 +761,9 @@ VideoRtpSession::attachLocalRecorder(const MediaStream& ms)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !videoLocal_ || !Manager::instance().videoPreferences.getRecordPreview())
         return;
-    if (auto ob = recorder_->addStream(ms)) {
+    if (auto ob = recorder_->addStream(ms))
         videoLocal_->attach(ob);
-    }
+
 }
 
 void

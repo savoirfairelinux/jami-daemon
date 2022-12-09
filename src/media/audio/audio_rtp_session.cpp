@@ -274,6 +274,7 @@ AudioRtpSession::stop()
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
+    std::lock_guard<std::mutex> lk(recorderMtx_);
     audioInput_.reset();
 }
 
@@ -418,9 +419,8 @@ AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
         return;
     MediaStream localMS = ms;
     localMS.name = streamId_ + ":local";
-    if (auto ob = recorder_->addStream(localMS)) {
+    if (auto ob = recorder_->addStream(localMS))
         audioInput_->attach(ob);
-    }
 }
 
 void

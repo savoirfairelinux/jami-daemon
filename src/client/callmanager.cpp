@@ -249,12 +249,6 @@ addMainParticipant(const std::string& accountId, const std::string& confId)
 }
 
 bool
-detachLocalParticipant()
-{
-    return jami::Manager::instance().detachLocalParticipant();
-}
-
-bool
 detachParticipant(const std::string&, const std::string& callId)
 {
     return jami::Manager::instance().detachParticipant(callId);
@@ -272,14 +266,6 @@ joinConference(const std::string& accountId,
 bool
 holdConference(const std::string& accountId, const std::string& confId)
 {
-    /*
-    if (const auto account = jami::Manager::instance().getAccount(accountId))
-        if (auto conf = account->getConference(confId)) {
-            conf->detach();
-            jami::emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getConfId(),
-    conf->getStateStr()); return true;
-        }
-    return false;*/
     return jami::Manager::instance().holdConference(accountId, confId);
 }
 
@@ -330,7 +316,7 @@ getParticipantList(const std::string& accountId, const std::string& confId)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId))
         if (auto conf = account->getConference(confId)) {
-            const auto& participants(conf->getParticipantList());
+            const auto& participants(conf->getCallIds());
             return {participants.begin(), participants.end()};
         }
     return {};
@@ -454,7 +440,7 @@ switchInput(const std::string& accountId, const std::string& callId, const std::
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(callId)) {
-            conf->switchInput(resource);
+            JAMI_ERROR("Switch input should not be used anymore");
             return true;
         } else if (auto call = account->getCall(callId)) {
             call->switchInput(resource);
@@ -585,7 +571,7 @@ setActiveStream(const std::string& accountId,
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            conf->setActiveStream(streamId, state);
+            conf->setActiveStream(accountUri, deviceId, streamId, state);
         } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             call->setActiveMediaStream(accountUri, deviceId, streamId, state);
         }
@@ -629,20 +615,6 @@ raiseParticipantHand(const std::string& accountId,
                      const bool& state)
 {
     JAMI_ERR() << "raiseParticipantHand is deprecated, please use raiseHand";
-    if (const auto account = jami::Manager::instance().getAccount(accountId)) {
-        if (auto conf = account->getConference(confId)) {
-            if (auto call = std::static_pointer_cast<jami::SIPCall>(
-                    conf->getCallFromPeerID(peerId))) {
-                if (auto* transport = call->getTransport())
-                    conf->setHandRaised(std::string(transport->deviceId()), state);
-            }
-        } else if (auto call = account->getCall(confId)) {
-            Json::Value root;
-            root["handRaised"] = peerId;
-            root["handState"] = state ? jami::TRUE_STR : jami::FALSE_STR;
-            call->sendConfOrder(root);
-        }
-    }
 }
 
 void
@@ -653,11 +625,11 @@ raiseHand(const std::string& accountId,
           const bool& state)
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        auto uri = accountUri.empty() ? account->getUsername() : accountUri;
+        std::string device = deviceId.empty() ? std::string(account->currentDeviceId())
+                                                : deviceId;
         if (auto conf = account->getConference(confId)) {
-            auto device = deviceId;
-            if (device.empty())
-                device = std::string(account->currentDeviceId());
-            conf->setHandRaised(device, state);
+            conf->setHandRaised(uri, device, state);
         } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->conferenceProtocolVersion() == 1) {
                 Json::Value deviceVal;
