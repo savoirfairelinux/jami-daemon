@@ -83,6 +83,7 @@ static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / 
 
 VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, bool attachHost)
     : VideoGenerator::VideoGenerator()
+    , CallStreamsManager::CallStreamsManager()
     , id_(id)
     , sink_(Manager::instance().createSinkClient(id, true))
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
@@ -396,8 +397,7 @@ VideoMixer::process()
                                                          sinfo.callId,
                                                          sinfo.streamId});
                 }
-                if (onSourcesUpdated_)
-                    onSourcesUpdated_(std::move(sourcesInfo));
+                updateInfo();
             }
         }
     }
