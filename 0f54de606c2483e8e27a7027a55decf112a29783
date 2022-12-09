@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9330ff68_868ac599",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2622,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-09T11:18:34Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "5b5b0e61_e540c3e7",
+      "range": {
+        "startLine": 2622,
+        "startChar": 36,
+        "endLine": 2622,
+        "endChar": 47
+      },
+      "revId": "0f54de606c2483e8e27a7027a55decf112a29783",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "675ee722_a9b5422a",
@@ -41,6 +65,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6e16dc9_0e06f6fe",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2625,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-09T11:18:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "675ee722_a9b5422a",
+      "revId": "0f54de606c2483e8e27a7027a55decf112a29783",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1a691477_5a4c1fe2",
@@ -54,6 +96,30 @@
       "writtenOn": "2022-12-07T17:55:57Z",
       "side": 1,
       "message": "also a regression means there is no test to detect this and this can be broken again. Ideally the patch should have a unit test to avoid to re-fix it later.",
+      "range": {
+        "startLine": 2629,
+        "startChar": 39,
+        "endLine": 2629,
+        "endChar": 41
+      },
+      "revId": "0f54de606c2483e8e27a7027a55decf112a29783",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8190152c_decf962d",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2629,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-09T11:18:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1a691477_5a4c1fe2",
       "range": {
         "startLine": 2629,
         "startChar": 39,
