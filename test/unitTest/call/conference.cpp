@@ -124,7 +124,7 @@ private:
     CPPUNIT_TEST(testIsConferenceParticipant);
     CPPUNIT_TEST(testAudioConferenceConfInfo);
     CPPUNIT_TEST(testHostAddRmSecondVideo);
-    CPPUNIT_TEST(testParticipantAddRmSecondVideo);
+    //CPPUNIT_TEST(testParticipantAddRmSecondVideo);
     CPPUNIT_TEST(testPropagateRecording);
     CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
@@ -469,7 +469,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     startConference();
 
-    auto expectedNumberOfParticipants = 3;
+    auto expectedNumberOfParticipants = 3u;
 
     // Check participants number
     CPPUNIT_ASSERT(
@@ -986,7 +986,7 @@ ConferenceTest::testBrokenParticipantAudioOnly()
     // Check participants number
     // It should have one less participant than in the conference start
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+        cv.wait_for(lk, 30s, [&] {return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
     libjami::unregisterSignalHandlers();

@@ -29,10 +29,12 @@
 #include "sinkclient.h"
 #include "logger.h"
 #include "filter_transpose.h"
+#include "sip/sipcall.h"
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif
 #include "connectivity/sip_utils.h"
+#include "string_utils.h"
 
 #include <cmath>
 #include <unistd.h>
@@ -83,6 +85,7 @@ static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / 
 
 VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, bool attachHost)
     : VideoGenerator::VideoGenerator()
+    , CallStreamsManager::CallStreamsManager()
     , id_(id)
     , sink_(Manager::instance().createSinkClient(id, true))
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
@@ -99,6 +102,20 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, boo
     nextProcess_ = std::chrono::steady_clock::now();
 
     JAMI_DBG("[mixer:%s] New instance created", id_.c_str());
+
+
+    auto conf_res = split_string_to_unsigned(jami::Manager::instance()
+                                                 .videoPreferences.getConferenceResolution(),
+                                             'x');
+    if (conf_res.size() == 2u) {
+#if defined(__APPLE__) && TARGET_OS_MAC
+        setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
+#else
+        setParameters(conf_res[0], conf_res[1]);
+#endif
+    } else {
+        JAMI_ERR("Conference resolution is invalid");
+    }
 }
 
 VideoMixer::~VideoMixer()
@@ -141,6 +158,64 @@ VideoMixer::switchInputs(const std::vector<std::string>& inputs)
         attachVideo(localInputs_[i].get(), "", sip_utils::streamId("", fmt::format("video_{}", i)));
 }
 
+
+
+void
+VideoMixer::setStreams(const std::string& uri, const std::string& device, const std::vector<MediaAttribute>& streams)
+{
+    auto key = std::make_pair(uri, device); // TODO if uri/device is self, switch input
+    auto& callInfo = callInfo_[key];
+    callInfo.streams.clear();
+
+    // Do not stop video inputs that are already there
+    // But only detach it to get new index
+    std::lock_guard<std::mutex> lk(localInputsMtx_);
+    decltype(localInputs_) newInputs;
+
+
+    for (const auto& stream : streams) {
+        auto streamId = sip_utils::streamId("", stream.label_);
+        if (streamId.find("video") != std::string::npos) {
+            // Video stream, we can replace audio
+            replaceAudioStream(uri, device, streamId);
+            auto& sInfo = callInfo.streams[streamId];
+            sInfo.videoMuted = stream.muted_;
+
+            auto videoInput = getVideoInput(stream.sourceUri_);
+            // Note, video can be a previously stopped device (eg. restart a screen sharing)
+            // in this case, the videoInput will be found and must be restarted
+            videoInput->restart();
+            auto onlyDetach = false;
+            auto it = std::find(localInputs_.cbegin(), localInputs_.cend(), videoInput);
+            onlyDetach = it != localInputs_.cend();
+            newInputs.emplace_back(videoInput);
+            if (onlyDetach) {
+                videoInput->detach(this);
+                localInputs_.erase(it);
+            }
+        } else {
+            // Audio stream, nothing to do if video
+            std::string videoStream = streamId;
+            string_replace(videoStream, "audio", "video"); // TODO bestStreamId
+            if (callInfo.streams.find(videoStream) == callInfo.streams.end()) {
+                auto& sInfo = callInfo.streams[streamId];
+                sInfo.audioLocalMuted = stream.muted_;
+            }
+        }
+    }
+    updateInfo();
+
+
+    // Stop other video inputs
+    stopInputs();
+    localInputs_ = std::move(newInputs);
+
+    // Re-attach videoInput to mixer
+    // TODO use ID from streams()
+    for (auto i = 0u; i != localInputs_.size(); ++i)
+        attachVideo(localInputs_[i].get(), "", sip_utils::streamId("", fmt::format("video_{}", i)));
+}
+
 void
 VideoMixer::stopInput(const std::shared_ptr<VideoFrameActiveWriter>& input)
 {
@@ -162,17 +237,18 @@ VideoMixer::stopInputs()
 }
 
 void
-VideoMixer::setActiveStream(const std::string& id)
+VideoMixer::setLayout(int layout)
 {
-    activeStream_ = id;
-    updateLayout();
-}
-
-void
-VideoMixer::updateLayout()
-{
-    if (activeStream_ == "")
-        currentLayout_ = Layout::GRID;
+    if (layout < 0 || layout > 2) {
+        JAMI_ERROR("Unknown layout {}", layout);
+        return;
+    }
+    currentLayout_ = static_cast<Layout>(layout);
+    if (currentLayout_ == Layout::GRID) {
+        if (!activeStream_.second.empty())
+            callInfo_[activeStream_.first].streams[activeStream_.second].active = false;
+        activeStream_ = {};
+    }
     layoutUpdated_ += 1;
 }
 
@@ -183,10 +259,14 @@ VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
 {
     if (!frame)
         return;
-    JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
+    JAMI_DEBUG("Attaching video with streamId {:s}", streamId);
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId)))
+        replaceAudioStream(call->getRemoteUri(), call->getRemoteDeviceId(), streamId);
     {
         std::lock_guard<std::mutex> lk(videoToStreamInfoMtx_);
         videoToStreamInfo_[frame] = StreamInfo {callId, streamId};
+        streamIdToSource_[streamId] = frame;
+        // TODO homogeneize remove
     }
     frame->attach(this);
 }
@@ -200,12 +280,14 @@ VideoMixer::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
     std::unique_lock<std::mutex> lk(videoToStreamInfoMtx_);
     auto it = videoToStreamInfo_.find(frame);
     if (it != videoToStreamInfo_.end()) {
-        JAMI_DBG("Detaching video of call %s", it->second.callId.c_str());
+        JAMI_DEBUG("Detaching video of call {:s}", it->second.callId);
         detach = true;
         // Handle the case where the current shown source leave the conference
-        // Note, do not call resetActiveStream() to avoid multiple updates
-        if (verifyActive(it->second.streamId))
-            activeStream_ = {};
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(it->second.callId))) {
+            auto& si = callInfo_[std::make_pair(call->getRemoteUri(), call->getRemoteDeviceId())];
+            si.streams.erase(it->second.streamId);
+            streamIdToSource_.erase(it->second.streamId);
+        }
         videoToStreamInfo_.erase(it);
     }
     lk.unlock();
@@ -224,7 +306,7 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
     JAMI_DBG("Add new source [%p]", src.get());
     sources_.emplace_back(std::move(src));
     JAMI_DEBUG("Total sources: {:d}", sources_.size());
-    updateLayout();
+    layoutUpdated_ += 1;
 }
 
 void
@@ -237,7 +319,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
             JAMI_DBG("Remove source [%p]", x.get());
             sources_.remove(x);
             JAMI_DEBUG("Total sources: {:d}", sources_.size());
-            updateLayout();
+            layoutUpdated_ += 1;
             break;
         }
     }
@@ -301,104 +383,112 @@ VideoMixer::process()
         bool activeFound = false;
         bool needsUpdate = layoutUpdated_ > 0;
         bool successfullyRendered = audioOnlySources_.size() != 0 && sources_.size() == 0;
-        std::vector<SourceInfo> sourcesInfo;
-        sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
-        // add all audioonlysources
-        for (auto& [callId, streamId] : audioOnlySources_) {
-            auto active = verifyActive(streamId);
-            if (currentLayout_ != Layout::ONE_BIG or active) {
-                sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, callId, streamId});
-            }
-            if (currentLayout_ == Layout::ONE_BIG and active)
-                successfullyRendered = true;
-        }
-        // add video sources
-        for (auto& x : sources_) {
-            /* thread stop pending? */
-            if (!loop_.isRunning())
-                return;
 
-            auto sinfo = streamInfo(x->source);
-            auto activeSource = verifyActive(sinfo.streamId);
-            if (currentLayout_ != Layout::ONE_BIG or activeSource) {
-                // make rendered frame temporarily unavailable for update()
-                // to avoid concurrent access.
-                std::shared_ptr<VideoFrame> input = x->getRenderFrame();
-                std::shared_ptr<VideoFrame> fooInput = std::make_shared<VideoFrame>();
 
-                auto wantedIndex = i;
-                if (currentLayout_ == Layout::ONE_BIG) {
-                    wantedIndex = 0;
-                    activeFound = true;
-                } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-                    if (activeSource) {
-                        wantedIndex = 0;
-                        activeFound = true;
-                    } else if (not activeFound) {
-                        wantedIndex += 1;
+        for (auto& [cid, callInfo]: callInfo_) {
+            for (auto& [sid, streamInfo]: callInfo.streams) {
+
+                // thread stop pending?
+                if (!loop_.isRunning()) {
+                    return;
+                }
+
+                VideoMixerSource* x = nullptr;
+
+                auto itS = streamIdToSource_.find(sid);
+                if (itS != streamIdToSource_.end()) {
+                    for (const auto& s: sources_) {
+                        if (itS->second == s->source) {
+                            x = s.get();
+                        }
                     }
                 }
 
-                auto hasVideo = x->hasVideo;
-                bool blackFrame = false;
+                if (!x) {
+                    // Audio only
+                    streamInfo.x = 0; streamInfo.y = 0; streamInfo.w = 10; streamInfo.h = 10;
+                    if (currentLayout_ == Layout::ONE_BIG) {
+                        if (streamInfo.active) {
+                            successfullyRendered = true;
+                            streamInfo.w = 10; streamInfo.h = 10;
+                        } else {
+                            streamInfo.w = 0; streamInfo.h = 0;
+                        }
+                    }
+                } else if (currentLayout_ != Layout::ONE_BIG or streamInfo.active) {
+                    // make rendered frame temporarily unavailable for update()
+                    // to avoid concurrent access.
+                    std::shared_ptr<VideoFrame> input = x->getRenderFrame();
+                    std::shared_ptr<VideoFrame> fooInput = std::make_shared<VideoFrame>();
 
-                if (!input->height() or !input->width()) {
-                    successfullyRendered = true;
-                    fooInput->reserve(format_, width_, height_);
-                    blackFrame = true;
-                } else {
-                    fooInput.swap(input);
+                    auto wantedIndex = i;
+                    if (currentLayout_ == Layout::ONE_BIG) {
+                        wantedIndex = 0;
+                        activeFound = true;
+                    } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
+                        if (streamInfo.active) {
+                            wantedIndex = 0;
+                            activeFound = true;
+                        } else if (not activeFound) {
+                            wantedIndex += 1;
+                        }
+                    }
+
+                    auto hasVideo = x->hasVideo;
+                    bool blackFrame = false;
+
+                    if (!input->height() or !input->width()) {
+                        successfullyRendered = true;
+                        fooInput->reserve(format_, width_, height_);
+                        blackFrame = true;
+                    } else {
+                        fooInput.swap(input);
+                    }
+
+                    // If orientation changed or if the first valid frame for source
+                    // is received -> trigger layout calculation and confInfo update
+                    if (x->rotation != fooInput->getOrientation() or !x->w or !x->h) {
+                        layoutUpdated_ += 1;
+                        needsUpdate = true;
+                    }
+
+                    if (needsUpdate)
+                        calc_position(x, fooInput, wantedIndex);
+
+                    if (!blackFrame) {
+                        if (fooInput)
+                            successfullyRendered |= render_frame(output, fooInput, x);
+                        else
+                            JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
+                    }
+
+                    streamInfo.videoMuted = blackFrame || !successfullyRendered;
+                    if (hasVideo != x->hasVideo) {
+                        layoutUpdated_ += 1;
+                        needsUpdate = true;
+                    }
+                    // TODO videoMuted should not have a source
+                    streamInfo.x = !streamInfo.videoMuted? x->x : 0;
+                    streamInfo.y = !streamInfo.videoMuted? x->y : 0;
+                    streamInfo.w = !streamInfo.videoMuted? x->w : (currentLayout_ == Layout::ONE_BIG)? 0 : 10;
+                    streamInfo.h = !streamInfo.videoMuted? x->h : (currentLayout_ == Layout::ONE_BIG)? 0 : 10;
+                } else if (needsUpdate) {
+                    streamInfo.x = 0;
+                    streamInfo.y = 0;
+                    streamInfo.w = 0;
+                    streamInfo.h = 0;
+                    streamInfo.videoMuted = true;
                 }
 
-                // If orientation changed or if the first valid frame for source
-                // is received -> trigger layout calculation and confInfo update
-                if (x->rotation != fooInput->getOrientation() or !x->w or !x->h) {
-                    updateLayout();
-                    needsUpdate = true;
-                }
+                ++i;
 
-                if (needsUpdate)
-                    calc_position(x, fooInput, wantedIndex);
 
-                if (!blackFrame) {
-                    if (fooInput)
-                        successfullyRendered |= render_frame(output, fooInput, x);
-                    else
-                        JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
-                }
-
-                x->hasVideo = !blackFrame && successfullyRendered;
-                if (hasVideo != x->hasVideo) {
-                    updateLayout();
-                    needsUpdate = true;
-                }
-            } else if (needsUpdate) {
-                x->x = 0;
-                x->y = 0;
-                x->w = 0;
-                x->h = 0;
-                x->hasVideo = false;
             }
-
-            ++i;
         }
         if (needsUpdate and successfullyRendered) {
             layoutUpdated_ -= 1;
-            if (layoutUpdated_ == 0) {
-                for (auto& x : sources_) {
-                    auto sinfo = streamInfo(x->source);
-                    sourcesInfo.emplace_back(SourceInfo {x->source,
-                                                         x->x,
-                                                         x->y,
-                                                         x->w,
-                                                         x->h,
-                                                         x->hasVideo,
-                                                         sinfo.callId,
-                                                         sinfo.streamId});
-                }
-                if (onSourcesUpdated_)
-                    onSourcesUpdated_(std::move(sourcesInfo));
-            }
+            if (layoutUpdated_ == 0)
+                updateInfo();
         }
     }
 
@@ -414,7 +504,7 @@ VideoMixer::process()
 bool
 VideoMixer::render_frame(VideoFrame& output,
                          const std::shared_ptr<VideoFrame>& input,
-                         std::unique_ptr<VideoMixerSource>& source)
+                         VideoMixerSource* source)
 {
     if (!width_ or !height_ or !input->pointer() or input->pointer()->format == -1)
         return false;
@@ -449,7 +539,7 @@ VideoMixer::render_frame(VideoFrame& output,
 }
 
 void
-VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
+VideoMixer::calc_position(VideoMixerSource* source,
                           const std::shared_ptr<VideoFrame>& input,
                           int index)
 {
@@ -532,7 +622,7 @@ VideoMixer::setParameters(int width, int height, AVPixelFormat format)
         libav_utils::fillWithBlack(previous_p->pointer());
 
     startSink();
-    updateLayout();
+    layoutUpdated_ += 1;
     startTime_ = av_gettime();
 }
 
