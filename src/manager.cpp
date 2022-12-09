@@ -686,7 +686,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
 
     base_.getRingBufferPool().unBindAll(callId);
 
-    conf.addParticipant(callId);
+    conf.bindCall(call);
 
     if (state == "HOLD") {
         conf.bindParticipant(callId);
@@ -1478,11 +1478,11 @@ Manager::createConfFromParticipantList(const std::string& accountId,
 
         // Create call
         auto callId = outgoingCall(account, tostr, {});
-        if (callId.empty())
+        if (!getCallFromCallID(callId))
             continue;
 
         // Manager methods may behave differently if the call id participates in a conference
-        conf->addParticipant(callId);
+        conf->addParticipant(getCallFromCallID(callId));
         successCounter++;
     }
 
