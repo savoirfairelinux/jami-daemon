@@ -2480,7 +2480,7 @@ ConversationModule::hostConference(const std::string& conversationId,
         conf = std::make_shared<Conference>(acc, confId, true, call->getMediaAttributeList());
         acc->attach(conf);
     }
-    conf->addParticipant(callId);
+    conf->bindCall(call);
 
     if (createConf) {
         emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
