@@ -87,6 +87,8 @@ libjami_la_SOURCES = \
 		vcard.cpp \
 		threadloop.h \
 		conference.h \
+		callstreamsmanager.cpp \
+		callstreamsmanager.h \
 		conference_protocol.h \
 		account_factory.h \
 		call_factory.h \

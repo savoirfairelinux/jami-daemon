@@ -247,6 +247,7 @@ AudioRtpSession::stop()
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
+    std::lock_guard<std::mutex> lk(recorderMtx_);
     audioInput_.reset();
 }
 
@@ -377,11 +378,11 @@ AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 void
 AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::mutex> lk(recorderMtx_);
     if (!recorder_ || !audioInput_)
         return;
-    if (auto ob = recorder_->addStream(ms)) {
+    if (auto ob = recorder_->addStream(ms))
         audioInput_->attach(ob);
-    }
 }
 
 void

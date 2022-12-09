@@ -305,10 +305,6 @@ public:
         peerUri_ = peerUri;
     }
 
-    std::string_view peerUri() const {
-        return peerUri_;
-    }
-
     // Create a new ICE media session. If we already have an instance,
     // it will be destroyed first.
     bool createIceMediaTransport(bool isReinvite);
@@ -337,6 +333,9 @@ public:
      * Announce to the client that medias are successfully negotiated
      */
     void reportMediaNegotiationStatus();
+
+    std::string getRemoteUri();
+    std::string getRemoteDeviceId();
 
 private:
     void generateMediaPorts();
@@ -468,6 +467,7 @@ private:
     std::vector<std::string> peerAllowedMethods_;
 
     // Vector holding the current RTP sessions.
+    mutable std::mutex rtpStreamsMtx_;
     std::vector<RtpStream> rtpStreams_;
 
     /**
@@ -508,7 +508,9 @@ private:
     // Re-invite (temporary) ICE media transport.
     std::shared_ptr<dhtnet::IceTransport> reinvIceMedia_;
 
-    std::string peerUri_ {};
+    std::string peerUri_ {}; // Contains jami:
+    std::string remoteUri_ {};
+    std::string peerDeviceId_ {};
 
     bool readyToRecord_ {false};
     bool pendingRecord_ {false};

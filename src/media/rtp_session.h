@@ -88,6 +88,7 @@ protected:
     MediaDescription send_;
     MediaDescription receive_;
     uint16_t mtu_;
+    std::mutex recorderMtx_;
     std::shared_ptr<MediaRecorder> recorder_;
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
 
