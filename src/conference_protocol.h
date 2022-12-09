@@ -53,7 +53,7 @@ public:
     {
         hangupParticipant_ = std::move(cb);
     }
-    void onRaiseHand(std::function<void(const std::string&, bool)>&& cb)
+    void onRaiseHand(std::function<void(const std::string&, const std::string&, bool)>&& cb)
     {
         raiseHand_ = std::move(cb);
     }
@@ -120,7 +120,7 @@ private:
 
     std::function<bool(std::string_view)> checkAuthorization_;
     std::function<void(const std::string&, const std::string&)> hangupParticipant_;
-    std::function<void(const std::string&, bool)> raiseHand_;
+    std::function<void(const std::string&, const std::string&, bool)> raiseHand_;
     std::function<void(const std::string&, bool)> setActiveStream_;
     std::function<void(const std::string&, const std::string&, const std::string&, bool)>
         muteStreamAudio_;
