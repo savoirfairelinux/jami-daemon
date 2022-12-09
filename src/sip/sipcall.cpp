@@ -291,7 +291,7 @@ SIPCall::setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession)
                     // updates conference info and sends it to others via ConfInfo
                     // (only if there was a change)
                     // also emits signal with updated conference info
-                    conference->setVoiceActivity(streamId, voice);
+                    conference->setVoiceActivity(thisPtr->getRemoteUri(), thisPtr->getRemoteDeviceId(), streamId, voice);
                 } else {
                     // we are in a one-to-one call
                     // send voice activity over SIP
@@ -2027,6 +2027,25 @@ SIPCall::hasVideo() const
 #endif
 }
 
+std::string
+SIPCall::getRemoteUri()
+{
+    if (auto* transport = getTransport())
+        if (auto cert = transport->getTlsInfos().peerCert)
+            if (cert->issuer)
+                return cert->issuer->getId().toString();
+    return {};
+}
+
+std::string
+SIPCall::getRemoteDeviceId()
+{
+    if (auto* transport = getTransport())
+        return std::string(transport->deviceId()); // TODO string_view
+    return {};
+}
+
+
 bool
 SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
 {
@@ -3504,14 +3523,13 @@ SIPCall::peerRecording(bool state)
     const std::string& id = conference ? conference->getConfId() : getCallId();
     if (state) {
         JAMI_WARN("[call:%s] Peer is recording", getCallId().c_str());
-        emitSignal<libjami::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
     } else {
         JAMI_WARN("Peer stopped recording");
-        emitSignal<libjami::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
+    emitSignal<libjami::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), state);
     peerRecording_ = state;
     if (auto conf = conf_.lock())
-        conf->updateRecording();
+        conf->setRecording(getRemoteUri(), getRemoteDeviceId(), state);
 }
 
 void
@@ -3523,8 +3541,8 @@ SIPCall::peerMuted(bool muted)
         JAMI_WARN("Peer un-muted");
     }
     peerMuted_ = muted;
-    if (auto conf = conf_.lock())
-        conf->updateMuted();
+// TODO    if (auto conf = conf_.lock())
+// TODO        conf->updateMuted();
 }
 
 void
@@ -3533,7 +3551,7 @@ SIPCall::peerVoice(bool voice)
     peerVoice_ = voice;
 
     if (auto conference = conf_.lock()) {
-        conference->updateVoiceActivity();
+        conference->setVoiceActivity(getRemoteUri(), getRemoteDeviceId(), sip_utils::streamId(getCallId(), sip_utils::DEFAULT_VIDEO_STREAMID), voice);
     } else {
         // one-to-one call
         // maybe emit signal with partner voice activity
