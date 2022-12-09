@@ -2496,10 +2496,9 @@ ConversationModule::hostConference(const std::string& conversationId,
     auto acc = pimpl_->account_.lock();
     if (!acc)
         return;
-    std::shared_ptr<Call> call;
-    call = acc->getCall(callId);
+    std::shared_ptr<SIPCall> call = std::dynamic_pointer_cast<SIPCall>(acc->getCall(callId));
     if (!call) {
-        JAMI_WARN("No call with id %s found", callId.c_str());
+        JAMI_WARNING("No call with id {:s} found", callId);
         return;
     }
     auto conf = acc->getConference(confId);
@@ -2508,12 +2507,12 @@ ConversationModule::hostConference(const std::string& conversationId,
         conf = std::make_shared<Conference>(acc, confId, true, call->getMediaAttributeList());
         acc->attach(conf);
     }
-    conf->addParticipant(callId);
+    conf->bindCall(call);
 
     if (createConf) {
         emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
     } else {
-        conf->attachLocalParticipant();
+        conf->attachLocal();
         conf->reportMediaNegotiationStatus();
         emitSignal<libjami::CallSignal::ConferenceChanged>(acc->getAccountID(),
                                                            conf->getConfId(),
@@ -2524,7 +2523,7 @@ ConversationModule::hostConference(const std::string& conversationId,
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     auto conversation = pimpl_->conversations_.find(conversationId);
     if (conversation == pimpl_->conversations_.end() || !conversation->second) {
-        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        JAMI_ERROR("Conversation {:s} not found", conversationId);
         return;
     }
     auto& conv = conversation->second;
@@ -2540,8 +2539,8 @@ ConversationModule::hostConference(const std::string& conversationId,
                                  if (auto shared = w.lock())
                                      shared->sendMessageNotification(conversationId, true, commitId);
                              } else {
-                                 JAMI_ERR("Failed to send message to conversation %s",
-                                          conversationId.c_str());
+                                 JAMI_ERROR("Failed to send message to conversation {:s}",
+                                          conversationId);
                              }
                          });
 
@@ -2563,7 +2562,7 @@ ConversationModule::hostConference(const std::string& conversationId,
                 std::unique_lock<std::mutex> lk(shared->conversationsMtx_);
                 auto conversation = shared->conversations_.find(conversationId);
                 if (conversation == shared->conversations_.end() || !conversation->second) {
-                    JAMI_ERR("Conversation %s not found", conversationId.c_str());
+                    JAMI_ERROR("Conversation {:s} not found", conversationId);
                     return true;
                 }
                 auto& conv = conversation->second;
@@ -2574,8 +2573,8 @@ ConversationModule::hostConference(const std::string& conversationId,
                                 shared->sendMessageNotification(conversationId, true, commitId);
                             }
                         } else {
-                            JAMI_ERR("Failed to send message to conversation %s",
-                                     conversationId.c_str());
+                            JAMI_ERROR("Failed to send message to conversation {:s}",
+                                     conversationId);
                         }
                     });
             }

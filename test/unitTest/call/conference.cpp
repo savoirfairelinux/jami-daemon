@@ -247,7 +247,7 @@ ConferenceTest::registerSignalHandlers()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
         [=](const std::string&,
-            const std::vector<std::map<std::string, std::string>> participantsInfos) {
+            const std::vector<std::map<std::string, std::string>>& participantsInfos) {
             pInfos_ = participantsInfos;
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
@@ -469,7 +469,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     startConference();
 
-    auto expectedNumberOfParticipants = 3;
+    auto expectedNumberOfParticipants = 3u;
 
     // Check participants number
     CPPUNIT_ASSERT(
@@ -776,7 +776,7 @@ ConferenceTest::testIsConferenceParticipant()
     startConference();
 
     // is Conference participant should be true for Carla
-    auto participants = aliceAccount->getConference(confId)->getParticipantList();
+    auto participants = aliceAccount->getConference(confId)->getCallIds();
     CPPUNIT_ASSERT(participants.size() == 2);
     auto call1 = *participants.begin();
     auto call2 = *participants.rbegin();
@@ -986,7 +986,7 @@ ConferenceTest::testBrokenParticipantAudioOnly()
     // Check participants number
     // It should have one less participant than in the conference start
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+        cv.wait_for(lk, 30s, [&] {return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
     libjami::unregisterSignalHandlers();
