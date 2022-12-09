@@ -134,7 +134,7 @@ ConfProtocolParser::parseV1()
                     if (deviceValue.isMember(ProtocolKeys::RAISEHAND)) {
                         auto newState = deviceValue[ProtocolKeys::RAISEHAND].asBool();
                         if (peerId_ == accountUri || (!newState && isPeerModerator))
-                            raiseHand_(deviceId, newState);
+                            raiseHand_(peerId_, deviceId, newState);
                     }
                     if (isPeerModerator && deviceValue.isMember(ProtocolKeys::HANGUP)) {
                         hangupParticipant_(accountUri, deviceId);
