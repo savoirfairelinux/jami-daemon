@@ -106,8 +106,6 @@ public:
 
     std::shared_ptr<VideoInput>& getVideoLocal() { return videoLocal_; }
 
-    std::shared_ptr<VideoMixer>& getVideoMixer() { return videoMixer_; }
-
     std::shared_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
 
 private:
