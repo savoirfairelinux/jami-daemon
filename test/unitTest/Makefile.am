@@ -262,4 +262,10 @@ ut_routing_table_SOURCES = swarm/routing_table.cpp
 check_PROGRAMS += ut_bootstrap
 ut_bootstrap_SOURCES = swarm/bootstrap.cpp common.cpp
 
+#
+# SwarmConversation
+#
+check_PROGRAMS += ut_swarm_conversation
+ut_swarm_conversation_SOURCES = swarm/swarm_conversation.cpp common.cpp
+
 TESTS = $(check_PROGRAMS)

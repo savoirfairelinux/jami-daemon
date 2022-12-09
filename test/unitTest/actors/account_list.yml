@@ -1,0 +1,112 @@
+default-account:
+      type: RING
+      upnpEnabled: "true"
+      archivePassword: ""
+      archivePIN: ""
+      archivePath: ""
+
+accounts:
+
+  alice:
+    displayName: ALICE
+    alias: ALICE
+
+  bob:
+    displayName: BOB
+    alias: BOB
+
+  charlie:
+    displayName: CHARLIE
+    alias: CHARLIE
+
+  dave:
+    displayName: DAVE
+    alias: DAVE
+
+  emily:
+    displayName: EMILY
+    alias: EMILY
+
+  frank:
+    displayName: FRANK
+    alias: FRANK
+
+  greg:
+    displayName: GREG
+    alias: GREG
+
+  holly:
+    displayName: HOLLY
+    alias: HOLLY
+
+  ian:
+    displayName: IAN
+    alias: IAN
+
+  jenna:
+    displayName: JENNA
+    alias: JENNA
+
+  kevin:
+    displayName: KEVIN
+    alias: KEVIN
+
+  lucy:
+    displayName: LUCY
+    alias: LUCY
+
+  mike:
+    displayName: MIKE
+    alias: MIKE
+
+  nora:
+    displayName: NORA
+    alias: NORA
+
+  olivia:
+    displayName: OLIVIA
+    alias: OLIVIA
+
+  pete:
+    displayName: PETE
+    alias: PETE
+
+  quinn:
+    displayName: QUINN
+    alias: QUINN
+
+  rachel:
+    displayName: RACHEL
+    alias: RACHEL
+
+  sam:
+    displayName: SAM
+    alias: SAM
+
+  tom:
+    displayName: TOM
+    alias: TOM
+
+  uma:
+    displayName: UMA
+    alias: UMA
+
+  victor:
+    displayName: VICTOR
+    alias: VICTOR
+
+  wendy:
+    displayName: WENDY
+    alias: WENDY
+
+  xander:
+    displayName: XANDER
+    alias: XANDER
+
+  yvonne:
+    displayName: YVONNE
+    alias: YVONNE
+
+  zoe:
+    displayName: ZOE
+    alias: ZOE
