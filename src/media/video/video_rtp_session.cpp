@@ -28,6 +28,7 @@
 #include "connectivity/ice_socket.h"
 #include "socket_pair.h"
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
+#include "sip/sipcall.h"
 #include "manager.h"
 #ifdef ENABLE_PLUGIN
 #include "plugin/streamdata.h"
@@ -267,10 +268,13 @@ VideoRtpSession::startReceiver()
             // Note, this should be managed differently, this is a bit hacky
             auto audioId = streamId_;
             string_replace(audioId, "video", "audio");
-            auto activeStream = videoMixer_->verifyActive(audioId);
+            auto activeStream = false; // TODO videoMixer_->verifyActive(audioId);
             videoMixer_->removeAudioOnlySource(callId_, audioId);
-            if (activeStream)
-                videoMixer_->setActiveStream(streamId_);
+            if (activeStream) {
+                // TODO get call from conference
+                if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId_)))
+                    videoMixer_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(), streamId_, true);
+            }
         }
 
     } else {
@@ -279,11 +283,13 @@ VideoRtpSession::startReceiver()
             // Note, this should be managed differently, this is a bit hacky
             auto audioId_ = streamId_;
             string_replace(audioId_, "video", "audio");
-            auto activeStream = videoMixer_->verifyActive(streamId_);
+            auto activeStream = false; // TODO videoMixer_->verifyActive(streamId_);
             videoMixer_->addAudioOnlySource(callId_, audioId_);
             receiveThread_->detach(videoMixer_.get());
-            if (activeStream)
-                videoMixer_->setActiveStream(audioId_);
+            if (activeStream) {
+                if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId_)))
+                    videoMixer_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(), audioId_, true);
+            }
         }
     }
     if (socketPair_)
@@ -301,13 +307,15 @@ VideoRtpSession::stopReceiver()
         return;
 
     if (videoMixer_) {
-        auto activeStream = videoMixer_->verifyActive(streamId_);
+        auto activeStream = false; // TODO videoMixer_->verifyActive(streamId_);
         auto audioId = streamId_;
         string_replace(audioId, "video", "audio");
         videoMixer_->addAudioOnlySource(callId_, audioId);
         receiveThread_->detach(videoMixer_.get());
-        if (activeStream)
-            videoMixer_->setActiveStream(audioId);
+        if (activeStream) {
+            if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId_)))
+                videoMixer_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(), audioId, true);
+        }
     }
 
     // We need to disable the read operation, otherwise the
@@ -477,12 +485,12 @@ VideoRtpSession::setupVideoPipeline()
 void
 VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction dir)
 {
+    videoMixer_ = conference.getVideoMixer();
     if (dir == Direction::SEND) {
-        JAMI_DBG("[%p] Setup video sender pipeline on conference %s for call %s",
-                 this,
-                 conference.getConfId().c_str(),
-                 callId_.c_str());
-        videoMixer_ = conference.getVideoMixer();
+        JAMI_DEBUG("[{:p}] Setup video sender pipeline on conference {:s} for call {:s}",
+                 fmt::ptr(this),
+                 conference.getConfId(),
+                 callId_);
         if (sender_) {
             // Swap sender from local video to conference video mixer
             if (videoLocal_)
@@ -490,13 +498,13 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
             if (videoMixer_)
                 videoMixer_->attach(sender_.get());
         } else {
-            JAMI_WARN("[%p] no sender", this);
+            JAMI_WARNING("[{:p}] no sender", fmt::ptr(this));
         }
     } else {
-        JAMI_DBG("[%p] Setup video receiver pipeline on conference %s for call %s",
-                 this,
-                 conference.getConfId().c_str(),
-                 callId_.c_str());
+        JAMI_DEBUG("[{:p}] Setup video receiver pipeline on conference {:s} for call {:s}",
+                 fmt::ptr(this),
+                 conference.getConfId(),
+                 callId_);
         if (receiveThread_) {
             receiveThread_->stopSink();
             if (videoMixer_)
@@ -516,15 +524,14 @@ VideoRtpSession::enterConference(Conference& conference)
 
     conference_ = &conference;
     videoMixer_ = conference.getVideoMixer();
-    JAMI_DBG("[%p] enterConference (conf: %s)", this, conference.getConfId().c_str());
+    JAMI_DEBUG("[{:p}] enterConference (conf: {:s})", fmt::ptr(this), conference.getConfId());
 
     if (send_.enabled or receiveThread_) {
         // Restart encoder with conference parameter ON in order to unlink HW encoder
         // from HW decoder.
         restartSender();
-        if (conference_) {
+        if (conference_)
             setupConferenceVideoPipeline(conference, Direction::RECV);
-        }
     }
 }
 
@@ -543,11 +550,13 @@ VideoRtpSession::exitConference()
             videoMixer_->detach(sender_.get());
 
         if (receiveThread_) {
-            auto activeStream = videoMixer_->verifyActive(streamId_);
+            auto activeStream = false;// TODO: videoMixer_->verifyActive(streamId_);
             videoMixer_->detachVideo(receiveThread_.get());
             receiveThread_->startSink();
-            if (activeStream)
-                videoMixer_->setActiveStream(streamId_);
+            if (activeStream) {
+                if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId_)))
+                    videoMixer_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(), streamId_, true);
+            }
         }
 
         videoMixer_.reset();
