@@ -98,143 +98,16 @@ Conference::Conference(const std::shared_ptr<Account>& account,
     // Only set host source if creating conference from joining calls
     auto hasVideo = videoEnabled_ && itVideo != hostSources_.end() && attachHost_;
     auto source = hasVideo ? itVideo->sourceUri_ : "";
-    videoMixer_ = std::make_shared<video::VideoMixer>(id_, source, hasVideo);
-    videoMixer_->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
-        runOnMainThread([w = weak(), infos = std::move(infos)] {
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            auto acc = std::dynamic_pointer_cast<JamiAccount>(shared->account_.lock());
-            if (!acc)
-                return;
-            ConfInfo newInfo;
-            {
-                std::lock_guard<std::mutex> lock(shared->confInfoMutex_);
-                newInfo.w = shared->confInfo_.w;
-                newInfo.h = shared->confInfo_.h;
-                newInfo.layout = shared->confInfo_.layout;
-            }
-            auto hostAdded = false;
-            // Handle participants showing their video
-            for (const auto& info : infos) {
-                std::string uri {};
-                bool isLocalMuted = false, isPeerRecording = false;
-                std::string deviceId {};
-                auto active = false;
-                if (!info.callId.empty()) {
-                    std::string callId = info.callId;
-                    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
-                        uri = call->getPeerNumber();
-                        isLocalMuted = call->isPeerMuted();
-                        isPeerRecording = call->isPeerRecording();
-                        if (auto* transport = call->getTransport())
-                            deviceId = transport->deviceId();
-                    }
-                    std::string_view peerId = string_remove_suffix(uri, '@');
-                    auto isModerator = shared->isModerator(peerId);
-                    auto isHandRaised = shared->isHandRaised(deviceId);
-                    auto isModeratorMuted = shared->isMuted(callId);
-                    auto isVoiceActive = shared->isVoiceActive(info.streamId);
-                    if (auto videoMixer = shared->videoMixer_)
-                        active = videoMixer->verifyActive(info.streamId);
-                    newInfo.emplace_back(ParticipantInfo {std::move(uri),
-                                                          deviceId,
-                                                          std::move(info.streamId),
-                                                          active,
-                                                          info.x,
-                                                          info.y,
-                                                          info.w,
-                                                          info.h,
-                                                          !info.hasVideo,
-                                                          isLocalMuted,
-                                                          isModeratorMuted,
-                                                          isModerator,
-                                                          isHandRaised,
-                                                          isVoiceActive,
-                                                          isPeerRecording});
-                } else {
-                    auto isModeratorMuted = false;
-                    // If not local
-                    auto streamInfo = shared->videoMixer_->streamInfo(info.source);
-                    std::string streamId = streamInfo.streamId;
-                    if (!streamId.empty()) {
-                        // Retrieve calls participants
-                        // TODO: this is a first version, we assume that the peer is not
-                        // a master of a conference and there is only one remote
-                        // In the future, we should retrieve confInfo from the call
-                        // To merge layouts informations
-                        isModeratorMuted = shared->isMuted(streamId);
-                        if (auto videoMixer = shared->videoMixer_)
-                            active = videoMixer->verifyActive(streamId);
-                        if (auto call = std::dynamic_pointer_cast<SIPCall>(
-                                getCall(streamInfo.callId))) {
-                            uri = call->getPeerNumber();
-                            isLocalMuted = call->isPeerMuted();
-                            isPeerRecording = call->isPeerRecording();
-                            if (auto* transport = call->getTransport())
-                                deviceId = transport->deviceId();
-                        }
-                    } else {
-                        streamId = sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID);
-                        if (auto videoMixer = shared->videoMixer_)
-                            active = videoMixer->verifyActive(streamId);
-                    }
-                    std::string_view peerId = string_remove_suffix(uri, '@');
-                    auto isModerator = shared->isModerator(peerId);
-                    if (uri.empty() && !hostAdded) {
-                        hostAdded = true;
-                        peerId = "host"sv;
-                        deviceId = acc->currentDeviceId();
-                        isLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
-                        isPeerRecording = shared->isRecording();
-                    }
-                    auto isHandRaised = shared->isHandRaised(deviceId);
-                    auto isVoiceActive = shared->isVoiceActive(streamId);
-                    newInfo.emplace_back(ParticipantInfo {std::move(uri),
-                                                          deviceId,
-                                                          std::move(streamId),
-                                                          active,
-                                                          info.x,
-                                                          info.y,
-                                                          info.w,
-                                                          info.h,
-                                                          !info.hasVideo,
-                                                          isLocalMuted,
-                                                          isModeratorMuted,
-                                                          isModerator,
-                                                          isHandRaised,
-                                                          isVoiceActive,
-                                                          isPeerRecording});
-                }
-            }
-            if (auto videoMixer = shared->videoMixer_) {
-                newInfo.h = videoMixer->getHeight();
-                newInfo.w = videoMixer->getWidth();
-            }
-            if (!hostAdded) {
-                ParticipantInfo pi;
-                pi.videoMuted = true;
-                pi.audioLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
-                pi.isModerator = true;
-                newInfo.emplace_back(pi);
-            }
-
-            shared->updateConferenceInfo(std::move(newInfo));
-        });
-    });
-
-    auto conf_res = split_string_to_unsigned(jami::Manager::instance()
-                                                 .videoPreferences.getConferenceResolution(),
-                                             'x');
-    if (conf_res.size() == 2u) {
-#if defined(__APPLE__) && TARGET_OS_MAC
-        videoMixer_->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
-#else
-        videoMixer_->setParameters(conf_res[0], conf_res[1]);
-#endif
-    } else {
-        JAMI_ERR("Conference resolution is invalid");
+    callStreamsMgr_ = std::make_shared<video::VideoMixer>(id_, source, hasVideo); // TODO remove source ; unique_ptr
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock())) {
+        callStreamsMgr_->setAccountInfo(acc->getUsername(), std::string(acc->currentDeviceId()));
+        callStreamsMgr_->setStreams(acc->getUsername(), std::string(acc->currentDeviceId()), hostSources_);
     }
+    callStreamsMgr_->setOnInfoUpdated([this](const auto& info) {
+        std::lock_guard<std::mutex> lk(confInfoMutex_);
+        confInfo_.callInfo_ = info;
+        sendConferenceInfos();
+    });
 #endif
 
     parser_.onVersion([&](uint32_t) {}); // TODO
@@ -242,9 +115,9 @@ Conference::Conference(const std::shared_ptr<Account>& account,
     parser_.onHangupParticipant([&](const auto& accountUri, const auto& deviceId) {
         hangupParticipant(accountUri, deviceId);
     });
-    parser_.onRaiseHand([&](const auto& deviceId, bool state) { setHandRaised(deviceId, state); });
+    parser_.onRaiseHand([&](const auto& uri, const auto& deviceId, bool state) { callStreamsMgr_->setHandRaised(uri, deviceId, state); });
     parser_.onSetActiveStream(
-        [&](const auto& streamId, bool state) { setActiveStream(streamId, state); });
+        [&](const auto& uri, const auto& deviceId, const auto& streamId, bool state) { callStreamsMgr_->setActiveStream(uri, deviceId, streamId, state); });
     parser_.onMuteStreamAudio(
         [&](const auto& accountUri, const auto& deviceId, const auto& streamId, bool state) {
             muteStream(accountUri, deviceId, streamId, state);
@@ -259,12 +132,11 @@ Conference::Conference(const std::shared_ptr<Account>& account,
         [&](const auto& participantId, bool state) { muteParticipant(participantId, state); });
     parser_.onRaiseHandUri([&](const auto& uri, bool state) {
         if (auto call = std::dynamic_pointer_cast<SIPCall>(getCallFromPeerID(uri)))
-            if (auto* transport = call->getTransport())
-                setHandRaised(std::string(transport->deviceId()), state);
+            setHandRaised(uri, call->getRemoteDeviceId(), state);
     });
 
     parser_.onVoiceActivity(
-        [&](const auto& streamId, bool state) { setVoiceActivity(streamId, state); });
+        [&](const auto& uri, const auto& deviceId, const auto& streamId, bool state) { setVoiceActivity(uri, deviceId, streamId, state); });
     jami_tracepoint(conference_begin, id_.c_str());
 }
 
@@ -372,6 +244,9 @@ Conference::setLocalHostDefaultMediaSource()
         hostSources_.emplace_back(videoAttr);
     }
 #endif
+    if (callStreamsMgr_)
+        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+            callStreamsMgr_->setStreams(acc->getUsername(), std::string(acc->currentDeviceId()), hostSources_);
 
     reportMediaNegotiationStatus();
 }
@@ -455,14 +330,6 @@ Conference::createConfAVStream(const StreamData& StreamData,
 }
 #endif // ENABLE_PLUGIN
 
-void
-Conference::setLocalHostMuteState(MediaType type, bool muted)
-{
-    for (auto& source : hostSources_)
-        if (source.type_ == type)
-            source.muted_ = muted;
-}
-
 bool
 Conference::isMediaSourceMuted(MediaType type) const
 {
@@ -471,22 +338,10 @@ Conference::isMediaSourceMuted(MediaType type) const
         return true;
     }
 
-    if (type != MediaType::MEDIA_AUDIO and type != MediaType::MEDIA_VIDEO) {
-        JAMI_ERR("Unsupported media type");
-        return true;
-    }
-
-    for (const auto& source : hostSources_) {
-        if (source.muted_ && source.type_ == type)
-            return true;
-        if (source.type_ == MediaType::MEDIA_NONE) {
-            JAMI_WARN("The host source for %s is not set. The mute state is meaningless",
-                      source.mediaTypeToString(source.type_));
-            // Assume muted if the media is not present.
-            return true;
-        }
-    }
-    return false;
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+        return callStreamsMgr_->isMuted(acc->getUsername(), std::string(acc->currentDeviceId()), sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID), true);
+    // Assume muted if the media is not present.
+    return true;
 }
 
 void
@@ -503,6 +358,9 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
         JAMI_ERR("No account detected for call %s", callId.c_str());
         return;
     }
+    std::string deviceId;
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
+        deviceId = acc->currentDeviceId();
 
     auto mediaList = call->getMediaAttributeList();
 
@@ -529,11 +387,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
             // To mute the local source, all the sources of the participating
             // calls must be muted. If it's the first participant, just use
             // its mute state.
-            if (participants_.size() == 1) {
-                setLocalHostMuteState(iter->type_, iter->muted_);
-            } else {
-                setLocalHostMuteState(iter->type_, iter->muted_ and isMediaSourceMuted(iter->type_));
-            }
+            callStreamsMgr_->muteStream(account->getUsername(), deviceId, iter->label_, iter->muted_, true);
         }
 
         // Un-mute media in the call. The mute/un-mute state will be handled
@@ -548,14 +402,14 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
     for (auto mediaType : mediaTypeList) {
         if (mediaType == MediaType::MEDIA_AUDIO) {
             bool muted = isMediaSourceMuted(MediaType::MEDIA_AUDIO);
-            JAMI_WARN("Take over [AUDIO] control from call %s - current local source state [%s]",
-                      callId.c_str(),
+            JAMI_WARNING("Take over [AUDIO] control from call {:s} - current local source state [{:s}]",
+                      callId,
                       muted ? "muted" : "un-muted");
             emitSignal<libjami::CallSignal::AudioMuted>(id_, muted);
         } else {
             bool muted = isMediaSourceMuted(MediaType::MEDIA_VIDEO);
-            JAMI_WARN("Take over [VIDEO] control from call %s - current local source state [%s]",
-                      callId.c_str(),
+            JAMI_WARNING("Take over [VIDEO] control from call {:s} - current local source state [{:s}]",
+                      callId,
                       muted ? "muted" : "un-muted");
             emitSignal<libjami::CallSignal::VideoMuted>(id_, muted);
         }
@@ -602,11 +456,9 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         }
     }
 
-#ifdef ENABLE_VIDEO
-    if (videoMixer_)
-        videoMixer_->switchInputs(newVideoInputs);
-#endif
     hostSources_ = mediaAttrList; // New medias
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+        callStreamsMgr_->setStreams(acc->getUsername(), std::string(acc->currentDeviceId()), hostSources_);
 
     // It's host medias, so no need to negotiate anything, but inform the client.
     reportMediaNegotiationStatus();
@@ -663,71 +515,60 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
 }
 
 void
-Conference::addParticipant(const std::string& participant_id)
+Conference::bindCall(const std::shared_ptr<Call>& call)
 {
-    JAMI_DEBUG("Adding call {:s} to conference {:s}", participant_id, id_);
+    const auto& callId = call->getCallId();
+    JAMI_DEBUG("Adding call {:s} to conference {:s}", callId, id_);
 
-    jami_tracepoint(conference_add_participant, id_.c_str(), participant_id.c_str());
+    jami_tracepoint(conference_add_participant, id_.c_str(), callId.c_str());
 
     {
         std::lock_guard<std::mutex> lk(participantsMtx_);
-        if (!participants_.insert(participant_id).second)
+        if (!participants_.insert(callId).second)
             return;
     }
 
-    if (auto call = getCall(participant_id)) {
-        // Check if participant was muted before conference
-        if (call->isPeerMuted())
-            participantsMuted_.emplace(call->getCallId());
+    // NOTE:
+    // When a call joins a conference, the media source of the call
+    // will be set to the output of the conference mixer.
+    takeOverMediaSourceControl(callId);
+    auto w = call->getAccount();
+    auto account = w.lock();
+    auto isModerator = false;
+    if (account) {
+        // TODO move?
+        // Check for allModeratorEnabled preference
+        isModerator = account->isAllModerators();
+        if (auto sipCall = std::dynamic_pointer_cast<SIPCall>(call)) {
+            auto peerUri = sipCall->getRemoteUri();
 
-        // NOTE:
-        // When a call joins a conference, the media source of the call
-        // will be set to the output of the conference mixer.
-        takeOverMediaSourceControl(participant_id);
-        auto w = call->getAccount();
-        auto account = w.lock();
-        if (account) {
-            // Add defined moderators for the account link to the call
-            for (const auto& mod : account->getDefaultModerators()) {
-                moderators_.emplace(mod);
+            if (!isModerator) {
+                const auto& defaultMods = account->getDefaultModerators();
+                isModerator = std::find(defaultMods.cbegin(), defaultMods.cend(), peerUri) != defaultMods.cend();
             }
 
             // Check for localModeratorsEnabled preference
-            if (account->isLocalModeratorsEnabled() && not localModAdded_) {
+            if (account->isLocalModeratorsEnabled() and not isModerator) {
                 auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
-                for (const auto& account : accounts) {
-                    moderators_.emplace(account->getUsername());
-                }
-                localModAdded_ = true;
-            }
-
-            // Check for allModeratorEnabled preference
-            if (account->isAllModerators())
-                moderators_.emplace(getRemoteId(call));
-        }
-#ifdef ENABLE_VIDEO
-        // In conference, if a participant joins with an audio only
-        // call, it must be listed in the audioonlylist.
-        auto mediaList = call->getMediaAttributeList();
-        if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
-            videoMixer_->addAudioOnlySource(call->getCallId(),
-                                            sip_utils::streamId(call->getCallId(),
-                                                                sip_utils::DEFAULT_AUDIO_STREAMID));
-        }
-        call->enterConference(shared_from_this());
-        // Continue the recording for the conference if one participant was recording
-        if (call->isRecording()) {
-            JAMI_DEBUG("Stop recording for call {:s}", call->getCallId());
-            call->toggleRecording();
-            if (not this->isRecording()) {
-                JAMI_DEBUG("One participant was recording, start recording for conference {:s}",
-                           getConfId());
-                this->toggleRecording();
+                isModerator = std::find_if(accounts.cbegin(), accounts.cend(), [&](const auto& value) {
+                    return account->getUsername() == peerUri;
+                }) != accounts.cend();
             }
         }
-#endif // ENABLE_VIDEO
-    } else
-        JAMI_ERR("no call associate to participant %s", participant_id.c_str());
+    }
+    call->enterConference(shared_from_this());
+    // TODO sinkID? TODO dimensions videoMixer_
+    callStreamsMgr_->bindCall(std::dynamic_pointer_cast<SIPCall>(call), isModerator); // TODO avoid dynamic_pointer_cast
+    // Continue the recording for the conference if one participant was recording
+    if (call->isRecording()) {
+        JAMI_DEBUG("Stop recording for call {:s}", call->getCallId());
+        call->toggleRecording();
+        if (not this->isRecording()) {
+            JAMI_DEBUG("One participant was recording, start recording for conference {:s}",
+                        getConfId());
+            this->toggleRecording();
+        }
+    }
 #ifdef ENABLE_PLUGIN
     createConfAVStreams();
 #endif
@@ -737,15 +578,16 @@ void
 Conference::setActiveParticipant(const std::string& participant_id)
 {
 #ifdef ENABLE_VIDEO
-    if (!videoMixer_)
+    if (!callStreamsMgr_)
         return;
     if (isHost(participant_id)) {
-        videoMixer_->setActiveStream(sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID));
+        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+            callStreamsMgr_->setActiveStream(acc->getUsername(), std::string(acc->currentDeviceId()), sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID), true);
         return;
     }
-    if (auto call = getCallFromPeerID(participant_id)) {
-        videoMixer_->setActiveStream(
-            sip_utils::streamId(call->getCallId(), sip_utils::DEFAULT_VIDEO_STREAMID));
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCallFromPeerID(participant_id))) {
+        callStreamsMgr_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(),
+            sip_utils::streamId(call->getCallId(), sip_utils::DEFAULT_VIDEO_STREAMID), true);
         return;
     }
 
@@ -755,64 +597,118 @@ Conference::setActiveParticipant(const std::string& participant_id)
         JAMI_WARN("Change remote layout is not supported");
         return;
     }
-    // Unset active participant by default
-    videoMixer_->resetActiveStream();
 #endif
 }
 
 void
-Conference::setActiveStream(const std::string& streamId, bool state)
+Conference::setActiveStream(const std::string& uri, const std::string& deviceId, const std::string& streamId, bool state)
 {
-#ifdef ENABLE_VIDEO
-    if (!videoMixer_)
-        return;
-    if (state)
-        videoMixer_->setActiveStream(streamId);
-    else
-        videoMixer_->resetActiveStream();
-#endif
+    if (callStreamsMgr_)
+        callStreamsMgr_->setActiveStream(uri, deviceId, streamId, state);
 }
+
+void
+Conference::setRecording(const std::string& uri, const std::string& deviceId, bool state)
+{
+    if (callStreamsMgr_)
+        callStreamsMgr_->setRecording(uri, deviceId, state);
+}
+
 
 void
 Conference::setLayout(int layout)
 {
-#ifdef ENABLE_VIDEO
-    if (layout < 0 || layout > 2) {
-        JAMI_ERR("Unknown layout %u", layout);
-        return;
-    }
-    if (!videoMixer_)
-        return;
-    {
-        std::lock_guard<std::mutex> lk(confInfoMutex_);
-        confInfo_.layout = layout;
-    }
-    videoMixer_->setVideoLayout(static_cast<video::Layout>(layout));
-#endif
+    callStreamsMgr_->setLayout(layout);
 }
 
 std::vector<std::map<std::string, std::string>>
 ConfInfo::toVectorMapStringString() const
 {
-    std::vector<std::map<std::string, std::string>> infos;
-    infos.reserve(size());
-    for (const auto& info : *this)
-        infos.emplace_back(info.toMap());
-    return infos;
+    std::vector<std::map<std::string, std::string>> res;
+    for (const auto& [key, value] : callInfo_) {
+        auto& [uri, device] = key;
+        std::map<std::string, std::string> baseValue;
+        baseValue["uri"] = uri;
+        baseValue["device"] = device;
+        // Device information
+        baseValue["handRaised"] = value.handRaised ? "true" : "false";
+        baseValue["recording"] = value.recording ? "true" : "false";
+        baseValue["isModerator"] = value.isModerator ? "true" : "false";
+        for (const auto& [streamId, stream] : value.streams) {
+            auto streamValue = baseValue;
+            streamValue["sinkId"] = streamId;
+            streamValue["active"] = stream.active ? "true" : "false";
+            streamValue["x"] = std::to_string(stream.x);
+            streamValue["y"] = std::to_string(stream.y);
+            streamValue["w"] = std::to_string(stream.w);
+            streamValue["h"] = std::to_string(stream.h);
+            streamValue["videoMuted"] = stream.videoMuted ? "true" : "false";
+            streamValue["audioLocalMuted"] = stream.audioLocalMuted ? "true" : "false";
+            streamValue["audioModeratorMuted"] = stream.audioModeratorMuted ? "true" : "false";
+            streamValue["voiceActivity"] = stream.voiceActivity ? "true" : "false";
+            res.emplace_back(streamValue);
+        }
+    }
+    return res;
 }
 
 std::string
 ConfInfo::toString() const
 {
     Json::Value val = {};
-    for (const auto& info : *this) {
-        val["p"].append(info.toJson());
+    for (const auto& [key, value] : callInfo_) {
+        auto& [uri, device] = key;
+        Json::Value baseValue;
+        baseValue["uri"] = uri;
+        baseValue["device"] = device;
+        // Device information
+        baseValue["handRaised"] = value.handRaised;
+        baseValue["recording"] = value.recording;
+        baseValue["isModerator"] = value.isModerator;
+        for (const auto& [streamId, stream] : value.streams) {
+            auto streamValue = baseValue;
+            streamValue["sinkId"] = streamId;
+            streamValue["active"] = stream.active;
+            streamValue["x"] = stream.x;
+            streamValue["y"] = stream.y;
+            streamValue["w"] = stream.w;
+            streamValue["h"] = stream.h;
+            streamValue["videoMuted"] = stream.videoMuted;
+            streamValue["audioLocalMuted"] = stream.audioLocalMuted;
+            streamValue["audioModeratorMuted"] = stream.audioModeratorMuted;
+            streamValue["voiceActivity"] = stream.voiceActivity;
+            val["p"].append(streamValue);
+        }
     }
     val["w"] = w;
     val["h"] = h;
     val["v"] = v;
     val["layout"] = layout;
     return Json::writeString(Json::StreamWriterBuilder {}, val);
+}
+
+void
+ConfInfo::mergeJson(const Json::Value& jsonObj)
+{
+    for (const auto& participantInfo : jsonObj) {
+        if (!participantInfo.isMember("uri") || !participantInfo.isMember("device") || !participantInfo.isMember("sinkId"))
+            continue;
+        auto key = std::make_pair(participantInfo["uri"].asString(), participantInfo["device"].asString());
+        auto& callInfo = callInfo_[key];
+        callInfo.handRaised = participantInfo["handRaised"].asBool();
+        callInfo.recording = participantInfo["recording"].asBool();
+        callInfo.isModerator = participantInfo["isModerator"].asBool();
+        auto& streamInfo = callInfo.streams[participantInfo["sinkId"].asString()];
+        streamInfo.active = participantInfo["active"].asBool();
+        streamInfo.x = participantInfo["x"].asInt();
+        streamInfo.y = participantInfo["y"].asInt();
+        streamInfo.w = participantInfo["w"].asInt();
+        streamInfo.h = participantInfo["h"].asInt();
+        streamInfo.videoMuted = participantInfo["videoMuted"].asBool();
+        streamInfo.audioLocalMuted = participantInfo["audioLocalMuted"].asBool();
+        streamInfo.audioModeratorMuted = participantInfo["audioModeratorMuted"].asBool();
+        streamInfo.voiceActivity = participantInfo["voiceActivity"].asBool();
+    }
 }
 
 void
@@ -840,6 +736,8 @@ Conference::sendConferenceInfos()
     createSinks(confInfo);
 #endif
 
+    JAMI_ERROR("@@@ {}", confInfo.toString());
+
     // Inform client that layout has changed
     jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(id_,
                                                                     confInfo
@@ -851,14 +749,14 @@ void
 Conference::createSinks(const ConfInfo& infos)
 {
     std::lock_guard<std::mutex> lk(sinksMtx_);
-    if (!videoMixer_)
-        return;
-    auto& sink = videoMixer_->getSink();
-    Manager::instance().createSinkClients(getConfId(),
-                                          infos,
-                                          {std::static_pointer_cast<video::VideoFrameActiveWriter>(
-                                              sink)},
-                                          confSinksMap_);
+    if (auto vm = std::dynamic_pointer_cast<video::VideoMixer>(callStreamsMgr_)) {
+        auto& sink = vm->getSink();
+        Manager::instance().createSinkClients(getConfId(),
+                                            infos,
+                                            {std::static_pointer_cast<video::VideoFrameActiveWriter>(
+                                                sink)},
+                                            confSinksMap_);
+    }
 }
 #endif
 
@@ -872,21 +770,12 @@ Conference::removeParticipant(const std::string& participant_id)
             return;
     }
     if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(participant_id))) {
-        const auto& peerId = getRemoteId(call);
-        participantsMuted_.erase(call->getCallId());
-        if (auto* transport = call->getTransport())
-            handsRaised_.erase(std::string(transport->deviceId()));
-#ifdef ENABLE_VIDEO
-        auto sinkId = getConfId() + peerId;
-        // Remove if active
-        // TODO all streams
-        if (videoMixer_->verifyActive(
-                sip_utils::streamId(participant_id, sip_utils::DEFAULT_VIDEO_STREAMID)))
-            videoMixer_->resetActiveStream();
+        const auto& peerId = call->getRemoteUri();
+        const auto& deviceId = call->getRemoteDeviceId();
+        callStreamsMgr_->removeCall(peerId, deviceId);
         call->exitConference();
         if (call->isPeerRecording())
             call->peerRecording(false);
-#endif // ENABLE_VIDEO
     }
 }
 
@@ -901,8 +790,8 @@ Conference::attachLocalParticipant()
 
         auto& rbPool = Manager::instance().getRingBufferPool();
         for (const auto& participant : getParticipantList()) {
-            if (auto call = Manager::instance().getCallFromCallID(participant)) {
-                if (isMuted(call->getCallId()))
+            if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(participant))) {
+                if (callStreamsMgr_->isMuted(call->getRemoteUri(), call->getRemoteDeviceId(), sip_utils::streamId(call->getCallId(), sip_utils::DEFAULT_AUDIO_STREAMID)))
                     rbPool.bindHalfDuplexOut(participant, RingBufferPool::DEFAULT_ID);
                 else
                     rbPool.bindCallID(participant, RingBufferPool::DEFAULT_ID);
@@ -969,8 +858,8 @@ Conference::bindParticipant(const std::string& participant_id)
     for (const auto& item : getParticipantList()) {
         if (participant_id != item) {
             // Do not attach muted participants
-            if (auto call = Manager::instance().getCallFromCallID(item)) {
-                if (isMuted(call->getCallId()))
+            if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(item))) {
+                if (callStreamsMgr_->isMuted(call->getRemoteUri(), call->getRemoteDeviceId(), sip_utils::streamId(participant_id, sip_utils::DEFAULT_AUDIO_STREAMID)))
                     rbPool.bindHalfDuplexOut(item, participant_id);
                 else
                     rbPool.bindCallID(participant_id, item);
@@ -1005,8 +894,8 @@ Conference::bindHost()
     auto& rbPool = Manager::instance().getRingBufferPool();
 
     for (const auto& item : getParticipantList()) {
-        if (auto call = Manager::instance().getCallFromCallID(item)) {
-            if (isMuted(call->getCallId()))
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(item))) {
+            if (callStreamsMgr_->isMuted(call->getRemoteUri(), call->getRemoteDeviceId(), sip_utils::streamId(call->getCallId(), sip_utils::DEFAULT_AUDIO_STREAMID)))
                 continue;
             rbPool.bindCallID(item, RingBufferPool::DEFAULT_ID);
             rbPool.flush(RingBufferPool::DEFAULT_ID);
@@ -1041,15 +930,16 @@ Conference::toggleRecording()
     foreachCall([&](auto call) { call->updateRecState(newState); });
 
     auto res = Recordable::toggleRecording();
-    updateRecording();
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+        callStreamsMgr_->setRecording(acc->getUsername(), std::string(acc->currentDeviceId()), newState);
     return res;
 }
 
 std::string
 Conference::getAccountId() const
 {
-    if (auto account = getAccount())
-        return account->getAccountID();
+    if (auto acc = account_.lock())
+        return acc->getAccountID();
     return {};
 }
 
@@ -1108,7 +998,7 @@ Conference::isVideoEnabled() const
 std::shared_ptr<video::VideoMixer>
 Conference::getVideoMixer()
 {
-    return videoMixer_;
+    return std::dynamic_pointer_cast<video::VideoMixer>(callStreamsMgr_); // TODO remove videoMixer_
 }
 
 std::string
@@ -1173,18 +1063,17 @@ void
 Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 {
     // Check if the peer is a master
-    if (auto call = getCall(callId)) {
-        const auto& peerId = getRemoteId(call);
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
         std::string err;
         Json::Value root;
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Couldn't parse conference order from %s", peerId.c_str());
+            JAMI_WARNING("Couldn't parse conference order from {:s}", call->getRemoteUri());
             return;
         }
 
-        parser_.initData(std::move(root), peerId);
+        parser_.initData(std::move(root), call->getRemoteUri());
         parser_.parse();
     }
 }
@@ -1198,166 +1087,27 @@ Conference::getCall(const std::string& callId)
 bool
 Conference::isModerator(std::string_view uri) const
 {
-    return moderators_.find(uri) != moderators_.end() or isHost(uri);
-}
-
-bool
-Conference::isHandRaised(std::string_view deviceId) const
-{
-    return isHostDevice(deviceId) ? handsRaised_.find("host"sv) != handsRaised_.end()
-                                  : handsRaised_.find(deviceId) != handsRaised_.end();
+    return callStreamsMgr_->isModerator(uri);
 }
 
 void
-Conference::setHandRaised(const std::string& deviceId, const bool& state)
+Conference::setHandRaised(const std::string& uri, const std::string& deviceId, const bool& state)
 {
-    if (isHostDevice(deviceId)) {
-        auto isPeerRequiringAttention = isHandRaised("host"sv);
-        if (state and not isPeerRequiringAttention) {
-            JAMI_DBG("Raise host hand");
-            handsRaised_.emplace("host"sv);
-            updateHandsRaised();
-        } else if (not state and isPeerRequiringAttention) {
-            JAMI_DBG("Lower host hand");
-            handsRaised_.erase("host");
-            updateHandsRaised();
-        }
-    } else {
-        for (const auto& p : getParticipantList()) {
-            if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(p))) {
-                auto isPeerRequiringAttention = isHandRaised(deviceId);
-                std::string callDeviceId;
-                if (auto* transport = call->getTransport())
-                    callDeviceId = transport->deviceId();
-                if (deviceId == callDeviceId) {
-                    if (state and not isPeerRequiringAttention) {
-                        JAMI_DEBUG("Raise {:s} hand", deviceId);
-                        handsRaised_.emplace(deviceId);
-                        updateHandsRaised();
-                    } else if (not state and isPeerRequiringAttention) {
-                        JAMI_DEBUG("Remove {:s} raised hand", deviceId);
-                        handsRaised_.erase(deviceId);
-                        updateHandsRaised();
-                    }
-                    return;
-                }
-            }
-        }
-        JAMI_WARN("Fail to raise %s hand (participant not found)", deviceId.c_str());
-    }
-}
-
-bool
-Conference::isVoiceActive(std::string_view streamId) const
-{
-    return streamsVoiceActive.find(streamId) != streamsVoiceActive.end();
+    if (callStreamsMgr_)
+        callStreamsMgr_->setHandRaised(uri, deviceId, state);
 }
 
 void
-Conference::setVoiceActivity(const std::string& streamId, const bool& newState)
+Conference::setVoiceActivity(const std::string& uri, const std::string& deviceId, const std::string& streamId, const bool& newState)
 {
-    // verify that streamID exists in our confInfo
-    bool exists = false;
-    for (auto& participant : confInfo_) {
-        if (participant.sinkId == streamId) {
-            exists = true;
-            break;
-        }
-    }
-
-    if (!exists) {
-        JAMI_ERR("participant not found with streamId: %s", streamId.c_str());
-        return;
-    }
-
-    auto previousState = isVoiceActive(streamId);
-
-    if (previousState == newState) {
-        // no change, do not send out updates
-        return;
-    }
-
-    if (newState and not previousState) {
-        // voice going from inactive to active
-        streamsVoiceActive.emplace(streamId);
-        updateVoiceActivity();
-        return;
-    }
-
-    if (not newState and previousState) {
-        // voice going from active to inactive
-        streamsVoiceActive.erase(streamId);
-        updateVoiceActivity();
-        return;
-    }
+    if (callStreamsMgr_)
+        callStreamsMgr_->setVoiceActivity(uri, deviceId, streamId, newState);
 }
 
 void
-Conference::setModerator(const std::string& participant_id, const bool& state)
+Conference::setModerator(const std::string& uri, const bool& state)
 {
-    for (const auto& p : getParticipantList()) {
-        if (auto call = getCall(p)) {
-            auto isPeerModerator = isModerator(participant_id);
-            if (participant_id == getRemoteId(call)) {
-                if (state and not isPeerModerator) {
-                    JAMI_DEBUG("Add {:s} as moderator", participant_id);
-                    moderators_.emplace(participant_id);
-                    updateModerators();
-                } else if (not state and isPeerModerator) {
-                    JAMI_DEBUG("Remove {:s} as moderator", participant_id);
-                    moderators_.erase(participant_id);
-                    updateModerators();
-                }
-                return;
-            }
-        }
-    }
-    JAMI_WARN("Fail to set %s as moderator (participant not found)", participant_id.c_str());
-}
-
-void
-Conference::updateModerators()
-{
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
-    for (auto& info : confInfo_) {
-        info.isModerator = isModerator(string_remove_suffix(info.uri, '@'));
-    }
-    sendConferenceInfos();
-}
-
-void
-Conference::updateHandsRaised()
-{
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
-    for (auto& info : confInfo_)
-        info.handRaised = isHandRaised(info.device);
-    sendConferenceInfos();
-}
-
-void
-Conference::updateVoiceActivity()
-{
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
-
-    // streamId is actually sinkId
-    for (ParticipantInfo& participantInfo : confInfo_) {
-        bool newActivity;
-
-        if (auto call = getCallWith(std::string(string_remove_suffix(participantInfo.uri, '@')),
-                                    participantInfo.device)) {
-            // if this participant is in a direct call with us
-            // grab voice activity info directly from the call
-            newActivity = call->hasPeerVoice();
-        } else {
-            // check for it
-            newActivity = isVoiceActive(participantInfo.sinkId);
-        }
-
-        if (participantInfo.voiceActivity != newActivity) {
-            participantInfo.voiceActivity = newActivity;
-        }
-    }
-    sendConferenceInfos(); // also emits signal to client
+    callStreamsMgr_->setModerator(uri, state);
 }
 
 void
@@ -1368,63 +1118,51 @@ Conference::foreachCall(const std::function<void(const std::shared_ptr<Call>& ca
             cb(call);
 }
 
-bool
-Conference::isMuted(std::string_view callId) const
-{
-    return participantsMuted_.find(callId) != participantsMuted_.end();
-}
-
 void
 Conference::muteStream(const std::string& accountUri,
                        const std::string& deviceId,
-                       const std::string&,
+                       const std::string& streamId,
                        const bool& state)
 {
-    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock())) {
-        if (accountUri == acc->getUsername() && deviceId == acc->currentDeviceId()) {
-            muteHost(state);
-        } else if (auto call = getCallWith(accountUri, deviceId)) {
-            muteCall(call->getCallId(), state);
-        } else {
-            JAMI_WARN("No call with %s - %s", accountUri.c_str(), deviceId.c_str());
-        }
-    }
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+        callStreamsMgr_->muteStream(accountUri, deviceId, streamId, state);
 }
 
 void
 Conference::muteHost(bool state)
 {
-    auto isHostMuted = isMuted("host"sv);
-    if (state and not isHostMuted) {
-        participantsMuted_.emplace("host"sv);
-        if (not isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
-            JAMI_DBG("Mute host");
-            unbindHost();
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock())) {
+        std::string streamId = sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID);
+        auto isHostMuted = callStreamsMgr_->isMuted(acc->getUsername(), std::string(acc->currentDeviceId()), streamId);
+        if (state and not isHostMuted) {
+            if (not isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
+                JAMI_DEBUG("Mute host");
+                unbindHost();
+            }
+        } else if (not state and isHostMuted) {
+            if (not isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
+                JAMI_DEBUG("Unmute host");
+                bindHost();
+            }
         }
-    } else if (not state and isHostMuted) {
-        participantsMuted_.erase("host");
-        if (not isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
-            JAMI_DBG("Unmute host");
-            bindHost();
-        }
+        callStreamsMgr_->muteStream(acc->getUsername(), std::string(acc->currentDeviceId()), streamId, state);
     }
-    updateMuted();
 }
 
 void
 Conference::muteCall(const std::string& callId, bool state)
 {
-    auto isPartMuted = isMuted(callId);
-    if (state and not isPartMuted) {
-        JAMI_DEBUG("Mute participant {:s}", callId);
-        participantsMuted_.emplace(callId);
-        unbindParticipant(callId);
-        updateMuted();
-    } else if (not state and isPartMuted) {
-        JAMI_DEBUG("Unmute participant {:s}", callId);
-        participantsMuted_.erase(callId);
-        bindParticipant(callId);
-        updateMuted();
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
+        std::string streamId = sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID);
+        auto isPartMuted = callStreamsMgr_->isMuted(call->getRemoteUri(), call->getRemoteDeviceId(), streamId);
+        if (state and not isPartMuted) {
+            JAMI_DEBUG("Mute participant {:s}", callId);
+            unbindParticipant(callId);
+        } else if (not state and isPartMuted) {
+            JAMI_DEBUG("Unmute participant {:s}", callId);
+            bindParticipant(callId);
+        }
+        callStreamsMgr_->muteStream(call->getRemoteUri(), call->getRemoteDeviceId(), streamId, state);
     }
 }
 
@@ -1459,53 +1197,21 @@ Conference::muteParticipant(const std::string& participant_id, const bool& state
         muteCall(call->getCallId(), state);
 }
 
-void
-Conference::updateRecording()
-{
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
-    for (auto& info : confInfo_) {
-        if (info.uri.empty()) {
-            info.recording = isRecording();
-        } else if (auto call = getCallWith(std::string(string_remove_suffix(info.uri, '@')),
-                                           info.device)) {
-            info.recording = call->isPeerRecording();
-        }
-    }
-    sendConferenceInfos();
-}
-
-void
-Conference::updateMuted()
-{
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
-    for (auto& info : confInfo_) {
-        if (info.uri.empty()) {
-            info.audioModeratorMuted = isMuted("host"sv);
-            info.audioLocalMuted = isMediaSourceMuted(MediaType::MEDIA_AUDIO);
-        } else if (auto call = getCallWith(std::string(string_remove_suffix(info.uri, '@')),
-                                           info.device)) {
-            info.audioModeratorMuted = isMuted(call->getCallId());
-            info.audioLocalMuted = call->isPeerMuted();
-        }
-    }
-    sendConferenceInfos();
-}
-
 ConfInfo
 Conference::getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI)
 {
     ConfInfo newInfo = confInfo_;
 
-    for (auto it = newInfo.begin(); it != newInfo.end();) {
-        bool isRemoteHost = remoteHosts_.find(it->uri) != remoteHosts_.end();
-        if (it->uri.empty() and not destURI.empty()) {
+    for (auto it = newInfo.callInfo_.begin(); it != newInfo.callInfo_.end();) {
+        bool isRemoteHost = remoteHosts_.find(it->first.first) != remoteHosts_.end();
+        /*if (it->first.first.empty() and not destURI.empty()) {
             // fill the empty uri with the local host URI, let void for local client
-            it->uri = localHostURI;
-        }
+            it->first.first = localHostURI;
+        }*/ // NOT NECESSARY?
         if (isRemoteHost) {
             // Don't send back the ParticipantInfo for remote Host
             // For other than remote Host, the new info is in remoteHosts_
-            it = newInfo.erase(it);
+            it = newInfo.callInfo_.erase(it);
         } else {
             ++it;
         }
@@ -1518,7 +1224,7 @@ Conference::getConfInfoHostUri(std::string_view localHostURI, std::string_view d
         // ConfA send ConfA and ConfC for ConfB
         // ...
         if (destURI != hostUri)
-            newInfo.insert(newInfo.end(), confInfo.begin(), confInfo.end());
+            newInfo.callInfo_.insert(confInfo.callInfo_.begin(), confInfo.callInfo_.end());
     }
     return newInfo;
 }
@@ -1548,14 +1254,6 @@ Conference::isHostDevice(std::string_view deviceId) const
     if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
         return deviceId == acc->currentDeviceId();
     return false;
-}
-
-void
-Conference::updateConferenceInfo(ConfInfo confInfo)
-{
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
-    confInfo_ = std::move(confInfo);
-    sendConferenceInfos();
 }
 
 void
@@ -1593,14 +1291,19 @@ Conference::hangupParticipant(const std::string& accountUri, const std::string& 
 void
 Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 {
+    auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock());
+    if (!acc)
+        return;
     if (mediaType.compare(libjami::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
+        // TODO mute audio in callStreamManager for host
         if (is_muted == isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
             JAMI_DEBUG("Local audio source already in [{:s}] state",
                        is_muted ? "muted" : "un-muted");
             return;
         }
 
-        auto isHostMuted = isMuted("host"sv);
+        bool isHostMuted = callStreamsMgr_->isMuted(acc->getUsername(), std::string(acc->currentDeviceId()), sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
+
         if (is_muted and not isMediaSourceMuted(MediaType::MEDIA_AUDIO) and not isHostMuted) {
             JAMI_DBG("Muting local audio source");
             unbindHost();
@@ -1608,10 +1311,8 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
             JAMI_DBG("Un-muting local audio source");
             bindHost();
         }
-        setLocalHostMuteState(MediaType::MEDIA_AUDIO, is_muted);
-        updateMuted();
+        callStreamsMgr_->muteStream(acc->getUsername(), std::string(acc->currentDeviceId()), sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID), is_muted, true);
         emitSignal<libjami::CallSignal::AudioMuted>(id_, is_muted);
-        return;
     } else if (mediaType.compare(libjami::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef ENABLE_VIDEO
         if (not isVideoEnabled()) {
@@ -1624,7 +1325,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
                        is_muted ? "muted" : "un-muted");
             return;
         }
-        setLocalHostMuteState(MediaType::MEDIA_VIDEO, is_muted);
+        callStreamsMgr_->muteStream(acc->getUsername(), std::string(acc->currentDeviceId()), sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID), is_muted, true);
         if (is_muted) {
             if (auto mixer = videoMixer_) {
                 JAMI_DBG("Muting local video sources");
@@ -1651,6 +1352,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 void
 Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI)
 {
+    return; // TODO?
     int remoteFrameHeight = confInfo.h;
     int remoteFrameWidth = confInfo.w;
 
@@ -1678,8 +1380,8 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
     }
 
     // get the size of the local frame
-    ParticipantInfo localCell;
-    for (const auto& p : confInfo_) {
+    StreamInfo localCell;
+    /*for (const auto& p : confInfo_) {
         if (p.uri == peerURI) {
             localCell = p;
             break;
@@ -1694,14 +1396,14 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
         remoteCell.y = remoteCell.y / zoomY + localCell.y;
         remoteCell.w = remoteCell.w / zoomX;
         remoteCell.h = remoteCell.h / zoomY;
-    }
+    }*/
 }
 #endif
 
 void
 Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
 {
-    if (newInfo.empty()) {
+    if (newInfo.callInfo_.empty()) {
         JAMI_DBG("confInfo empty, remove remoteHost");
         std::lock_guard<std::mutex> lk(confInfoMutex_);
         remoteHosts_.erase(peerURI);
@@ -1740,22 +1442,21 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
 std::string_view
 Conference::findHostforRemoteParticipant(std::string_view uri, std::string_view deviceId)
 {
-    for (const auto& host : remoteHosts_) {
-        for (const auto& p : host.second) {
-            if (uri == string_remove_suffix(p.uri, '@') && (deviceId == "" || deviceId == p.device))
-                return host.first;
-        }
+    for (const auto& [host, confInfo] : remoteHosts_) {
+        for (const auto& [key, _] : confInfo.callInfo_)
+            if (uri == key.first && (deviceId == "" || deviceId == key.second))
+                return host;
     }
     return "";
 }
 
 std::shared_ptr<Call>
-Conference::getCallFromPeerID(std::string_view peerID)
+Conference::getCallFromPeerID(std::string_view peerId)
 {
     for (const auto& p : getParticipantList()) {
-        auto call = getCall(p);
-        if (call && getRemoteId(call) == peerID) {
-            return call;
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(p))) {
+            if (call->getRemoteUri() == peerId)
+                return call;
         }
     }
     return nullptr;
@@ -1766,9 +1467,8 @@ Conference::getCallWith(const std::string& accountUri, const std::string& device
 {
     for (const auto& p : getParticipantList()) {
         if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(p))) {
-            auto* transport = call->getTransport();
-            if (accountUri == string_remove_suffix(call->getPeerNumber(), '@') && transport
-                && deviceId == transport->deviceId()) {
+            if (accountUri == call->getRemoteUri()
+                && deviceId == call->getRemoteDeviceId()) {
                 return call;
             }
         }
@@ -1776,28 +1476,22 @@ Conference::getCallWith(const std::string& accountUri, const std::string& device
     return {};
 }
 
-std::string
-Conference::getRemoteId(const std::shared_ptr<jami::Call>& call) const
-{
-    if (auto* transport = std::dynamic_pointer_cast<SIPCall>(call)->getTransport())
-        if (auto cert = transport->getTlsInfos().peerCert)
-            if (cert->issuer)
-                return cert->issuer->getId().toString();
-    return {};
-}
-
 void
 Conference::stopRecording()
 {
     Recordable::stopRecording();
-    updateRecording();
+
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+        callStreamsMgr_->setRecording(acc->getUsername(), std::string(acc->currentDeviceId()), false);
 }
 
 bool
 Conference::startRecording(const std::string& path)
 {
     auto res = Recordable::startRecording(path);
-    updateRecording();
+
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock()))
+        callStreamsMgr_->setRecording(acc->getUsername(), std::string(acc->currentDeviceId()), true);
     return res;
 }
 
