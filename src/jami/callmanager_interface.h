@@ -102,7 +102,6 @@ LIBJAMI_PUBLIC bool addParticipant(const std::string& accountId,
                                  const std::string& account2Id,
                                  const std::string& confId);
 LIBJAMI_PUBLIC bool addMainParticipant(const std::string& accountId, const std::string& confId);
-LIBJAMI_PUBLIC bool detachLocalParticipant();
 LIBJAMI_PUBLIC bool detachParticipant(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool joinConference(const std::string& accountId,
                                  const std::string& sel_confId,
