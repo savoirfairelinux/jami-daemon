@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "callstreamsmanager.h"
 #include "noncopyable.h"
 #include "video_base.h"
 #include "video_scaler.h"
@@ -56,13 +57,11 @@ struct SourceInfo
 };
 using OnSourcesUpdatedCb = std::function<void(std::vector<SourceInfo>&&)>;
 
-enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
-
-class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
+class VideoMixer : public VideoGenerator, public VideoFramePassiveReader, public CallStreamsManager
 {
 public:
     VideoMixer(const std::string& id, const std::string& localInput = {}, bool attachHost = true);
-    ~VideoMixer();
+    virtual ~VideoMixer();
 
     void setParameters(int width, int height, AVPixelFormat format = AV_PIX_FMT_YUV422P);
 
@@ -87,24 +86,8 @@ public:
      */
     void stopInputs();
 
-    void setActiveStream(const std::string& id);
-    void resetActiveStream()
-    {
-        activeStream_ = {};
-        updateLayout();
-    }
-
     bool verifyActive(const std::string& id) { return activeStream_ == id; }
 
-    void setVideoLayout(Layout newLayout)
-    {
-        currentLayout_ = newLayout;
-        if (currentLayout_ == Layout::GRID)
-            resetActiveStream();
-        layoutUpdated_ += 1;
-    }
-
-    Layout getVideoLayout() const { return currentLayout_; }
 
     void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) { onSourcesUpdated_ = std::move(cb); }
 
@@ -186,7 +169,6 @@ private:
 
     ThreadLoop loop_; // as to be last member
 
-    Layout currentLayout_ {Layout::GRID};
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
 
     // We need to convert call to frame

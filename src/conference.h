@@ -34,6 +34,7 @@
 #include <functional>
 
 #include "audio/audio_input.h"
+#include "callstreamsmanager.h"
 #include "conference_protocol.h"
 #include "media_attribute.h"
 
@@ -60,102 +61,7 @@ class VideoMixer;
 }
 #endif
 
-// info for a stream
-struct ParticipantInfo
-{
-    std::string uri;
-    std::string device;
-    std::string sinkId; // stream ID
-    bool active {false};
-    int x {0};
-    int y {0};
-    int w {0};
-    int h {0};
-    bool videoMuted {false};
-    bool audioLocalMuted {false};
-    bool audioModeratorMuted {false};
-    bool isModerator {false};
-    bool handRaised {false};
-    bool voiceActivity {false};
-    bool recording {false};
-
-    void fromJson(const Json::Value& v)
-    {
-        uri = v["uri"].asString();
-        device = v["device"].asString();
-        sinkId = v["sinkId"].asString();
-        active = v["active"].asBool();
-        x = v["x"].asInt();
-        y = v["y"].asInt();
-        w = v["w"].asInt();
-        h = v["h"].asInt();
-        videoMuted = v["videoMuted"].asBool();
-        audioLocalMuted = v["audioLocalMuted"].asBool();
-        audioModeratorMuted = v["audioModeratorMuted"].asBool();
-        isModerator = v["isModerator"].asBool();
-        handRaised = v["handRaised"].asBool();
-        voiceActivity = v["voiceActivity"].asBool();
-        recording = v["recording"].asBool();
-    }
-
-    Json::Value toJson() const
-    {
-        Json::Value val;
-        val["uri"] = uri;
-        val["device"] = device;
-        val["sinkId"] = sinkId;
-        val["active"] = active;
-        val["x"] = x;
-        val["y"] = y;
-        val["w"] = w;
-        val["h"] = h;
-        val["videoMuted"] = videoMuted;
-        val["audioLocalMuted"] = audioLocalMuted;
-        val["audioModeratorMuted"] = audioModeratorMuted;
-        val["isModerator"] = isModerator;
-        val["handRaised"] = handRaised;
-        val["voiceActivity"] = voiceActivity;
-        val["recording"] = recording;
-        return val;
-    }
-
-    std::map<std::string, std::string> toMap() const
-    {
-        return {{"uri", uri},
-                {"device", device},
-                {"sinkId", sinkId},
-                {"active", active ? "true" : "false"},
-                {"x", std::to_string(x)},
-                {"y", std::to_string(y)},
-                {"w", std::to_string(w)},
-                {"h", std::to_string(h)},
-                {"videoMuted", videoMuted ? "true" : "false"},
-                {"audioLocalMuted", audioLocalMuted ? "true" : "false"},
-                {"audioModeratorMuted", audioModeratorMuted ? "true" : "false"},
-                {"isModerator", isModerator ? "true" : "false"},
-                {"handRaised", handRaised ? "true" : "false"},
-                {"voiceActivity", voiceActivity ? "true" : "false"},
-                {"recording", recording ? "true" : "false"}};
-    }
-
-    friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
-    {
-        return p1.uri == p2.uri and p1.device == p2.device and p1.sinkId == p2.sinkId
-               and p1.active == p2.active and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w
-               and p1.h == p2.h and p1.videoMuted == p2.videoMuted
-               and p1.audioLocalMuted == p2.audioLocalMuted
-               and p1.audioModeratorMuted == p2.audioModeratorMuted
-               and p1.isModerator == p2.isModerator and p1.handRaised == p2.handRaised
-               and p1.voiceActivity == p2.voiceActivity and p1.recording == p2.recording;
-    }
-
-    friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
-    {
-        return !(p1 == p2);
-    }
-};
-
-struct ConfInfo : public std::vector<ParticipantInfo>
+struct ConfInfo : public std::vector<StreamInfo>
 {
     int h {0};
     int w {0};
@@ -170,7 +76,7 @@ struct ConfInfo : public std::vector<ParticipantInfo>
             return false;
 
         for (auto& p1 : c1) {
-            auto it = std::find_if(c2.begin(), c2.end(), [&p1](const ParticipantInfo& p2) {
+            auto it = std::find_if(c2.begin(), c2.end(), [&p1](const StreamInfo& p2) {
                 return p1 == p2;
             });
             if (it != c2.end())
@@ -212,8 +118,6 @@ public:
      */
     const std::string& getConfId() const { return id_; }
 
-    std::shared_ptr<Account> getAccount() const { return account_.lock(); }
-
     std::string getAccountId() const;
 
     /**
@@ -249,6 +153,18 @@ public:
     }
 
     const char* getStateStr() const { return getStateStr(confState_); }
+
+
+    // DONE
+    void setVoiceActivity(const std::string& streamId, const bool& newState);
+    void setHandRaised(const std::string& uri, const std::string& deviceId, const bool& state);
+
+    // TODO
+
+
+
+
+
 
     /**
      * Set default media source for the local host
@@ -294,7 +210,7 @@ public:
     /**
      * Add a new participant to the conference
      */
-    void addParticipant(const std::string& participant_id);
+    void bindCall(const std::shared_ptr<Call>& participant_id);
 
     /**
      * Remove a participant from the conference
@@ -343,6 +259,7 @@ public:
 
     void switchInput(const std::string& input);
     void setActiveParticipant(const std::string& participant_id);
+    void setRecording(const std::string& uri, const std::string& deviceId, bool state);
     void setActiveStream(const std::string& streamId, bool state);
     void setLayout(int layout);
 
@@ -365,8 +282,6 @@ public:
     void updateConferenceInfo(ConfInfo confInfo);
     void setModerator(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& accountUri, const std::string& deviceId = "");
-    void setHandRaised(const std::string& uri, const bool& state);
-    void setVoiceActivity(const std::string& streamId, const bool& newState);
 
     void muteParticipant(const std::string& uri, const bool& state);
     void muteLocalHost(bool is_muted, const std::string& mediaType);
@@ -387,9 +302,8 @@ public:
                     const std::string& streamId,
                     const bool& state);
     void updateMuted();
-    void updateRecording();
 
-    void updateVoiceActivity();
+    void setVoiceActivity();
 
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerId);
 
@@ -427,10 +341,7 @@ private:
 
     static std::shared_ptr<Call> getCall(const std::string& callId);
     bool isModerator(std::string_view uri) const;
-    bool isHandRaised(std::string_view uri) const;
-    bool isVoiceActive(std::string_view uri) const;
     void updateModerators();
-    void updateHandsRaised();
     void muteHost(bool state);
     void muteCall(const std::string& callId, bool state);
 
@@ -456,18 +367,11 @@ private:
 
     std::shared_ptr<jami::AudioInput> audioMixer_;
     std::set<std::string, std::less<>> moderators_ {};
-    std::set<std::string, std::less<>> participantsMuted_ {};
-    std::set<std::string, std::less<>> handsRaised_;
 
     bool attachHost_;
 
-    // stream IDs
-    std::set<std::string, std::less<>> streamsVoiceActive {};
-
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
-
-    bool isMuted(std::string_view uri) const;
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
@@ -532,10 +436,11 @@ private:
 #endif // ENABLE_PLUGIN
 
     ConfProtocolParser parser_;
-    std::string getRemoteId(const std::shared_ptr<jami::Call>& call) const;
 
     std::function<void(int)> shutdownCb_;
     clock::time_point duration_start_;
+
+    std::unique_ptr<CallStreamsManager> callStreamsMgr_;
 };
 
 } // namespace jami

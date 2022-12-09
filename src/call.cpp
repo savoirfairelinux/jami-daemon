@@ -22,6 +22,7 @@
 
 #include "call.h"
 #include "account.h"
+#include "callstreamsmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
 #ifdef ENABLE_PLUGIN
@@ -655,7 +656,7 @@ Call::setConferenceInfo(const std::string& msg)
             // new confInfo
             if (json.isMember("p")) {
                 for (const auto& participantInfo : json["p"]) {
-                    ParticipantInfo pInfo;
+                    StreamInfo pInfo;
                     if (!participantInfo.isMember("uri"))
                         continue;
                     pInfo.fromJson(participantInfo);
@@ -673,7 +674,7 @@ Call::setConferenceInfo(const std::string& msg)
         } else {
             // old confInfo
             for (const auto& participantInfo : json) {
-                ParticipantInfo pInfo;
+                StreamInfo pInfo;
                 if (!participantInfo.isMember("uri"))
                     continue;
                 pInfo.fromJson(participantInfo);
