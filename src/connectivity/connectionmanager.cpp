@@ -646,7 +646,13 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             info->ice_->setOnShutdown([eraseInfo]() {
                 runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
             });
-            info->ice_->initIceInstance(ice_config);
+
+            try {
+                info->ice_->initIceInstance(ice_config);
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Error on ICE initalization: {}", e.what());
+                info->ice_->shutdown();
+            }
         });
     });
 }
@@ -1019,7 +1025,12 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         info->ice_->setOnShutdown([eraseInfo]() {
             runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
         });
-        info->ice_->initIceInstance(ice_config);
+        try {
+            info->ice_->initIceInstance(ice_config);
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Error on ICE initalization: {}", e.what());
+            info->ice_->shutdown();
+        }
     });
 }
 
