@@ -80,9 +80,15 @@ private:
     std::unique_ptr<IpAddr> cacheTurnV4_ {};
     std::unique_ptr<IpAddr> cacheTurnV6_ {};
 
+    void onConnected(const asio::error_code& ec, bool ok, IpAddr server);
+
     // io
     std::shared_ptr<asio::io_context> io_context;
     std::unique_ptr<asio::steady_timer> refreshTimer_;
+    std::unique_ptr<asio::steady_timer> onConnectedTimer_;
+
+    std::mutex shutdownMtx_;
+
 };
 
 } // namespace jami
