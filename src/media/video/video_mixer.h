@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "callstreamsmanager.h"
 #include "noncopyable.h"
 #include "video_base.h"
 #include "video_scaler.h"
@@ -58,7 +59,7 @@ using OnSourcesUpdatedCb = std::function<void(std::vector<SourceInfo>&&)>;
 
 enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
 
-class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
+class VideoMixer : public VideoGenerator, public VideoFramePassiveReader, public CallStreamsManager
 {
 public:
     VideoMixer(const std::string& id, const std::string& localInput = {}, bool attachHost = true);
@@ -87,12 +88,7 @@ public:
      */
     void stopInputs();
 
-    void setActiveStream(const std::string& id);
-    void resetActiveStream()
-    {
-        activeStream_ = {};
-        updateLayout();
-    }
+    void setActiveStream(const std::string& id) override;
 
     bool verifyActive(const std::string& id) { return activeStream_ == id; }
 
@@ -100,7 +96,7 @@ public:
     {
         currentLayout_ = newLayout;
         if (currentLayout_ == Layout::GRID)
-            resetActiveStream();
+            activeStream_.clear();
         layoutUpdated_ += 1;
     }
 
