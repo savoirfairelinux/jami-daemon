@@ -2630,24 +2630,24 @@ ConversationModule::hostConference(const std::string& conversationId,
     auto acc = pimpl_->account_.lock();
     if (!acc)
         return;
-    std::shared_ptr<Call> call;
-    call = acc->getCall(callId);
+    std::shared_ptr<SIPCall> call = std::dynamic_pointer_cast<SIPCall>(acc->getCall(callId));
     if (!call) {
-        JAMI_WARN("No call with id %s found", callId.c_str());
+        JAMI_WARNING("No call with id {:s} found", callId);
         return;
     }
     auto conf = acc->getConference(confId);
     auto createConf = !conf;
     if (createConf) {
         conf = std::make_shared<Conference>(acc, confId, true, call->getMediaAttributeList());
+        conf->initLayout();
         acc->attach(conf);
     }
-    conf->addParticipant(callId);
+    conf->bindCall(call);
 
     if (createConf) {
         emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
     } else {
-        conf->attachLocalParticipant();
+        conf->attachLocal();
         conf->reportMediaNegotiationStatus();
         emitSignal<libjami::CallSignal::ConferenceChanged>(acc->getAccountID(),
                                                            conf->getConfId(),

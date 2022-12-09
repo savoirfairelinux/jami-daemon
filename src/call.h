@@ -38,15 +38,16 @@
 #include <dhtnet/ip_utils.h>
 
 #include <atomic>
+#include <condition_variable>
+#include <functional>
+#include <json/json.h>
+#include <list>
 #include <mutex>
 #include <map>
-#include <sstream>
 #include <memory>
-#include <vector>
-#include <condition_variable>
 #include <set>
-#include <list>
-#include <functional>
+#include <sstream>
+#include <vector>
 
 template<typename T>
 bool
@@ -63,8 +64,6 @@ class Account;
 class AudioDeviceGuard;
 
 class Call;
-class Conference;
-
 using CallMap = std::map<std::string, std::shared_ptr<Call>>;
 
 namespace video {
