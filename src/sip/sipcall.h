@@ -331,6 +331,9 @@ public:
      */
     void reportMediaNegotiationStatus();
 
+    std::string getRemoteUri();
+    std::string getRemoteDeviceId();
+
 private:
     void generateMediaPorts();
 
