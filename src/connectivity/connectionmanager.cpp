@@ -646,7 +646,20 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             info->ice_->setOnShutdown([eraseInfo]() {
                 runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
             });
-            info->ice_->initIceInstance(ice_config);
+
+            try {
+                info->ice_->initIceInstance(ice_config);
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Error on ICE initalization: {}", e.what());
+                if (info->ice_) {
+                    info->ice_->cancelOperations();
+                    if (info->ice_) {
+                        std::unique_lock<std::mutex> lk {info->mutex_};
+                        dht::ThreadPool::io().run(
+                            [ice = std::shared_ptr<IceTransport>(std::move(info->ice_))] {});
+                    }
+                }
+            }
         });
     });
 }
@@ -1019,7 +1032,19 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         info->ice_->setOnShutdown([eraseInfo]() {
             runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
         });
-        info->ice_->initIceInstance(ice_config);
+        try {
+            info->ice_->initIceInstance(ice_config);
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Error on ICE initalization: {}", e.what());
+            if (info->ice_) {
+                info->ice_->cancelOperations();
+                if (info->ice_) {
+                    std::unique_lock<std::mutex> lk {info->mutex_};
+                    dht::ThreadPool::io().run(
+                        [ice = std::shared_ptr<IceTransport>(std::move(info->ice_))] {});
+                }
+            }
+        }
     });
 }
 
