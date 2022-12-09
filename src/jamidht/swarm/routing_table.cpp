@@ -187,20 +187,12 @@ void
 Bucket::shutdownAllNodes()
 {
     while (not nodes.empty()) {
-        JAMI_ERROR("HERE");
-
         auto it = nodes.begin();
         auto socket = it->second.socket;
         auto nodeId = socket->deviceId();
-
-        JAMI_ERROR("Sending shutdown to {}", nodeId.toString());
         socket->shutdown();
         removeNode(nodeId);
     }
-
-    JAMI_ERROR("#########################EMPTY {} "
-               "#############################################################",
-               fmt::ptr(this));
 }
 
 void
