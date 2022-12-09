@@ -405,7 +405,6 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
             return;
         JAMI_DBG() << "New outgoing call with " << uri.toString();
         call->setPeerNumber(uri.authority());
-        call->setPeerUri(uri.toString());
 
         if (uri.scheme() == Uri::Scheme::SWARM || uri.scheme() == Uri::Scheme::RENDEZVOUS)
             shared->newSwarmOutgoingCallHelper(call, uri);
@@ -553,7 +552,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         // Create conference and host it.
         convModule()->hostConference(conversationId, confId, callId);
         if (auto conf = getConference(confId))
-            conf->detachLocalParticipant();
+            conf->detachLocal();
     } else {
         auto conf = getConference(confId);
         if (!conf) {
@@ -561,7 +560,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             return;
         }
 
-        conf->addParticipant(callId);
+        conf->bindCall(std::dynamic_pointer_cast<SIPCall>(call));
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
                                                            conf->getConfId(),
                                                            conf->getStateStr());
