@@ -83,6 +83,7 @@ static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / 
 
 VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, bool attachHost)
     : VideoGenerator::VideoGenerator()
+    , CallStreamsManager::CallStreamsManager()
     , id_(id)
     , sink_(Manager::instance().createSinkClient(id, true))
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
@@ -301,14 +302,13 @@ VideoMixer::process()
         bool activeFound = false;
         bool needsUpdate = layoutUpdated_ > 0;
         bool successfullyRendered = audioOnlySources_.size() != 0 && sources_.size() == 0;
-        std::vector<SourceInfo> sourcesInfo;
-        sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
+        //std::vector<StreamInfos> sourcesInfo;
+        //sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
         // add all audioonlysources
         for (auto& [callId, streamId] : audioOnlySources_) {
             auto active = verifyActive(streamId);
-            if (currentLayout_ != Layout::ONE_BIG or active) {
-                sourcesInfo.emplace_back(SourceInfo {{}, 0, 0, 10, 10, false, callId, streamId});
-            }
+            auto& si = streamsInfo_[streamId];
+            si.x = 0; si.y = 0; si.w = 10; si.h = 10;
             if (currentLayout_ == Layout::ONE_BIG and active)
                 successfullyRendered = true;
         }
@@ -319,8 +319,8 @@ VideoMixer::process()
                 return;
 
             auto sinfo = streamInfo(x->source);
-            auto activeSource = verifyActive(sinfo.streamId);
-            if (currentLayout_ != Layout::ONE_BIG or activeSource) {
+            auto& si = streamsInfo_[sinfo.streamId];
+            if (currentLayout_ != Layout::ONE_BIG or si.active) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
                 std::shared_ptr<VideoFrame> input = x->getRenderFrame();
@@ -331,7 +331,7 @@ VideoMixer::process()
                     wantedIndex = 0;
                     activeFound = true;
                 } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-                    if (activeSource) {
+                    if (si.active) {
                         wantedIndex = 0;
                         activeFound = true;
                     } else if (not activeFound) {
@@ -367,38 +367,29 @@ VideoMixer::process()
                         JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
                 }
 
-                x->hasVideo = !blackFrame && successfullyRendered;
-                if (hasVideo != x->hasVideo) {
+                si.videoMuted = !blackFrame && successfullyRendered;
+                if (hasVideo != si.videoMuted) {
                     updateLayout();
                     needsUpdate = true;
                 }
+                si.x = x->x;
+                si.y = x->y;
+                si.w = x->w;
+                si.h = x->h;
             } else if (needsUpdate) {
-                x->x = 0;
-                x->y = 0;
-                x->w = 0;
-                x->h = 0;
-                x->hasVideo = false;
+                si.x = 0;
+                si.y = 0;
+                si.w = 0;
+                si.h = 0;
+                si.videoMuted = true;
             }
 
             ++i;
         }
         if (needsUpdate and successfullyRendered) {
             layoutUpdated_ -= 1;
-            if (layoutUpdated_ == 0) {
-                for (auto& x : sources_) {
-                    auto sinfo = streamInfo(x->source);
-                    sourcesInfo.emplace_back(SourceInfo {x->source,
-                                                         x->x,
-                                                         x->y,
-                                                         x->w,
-                                                         x->h,
-                                                         x->hasVideo,
-                                                         sinfo.callId,
-                                                         sinfo.streamId});
-                }
-                if (onSourcesUpdated_)
-                    onSourcesUpdated_(std::move(sourcesInfo));
-            }
+            if (layoutUpdated_ == 0)
+                updateInfo();
         }
     }
 

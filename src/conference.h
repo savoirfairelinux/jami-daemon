@@ -250,6 +250,18 @@ public:
 
     const char* getStateStr() const { return getStateStr(confState_); }
 
+
+    // DONE
+    void setVoiceActivity(const std::string& streamId, const bool& newState);
+    void setHandRaised(const std::string& uri, const std::string& deviceId, const bool& state);
+
+    // TODO
+
+
+
+
+
+
     /**
      * Set default media source for the local host
      */
@@ -365,8 +377,6 @@ public:
     void updateConferenceInfo(ConfInfo confInfo);
     void setModerator(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& accountUri, const std::string& deviceId = "");
-    void setHandRaised(const std::string& uri, const bool& state);
-    void setVoiceActivity(const std::string& streamId, const bool& newState);
 
     void muteParticipant(const std::string& uri, const bool& state);
     void muteLocalHost(bool is_muted, const std::string& mediaType);
@@ -387,7 +397,6 @@ public:
                     const std::string& streamId,
                     const bool& state);
     void updateMuted();
-    void updateRecording();
 
     void updateVoiceActivity();
 
@@ -427,10 +436,7 @@ private:
 
     static std::shared_ptr<Call> getCall(const std::string& callId);
     bool isModerator(std::string_view uri) const;
-    bool isHandRaised(std::string_view uri) const;
-    bool isVoiceActive(std::string_view uri) const;
     void updateModerators();
-    void updateHandsRaised();
     void muteHost(bool state);
     void muteCall(const std::string& callId, bool state);
 
@@ -456,18 +462,11 @@ private:
 
     std::shared_ptr<jami::AudioInput> audioMixer_;
     std::set<std::string, std::less<>> moderators_ {};
-    std::set<std::string, std::less<>> participantsMuted_ {};
-    std::set<std::string, std::less<>> handsRaised_;
 
     bool attachHost_;
 
-    // stream IDs
-    std::set<std::string, std::less<>> streamsVoiceActive {};
-
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
-
-    bool isMuted(std::string_view uri) const;
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
@@ -532,10 +531,11 @@ private:
 #endif // ENABLE_PLUGIN
 
     ConfProtocolParser parser_;
-    std::string getRemoteId(const std::shared_ptr<jami::Call>& call) const;
 
     std::function<void(int)> shutdownCb_;
     clock::time_point duration_start_;
+
+    std::unique_ptr<CallStreamsManager> callStreamsMgr_;
 };
 
 } // namespace jami
