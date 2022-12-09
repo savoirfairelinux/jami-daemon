@@ -250,6 +250,18 @@ public:
 
     const char* getStateStr() const { return getStateStr(confState_); }
 
+
+    // DONE
+    void setVoiceActivity(const std::string& streamId, const bool& newState);
+
+    // TODO
+    void setHandRaised(const std::string& uri, const std::string& deviceId, const bool& state);
+
+
+
+
+
+
     /**
      * Set default media source for the local host
      */
@@ -365,8 +377,6 @@ public:
     void updateConferenceInfo(ConfInfo confInfo);
     void setModerator(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& accountUri, const std::string& deviceId = "");
-    void setHandRaised(const std::string& uri, const bool& state);
-    void setVoiceActivity(const std::string& streamId, const bool& newState);
 
     void muteParticipant(const std::string& uri, const bool& state);
     void muteLocalHost(bool is_muted, const std::string& mediaType);
@@ -428,7 +438,6 @@ private:
     static std::shared_ptr<Call> getCall(const std::string& callId);
     bool isModerator(std::string_view uri) const;
     bool isHandRaised(std::string_view uri) const;
-    bool isVoiceActive(std::string_view uri) const;
     void updateModerators();
     void updateHandsRaised();
     void muteHost(bool state);
@@ -460,9 +469,6 @@ private:
     std::set<std::string, std::less<>> handsRaised_;
 
     bool attachHost_;
-
-    // stream IDs
-    std::set<std::string, std::less<>> streamsVoiceActive {};
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
@@ -536,6 +542,8 @@ private:
 
     std::function<void(int)> shutdownCb_;
     clock::time_point duration_start_;
+
+    std::unique_ptr<CallStreamsManager> callStreamsMgr_;
 };
 
 } // namespace jami

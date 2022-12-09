@@ -655,7 +655,7 @@ raiseParticipantHand(const std::string& accountId,
             if (auto call = std::static_pointer_cast<jami::SIPCall>(
                     conf->getCallFromPeerID(peerId))) {
                 if (auto* transport = call->getTransport())
-                    conf->setHandRaised(std::string(transport->deviceId()), state);
+                    conf->setHandRaised(peerId, std::string(transport->deviceId()), state);
             }
         } else if (auto call = account->getCall(confId)) {
             Json::Value root;
@@ -678,7 +678,7 @@ raiseHand(const std::string& accountId,
             auto device = deviceId;
             if (device.empty())
                 device = std::string(account->currentDeviceId());
-            conf->setHandRaised(device, state);
+            conf->setHandRaised(account->getUsername(), device, state);
         } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->conferenceProtocolVersion() == 1) {
                 Json::Value deviceVal;
