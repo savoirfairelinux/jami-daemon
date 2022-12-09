@@ -331,6 +331,9 @@ public:
      */
     void reportMediaNegotiationStatus();
 
+    std::string getRemoteUri();
+    std::string getRemoteDeviceId();
+
 private:
     void generateMediaPorts();
 
@@ -461,6 +464,7 @@ private:
     std::vector<std::string> peerAllowedMethods_;
 
     // Vector holding the current RTP sessions.
+    mutable std::mutex rtpStreamsMtx_;
     std::vector<RtpStream> rtpStreams_;
 
     /**
@@ -501,7 +505,9 @@ private:
     // Re-invite (temporary) ICE media transport.
     std::shared_ptr<IceTransport> reinvIceMedia_;
 
-    std::string peerUri_ {};
+    std::string peerUri_ {}; // Contains jami: // TODO delete?
+    std::string remoteUri_ {};
+    std::string peerDeviceId_ {};
 
     bool readyToRecord_ {false};
     bool pendingRecord_ {false};

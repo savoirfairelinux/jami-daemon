@@ -28,6 +28,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "sip/sipcall.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -342,7 +343,7 @@ struct Manager::ManagerPimpl
                                      const std::map<std::string, std::string>& messages,
                                      const std::string& from) const noexcept;
 
-    void bindCallToConference(Call& call, Conference& conf);
+    void bindCallToConference(const std::shared_ptr<SIPCall>& call, Conference& conf);
 
     void addMainParticipant(Conference& conf);
 
@@ -570,11 +571,11 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
         }
 
         JAMI_DBG("No remaining participants, remove conference");
-        if (auto account = conf.getAccount())
+        if (auto account = base_.getAccount(conf.getAccountId()))
             account->removeConference(conf.getConfId());
     } else {
         JAMI_DBG("No remaining participants, remove conference");
-        if (auto account = conf.getAccount())
+        if (auto account = base_.getAccount(conf.getAccountId()))
             account->removeConference(conf.getConfId());
         unsetCurrentCall();
     }
@@ -669,40 +670,38 @@ Manager::ManagerPimpl::sendTextMessageToConference(const Conference& conf,
 }
 
 void
-Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
+Manager::ManagerPimpl::bindCallToConference(const std::shared_ptr<SIPCall>& call, Conference& conf)
 {
-    const auto& callId = call.getCallId();
+    const auto& callId = call->getCallId();
     const auto& confId = conf.getConfId();
-    const auto& state = call.getStateStr();
+    const auto& state = call->getStateStr();
 
     // ensure that calls are only in one conference at a time
-    if (call.isConferenceParticipant())
+    if (call->isConferenceParticipant())
         base_.detachParticipant(callId);
 
-
-
-    JAMI_DEBUG("[call:{}] bind to conference {} (callState={})",
+    JAMI_DEBUG("[call:{:s}] bind to conference {:s} (callState={:s})",
              callId,
              confId,
              state);
 
     base_.getRingBufferPool().unBindAll(callId);
 
-    conf.addParticipant(callId);
+    conf.bindCall(std::dynamic_pointer_cast<SIPCall>(call));
 
     if (state == "HOLD") {
         conf.bindParticipant(callId);
-        base_.offHoldCall(call.getAccountId(), callId);
+        base_.offHoldCall(call->getAccountId(), callId);
     } else if (state == "INCOMING") {
         conf.bindParticipant(callId);
-        base_.answerCall(call);
+        base_.answerCall(*call);
     } else if (state == "CURRENT") {
         conf.bindParticipant(callId);
     } else if (state == "INACTIVE") {
         conf.bindParticipant(callId);
-        base_.answerCall(call);
+        base_.answerCall(*call);
     } else
-        JAMI_WARNING("[call:{}] call state {} not recognized for conference",
+        JAMI_WARNING("[call:{:s}] call state {:s} not recognized for conference",
                   callId,
                   state);
 }
@@ -1314,19 +1313,19 @@ Manager::addParticipant(const std::string& accountId,
     auto account = getAccount(accountId);
     auto account2 = getAccount(account2Id);
     if (account && account2) {
-        auto call = account->getCall(callId);
+        auto call = std::dynamic_pointer_cast<SIPCall>(account->getCall(callId));
         auto conf = account2->getConference(conferenceId);
         if (!call or !conf)
             return false;
         auto callConf = call->getConference();
         if (callConf != conf)
-            return addParticipant(*call, *conf);
+            return addParticipant(call, *conf);
     }
     return false;
 }
 
 bool
-Manager::addParticipant(Call& call, Conference& conference)
+Manager::addParticipant(const std::shared_ptr<SIPCall>& call, Conference& conference)
 {
     // No-op if the call is already a conference participant
     /*if (call.getConfId() == conference.getConfId()) {
@@ -1334,9 +1333,9 @@ Manager::addParticipant(Call& call, Conference& conference)
     conference.getConfId().c_str()); return true;
     }*/
 
-    JAMI_DBG("Add participant %s to conference %s",
-             call.getCallId().c_str(),
-             conference.getConfId().c_str());
+    JAMI_DEBUG("Add participant {:s} to conference {:s}",
+             call->getCallId(),
+             conference.getConfId());
 
     // store the current call id (it will change in offHoldCall or in answerCall)
     pimpl_->bindCallToConference(call, conference);
@@ -1351,7 +1350,7 @@ Manager::addParticipant(Call& call, Conference& conference)
     pimpl_->unsetCurrentCall();
     pimpl_->addMainParticipant(conference);
     pimpl_->switchCall(conference.getConfId());
-    addAudio(call);
+    addAudio(*call);
 
     return true;
 }
@@ -1421,21 +1420,21 @@ Manager::joinParticipant(const std::string& accountId,
               attached ? "YES" : "NO");
 
     if (callId1 == callId2) {
-        JAMI_ERR("Cannot join participant %s to itself", callId1.c_str());
+        JAMI_ERROR("Cannot join participant {:s} to itself", callId1);
         return false;
     }
 
     // Set corresponding conference ids for call 1
-    auto call1 = account->getCall(callId1);
+    auto call1 = std::dynamic_pointer_cast<SIPCall>(account->getCall(callId1));
     if (!call1) {
-        JAMI_ERR("Could not find call %s", callId1.c_str());
+        JAMI_ERROR("Could not find call {:s}", callId1);
         return false;
     }
 
     // Set corresponding conference details
-    auto call2 = account2->getCall(callId2);
+    auto call2 = std::dynamic_pointer_cast<SIPCall>(account2->getCall(callId2));
     if (!call2) {
-        JAMI_ERR("Could not find call %s", callId2.c_str());
+        JAMI_ERROR("Could not find call {:s}", callId2);
         return false;
     }
 
@@ -1444,8 +1443,8 @@ Manager::joinParticipant(const std::string& accountId,
     emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), conf->getConfId());
 
     // Bind calls according to their state
-    pimpl_->bindCallToConference(*call1, *conf);
-    pimpl_->bindCallToConference(*call2, *conf);
+    pimpl_->bindCallToConference(call1, *conf);
+    pimpl_->bindCallToConference(call2, *conf);
 
     // Switch current call id to this conference
     if (attached) {
@@ -1488,11 +1487,11 @@ Manager::createConfFromParticipantList(const std::string& accountId,
 
         // Create call
         auto callId = outgoingCall(account, tostr, {});
-        if (callId.empty())
+        if (!getCallFromCallID(callId))
             continue;
 
         // Manager methods may behave differently if the call id participates in a conference
-        conf->addParticipant(callId);
+        conf->bindCall(getCallFromCallID(callId));
         successCounter++;
     }
 
@@ -1609,7 +1608,7 @@ Manager::joinConference(const std::string& accountId,
     account->removeConference(confId1);
 
     for (const auto& c : calls)
-        addParticipant(*c, *conf2);
+        addParticipant(std::dynamic_pointer_cast<SIPCall>(c), *conf2);
 
     return true;
 }
@@ -2512,7 +2511,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                         continue;
                     if (call != incomCall) {
                         if (auto conf = call->getConference()) {
-                            base_.addParticipant(*incomCall, *conf);
+                            base_.addParticipant(std::dynamic_pointer_cast<SIPCall>(incomCall), *conf);
                         } else {
                             base_.joinParticipant(account->getAccountID(),
                                                   incomCall->getCallId(),
@@ -2532,7 +2531,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                                                conf->getConfId());
 
             // Bind calls according to their state
-            bindCallToConference(*incomCall, *conf);
+            bindCallToConference(std::dynamic_pointer_cast<SIPCall>(incomCall), *conf);
             conf->detachLocalParticipant();
             emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
                                                                conf->getConfId(),
@@ -3042,31 +3041,34 @@ Manager::createSinkClients(
     std::set<std::string> sinkIdsList {};
 
     // create video sinks
-    for (const auto& participant : infos) {
-        std::string sinkId = participant.sinkId;
-        if (sinkId.empty()) {
-            sinkId = callId;
-            sinkId += string_remove_suffix(participant.uri, '@') + participant.device;
-        }
-        if (participant.w && participant.h && !participant.videoMuted) {
-            auto currentSink = getSinkClient(sinkId);
-            if (currentSink) {
-                currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
-                sinkIdsList.emplace(sinkId);
-                continue;
+    for (const auto& [key, callInfo] : infos.callInfo_) {
+        auto& uri = key.first; auto& device = key.second;
+        for (const auto& [streamId, streamInfo] : callInfo.streams) {
+            auto sinkId = streamId;
+            if (sinkId.empty()) {
+                sinkId = callId;
+                sinkId += uri + device;
             }
-            auto newSink = createSinkClient(sinkId);
-            newSink->start();
-            newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
-            newSink->setFrameSize(participant.w, participant.h);
+            if (streamInfo.w && streamInfo.h && !streamInfo.videoMuted) {
+                auto currentSink = getSinkClient(sinkId);
+                if (currentSink) {
+                    currentSink->setCrop(streamInfo.x, streamInfo.y, streamInfo.w, streamInfo.h);
+                    sinkIdsList.emplace(sinkId);
+                    continue;
+                }
+                auto newSink = createSinkClient(sinkId);
+                newSink->start();
+                newSink->setCrop(streamInfo.x, streamInfo.y, streamInfo.w, streamInfo.h);
+                newSink->setFrameSize(streamInfo.w, streamInfo.h);
 
-            for (auto& videoStream : videoStreams)
-                videoStream->attach(newSink.get());
+                for (auto& videoStream : videoStreams)
+                    videoStream->attach(newSink.get());
 
-            sinksMap.emplace(sinkId, newSink);
-            sinkIdsList.emplace(sinkId);
-        } else {
-            sinkIdsList.erase(sinkId);
+                sinksMap.emplace(sinkId, newSink);
+                sinkIdsList.emplace(sinkId);
+            } else {
+                sinkIdsList.erase(sinkId);
+            }
         }
     }
 

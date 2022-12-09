@@ -249,7 +249,7 @@ public:
                         const std::string& callId,
                         const std::string& account2Id,
                         const std::string& confId);
-    bool addParticipant(Call& call, Conference& conference);
+    bool addParticipant(const std::shared_ptr<SIPCall>& call, Conference& conference);
 
     /**
      * Bind the main participant to a conference (mainly called on a double click action)
