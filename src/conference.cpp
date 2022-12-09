@@ -98,8 +98,8 @@ Conference::Conference(const std::shared_ptr<Account>& account,
     // Only set host source if creating conference from joining calls
     auto hasVideo = videoEnabled_ && itVideo != hostSources_.end() && attachHost_;
     auto source = hasVideo ? itVideo->sourceUri_ : "";
-    videoMixer_ = std::make_shared<video::VideoMixer>(id_, source, hasVideo);
-    videoMixer_->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
+    callStreamsMgr_ = std::make_shared<video::VideoMixer>(id_, source, hasVideo);
+    callStreamsMgr_->setOnSourcesUpdated([this](const std::vector<StreamInfo>& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
             if (!shared)
@@ -132,9 +132,7 @@ Conference::Conference(const std::shared_ptr<Account>& account,
                     }
                     std::string_view peerId = string_remove_suffix(uri, '@');
                     auto isModerator = shared->isModerator(peerId);
-                    auto isHandRaised = shared->isHandRaised(deviceId);
                     auto isModeratorMuted = shared->isMuted(callId);
-                    auto isVoiceActive = shared->isVoiceActive(info.streamId);
                     if (auto videoMixer = shared->videoMixer_)
                         active = videoMixer->verifyActive(info.streamId);
                     newInfo.emplace_back(ParticipantInfo {std::move(uri),
@@ -149,8 +147,8 @@ Conference::Conference(const std::shared_ptr<Account>& account,
                                                           isLocalMuted,
                                                           isModeratorMuted,
                                                           isModerator,
-                                                          isHandRaised,
-                                                          isVoiceActive,
+                                                          info.handRaised,
+                                                          info.voiceActivity,
                                                           isPeerRecording});
                 } else {
                     auto isModeratorMuted = false;
@@ -188,8 +186,6 @@ Conference::Conference(const std::shared_ptr<Account>& account,
                         isLocalMuted = shared->isMediaSourceMuted(MediaType::MEDIA_AUDIO);
                         isPeerRecording = shared->isRecording();
                     }
-                    auto isHandRaised = shared->isHandRaised(deviceId);
-                    auto isVoiceActive = shared->isVoiceActive(streamId);
                     newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                           deviceId,
                                                           std::move(streamId),
@@ -202,8 +198,8 @@ Conference::Conference(const std::shared_ptr<Account>& account,
                                                           isLocalMuted,
                                                           isModeratorMuted,
                                                           isModerator,
-                                                          isHandRaised,
-                                                          isVoiceActive,
+                                                          info.handRaised,,
+                                                          info.voiceActivity,
                                                           isPeerRecording});
                 }
             }
@@ -260,7 +256,7 @@ Conference::Conference(const std::shared_ptr<Account>& account,
     parser_.onRaiseHandUri([&](const auto& uri, bool state) {
         if (auto call = std::dynamic_pointer_cast<SIPCall>(getCallFromPeerID(uri)))
             if (auto* transport = call->getTransport())
-                setHandRaised(std::string(transport->deviceId()), state);
+                setHandRaised(uri, std::string(transport->deviceId()), state);
     });
 
     parser_.onVoiceActivity(
@@ -1201,95 +1197,18 @@ Conference::isModerator(std::string_view uri) const
     return moderators_.find(uri) != moderators_.end() or isHost(uri);
 }
 
-bool
-Conference::isHandRaised(std::string_view deviceId) const
-{
-    return isHostDevice(deviceId) ? handsRaised_.find("host"sv) != handsRaised_.end()
-                                  : handsRaised_.find(deviceId) != handsRaised_.end();
-}
-
 void
-Conference::setHandRaised(const std::string& deviceId, const bool& state)
+Conference::setHandRaised(const std::string& uri, const std::string& deviceId, const bool& state)
 {
-    if (isHostDevice(deviceId)) {
-        auto isPeerRequiringAttention = isHandRaised("host"sv);
-        if (state and not isPeerRequiringAttention) {
-            JAMI_DBG("Raise host hand");
-            handsRaised_.emplace("host"sv);
-            updateHandsRaised();
-        } else if (not state and isPeerRequiringAttention) {
-            JAMI_DBG("Lower host hand");
-            handsRaised_.erase("host");
-            updateHandsRaised();
-        }
-    } else {
-        for (const auto& p : getParticipantList()) {
-            if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(p))) {
-                auto isPeerRequiringAttention = isHandRaised(deviceId);
-                std::string callDeviceId;
-                if (auto* transport = call->getTransport())
-                    callDeviceId = transport->deviceId();
-                if (deviceId == callDeviceId) {
-                    if (state and not isPeerRequiringAttention) {
-                        JAMI_DEBUG("Raise {:s} hand", deviceId);
-                        handsRaised_.emplace(deviceId);
-                        updateHandsRaised();
-                    } else if (not state and isPeerRequiringAttention) {
-                        JAMI_DEBUG("Remove {:s} raised hand", deviceId);
-                        handsRaised_.erase(deviceId);
-                        updateHandsRaised();
-                    }
-                    return;
-                }
-            }
-        }
-        JAMI_WARN("Fail to raise %s hand (participant not found)", deviceId.c_str());
-    }
-}
-
-bool
-Conference::isVoiceActive(std::string_view streamId) const
-{
-    return streamsVoiceActive.find(streamId) != streamsVoiceActive.end();
+    if (callStreamsMgr_)
+        callStreamsMgr_->setHandRaised(uri, deviceId, state);
 }
 
 void
 Conference::setVoiceActivity(const std::string& streamId, const bool& newState)
 {
-    // verify that streamID exists in our confInfo
-    bool exists = false;
-    for (auto& participant : confInfo_) {
-        if (participant.sinkId == streamId) {
-            exists = true;
-            break;
-        }
-    }
-
-    if (!exists) {
-        JAMI_ERR("participant not found with streamId: %s", streamId.c_str());
-        return;
-    }
-
-    auto previousState = isVoiceActive(streamId);
-
-    if (previousState == newState) {
-        // no change, do not send out updates
-        return;
-    }
-
-    if (newState and not previousState) {
-        // voice going from inactive to active
-        streamsVoiceActive.emplace(streamId);
-        updateVoiceActivity();
-        return;
-    }
-
-    if (not newState and previousState) {
-        // voice going from active to inactive
-        streamsVoiceActive.erase(streamId);
-        updateVoiceActivity();
-        return;
-    }
+    if (callStreamsMgr_)
+        callStreamsMgr_->setVoiceActivity(streamId, newState);
 }
 
 void
@@ -1323,41 +1242,6 @@ Conference::updateModerators()
         info.isModerator = isModerator(string_remove_suffix(info.uri, '@'));
     }
     sendConferenceInfos();
-}
-
-void
-Conference::updateHandsRaised()
-{
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
-    for (auto& info : confInfo_)
-        info.handRaised = isHandRaised(info.device);
-    sendConferenceInfos();
-}
-
-void
-Conference::updateVoiceActivity()
-{
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
-
-    // streamId is actually sinkId
-    for (ParticipantInfo& participantInfo : confInfo_) {
-        bool newActivity;
-
-        if (auto call = getCallWith(std::string(string_remove_suffix(participantInfo.uri, '@')),
-                                    participantInfo.device)) {
-            // if this participant is in a direct call with us
-            // grab voice activity info directly from the call
-            newActivity = call->hasPeerVoice();
-        } else {
-            // check for it
-            newActivity = isVoiceActive(participantInfo.sinkId);
-        }
-
-        if (participantInfo.voiceActivity != newActivity) {
-            participantInfo.voiceActivity = newActivity;
-        }
-    }
-    sendConferenceInfos(); // also emits signal to client
 }
 
 void

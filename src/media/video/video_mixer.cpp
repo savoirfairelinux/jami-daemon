@@ -83,6 +83,7 @@ static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / 
 
 VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, bool attachHost)
     : VideoGenerator::VideoGenerator()
+    , CallStreamsManager::CallStreamsManager()
     , id_(id)
     , sink_(Manager::instance().createSinkClient(id, true))
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
@@ -301,7 +302,7 @@ VideoMixer::process()
         bool activeFound = false;
         bool needsUpdate = layoutUpdated_ > 0;
         bool successfullyRendered = audioOnlySources_.size() != 0 && sources_.size() == 0;
-        std::vector<SourceInfo> sourcesInfo;
+        std::vector<StreamInfos> sourcesInfo;
         sourcesInfo.reserve(sources_.size() + audioOnlySources_.size());
         // add all audioonlysources
         for (auto& [callId, streamId] : audioOnlySources_) {
@@ -396,8 +397,7 @@ VideoMixer::process()
                                                          sinfo.callId,
                                                          sinfo.streamId});
                 }
-                if (onSourcesUpdated_)
-                    onSourcesUpdated_(std::move(sourcesInfo));
+                updateInfo();
             }
         }
     }
