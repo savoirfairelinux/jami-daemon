@@ -108,27 +108,27 @@ private:
     void testRemoveConferenceInOneOne();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
-    CPPUNIT_TEST(testGetConference);
-    CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
-    CPPUNIT_TEST(testUnauthorizedMute);
-    CPPUNIT_TEST(testAudioVideoMutedStates);
-    CPPUNIT_TEST(testCreateParticipantsSinks);
-    CPPUNIT_TEST(testMuteStatusAfterRemove);
-    CPPUNIT_TEST(testActiveStatusAfterRemove);
+   // CPPUNIT_TEST(testGetConference);
+   // CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
+   // CPPUNIT_TEST(testUnauthorizedMute);
+   // CPPUNIT_TEST(testAudioVideoMutedStates);
+   // CPPUNIT_TEST(testCreateParticipantsSinks);
+   // CPPUNIT_TEST(testMuteStatusAfterRemove);
+   // CPPUNIT_TEST(testActiveStatusAfterRemove);
     CPPUNIT_TEST(testHandsUp);
-    CPPUNIT_TEST(testPeerLeaveConference);
-    CPPUNIT_TEST(testJoinCallFromOtherAccount);
-    CPPUNIT_TEST(testDevices);
-    CPPUNIT_TEST(testUnauthorizedSetActive);
-    CPPUNIT_TEST(testHangup);
-    CPPUNIT_TEST(testIsConferenceParticipant);
-    CPPUNIT_TEST(testAudioConferenceConfInfo);
-    CPPUNIT_TEST(testHostAddRmSecondVideo);
-    CPPUNIT_TEST(testParticipantAddRmSecondVideo);
-    CPPUNIT_TEST(testPropagateRecording);
-    CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
-    CPPUNIT_TEST(testBrokenParticipantAudioOnly);
-    CPPUNIT_TEST(testRemoveConferenceInOneOne);
+   // CPPUNIT_TEST(testPeerLeaveConference);
+   // CPPUNIT_TEST(testJoinCallFromOtherAccount);
+   // CPPUNIT_TEST(testDevices);
+   // CPPUNIT_TEST(testUnauthorizedSetActive);
+   // CPPUNIT_TEST(testHangup);
+   // CPPUNIT_TEST(testIsConferenceParticipant);
+   // CPPUNIT_TEST(testAudioConferenceConfInfo);
+   // CPPUNIT_TEST(testHostAddRmSecondVideo);
+   // CPPUNIT_TEST(testParticipantAddRmSecondVideo);
+   // CPPUNIT_TEST(testPropagateRecording);
+   // CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
+   // CPPUNIT_TEST(testBrokenParticipantAudioOnly);
+   // CPPUNIT_TEST(testRemoveConferenceInOneOne);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -627,8 +627,11 @@ ConferenceTest::testHandsUp()
     libjami::raiseHand(carlaId, carlaCall.callId, carlaUri, carlaCall.device, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return carlaCall.raisedHand.load(); }));
 
+    JAMI_ERROR("@@@@@@@@@@@@@@@@@@ DAVID RAISE HAND {}", daviUri);
     libjami::raiseHand(daviId, carlaCall.callId, carlaUri, carlaCall.device, false);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&] { return !carlaCall.raisedHand.load(); }));
+
+    JAMI_ERROR("@@@@@@@@@@@@@@@@@@ BOB RAISE HAND, {}", bobUri);
 
     libjami::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !carlaCall.raisedHand.load(); }));
