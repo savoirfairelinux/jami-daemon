@@ -159,18 +159,22 @@ TurnCache::testTurn(IpAddr server)
     try {
         turn = std::make_unique<TurnTransport>(
             params, std::move([this, server](bool ok) {
-                std::lock_guard<std::mutex> lk(cachedTurnMutex_);
-                auto& cacheTurn = server.isIpv4() ? cacheTurnV4_ : cacheTurnV6_;
-                if (!ok) {
-                    JAMI_ERROR("Connection to {:s} failed - reset", server.toString());
-                    cacheTurn.reset();
-                } else {
-                    JAMI_DEBUG("Connection to {:s} ready", server.toString());
-                    cacheTurn = std::make_unique<IpAddr>(server);
-                }
-                refreshTurnDelay(!cacheTurnV6_ && !cacheTurnV4_);
-                auto& turn = server.isIpv4() ? testTurnV4_ : testTurnV6_;
-                turn->shutdown();
+                // Stop server in an async job, because this callback can be called
+                // immediately and cachedTUrnMutex_ must not be locked.
+                io_context->post([this, server, ok]() {
+                    std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+                    auto& cacheTurn = server.isIpv4() ? cacheTurnV4_ : cacheTurnV6_;
+                    if (!ok) {
+                        JAMI_ERROR("Connection to {:s} failed - reset", server.toString());
+                        cacheTurn.reset();
+                    } else {
+                        JAMI_DEBUG("Connection to {:s} ready", server.toString());
+                        cacheTurn = std::make_unique<IpAddr>(server);
+                    }
+                    refreshTurnDelay(!cacheTurnV6_ && !cacheTurnV4_);
+                    auto& turn = server.isIpv4() ? testTurnV4_ : testTurnV6_;
+                    turn->shutdown();
+                });
             }));
     } catch (const std::exception& e) {
         JAMI_ERROR("TurnTransport creation error: {}", e.what());
