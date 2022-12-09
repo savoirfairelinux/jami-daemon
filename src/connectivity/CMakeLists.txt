@@ -18,6 +18,10 @@ list (APPEND Source_Files__connectivity
     "${CMAKE_CURRENT_SOURCE_DIR}/sip_utils.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/turn_cache.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/turn_cache.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/turn_transport.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/turn_transport.h"
 )
 
 set (Source_Files__connectivity ${Source_Files__connectivity} PARENT_SCOPE)
