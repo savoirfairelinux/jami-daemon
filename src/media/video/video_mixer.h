@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "callstreamsmanager.h"
 #include "noncopyable.h"
 #include "video_base.h"
 #include "video_scaler.h"
@@ -56,13 +57,11 @@ struct SourceInfo
 };
 using OnSourcesUpdatedCb = std::function<void(std::vector<SourceInfo>&&)>;
 
-enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
-
-class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
+class VideoMixer : public VideoGenerator, public VideoFramePassiveReader, public CallStreamsManager
 {
 public:
     VideoMixer(const std::string& id, const std::string& localInput = {}, bool attachHost = true);
-    ~VideoMixer();
+    virtual ~VideoMixer();
 
     void setParameters(int width, int height, AVPixelFormat format = AV_PIX_FMT_YUV422P);
 
@@ -82,29 +81,11 @@ public:
      * @note previous inputs will be stopped
      */
     void switchInputs(const std::vector<std::string>& inputs);
+    void setStreams(const std::string& uri, const std::string& device, const std::vector<MediaAttribute>& streams) override;
     /**
      * Stop all inputs
      */
     void stopInputs();
-
-    void setActiveStream(const std::string& id);
-    void resetActiveStream()
-    {
-        activeStream_ = {};
-        updateLayout();
-    }
-
-    bool verifyActive(const std::string& id) { return activeStream_ == id; }
-
-    void setVideoLayout(Layout newLayout)
-    {
-        currentLayout_ = newLayout;
-        if (currentLayout_ == Layout::GRID)
-            resetActiveStream();
-        layoutUpdated_ += 1;
-    }
-
-    Layout getVideoLayout() const { return currentLayout_; }
 
     void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) { onSourcesUpdated_ = std::move(cb); }
 
@@ -117,24 +98,30 @@ public:
         return {};
     }
 
-    void updateLayout();
+    void updateLayout() {
+        JAMI_ERROR("@@@ UPDATE LAYOUT");
+        layoutUpdated_ += 1; // TODO remove
+    }
+    void setLayout(int layout) override;
 
     std::shared_ptr<SinkClient>& getSink() { return sink_; }
 
     void addAudioOnlySource(const std::string& callId, const std::string& streamId)
     {
+        JAMI_ERROR("@@@ addAudioOnlySource {}", streamId );
         std::unique_lock<std::mutex> lk(audioOnlySourcesMtx_);
         audioOnlySources_.insert({callId, streamId});
         lk.unlock();
-        updateLayout();
+        layoutUpdated_ += 1;
     }
 
     void removeAudioOnlySource(const std::string& callId, const std::string& streamId)
     {
+    JAMI_ERROR("@@@ removeAudioOnlySource {} ", streamId);
         std::unique_lock<std::mutex> lk(audioOnlySourcesMtx_);
         if (audioOnlySources_.erase({callId, streamId})) {
             lk.unlock();
-            updateLayout();
+            layoutUpdated_ += 1;
         }
     }
 
@@ -158,9 +145,9 @@ private:
 
     bool render_frame(VideoFrame& output,
                       const std::shared_ptr<VideoFrame>& input,
-                      std::unique_ptr<VideoMixerSource>& source);
+                      VideoMixerSource* source);
 
-    void calc_position(std::unique_ptr<VideoMixerSource>& source,
+    void calc_position(VideoMixerSource* source,
                        const std::shared_ptr<VideoFrame>& input,
                        int index);
 
@@ -186,16 +173,16 @@ private:
 
     ThreadLoop loop_; // as to be last member
 
-    Layout currentLayout_ {Layout::GRID};
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
 
     // We need to convert call to frame
     mutable std::mutex videoToStreamInfoMtx_ {};
     std::map<Observable<std::shared_ptr<MediaFrame>>*, StreamInfo> videoToStreamInfo_ {};
+    std::map<std::string, Observable<std::shared_ptr<MediaFrame>>*> streamIdToSource_ {};
+
 
     std::mutex audioOnlySourcesMtx_;
     std::set<std::pair<std::string, std::string>> audioOnlySources_;
-    std::string activeStream_ {};
 
     std::atomic_int layoutUpdated_ {0};
     OnSourcesUpdatedCb onSourcesUpdated_ {};

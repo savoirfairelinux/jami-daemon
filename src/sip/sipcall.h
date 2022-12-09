@@ -331,6 +331,9 @@ public:
      */
     void reportMediaNegotiationStatus();
 
+    std::string getRemoteUri();
+    std::string getRemoteDeviceId();
+
 private:
     void generateMediaPorts();
 
@@ -501,7 +504,9 @@ private:
     // Re-invite (temporary) ICE media transport.
     std::shared_ptr<IceTransport> reinvIceMedia_;
 
-    std::string peerUri_ {};
+    std::string peerUri_ {}; // Contains jami: // TODO delete?
+    std::string remoteUri_ {};
+    std::string peerDeviceId_ {};
 
     bool readyToRecord_ {false};
     bool pendingRecord_ {false};
