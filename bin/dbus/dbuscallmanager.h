@@ -106,7 +106,6 @@ public:
                         const std::string& account2Id,
                         const std::string& confId);
     bool addMainParticipant(const std::string& accountId, const std::string& confId);
-    bool detachLocalParticipant();
     bool detachParticipant(const std::string& accountId, const std::string& callId);
     bool joinConference(const std::string& accountId,
                         const std::string& sel_confId,

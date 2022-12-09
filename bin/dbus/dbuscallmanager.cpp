@@ -239,12 +239,6 @@ DBusCallManager::addMainParticipant(const std::string& accountId, const std::str
 }
 
 auto
-DBusCallManager::detachLocalParticipant() -> decltype(libjami::detachLocalParticipant())
-{
-    return libjami::detachLocalParticipant();
-}
-
-auto
 DBusCallManager::detachParticipant(const std::string& accountId, const std::string& callId)
     -> decltype(libjami::detachParticipant(accountId, callId))
 {
