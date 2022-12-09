@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e6500079_641de028",
+        "filename": "src/connectivity/turn_cache.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-12-09T15:55:25Z",
+      "side": 1,
+      "message": "this could become invalid during destruction",
+      "range": {
+        "startLine": 164,
+        "startChar": 34,
+        "endLine": 164,
+        "endChar": 38
+      },
+      "revId": "48940b195e625b1e0524cf730dffa73be780530e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
