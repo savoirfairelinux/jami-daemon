@@ -2223,7 +2223,7 @@ ConversationModule::hostConference(const std::string& conversationId,
         conf = std::make_shared<Conference>(acc, confId);
         acc->attach(conf);
     }
-    conf->addParticipant(callId);
+    conf->bindCall(call);
 
     if (createConf) {
         emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
