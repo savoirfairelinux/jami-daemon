@@ -53,11 +53,11 @@ public:
     {
         hangupParticipant_ = std::move(cb);
     }
-    void onRaiseHand(std::function<void(const std::string&, bool)>&& cb)
+    void onRaiseHand(std::function<void(const std::string&, const std::string&, bool)>&& cb)
     {
         raiseHand_ = std::move(cb);
     }
-    void onSetActiveStream(std::function<void(const std::string&, bool)>&& cb)
+    void onSetActiveStream(std::function<void(const std::string&, const std::string&, const std::string&, bool)>&& cb)
     {
         setActiveStream_ = std::move(cb);
     }
@@ -90,7 +90,7 @@ public:
     {
         raiseHandUri_ = std::move(cb);
     }
-    void onVoiceActivity(std::function<void(const std::string&, bool)>&& cb)
+    void onVoiceActivity(std::function<void(const std::string&, const std::string&, const std::string&, bool)>&& cb)
     {
         voiceActivity_ = std::move(cb);
     }
@@ -120,8 +120,8 @@ private:
 
     std::function<bool(std::string_view)> checkAuthorization_;
     std::function<void(const std::string&, const std::string&)> hangupParticipant_;
-    std::function<void(const std::string&, bool)> raiseHand_;
-    std::function<void(const std::string&, bool)> setActiveStream_;
+    std::function<void(const std::string&, const std::string&, bool)> raiseHand_;
+    std::function<void(const std::string&, const std::string&, const std::string&, bool)> setActiveStream_;
     std::function<void(const std::string&, const std::string&, const std::string&, bool)>
         muteStreamAudio_;
     std::function<void(const std::string&, const std::string&, const std::string&, bool)>
@@ -132,7 +132,7 @@ private:
     std::function<void(const std::string&)> kickParticipant_;
     std::function<void(const std::string&)> setActiveParticipant_;
     std::function<void(const std::string&, bool)> muteParticipant_;
-    std::function<void(const std::string&, bool)> voiceActivity_;
+    std::function<void(const std::string&, const std::string&, const std::string&, bool)> voiceActivity_;
 };
 
 } // namespace jami
