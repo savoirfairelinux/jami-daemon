@@ -840,7 +840,7 @@ ConferenceTest::testIsConferenceParticipant()
     startConference();
 
     // is Conference participant should be true for Carla
-    auto participants = aliceAccount->getConference(confId)->getParticipantList();
+    auto participants = aliceAccount->getConference(confId)->getCallIds();
     CPPUNIT_ASSERT(participants.size() == 2);
     auto call1 = *participants.begin();
     auto call2 = *participants.rbegin();
@@ -1073,7 +1073,7 @@ ConferenceTest::testBrokenParticipantAudioOnly()
     // Check participants number
     // It should have one less participant than in the conference start
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+        cv.wait_for(lk, 30s, [&] {return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
     libjami::unregisterSignalHandlers();

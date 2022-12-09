@@ -22,6 +22,7 @@
 
 #include "call.h"
 #include "account.h"
+#include "callstreamsmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
 #ifdef ENABLE_PLUGIN
@@ -108,7 +109,7 @@ Call::Call(const std::shared_ptr<Account>& account,
                                 "Call %s is still ringing after timeout, setting state to BUSY",
                                 callShPtr->getCallId().c_str());
                             callShPtr->hangup(PJSIP_SC_BUSY_HERE);
-                            Manager::instance().callFailure(*callShPtr);
+                            Manager::instance().callFailure(callShPtr);
                         }
                     }
                 },
@@ -389,6 +390,10 @@ Call::getDetails() const
 void
 Call::onTextMessage(std::map<std::string, std::string>&& messages)
 {
+    JAMI_ERROR("@@@ ON TEXT MESSAGE");
+    for (const auto& [k,v]: messages) {
+        JAMI_ERROR("@@@ {} {}", k, v);
+    }
     auto it = messages.find("application/confInfo+json");
     if (it != messages.end()) {
         setConferenceInfo(it->second);
@@ -506,7 +511,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
                   subcall.getCallId().c_str());
 
         hangupCalls(safePopSubcalls(), 0);
-        Manager::instance().peerHungupCall(*this);
+        Manager::instance().peerHungupCall(shared_from_this());
         removeCall();
         return;
     }
@@ -644,15 +649,8 @@ Call::setConferenceInfo(const std::string& msg)
     if (reader->parse(msg.data(), msg.data() + msg.size(), &json, &err)) {
         if (json.isObject()) {
             // new confInfo
-            if (json.isMember("p")) {
-                for (const auto& participantInfo : json["p"]) {
-                    ParticipantInfo pInfo;
-                    if (!participantInfo.isMember("uri"))
-                        continue;
-                    pInfo.fromJson(participantInfo);
-                    newInfo.emplace_back(pInfo);
-                }
-            }
+            if (json.isMember("p"))
+                newInfo.mergeJson(json["p"]);
             if (json.isMember("v")) {
                 newInfo.v = json["v"].asInt();
                 peerConfProtocol_ = newInfo.v;
@@ -662,14 +660,7 @@ Call::setConferenceInfo(const std::string& msg)
             if (json.isMember("h"))
                 newInfo.h = json["h"].asInt();
         } else {
-            // old confInfo
-            for (const auto& participantInfo : json) {
-                ParticipantInfo pInfo;
-                if (!participantInfo.isMember("uri"))
-                    continue;
-                pInfo.fromJson(participantInfo);
-                newInfo.emplace_back(pInfo);
-            }
+            newInfo.mergeJson(json);
         }
     }
 
@@ -687,7 +678,7 @@ Call::setConferenceInfo(const std::string& msg)
             jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(
                 id_, confInfo_.toVectorMapStringString());
         } else if (auto conf = conf_.lock()) {
-            conf->mergeConfInfo(newInfo, getPeerNumber());
+            conf->mergeConfInfo(newInfo, getCallId());
         }
     }
 }

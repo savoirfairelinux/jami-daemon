@@ -254,12 +254,6 @@ public:
     }
 
     auto
-    detachLocalParticipant() -> decltype(libjami::detachLocalParticipant())
-    {
-        return libjami::detachLocalParticipant();
-    }
-
-    auto
     detachParticipant(const std::string& accountId, const std::string& callId)
         -> decltype(libjami::detachParticipant(accountId, callId))
     {

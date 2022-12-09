@@ -258,7 +258,7 @@ public:
                         const std::string& callId,
                         const std::string& account2Id,
                         const std::string& confId);
-    bool addParticipant(Call& call, Conference& conference);
+    bool addParticipant(const std::shared_ptr<SIPCall>& call, Conference& conference);
 
     /**
      * Bind the main participant to a conference (mainly called on a double click action)
@@ -295,13 +295,13 @@ public:
      * Detach the local participant from curent conference.
      * Remote participants are placed in hold.
      */
-    bool detachLocalParticipant(const std::shared_ptr<Conference>& conf = {});
+    bool detachLocal(const std::shared_ptr<Conference>& conf = {});
 
     /**
-     * Remove the conference participant from a conference
+     * Remove a call from a conference
      * @param call id
      */
-    void removeParticipant(Call& call);
+    void removeCall(const std::shared_ptr<Call>& call);
 
     /**
      * Join two conference together into one unique conference
@@ -313,7 +313,7 @@ public:
 
     void addAudio(Call& call);
 
-    void removeAudio(Call& call);
+    void removeAudio(const std::shared_ptr<Call>& call);
 
     /**
      * Save config to file
@@ -354,7 +354,7 @@ public:
      * Put the call in Hungup state, remove the call from the list
      * @param id  The call identifier
      */
-    void peerHungupCall(Call& call);
+    void peerHungupCall(const std::shared_ptr<Call>& call);
 
     /**
      * Notify the client with an incoming message
@@ -646,7 +646,7 @@ public:
     /**
      * Handle played sound when a failure occurs
      */
-    void callFailure(Call& call);
+    void callFailure(const std::shared_ptr<Call>& call);
 
     /**
      * Retrieve the current telephone tone
