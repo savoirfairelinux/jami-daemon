@@ -235,8 +235,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
 {
     auto bucket = routing_table.findBucket(nodeId);
     bucket->removeKnownNode(nodeId);
-
-    //    bucket->addConnectingNode(nodeId);
+    bucket->addConnectingNode(nodeId);
 
     if (needSocketCb_)
         needSocketCb_(nodeId.toString(),
@@ -246,9 +245,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                               return true;
                           }
                           std::unique_lock<std::mutex> lk(mutex);
-                          routing_table.addKnownNode(nodeId); // TODO move?
                           auto bucket = routing_table.findBucket(getId());
-                          bucket->removeConnectingNode(nodeId); // TODO move?
                           if (bucket->getConnectingNodesSize() == 0
                               && bucket->getNodeIds().size() == 0 && onConnectionChanged_) {
                               lk.unlock();
