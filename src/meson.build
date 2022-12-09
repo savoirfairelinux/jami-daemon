@@ -100,6 +100,7 @@ libjami_sources = files(
     'buildinfo.cpp',
     'call.cpp',
     'call_factory.cpp',
+    'callstreamsmanager.cpp',
     'conference.cpp',
     'conference_protocol.cpp',
     'data_transfer.cpp',
