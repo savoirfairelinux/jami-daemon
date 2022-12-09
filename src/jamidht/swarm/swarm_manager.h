@@ -73,11 +73,7 @@ public:
     RoutingTable& getRoutingTable() { return routing_table; };
     std::list<Bucket>& getBuckets() { return routing_table.getBuckets(); };
 
-    void shutdown()
-    {
-        JAMI_ERROR("SENDING SD {}", id_.toString());
-        routing_table.shutdownAllNodes();
-    }
+    void shutdown() { routing_table.shutdownAllNodes(); }
 
     void display()
     {
