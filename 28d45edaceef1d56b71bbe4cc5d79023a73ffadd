@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "967e74cc_a2c01871",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-09T13:34:59Z",
+      "side": 1,
+      "message": "Also: needs to update toolset for 143 where the default toolset is defined as 142.\nThis change is needed for the MFC",
+      "revId": "28d45edaceef1d56b71bbe4cc5d79023a73ffadd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3df5ebaf_a55c205f",
         "filename": "compat/msvc/winmake.py",
         "patchSetId": 1
