@@ -1146,7 +1146,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     int ret;
     size_t retry_count = 0;
     do {
-        JAMI_DBG("[TLS] handshake");
+        JAMI_DEBUG("[TLS] handshake {}", ret);
         ret = gnutls_handshake(session_);
     } while ((ret == GNUTLS_E_INTERRUPTED or ret == GNUTLS_E_AGAIN)
              and ++retry_count < HANDSHAKE_MAX_RETRY
