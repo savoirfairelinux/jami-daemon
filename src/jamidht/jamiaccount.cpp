@@ -291,7 +291,6 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
 {}
-{}
 
 JamiAccount::~JamiAccount() noexcept
 {
@@ -2111,6 +2110,8 @@ JamiAccount::doRegister_()
             }
         }
 
+        isPersistent = this->config().dhtPeerDiscovery;
+
         // Bootstrap at the end to avoid to be long to load.
         dht::ThreadPool::io().run([w = weak()] {
             if (auto shared = w.lock())
@@ -2146,7 +2147,6 @@ JamiAccount::convModule()
                 // main thread.
                 if (!device)
                     return sendTextMessage(uri, msg, token);
-                JAMI_ERROR("@@@ SEND TEXT MESSAGE TO: {:s} device: {:s}", uri, device.toString());
                 sendMessageToDevice(uri, device, msg);
                 return 0ul;
             },
@@ -3406,7 +3406,6 @@ void
 JamiAccount::setPushNotificationToken(const std::string& token)
 {
     JAMI_WARNING("[Account {:s}] setPushNotificationToken: {:s}", getAccountID(), token);
-    isPersistent = config().proxyEnabled;
     SIPAccountBase::setPushNotificationToken(token);
     if (dht_)
         dht_->setPushNotificationToken(token);
@@ -3984,13 +3983,14 @@ JamiAccount::dataTransfer(const std::string& id)
 }
 
 void
-JamiAccount::monitor() const
+JamiAccount::monitor()
 {
     JAMI_DBG("[Account %s] Monitor connections", getAccountID().c_str());
 
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
-    if (connectionManager_)
-        connectionManager_->monitor();
+    ///std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    ///if (connectionManager_)
+    ///    connectionManager_->monitor();
+    convModule()->monitor();
 }
 
 void

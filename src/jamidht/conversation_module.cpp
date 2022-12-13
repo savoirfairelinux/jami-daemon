@@ -118,11 +118,13 @@ public:
      * @param conversation
      * @param commit
      * @param sync      If we send an update to other account's devices
+     * @param deviceId  If we need to filter a specific device
      */
     void sendMessageNotification(const std::string& conversationId,
                                  const std::string& commitId,
-                                 bool sync);
-    void sendMessageNotification(Conversation& conversation, const std::string& commitId, bool sync);
+                                 bool sync,
+                                 const std::string& deviceId = "");
+    void sendMessageNotification(Conversation& conversation, const std::string& commitId, bool sync, const std::string& deviceId = "");
 
     /**
      * @return if a convId is a valid conversation (repository cloned & usable)
@@ -400,6 +402,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
+        // Check if we already have the commit
+        if (conversation->second->getCommit(commitId) != std::nullopt)
+            return;
         if (!conversation->second->isMember(peer, true)) {
             JAMI_WARN("[Account %s] %s is not a member of %s",
                       accountId_.c_str(),
@@ -470,8 +475,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         {
                             std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
                             pendingConversationsFetch_.erase(conversationId);
-                            // TODO notify peers that a new commit is there (DRT)
                         }
+                        // Notify peers that a new commit is there (DRT)
+                        sendMessageNotification(conversationId, commitId, false, deviceId);
                         if (syncCnt.fetch_sub(1) == 1) {
                             if (auto account = account_.lock())
                                 emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(
@@ -803,19 +809,21 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId)
 void
 ConversationModule::Impl::sendMessageNotification(const std::string& conversationId,
                                                   const std::string& commitId,
-                                                  bool sync)
+                                                  bool sync,
+                                                  const std::string& deviceId)
 {
     std::lock_guard<std::mutex> lk(conversationsMtx_);
     auto it = conversations_.find(conversationId);
     if (it != conversations_.end() && it->second) {
-        sendMessageNotification(*it->second, commitId, sync);
+        sendMessageNotification(*it->second, commitId, sync, deviceId);
     }
 }
 
 void
 ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                   const std::string& commitId,
-                                                  bool sync)
+                                                  bool sync,
+                                                  const std::string& deviceId)
 {
     Json::Value message;
     message["id"] = conversation.id();
@@ -845,16 +853,15 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         }
     }
     for (const auto& device : devices) {
-        auto deviceId = device.toString();
-        auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
-        if (!cert || !cert->issuer)
+        auto deviceIdStr = device.toString();
+        auto memberUri = conversation.uriFromDevice(deviceIdStr);
+        if (memberUri.empty() || deviceIdStr == deviceId)
             continue;
-        auto memberUri = cert->issuer->getId().toString();
-        refreshMessage[deviceId] = sendMsgCb_(memberUri,
+        refreshMessage[deviceIdStr] = sendMsgCb_(memberUri,
                                               device,
                                               std::map<std::string, std::string> {
                                                   {"application/im-gitmessage-id", text}},
-                                              refreshMessage[deviceId]);
+                                              refreshMessage[deviceIdStr]);
     }
 }
 
@@ -1155,6 +1162,16 @@ ConversationModule::bootstrap()
 #endif // LIBJAMI_TESTABLE
             conv->bootstrap(
                 std::bind(&ConversationModule::Impl::boostrapCb, pimpl_.get(), conv->id()));
+        }
+    }
+}
+void
+ConversationModule::monitor()
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (auto& [_, conv] : pimpl_->conversations_) {
+        if (conv) {
+            conv->monitor();
         }
     }
 }
