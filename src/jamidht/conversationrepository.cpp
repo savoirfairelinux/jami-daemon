@@ -3687,6 +3687,13 @@ ConversationRepository::pinCertificates(bool blocking)
 }
 
 std::string
+ConversationRepository::uriFromDevice(const std::string& deviceId) const
+{
+    return pimpl_->uriFromDevice(deviceId);
+}
+
+
+std::string
 ConversationRepository::updateInfos(const std::map<std::string, std::string>& profile)
 {
     auto account = pimpl_->account_.lock();
