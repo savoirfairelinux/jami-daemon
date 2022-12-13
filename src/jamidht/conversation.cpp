@@ -981,6 +981,30 @@ Conversation::peersToSyncWith() const
 }
 
 std::string
+Conversation::uriFromDevice(const std::string& deviceId) const
+{
+    return pimpl_->repository_->uriFromDevice(deviceId);
+}
+
+void
+Conversation::monitor()
+{
+    const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
+    const auto& nodes = routingTable.getNodes();
+    const auto& mobiles = routingTable.getMobileNodes();
+    if (mobiles.size() + nodes.size() > 0) {
+        JAMI_ERROR("{:s} Monitor:", pimpl_->toString());
+        auto selfId = pimpl_->swarmManager_->getId().toString();
+        for (const auto& node : nodes) {
+            JAMI_ERROR("    {:s}        Node: {}", selfId, node.toString());
+        }
+        for (const auto& node : mobiles) {
+            JAMI_ERROR("    {:s} Mobile Node: {}", selfId, node.toString());
+        }
+    }
+}
+
+std::string
 Conversation::join()
 {
     return pimpl_->repository_->join();
