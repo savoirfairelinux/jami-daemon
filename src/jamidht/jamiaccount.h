@@ -453,13 +453,11 @@ public:
                                                           const std::string& conversationId) const
     {
         auto deviceSockets = gitSocketList_.find(deviceId);
-        if (deviceSockets == gitSocketList_.end()) {
+        if (deviceSockets == gitSocketList_.end())
             return std::nullopt;
-        }
         auto socketIt = deviceSockets->second.find(conversationId);
-        if (socketIt == deviceSockets->second.end()) {
+        if (socketIt == deviceSockets->second.end())
             return std::nullopt;
-        }
         return socketIt->second;
     }
     bool hasGitSocket(const DeviceId& deviceId, const std::string& conversationId) const
@@ -478,13 +476,13 @@ public:
     void removeGitSocket(const DeviceId& deviceId, const std::string& conversationId)
     {
         auto deviceSockets = gitSocketList_.find(deviceId);
-        if (deviceSockets == gitSocketList_.end()) {
+        if (deviceSockets == gitSocketList_.end())
             return;
-        }
-        deviceSockets->second.erase(conversationId);
-        if (deviceSockets->second.empty()) {
+        auto itSocket = deviceSockets->second.find(conversationId);
+        if (itSocket != deviceSockets->second.end())
+            deviceSockets->second.erase(itSocket);
+        if (deviceSockets->second.empty())
             gitSocketList_.erase(deviceSockets);
-        }
     }
 
     std::string_view currentDeviceId() const;

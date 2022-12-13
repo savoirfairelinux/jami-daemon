@@ -2034,11 +2034,13 @@ JamiAccount::doRegister_()
                               channel->channel());
                     auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
                     gs->setOnFetched(
-                        [w = weak(), conversationId, deviceId](const std::string& commit) {
+                        [w = weak(), conversationId, deviceId, channel](const std::string& commit) {
                             if (auto shared = w.lock())
                                 shared->convModule()->setFetched(conversationId,
                                                                  deviceId.toString(),
                                                                  commit);
+                            channel->shutdown();
+
                         });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
@@ -2141,6 +2143,7 @@ JamiAccount::convModule()
                     if (!shared)
                         return;
                     auto gs = shared->gitSocket(DeviceId(deviceId), convId);
+
                     if (gs != std::nullopt) {
                         if (auto socket = gs->lock()) {
                             if (!cb(socket))
