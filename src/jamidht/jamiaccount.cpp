@@ -2029,12 +2029,17 @@ JamiAccount::doRegister_()
                               deviceId.to_c_str(),
                               channel->channel());
                     auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
+                    std::weak_ptr<ChannelSocket> wc = channel;
+                    JAMI_ERROR("@@@ CREATE");
                     gs->setOnFetched(
-                        [w = weak(), conversationId, deviceId](const std::string& commit) {
+                        [w = weak(), conversationId, deviceId, wc](const std::string& commit) {
                             if (auto shared = w.lock())
                                 shared->convModule()->setFetched(conversationId,
                                                                  deviceId.toString(),
                                                                  commit);
+                            JAMI_ERROR("@@@ SHUTDOWN");
+                            if (auto channel = wc.lock())
+                                channel->shutdown();
                         });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
@@ -2048,6 +2053,7 @@ JamiAccount::doRegister_()
                             if (!shared)
                                 return;
                             std::lock_guard<std::mutex> lk(shared->gitServersMtx_);
+                            JAMI_ERROR("@@@ ERASE");
                             shared->gitServers_.erase(serverId);
                         });
                     });
