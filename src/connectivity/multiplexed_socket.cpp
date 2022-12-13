@@ -942,9 +942,15 @@ ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                              const uint16_t& channel,
                              bool isInitiator)
     : pimpl_ {std::make_unique<Impl>(endpoint, name, channel, isInitiator)}
-{}
+{
+    if (pimpl_->name.find("git://") == 0)
+        JAMI_ERROR("@@@@ CREATE {:p} {} isInitiator {}", fmt::ptr(this), pimpl_->name, pimpl_->isInitiator_);
+}
 
-ChannelSocket::~ChannelSocket() {}
+ChannelSocket::~ChannelSocket() {
+    if (pimpl_->name.find("git://") == 0)
+        JAMI_ERROR("@@@@ DESTROY {:p} isInitiator {}", fmt::ptr(this), pimpl_->name, pimpl_->isInitiator_);
+}
 
 DeviceId
 ChannelSocket::deviceId() const

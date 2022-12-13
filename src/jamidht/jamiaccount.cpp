@@ -2029,12 +2029,14 @@ JamiAccount::doRegister_()
                               deviceId.to_c_str(),
                               channel->channel());
                     auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
+                    JAMI_WARNING("@@@ CREATE GIT SERVER {}", fmt::ptr(channel.get()));
                     gs->setOnFetched(
                         [w = weak(), conversationId, deviceId](const std::string& commit) {
                             if (auto shared = w.lock())
                                 shared->convModule()->setFetched(conversationId,
                                                                  deviceId.toString(),
                                                                  commit);
+
                         });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
@@ -2137,6 +2139,7 @@ JamiAccount::convModule()
                     if (!shared)
                         return;
                     auto gs = shared->gitSocket(DeviceId(deviceId), convId);
+
                     if (gs != std::nullopt) {
                         if (auto socket = gs->lock()) {
                             if (!cb(socket))
@@ -2157,7 +2160,9 @@ JamiAccount::convModule()
                         [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
                                              const DeviceId&) {
                             if (socket) {
+                                JAMI_ERROR("@@@@ SET ON SHUTDOWN {}", fmt::ptr(socket.get()));
                                 socket->onShutdown([shared, deviceId = socket->deviceId(), convId] {
+                                    JAMI_ERROR("@@@@ SHUTDOWN SHUTDOWN");
                                     shared->removeGitSocket(deviceId, convId);
                                 });
                                 if (!cb(socket))

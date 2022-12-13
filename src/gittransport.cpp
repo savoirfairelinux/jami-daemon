@@ -132,8 +132,13 @@ P2PStreamWrite(git_smart_subtransport_stream* stream, const char* buffer, size_t
 }
 
 void
-P2PStreamFree(git_smart_subtransport_stream*)
-{}
+P2PStreamFree(git_smart_subtransport_stream* stream)
+{
+    if (auto c = reinterpret_cast<P2PStream*>(stream)->socket.lock())
+        JAMI_ERROR("@@@@@@@@@@@ FREE {} {}", fmt::ptr(c.get()), c.use_count());
+    else
+        JAMI_ERROR("@@@@@@@@@@@ FREE NO CHANNEL");
+}
 
 int
 P2PSubTransportAction(git_smart_subtransport_stream** out,
@@ -190,6 +195,7 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
                      std::string(conversationId).c_str());
             return -1;
         }
+        JAMI_ERROR("### {}", fmt::ptr(gitSocket->lock().get()));
         auto stream = std::make_unique<P2PStream>();
         stream->socket = *gitSocket;
         stream->base.read = P2PStreamRead;

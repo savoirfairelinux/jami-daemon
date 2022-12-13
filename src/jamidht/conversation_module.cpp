@@ -22,6 +22,7 @@
 
 #include <fstream>
 
+#include <memory>
 #include <opendht/thread_pool.h>
 
 #include "account_const.h"
@@ -45,6 +46,7 @@ struct PendingConversationFetch
     std::string deviceId {};
     std::string removeId {};
     std::set<std::string> connectingTo {};
+    std::shared_ptr<ChannelSocket> socket;
 };
 
 class ConversationModule::Impl : public std::enable_shared_from_this<Impl>
@@ -337,7 +339,9 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                     if (channel) {
                         pending.ready = true;
                         pending.deviceId = channel->deviceId().toString();
+                        pending.socket = channel;
                         lk.unlock();
+                        JAMI_ERROR("@@@ ADD {}", fmt::ptr(channel.get()));
                         acc->addGitSocket(channel->deviceId(), convId, channel);
                         checkConversationsEvents();
                         return true;
@@ -433,12 +437,14 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     syncCnt.fetch_sub(1);
                     return false;
                 }
+                        JAMI_ERROR("@@@ ADD {}", fmt::ptr(channel.get()));
                 acc->addGitSocket(channel->deviceId(), conversationId, channel);
                 conversation->second->sync(
                     peer,
                     deviceId,
                     [this,
                      conversationId = std::move(conversationId),
+                     wchannel = std::weak_ptr<ChannelSocket>(channel),
                      peer = std::move(peer),
                      deviceId = std::move(deviceId),
                      commitId = std::move(commitId)](bool ok) {
@@ -462,6 +468,11 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             if (auto account = account_.lock())
                                 emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(
                                     account->getAccountID().c_str());
+                        }
+                        if (auto channel = wchannel.lock()) {
+                                JAMI_ERROR("@@@@ SHUTDOWN {}", fmt::ptr(channel.get()));
+
+                            channel->shutdown();
                         }
                     },
                     commitId);
@@ -524,8 +535,11 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     auto erasePending = [&] {
         std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
         auto oldFetch = pendingConversationsFetch_.find(conversationId);
-        if (oldFetch != pendingConversationsFetch_.end() && !oldFetch->second.removeId.empty())
+        if (oldFetch != pendingConversationsFetch_.end() && !oldFetch->second.removeId.empty()) {
+            if (oldFetch->second.socket)
+                oldFetch->second.socket->shutdown();
             removeConversation(oldFetch->second.removeId);
+        }
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
@@ -1302,8 +1316,10 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                        if (channel) {
                                            pending.ready = true;
                                            pending.deviceId = channel->deviceId().toString();
+                                           pending.socket = channel;
                                            lk.unlock();
                                            // Save the git socket
+                        JAMI_ERROR("@@@ ADD {}", fmt::ptr(channel.get()));
                                            acc->addGitSocket(channel->deviceId(),
                                                              conversationId,
                                                              channel);

@@ -460,6 +460,9 @@ public:
         if (socketIt == deviceSockets->second.end()) {
             return std::nullopt;
         }
+
+        if (socketIt->second)
+            JAMI_ERROR("@@@ {} (count: {})", fmt::ptr(socketIt->second.get()), socketIt->second.use_count());
         return socketIt->second;
     }
     bool hasGitSocket(const DeviceId& deviceId, const std::string& conversationId) const
@@ -471,6 +474,7 @@ public:
                       const std::string& conversationId,
                       const std::shared_ptr<ChannelSocket>& socket)
     {
+        JAMI_ERROR("@@@ {} ADD GIT CHANNEL {} {} / {}", fmt::ptr(this), fmt::ptr(socket.get()), deviceId.toString(), conversationId);
         auto& deviceSockets = gitSocketList_[deviceId];
         deviceSockets[conversationId] = socket;
     }
@@ -481,10 +485,14 @@ public:
         if (deviceSockets == gitSocketList_.end()) {
             return;
         }
-        deviceSockets->second.erase(conversationId);
+        auto itSocket = deviceSockets->second.find(conversationId);
+        if (itSocket != deviceSockets->second.end())
+            JAMI_ERROR("@@@{} ERASE GIT CHANNEL {} (count: {}) {} / {}", fmt::ptr(this), fmt::ptr(itSocket->second.get()), itSocket->second.use_count(), deviceId.toString(), conversationId);
+        deviceSockets->second.erase(itSocket);
         if (deviceSockets->second.empty()) {
             gitSocketList_.erase(deviceSockets);
         }
+        JAMI_ERROR("@@@ MISSING {} sockets", gitSocketList_.size());
     }
 
     std::string_view currentDeviceId() const;

@@ -35,6 +35,9 @@ class ChannelSocket;
 
 struct P2PStream
 {
+    ~P2PStream() {
+        printf("@@@ DESTROY P2PStream\n");
+    }
     git_smart_subtransport_stream base;
     std::weak_ptr<jami::ChannelSocket> socket;
 
@@ -45,6 +48,9 @@ struct P2PStream
 
 struct P2PSubTransport
 {
+    ~P2PSubTransport() {
+        printf("@@@ DESTROY P2PSubTransport\n");
+    }
     git_smart_subtransport base;
     std::unique_ptr<P2PStream> stream;
     git_remote* remote;
