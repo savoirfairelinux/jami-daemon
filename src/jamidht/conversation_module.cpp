@@ -1158,6 +1158,16 @@ ConversationModule::bootstrap()
         }
     }
 }
+void
+ConversationModule::monitor()
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (auto& [_, conv] : pimpl_->conversations_) {
+        if (conv) {
+            conv->monitor();
+        }
+    }
+}
 
 void
 ConversationModule::clearPendingFetch()

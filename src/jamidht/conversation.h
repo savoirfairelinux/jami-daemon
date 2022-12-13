@@ -136,6 +136,8 @@ public:
                  const std::string& conversationId);
     ~Conversation();
 
+    void monitor();
+
 #ifdef LIBJAMI_TESTABLE
     enum class BootstrapStatus { FAILED, FALLBACK, SUCCESS };
     void onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb);
