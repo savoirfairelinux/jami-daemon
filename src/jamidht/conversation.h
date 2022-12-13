@@ -136,6 +136,8 @@ public:
                  const std::string& conversationId);
     ~Conversation();
 
+    void monitor();
+
 #ifdef LIBJAMI_TESTABLE
     enum class BootstrapStatus { FAILED, FALLBACK, SUCCESS };
     void onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb);
@@ -202,6 +204,13 @@ public:
                                                      MemberRole::BANNED}) const;
 
     std::vector<NodeId> peersToSyncWith() const;
+    /**
+     * Retrieve the uri from a deviceId
+     * @note used by swarm manager (peersToSyncWith)
+     * @param deviceId
+     * @return corresponding issuer
+     */
+    std::string uriFromDevice(const std::string& deviceId) const;
 
     /**
      * Join a conversation

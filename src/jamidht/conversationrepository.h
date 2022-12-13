@@ -372,6 +372,13 @@ public:
      * @param blocking      if we need to wait that certificates are pinned
      */
     void pinCertificates(bool blocking = false);
+    /**
+     * Retrieve the uri from a deviceId
+     * @note used by swarm manager (peersToSyncWith)
+     * @param deviceId
+     * @return corresponding issuer
+     */
+    std::string uriFromDevice(const std::string& deviceId) const;
 
     /**
      * Change repository's infos
