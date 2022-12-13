@@ -73,6 +73,8 @@ public:
     void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);
 #endif
 
+    void monitor();
+
     /**
      * Bootstrap swarm managers to other peers
      */
