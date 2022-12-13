@@ -2141,6 +2141,7 @@ JamiAccount::convModule()
                     if (!shared)
                         return;
                     auto gs = shared->gitSocket(DeviceId(deviceId), convId);
+
                     if (gs != std::nullopt) {
                         if (auto socket = gs->lock()) {
                             if (!cb(socket))

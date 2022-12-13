@@ -129,7 +129,20 @@ public:
             channelSocket = std::make_shared<ChannelSocket>(parent_.weak(),
                                                             name,
                                                             channel,
-                                                            isInitiator);
+                                                            isInitiator,
+                                                            std::move([this, channel]() {
+                                                                // Remove socket
+                                                                dht::ThreadPool::io().run([w = parent_.weak(), channel]() {
+                                                                    auto shared = w.lock();
+                                                                    if (!shared)
+                                                                        return;
+                                                                    std::lock_guard<std::mutex> lkSockets(shared->pimpl_->socketsMutex);
+                                                                    auto itSocket = shared->pimpl_->sockets.find(channel);
+                                                                    if (shared->pimpl_->sockets.find(channel) != shared->pimpl_->sockets.end())
+                                                                        shared->pimpl_->sockets.erase(itSocket);
+                                                                });
+
+                                                            }));
         else {
             JAMI_WARN("A channel is already present on that socket, accepting "
                       "the request will close the previous one %s",
@@ -440,7 +453,7 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, std::vector<uint8
 {
     std::lock_guard<std::mutex> lkSockets(socketsMutex);
     auto sockIt = sockets.find(channel);
-    if (channel > 0 && sockIt->second) {
+    if (channel > 0 && sockIt != sockets.end() && sockIt->second) {
         if (pkt.size() == 0) {
             sockIt->second->stop();
             if (sockIt->second->isAnswered())
@@ -659,7 +672,7 @@ MultiplexedSocket::monitor() const
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (const auto& [_, channel] : pimpl_->sockets) {
         if (channel)
-            JAMI_DEBUG("\t\t- Channel with name {:s}", channel->name());
+            JAMI_DEBUG("\t\t- Channel {} (count: {}) with name {:s} Initiator: {}", fmt::ptr(channel.get()), channel.use_count(), channel->name(), channel->isInitiator());
     }
 }
 
@@ -734,11 +747,13 @@ public:
     Impl(std::weak_ptr<MultiplexedSocket> endpoint,
          const std::string& name,
          const uint16_t& channel,
-         bool isInitiator)
+         bool isInitiator,
+         std::function<void()> rmFromMxSockCb)
         : name(name)
         , channel(channel)
         , endpoint(std::move(endpoint))
         , isInitiator_(isInitiator)
+        , rmFromMxSockCb_(std::move(rmFromMxSockCb))
     {}
 
     ~Impl() {}
@@ -750,6 +765,7 @@ public:
     uint16_t channel {};
     std::weak_ptr<MultiplexedSocket> endpoint {};
     bool isInitiator_ {false};
+    std::function<void()> rmFromMxSockCb_;
 
     bool isAnswered_ {false};
     bool isRemovable_ {false};
@@ -940,8 +956,9 @@ ChannelSocketTest::eventLoop()
 ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                              const std::string& name,
                              const uint16_t& channel,
-                             bool isInitiator)
-    : pimpl_ {std::make_unique<Impl>(endpoint, name, channel, isInitiator)}
+                             bool isInitiator,
+                             std::function<void()> rmFromMxSockCb)
+    : pimpl_ {std::make_unique<Impl>(endpoint, name, channel, isInitiator, std::move(rmFromMxSockCb))}
 {}
 
 ChannelSocket::~ChannelSocket() {}
@@ -1070,6 +1087,11 @@ ChannelSocket::stop()
     if (pimpl_->shutdownCb_)
         pimpl_->shutdownCb_();
     pimpl_->cv.notify_all();
+    // Because we send data, it's not processed by the
+    // eventloop so we must ask the multiplexedSocket to
+    // close the channel.
+    if (pimpl_->rmFromMxSockCb_)
+        pimpl_->rmFromMxSockCb_();
 }
 
 void

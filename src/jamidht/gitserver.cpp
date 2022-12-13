@@ -182,6 +182,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
             sendData = ACKFirst();
         if (sendData)
             sendPackData();
+        socket_->shutdown();
     } else if (pkt == FLUSH_PKT) {
         if (!haveRefs_.empty()) {
             // Reference:
@@ -189,6 +190,8 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
             // Do not do multi-ack, just send ACK + pack file In case of no common base ACK
             ACKCommon();
             NAK();
+        } else if (wantedReference_.empty()) {
+            socket_->shutdown();
         }
     } else {
         JAMI_WARN("Unwanted packet received: %s", pkt.c_str());

@@ -22,6 +22,7 @@
 
 #include <fstream>
 
+#include <memory>
 #include <opendht/thread_pool.h>
 
 #include "account_const.h"
@@ -45,6 +46,7 @@ struct PendingConversationFetch
     std::string deviceId {};
     std::string removeId {};
     std::set<std::string> connectingTo {};
+    std::shared_ptr<ChannelSocket> socket;
 };
 
 class ConversationModule::Impl : public std::enable_shared_from_this<Impl>
@@ -337,6 +339,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                     if (channel) {
                         pending.ready = true;
                         pending.deviceId = channel->deviceId().toString();
+                        pending.socket = channel;
                         lk.unlock();
                         acc->addGitSocket(channel->deviceId(), convId, channel);
                         checkConversationsEvents();
@@ -344,7 +347,8 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                     } else {
                         stopFetch(convId, deviceId);
                     }
-                }
+                } else if (channel)
+                    channel->shutdown();
                 return false;
             },
             "application/im-gitmessage-id");
@@ -428,6 +432,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                 auto acc = account_.lock();
                 if (!channel || !acc || conversation == conversations_.end()
                     || !conversation->second) {
+                    if (channel)
+                        channel->shutdown();
                     std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
                     stopFetch(conversationId, deviceId);
                     syncCnt.fetch_sub(1);
@@ -439,6 +445,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     deviceId,
                     [this,
                      conversationId = std::move(conversationId),
+                     channel,
                      peer = std::move(peer),
                      deviceId = std::move(deviceId),
                      commitId = std::move(commitId)](bool ok) {
@@ -463,6 +470,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                 emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(
                                     account->getAccountID().c_str());
                         }
+                        channel->shutdown();
                     },
                     commitId);
                 return true;
@@ -524,9 +532,13 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     auto erasePending = [&] {
         std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
         auto oldFetch = pendingConversationsFetch_.find(conversationId);
-        if (oldFetch != pendingConversationsFetch_.end() && !oldFetch->second.removeId.empty())
-            removeConversation(oldFetch->second.removeId);
-        pendingConversationsFetch_.erase(conversationId);
+        if (oldFetch != pendingConversationsFetch_.end()) {
+            if (oldFetch->second.socket)
+                oldFetch->second.socket->shutdown();
+            if (!oldFetch->second.removeId.empty())
+                removeConversation(oldFetch->second.removeId);
+            pendingConversationsFetch_.erase(oldFetch);
+        }
     };
     try {
         auto conversation = std::make_shared<Conversation>(account_, deviceId, conversationId);
@@ -1302,6 +1314,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                        if (channel) {
                                            pending.ready = true;
                                            pending.deviceId = channel->deviceId().toString();
+                                           pending.socket = channel;
                                            lk.unlock();
                                            // Save the git socket
                                            acc->addGitSocket(channel->deviceId(),
@@ -1312,7 +1325,8 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                        } else {
                                            sthis->stopFetch(conversationId, deviceId);
                                        }
-                                   }
+                                   } else if (channel)
+                                    channel->shutdown();
                                    return false;
                                },
                                "application/im-gitmessage-id");

@@ -263,7 +263,8 @@ public:
     ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                   const std::string& name,
                   const uint16_t& channel,
-                  bool isInitiator = false);
+                  bool isInitiator = false,
+                  std::function<void()> rmFromMxSockCb = {});
     ~ChannelSocket();
 
     DeviceId deviceId() const override;
