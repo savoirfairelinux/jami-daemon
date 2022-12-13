@@ -464,7 +464,7 @@ public:
     bool handleMessage(const std::string& from,
                        const std::pair<std::string, std::string>& message) override;
 
-    void monitor() const;
+    void monitor();
 
     // File transfer
     void sendFile(const std::string& conversationId,
