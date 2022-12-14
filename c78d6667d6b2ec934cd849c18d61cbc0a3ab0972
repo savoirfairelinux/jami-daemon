@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf9563d4_b0f6edd6",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2627,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-14T18:24:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4a3eddfe_39a69696",
+      "range": {
+        "startLine": 2625,
+        "startChar": 8,
+        "endLine": 2627,
+        "endChar": 9
+      },
+      "revId": "c78d6667d6b2ec934cd849c18d61cbc0a3ab0972",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "614e38af_2d235fe3",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-12-14T15:43:18Z",
       "side": 1,
       "message": "\"30s\" with \"using namespace std::literals::chrono_literals;\"",
+      "range": {
+        "startLine": 121,
+        "startChar": 35,
+        "endLine": 121,
+        "endChar": 59
+      },
+      "revId": "c78d6667d6b2ec934cd849c18d61cbc0a3ab0972",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "23a5e0f0_0c3a70ec",
+        "filename": "test/unitTest/account_factory/testAccount_factory.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-14T18:24:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "614e38af_2d235fe3",
       "range": {
         "startLine": 121,
         "startChar": 35,
