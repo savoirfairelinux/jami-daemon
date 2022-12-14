@@ -87,12 +87,14 @@ private:
     void registerSignalHandlers();
     void testRecordCall();
     void testRecordAudioOnlyCall();
+    void testRecordCallOnePersonRdv();
     void testStopCallWhileRecording();
     void testDaemonPreference();
 
     CPPUNIT_TEST_SUITE(RecorderTest);
     CPPUNIT_TEST(testRecordCall);
     CPPUNIT_TEST(testRecordAudioOnlyCall);
+    CPPUNIT_TEST(testRecordCallOnePersonRdv);
     CPPUNIT_TEST(testStopCallWhileRecording);
     CPPUNIT_TEST(testDaemonPreference);
     CPPUNIT_TEST_SUITE_END();
@@ -177,6 +179,7 @@ RecorderTest::registerSignalHandlers()
 void
 RecorderTest::testRecordCall()
 {
+    JAMI_INFO("Start testRecordCall");
     registerSignalHandlers();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -221,11 +224,13 @@ RecorderTest::testRecordCall()
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
+    JAMI_INFO("End testRecordCall");
 }
 
 void
 RecorderTest::testRecordAudioOnlyCall()
 {
+    JAMI_INFO("Start testRecordAudioOnlyCall");
     registerSignalHandlers();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -263,11 +268,63 @@ RecorderTest::testRecordAudioOnlyCall()
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
+    JAMI_INFO("End testRecordAudioOnlyCall");
+}
+
+void
+RecorderTest::testRecordCallOnePersonRdv()
+{
+    JAMI_INFO("Start testRecordCallOnePersonRdv");
+    registerSignalHandlers();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    try {
+        bobAccount->editConfig(
+            [&](AccountConfig& config) { config.isRendezVous = true; });
+    } catch (...) {}
+
+    CPPUNIT_ASSERT(bobAccount->config().isRendezVous);
+
+    recordedFile.clear();
+
+    JAMI_INFO("Start call between Alice and Bob");
+    std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttributeA
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+           {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+           {libjami::Media::MediaAttributeKey::SOURCE, ""}};
+    mediaList.emplace_back(mediaAttributeA);
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
+        return bobCall.mediaStatus
+               == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
+    }));
+
+    CPPUNIT_ASSERT(!libjami::getIsRecording(aliceId, callId));
+    libjami::toggleRecording(aliceId, callId);
+
+    // Stop recorder after a few seconds
+    std::this_thread::sleep_for(5s);
+    CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
+    libjami::toggleRecording(aliceId, callId);
+    CPPUNIT_ASSERT(!libjami::getIsRecording(aliceId, callId));
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !recordedFile.empty(); }));
+
+    Manager::instance().hangupCall(aliceId, callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && !recordedFile.empty(); }));
+    JAMI_INFO("End testRecordCallOnePersonRdv");
 }
 
 void
 RecorderTest::testStopCallWhileRecording()
 {
+    JAMI_INFO("Start testStopCallWhileRecording");
     registerSignalHandlers();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -303,14 +360,17 @@ RecorderTest::testStopCallWhileRecording()
 
     // Hangup call
     std::this_thread::sleep_for(5s);
+    CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && !recordedFile.empty(); }));
+    JAMI_INFO("End testStopCallWhileRecording");
 }
 
 void
 RecorderTest::testDaemonPreference()
 {
+    JAMI_INFO("Start testDaemonPreference");
     registerSignalHandlers();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -337,10 +397,12 @@ RecorderTest::testDaemonPreference()
 
     // Let record some seconds
     std::this_thread::sleep_for(5s);
+    CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && !recordedFile.empty(); }));
+    JAMI_INFO("End testDaemonPreference");
 }
 
 } // namespace test
