@@ -1344,7 +1344,11 @@ JamiAccount::getVolatileAccountDetails() const
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServerCached_);
     a.emplace(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED,
               deviceAnnounced_ ? TRUE_STR : FALSE_STR);
-
+    if (accountManager_) {
+        if (auto info = accountManager_->getInfo()) {
+            a.emplace(libjami::Account::ConfProperties::DEVICE_ID, info->deviceId);
+        }
+    }
     return a;
 }
 
