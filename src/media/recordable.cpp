@@ -61,6 +61,8 @@ Recordable::toggleRecording()
         auto dir = Manager::instance().audioPreference.getRecordPath();
         if (dir.empty())
             dir = fileutils::get_home_dir();
+        // Check if dir exists, create if if it does not
+        fileutils::check_dir(dir.c_str());
         ss << dir;
         if (dir.back() != DIR_SEPARATOR_CH)
             ss << DIR_SEPARATOR_CH;
