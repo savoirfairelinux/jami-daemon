@@ -242,6 +242,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                       [this, nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
                           if (socket) {
                               addChannel(socket);
+                              JAMI_ERROR("DEVICE ADDED {}", socket->deviceId().toString());
                               return true;
                           }
                           std::unique_lock<std::mutex> lk(mutex);

@@ -52,6 +52,7 @@ Bucket::addNode(NodeInfo&& info)
     if (nodes.try_emplace(nodeId, std::move(info)).second) {
         connecting_nodes.erase(nodeId);
         known_nodes.erase(nodeId);
+        mobile_nodes.erase(nodeId);
         return true;
     }
     return false;

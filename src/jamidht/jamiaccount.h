@@ -313,11 +313,9 @@ public:
                      const std::map<std::string, std::string>& payloads,
                      uint64_t id,
                      bool retryOnTimeout = true,
-                     bool onlyConnected = false) override;
-    void sendMessageToDevice(const std::string& to,
-                             const DeviceId& device,
-                             const std::map<std::string, std::string>& payloads,
-                             bool onlyConnected = false);
+                     bool onlyConnected = false,
+                     const std::string& deviceId = {}) override;
+
     uint64_t sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
                              uint64_t refreshToken = 0) override;
