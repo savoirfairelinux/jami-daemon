@@ -81,6 +81,12 @@ MessageEngine::onPeerOnline(const std::string& peer, bool retryOnTimeout)
 }
 
 void
+MessageEngine::onDeviceOnline(const std::string& peer, const DeviceId& deviceId, bool retryOnTimeout)
+{
+    retrySendDevice(peer, deviceId, retryOnTimeout);
+}
+
+void
 MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
 {
     if (account_.getRegistrationState() != RegistrationState::REGISTERED) {
@@ -120,6 +126,53 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
                 std::to_string(p.token),
                 (int) libjami::Account::MessageStates::SENDING);
         account_.sendMessage(p.to, p.payloads, p.token, retryOnTimeout);
+    }
+}
+
+void
+MessageEngine::retrySendDevice(const std::string& peer,
+                               const DeviceId& deviceId,
+                               bool retryOnTimeout)
+{
+    if (account_.getRegistrationState() != RegistrationState::REGISTERED) {
+        return;
+    }
+    struct PendingMsg
+    {
+        MessageToken token;
+        std::string to;
+        DeviceId deviceId;
+        std::map<std::string, std::string> payloads;
+    };
+    std::vector<PendingMsg> pending {};
+    {
+        // SE CRESUER LE CRANE AAAA
+        std::lock_guard<std::mutex> lock(messagesMutex_);
+        auto p = messagesDevices_.find(deviceId);
+        if (p == messagesDevices_.end())
+            return;
+        auto& messages = p->second;
+        for (auto m = messages.begin(); m != messages.end(); ++m) {
+            if (m->second.status == MessageStatus::UNKNOWN
+                || m->second.status == MessageStatus::IDLE) {
+                m->second.status = MessageStatus::SENDING;
+                m->second.retried++;
+                m->second.last_op = clock::now();
+                pending.emplace_back(PendingMsg {m->first, m->second.to, m->second.payloads});
+            }
+        }
+    }
+    // avoid locking while calling callback
+    for (const auto& p : pending) {
+        JAMI_DEBUG("[message {:d}] Retry sending", p.token);
+        if (p.payloads.find("application/im-gitmessage-id") == p.payloads.end())
+            emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
+                account_.getAccountID(),
+                "",
+                p.to,
+                std::to_string(p.token),
+                (int) libjami::Account::MessageStates::SENDING);
+        account_.sendMessageToDevice(p.to, p.deviceId, p.payloads, p.token, retryOnTimeout);
     }
 }
 
@@ -305,7 +358,8 @@ MessageEngine::save_() const
                     payloads[p.first] = p.second;
                 peerRoot[to_hex_string(m.first)] = std::move(msg);
             }
-            if (peerRoot.size() == 0) continue;
+            if (peerRoot.size() == 0)
+                continue;
             root[c.first] = std::move(peerRoot);
         }
 
@@ -326,14 +380,11 @@ MessageEngine::save_() const
                     writer->write(root, &file);
             } catch (const std::exception& e) {
                 JAMI_ERROR("[Account {:s}] Couldn't save messages to {:s}: {:s}",
-                         accountID,
-                         path,
-                         e.what());
+                           accountID,
+                           path,
+                           e.what());
             }
-            JAMI_DEBUG("[Account {:s}] saved {:d} messages to {:s}",
-                     accountID,
-                     root.size(),
-                     path);
+            JAMI_DEBUG("[Account {:s}] saved {:d} messages to {:s}", accountID, root.size(), path);
         });
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] couldn't save messages to %s: %s",

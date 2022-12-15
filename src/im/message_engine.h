@@ -25,6 +25,7 @@
 #include <chrono>
 #include <mutex>
 #include <cstdint>
+#include "opendht/infohash.h"
 
 namespace jami {
 
@@ -33,6 +34,7 @@ class SIPAccountBase;
 namespace im {
 
 using MessageToken = uint64_t;
+using DeviceId = dht::PkId;
 
 enum class MessageStatus { UNKNOWN = 0, IDLE, SENDING, SENT, DISPLAYED, FAILURE, CANCELLED };
 
@@ -45,6 +47,10 @@ public:
                              const std::map<std::string, std::string>& payloads,
                              uint64_t refreshToken);
 
+    MessageToken sendMessage(const std::string& to,
+                             const std::map<std::string, std::string>& payloads,
+                             uint64_t refreshToken);
+
     MessageStatus getStatus(MessageToken t) const;
 
     bool cancel(MessageToken t);
@@ -52,6 +58,11 @@ public:
     bool isSent(MessageToken t) const { return getStatus(t) == MessageStatus::SENT; }
 
     void onMessageSent(const std::string& peer, MessageToken t, bool success);
+    void onMessageSentDevice(const std::string& peer,
+                             const DeviceId& deviceId,
+                             MessageToken t,
+                             bool success);
+
     void onMessageDisplayed(const std::string& peer, MessageToken t, bool displayed);
 
     /**
@@ -59,6 +70,9 @@ public:
      * @NOTE retryOnTimeout is used for failing SIP messages (jamiAccount::sendTextMessage)
      */
     void onPeerOnline(const std::string& peer, bool retryOnTimeout = true);
+    void onDeviceOnline(const std::string& peer,
+                        const DeviceId& deviceId,
+                        bool retryOnTimeout = true);
 
     /**
      * Load persisted messages
@@ -76,11 +90,16 @@ private:
     using clock = std::chrono::steady_clock;
 
     void retrySend(const std::string& peer, bool retryOnTimeout = true);
+    void retrySendDevice(const std::string& peer,
+                         const DeviceId& deviceId,
+                         bool retryOnTimeout = true);
+
     void save_() const;
 
     struct Message
     {
         std::string to;
+        DeviceId deviceId;
         std::map<std::string, std::string> payloads;
         MessageStatus status {MessageStatus::UNKNOWN};
         unsigned retried {0};
@@ -91,6 +110,8 @@ private:
     const std::string savePath_;
 
     std::map<std::string, std::map<MessageToken, Message>> messages_;
+    std::map<DeviceId, std::map<MessageToken, Message>> messagesDevices_;
+
     std::set<MessageToken> sentMessages_;
 
     mutable std::mutex messagesMutex_ {};

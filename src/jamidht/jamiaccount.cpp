@@ -2147,7 +2147,7 @@ JamiAccount::convModule()
                 // main thread.
                 if (!device)
                     return sendTextMessage(uri, msg, token);
-                sendMessageToDevice(uri, device, msg);
+                sendMessageToDevice(uri, device, msg, token);
                 return 0ul;
             },
             [this](const auto& convId, const auto& deviceId, auto cb, const auto& type) {
@@ -2201,7 +2201,10 @@ JamiAccount::convModule()
                         ->connectDevice(DeviceId(deviceId),
                                         fmt::format("swarm://{}", convId),
                                         [cb = std::move(cb)](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId&) { cb(socket); });
+                                                             const DeviceId&) {
+                                            // IF OSOCKET requestSIPconn
+                                            cb(socket);
+                                        });
                 });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
@@ -3216,29 +3219,28 @@ void
 JamiAccount::sendMessageToDevice(const std::string& to,
                                  const DeviceId& device,
                                  const std::map<std::string, std::string>& payloads,
+                                 uint64_t id,
+                                 bool retryOnTimeout,
                                  bool onlyConnected)
 {
     // TODO message Engine needed to retry on failure?
-    /////if (token == 0)
     auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
 
     std::string toUri;
     try {
         toUri = parseJamiUri(to);
     } catch (...) {
-        JAMI_ERROR("Failed to send a text message due to an invalid URI {:s}", to);
-        /////if (!onlyConnected)
-        /////    messageEngine_.onMessageSent(to, token, false);
+        JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
+        if (!onlyConnected)
+            messageEngine_.onMessageSentDevice(to, device, token, false);
         return;
     }
 
-    std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
+    auto toH = dht::InfoHash(toUri);
+    auto now = clock::to_time_t(clock::now());
+
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
 
-    for (auto it = sipConns_.begin(); it != sipConns_.end(); ++it) {
-        auto& [key, value] = *it;
-        JAMI_ERROR("{}/{} vs {}/{}", key.first, key.second.toString(), to, device.toString());
-    }
     SipConnectionKey key(to, device);
     auto itConn = sipConns_.find(key);
     if (itConn != sipConns_.end()) {
@@ -3246,56 +3248,49 @@ JamiAccount::sendMessageToDevice(const std::string& to,
         auto& channel = conn.channel;
 
         // Set input token into callback
-        /////std::unique_ptr<TextMessageCtx> ctx {std::make_unique<TextMessageCtx>()};
-        /////ctx->acc = weak();
-        /////ctx->to = to;
-        /////ctx->deviceId = device;
-        /////ctx->id = token;
-        /////ctx->onlyConnected = onlyConnected;
-        /////ctx->retryOnTimeout = retryOnTimeout;
-        /////ctx->channel = channel;
-        /////ctx->confirmation = confirm;
+        std::unique_ptr<TextMessageCtx> ctx {std::make_unique<TextMessageCtx>()};
+        ctx->acc = weak();
+        ctx->to = to;
+        ctx->deviceId = device;
+        ctx->id = token;
+        ctx->onlyConnected = onlyConnected;
+        ctx->retryOnTimeout = retryOnTimeout;
+        ctx->channel = channel;
 
         try {
             auto res = sendSIPMessage(conn,
                                       to,
-                                      nullptr, /////ctx.release(),
+                                      nullptr,
                                       token,
                                       payloads,
                                       [](void* token, pjsip_event* event) {
-                                          //////std::shared_ptr<TextMessageCtx> c {
-                                          //////    (TextMessageCtx*) token};
+                                          std::shared_ptr<TextMessageCtx> c {
+                                              (TextMessageCtx*) token};
                                           auto code = event->body.tsx_state.tsx->status_code;
                                           JAMI_ERROR("Message sent with code: {}", code);
-                                          //////runOnMainThread([c = std::move(c), code]() {
-                                          //////    if (c) {
-                                          //////        auto acc = c->acc.lock();
-                                          //////        if (not acc)
-                                          //////            return;
-                                          //////        acc->onSIPMessageSent(std::move(c), code);
-                                          //////    }
-                                          //////});
+                                          runOnMainThread([c = std::move(c), code]() {
+                                              if (c) {
+                                                  auto acc = c->acc.lock();
+                                                  if (not acc)
+                                                      return;
+                                                  acc->onSIPMessageSent(std::move(c), code);
+                                              }
+                                          });
                                       });
             if (!res) {
-                /////if (!onlyConnected)
-                /////    messageEngine_.onMessageSent(to, token, false);
+                if (!onlyConnected)
+                    messageEngine_.onMessageSentDevice(to, device, token, false);
             }
         } catch (const std::runtime_error& ex) {
-            JAMI_WARNING("{:s}", ex.what());
-            /////if (!onlyConnected)
-            /////    messageEngine_.onMessageSent(to, token, false); // TODO msgengine per device
+            JAMI_WARN("%s", ex.what());
+            if (!onlyConnected)
+                messageEngine_.onMessageSentDevice(to, device, token, false);
             // Remove connection in incorrect state
-            shutdownSIPConnection(channel, to, device);
+            shutdownSIPConnection(channel, to, key.second);
         }
-    } else {
-        return;
     }
 
     lk.unlock();
-
-    if (onlyConnected)
-        return;
-
     // Else, ask for a channel and send a DHT message
     auto payload_type = payloads.cbegin()->first;
     requestSIPConnection(to, device, payload_type);
@@ -3921,6 +3916,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     convModule()->syncConversations(peerId, deviceId.toString());
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
+    messageEngine_.onDeviceOnline(peerId, deviceId);
 
     // Connect pending calls
     forEachPendingCall(deviceId, [&](const auto& pc) {
@@ -3987,9 +3983,9 @@ JamiAccount::monitor()
 {
     JAMI_DBG("[Account %s] Monitor connections", getAccountID().c_str());
 
-    ///std::lock_guard<std::mutex> lkCM(connManagerMtx_);
-    ///if (connectionManager_)
-    ///    connectionManager_->monitor();
+    /// std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    /// if (connectionManager_)
+    ///     connectionManager_->monitor();
     convModule()->monitor();
 }
 
