@@ -47,6 +47,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e3863e56_df40ac25",
+        "filename": "src/connectivity/multiplexed_socket.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-16T16:49:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c92cceb5_58df12dc",
+      "range": {
+        "startLine": 133,
+        "startChar": 71,
+        "endLine": 133,
+        "endChar": 75
+      },
+      "revId": "ed723e2747abf335773a0beef5deab42d2b8e6d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ba3586ef_6c6dae73",
+        "filename": "src/connectivity/multiplexed_socket.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-16T16:49:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8fe998c5_355271d9",
+      "range": {
+        "startLine": 133,
+        "startChar": 60,
+        "endLine": 133,
+        "endChar": 70
+      },
+      "revId": "ed723e2747abf335773a0beef5deab42d2b8e6d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bef4bf86_5e609aaf",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-12-16T16:27:11Z",
       "side": 1,
       "message": "too much indentation, too much \u0027shared-\u003epimpl_-\u003e\u0027. Move to a method of MultiplexedSocket",
+      "range": {
+        "startLine": 136,
+        "startChar": 0,
+        "endLine": 145,
+        "endChar": 0
+      },
+      "revId": "ed723e2747abf335773a0beef5deab42d2b8e6d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c7ede17_23fc7fef",
+        "filename": "src/connectivity/multiplexed_socket.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-16T16:49:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bef4bf86_5e609aaf",
       "range": {
         "startLine": 136,
         "startChar": 0,
