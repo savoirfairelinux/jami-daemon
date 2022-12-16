@@ -45,6 +45,7 @@ SwarmManager::removeNode(const NodeId& nodeId)
 {
     std::lock_guard<std::mutex> lock(mutex);
     removeNodeInternal(nodeId);
+    maintainBuckets();
 }
 
 void
@@ -62,7 +63,6 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
     for (const auto& NodeId : known_nodes) {
         addKnownNodes(std::move(NodeId));
     }
-    JAMI_ERROR("MB FROM SKN RCV {}", id_.toString());
 
     maintainBuckets();
 }
@@ -81,7 +81,7 @@ SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
 void
 SwarmManager::addKnownNodes(const NodeId& nodeId)
 {
-    if (id_ != nodeId) {
+    if (id_ != nodeId) { //?
         routing_table.addKnownNode(nodeId);
     }
 }
@@ -89,7 +89,7 @@ SwarmManager::addKnownNodes(const NodeId& nodeId)
 void
 SwarmManager::addMobileNodes(const NodeId& nodeId)
 {
-    if (id_ != nodeId) {
+    if (id_ != nodeId) { //?
         routing_table.addMobileNode(nodeId);
     }
 }
@@ -106,7 +106,7 @@ SwarmManager::sendRequest(const std::shared_ptr<ChannelSocketInterface>& socket,
 
     Request toRequest {q, numberNodes, nodeId};
     Message msg;
-    msg.is_mobile = isPersistent;
+    msg.is_mobile = isMobile_;
     msg.request = std::move(toRequest);
 
     pk.pack(msg);
@@ -131,7 +131,7 @@ SwarmManager::sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, 
         Response toResponse {Query::FOUND, nodes, {m_nodes.begin(), m_nodes.end()}};
 
         Message msg;
-        msg.is_mobile = isPersistent;
+        msg.is_mobile = isMobile_;
         msg.response = std::move(toResponse);
 
         msgpack::sbuffer buffer((size_t) 1024);
@@ -176,8 +176,14 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
             try {
                 Message msg;
                 oh.get().convert(msg);
-                if (!msg.is_mobile) {
-                    shared->changePersistency(socket->deviceId(), msg.is_mobile);
+                JAMI_ERROR("{} RECEIVED MESSAGE FROM {}",
+                           shared->getId().toString(),
+                           socket->deviceId().toString());
+                if (msg.is_mobile) {
+                    shared->changeMobility(socket->deviceId(), msg.is_mobile);
+                    JAMI_ERROR("{} RECEIVED THAT {} IS A MOBILE NODE",
+                               shared->getId().toString(),
+                               socket->deviceId().toString());
                 }
 
                 if (msg.request) {
@@ -197,16 +203,13 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
         return len;
     });
 
-    socket->onShutdown([w = weak(), wsocket = std::weak_ptr<ChannelSocketInterface>(socket)] {
+    socket->onShutdown([w = weak(), deviceId = socket->deviceId()] {
         auto shared = w.lock();
-        auto socket = wsocket.lock();
-        if (shared and socket) {
+        if (shared) {
             std::lock_guard<std::mutex> lock(shared->mutex);
-            shared->removeNodeInternal(socket->deviceId());
+            shared->removeNodeInternal(deviceId);
             shared->maintainBuckets();
-            JAMI_ERROR("MB FROM SD RCV {} FROM {}",
-                       shared->id_.toString(),
-                       socket->deviceId().toString());
+            JAMI_ERROR("MB FROM SD RCV {} FROM {}", shared->id_.toString(), deviceId.toString());
         }
     });
 }
@@ -313,10 +316,10 @@ SwarmManager::resetNodeExpiry(const asio::error_code& ec,
 }
 
 void
-SwarmManager::changePersistency(const NodeId& nodeId, bool isPersistent)
+SwarmManager::changeMobility(const NodeId& nodeId, bool isMobile)
 {
     auto bucket = routing_table.findBucket(nodeId);
-    bucket->changePersistency(nodeId, isPersistent);
+    bucket->changeMobility(nodeId, isMobile);
 }
 
 } // namespace jami

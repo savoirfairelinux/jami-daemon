@@ -3361,9 +3361,11 @@ JamiAccount::setPushNotificationToken(const std::string& token)
 {
     JAMI_WARNING("[Account {:s}] setPushNotificationToken: {:s}", getAccountID(), token);
     SIPAccountBase::setPushNotificationToken(token);
-    if (dht_)
-        isPersistent = config().proxyEnabled;
-    dht_->setPushNotificationToken(token);
+    if (dht_) {
+        isMobile_ = config().proxyEnabled;
+        JAMI_ERROR("THIS IS MOBILE");
+        dht_->setPushNotificationToken(token);
+    }
 }
 
 void

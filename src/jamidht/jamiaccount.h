@@ -560,9 +560,9 @@ public:
      */
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
 
-    bool getPersistency()
+    bool isMobile()
     {
-        return isPersistent;
+        return isMobile_;
     }
 
 #ifdef LIBJAMI_TESTABLE
@@ -870,7 +870,7 @@ private:
 
     void initConnectionManager();
 
-    bool isPersistent {true};
+    bool isMobile_ {false};
 };
 
 static inline std::ostream&

@@ -39,7 +39,7 @@ static constexpr const std::chrono::minutes FIND_PERIOD {10};
 
 struct NodeInfo
 {
-    bool isPersistent {true};
+    bool isMobile_ {false};
     std::shared_ptr<ChannelSocketInterface> socket {};
     asio::steady_timer refresh_timer {*Manager::instance().ioContext(), FIND_PERIOD};
     NodeInfo() = delete;
@@ -52,7 +52,7 @@ struct NodeInfo
 class Bucket
 {
 public:
-    static constexpr int BUCKET_MAX_SIZE = 2;
+    static constexpr int BUCKET_MAX_SIZE = 4;
 
     Bucket() = delete;
     Bucket(const Bucket&) = delete;
@@ -64,7 +64,7 @@ public:
      */
     bool addNode(std::shared_ptr<ChannelSocketInterface> socket);
     /**
-     * Add Node socket to bucket
+     * Add NodeInfo to bucket
      * @param NodeInfo&& nodeInfo
      */
     bool addNode(NodeInfo&& info);
@@ -248,7 +248,7 @@ public:
     /**
      * Change persistency of specific node
      */
-    void changePersistency(const NodeId& nodeId, bool isPersistent);
+    void changeMobility(const NodeId& nodeId, bool isMobile);
 
     // For tests
 
@@ -425,6 +425,11 @@ public:
      * Returns all routing table's nodes
      */
     std::vector<NodeId> getNodes() const;
+
+    /**
+     * Returns all routing table's known nodes
+     */
+    std::vector<NodeId> getKnownNodes() const;
 
     /**
      * Returns all routing table's mobile nodes
