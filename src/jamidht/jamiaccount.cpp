@@ -1968,13 +1968,16 @@ JamiAccount::doRegister_()
                           getAccountID().c_str(),
                           name.c_str());
 
-                if (this->config().turnEnabled && turnCache_) {
-                    auto addr = turnCache_->getResolvedTurn();
-                    if (addr == std::nullopt) {
-                        // If TURN is enabled, but no TURN cached, there can be a temporary
-                        // resolution error to solve. Sometimes, a connectivity change is not
-                        // enough, so even if this case is really rare, it should be easy to avoid.
-                        turnCache_->refresh();
+                if (this->config().turnEnabled) {
+                    std::lock_guard<std::mutex> lock(turnCacheMtx_);
+                    if (turnCache_) {
+                        auto addr = turnCache_->getResolvedTurn();
+                        if (addr == std::nullopt) {
+                            // If TURN is enabled, but no TURN cached, there can be a temporary
+                            // resolution error to solve. Sometimes, a connectivity change is not
+                            // enough, so even if this case is really rare, it should be easy to avoid.
+                            turnCache_->refresh();
+                        }
                     }
                 }
 
@@ -2251,8 +2254,11 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     // Stop all current p2p connections if account is disabled
     // Else, we let the system managing if the co is down or not
     // NOTE: this is used for changing account's config.
-    if (not isEnabled())
+    if (not isEnabled()) {
         shutdownConnections();
+        std::lock_guard<std::mutex> lk(turnCacheMtx_);
+        if (turnCache_) turnCache_->shutdown();
+    }
 
     // Release current upnp mapping if any.
     if (upnpCtrl_ and dhtUpnpMapping_.isValid()) {
@@ -2284,7 +2290,11 @@ JamiAccount::setRegistrationState(RegistrationState state,
     if (registrationState_ != state) {
         if (state == RegistrationState::REGISTERED) {
             JAMI_WARN("[Account %s] connected", getAccountID().c_str());
-            turnCache_->refresh();
+            {
+                std::lock_guard<std::mutex> lock(turnCacheMtx_);
+                if (turnCache_)
+                    turnCache_->refresh();
+            }
             storeActiveIpAddress();
         } else if (state == RegistrationState::TRYING) {
             JAMI_WARN("[Account %s] connecting…", getAccountID().c_str());
