@@ -78,6 +78,7 @@ namespace std {
 %include "callmanager.i"
 %include "videomanager.i"
 %include "conversation.i"
+%include "datatransfer.i"
 
 %header %{
 #include "callback.h"
@@ -118,6 +119,7 @@ void init(const SWIGV8_VALUE& funcMap){
     using DRing::ConfigurationSignal;
     using DRing::CallSignal;
     using DRing::ConversationSignal;
+    using DRing::DataTransferSignal;
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
     const std::map<std::string, SharedCallback> callEvHandlers = {
         exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3, _4)),
@@ -145,6 +147,10 @@ void init(const SWIGV8_VALUE& funcMap){
         //exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5 )),
     };
 
+    const std::map<std::string, SharedCallback> dataTransferEvHandlers = {
+        exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&dataTransferEvent, _1, _2, _3, _4, _5)),
+    };
+
     const std::map<std::string, SharedCallback> conversationHandlers = {
         exportable_callback<ConversationSignal::ConversationLoaded>(bind(&conversationLoaded, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::MessagesFound>(bind(&messagesFound, _1, _2, _3, _4)),
@@ -164,6 +170,7 @@ void init(const SWIGV8_VALUE& funcMap){
 
     registerSignalHandlers(configEvHandlers);
     registerSignalHandlers(callEvHandlers);
+    registerSignalHandlers(dataTransferEvHandlers);
     registerSignalHandlers(conversationHandlers);
 
     DRing::start();
