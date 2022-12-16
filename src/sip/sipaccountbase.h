@@ -266,6 +266,7 @@ protected:
         std::chrono::steady_clock::time_point::min()};
     std::shared_ptr<Task> composingTimeout_;
 
+    mutable std::mutex turnCacheMtx_;
     std::unique_ptr<TurnCache> turnCache_;
 
 private:

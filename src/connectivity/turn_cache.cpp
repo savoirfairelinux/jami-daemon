@@ -25,6 +25,7 @@
 #include "manager.h"
 #include "opendht/thread_pool.h" // TODO remove asio
 #include "turn_cache.h"
+#include <asio/error_code.hpp>
 
 namespace jami {
 
@@ -44,10 +45,18 @@ TurnCache::TurnCache(const std::string& accountId,
 }
 
 TurnCache::~TurnCache() {
+    shutdown();
+}
+
+void
+TurnCache::shutdown()
+{
     {
         std::lock_guard<std::mutex> lock(shutdownMtx_);
-        onConnectedTimer_->cancel();
-        onConnectedTimer_.reset();
+        if (onConnectedTimer_) {
+            onConnectedTimer_->cancel();
+            onConnectedTimer_.reset();
+        }
     }
     {
         std::lock_guard<std::mutex> lock(cachedTurnMutex_);
@@ -203,9 +212,19 @@ TurnCache::onConnected(const asio::error_code& ec, bool ok, IpAddr server)
         JAMI_DEBUG("Connection to {:s} ready", server.toString());
         cacheTurn = std::make_unique<IpAddr>(server);
     }
-    refreshTurnDelay(!cacheTurnV6_ && !cacheTurnV4_);
     if (auto& turn = server.isIpv4() ? testTurnV4_ : testTurnV6_)
         turn->shutdown();
+    refreshTurnDelay(!cacheTurnV6_ && !cacheTurnV4_);
+}
+
+void
+TurnCache::resetTestTransport(const asio::error_code& ec)
+{
+    if (ec == asio::error::operation_aborted)
+        return;
+    std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+    testTurnV4_.reset();
+    testTurnV6_.reset();
 }
 
 
@@ -222,6 +241,8 @@ TurnCache::refreshTurnDelay(bool scheduleNext)
     } else {
         JAMI_DEBUG("[Account {:s}] Cache refreshed for TURN resolution", accountId_);
         turnRefreshDelay_ = std::chrono::seconds(10);
+        refreshTimer_->expires_at(std::chrono::steady_clock::now());
+        refreshTimer_->async_wait(std::bind(&TurnCache::resetTestTransport, this, std::placeholders::_1));
     }
 }
 
