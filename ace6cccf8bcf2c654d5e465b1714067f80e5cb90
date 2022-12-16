@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6a2a0f7_b81a9657",
+        "filename": "src/connectivity/turn_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-16T16:49:22Z",
+      "side": 1,
+      "message": "Not sure it\u0027s better but sure done",
+      "parentUuid": "81625aef_8d3eca03",
+      "range": {
+        "startLine": 45,
+        "startChar": 39,
+        "endLine": 45,
+        "endChar": 99
+      },
+      "revId": "ace6cccf8bcf2c654d5e465b1714067f80e5cb90",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "085b75b9_95f8199f",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-12-16T16:40:07Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 46,
+        "startChar": 20,
+        "endLine": 46,
+        "endChar": 66
+      },
+      "revId": "ace6cccf8bcf2c654d5e465b1714067f80e5cb90",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d87f90a7_890adcc6",
+        "filename": "src/connectivity/turn_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-16T16:49:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "085b75b9_95f8199f",
       "range": {
         "startLine": 46,
         "startChar": 20,
