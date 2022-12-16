@@ -1145,16 +1145,19 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 {
     int ret;
     size_t retry_count = 0;
+    JAMI_DEBUG("[TLS] handshake");
     do {
-        JAMI_DBG("[TLS] handshake");
         ret = gnutls_handshake(session_);
     } while ((ret == GNUTLS_E_INTERRUPTED or ret == GNUTLS_E_AGAIN)
              and ++retry_count < HANDSHAKE_MAX_RETRY
              and state_.load() != TlsSessionState::SHUTDOWN);
+    if (retry_count > 0) {
+        JAMI_ERROR("[TLS] handshake retried count: {}", retry_count);
+    }
 
     // Stop on fatal error
     if (gnutls_error_is_fatal(ret) || state_.load() == TlsSessionState::SHUTDOWN) {
-        JAMI_ERR("[TLS] handshake failed: %s", gnutls_strerror(ret));
+        JAMI_ERROR("[TLS] handshake failed: {:s}", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
     }
 
@@ -1162,7 +1165,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     if (ret != GNUTLS_E_SUCCESS) {
         // TODO: handle GNUTLS_E_LARGE_PACKET (MTU must be lowered)
         if (ret != GNUTLS_E_AGAIN)
-            JAMI_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
+            JAMI_DEBUG("[TLS] non-fatal handshake error: {:s}", gnutls_strerror(ret));
         return state;
     }
 
@@ -1175,7 +1178,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     if (!isTLS1_3 || (isTLS1_3 && isServer_)) {
 #endif
         if (!gnutls_safe_renegotiation_status(session_)) {
-            JAMI_ERR("[TLS] server identity changed! MiM attack?");
+            JAMI_ERROR("[TLS] server identity changed! MiM attack?");
             return TlsSessionState::SHUTDOWN;
         }
 #if GNUTLS_VERSION_NUMBER >= 0x030605
@@ -1183,13 +1186,13 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 #endif
 
     auto desc = gnutls_session_get_desc(session_);
-    JAMI_DBG("[TLS] session established: %s", desc);
+    JAMI_DEBUG("[TLS] session established: {:s}", desc);
     gnutls_free(desc);
 
     // Anonymous connection? rehandshake immediately with certificate authentification forced
     auto cred = gnutls_auth_get_type(session_);
     if (cred == GNUTLS_CRD_ANON) {
-        JAMI_DBG("[TLS] renogotiate with certificate authentification");
+        JAMI_DEBUG("[TLS] renogotiate with certificate authentification");
 
         // Re-setup TLS algorithms priority list with only certificate based cipher suites
         ret = gnutls_priority_set_direct(session_,
@@ -1198,7 +1201,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
                                              : DTLS_CERT_PRIORITY_STRING,
                                          nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
-            JAMI_ERR("[TLS] session TLS cert-only priority set failed: %s", gnutls_strerror(ret));
+            JAMI_ERROR("[TLS] session TLS cert-only priority set failed: {:s}", gnutls_strerror(ret));
             return TlsSessionState::SHUTDOWN;
         }
 
@@ -1206,14 +1209,14 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
         gnutls_credentials_clear(session_);
         ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, *xcred_);
         if (ret != GNUTLS_E_SUCCESS) {
-            JAMI_ERR("[TLS] session credential set failed: %s", gnutls_strerror(ret));
+            JAMI_ERROR("[TLS] session credential set failed: {:s}", gnutls_strerror(ret));
             return TlsSessionState::SHUTDOWN;
         }
 
         return state; // handshake
 
     } else if (cred != GNUTLS_CRD_CERTIFICATE) {
-        JAMI_ERR("[TLS] spurious session credential (%u)", cred);
+        JAMI_ERROR("[TLS] spurious session credential ({})", cred);
         return TlsSessionState::SHUTDOWN;
     }
 
