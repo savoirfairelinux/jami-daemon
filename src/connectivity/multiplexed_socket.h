@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include <cstdint>
 #include <opendht/default_types.h>
 
 #include "connectivity/generic_io.h"
@@ -137,6 +138,8 @@ public:
 
     IpAddr getLocalAddress() const;
     IpAddr getRemoteAddress() const;
+
+    void eraseChannel(uint16_t channel);
 
 #ifdef LIBJAMI_TESTABLE
     /**
@@ -263,7 +266,8 @@ public:
     ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                   const std::string& name,
                   const uint16_t& channel,
-                  bool isInitiator = false);
+                  bool isInitiator = false,
+                  std::function<void()> rmFromMxSockCb = {});
     ~ChannelSocket();
 
     DeviceId deviceId() const override;
