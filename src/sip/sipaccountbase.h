@@ -266,7 +266,10 @@ protected:
         std::chrono::steady_clock::time_point::min()};
     std::shared_ptr<Task> composingTimeout_;
 
-    std::unique_ptr<TurnCache> turnCache_;
+    mutable std::mutex turnCacheMtx_;
+    // ASIO :(
+    // https://stackoverflow.com/questions/35507956/is-it-safe-to-destroy-boostasio-timer-from-its-handler-or-handler-dtor
+    std::shared_ptr<TurnCache> turnCache_;
 
 private:
     NON_COPYABLE(SIPAccountBase);

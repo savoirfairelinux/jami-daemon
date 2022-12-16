@@ -34,7 +34,7 @@
 
 namespace jami {
 
-class TurnCache
+class TurnCache : public std::enable_shared_from_this<TurnCache>
 {
 public:
     TurnCache(const std::string& accountId,
@@ -53,6 +53,10 @@ public:
      * Refresh cache from current configuration
      */
     void refresh(const asio::error_code& ec = {});
+    /**
+     * Reset connections
+     */
+    void shutdown();
 
 private:
     std::string accountId_;
@@ -81,6 +85,7 @@ private:
     std::unique_ptr<IpAddr> cacheTurnV6_ {};
 
     void onConnected(const asio::error_code& ec, bool ok, IpAddr server);
+    void resetTestTransport(const asio::error_code& ec);
 
     // io
     std::shared_ptr<asio::io_context> io_context;
@@ -88,7 +93,6 @@ private:
     std::unique_ptr<asio::steady_timer> onConnectedTimer_;
 
     std::mutex shutdownMtx_;
-
 };
 
 } // namespace jami
