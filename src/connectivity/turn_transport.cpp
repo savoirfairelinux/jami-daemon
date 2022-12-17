@@ -60,9 +60,9 @@ public:
 
     ~TurnLock() { unlock(); }
 
-    void lock() { pj_grp_lock_acquire(lk_); }
+    void lock() { pj_grp_lock_add_ref(lk_); }
 
-    void unlock() { pj_grp_lock_release(lk_); }
+    void unlock() { pj_grp_lock_dec_ref(lk_); }
 };
 
 class TurnTransport::Impl
@@ -95,11 +95,9 @@ public:
     void shutdown()
     {
         noCallback_ = true;
-        {
-            TurnLock lock(relay);
-            if (relay)
-                pj_turn_sock_destroy(relay);
-        }
+        if (relay)
+            pj_turn_sock_destroy(relay);
+        turnLock.reset();
         if (ioWorker.joinable())
             ioWorker.join();
         pool.reset();
@@ -112,6 +110,7 @@ public:
     Pool pool {};
     pj_stun_config stunConfig {};
     pj_turn_sock* relay {nullptr};
+    std::unique_ptr<TurnLock> turnLock;
     pj_str_t relayAddr {};
     IpAddr peerRelayAddr; // address where peers should connect to
     IpAddr mappedAddr;
@@ -137,7 +136,7 @@ TurnTransport::Impl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_
     } else if (old_state <= PJ_TURN_STATE_READY and new_state > PJ_TURN_STATE_READY and not noCallback_) {
         JAMI_WARNING("TURN server disconnected ({:s})", pj_turn_state_name(new_state));
         cb_(false);
-    } else if (new_state >= PJ_TURN_STATE_DESTROYING) {
+    } else if (new_state == PJ_TURN_STATE_DESTROYING) {
         stopped_ = true;
     }
 }
@@ -191,6 +190,7 @@ TurnTransport::TurnTransport(const TurnTransportParams& params, std::function<vo
                             &turn_sock_cfg,
                             &*this->pimpl_,
                             &pimpl_->relay));
+    pimpl_->turnLock.reset(new TurnLock {pimpl_->relay});
     // TURN allocation setup
     pj_turn_alloc_param turn_alloc_param;
     pj_turn_alloc_param_default(&turn_alloc_param);
