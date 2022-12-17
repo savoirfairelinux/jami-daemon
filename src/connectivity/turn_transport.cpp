@@ -95,11 +95,9 @@ public:
     void shutdown()
     {
         noCallback_ = true;
-        {
-            TurnLock lock(relay);
-            if (relay)
-                pj_turn_sock_destroy(relay);
-        }
+        if (relay)
+            pj_turn_sock_destroy(relay);
+        turnLock.reset();
         if (ioWorker.joinable())
             ioWorker.join();
         pool.reset();
@@ -112,6 +110,7 @@ public:
     Pool pool {};
     pj_stun_config stunConfig {};
     pj_turn_sock* relay {nullptr};
+    std::unique_ptr<TurnLock> turnLock;
     pj_str_t relayAddr {};
     IpAddr peerRelayAddr; // address where peers should connect to
     IpAddr mappedAddr;
@@ -191,6 +190,7 @@ TurnTransport::TurnTransport(const TurnTransportParams& params, std::function<vo
                             &turn_sock_cfg,
                             &*this->pimpl_,
                             &pimpl_->relay));
+    pimpl_->turnLock.reset(pimpl_->relay);
     // TURN allocation setup
     pj_turn_alloc_param turn_alloc_param;
     pj_turn_alloc_param_default(&turn_alloc_param);
