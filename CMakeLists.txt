@@ -34,6 +34,14 @@ source_group("Source Files\\media\\audio\\sound" FILES ${Source_Files__media__au
 source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
 source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
 
+set(CONTRIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/contrib)
+set(TARGET ${TARGET})
+set(CONTRIB_PATH ${CONTRIB_DIR}/${TARGET})
+set(JAMI_DATADIR ${JAMI_DATADIR})
+set(PACKAGE_NAME "Jami Daemon")
+
+message(CONTRIB_PATH="${CONTRIB_PATH}")
+
 if(MSVC)
    if(WINDOWS_STORE)
       source_group("Source Files\\media\\video\\uwpvideo" FILES ${Source_Files__media__video__uwpvideo})
@@ -287,5 +295,48 @@ if(MSVC)
    )
 
    set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
+else()
+    list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
+    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+
+    find_package (msgpack REQUIRED)
+
+    add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon") 
+    set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+    target_include_directories(${PROJECT_NAME} PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/.;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/config;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/security;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/sip;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/igd;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/protocol;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/mapping;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/jami;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/media;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht/eth;"
+        SYSTEM
+        ${CONTRIB_PATH}/include
+    )
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        -DPJ_AUTOCONF=1
+        -DHAVE_RINGNS
+        -DENABLE_VIDEO
+        -DJAMI_DATADIR="${JAMI_DATADIR}"
+        -DPACKAGE_NAME="${PACKAGE_NAME}"
+        -DPACKAGE="jami"
+        -Wall -Wextra
+        -Wnon-virtual-dtor
+        -Wno-deprecated
+        -Wno-deprecated-declarations
+    )
+    target_link_libraries(${PROJECT_NAME} msgpack)
 
 endif()
