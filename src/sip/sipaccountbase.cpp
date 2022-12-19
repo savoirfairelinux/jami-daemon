@@ -20,8 +20,6 @@
 
 #include "sip/sipaccountbase.h"
 #include "sip/sipvoiplink.h"
-#include "sipaccountbase.h"
-#include <mutex>
 
 #ifdef ENABLE_VIDEO
 #include "libav_utils.h"
@@ -150,13 +148,12 @@ SIPAccountBase::loadConfig()
     turnParams.username = conf.turnServerUserName;
     turnParams.password = conf.turnServerPwd;
     turnParams.realm = conf.turnServerRealm;
-    std::lock_guard<std::mutex> lk(turnCacheMtx_);
     if (!turnCache_) {
         auto cachePath = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID();
         turnCache_ = std::make_shared<TurnCache>(getAccountID(),
-                                                    cachePath,
-                                                    turnParams,
-                                                    conf.turnEnabled);
+                                                 cachePath,
+                                                 turnParams,
+                                                 conf.turnEnabled);
     } else {
         turnCache_->reconfigure(turnParams, conf.turnEnabled);
     }
@@ -258,7 +255,6 @@ SIPAccountBase::getIceOptions() const noexcept
 
     // if (config().stunEnabled)
     //     opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
-    std::lock_guard<std::mutex> lk(turnCacheMtx_);
     if (config().turnEnabled && turnCache_) {
         auto turnAddr = turnCache_->getResolvedTurn();
         if (turnAddr != std::nullopt) {

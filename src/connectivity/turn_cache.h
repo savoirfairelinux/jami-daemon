@@ -53,10 +53,6 @@ public:
      * Refresh cache from current configuration
      */
     void refresh(const asio::error_code& ec = {});
-    /**
-     * Reset connections
-     */
-    void shutdown();
 
 private:
     std::string accountId_;
@@ -84,20 +80,20 @@ private:
     std::unique_ptr<IpAddr> cacheTurnV4_ {};
     std::unique_ptr<IpAddr> cacheTurnV6_ {};
 
-    void onConnected(bool ok, IpAddr server);
-    void resetTestTransport();
+    void onConnected(const asio::error_code& ec, bool ok, IpAddr server);
 
     // io
     std::shared_ptr<asio::io_context> io_context;
     std::unique_ptr<asio::steady_timer> refreshTimer_;
+    std::unique_ptr<asio::steady_timer> onConnectedTimer_;
 
+    std::mutex shutdownMtx_;
     // Asio :(
     // https://stackoverflow.com/questions/35507956/is-it-safe-to-destroy-boostasio-timer-from-its-handler-or-handler-dtor
     std::weak_ptr<TurnCache> weak()
     {
         return std::static_pointer_cast<TurnCache>(shared_from_this());
     }
-
 };
 
 } // namespace jami
