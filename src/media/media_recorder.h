@@ -20,7 +20,9 @@
 
 #pragma once
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 #include "media_buffer.h"
 #include "media_encoder.h"
 #include "media_filter.h"

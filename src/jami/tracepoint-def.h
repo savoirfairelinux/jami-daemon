@@ -1,6 +1,7 @@
-#include "config.h"
-
 #ifdef ENABLE_TRACEPOINTS
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #undef LTTNG_UST_TRACEPOINT_PROVIDER
 #define LTTNG_UST_TRACEPOINT_PROVIDER jami
