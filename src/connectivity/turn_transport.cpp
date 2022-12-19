@@ -38,44 +38,29 @@
 
 namespace jami {
 
-struct CachePoolDeleter {
-  void operator()(pj_caching_pool* b) { pj_caching_pool_destroy(b); }
-};
-struct PoolDeleter {
-  void operator()(pj_pool_t* p) { pj_pool_release(p); }
-};
-using CachePool = std::unique_ptr<pj_caching_pool, CachePoolDeleter>;
-using Pool = std::unique_ptr<pj_pool_t, PoolDeleter>;
-
 class TurnLock
 {
     pj_grp_lock_t* lk_;
 
 public:
-    TurnLock(pj_turn_sock* strans)
-        : lk_(pj_turn_sock_get_grp_lock(strans))
+    TurnLock(pj_turn_sock* sock)
+        : lk_(pj_turn_sock_get_grp_lock(sock))
     {
         lock();
     }
 
     ~TurnLock() { unlock(); }
 
-    void lock() { pj_grp_lock_acquire(lk_); }
+    void lock() { pj_grp_lock_add_ref(lk_); }
 
-    void unlock() { pj_grp_lock_release(lk_); }
+    void unlock() { pj_grp_lock_dec_ref(lk_); }
 };
 
 class TurnTransport::Impl
 {
 public:
-    Impl(std::function<void(bool)>&& cb)
-    : poolCache(new pj_caching_pool())
-    , pool(nullptr)
-    { cb_ = std::move(cb); }
-
-    ~Impl() {
-        shutdown();
-    }
+    Impl(std::function<void(bool)>&& cb) { cb_ = std::move(cb); }
+    ~Impl();
 
     /**
      * Detect new TURN state
@@ -92,26 +77,24 @@ public:
         ioWorker = std::thread([this] { ioJob(); });
     }
 
-    void shutdown()
-    {
-        noCallback_ = true;
-        {
-            TurnLock lock(relay);
-            if (relay)
-                pj_turn_sock_destroy(relay);
+    void shutdown() {
+        std::lock_guard<std::mutex> lock(shutdownMtx_);
+        if (relay) {
+            pj_turn_sock_destroy(relay);
+            relay = nullptr;
         }
+        turnLock.reset();
         if (ioWorker.joinable())
             ioWorker.join();
-        pool.reset();
-        poolCache.reset();
-    }
+     }
 
     TurnTransportParams settings;
 
-    CachePool poolCache {};
-    Pool pool {};
+    pj_caching_pool poolCache {};
+    pj_pool_t* pool {nullptr};
     pj_stun_config stunConfig {};
     pj_turn_sock* relay {nullptr};
+    std::unique_ptr<TurnLock> turnLock;
     pj_str_t relayAddr {};
     IpAddr peerRelayAddr; // address where peers should connect to
     IpAddr mappedAddr;
@@ -119,12 +102,23 @@ public:
 
     std::thread ioWorker;
     std::atomic_bool stopped_ {false};
-    std::atomic_bool noCallback_ {false};
+    std::atomic_bool cbCalled_ {false};
+    std::mutex shutdownMtx_;
 };
 
+TurnTransport::Impl::~Impl()
+{
+    shutdown();
+    pj_caching_pool_destroy(&poolCache);
+}
 void
 TurnTransport::Impl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_state)
 {
+    if (new_state == PJ_TURN_STATE_DESTROYING) {
+        stopped_ = true;
+        return;
+    }
+
     if (new_state == PJ_TURN_STATE_READY) {
         pj_turn_session_info info;
         pj_turn_sock_get_info(relay, &info);
@@ -132,13 +126,11 @@ TurnTransport::Impl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_
         mappedAddr = IpAddr {info.mapped_addr};
         JAMI_DEBUG("TURN server ready, peer relay address: {:s}",
                    peerRelayAddr.toString(true, true).c_str());
-        noCallback_ = true;
+        cbCalled_ = true;
         cb_(true);
-    } else if (old_state <= PJ_TURN_STATE_READY and new_state > PJ_TURN_STATE_READY and not noCallback_) {
+    } else if (old_state <= PJ_TURN_STATE_READY and new_state > PJ_TURN_STATE_READY and not cbCalled_) {
         JAMI_WARNING("TURN server disconnected ({:s})", pj_turn_state_name(new_state));
         cb_(false);
-    } else if (new_state >= PJ_TURN_STATE_DESTROYING) {
-        stopped_ = true;
     }
 }
 void
@@ -161,16 +153,16 @@ TurnTransport::TurnTransport(const TurnTransportParams& params, std::function<vo
         throw std::invalid_argument("invalid turn server address");
     pimpl_->settings = params;
     // PJSIP memory pool
-    pj_caching_pool_init(pimpl_->poolCache.get(), &pj_pool_factory_default_policy, 0);
-    pimpl_->pool.reset(pj_pool_create(&pimpl_->poolCache->factory, "TurnTransport", 512, 512, nullptr));
+    pj_caching_pool_init(&pimpl_->poolCache, &pj_pool_factory_default_policy, 0);
+    pimpl_->pool = pj_pool_create(&pimpl_->poolCache.factory, "TurnTransport", 512, 512, nullptr);
     if (not pimpl_->pool)
         throw std::runtime_error("pj_pool_create() failed");
     // STUN config
-    pj_stun_config_init(&pimpl_->stunConfig, &pimpl_->poolCache->factory, 0, nullptr, nullptr);
+    pj_stun_config_init(&pimpl_->stunConfig, &pimpl_->poolCache.factory, 0, nullptr, nullptr);
     // create global timer heap
-    TRY(pj_timer_heap_create(pimpl_->pool.get(), 1000, &pimpl_->stunConfig.timer_heap));
+    TRY(pj_timer_heap_create(pimpl_->pool, 1000, &pimpl_->stunConfig.timer_heap));
     // create global ioqueue
-    TRY(pj_ioqueue_create(pimpl_->pool.get(), 16, &pimpl_->stunConfig.ioqueue));
+    TRY(pj_ioqueue_create(pimpl_->pool, 16, &pimpl_->stunConfig.ioqueue));
     // TURN callbacks
     pj_turn_sock_cb relay_cb;
     pj_bzero(&relay_cb, sizeof(relay_cb));
@@ -202,7 +194,7 @@ TurnTransport::TurnTransport(const TurnTransportParams& params, std::function<vo
     pj_cstr(&cred.data.static_cred.username, pimpl_->settings.username.c_str());
     cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
     pj_cstr(&cred.data.static_cred.data, pimpl_->settings.password.c_str());
-    pimpl_->relayAddr = pj_strdup3(pimpl_->pool.get(), server.toString().c_str());
+    pimpl_->relayAddr = pj_strdup3(pimpl_->pool, server.toString().c_str());
     // TURN connection/allocation
     JAMI_DEBUG("Connecting to TURN {:s}", server.toString(true, true));
     TRY(pj_turn_sock_alloc(pimpl_->relay,
@@ -211,6 +203,7 @@ TurnTransport::TurnTransport(const TurnTransportParams& params, std::function<vo
                            nullptr,
                            &cred,
                            &turn_alloc_param));
+    pimpl_->turnLock = std::make_unique<TurnLock>(pimpl_->relay);
     pimpl_->start();
 }
 

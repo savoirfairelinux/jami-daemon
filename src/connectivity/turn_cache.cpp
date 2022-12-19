@@ -25,7 +25,6 @@
 #include "manager.h"
 #include "opendht/thread_pool.h" // TODO remove asio
 #include "turn_cache.h"
-#include <asio/error_code.hpp>
 
 namespace jami {
 
@@ -39,16 +38,17 @@ TurnCache::TurnCache(const std::string& accountId,
 {
     refreshTimer_ = std::make_unique<asio::steady_timer>(*io_context,
                                                          std::chrono::steady_clock::now());
+    onConnectedTimer_ = std::make_unique<asio::steady_timer>(*io_context,
+                                                         std::chrono::steady_clock::now());
     reconfigure(params, enabled);
 }
 
 TurnCache::~TurnCache() {
-    shutdown();
-}
-
-void
-TurnCache::shutdown()
-{
+    {
+        std::lock_guard<std::mutex> lock(shutdownMtx_);
+        onConnectedTimer_->cancel();
+        onConnectedTimer_.reset();
+    }
     {
         std::lock_guard<std::mutex> lock(cachedTurnMutex_);
         testTurnV4_.reset();
@@ -175,13 +175,13 @@ TurnCache::testTurn(IpAddr server)
     try {
         turn = std::make_unique<TurnTransport>(
             params, std::move([this, server](bool ok) {
-                if (!io_context) return;
                 // Stop server in an async job, because this callback can be called
                 // immediately and cachedTurnMutex_ must not be locked.
-                io_context->post([w= weak(), ok, server] {
-                    if (auto shared = w.lock())
-                        shared->onConnected(ok, server);
-                });
+                std::lock_guard<std::mutex> lock(shutdownMtx_);
+                if (onConnectedTimer_) {
+                    onConnectedTimer_->expires_at(std::chrono::steady_clock::now());
+                    onConnectedTimer_->async_wait(std::bind(&TurnCache::onConnected, shared_from_this(), std::placeholders::_1, ok, server));
+                }
             }));
     } catch (const std::exception& e) {
         JAMI_ERROR("TurnTransport creation error: {}", e.what());
@@ -189,8 +189,11 @@ TurnCache::testTurn(IpAddr server)
 }
 
 void
-TurnCache::onConnected(bool ok, IpAddr server)
+TurnCache::onConnected(const asio::error_code& ec, bool ok, IpAddr server)
 {
+    if (ec == asio::error::operation_aborted)
+        return;
+
     std::lock_guard<std::mutex> lk(cachedTurnMutex_);
     auto& cacheTurn = server.isIpv4() ? cacheTurnV4_ : cacheTurnV6_;
     if (!ok) {
@@ -200,18 +203,11 @@ TurnCache::onConnected(bool ok, IpAddr server)
         JAMI_DEBUG("Connection to {:s} ready", server.toString());
         cacheTurn = std::make_unique<IpAddr>(server);
     }
+    refreshTurnDelay(!cacheTurnV6_ && !cacheTurnV4_);
     if (auto& turn = server.isIpv4() ? testTurnV4_ : testTurnV6_)
         turn->shutdown();
-    refreshTurnDelay(!cacheTurnV6_ && !cacheTurnV4_);
 }
 
-void
-TurnCache::resetTestTransport()
-{
-    std::lock_guard<std::mutex> lk(cachedTurnMutex_);
-    testTurnV4_.reset();
-    testTurnV6_.reset();
-}
 
 void
 TurnCache::refreshTurnDelay(bool scheduleNext)
@@ -223,13 +219,9 @@ TurnCache::refreshTurnDelay(bool scheduleNext)
         refreshTimer_->async_wait(std::bind(&TurnCache::refresh, shared_from_this(), std::placeholders::_1));
         if (turnRefreshDelay_ < std::chrono::minutes(30))
             turnRefreshDelay_ *= 2;
-    } else if (io_context) {
+    } else {
         JAMI_DEBUG("[Account {:s}] Cache refreshed for TURN resolution", accountId_);
         turnRefreshDelay_ = std::chrono::seconds(10);
-        io_context->post([w= weak()] {
-            if (auto shared = w.lock())
-                shared->resetTestTransport();
-        });
     }
 }
 
