@@ -16,6 +16,23 @@
       "message": "Ready for testing. Don\u0027t see any more issues, but I can\u0027t test calls on Windows.",
       "revId": "35cc54e7c318294856c02e1f002148b307770619",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "115432cc_d0e643a6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-12-19T09:23:03Z",
+      "side": 1,
+      "message": "Please test a release build as well: https://github.com/jbeder/yaml-cpp/issues/1153\nWe can add `-DCMAKE_BUILD_TYPE\u003dDebug` until it will be fixed.",
+      "revId": "35cc54e7c318294856c02e1f002148b307770619",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
