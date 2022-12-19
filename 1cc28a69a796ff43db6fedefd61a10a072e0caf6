@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9c9d3d5c_e768cc02",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-12-19T21:54:08Z",
+      "side": 1,
+      "message": "\u003e Support building without config.h\n\nTo support building without config.h you need to add an option `--disable-config-h`, and accumulate all definitions in `CFLAGS` and `CXXFLAGS` when it is activated. The patch is not finished IMHO.",
+      "revId": "1cc28a69a796ff43db6fedefd61a10a072e0caf6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
