@@ -16,6 +16,24 @@
       "message": "\u003e Support building without config.h\n\nTo support building without config.h you need to add an option `--disable-config-h`, and accumulate all definitions in `CFLAGS` and `CXXFLAGS` when it is activated. The patch is not finished IMHO.",
       "revId": "1cc28a69a796ff43db6fedefd61a10a072e0caf6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "31a1b52b_1dea79aa",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2022-12-20T19:40:34Z",
+      "side": 1,
+      "message": "Thanks. I clarified the scope and intent of this commit in the commit message. The goal is to add missing header guards, to allow future work on the CMake build to allow building without needing config.h (this might also optionally be used by Meson build in the future).",
+      "parentUuid": "9c9d3d5c_e768cc02",
+      "revId": "1cc28a69a796ff43db6fedefd61a10a072e0caf6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
