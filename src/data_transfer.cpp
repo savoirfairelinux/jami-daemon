@@ -515,7 +515,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
 
     auto recvDir = fmt::format("{:s}/{:s}/vcard/", fileutils::get_cache_dir(), pimpl_->accountId_);
     fileutils::recursive_mkdir(recvDir);
-    info.path =  fmt::format("{:s}/{:s}_{:s}_{}", recvDir, deviceId, uri, tid);
+    info.path =  fmt::format("{:s}{:s}_{:s}_{}", recvDir, deviceId, uri, tid);
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "");
     auto res = pimpl_->vcards_.emplace(idx, std::move(ifile));

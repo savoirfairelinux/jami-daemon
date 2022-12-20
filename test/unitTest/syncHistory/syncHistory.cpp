@@ -996,6 +996,7 @@ END:VCARD";
             if (accountId == aliceId && peerId == bobUri) {
                 bobProfileReceived = true;
                 auto p = std::filesystem::path(bobDest);
+                fileutils::recursive_mkdir(p.parent_path());
                 auto res = std::rename(path.c_str(), bobDest.c_str());
             } else if (accountId == bobId && peerId == aliceUri) {
                 aliceProfileReceived = true;
