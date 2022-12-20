@@ -432,7 +432,7 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input,
         return -1;
     }
 #else
-    output = getScaledSWFrame(input);
+    output = getScaledSWFrame(*input.get());
 #endif // RING_ACCEL
 
     if (!output) {
@@ -1267,7 +1267,7 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input,
         } else {
             output = getScaledSWFrame(*input.get());
         }
-#elif !defined(__APPLE__)
+#elif !defined(__APPLE__) && defined(RING_ACCEL)
         // Other Platforms
         auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format()));
         bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
@@ -1297,6 +1297,7 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input,
     return 0;
 }
 
+#ifdef RING_ACCEL
 std::shared_ptr<VideoFrame>
 MediaEncoder::getUnlinkedHWFrame(const VideoFrame& input)
 {
@@ -1323,6 +1324,7 @@ MediaEncoder::getHWFrameFromSWFrame(const VideoFrame& input)
     }
     return framePtr;
 }
+#endif
 
 std::shared_ptr<VideoFrame>
 MediaEncoder::getScaledSWFrame(const VideoFrame& input)
