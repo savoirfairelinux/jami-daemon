@@ -272,7 +272,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     std::unique_ptr<MediaFrame> clone;
     const auto& ms = streams_[name]->info;
-#ifdef ENABLE_VIDEO
+#if defined(ENABLE_VIDEO) && defined(RING_ACCEL)
     if (ms.isVideo) {
         auto desc = av_pix_fmt_desc_get(
             (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame))->format());
@@ -290,12 +290,12 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
             clone->copyFrom(*frame);
         }
     } else {
-#endif // ENABLE_VIDEO
+#endif // ENABLE_VIDEO && RING_ACCEL
         clone = std::make_unique<MediaFrame>();
         clone->copyFrom(*frame);
-#ifdef ENABLE_VIDEO
+#if defined(ENABLE_VIDEO) && defined(RING_ACCEL)
     }
-#endif // ENABLE_VIDEO
+#endif // ENABLE_VIDEO && RING_ACCEL
     clone->pointer()->pts = av_rescale_q_rnd(av_gettime() - startTimeStamp_,
                                              {1, AV_TIME_BASE},
                                              ms.timeBase,
