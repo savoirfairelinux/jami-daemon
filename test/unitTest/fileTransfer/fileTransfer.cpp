@@ -119,6 +119,9 @@ FileTransferTest::setUp()
 void
 FileTransferTest::tearDown()
 {
+    std::remove(sendPath.c_str());
+    std::remove(recvPath.c_str());
+    std::remove(recv2Path.c_str());
     wait_for_removal_of({aliceId, bobId, carlaId});
 }
 
@@ -234,10 +237,6 @@ FileTransferTest::testConversationFileTransfer()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(45), [&]() { return finished.size() == 3; }));
 
-    std::remove(sendPath.c_str());
-    std::remove(recvPath.c_str());
-    std::remove(recv2Path.c_str());
-
     libjami::unregisterSignalHandlers();
 }
 
@@ -332,8 +331,6 @@ FileTransferTest::testFileTransferInConversation()
         return transferAFinished && transferBFinished;
     }));
 
-    std::remove(sendPath.c_str());
-    std::remove(recvPath.c_str());
     libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
@@ -429,8 +426,6 @@ FileTransferTest::testVcfFileTransferInConversation()
         return transferAFinished && transferBFinished;
     }));
 
-    std::remove(sendPath.c_str());
-    std::remove(recvPath.c_str());
     libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
@@ -543,7 +538,6 @@ FileTransferTest::testBadSha3sumOut()
         return transferAFinished || transferBFinished;
     }));
 
-    std::remove(sendPath.c_str());
     libjami::unregisterSignalHandlers();
 }
 
@@ -781,9 +775,6 @@ FileTransferTest::testAskToMultipleParticipants()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile(recvPath));
 
-    std::remove(sendPath.c_str());
-    std::remove(recvPath.c_str());
-    std::remove(recv2Path.c_str());
     libjami::unregisterSignalHandlers();
 }
 
@@ -882,7 +873,6 @@ FileTransferTest::testCancelInTransfer()
     CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(tidBob));
 
-    std::remove(sendPath.c_str());
     libjami::unregisterSignalHandlers();
 }
 
@@ -990,8 +980,6 @@ FileTransferTest::testTransferInfo()
     CPPUNIT_ASSERT(totalSize == 64000);
     CPPUNIT_ASSERT(fileutils::isFile(path));
 
-    std::remove(sendPath.c_str());
-    std::remove(recvPath.c_str());
     libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }

@@ -1193,11 +1193,20 @@ Conversation::sync(const std::string& member,
 {
     JAMI_INFO() << "Sync " << id() << " with " << deviceId;
     pull(deviceId, std::move(cb), commitId);
-    // For waiting request, downloadFile
-    for (const auto& wr : dataTransfer()->waitingRequests())
-        downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId);
-    // VCard sync for member
     if (auto account = pimpl_->account_.lock()) {
+        // For waiting request, downloadFile
+        for (const auto& wr : dataTransfer()->waitingRequests()) {
+            auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                        + account->getAccountID() + DIR_SEPARATOR_STR
+                        + "conversation_data" + DIR_SEPARATOR_STR
+                        + id() + DIR_SEPARATOR_STR
+                        + wr.fileId;
+            auto start = fileutils::size(path);
+            if (start < 0)
+                start = 0;
+            downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId, start);
+        }
+        // VCard sync for member
         if (not account->needToSendProfile(member, deviceId)) {
             JAMI_INFO() << "Peer " << deviceId << " already got an up-to-date vcard";
             return;
