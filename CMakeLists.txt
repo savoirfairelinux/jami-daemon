@@ -1,16 +1,17 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16)
 
-project(ring-daemon C CXX)
+project(jami CXX)
 
 ################################################################################
 # Source groups
 ################################################################################
 
 # compat, src source group
+if(MSVC)
+    add_subdirectory("compat")
+endif()
 
-add_subdirectory("compat")
 add_subdirectory("src")
-
 source_group("Source Files" FILES ${Source_Files})
 source_group("Source Files\\client" FILES ${Source_Files__client})
 source_group("Source Files\\config" FILES ${Source_Files__config})
@@ -33,6 +34,26 @@ source_group("Source Files\\media\\audio\\audio-processing" FILES ${Source_Files
 source_group("Source Files\\media\\audio\\sound" FILES ${Source_Files__media__audio__sound})
 source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
 source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
+
+if (ANDROID_ABI STREQUAL "x86")
+    set(TARGET "i686-linux-android")
+elseif (ANDROID_ABI STREQUAL "x86_64")
+    set(TARGET "x86_64-linux-android")
+elseif (ANDROID_ABI STREQUAL "arm64-v8a")
+    set(TARGET "aarch64-linux-android")
+elseif (ANDROID_ABI STREQUAL "armeabi-v7a")
+    set(TARGET "arm-linux-androideabi")
+else()
+    set(TARGET ${TARGET})
+endif()
+
+set(CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
+set(PACKAGE_NAME "Jami Daemon")
+
+option(JAMI_NATPNP "Build with NAT-PMP (if found)" ON)
+option(JAMI_PUPNP "Build with PUPNP (if found)" ON)
+option(JAMI_PLUGIN "Build with plugin support" ON)
+option(JAMI_JNI "Build the JNI binding" OFF)
 
 if(MSVC)
    if(WINDOWS_STORE)
@@ -62,29 +83,68 @@ list (APPEND ALL_FILES
       ${Source_Files__sip}
       ${Source_Files__upnp}
       ${Source_Files__upnp__protocol}
-      ${Source_Files__upnp__protocol__natpmp}
-      ${Source_Files__upnp__protocol__pupnp}
-      ${Source_Files__plugin}
 )
-
+if (JAMI_NATPNP)
+    list (APPEND ALL_FILES ${Source_Files__upnp__protocol__natpmp})
+endif()
+if (JAMI_PUPNP)
+    list (APPEND ALL_FILES ${Source_Files__upnp__protocol__pupnp})
+endif()
+if (JAMI_PLUGIN)
+    list (APPEND ALL_FILES ${Source_Files__plugin})
+endif()
+if (ANDROID)
+    list (APPEND ALL_FILES ${ALL_FILES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/androidvideo/video_device_impl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/androidvideo/video_device_monitor_impl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/opensl/audio_player.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/opensl/audio_recorder.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/opensl/opensllayer.cpp
+    )
+endif()
 if(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
          "${Source_Files__media__audio__portaudio}"
          "${Source_Files__media__video__uwpvideo}"
          "${Source_Files__media__video__winvideo}"
    )
+endif()
 
+add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
+set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    LIBJAMI_BUILD
+    HAVE_RINGNS
+    ENABLE_VIDEO
+    JAMI_DATADIR="${JAMI_DATADIR}"
+    PACKAGE_NAME="${PACKAGE_NAME}"
+    PACKAGE="jami"
+    PJ_AUTOCONF=1
+    ASIO_STANDALONE
+    MSGPACK_NO_BOOST
+)
+target_compile_options(${PROJECT_NAME} PRIVATE
+    -fvisibility=hidden
+    -Wall -Wextra
+    -Wnon-virtual-dtor
+    -Wno-deprecated
+    -Wno-deprecated-declarations
+    -Wno-unknown-pragmas
+)
+if (JAMI_PLUGIN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_PLUGIN)
+endif()
+if (ANDROID)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENSL)
+endif()
+
+if(MSVC)
    ################################################################################
    # Target
    ################################################################################
    include("CMake/Utils.cmake")
-
-   add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
-   set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
-
    use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-
-   set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 
    ################################################################################
    # Include necessary .cmake file (need to init use_props first)
@@ -94,7 +154,6 @@ if(MSVC)
 
    # Supress generation of ZERO_CHECK
    set(CMAKE_SUPPRESS_REGENERATION true)
-
    set(ROOT_NAMESPACE ringdaemon)
 
    ################################################################################
@@ -176,14 +235,12 @@ if(MSVC)
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        target_compile_definitions(${PROJECT_NAME} PRIVATE
            "_WIN32_WINNT=0x0A00;"
-           "ASIO_STANDALONE;"
            "STATIC_GETOPT;"
            "LIBARCHIVE_STATIC;"
            "OPENDHT_PROXY_CLIENT;"
            "OPENDHT_PROXY_SERVER;"
            "OPENDHT_PUSH_NOTIFICATIONS;"
            "NATPMP_STATICLIB;"
-           "ENABLE_PLUGIN;"
            "NDEBUG;"
            "_USE_MATH_DEFINES;"
            "_SCL_SECURE_NO_WARNINGS;"
@@ -194,7 +251,6 @@ if(MSVC)
            "WEBRTC_WIN;"
            "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
            "WEBRTC_NS_FLOAT;"
-           "MSGPACK_NO_BOOST;"
        )
    endif()
 
@@ -287,5 +343,103 @@ if(MSVC)
    )
 
    set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
+else()
+    list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
+    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+    list(APPEND CMAKE_PREFIX_PATH ${CONTRIB_PATH})
+    include(FindPkgConfig)
+
+    find_package (jsoncpp REQUIRED)
+    find_package (yaml-cpp REQUIRED)
+    find_package (fmt REQUIRED)
+    pkg_search_module (webrtcap REQUIRED IMPORTED_TARGET webrtc-audio-processing)
+    pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
+    pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
+    pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
+    pkg_search_module (archive REQUIRED IMPORTED_TARGET libarchive)
+    pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1)
+    pkg_search_module (pjproject REQUIRED IMPORTED_TARGET libpjproject)
+    pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat)
+    pkg_search_module (avdevice REQUIRED IMPORTED_TARGET libavdevice)
+    pkg_search_module (avfilter REQUIRED IMPORTED_TARGET libavfilter)
+    pkg_search_module (avcodec REQUIRED IMPORTED_TARGET libavcodec)
+    pkg_search_module (swresample REQUIRED IMPORTED_TARGET libswresample)
+    pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale)
+    pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil)
+
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/.;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/config;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/security;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/sip;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/igd;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/protocol;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/mapping;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/media;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht/eth;"
+        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src;" "${CMAKE_CURRENT_SOURCE_DIR}/src/jami;"
+        SYSTEM ${CONTRIB_PATH}/include
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        PkgConfig::opendht
+        PkgConfig::pjproject
+        PkgConfig::git2
+        PkgConfig::archive
+        PkgConfig::gnutls
+        PkgConfig::webrtcap
+        PkgConfig::avformat
+        PkgConfig::avdevice
+        PkgConfig::avfilter
+        PkgConfig::avcodec
+        PkgConfig::swresample
+        PkgConfig::swscale
+        PkgConfig::avutil
+        jsoncpp
+        yaml-cpp
+        fmt
+        secp256k1
+    )
+    if (ANDROID)
+        target_link_libraries(${PROJECT_NAME} PRIVATE opensles log)
+    endif()
+    if (JAMI_NATPNP)
+        pkg_search_module (natpmp IMPORTED_TARGET natpmp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE natpmp)
+    endif()
+    if (JAMI_PUPNP)
+        pkg_search_module (upnp IMPORTED_TARGET upnp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE upnp)
+    endif()
+
+    if (JAMI_JNI)
+        # Generate swig binding
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp
+            COMMAND env PACKAGEDIR=${JAMI_JNI_PACKAGEDIR} "./make-swig.sh"
+            DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/make-swig.sh
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jni_interface.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/callmanager.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/configurationmanager.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/conversation.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/managerimpl.i
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni
+        )
+        # Build jni binding
+        add_library(${PROJECT_NAME}-jni SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp)
+        target_link_directories(${PROJECT_NAME}-jni PRIVATE ${CONTRIB_PATH}/lib)
+        target_link_libraries(${PROJECT_NAME}-jni ${PROJECT_NAME} android log)
+        set_target_properties(${PROJECT_NAME}-jni PROPERTIES CXX_STANDARD 17)
+        target_link_options(${PROJECT_NAME}-jni PRIVATE
+            -Wl,-Bsymbolic
+            -Wall -Wextra
+        )
+    endif()
 
 endif()
