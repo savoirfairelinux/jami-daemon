@@ -20,7 +20,10 @@
 
 #pragma once
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include "videomanager_interface.h"
 #include "observer.h"
 
