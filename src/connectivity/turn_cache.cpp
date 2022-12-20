@@ -174,7 +174,7 @@ TurnCache::testTurn(IpAddr server)
     turn.reset(); // Stop previous TURN
     try {
         turn = std::make_unique<TurnTransport>(
-            params, std::move([this, server](bool ok) {
+            params, [this, server](bool ok) {
                 // Stop server in an async job, because this callback can be called
                 // immediately and cachedTurnMutex_ must not be locked.
                 std::lock_guard<std::mutex> lock(shutdownMtx_);
@@ -182,7 +182,7 @@ TurnCache::testTurn(IpAddr server)
                     onConnectedTimer_->expires_at(std::chrono::steady_clock::now());
                     onConnectedTimer_->async_wait(std::bind(&TurnCache::onConnected, shared_from_this(), std::placeholders::_1, ok, server));
                 }
-            }));
+            });
     } catch (const std::exception& e) {
         JAMI_ERROR("TurnTransport creation error: {}", e.what());
     }
