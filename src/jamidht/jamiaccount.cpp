@@ -458,7 +458,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, co
     convModule()->call(
         uri.authority(),
         call,
-        std::move([this, uri, call](const std::string& accountUri, const DeviceId& deviceId) {
+        [this, uri, call](const std::string& accountUri, const DeviceId& deviceId) {
             std::unique_lock<std::mutex> lkSipConn(sipConnsMtx_);
             for (auto& [key, value] : sipConns_) {
                 if (key.first != accountUri || key.second != deviceId)
@@ -502,7 +502,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, co
             JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
                       call->getCallId().c_str());
             requestSIPConnection(accountUri, deviceId, type, true, call);
-        }));
+        });
 }
 
 void
