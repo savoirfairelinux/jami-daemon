@@ -1,16 +1,17 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16)
 
-project(ring-daemon C CXX)
+project(jami C CXX)
 
 ################################################################################
 # Source groups
 ################################################################################
 
 # compat, src source group
+if(MSVC)
+    add_subdirectory("compat")
+endif()
 
-add_subdirectory("compat")
 add_subdirectory("src")
-
 source_group("Source Files" FILES ${Source_Files})
 source_group("Source Files\\client" FILES ${Source_Files__client})
 source_group("Source Files\\config" FILES ${Source_Files__config})
@@ -33,6 +34,18 @@ source_group("Source Files\\media\\audio\\audio-processing" FILES ${Source_Files
 source_group("Source Files\\media\\audio\\sound" FILES ${Source_Files__media__audio__sound})
 source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
 source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
+
+set(TARGET ${TARGET})
+set(CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
+set(JAMI_DATADIR ${JAMI_DATADIR})
+set(PACKAGE_NAME "Jami Daemon")
+
+option(JAMI_NATPNP "Build Jami with NAT-PMP (if found)" ON)
+option(JAMI_PUPNP "Build Jami with PUPNP (if found)" ON)
+option(JAMI_PLUGIN "Build Jami with plugin support" ON)
+option(JAMI_JNI "Build the Jami JNI binding" OFF)
+
+message(CONTRIB_PATH="${CONTRIB_PATH}")
 
 if(MSVC)
    if(WINDOWS_STORE)
@@ -62,10 +75,16 @@ list (APPEND ALL_FILES
       ${Source_Files__sip}
       ${Source_Files__upnp}
       ${Source_Files__upnp__protocol}
-      ${Source_Files__upnp__protocol__natpmp}
-      ${Source_Files__upnp__protocol__pupnp}
-      ${Source_Files__plugin}
 )
+if (JAMI_NATPNP)
+    list (APPEND ALL_FILES ${Source_Files__upnp__protocol__natpmp})
+endif()
+if (JAMI_PUPNP)
+    list (APPEND ALL_FILES ${Source_Files__upnp__protocol__pupnp})
+endif()
+if (JAMI_PLUGIN)
+    list (APPEND ALL_FILES ${Source_Files__plugin})
+endif()
 
 if(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
@@ -287,5 +306,117 @@ if(MSVC)
    )
 
    set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
+else()
+    list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
+    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
+    list(APPEND CMAKE_PREFIX_PATH ${CONTRIB_PATH})
+    include(FindPkgConfig)
+
+    #find_package (msgpack REQUIRED)
+    find_package (jsoncpp REQUIRED)
+    find_package (yaml-cpp REQUIRED)
+    find_package (fmt REQUIRED)
+    pkg_search_module (webrtcap REQUIRED IMPORTED_TARGET webrtc-audio-processing)
+    pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
+    pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
+    pkg_search_module (git2 REQUIRED IMPORTED_TARGET git2 libgit2)
+    pkg_search_module (archive REQUIRED IMPORTED_TARGET archive libarchive)
+    pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET secp256k1 libsecp256k1)
+    pkg_search_module (pjproject REQUIRED IMPORTED_TARGET pjproject libpjproject)
+    pkg_search_module (avformat REQUIRED IMPORTED_TARGET avformat libavformat)
+    pkg_search_module (avdevice REQUIRED IMPORTED_TARGET avdevice libavdevice)
+    pkg_search_module (avfilter REQUIRED IMPORTED_TARGET avfilter libavfilter)
+    pkg_search_module (avcodec REQUIRED IMPORTED_TARGET avcodec libavcodec)
+    pkg_search_module (swresample REQUIRED IMPORTED_TARGET swresample libswresample)
+    pkg_search_module (swscale REQUIRED IMPORTED_TARGET swscale libswscale)
+    pkg_search_module (avutil REQUIRED IMPORTED_TARGET avutil libavutil)
+
+    if (ANDROID)
+        list (APPEND ALL_FILES ${ALL_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/androidvideo/video_device_impl.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/androidvideo/video_device_monitor_impl.cpp
+        )
+    endif()
+    add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
+    set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+    target_include_directories(${PROJECT_NAME} PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/.;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/config;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/security;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/sip;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/igd;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/protocol;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/mapping;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/jami;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/media;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht;"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht/eth;"
+        SYSTEM
+        ${CONTRIB_PATH}/include
+    )
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        -DHAVE_RINGNS
+        -DENABLE_VIDEO
+        -DJAMI_DATADIR="${JAMI_DATADIR}"
+        -DPACKAGE_NAME="${PACKAGE_NAME}"
+        -DPACKAGE="jami"
+        -DPJ_AUTOCONF=1
+        -DASIO_STANDALONE
+        -DMSGPACK_NO_BOOST
+        -Wall -Wextra
+        -Wnon-virtual-dtor
+        -Wno-deprecated
+        -Wno-deprecated-declarations
+        -Wno-unknown-pragmas
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        jsoncpp
+        yaml-cpp
+        fmt
+        secp256k1
+        PkgConfig::webrtcap
+        PkgConfig::gnutls
+        PkgConfig::opendht
+        PkgConfig::git2
+        PkgConfig::archive
+        PkgConfig::pjproject
+        PkgConfig::avformat
+        PkgConfig::avdevice
+        PkgConfig::avfilter
+        PkgConfig::avcodec
+        PkgConfig::swresample
+        PkgConfig::swscale
+        PkgConfig::avutil
+    )
+
+    if (JAMI_NATPNP)
+        pkg_search_module (natpmp IMPORTED_TARGET natpmp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE natpmp)
+    endif()
+    if (JAMI_PUPNP)
+        pkg_search_module (upnp IMPORTED_TARGET upnp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE upnp)
+    endif()
+    if (JAMI_PLUGIN)
+        target_compile_options(${PROJECT_NAME} PRIVATE -DENABLE_PLUGIN)
+    endif()
+
+    if (JAMI_JNI)
+        add_library(${PROJECT_NAME}-jni SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp)
+        target_link_directories(${PROJECT_NAME}-jni PRIVATE ${CONTRIB_PATH}/lib)
+        target_link_libraries(${PROJECT_NAME}-jni ${PROJECT_NAME} android log)
+        set_target_properties(${PROJECT_NAME}-jni PROPERTIES CXX_STANDARD 17)
+        target_link_options(${PROJECT_NAME}-jni PRIVATE
+            -Wl,-Bsymbolic
+            -Wall -Wextra
+        )
+    endif()
 
 endif()
