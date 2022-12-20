@@ -162,7 +162,7 @@ IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
 {
-    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::out);
+    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::out | std::ios::app);
     if (!stream_)
         return;
 
@@ -204,17 +204,22 @@ IncomingFile::process()
         if (!shared)
             return;
         auto correct = shared->sha3Sum_.empty();
-        if (shared->stream_ && shared->stream_.is_open())
+        auto isEOF = shared->info_.bytesProgress == shared->info_.totalSize;
+        if (shared->stream_ && shared->stream_.is_open()) {
+            isEOF |= shared->stream_.eof();
             shared->stream_.close();
+        }
         if (!correct) {
             // Verify shaSum
             auto sha3Sum = fileutils::sha3File(shared->info_.path);
             if (shared->sha3Sum_ == sha3Sum) {
                 JAMI_INFO() << "New file received: " << shared->info_.path;
                 correct = true;
-            } else {
+            } else if (isEOF || shared->isUserCancelled_) {
                 JAMI_WARN() << "Remove file, invalid sha3sum detected for " << shared->info_.path;
                 fileutils::remove(shared->info_.path, true);
+            } else {
+                JAMI_WARN() << "Invalid sha3sum detected, unfinished file: " << shared->info_.path;
             }
         }
         if (shared->isUserCancelled_)
@@ -424,7 +429,6 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     info.conversationId = pimpl_->to_;
     info.path = itW->second.path;
     info.totalSize = itW->second.totalSize;
-    info.bytesProgress = 0;
 
     // Generate the file path within the conversation data directory
     // using the file id if no path has been specified, otherwise create
@@ -437,6 +441,9 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
         // the attempt to create one should report the error string correctly.
         fileutils::createFileLink(filePath, info.path);
     }
+    info.bytesProgress = fileutils::size(info.path);
+    if (info.bytesProgress < 0)
+        info.bytesProgress = 0;
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel),
                                                 info,
