@@ -75,6 +75,7 @@ public:
 
     void shutdown()
     {
+        isShutdown_ = true;
         JAMI_ERROR("{} SHUTTING DOWN NODES", id_.toString());
         routing_table.shutdownAllNodes();
     }
@@ -158,6 +159,8 @@ private:
     mutable std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
+
+    std::atomic_bool isShutdown_ {false};
 
     OnConnectionChanged onConnectionChanged_;
 };

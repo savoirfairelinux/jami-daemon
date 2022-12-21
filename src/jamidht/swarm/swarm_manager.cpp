@@ -57,6 +57,7 @@ SwarmManager::removeNodeInternal(const NodeId& nodeId)
 void
 SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
 {
+    isShutdown_ = false;
     std::lock_guard<std::mutex> lock(mutex);
 
     for (const auto& NodeId : known_nodes) {
@@ -212,7 +213,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
 
     socket->onShutdown([w = weak(), deviceId = socket->deviceId()] {
         auto shared = w.lock();
-        if (shared) {
+        if (shared && !shared->isShutdown_) {
             std::lock_guard<std::mutex> lock(shared->mutex);
             shared->removeNodeInternal(deviceId);
             shared->maintainBuckets();
@@ -265,7 +266,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                           if (bucket->getConnectingNodesSize() == 0
                               && bucket->getNodeIds().size() == 0 && onConnectionChanged_) {
                               lk.unlock();
-                              JAMI_WARNING("[SwarmManager {}] Bootstrap: all connections failed",
+                              JAMI_WARNING("[SwarmManager {:p}] Bootstrap: all connections failed",
                                            fmt::ptr(this));
                               onConnectionChanged_(false);
                           }
