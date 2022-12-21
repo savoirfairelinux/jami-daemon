@@ -39,10 +39,10 @@ AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
 {
     return dht::ThreadPool::computation().get<std::unique_ptr<dht::crypto::CertificateRequest>>(
-        [fDeviceKey] {
+        [fDeviceKey = std::move(fDeviceKey)] {
             auto request = std::make_unique<dht::crypto::CertificateRequest>();
             request->setName("Jami device");
-            auto deviceKey = fDeviceKey.get();
+            const auto& deviceKey = fDeviceKey.get();
             request->setUID(deviceKey->getPublicKey().getId().toString());
             request->sign(*deviceKey);
             return request;
