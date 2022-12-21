@@ -2500,14 +2500,15 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     git_clone_options clone_options;
     git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
     git_fetch_options_init(&clone_options.fetch_opts, GIT_FETCH_OPTIONS_VERSION);
-    size_t received_bytes = 0;
-    clone_options.fetch_opts.callbacks.payload = static_cast<void*>(&received_bytes);
     clone_options.fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats,
-                                                              void* payload) {
-        *(static_cast<size_t*>(payload)) += stats->received_bytes;
-        if (*(static_cast<size_t*>(payload)) > MAX_FETCH_SIZE) {
-            JAMI_ERR("Abort fetching repository, the fetch is too big: %lu bytes",
-                     *(static_cast<size_t*>(payload)));
+                                                              void*) {
+        // Uncomment to get advancment
+        // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
+        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects, stats->received_bytes/1024);
+        // If a pack is more than 256Mb, it's anormal.
+        if (stats->received_bytes > MAX_FETCH_SIZE) {
+            JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
+                stats->received_bytes, stats->received_objects, stats->total_objects);
             return -1;
         }
         return 0;
@@ -2897,13 +2898,14 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     }
     GitRemote remote {remote_ptr, git_remote_free};
 
-    size_t received_bytes = 0;
-    fetch_opts.callbacks.payload = static_cast<void*>(&received_bytes);
-    fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void* payload) {
-        *(static_cast<size_t*>(payload)) += stats->received_bytes;
-        if (*(static_cast<size_t*>(payload)) > MAX_FETCH_SIZE) {
-            JAMI_ERR("Abort fetching repository, the fetch is too big: %lu bytes",
-                     *(static_cast<size_t*>(payload)));
+    fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
+        // Uncomment to get advancment
+        // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
+        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects, stats->received_bytes/1024);
+        // If a pack is more than 256Mb, it's anormal.
+        if (stats->received_bytes > MAX_FETCH_SIZE) {
+            JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
+                stats->received_bytes, stats->received_objects, stats->total_objects);
             return -1;
         }
         return 0;
