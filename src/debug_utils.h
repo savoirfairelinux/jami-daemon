@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "config.h"
-
 #include "libav_deps.h"
 #include "media_io_handle.h"
 #include "system_codec_container.h"

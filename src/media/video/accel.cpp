@@ -21,12 +21,15 @@
 
 #include <algorithm>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "media_buffer.h"
 #include "string_utils.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "accel.h"
-#include "config.h"
 
 namespace jami {
 namespace video {
