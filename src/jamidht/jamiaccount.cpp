@@ -2158,7 +2158,17 @@ JamiAccount::convModule()
                 // main thread.
                 if (!device)
                     return sendTextMessage(uri, msg, token);
-                sendMessage(uri, msg, token, true, false, device.toString()); // ICI CHECK
+                runOnMainThread([w = weak(), uri, msg, token, device] {
+                    if (auto shared = w.lock())
+                        shared->sendMessage(
+                            uri,
+                            msg,
+                            token,
+                            true,
+                            false,
+                            device.toString()); // ICI CHECK => TODO mettre dans messageEngine et
+                                                // retrigger comme sendTextMEssage
+                });
                 return 0ul;
             },
             [this](const auto& convId, const auto& deviceId, auto cb, const auto& type) {
@@ -2938,7 +2948,7 @@ JamiAccount::declineConversationRequest(const std::string& conversationId)
 {
     auto peerId = convModule()->peerFromConversationRequest(conversationId);
     convModule()->declineConversationRequest(conversationId);
-    if (!peerId.empty())  {
+    if (!peerId.empty()) {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (auto info = accountManager_->getInfo()) {
             // Verify if we have a trust request with this peer + convId
@@ -2946,7 +2956,9 @@ JamiAccount::declineConversationRequest(const std::string& conversationId)
             if (req.find(libjami::Account::TrustRequest::CONVERSATIONID) != req.end()
                 && req.at(libjami::Account::TrustRequest::CONVERSATIONID) == conversationId) {
                 accountManager_->discardTrustRequest(peerId);
-                JAMI_DEBUG("[Account {:s}] declined trust request with {:s}", getAccountID(), peerId);
+                JAMI_DEBUG("[Account {:s}] declined trust request with {:s}",
+                           getAccountID(),
+                           peerId);
             }
         }
     }
@@ -3527,13 +3539,18 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             return false;
         }
 
-        JAMI_WARN("Received indication for new commit available in conversation %s",
-                  json["id"].asString().c_str());
-
-        convModule()->onNewCommit(from,
-                                  json["deviceId"].asString(),
-                                  json["id"].asString(),
-                                  json["commit"].asString());
+        std::string deviceId = json["deviceId"].asString();
+        std::string id = json["id"].asString();
+        std::string commit = json["commit"].asString();
+        /*         JAMI_WARN("Received indication for new commit available in conversation {} ({})",
+                          id,
+                          commit); */
+        dht::ThreadPool::io().run([w = weak(), from, deviceId, id, commit] {
+            // onNewCommit will do heavy stuff like fetching, avoid to block SIP socket
+            if (auto shared = w.lock()) {
+                shared->convModule()->onNewCommit(from, deviceId, id, commit);
+            }
+        });
         return true;
     } else if (m.first == MIME_TYPE_INVITE) {
         convModule()->onNeedConversationRequest(from, m.second);
@@ -3911,7 +3928,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 
     convModule()->syncConversations(peerId, deviceId.toString());
     // Retry messages
+
     messageEngine_.onPeerOnline(peerId);
+    messageEngine_.onPeerOnline(peerId, true, deviceId.toString());
 
     // Connect pending calls
     forEachPendingCall(deviceId, [&](const auto& pc) {
