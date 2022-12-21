@@ -52,7 +52,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
     ctx->onFailure = std::move(onFailure);
 
     if (not ctx->credentials) {
-        onFailure(AuthError::INVALID_ARGUMENTS, "invalid credentials");
+        ctx->onFailure(AuthError::INVALID_ARGUMENTS, "invalid credentials");
         return;
     }
 
