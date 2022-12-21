@@ -67,27 +67,31 @@ public:
     void addChannel(std::shared_ptr<ChannelSocketInterface> channel);
 
     void removeNode(const NodeId& nodeId);
-    void changePersistency(const NodeId& nodeId, bool isPersistent);
+    void changeMobility(const NodeId& nodeId, bool isMobile);
 
     /** For testing */
     RoutingTable& getRoutingTable() { return routing_table; };
     std::list<Bucket>& getBuckets() { return routing_table.getBuckets(); };
 
-    void shutdown() { routing_table.shutdownAllNodes(); }
+    void shutdown()
+    {
+        JAMI_ERROR("{} SHUTTING DOWN NODES", id_.toString());
+        routing_table.shutdownAllNodes();
+    }
 
     void display()
     {
         JAMI_DEBUG("SwarmManager {:s} has {:d} nodes in table [P = {}]",
                    getId().to_c_str(),
                    routing_table.getRoutingTableNodeCount(),
-                   isPersistent);
+                   isMobile_);
     }
 
     void onConnectionChanged(OnConnectionChanged cb) { onConnectionChanged_ = std::move(cb); }
 
-    void setPersistency(bool isPersistent_) { isPersistent = isPersistent_; }
+    void setMobility(bool isMobile) { isMobile_ = isMobile; }
 
-    bool isPersist() const { return isPersistent; }
+    bool isMobile() const { return isMobile_; }
 
 private:
     /**
@@ -150,7 +154,7 @@ private:
     void removeNodeInternal(const NodeId& nodeId);
 
     const NodeId id_;
-    bool isPersistent;
+    bool isMobile_ {false};
     mutable std::mt19937_64 rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;

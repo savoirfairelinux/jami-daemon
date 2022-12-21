@@ -992,7 +992,10 @@ Conversation::monitor()
     const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
     const auto& nodes = routingTable.getNodes();
     const auto& mobiles = routingTable.getMobileNodes();
-    if (mobiles.size() + nodes.size() > 0) {
+    const auto& known = routingTable.getKnownNodes();
+    const auto& connecting = routingTable.getConnectingNodes();
+
+    if (mobiles.size() + nodes.size() + known.size() > 0) {
         JAMI_ERROR("{:s} Monitor:", pimpl_->toString());
         auto selfId = pimpl_->swarmManager_->getId().toString();
         for (const auto& node : nodes) {
@@ -1000,6 +1003,14 @@ Conversation::monitor()
         }
         for (const auto& node : mobiles) {
             JAMI_ERROR("    {:s} Mobile Node: {}", selfId, node.toString());
+        }
+
+        for (const auto& node : known) {
+            JAMI_ERROR("    {:s} Known Node: {}", selfId, node.toString());
+        }
+
+        for (const auto& node : connecting) {
+            JAMI_ERROR("    {:s} Connecting Node: {}", selfId, node.toString());
         }
     }
 }
