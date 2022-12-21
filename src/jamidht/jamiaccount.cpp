@@ -2145,7 +2145,10 @@ JamiAccount::convModule()
                 // main thread.
                 if (!device)
                     return sendTextMessage(uri, msg, token);
-                sendMessage(uri, msg, token, true, false, device.toString()); // ICI CHECK
+                runOnMainThread([w=weak(), uri, msg, token, device] {
+                    if (auto shared = w.lock())
+                        shared->sendMessage(uri, msg, token, true, false, device.toString()); // ICI CHECK => TODO mettre dans messageEngine et retrigger comme sendTextMEssage
+                });
                 return 0ul;
             },
             [this](const auto& convId, const auto& deviceId, auto cb, const auto& type) {
@@ -3514,13 +3517,17 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             return false;
         }
 
-        JAMI_WARN("Received indication for new commit available in conversation %s",
-                  json["id"].asString().c_str());
-
-        convModule()->onNewCommit(from,
-                                  json["deviceId"].asString(),
-                                  json["id"].asString(),
-                                  json["commit"].asString());
+        JAMI_WARN("Received indication for new commit available in conversation {} ({})",
+                  json["id"].asString(), json["commit"].asString());
+        dht::ThreadPool::io().run([w=weak(), from, json] {
+            // onNewCommit will do heavy stuff like fetching, avoid to block SIP socket
+            if (auto shared = w.lock()) {
+                shared->convModule()->onNewCommit(from,
+                                        json["deviceId"].asString(),
+                                        json["id"].asString(),
+                                        json["commit"].asString());
+            }
+        });
         return true;
     } else if (m.first == MIME_TYPE_INVITE) {
         convModule()->onNeedConversationRequest(from, m.second);
@@ -3875,7 +3882,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 
     convModule()->syncConversations(peerId, deviceId.toString());
     // Retry messages
+
     messageEngine_.onPeerOnline(peerId);
+    messageEngine_.onPeerOnline(peerId, true, deviceId.toString());
 
     // Connect pending calls
     forEachPendingCall(deviceId, [&](const auto& pc) {
