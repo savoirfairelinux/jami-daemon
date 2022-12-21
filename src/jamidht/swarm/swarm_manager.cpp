@@ -100,6 +100,7 @@ SwarmManager::sendRequest(const std::shared_ptr<ChannelSocketInterface>& socket,
                           Query q,
                           int numberNodes)
 {
+    JAMI_ERROR("{} SENDING REQUEST TO {}", id_.toString(), socket->deviceId().toString());
     msgpack::sbuffer buffer;
     msgpack::packer<msgpack::sbuffer> pk(&buffer);
     std::error_code ec;
@@ -176,9 +177,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
             try {
                 Message msg;
                 oh.get().convert(msg);
-                JAMI_ERROR("{} RECEIVED MESSAGE FROM {}",
-                           shared->getId().toString(),
-                           socket->deviceId().toString());
+
                 if (msg.is_mobile) {
                     shared->changeMobility(socket->deviceId(), msg.is_mobile);
                     JAMI_ERROR("{} RECEIVED THAT {} IS A MOBILE NODE",
@@ -187,9 +186,15 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
                 }
 
                 if (msg.request) {
+                    JAMI_ERROR("{} RECEIVED REQUEST FROM {}",
+                               shared->getId().toString(),
+                               socket->deviceId().toString());
                     shared->sendAnswer(socket, msg);
                 }
                 if (msg.response) {
+                    JAMI_ERROR("{} RECEIVED RESPONSE FROM {}",
+                               shared->getId().toString(),
+                               socket->deviceId().toString());
                     shared->setKnownNodes(msg.response->nodes);
                     shared->setMobileNodes(msg.response->mobile_nodes);
                 }
@@ -239,13 +244,16 @@ SwarmManager::tryConnect(const NodeId& nodeId)
     auto bucket = routing_table.findBucket(nodeId);
     bucket->removeKnownNode(nodeId);
     bucket->addConnectingNode(nodeId);
+    JAMI_ERROR("{} TRY CONNECT TO {}", id_.toString(), nodeId.toString());
 
     if (needSocketCb_)
         needSocketCb_(nodeId.toString(),
                       [this, nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
                           if (socket) {
                               addChannel(socket);
-                              JAMI_ERROR("DEVICE ADDED {}", socket->deviceId().toString());
+                              JAMI_ERROR("{}  ADDED {}",
+                                         this->getId().toString(),
+                                         socket->deviceId().toString());
                               return true;
                           }
                           std::unique_lock<std::mutex> lk(mutex);
@@ -272,6 +280,7 @@ SwarmManager::addChannel(std::shared_ptr<ChannelSocketInterface> channel)
         emit = routing_table.findBucket(getId())->getNodeIds().size() == 0;
         auto bucket = routing_table.findBucket(channel->deviceId());
         if (routing_table.addNode(channel, bucket)) {
+            JAMI_ERROR("{} ADDED {} BY ADD CHANNEL", id_.toString(), channel->deviceId().toString());
             std::error_code ec;
             resetNodeExpiry(ec, channel, id_);
         }

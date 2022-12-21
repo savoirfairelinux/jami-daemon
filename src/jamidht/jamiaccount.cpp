@@ -3071,7 +3071,6 @@ JamiAccount::sendMessage(const std::string& to,
         ctx->confirmation = confirm;
 
         try {
-            JAMI_ERROR("AVANT SENDSIPMESSAGE ");
             auto res = sendSIPMessage(conn,
                                       to,
                                       ctx.release(),
@@ -3249,7 +3248,6 @@ JamiAccount::sendMessage(const std::string& to,
             std::chrono::minutes(1));
 
     } else {
-        JAMI_ERROR("AVANT requestSIPConnection ");
         auto payload_type = payloads.cbegin()->first;
         requestSIPConnection(to, DeviceId(deviceId), payload_type);
     }

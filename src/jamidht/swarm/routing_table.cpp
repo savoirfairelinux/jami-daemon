@@ -288,16 +288,20 @@ bool
 RoutingTable::addMobileNode(const NodeId& nodeId)
 {
     auto bucket = findBucket(nodeId);
-    if (bucket->hasNode(nodeId) || bucket == buckets.end() || id_ == nodeId) {
+
+    if (bucket == buckets.end() || id_ == nodeId) {
         return 0;
     }
 
     else {
-        bucket->addMobileNode(nodeId);
-        bucket->removeConnectingNode(nodeId); //?
         bucket->removeKnownNode(nodeId);
-        return 1;
+
+        if (!bucket->hasNode(nodeId)) {
+            bucket->addMobileNode(nodeId);
+        }
     }
+
+    return 1;
 }
 
 bool

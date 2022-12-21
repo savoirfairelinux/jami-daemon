@@ -175,11 +175,12 @@ MessageEngine::onMessageSent(const std::string& peer,
     JAMI_DEBUG("[message {:d}] Message sent: {:s}", token, ok ? "success"sv : "failure"sv);
     std::lock_guard<std::mutex> lock(messagesMutex_);
     auto& m = deviceId.empty() ? messages_ : messagesDevices_;
-    JAMI_ERROR("DEVICE ID {}", deviceId.empty() ? peer : deviceId);
 
     auto p = m.find(deviceId.empty() ? peer : deviceId);
     if (p == m.end()) {
-        JAMI_DEBUG("[message {:d}] Can't find peer / deviceId", token);
+        JAMI_DEBUG("[message {:d}] Can't find peer / deviceId {}",
+                   token,
+                   deviceId.empty() ? peer : deviceId);
         return;
     }
 

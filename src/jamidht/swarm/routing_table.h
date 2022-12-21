@@ -52,7 +52,7 @@ struct NodeInfo
 class Bucket
 {
 public:
-    static constexpr int BUCKET_MAX_SIZE = 4;
+    static constexpr int BUCKET_MAX_SIZE = 2;
 
     Bucket() = delete;
     Bucket(const Bucket&) = delete;
