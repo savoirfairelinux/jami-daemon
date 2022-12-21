@@ -19,10 +19,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __MEDIA_ENCODER_H__
-#define __MEDIA_ENCODER_H__
+#pragma once
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #ifdef ENABLE_VIDEO
 #include "video/video_base.h"
@@ -183,5 +184,3 @@ protected:
 };
 
 } // namespace jami
-
-#endif // __MEDIA_ENCODER_H__

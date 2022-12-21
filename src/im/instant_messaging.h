@@ -28,7 +28,9 @@
 #include <list>
 #include <stdexcept>
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 extern "C" {
 struct pjsip_inv_session;
