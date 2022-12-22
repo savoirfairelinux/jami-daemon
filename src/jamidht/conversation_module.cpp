@@ -124,7 +124,10 @@ public:
                                  const std::string& commitId,
                                  bool sync,
                                  const std::string& deviceId = "");
-    void sendMessageNotification(Conversation& conversation, const std::string& commitId, bool sync, const std::string& deviceId = "");
+    void sendMessageNotification(Conversation& conversation,
+                                 const std::string& commitId,
+                                 bool sync,
+                                 const std::string& deviceId = "");
 
     /**
      * @return if a convId is a valid conversation (repository cloned & usable)
@@ -175,6 +178,8 @@ public:
     std::string accountId_ {};
     std::string deviceId_ {};
     std::string username_ {};
+
+    // bool isMobile_ {false};
 
     // Requests
     mutable std::mutex conversationsRequestsMtx_;
@@ -858,10 +863,10 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         if (memberUri.empty() || deviceIdStr == deviceId)
             continue;
         refreshMessage[deviceIdStr] = sendMsgCb_(memberUri,
-                                              device,
-                                              std::map<std::string, std::string> {
-                                                  {"application/im-gitmessage-id", text}},
-                                              refreshMessage[deviceIdStr]);
+                                                 device,
+                                                 std::map<std::string, std::string> {
+                                                     {"application/im-gitmessage-id", text}},
+                                                 refreshMessage[deviceIdStr]);
     }
 }
 
@@ -1150,14 +1155,14 @@ ConversationModule::loadConversations()
     std::vector<std::string> invalidPendingRequests;
     {
         std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
-        for (const auto& request: acc->getTrustRequests()) {
+        for (const auto& request : acc->getTrustRequests()) {
             auto itConvId = request.find(libjami::Account::TrustRequest::CONVERSATIONID);
             auto itConvFrom = request.find(libjami::Account::TrustRequest::FROM);
-            if (itConvId != request.end() && itConvFrom != request.end())
-            {
+            if (itConvId != request.end() && itConvFrom != request.end()) {
                 // Check if requests exists or is declined.
                 auto itReq = pimpl_->conversationsRequests_.find(itConvId->second);
-                auto declined = itReq  == pimpl_->conversationsRequests_.end() || itReq->second.declined;
+                auto declined = itReq == pimpl_->conversationsRequests_.end()
+                                || itReq->second.declined;
                 if (declined) {
                     JAMI_WARNING("Invalid trust request found: {:s}", itConvId->second);
                     invalidPendingRequests.emplace_back(itConvFrom->second);
@@ -1165,16 +1170,17 @@ ConversationModule::loadConversations()
             }
         }
     }
-    dht::ThreadPool::io().run([w=pimpl_->weak(), invalidPendingRequests = std::move(invalidPendingRequests)] () {
-        // Will lock account manager
-        auto shared = w.lock();
-        if (!shared)
-            return;
-        if (auto acc = shared->account_.lock()) {
-            for (const auto& invalidPendingRequest : invalidPendingRequests)
-                acc->discardTrustRequest(invalidPendingRequest);
-        }
-    });
+    dht::ThreadPool::io().run(
+        [w = pimpl_->weak(), invalidPendingRequests = std::move(invalidPendingRequests)]() {
+            // Will lock account manager
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            if (auto acc = shared->account_.lock()) {
+                for (const auto& invalidPendingRequest : invalidPendingRequests)
+                    acc->discardTrustRequest(invalidPendingRequest);
+            }
+        });
 
     ////////////////////////////////////////////////////////////////
     for (const auto& conv : toRm) {

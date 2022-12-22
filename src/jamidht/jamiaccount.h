@@ -313,11 +313,9 @@ public:
                      const std::map<std::string, std::string>& payloads,
                      uint64_t id,
                      bool retryOnTimeout = true,
-                     bool onlyConnected = false) override;
-    void sendMessageToDevice(const std::string& to,
-                             const DeviceId& device,
-                             const std::map<std::string, std::string>& payloads,
-                             bool onlyConnected = false);
+                     bool onlyConnected = false,
+                     const std::string& deviceId = {}) override;
+
     uint64_t sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
                              uint64_t refreshToken = 0) override;
@@ -562,9 +560,10 @@ public:
      */
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
 
-    bool getPersistency()
+    bool isMobile()
     {
-        return isPersistent;
+        // JAMI_ERROR("{} MOBILE {}", getAccountID(), isMobile_);
+        return config().proxyEnabled and not config().deviceKey.empty();
     }
 
 #ifdef LIBJAMI_TESTABLE
@@ -871,8 +870,6 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
-
-    bool isPersistent {true};
 };
 
 static inline std::ostream&
