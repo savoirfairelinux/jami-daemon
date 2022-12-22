@@ -20,6 +20,7 @@ gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
+	$(APPLY) $(SRC)/gnutls/debug.patch
 	$(call pkg_static,"lib/gnutls.pc.in")
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
