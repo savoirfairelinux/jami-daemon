@@ -397,6 +397,11 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
         return false;
 
     std::unique_lock<std::mutex> lk {info->mutex_};
+    if (info->waitForAnswer_) {
+        // Negotiation is done and connected, go to handshake
+        // and avoid any cancellation at this point.
+        info->waitForAnswer_->cancel();
+    }
     auto& ice = info->ice_;
     if (!ice || !ice->isRunning()) {
         JAMI_ERR("No ICE detected or not running");
