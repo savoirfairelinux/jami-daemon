@@ -955,6 +955,16 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
                 return -1;
             }
             if (ec) {
+                if (state_ == TlsSessionState::HANDSHAKE) {
+                    JAMI_ERROR("@@@ INTERRUPTED WHILE IN HANDSHAKE {}", fmt::ptr(this));
+                    JAMI_ERROR("@@@ INTERRUPTED WHILE IN HANDSHAKE {}", fmt::ptr(this));
+                    JAMI_ERROR("@@@ INTERRUPTED WHILE IN HANDSHAKE {}", fmt::ptr(this));
+                    JAMI_ERROR("@@@ INTERRUPTED WHILE IN HANDSHAKE {}", fmt::ptr(this));
+                    JAMI_ERROR("@@@ INTERRUPTED WHILE IN HANDSHAKE {}", fmt::ptr(this));
+                    JAMI_ERROR("@@@ INTERRUPTED WHILE IN HANDSHAKE {}", fmt::ptr(this));
+                    JAMI_ERROR("@@@ INTERRUPTED WHILE IN HANDSHAKE {}", fmt::ptr(this));
+                }
+
                 gnutls_transport_set_errno(session_, ec.value());
                 return -1;
             }
