@@ -1,0 +1,48 @@
+ lib/buffers.c   | 10 +++++++++-
+ lib/handshake.c |  1 +
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/lib/buffers.c b/lib/buffers.c
+index 2a2aaecfe..b15042dee 100644
+--- a/lib/buffers.c
++++ b/lib/buffers.c
+@@ -1172,6 +1172,7 @@ static int get_last_packet(gnutls_session_t session,
+ 		if (session->internals.handshake_recv_buffer_size > 0
+ 		    && recv_buf[0].length == recv_buf[0].data.length) {
+ 			if (cmp_hsk_types(htype, recv_buf[0].htype) == 0) {
++				printf("@@@@@@@@ RET ICI %u vs %u\n", htype, recv_buf[0].htype);
+ 				return
+ 				    gnutls_assert_val
+ 				    (GNUTLS_E_UNEXPECTED_HANDSHAKE_PACKET);
+@@ -1179,11 +1180,18 @@ static int get_last_packet(gnutls_session_t session,
+
+ 			_gnutls_handshake_buffer_move(hsk, &recv_buf[0]);
+ 			session->internals.handshake_recv_buffer_size--;
++			printf("@@@@@@@@ RET 0\n");
+ 			return 0;
+-		} else
++		} else {
++			printf("@@@@@@@@ RET ELSE %u \n", session->internals.handshake_recv_buffer_size);
++			if (session->internals.handshake_recv_buffer_size > 0) {
++			printf("@@@@@@@@ RET ELSE %u vs %u \n", recv_buf[0].length, recv_buf[0].data.length);
++
++			}
+ 			return
+ 			    gnutls_assert_val
+ 			    (GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE);
++		}
+ 	}
+
+       timeout:
+diff --git a/lib/handshake.c b/lib/handshake.c
+index f3edbbdac..b2fc41d1f 100644
+--- a/lib/handshake.c
++++ b/lib/handshake.c
+@@ -3485,6 +3485,7 @@ static int handshake_server(gnutls_session_t session)
+ 	switch (STATE) {
+ 	case STATE0:
+ 	case STATE1:
++		printf("@@@ handshake_server1\n");
+ 		ret =
+ 		    _gnutls_recv_handshake(session,
+ 					   GNUTLS_HANDSHAKE_CLIENT_HELLO,
