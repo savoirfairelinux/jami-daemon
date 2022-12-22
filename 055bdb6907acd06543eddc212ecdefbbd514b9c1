@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3da57e74_dbc49cc0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2022-12-22T11:37:10Z",
+      "side": 1,
+      "message": "What do you think about caching result of `fileutils::get_{home,data,config,cache}_dir()` in static variables? Like this:\n```\nstd::string\nget_home_dir()\n{\n    static std::string dir([](){\n        return ...;\n    }());\n    return dir;\n}\n```\n\nThese functions can cause multithreading issues on Windows, and I think it is right for performance in general.",
+      "revId": "055bdb6907acd06543eddc212ecdefbbd514b9c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
