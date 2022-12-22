@@ -44,7 +44,7 @@ public:
         std::unique_lock<std::mutex> lk {mutex_};
         cv_.wait_for(lk, timeout, [this] { return stop_ or not stream_.empty(); });
         if (stop_) {
-            ec = std::make_error_code(std::errc::interrupted);
+            ec = std::make_error_code(std::errc::broken_pipe);
             return -1;
         }
         ec.clear();
