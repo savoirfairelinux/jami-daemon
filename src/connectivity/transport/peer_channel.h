@@ -23,6 +23,8 @@
 #include <deque>
 #include <algorithm>
 
+#include <fmt/format.h>
+
 namespace jami {
 
 class PeerChannel
@@ -44,6 +46,7 @@ public:
         std::unique_lock<std::mutex> lk {mutex_};
         cv_.wait_for(lk, timeout, [this] { return stop_ or not stream_.empty(); });
         if (stop_) {
+            JAMI_ERROR("@@@ INTERRUPTED Stop: {}  Stream size: {}, this: {}", stop_, stream_.size(), fmt::ptr(this));
             ec = std::make_error_code(std::errc::interrupted);
             return -1;
         }
@@ -69,6 +72,7 @@ public:
             ec.clear();
             return 0;
         }
+        JAMI_ERROR("@@@ RESOURCE UNAVAILABLE");
         ec = std::make_error_code(std::errc::resource_unavailable_try_again);
         return -1;
     }
@@ -88,10 +92,12 @@ public:
 
     void stop() noexcept
     {
+        JAMI_ERROR("@@@SET Stop (before lock) this: {}", fmt::ptr(this));
         std::lock_guard<std::mutex> lk {mutex_};
         if (stop_)
             return;
         stop_ = true;
+        JAMI_ERROR("@@@SET Stop (before notify) this: {}", fmt::ptr(this));
         cv_.notify_all();
     }
 

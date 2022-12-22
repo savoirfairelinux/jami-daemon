@@ -922,6 +922,7 @@ TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
         auto count = transport_->read(reinterpret_cast<ValueType*>(buf), size, ec);
         if (!ec)
             return count;
+        JAMI_ERROR("@@@ recvRaw ec.value() {}", ec.value());
         gnutls_transport_set_errno(session_, ec.value());
         return -1;
     }
@@ -955,6 +956,7 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
                 return -1;
             }
             if (ec) {
+                JAMI_ERROR("@@@ waitForData ec.value() {} - {}", ec.value(), err);
                 gnutls_transport_set_errno(session_, ec.value());
                 return -1;
             }
