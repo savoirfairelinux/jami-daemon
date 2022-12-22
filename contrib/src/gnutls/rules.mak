@@ -5,7 +5,7 @@ GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7/gnutls-$(GNUTLS_VERSI
 
 PKGS += gnutls
 
-ifeq ($(call need_pkg,"gnutls >= 3.6.7"),)
+ifeq ($(call need_pkg,"gnutls >= 3.7.6"),)
 PKGS_FOUND += gnutls
 endif
 
