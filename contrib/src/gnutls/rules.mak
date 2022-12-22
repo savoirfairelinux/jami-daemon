@@ -5,9 +5,9 @@ GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7/gnutls-$(GNUTLS_VERSI
 
 PKGS += gnutls
 
-ifeq ($(call need_pkg,"gnutls >= 3.6.7"),)
-PKGS_FOUND += gnutls
-endif
+##ifeq ($(call need_pkg,"gnutls >= 3.7.6"),)
+##PKGS_FOUND += gnutls
+##endif
 
 $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 	$(call download,$(GNUTLS_URL))
@@ -20,6 +20,7 @@ gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
+	$(APPLY) $(SRC)/gnutls/debug.patch
 	$(call pkg_static,"lib/gnutls.pc.in")
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)

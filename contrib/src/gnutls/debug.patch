@@ -1,0 +1,289 @@
+ lib/handshake.c | 60 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 57 insertions(+), 3 deletions(-)
+
+diff --git a/lib/handshake.c b/lib/handshake.c
+index f3edbbdac..c6b478504 100644
+--- a/lib/handshake.c
++++ b/lib/handshake.c
+@@ -523,6 +523,7 @@ int
+ _gnutls_user_hello_func(gnutls_session_t session,
+ 			uint8_t major, uint8_t minor)
+ {
++	printf("@@@ start hello\n");
+ 	int ret, sret = 0;
+ 	const version_entry_st *vers, *old_vers;
+ 	const version_entry_st *new_max;
+@@ -531,6 +532,7 @@ _gnutls_user_hello_func(gnutls_session_t session,
+ 		ret = session->internals.user_hello_func(session);
+
+ 		if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++			printf("@@@ _gnutls_user_hello_func\n");
+ 			gnutls_assert();
+ 			sret = GNUTLS_E_INT_RET_0;
+ 		} else if (ret < 0) {
+@@ -620,6 +622,7 @@ static int
+ read_client_hello(gnutls_session_t session, uint8_t * data,
+ 			  int datalen)
+ {
++	printf("@@@ read_client_hello\n");
+ 	uint8_t session_id_len;
+ 	int pos = 0, ret;
+ 	uint16_t suite_size, comp_size;
+@@ -743,12 +746,18 @@ read_client_hello(gnutls_session_t session, uint8_t * data,
+
+ 		if (ret == 0) {		/* resumed using default TLS resumption! */
+ 			ret = _gnutls_server_select_suite(session, suite_ptr, suite_size, 1);
+-			if (ret < 0)
++			if (ret < 0) {
++	printf("@@@ ret read_client_hello\n");
++
+ 				return gnutls_assert_val(ret);
++			}
+
+ 			ret = tls12_resume_copy_required_vals(session, 0);
+-			if (ret < 0)
++			if (ret < 0) {
++	printf("@@@ ret2 read_client_hello\n");
++
+ 				return gnutls_assert_val(ret);
++			}
+
+ 			session->internals.resumed = true;
+
+@@ -1307,6 +1316,9 @@ _gnutls_send_handshake2(gnutls_session_t session, mbuffer_st * bufel,
+ 		 * send.
+ 		 */
+ 		ret = _gnutls_handshake_io_write_flush(session);
++		if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++			printf("@@@ _gnutls_send_handshake2 0\n");
++		}
+ 		return ret;
+
+ 	}
+@@ -1350,6 +1362,9 @@ _gnutls_send_handshake2(gnutls_session_t session, mbuffer_st * bufel,
+ 						     datasize)) < 0) {
+ 			gnutls_assert();
+ 			_mbuffer_xfree(&bufel);
++			if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++				printf("@@@ _gnutls_send_handshake2 1\n");
++			}
+ 			return ret;
+ 		}
+ 		/* If we are sending a PSK, generate early secrets here.
+@@ -1361,6 +1376,9 @@ _gnutls_send_handshake2(gnutls_session_t session, mbuffer_st * bufel,
+ 			if (ret < 0) {
+ 				gnutls_assert();
+ 				_mbuffer_xfree(&bufel);
++				if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++					printf("@@@ _gnutls_send_handshake2 2\n");
++				}
+ 				return ret;
+ 			}
+ 		}
+@@ -1371,6 +1389,9 @@ _gnutls_send_handshake2(gnutls_session_t session, mbuffer_st * bufel,
+ 	if (ret < 0) {
+ 		gnutls_assert();
+ 		_mbuffer_xfree(&bufel);
++		if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++			printf("@@@ _gnutls_send_handshake2 3\n");
++		}
+ 		return ret;
+ 	}
+
+@@ -1380,6 +1401,9 @@ _gnutls_send_handshake2(gnutls_session_t session, mbuffer_st * bufel,
+ 	if (ret < 0) {
+ 		_mbuffer_xfree(&bufel);
+ 		gnutls_assert();
++		if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++			printf("@@@ _gnutls_send_handshake2 4\n");
++		}
+ 		return ret;
+ 	}
+
+@@ -1387,6 +1411,9 @@ _gnutls_send_handshake2(gnutls_session_t session, mbuffer_st * bufel,
+ 				      _mbuffer_get_udata_ptr(bufel), _mbuffer_get_udata_size(bufel));
+ 	if (ret < 0) {
+ 		gnutls_assert();
++		if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++			printf("@@@ _gnutls_send_handshake2 5\n");
++		}
+ 		return ret;
+ 	}
+
+@@ -1444,10 +1471,17 @@ _gnutls_send_handshake2(gnutls_session_t session, mbuffer_st * bufel,
+ 		}
+ 	}
+
++	if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++		printf("@@@ _gnutls_send_handshake2 6\n");
++	}
+ 	return ret;
+
+  force_send:
+-	return _gnutls_handshake_io_write_flush(session);
++	ret = _gnutls_handshake_io_write_flush(session);
++	if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED) {
++		printf("@@@ _gnutls_send_handshake2 7\n");
++	}
++	return ret;
+ }
+
+ #define CHECK_SIZE(ll) \
+@@ -1655,6 +1689,7 @@ _gnutls_recv_handshake(gnutls_session_t session,
+ 			goto cleanup;
+ 		}
+
++		printf("@@@ GNUTLS_HANDSHAKE_SERVER_HELLO\n");
+ 		ret = read_server_hello(session, hsk.data.data,
+ 					hsk.data.length);
+
+@@ -1670,6 +1705,7 @@ _gnutls_recv_handshake(gnutls_session_t session,
+ 			goto cleanup;
+ 		}
+
++		printf("@@@ GNUTLS_HANDSHAKE_HELLO_VERIFY_REQUEST\n");
+ 		ret =
+ 		    recv_hello_verify_request(session,
+ 					      hsk.data.data,
+@@ -1688,6 +1724,7 @@ _gnutls_recv_handshake(gnutls_session_t session,
+ 		/* hash buffer synth message is generated during hello retry parsing */
+ 		gnutls_datum_t hrr = {hsk.data.data, hsk.data.length};
+
++		printf("@@@ GNUTLS_HANDSHAKE_HELLO_RETRY_REQUEST\n");
+ 		if (IS_SERVER(session)) {
+ 			ret = gnutls_assert_val(GNUTLS_E_UNEXPECTED_PACKET);
+ 			goto cleanup;
+@@ -3031,6 +3068,7 @@ static bool can_send_false_start(gnutls_session_t session)
+  */
+ static int handshake_client(gnutls_session_t session)
+ {
++	printf("@@@ handshake_client\n");
+ 	int ret = 0;
+ 	const version_entry_st *ver;
+
+@@ -3485,6 +3523,7 @@ static int handshake_server(gnutls_session_t session)
+ 	switch (STATE) {
+ 	case STATE0:
+ 	case STATE1:
++		printf("@@@ handshake_server1\n");
+ 		ret =
+ 		    _gnutls_recv_handshake(session,
+ 					   GNUTLS_HANDSHAKE_CLIENT_HELLO,
+@@ -3507,12 +3546,14 @@ static int handshake_server(gnutls_session_t session)
+ 		IMED_RET("recv hello", ret, 1);
+ 		FALLTHROUGH;
+ 	case STATE2:
++		printf("@@@ handshake_server2\n");
+
+ 		ret = _gnutls_ext_sr_verify(session);
+ 		STATE = STATE2;
+ 		IMED_RET_FATAL("recv hello", ret, 0);
+ 		FALLTHROUGH;
+ 	case STATE3:
++		printf("@@@ handshake_server3\n");
+ 		ret = _gnutls_send_server_hello(session, AGAIN(STATE3));
+ 		STATE = STATE3;
+ 		IMED_RET("send hello", ret, 1);
+@@ -3525,6 +3566,7 @@ static int handshake_server(gnutls_session_t session)
+
+ 		FALLTHROUGH;
+ 	case STATE4:
++		printf("@@@ handshake_server4\n");
+ 		if (session->security_parameters.do_send_supplemental) {
+ 			ret =
+ 			    _gnutls_send_supplemental(session,
+@@ -3535,6 +3577,7 @@ static int handshake_server(gnutls_session_t session)
+ 		/* SEND CERTIFICATE + KEYEXCHANGE + CERTIFICATE_REQUEST */
+ 		FALLTHROUGH;
+ 	case STATE5:
++		printf("@@@ handshake_server5\n");
+ 		/* NOTE: these should not be send if we are resuming */
+
+ 		if (!session->internals.resumed)
+@@ -3556,6 +3599,7 @@ static int handshake_server(gnutls_session_t session)
+ #endif
+ 		FALLTHROUGH;
+ 	case STATE7:
++		printf("@@@ handshake_server7\n");
+ 		/* send server key exchange (A) */
+ 		if (!session->internals.resumed)
+ 			ret =
+@@ -3565,6 +3609,7 @@ static int handshake_server(gnutls_session_t session)
+ 		IMED_RET("send server kx", ret, 0);
+ 		FALLTHROUGH;
+ 	case STATE8:
++		printf("@@@ handshake_server8\n");
+ 		/* Send certificate request - if requested to */
+ 		if (!session->internals.resumed)
+ 			ret =
+@@ -3574,6 +3619,7 @@ static int handshake_server(gnutls_session_t session)
+ 		IMED_RET("send server cert request", ret, 0);
+ 		FALLTHROUGH;
+ 	case STATE9:
++		printf("@@@ handshake_server9\n");
+ 		/* send the server hello done */
+ 		if (!session->internals.resumed)	/* if we are not resuming */
+ 			ret =
+@@ -3584,6 +3630,7 @@ static int handshake_server(gnutls_session_t session)
+ 		IMED_RET("send server hello done", ret, 1);
+ 		FALLTHROUGH;
+ 	case STATE10:
++		printf("@@@ handshake_server10\n");
+ 		if (session->security_parameters.do_recv_supplemental) {
+ 			ret = _gnutls_recv_supplemental(session);
+ 			STATE = STATE10;
+@@ -3592,6 +3639,7 @@ static int handshake_server(gnutls_session_t session)
+ 		/* RECV CERTIFICATE + KEYEXCHANGE + CERTIFICATE_VERIFY */
+ 		FALLTHROUGH;
+ 	case STATE11:
++		printf("@@@ handshake_server11\n");
+ 		/* receive the client certificate message */
+ 		if (!session->internals.resumed)	/* if we are not resuming */
+ 			ret = _gnutls_recv_client_certificate(session);
+@@ -3599,12 +3647,14 @@ static int handshake_server(gnutls_session_t session)
+ 		IMED_RET("recv client certificate", ret, 1);
+ 		FALLTHROUGH;
+ 	case STATE12:
++		printf("@@@ handshake_server12\n");
+ 		ret = _gnutls_run_verify_callback(session, GNUTLS_SERVER);
+ 		STATE = STATE12;
+ 		if (ret < 0)
+ 			return gnutls_assert_val(ret);
+ 		FALLTHROUGH;
+ 	case STATE13:
++		printf("@@@ handshake_server13\n");
+ 		/* receive the client key exchange message */
+ 		if (!session->internals.resumed)	/* if we are not resuming */
+ 			ret = _gnutls_recv_client_kx_message(session);
+@@ -3612,6 +3662,7 @@ static int handshake_server(gnutls_session_t session)
+ 		IMED_RET("recv client kx", ret, 1);
+ 		FALLTHROUGH;
+ 	case STATE14:
++		printf("@@@ handshake_server14\n");
+ 		/* receive the client certificate verify message */
+ 		if (!session->internals.resumed)	/* if we are not resuming */
+ 			ret =
+@@ -3621,6 +3672,7 @@ static int handshake_server(gnutls_session_t session)
+ 		IMED_RET("recv client certificate verify", ret, 1);
+ 		FALLTHROUGH;
+ 	case STATE15:
++		printf("@@@ handshake_server15\n");
+ 		STATE = STATE15;
+ 		if (!session->internals.resumed) {	/* if we are not resuming */
+ 			ret = recv_handshake_final(session, true);
+@@ -3631,6 +3683,7 @@ static int handshake_server(gnutls_session_t session)
+ 		}
+ 		FALLTHROUGH;
+ 	case STATE16:
++		printf("@@@ handshake_server16\n");
+ 		ret =
+ 		    _gnutls_send_new_session_ticket(session,
+ 						    AGAIN(STATE16));
+@@ -3638,6 +3691,7 @@ static int handshake_server(gnutls_session_t session)
+ 		IMED_RET("send handshake new session ticket", ret, 0);
+ 		FALLTHROUGH;
+ 	case STATE17:
++		printf("@@@ handshake_server17\n");
+ 		STATE = STATE17;
+ 		if (!session->internals.resumed) {	/* if we are not resuming */
+ 			ret = send_handshake_final(session, false);
