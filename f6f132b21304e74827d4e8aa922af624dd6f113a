@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "906869d7_d298dfab",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-23T12:13:49Z",
+      "side": 1,
+      "message": "https://jenkins.jami.net/view/daemon/job/daemon-check-test/170/",
+      "revId": "f6f132b21304e74827d4e8aa922af624dd6f113a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
