@@ -20,6 +20,10 @@
 
 #include "plugin_manager_interface.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
 #include "plugin/jamipluginmanager.h"
