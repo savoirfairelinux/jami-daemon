@@ -63,8 +63,8 @@ private:
     CPPUNIT_TEST_SUITE_END();
 
     const std::string SIP_ID = "SIP_ID";
-    const std::string RING_ID = "RING_ID";
-    bool sipReady, ringReady, accountsRemoved;
+    const std::string JAMI_ID = "JAMI_ID";
+    bool sipReady, ringReady, accountsRemoved, knownDevicesChanged;
     size_t initialAccounts;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
@@ -86,11 +86,11 @@ Account_factoryTest::setUp()
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountID,
                 const std::map<std::string, std::string>& details) {
-                if (accountID != RING_ID && accountID != SIP_ID) {
+                if (accountID != JAMI_ID && accountID != SIP_ID) {
                     return;
                 }
                 try {
-                    ringReady |= accountID == RING_ID
+                    ringReady |= accountID == JAMI_ID
                                 && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
                                 && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
                     sipReady |= accountID == SIP_ID
@@ -102,6 +102,10 @@ Account_factoryTest::setUp()
             if (jami::Manager::instance().getAccountList().size() <= initialAccounts) {
                 accountsRemoved = true;
             }
+        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::KnownDevicesChanged>([&](auto, auto) {
+            knownDevicesChanged = true;
         }));
     libjami::registerSignalHandlers(confHandlers);
 }
@@ -125,7 +129,7 @@ Account_factoryTest::testAddRemoveSIPAccount()
     }));
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(SIP_ID));
-    CPPUNIT_ASSERT(!accountFactory->hasAccount(RING_ID));
+    CPPUNIT_ASSERT(!accountFactory->hasAccount(JAMI_ID));
     CPPUNIT_ASSERT(!accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount() == 1 + initialAccounts);
 
@@ -143,20 +147,29 @@ Account_factoryTest::testAddRemoveRINGAccount()
     AccountFactory* accountFactory = &Manager::instance().accountFactory;
 
     auto accDetails = libjami::getAccountTemplate("RING");
-    auto newAccount = Manager::instance().addAccount(accDetails, RING_ID);
+    auto newAccount = Manager::instance().addAccount(accDetails, JAMI_ID);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
         return ringReady;
     }));
 
-    CPPUNIT_ASSERT(accountFactory->hasAccount(RING_ID));
+    CPPUNIT_ASSERT(accountFactory->hasAccount(JAMI_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(SIP_ID));
     CPPUNIT_ASSERT(!accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount() == 1 + initialAccounts);
 
-    auto details = Manager::instance().getVolatileAccountDetails(RING_ID);
+    auto details = Manager::instance().getVolatileAccountDetails(JAMI_ID);
     CPPUNIT_ASSERT(details.find(libjami::Account::ConfProperties::DEVICE_ID) != details.end());
 
-    Manager::instance().removeAccount(RING_ID, true);
+    std::map<std::string, std::string> newDetails;
+    newDetails[libjami::Account::ConfProperties::DEVICE_NAME] = "foo";
+    knownDevicesChanged = false;
+    libjami::setAccountDetails(JAMI_ID, newDetails);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return knownDevicesChanged; }));
+    details = Manager::instance().getAccountDetails(JAMI_ID);
+    CPPUNIT_ASSERT(details[libjami::Account::ConfProperties::DEVICE_NAME] == "foo");
+
+
+    Manager::instance().removeAccount(JAMI_ID, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return accountsRemoved; }));
 }
 
@@ -171,7 +184,7 @@ Account_factoryTest::testClear()
     const int nbrAccount = 5;
 
     for(int i = 0; i < nbrAccount ; ++i) {
-        accountFactory.createAccount(libjami::Account::ProtocolNames::RING, RING_ID+std::to_string(i));
+        accountFactory.createAccount(libjami::Account::ProtocolNames::RING, JAMI_ID+std::to_string(i));
     }
 
     CPPUNIT_ASSERT(accountFactory.accountCount()==nbrAccount);

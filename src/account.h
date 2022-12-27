@@ -124,7 +124,7 @@ public:
 
     virtual void saveConfig() const;
 
-    void setAccountDetails(const std::map<std::string, std::string>& details) {
+    virtual void setAccountDetails(const std::map<std::string, std::string>& details) {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (not config_)
             config_ = buildConfig();
