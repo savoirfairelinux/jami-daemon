@@ -588,28 +588,28 @@ ConversationTest::testMergeAfterMigration()
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
     carlaAccount->trackBuddyPresence(aliceUri, true);
-    auto convId = libjami::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false;
+    bool conversationReady = false, conversationAliceReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == carlaId) {
+            if (accountId == aliceId)
+                conversationAliceReady = true;
+            else if (accountId == carlaId)
                 conversationReady = true;
-                cv.notify_one();
-            }
+            cv.notify_one();
         }));
     std::string carlaGotMessage, aliceGotMessage;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& conversationId,
             std::map<std::string, std::string> message) {
-            if (accountId == carlaId && conversationId == convId) {
+            if (accountId == carlaId) {
                 carlaGotMessage = message["id"];
-            } else if (accountId == aliceId && conversationId == convId) {
+            } else if (accountId == aliceId) {
                 aliceGotMessage = message["id"];
             }
             cv.notify_one();
@@ -628,13 +628,20 @@ ConversationTest::testMergeAfterMigration()
             }));
     libjami::registerSignalHandlers(confHandlers);
 
+    auto convId = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationAliceReady; }));
+
+    aliceGotMessage = "";
     aliceAccount->convModule()->addConversationMember(convId, carlaUri, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return !aliceGotMessage.empty(); }));
 
     // Cp conversations & convInfo
     auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR
                          + aliceAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
     auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
                          + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    auto p = std::filesystem::path(repoPathCarla);
+    fileutils::recursive_mkdir(p.parent_path());
     std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
     auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                        + DIR_SEPARATOR_STR + "convInfo";
@@ -648,6 +655,8 @@ ConversationTest::testMergeAfterMigration()
     repo.join();
 
     std::filesystem::remove_all(repoPathAlice);
+    p = std::filesystem::path(repoPathAlice);
+    fileutils::recursive_mkdir(p.parent_path());
     std::filesystem::copy(repoPathCarla, repoPathAlice, std::filesystem::copy_options::recursive);
 
     // Makes different heads
