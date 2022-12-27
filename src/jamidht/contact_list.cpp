@@ -546,6 +546,7 @@ ContactList::setAccountDeviceName(const dht::PkId& device, const std::string& na
         if (dev->second.name != name) {
             dev->second.name = name;
             saveKnownDevices();
+            callbacks_.devicesChanged(knownDevices_);
         }
     }
 }

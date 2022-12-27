@@ -148,6 +148,8 @@ public:
      */
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
+    void setAccountDetails(const std::map<std::string, std::string>& details) override;
+
     std::unique_ptr<AccountConfig> buildConfig() const override
     {
         return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_);
