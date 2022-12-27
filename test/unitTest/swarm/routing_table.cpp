@@ -207,7 +207,7 @@ RoutingTableTest::generateSwarmManagers()
     for (size_t i = 0; i < total; i++) {
         const NodeId& node = randomNodeIds.at(i);
         auto sm = std::make_shared<SwarmManager>(node);
-        i >= nNodes ? sm->setPersistency(false) : sm->setPersistency(true);
+        i >= nNodes ? sm->setMobility(false) : sm->setMobility(true);
         swarmManagers[node] = sm;
     }
 }
@@ -1285,7 +1285,7 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
 
     /*         std::lock_guard<std::mutex> lk(channelSocketsMtx_);
             for (auto it = swarmManagers.begin(); it != swarmManagers.end();) {
-                if (it->second->isPersist()) {
+                if (it->second->isMobile()) {
                     std::cout << "SM " << it->second->getId() << std::endl;
                     it->second->shutdown();
                     it = swarmManagers.erase(it);
@@ -1369,7 +1369,7 @@ RoutingTableTest::testSwarmManagersWMobileModes()
     {
         std::lock_guard<std::mutex> lk(channelSocketsMtx_);
         for (auto it = swarmManagers.begin(); it != swarmManagers.end();) {
-            if (it->second->isPersist()) {
+            if (it->second->isMobile()) {
                 std::cout << "SM " << it->second->getId() << std::endl;
                 it->second->shutdown();
                 it = swarmManagers.erase(it);
