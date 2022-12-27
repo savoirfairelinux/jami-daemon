@@ -67,7 +67,7 @@ struct CallData
     std::vector<Signal> signals_;
     std::condition_variable cv_ {};
     std::mutex mtx_;
-    bool accountRegistered_ {false};
+    bool deviceAnnounced_ {false};
     bool upnpEnabled_ {false};
     bool turnEnabled_ {false};
     IpAddr dest_ {};
@@ -478,13 +478,13 @@ IceMediaCandExchangeTest::setupAccounts(CallData& aliceData,
                 }
 
                 auto details = account->getVolatileAccountDetails();
-                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
 
                 if (accountId == aliceData.accountId_) {
-                    aliceData.accountRegistered_ = daemonStatus == "REGISTERED";
+                    aliceData.deviceAnnounced_ = deviceAnnounced == "true";
                     aliceData.cv_.notify_one();
                 } else if (accountId == bobData.accountId_) {
-                    bobData.accountRegistered_ = daemonStatus == "REGISTERED";
+                    bobData.deviceAnnounced_ = deviceAnnounced == "true";
                     bobData.cv_.notify_one();
                 } else {
                     JAMI_ERR("Account with ID [%s] is unknown", accountId.c_str());
@@ -523,7 +523,7 @@ IceMediaCandExchangeTest::configureAccount(CallData& user, const char* accountTy
               user.accountId_.c_str());
     std::unique_lock<std::mutex> lock {user.mtx_};
     CPPUNIT_ASSERT(
-        user.cv_.wait_for(lock, std::chrono::seconds(60), [&] { return user.accountRegistered_; }));
+        user.cv_.wait_for(lock, std::chrono::seconds(60), [&] { return user.deviceAnnounced_; }));
 }
 
 void
@@ -792,8 +792,8 @@ IceMediaCandExchangeTest::jami_account_with_turn()
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
     auto accountType = libjami::Account::ProtocolNames::RING;
-    setupAccounts(aliceData_, bobData_, accountType);
 
+    setupAccounts(aliceData_, bobData_, accountType);
     bobData_.turnEnabled_ = true;
     aliceData_.turnEnabled_ = true;
 

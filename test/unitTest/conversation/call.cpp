@@ -43,6 +43,7 @@ struct ConvData
     bool conferenceChanged {false};
     bool conferenceRemoved {false};
     std::string hostState {};
+    std::string state {};
     std::vector<std::map<std::string, std::string>> messages {};
 };
 
@@ -220,6 +221,10 @@ ConversationCallTest::connectSignals()
                     else if (details["PEER_NUMBER"].find(carlaUri) != std::string::npos)
                         carlaData_.hostState = state;
                 }
+            } else if (accountId == bobId) {
+                bobData_.state = state;
+            } else if (accountId == carlaId) {
+                carlaData_.state = state;
             }
             cv.notify_one();
         }));
@@ -439,12 +444,12 @@ ConversationCallTest::testRejoinCall()
     aliceData_.conferenceChanged = false;
     auto bobCall = libjami::placeCallWithMedia(bobId, destination, {});
     cv.wait_for(lk, 30s, [&]() {
-        return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT";
+        return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"  && bobData_.state == "CURRENT";
     });
     aliceData_.conferenceChanged = false;
     libjami::placeCallWithMedia(carlaId, destination, {});
     cv.wait_for(lk, 30s, [&]() {
-        return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT";
+        return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT" && carlaData_.state == "CURRENT";
     });
 
     CPPUNIT_ASSERT(libjami::getParticipantList(aliceId, confId).size() == 3);
