@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9c70c50_e7f57553",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-27T14:44:45Z",
+      "side": 1,
+      "message": "question. Did you fully wrote this? Did you send this to ffmpeg\u0027s list?",
+      "range": {
+        "startLine": 3,
+        "startChar": 34,
+        "endLine": 4,
+        "endChar": 33
+      },
+      "revId": "adeaef2dc26bd9614b331ca7aeb15d0ea9395ff5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0d5ddde_eb079bcd",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 498,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-27T14:44:45Z",
+      "side": 1,
+      "message": "I\u0027d check that splits got a correct size",
+      "range": {
+        "startLine": 489,
+        "startChar": 26,
+        "endLine": 498,
+        "endChar": 27
+      },
+      "revId": "adeaef2dc26bd9614b331ca7aeb15d0ea9395ff5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
