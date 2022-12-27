@@ -72,6 +72,7 @@ TurnCache::getResolvedTurn(uint16_t family) const
 void
 TurnCache::reconfigure(const TurnTransportParams& params, bool enabled)
 {
+    JAMI_ERROR("@@@ RECONFIGURE");
     params_ = params;
     enabled_ = enabled;
     {
@@ -92,6 +93,7 @@ TurnCache::refresh(const asio::error_code& ec)
 {
     if (ec == asio::error::operation_aborted)
         return;
+    JAMI_ERROR("@@@ REFRESH");
     // The resolution of the TURN server can take quite some time (if timeout).
     // So, run this in its own io thread to avoid to block the main thread.
     // Avoid multiple refresh
@@ -167,6 +169,7 @@ TurnCache::refresh(const asio::error_code& ec)
 void
 TurnCache::testTurn(IpAddr server)
 {
+    JAMI_ERROR("@@@ testTurn");
     TurnTransportParams params = params_;
     params.server = server;
     std::lock_guard<std::mutex> lk(cachedTurnMutex_);
@@ -194,6 +197,7 @@ TurnCache::onConnected(const asio::error_code& ec, bool ok, IpAddr server)
     if (ec == asio::error::operation_aborted)
         return;
 
+    JAMI_ERROR("@@@ onConnected");
     std::lock_guard<std::mutex> lk(cachedTurnMutex_);
     auto& cacheTurn = server.isIpv4() ? cacheTurnV4_ : cacheTurnV6_;
     if (!ok) {

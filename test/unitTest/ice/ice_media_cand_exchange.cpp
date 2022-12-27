@@ -103,8 +103,8 @@ private:
     void sip_account_with_turn();
 
     CPPUNIT_TEST_SUITE(IceMediaCandExchangeTest);
-    CPPUNIT_TEST(check_upnp);
-    CPPUNIT_TEST(jami_account_no_turn);
+    //CPPUNIT_TEST(check_upnp);
+    //CPPUNIT_TEST(jami_account_no_turn);
     CPPUNIT_TEST(jami_account_with_turn);
     CPPUNIT_TEST_SUITE_END();
 
@@ -804,7 +804,7 @@ IceMediaCandExchangeTest::jami_account_with_turn()
         configureAccount(bobData_, accountType);
         test_call(accountType);
     }
-
+    JAMI_ERR("@@@");
     {
         aliceData_.upnpEnabled_ = true;
         bobData_.upnpEnabled_ = false;
@@ -812,6 +812,7 @@ IceMediaCandExchangeTest::jami_account_with_turn()
         configureAccount(bobData_, accountType);
         test_call(accountType);
     }
+    JAMI_ERR("@@@");
 
     {
         aliceData_.upnpEnabled_ = false;
@@ -820,6 +821,7 @@ IceMediaCandExchangeTest::jami_account_with_turn()
         configureAccount(bobData_, accountType);
         test_call(accountType);
     }
+    JAMI_ERR("@@@");
 
     {
         aliceData_.upnpEnabled_ = true;
