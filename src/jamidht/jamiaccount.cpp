@@ -1352,6 +1352,19 @@ JamiAccount::getVolatileAccountDetails() const
     return a;
 }
 
+void
+JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details)
+{
+    Account::setAccountDetails(details);
+    auto itDeviceName = details.find(libjami::Account::ConfProperties::DEVICE_NAME);
+    if (itDeviceName != details.end()) {
+        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        if (accountManager_)
+            accountManager_->setAccountDeviceName(itDeviceName->second);
+    }
+}
+
+
 #if HAVE_RINGNS
 void
 JamiAccount::lookupName(const std::string& name)
