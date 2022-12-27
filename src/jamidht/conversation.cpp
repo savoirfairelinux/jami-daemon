@@ -174,6 +174,8 @@ public:
             ioContext_ = Manager::instance().ioContext();
             fallbackTimer_ = std::make_unique<asio::steady_timer>(*ioContext_);
             swarmManager_ = std::make_shared<SwarmManager>(NodeId(shared->currentDeviceId()));
+            swarmManager_->setMobility(shared->isMobile());
+            JAMI_ERROR("{} IS MOBILE {}", shared->getAccountID(), shared->isMobile());
             accountId_ = shared->getAccountID();
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
                                                                  repository_->id());
@@ -627,6 +629,8 @@ public:
     // Bootstrap
     std::shared_ptr<asio::io_context> ioContext_;
     std::unique_ptr<asio::steady_timer> fallbackTimer_;
+
+    bool isMobile {false};
 };
 
 bool
@@ -992,18 +996,30 @@ void
 Conversation::monitor()
 {
     const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
-    const auto& nodes = routingTable.getNodes();
-    const auto& mobiles = routingTable.getMobileNodes();
-    if (mobiles.size() + nodes.size() > 0) {
-        JAMI_ERROR("{:s} Monitor:", pimpl_->toString());
-        auto selfId = pimpl_->swarmManager_->getId().toString();
-        for (const auto& node : nodes) {
-            JAMI_ERROR("    {:s}        Node: {}", selfId, node.toString());
-        }
-        for (const auto& node : mobiles) {
-            JAMI_ERROR("    {:s} Mobile Node: {}", selfId, node.toString());
-        }
-    }
+    routingTable.printRoutingTable();
+    /*     const auto& nodes = routingTable.getNodes();
+        const auto& mobiles = routingTable.getMobileNodes();
+        const auto& known = routingTable.getKnownNodes();
+        const auto& connecting = routingTable.getConnectingNodes();
+
+        if (mobiles.size() + nodes.size() + known.size() > 0) {
+            JAMI_ERROR("{:s} Monitor:", pimpl_->toString());
+            auto selfId = pimpl_->swarmManager_->getId().toString();
+            for (const auto& node : nodes) {
+                JAMI_ERROR("    {:s}        Node: {}", selfId, node.toString());
+            }
+            for (const auto& node : mobiles) {
+                JAMI_ERROR("    {:s} Mobile Node: {}", selfId, node.toString());
+            }
+
+            for (const auto& node : known) {
+                JAMI_ERROR("    {:s} Known Node: {}", selfId, node.toString());
+            }
+
+            for (const auto& node : connecting) {
+                JAMI_ERROR("    {:s} Connecting Node: {}", selfId, node.toString());
+            }
+        } */
 }
 
 std::string
