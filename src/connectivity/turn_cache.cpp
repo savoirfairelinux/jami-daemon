@@ -40,14 +40,19 @@ TurnCache::TurnCache(const std::string& accountId,
                                                          std::chrono::steady_clock::now());
     onConnectedTimer_ = std::make_unique<asio::steady_timer>(*io_context,
                                                          std::chrono::steady_clock::now());
-    reconfigure(params, enabled);
 }
 
 TurnCache::~TurnCache() {
     {
         std::lock_guard<std::mutex> lock(shutdownMtx_);
-        onConnectedTimer_->cancel();
-        onConnectedTimer_.reset();
+        if (refreshTimer_) {
+            refreshTimer_->cancel();
+            refreshTimer_.reset();
+        }
+        if (onConnectedTimer_) {
+            onConnectedTimer_->cancel();
+            onConnectedTimer_.reset();
+        }
     }
     {
         std::lock_guard<std::mutex> lock(cachedTurnMutex_);
@@ -83,8 +88,11 @@ TurnCache::reconfigure(const TurnTransportParams& params, bool enabled)
         testTurnV4_.reset();
         testTurnV6_.reset();
     }
-    refreshTimer_->expires_at(std::chrono::steady_clock::now());
-    refreshTimer_->async_wait(std::bind(&TurnCache::refresh, this, std::placeholders::_1));
+    std::lock_guard<std::mutex> lock(shutdownMtx_);
+    if (refreshTimer_) {
+        refreshTimer_->expires_at(std::chrono::steady_clock::now());
+        refreshTimer_->async_wait(std::bind(&TurnCache::refresh, shared_from_this(), std::placeholders::_1));
+    }
 }
 
 void
@@ -214,9 +222,12 @@ TurnCache::refreshTurnDelay(bool scheduleNext)
 {
     isRefreshing_ = false;
     if (scheduleNext) {
+        std::lock_guard<std::mutex> lock(shutdownMtx_);
         JAMI_WARNING("[Account {:s}] Cache for TURN resolution failed.", accountId_);
-        refreshTimer_->expires_at(std::chrono::steady_clock::now() + turnRefreshDelay_);
-        refreshTimer_->async_wait(std::bind(&TurnCache::refresh, shared_from_this(), std::placeholders::_1));
+        if (refreshTimer_) {
+            refreshTimer_->expires_at(std::chrono::steady_clock::now() + turnRefreshDelay_);
+            refreshTimer_->async_wait(std::bind(&TurnCache::refresh, shared_from_this(), std::placeholders::_1));
+        }
         if (turnRefreshDelay_ < std::chrono::minutes(30))
             turnRefreshDelay_ *= 2;
     } else {
