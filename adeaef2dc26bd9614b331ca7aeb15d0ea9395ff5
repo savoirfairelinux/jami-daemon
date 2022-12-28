@@ -50,6 +50,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "bf058a4d_ed5210a8",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-28T20:18:49Z",
+      "side": 1,
+      "message": "I can reproduce! It is related to the window name with some special chars",
+      "parentUuid": "e0278bf5_5fc50241",
+      "range": {
+        "startLine": 7,
+        "startChar": 9,
+        "endLine": 7,
+        "endChar": 20
+      },
+      "revId": "adeaef2dc26bd9614b331ca7aeb15d0ea9395ff5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f9c70c50_e7f57553",
         "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
         "patchSetId": 4
