@@ -549,6 +549,7 @@ public:
      */
     // Note: when swarm will be merged, this can be moved in transferManager
     bool needToSendProfile(const std::string& peerUri, const std::string& deviceId);
+    void sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId);
     /**
      * Send profile via cached SIP connection
      * @param peerUri       Uri that will receive the profile
