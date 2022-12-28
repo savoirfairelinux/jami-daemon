@@ -3643,6 +3643,29 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         connectionType);
 }
 
+void
+JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId)
+{
+    // VCard sync for peerUri
+    if (not needToSendProfile(peerUri, deviceId)) {
+        JAMI_DEBUG("Peer {} already got an up-to-date vcard", peerUri);
+        return;
+    }
+    // We need a new channel
+    transferFile(convId, profilePath(), deviceId, "profile.vcf", "");
+    // Mark the VCard as sent
+    auto sendDir = fmt::format("{}/{}/vcard/{}",
+                                fileutils::get_cache_dir(),
+                                getAccountID(),
+                                peerUri);
+    auto path = fmt::format("{}/{}", sendDir, deviceId);
+    fileutils::recursive_mkdir(sendDir);
+    std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
+    if (fileutils::isFile(path))
+        return;
+    fileutils::ofstream(path);
+}
+
 bool
 JamiAccount::needToSendProfile(const std::string& peerUri, const std::string& deviceId)
 {
@@ -3948,7 +3971,8 @@ JamiAccount::transferFile(const std::string& conversationId,
                           size_t start,
                           size_t end)
 {
-    auto channelName = fmt::format("{}{}/{}/{}",
+    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf", DATA_TRANSFER_URI)
+                        : fmt::format("{}{}/{}/{}",
                                    DATA_TRANSFER_URI,
                                    conversationId,
                                    currentDeviceId(),
