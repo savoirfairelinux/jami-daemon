@@ -154,9 +154,8 @@ SIPAccountBase::loadConfig()
                                                  cachePath,
                                                  turnParams,
                                                  conf.turnEnabled);
-    } else {
-        turnCache_->reconfigure(turnParams, conf.turnEnabled);
     }
+    turnCache_->reconfigure(turnParams, conf.turnEnabled);
 }
 
 std::map<std::string, std::string>
