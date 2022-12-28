@@ -543,12 +543,19 @@ public:
     SyncModule* syncModule();
 
     /**
-     * Send Profile via cached SIP connection
+     * Check (via the cache) if we need to send our profile to a specific device
      * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
      */
     // Note: when swarm will be merged, this can be moved in transferManager
     bool needToSendProfile(const std::string& peerUri, const std::string& deviceId);
+    /**
+     * Send Profile via cached SIP connection
+     * @param convId        Conversation's identifier (can be empty for self profile on sync)
+     * @param peerUri       Uri that will receive the profile
+     * @param deviceId      Device that will receive the profile
+     */
+    void sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId);
     /**
      * Send profile via cached SIP connection
      * @param peerUri       Uri that will receive the profile

@@ -52,7 +52,12 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     if (!acc || !cert || !cert->issuer)
         return false;
     auto uri = cert->issuer->getId().toString();
+    // Else, check if it's a profile or file in a conversation.
     auto idstr = name.substr(16);
+    if (idstr == "profile.vcf") {
+        // If it's our profile from another device
+        return uri == acc->getUsername();
+    }
     auto sep = idstr.find('/');
     auto lastSep = idstr.find_last_of('/');
     auto conversationId = idstr.substr(0, sep);
@@ -68,6 +73,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
 
     // Check if peer is member of the conversation
     if (fileId == fmt::format("{}.vcf", acc->getUsername()) || fileId == "profile.vcf") {
+        // Or a member from the conversation
         auto members = acc->convModule()->getConversationMembers(conversationId);
         return std::find_if(members.begin(), members.end(), [&](auto m) { return m["uri"] == uri; })
                != members.end();
@@ -92,6 +98,12 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         return;
 
     auto idstr = name.substr(16);
+    if (idstr == "profile.vcf") {
+        // If it's a profile from sync
+        acc->dataTransfer()->onIncomingProfile(channel);
+        return;
+    }
+
     auto splitted_id = split_string(idstr, '/');
     if (splitted_id.size() < 3) {
         JAMI_ERR() << "Unsupported ID detected " << name;
@@ -114,6 +126,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         fileId = fileId.substr(0, sep);
     }
 
+    // Profile for a member in the conversation
     if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
         std::string path = fmt::format("{}/profile.vcf", idPath_);
         acc->dataTransfer()->transferFile(channel, fileId, "", path);
@@ -126,6 +139,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         acc->dataTransfer()->onIncomingProfile(channel);
         return;
     }
+    // Check if it's a file in a conversation
     auto dt = acc->dataTransfer(conversationId);
     sep = fileId.find('_');
     if (!dt or sep == std::string::npos) {
