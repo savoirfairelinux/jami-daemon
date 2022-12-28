@@ -44,6 +44,10 @@ TurnCache::TurnCache(const std::string& accountId,
 }
 
 TurnCache::~TurnCache() {
+    if (refreshTimer_) {
+        refreshTimer_->cancel();
+        refreshTimer_.reset();
+    }
     {
         std::lock_guard<std::mutex> lock(shutdownMtx_);
         onConnectedTimer_->cancel();
@@ -84,7 +88,7 @@ TurnCache::reconfigure(const TurnTransportParams& params, bool enabled)
         testTurnV6_.reset();
     }
     refreshTimer_->expires_at(std::chrono::steady_clock::now());
-    refreshTimer_->async_wait(std::bind(&TurnCache::refresh, this, std::placeholders::_1));
+    refreshTimer_->async_wait(std::bind(&TurnCache::refresh, shared_from_this(), std::placeholders::_1));
 }
 
 void
