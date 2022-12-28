@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15054a59_609b3da5",
+        "filename": "test/unitTest/conversation/conversationRequest.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 490,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-28T16:27:28Z",
+      "side": 1,
+      "message": "please add a note that the trust request is removed asynchronously",
+      "range": {
+        "startLine": 490,
+        "startChar": 30,
+        "endLine": 490,
+        "endChar": 47
+      },
+      "revId": "675d6077fcd271c4aa2081f7a5059a04781c4dc3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57c1af69_e167c848",
+        "filename": "test/unitTest/conversation/conversationRequest.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 500,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-28T16:27:28Z",
+      "side": 1,
+      "message": "to remove",
+      "range": {
+        "startLine": 500,
+        "startChar": 9,
+        "endLine": 500,
+        "endChar": 48
+      },
+      "revId": "675d6077fcd271c4aa2081f7a5059a04781c4dc3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
