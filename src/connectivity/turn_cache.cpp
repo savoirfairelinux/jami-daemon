@@ -44,6 +44,10 @@ TurnCache::TurnCache(const std::string& accountId,
 }
 
 TurnCache::~TurnCache() {
+    if (refreshTimer_) {
+        refreshTimer_->cancel();
+        refreshTimer_.reset();
+    }
     {
         std::lock_guard<std::mutex> lock(shutdownMtx_);
         onConnectedTimer_->cancel();
