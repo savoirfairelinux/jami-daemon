@@ -97,6 +97,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fe88a7f0_e7528c79",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-28T18:26:39Z",
+      "side": 1,
+      "message": "If patch is ok now i can send it to ffmpeg dev list",
+      "parentUuid": "1f9fe1a2_10177d2e",
+      "range": {
+        "startLine": 3,
+        "startChar": 34,
+        "endLine": 4,
+        "endChar": 33
+      },
+      "revId": "adeaef2dc26bd9614b331ca7aeb15d0ea9395ff5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e0d5ddde_eb079bcd",
         "filename": "src/media/video/video_input.cpp",
         "patchSetId": 4
