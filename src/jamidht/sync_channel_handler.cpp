@@ -68,6 +68,7 @@ SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cer
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
         return;
+    acc->sendProfile("", acc->getUsername(), channel->deviceId().toString());
     if (auto sm = acc->syncModule())
         sm->cacheSyncConnection(std::move(channel),
                                 cert->issuer->getId().toString(),

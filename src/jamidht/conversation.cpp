@@ -1206,24 +1206,7 @@ Conversation::sync(const std::string& member,
                 start = 0;
             downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId, start);
         }
-        // VCard sync for member
-        if (not account->needToSendProfile(member, deviceId)) {
-            JAMI_INFO() << "Peer " << deviceId << " already got an up-to-date vcard";
-            return;
-        }
-        // We need a new channel
-        account->transferFile(id(), account->profilePath(), deviceId, "profile.vcf", "");
-        // Mark the VCard as sent
-        auto sendDir = fmt::format("{}/{}/vcard/{}",
-                                   fileutils::get_cache_dir(),
-                                   account->getAccountID(),
-                                   member);
-        auto path = fmt::format("{}/{}", sendDir, deviceId);
-        fileutils::recursive_mkdir(sendDir);
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
-        if (fileutils::isFile(path))
-            return;
-        fileutils::ofstream(path);
+        account->sendProfile(id(), member, deviceId);
     }
 }
 
