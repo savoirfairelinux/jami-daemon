@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c419952_2072f7e1",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-28T20:32:19Z",
+      "side": 1,
+      "message": "indent (auto can be used too)",
+      "range": {
+        "startLine": 241,
+        "startChar": 2,
+        "endLine": 243,
+        "endChar": 10
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b228c8b_08451571",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-28T20:32:19Z",
+      "side": 1,
+      "message": "indent",
+      "range": {
+        "startLine": 247,
+        "startChar": 11,
+        "endLine": 248,
+        "endChar": 5
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b026525c_4ac72a27",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-28T20:32:19Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 288,
+        "startChar": 14,
+        "endLine": 288,
+        "endChar": 36
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a4201af5_853f9e2b",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 873,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-28T20:32:19Z",
+      "side": 1,
+      "message": "release is not enough to reset texture to nullptr?",
+      "range": {
+        "startLine": 872,
+        "startChar": 21,
+        "endLine": 873,
+        "endChar": 21
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e8ee9411_fee3c518",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 892,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2022-12-28T20:32:19Z",
+      "side": 1,
+      "message": "why not y*mapInfo.RowPitch+x? startX-stopX !\u003d mapInfo.RowPitch?",
+      "range": {
+        "startLine": 892,
+        "startChar": 23,
+        "endLine": 892,
+        "endChar": 26
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
