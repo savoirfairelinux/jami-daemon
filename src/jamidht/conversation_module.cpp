@@ -744,7 +744,7 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId)
     if (it->second->mode() != ConversationMode::ONE_TO_ONE) {
         // For one to one, we do not notify the leave. The other can still generate request
         // and this is managed by the banned part. If we re-accept, the old conversation will be
-        // retrieven
+        // retrieved
         auto commitId = it->second->leave();
         if (hasMembers) {
             JAMI_DBG() << "Wait that someone sync that user left conversation " << conversationId;
@@ -2241,7 +2241,7 @@ ConversationModule::hostConference(const std::string& conversationId,
     value["confId"] = confId;
     value["type"] = "application/call-history+json";
     conv->hostConference(std::move(value),
-                         std::move([w = pimpl_->weak(),
+                         [w = pimpl_->weak(),
                                     conversationId](bool ok, const std::string& commitId) {
                              if (ok) {
                                  if (auto shared = w.lock())
@@ -2250,7 +2250,7 @@ ConversationModule::hostConference(const std::string& conversationId,
                                  JAMI_ERR("Failed to send message to conversation %s",
                                           conversationId.c_str());
                              }
-                         }));
+                         });
 
     // When conf finished = remove host & commit
     // Master call, so when it's stopped, the conference will be stopped (as we use the hold state
