@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "013017dd_4e006872",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-30T15:19:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8c419952_2072f7e1",
+      "range": {
+        "startLine": 241,
+        "startChar": 2,
+        "endLine": 243,
+        "endChar": 10
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2b228c8b_08451571",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8acc399d_d3cb3dc3",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-30T15:19:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2b228c8b_08451571",
+      "range": {
+        "startLine": 247,
+        "startChar": 11,
+        "endLine": 248,
+        "endChar": 5
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b026525c_4ac72a27",
@@ -60,6 +108,30 @@
       "writtenOn": "2022-12-28T20:32:19Z",
       "side": 1,
       "message": "unused",
+      "range": {
+        "startLine": 288,
+        "startChar": 14,
+        "endLine": 288,
+        "endChar": 36
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4aa0ad86_98c3e34a",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-30T15:19:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b026525c_4ac72a27",
       "range": {
         "startLine": 288,
         "startChar": 14,
@@ -106,6 +178,30 @@
       "writtenOn": "2022-12-28T20:32:19Z",
       "side": 1,
       "message": "why not y*mapInfo.RowPitch+x? startX-stopX !\u003d mapInfo.RowPitch?",
+      "range": {
+        "startLine": 892,
+        "startChar": 23,
+        "endLine": 892,
+        "endChar": 26
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36d919ef_1b715852",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 892,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2022-12-30T15:19:08Z",
+      "side": 1,
+      "message": "startX and starY might not be 0, thus the pkt-\u003edata[] would not be properly filled.",
+      "parentUuid": "e8ee9411_fee3c518",
       "range": {
         "startLine": 892,
         "startChar": 23,
