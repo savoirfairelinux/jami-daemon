@@ -30,6 +30,7 @@
 %include "std_map.i";
 %include "std_vector.i";
 %include "stdint.i";
+%include "data_view.i";
 %header %{
 
 #include <android/log.h>
@@ -117,9 +118,11 @@ namespace std {
 
   public java.util.HashMap<String,String> toNativeFromUtf8() {
       java.util.HashMap<String,String> out = new java.util.HashMap<>((int)size());
-      StringVect keys = keys();
-      for (String s : keys) {
-        out.put(s, getRaw(s).toJavaString());
+      for (String s : keys()) {
+          try {
+              out.put(s, new String(getRaw(s), "utf-8"));
+          } catch (java.io.UnsupportedEncodingException e) {
+          }
       }
       return out;
   }
@@ -137,9 +140,9 @@ namespace std {
     void setRaw(const std::string& key, const vector<uint8_t>& value) {
         (*$self)[key] = std::string(value.data(), value.data()+value.size());
     }
-    std::vector<uint8_t> getRaw(const std::string& key) {
+    jami::DataView getRaw(const std::string& key) {
         auto& v = $self->at(key);
-        return {v.begin(), v.end()};
+        return {(const uint8_t*)v.data(), v.size()};
     }
 }
 
@@ -169,24 +172,19 @@ namespace std {
       dat = in.getBytes();
     }
     Blob n = new Blob();
-    n.reserve(dat.length);
-    for (int i=0; i<dat.length; i++) {
-      n.add(dat[i]);
-    }
+    n.setBytes(dat);
     return n;
   }
-  public String toJavaString() {
-    byte[] dat = new byte[(int)size()];
-    for (int i=0; i<dat.length; i++) {
-        dat[i] = (byte)get(i);
-    }
-    try {
-        return new String(dat, "utf-8");
-    } catch (java.io.UnsupportedEncodingException e) {
-        return "";
-    }
-  }
 %}
+
+%extend vector<uint8_t> {
+    jami::DataView getBytes() {
+      return {self->data(), self->size()};
+    }
+    void setBytes(jami::Data data) {
+      *self = std::move(data.data);
+    }
+}
 %template(Blob) vector<uint8_t>;
 %template(FloatVect) vector<float>;
 }
