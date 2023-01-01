@@ -801,7 +801,6 @@ ConversationModule::Impl::removeRepository(const std::string& conversationId, bo
 bool
 ConversationModule::Impl::removeConversation(const std::string& conversationId)
 {
-    auto members = getConversationMembers(conversationId);
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     // Update convInfos
     std::unique_lock<std::mutex> lockCi(convInfosMtx_);
@@ -812,7 +811,12 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId)
     }
     auto it = conversations_.find(conversationId);
     auto isSyncing = it == conversations_.end();
-    auto hasMembers = !isSyncing && !(members.size() == 1 && username_ == members[0]["uri"]);
+    auto hasMembers = !isSyncing;
+    std::vector<std::map<std::string, std::string>> members;
+    if (hasMembers) {
+        members = it->second->getMembers(true, true);
+        hasMembers = !(members.size() == 1 && username_ == members[0]["uri"]);
+    }
     itConv->second.removed = std::time(nullptr);
     if (isSyncing)
         itConv->second.erased = std::time(nullptr);
