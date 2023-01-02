@@ -126,6 +126,9 @@ namespace std {
       }
       return out;
   }
+  public void setUnicode(String key, String value) {
+    setRaw(key, Blob.bytesFromString(value));
+  }
 %}
 
 %extend map<string, string> {
@@ -137,8 +140,8 @@ namespace std {
         }
         return k;
     }
-    void setRaw(const std::string& key, const vector<uint8_t>& value) {
-        (*$self)[key] = std::string(value.data(), value.data()+value.size());
+    void setRaw(const std::string& key, jami::String value) {
+        (*$self)[key] = std::move(value.str);
     }
     jami::DataView getRaw(const std::string& key) {
         auto& v = $self->at(key);
@@ -164,15 +167,16 @@ namespace std {
 %template(UintVect) vector<uint32_t>;
 
 %typemap(javacode) vector<uint8_t> %{
-  public static Blob fromString(String in) {
-    byte[] dat;
+  public static byte[] bytesFromString(String in) {
     try {
-      dat = in.getBytes("UTF-8");
+      return in.getBytes("UTF-8");
     } catch (java.io.UnsupportedEncodingException e) {
-      dat = in.getBytes();
+      return in.getBytes();
     }
+  }
+  public static Blob fromString(String in) {
     Blob n = new Blob();
-    n.setBytes(dat);
+    n.setBytes(bytesFromString(in));
     return n;
   }
 %}
