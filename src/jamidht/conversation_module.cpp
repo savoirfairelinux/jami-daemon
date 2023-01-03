@@ -489,8 +489,15 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             pendingConversationsFetch_.erase(conversationId);
                         }
                         // Notify peers that a new commit is there (DRT)
+                        std::string lastCommit;
                         if (not commitId.empty()) {
-                            sendMessageNotification(conversationId, commitId, false, deviceId);
+                            std::unique_lock<std::mutex> lk(conversationsMtx_);
+                            auto conversation = conversations_.find(conversationId);
+                            if (conversation != conversations_.end() && conversation->second)
+                                lastCommit = conversation->second->lastCommitId();
+                        }
+                        if (not lastCommit.empty()) {
+                            sendMessageNotification(conversationId, lastCommit, false, deviceId);
                         }
                         if (syncCnt.fetch_sub(1) == 1) {
                             if (auto account = account_.lock())
@@ -1705,8 +1712,14 @@ ConversationModule::syncConversations(const std::string& peer, const std::string
         for (const auto& [key, ci] : pimpl_->convInfos_) {
             auto it = pimpl_->conversations_.find(key);
             if (it != pimpl_->conversations_.end() && it->second) {
-                if (!it->second->isRemoving() && it->second->isMember(peer, false))
+                if (!it->second->isRemoving() && it->second->isMember(peer, false)) {
                     toFetch.emplace(key);
+                    if (!it->second->hasChannel(deviceId)) {
+                        if (auto acc = pimpl_->account_.lock()) {
+                            acc->syncSwarmChannel(deviceId, key);
+                        }
+                    }
+                }
             } else if (!ci.removed
                        && std::find(ci.members.begin(), ci.members.end(), peer)
                               != ci.members.end()) {
@@ -2574,5 +2587,5 @@ ConversationModule::connectivityChange()
             conversation->maintainRoutingTable();
         }
     }
-
+}
 } // namespace jami

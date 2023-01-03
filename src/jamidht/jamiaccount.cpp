@@ -4199,4 +4199,29 @@ JamiAccount::initConnectionManager()
     }
 }
 
+void
+JamiAccount::syncSwarmChannel(const std::string& deviceId, const std::string& convId)
+{
+    auto channelName = fmt::format("swarm://{}", convId);
+    [this](const auto& deviceId, const auto& channelName, auto&& cb, const auto& connectionType) {
+        JAMI_ERROR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+        runOnMainThread([w = weak(), deviceId, channelName, cb, connectionType] {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
+            if (!shared->connectionManager_
+                || !shared->connectionManager_->isConnecting(DeviceId(deviceId), channelName)) {
+                Manager::instance().ioContext()->post([cb = std::move(cb)] { cb({}); });
+                return;
+            }
+            shared->connectionManager_
+                ->connectDevice(DeviceId(deviceId),
+                                channelName,
+                                [cb = std::move(cb)](std::shared_ptr<ChannelSocket> socket,
+                                                     const DeviceId&) { cb(socket); });
+        });
+    };
+}
+
 } // namespace jami
