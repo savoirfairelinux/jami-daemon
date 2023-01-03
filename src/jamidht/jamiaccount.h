@@ -516,7 +516,9 @@ public:
      * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
      */
-    void sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId);
+    void sendProfile(const std::string& convId,
+                     const std::string& peerUri,
+                     const std::string& deviceId);
     /**
      * Send profile via cached SIP connection
      * @param peerUri       Uri that will receive the profile
@@ -574,6 +576,8 @@ public:
         // JAMI_ERROR("{} MOBILE {}", getAccountID(), isMobile_);
         return config().proxyEnabled and not config().deviceKey.empty();
     }
+
+    void syncSwarmChannel(const std::string& deviceId, const std::string& convId);
 
 #ifdef LIBJAMI_TESTABLE
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
