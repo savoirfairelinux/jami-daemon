@@ -99,6 +99,8 @@ public:
      */
     void maintainBuckets();
 
+    bool hasChannel(const NodeId& deviceId);
+
 private:
     /**
      * Add node to the known_nodes list

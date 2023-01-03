@@ -465,6 +465,7 @@ public:
     void removeGitSocket(const DeviceId& deviceId);
     void removeGitSockets();
     void maintainRoutingTable();
+    bool hasChannel(const std::string& deviceId);
 
 private:
     std::shared_ptr<Conversation> shared()
