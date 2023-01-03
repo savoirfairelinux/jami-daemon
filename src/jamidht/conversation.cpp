@@ -858,6 +858,12 @@ Conversation::maintainRoutingTable()
     pimpl_->swarmManager_->maintainBuckets();
 }
 
+bool
+Conversation::hasChannel(const std::string& deviceId)
+{
+    return pimpl_->swarmManager_->hasChannel(DeviceId(deviceId));
+}
+
 void
 Conversation::Impl::voteUnban(const std::string& contactUri,
                               const std::string_view type,
