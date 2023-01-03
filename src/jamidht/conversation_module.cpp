@@ -2565,4 +2565,14 @@ ConversationModule::addSwarmChannel(const std::string& conversationId,
         convIt->second->addSwarmChannel(channel);
 }
 
+void
+ConversationModule::connectivityChange()
+{
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        for (auto& [k, conversation] : pimpl_->conversations_) {
+            conversation->maintainRoutingTable();
+        }
+    }
+
 } // namespace jami

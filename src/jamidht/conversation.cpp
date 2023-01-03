@@ -853,6 +853,12 @@ Conversation::removeGitSockets()
 }
 
 void
+Conversation::maintainRoutingTable()
+{
+    pimpl_->swarmManager_->maintainBuckets();
+}
+
+void
 Conversation::Impl::voteUnban(const std::string& contactUri,
                               const std::string_view type,
                               const OnDoneCb& cb)
@@ -1340,11 +1346,9 @@ Conversation::sync(const std::string& member,
     if (auto account = pimpl_->account_.lock()) {
         // For waiting request, downloadFile
         for (const auto& wr : dataTransfer()->waitingRequests()) {
-            auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                        + account->getAccountID() + DIR_SEPARATOR_STR
-                        + "conversation_data" + DIR_SEPARATOR_STR
-                        + id() + DIR_SEPARATOR_STR
-                        + wr.fileId;
+            auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
+                        + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + id()
+                        + DIR_SEPARATOR_STR + wr.fileId;
             auto start = fileutils::size(path);
             if (start < 0)
                 start = 0;
