@@ -1366,7 +1366,6 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     }
 }
 
-
 #if HAVE_RINGNS
 void
 JamiAccount::lookupName(const std::string& name)
@@ -2354,6 +2353,7 @@ JamiAccount::setRegistrationState(RegistrationState state,
 void
 JamiAccount::connectivityChanged()
 {
+    convModule()->connectivityChange();
     JAMI_WARN("connectivityChanged");
     if (not isUsable()) {
         // nothing to do
@@ -3729,7 +3729,9 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
 }
 
 void
-JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId)
+JamiAccount::sendProfile(const std::string& convId,
+                         const std::string& peerUri,
+                         const std::string& deviceId)
 {
     // VCard sync for peerUri
     if (not needToSendProfile(peerUri, deviceId)) {
@@ -3740,9 +3742,9 @@ JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, 
     transferFile(convId, profilePath(), deviceId, "profile.vcf", "");
     // Mark the VCard as sent
     auto sendDir = fmt::format("{}/{}/vcard/{}",
-                                fileutils::get_cache_dir(),
-                                getAccountID(),
-                                peerUri);
+                               fileutils::get_cache_dir(),
+                               getAccountID(),
+                               peerUri);
     auto path = fmt::format("{}/{}", sendDir, deviceId);
     fileutils::recursive_mkdir(sendDir);
     std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
@@ -4058,11 +4060,11 @@ JamiAccount::transferFile(const std::string& conversationId,
                           size_t end)
 {
     auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf", DATA_TRANSFER_URI)
-                        : fmt::format("{}{}/{}/{}",
-                                   DATA_TRANSFER_URI,
-                                   conversationId,
-                                   currentDeviceId(),
-                                   fileId);
+                                              : fmt::format("{}{}/{}/{}",
+                                                            DATA_TRANSFER_URI,
+                                                            conversationId,
+                                                            currentDeviceId(),
+                                                            fileId);
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;

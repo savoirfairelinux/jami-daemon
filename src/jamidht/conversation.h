@@ -464,6 +464,7 @@ public:
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
     void removeGitSocket(const DeviceId& deviceId);
     void removeGitSockets();
+    void maintainRoutingTable();
 
 private:
     std::shared_ptr<Conversation> shared()

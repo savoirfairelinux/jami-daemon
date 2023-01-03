@@ -94,6 +94,11 @@ public:
 
     bool isMobile() const { return isMobile_; }
 
+    /**
+     * Maintain/Update buckets
+     */
+    void maintainBuckets();
+
 private:
     /**
      * Add node to the known_nodes list
@@ -130,11 +135,6 @@ private:
      * @param std::shared_ptr<ChannelSocketInterface>& socket
      */
     void receiveMessage(const std::shared_ptr<ChannelSocketInterface>& socket);
-
-    /**
-     * Maintain/Update buckets
-     */
-    void maintainBuckets();
 
     /**
      * Add list of nodes to the known nodes list
