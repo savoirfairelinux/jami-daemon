@@ -1079,7 +1079,7 @@ ConnectionManagerTest::testCanSendBeacon()
                                                         cv.notify_one();
                                                     });
     // connectDevice is full async, so isConnecting will be true after a few ms.
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceSocket && bobSocket; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceSocket && bobSocket && successfullyConnected; }));
     CPPUNIT_ASSERT(aliceSocket->canSendBeacon());
 
     // Because onConnectionReady is true before version is sent, we can wait a bit
@@ -1092,7 +1092,8 @@ ConnectionManagerTest::testCanSendBeacon()
         bobCanSendBeacon = bobSocket->canSendBeacon();
         if (!bobCanSendBeacon || !aliceCanSendBeacon)
             std::this_thread::sleep_for(1s);
-    } while (not bobCanSendBeacon and not aliceCanSendBeacon and std::chrono::steady_clock::now() - start < 5s);
+    } while ((not bobCanSendBeacon or not aliceCanSendBeacon)
+             and std::chrono::steady_clock::now() - start < 5s);
 
     CPPUNIT_ASSERT(bobCanSendBeacon && aliceCanSendBeacon);
 }
