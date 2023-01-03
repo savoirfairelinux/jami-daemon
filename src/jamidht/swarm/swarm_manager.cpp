@@ -240,6 +240,11 @@ SwarmManager::maintainBuckets()
         }
     }
 }
+bool
+SwarmManager::hasChannel(const NodeId& deviceId)
+{
+    return routing_table.hasNode(deviceId);
+}
 
 void
 SwarmManager::tryConnect(const NodeId& nodeId)
