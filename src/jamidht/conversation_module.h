@@ -444,6 +444,7 @@ public:
     void removeGitSocket(std::string_view deviceId, std::string_view convId);
     void shutdownConnections();
     void addSwarmChannel(const std::string& conversationId, std::shared_ptr<ChannelSocket>);
+    void connectivityChange();
 
 private:
     class Impl;
