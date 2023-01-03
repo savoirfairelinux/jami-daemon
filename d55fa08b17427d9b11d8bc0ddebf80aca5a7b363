@@ -22,6 +22,30 @@
       },
       "revId": "d55fa08b17427d9b11d8bc0ddebf80aca5a7b363",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f1bccd3_cc599564",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-03T21:01:46Z",
+      "side": 0,
+      "message": "This is an internal check that should not be triggered by normal use. It just makes sure the caller provided non-null credentials.",
+      "parentUuid": "b08dca04_396b339e",
+      "range": {
+        "startLine": 55,
+        "startChar": 8,
+        "endLine": 55,
+        "endChar": 17
+      },
+      "revId": "d55fa08b17427d9b11d8bc0ddebf80aca5a7b363",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
