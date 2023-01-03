@@ -191,6 +191,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "aff0809b_44ae4f76",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-03T18:19:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fe88a7f0_e7528c79",
+      "range": {
+        "startLine": 3,
+        "startChar": 34,
+        "endLine": 4,
+        "endChar": 33
+      },
+      "revId": "adeaef2dc26bd9614b331ca7aeb15d0ea9395ff5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e0d5ddde_eb079bcd",
