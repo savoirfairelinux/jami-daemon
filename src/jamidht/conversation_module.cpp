@@ -121,11 +121,9 @@ public:
      * @param deviceId  If we need to filter a specific device
      */
     void sendMessageNotification(const std::string& conversationId,
-                                 const std::string& commitId,
                                  bool sync,
                                  const std::string& deviceId = "");
     void sendMessageNotification(Conversation& conversation,
-                                 const std::string& commitId,
                                  bool sync,
                                  const std::string& deviceId = "");
 
@@ -489,15 +487,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             pendingConversationsFetch_.erase(conversationId);
                         }
                         // Notify peers that a new commit is there (DRT)
-                        std::string lastCommit;
+
                         if (not commitId.empty()) {
-                            std::unique_lock<std::mutex> lk(conversationsMtx_);
-                            auto conversation = conversations_.find(conversationId);
-                            if (conversation != conversations_.end() && conversation->second)
-                                lastCommit = conversation->second->lastCommitId();
-                        }
-                        if (not lastCommit.empty()) {
-                            sendMessageNotification(conversationId, lastCommit, false, deviceId);
+                            sendMessageNotification(conversationId, false, deviceId);
                         }
                         if (syncCnt.fetch_sub(1) == 1) {
                             if (auto account = account_.lock())
@@ -622,7 +614,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             }
         }
         if (!commitId.empty())
-            sendMessageNotification(conversationId, commitId, false);
+            sendMessageNotification(conversationId, false);
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
         needsSyncingCb_({});
@@ -643,9 +635,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
                                        [w = weak(), conversationId](const auto& commits) {
                                            auto shared = w.lock();
                                            if (shared and not commits.empty())
-                                               shared->sendMessageNotification(conversationId,
-                                                                               *commits.rbegin(),
-                                                                               true);
+                                               shared->sendMessageNotification(conversationId, true);
                                        });
         // Download members profile on first sync
         auto isOneOne = conversation->mode() == ConversationMode::ONE_TO_ONE;
@@ -806,7 +796,7 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId)
             // Commit that we left
             if (!commitId.empty()) {
                 // Do not sync as it's synched by convInfos
-                sendMessageNotification(*it->second, commitId, false);
+                sendMessageNotification(*it->second, false);
             } else {
                 JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
             }
@@ -829,26 +819,24 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId)
 
 void
 ConversationModule::Impl::sendMessageNotification(const std::string& conversationId,
-                                                  const std::string& commitId,
                                                   bool sync,
                                                   const std::string& deviceId)
 {
     std::lock_guard<std::mutex> lk(conversationsMtx_);
     auto it = conversations_.find(conversationId);
     if (it != conversations_.end() && it->second) {
-        sendMessageNotification(*it->second, commitId, sync, deviceId);
+        sendMessageNotification(*it->second, sync, deviceId);
     }
 }
 
 void
 ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
-                                                  const std::string& commitId,
                                                   bool sync,
                                                   const std::string& deviceId)
 {
     Json::Value message;
     message["id"] = conversation.id();
-    message["commit"] = commitId;
+    message["commit"] = conversation.lastCommitId();
     message["deviceId"] = deviceId_;
     Json::StreamWriterBuilder builder;
     const auto text = Json::writeString(builder, message);
@@ -869,7 +857,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         if (devices.empty()) {
             JAMI_DEBUG("[Conversation {}] Not yet bootstraped, save notification",
                        conversation.id());
-            notSyncedNotification_[conversation.id()] = commitId;
+            notSyncedNotification_[conversation.id()] = conversation.lastCommitId();
             return;
         }
     }
@@ -928,7 +916,7 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
                 if (!announce)
                     return;
                 if (ok)
-                    sendMessageNotification(conversationId, commitId, true);
+                    sendMessageNotification(conversationId, true);
                 else
                     JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
             });
@@ -980,7 +968,7 @@ ConversationModule::Impl::boostrapCb(const std::string& convId)
     JAMI_DEBUG("[Conversation {}] Resend last message notification", convId);
     dht::ThreadPool::io().run([w = weak(), convId, commitId] {
         if (auto sthis = w.lock())
-            sthis->sendMessageNotification(convId, commitId, true);
+            sthis->sendMessageNotification(convId, true);
     });
 }
 
@@ -1117,7 +1105,7 @@ ConversationModule::loadConversations()
                 // Note: here, this means that some calls were actives while the
                 // daemon finished (can be a crash).
                 // Notify other in the conversation that the call is finished
-                pimpl_->sendMessageNotification(*conv, *commits.rbegin(), true);
+                pimpl_->sendMessageNotification(*conv, true);
             }
             pimpl_->conversations_.emplace(repository, std::move(conv));
         } catch (const std::logic_error& e) {
@@ -1931,7 +1919,6 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                             auto it = pimpl_->conversations_.find(conversationId);
                             if (it != pimpl_->conversations_.end() && it->second) {
                                 pimpl_->sendMessageNotification(*it->second,
-                                                                commitId,
                                                                 true); // For the other members
                                 if (sendRequest) {
                                     auto invite = it->second->generateInvitation();
@@ -1955,9 +1942,7 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
                                  isDevice,
                                  [this, conversationId](bool ok, const std::string& commitId) {
                                      if (ok) {
-                                         pimpl_->sendMessageNotification(conversationId,
-                                                                         commitId,
-                                                                         true);
+                                         pimpl_->sendMessageNotification(conversationId, true);
                                      }
                                  });
     }
@@ -2018,7 +2003,7 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
     it->second->updateInfos(infos,
                             [this, conversationId, sync](bool ok, const std::string& commitId) {
                                 if (ok && sync) {
-                                    pimpl_->sendMessageNotification(conversationId, commitId, true);
+                                    pimpl_->sendMessageNotification(conversationId, true);
                                 } else if (sync)
                                     JAMI_WARN("Couldn't update infos on %s", conversationId.c_str());
                             });
@@ -2405,11 +2390,10 @@ ConversationModule::hostConference(const std::string& conversationId,
     value["confId"] = confId;
     value["type"] = "application/call-history+json";
     conv->hostConference(std::move(value),
-                         [w = pimpl_->weak(),
-                                    conversationId](bool ok, const std::string& commitId) {
+                         [w = pimpl_->weak(), conversationId](bool ok, const std::string& commitId) {
                              if (ok) {
                                  if (auto shared = w.lock())
-                                     shared->sendMessageNotification(conversationId, commitId, true);
+                                     shared->sendMessageNotification(conversationId, true);
                              } else {
                                  JAMI_ERR("Failed to send message to conversation %s",
                                           conversationId.c_str());
@@ -2442,7 +2426,7 @@ ConversationModule::hostConference(const std::string& conversationId,
                     std::move(value), [w, conversationId](bool ok, const std::string& commitId) {
                         if (ok) {
                             if (auto shared = w.lock()) {
-                                shared->sendMessageNotification(conversationId, commitId, true);
+                                shared->sendMessageNotification(conversationId, true);
                             }
                         } else {
                             JAMI_ERR("Failed to send message to conversation %s",

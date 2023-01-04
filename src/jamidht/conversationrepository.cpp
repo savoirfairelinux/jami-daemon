@@ -2043,12 +2043,14 @@ ConversationRepository::Impl::log(const LogOptions& options) const
     auto startLogging = options.from == "";
     auto breakLogging = false;
     forEachCommit(
-        [&](const auto& id, const auto& author, const auto&) {
+        [&](const auto& id, const auto& author, const auto& commit) {
             if (!commits.empty()) {
                 // Set linearized parent
                 commits.rbegin()->linearized_parent = id;
             }
-
+            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
+                return CallbackResult::Skip;
+            }
             if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
                 return CallbackResult::Break; // Stop logging
             if (breakLogging)
@@ -2519,11 +2521,14 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
                                                               void*) {
         // Uncomment to get advancment
         // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
-        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects, stats->received_bytes/1024);
+        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects,
+        //     stats->received_bytes/1024);
         // If a pack is more than 256Mb, it's anormal.
         if (stats->received_bytes > MAX_FETCH_SIZE) {
             JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
-                stats->received_bytes, stats->received_objects, stats->total_objects);
+                       stats->received_bytes,
+                       stats->received_objects,
+                       stats->total_objects);
             return -1;
         }
         return 0;
@@ -2916,11 +2921,14 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
         // Uncomment to get advancment
         // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
-        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects, stats->received_bytes/1024);
+        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects,
+        //     stats->received_bytes/1024);
         // If a pack is more than 256Mb, it's anormal.
         if (stats->received_bytes > MAX_FETCH_SIZE) {
             JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
-                stats->received_bytes, stats->received_objects, stats->total_objects);
+                       stats->received_bytes,
+                       stats->received_objects,
+                       stats->total_objects);
             return -1;
         }
         return 0;
@@ -3693,7 +3701,6 @@ ConversationRepository::uriFromDevice(const std::string& deviceId) const
 {
     return pimpl_->uriFromDevice(deviceId);
 }
-
 
 std::string
 ConversationRepository::updateInfos(const std::map<std::string, std::string>& profile)

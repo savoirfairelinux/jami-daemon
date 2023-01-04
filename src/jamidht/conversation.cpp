@@ -39,7 +39,7 @@
 namespace jami {
 
 static const char* const LAST_MODIFIED = "lastModified";
-static const auto jsonBuilder =  []{
+static const auto jsonBuilder = [] {
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
@@ -1184,6 +1184,7 @@ Conversation::lastCommitId() const
 {
     LogOptions options;
     options.nbOfCommits = 1;
+    options.skipMerge = true;
     auto messages = pimpl_->loadMessages(options);
     if (messages.empty())
         return {};
