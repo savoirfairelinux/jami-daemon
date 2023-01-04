@@ -77,6 +77,7 @@ private:
     void testGetConversationsAfterRm();
     void testRemoveInvalidConversation();
     void testSendMessage();
+    void testSendMessageWithBadDisplayName();
     void testReplaceWithBadCertificate();
     void testSendMessageTriggerMessageReceived();
     void testMergeTwoDifferentHeads();
@@ -125,6 +126,7 @@ private:
     CPPUNIT_TEST(testGetConversationsAfterRm);
     CPPUNIT_TEST(testRemoveInvalidConversation);
     CPPUNIT_TEST(testSendMessage);
+    CPPUNIT_TEST(testSendMessageWithBadDisplayName);
     CPPUNIT_TEST(testReplaceWithBadCertificate);
     CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
     CPPUNIT_TEST(testMergeTwoDifferentHeads);
@@ -332,6 +334,71 @@ ConversationTest::testSendMessage()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    auto convId = libjami::startConversation(aliceId);
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    // Wait that alice sees Bob
+    cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 2; });
+
+    libjami::sendMessage(aliceId, convId, "hi"s, "");
+    cv.wait_for(lk, 30s, [&]() { return messageBobReceived == 1; });
+}
+
+void
+ConversationTest::testSendMessageWithBadDisplayName()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::map<std::string, std::string> details;
+    details[ConfProperties::DISPLAYNAME] = "<o>";
+    libjami::setAccountDetails(aliceId, details);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
