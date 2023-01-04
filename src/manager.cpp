@@ -758,6 +758,10 @@ Manager::init(const std::string& config_file)
         JAMI_ERR("Unable to initialize git transport %s", error ? error->message : "(unknown)");
     }
 
+#if defined _MSC_VER
+    gnutls_global_init();
+#endif
+
 #ifndef WIN32
     // Set the max number of open files.
     struct rlimit nofiles;
@@ -917,6 +921,10 @@ Manager::finish() noexcept
         }
         if (pimpl_->ioContextRunner_.joinable())
             pimpl_->ioContextRunner_.join();
+
+#if defined _MSC_VER
+        gnutls_global_deinit();
+#endif
 
     } catch (const VoipLinkException& err) {
         JAMI_ERR("%s", err.what());
@@ -2703,8 +2711,8 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     auto newAccount = accountFactory.createAccount(accountType, newAccountID);
     if (!newAccount) {
         JAMI_ERROR("Unknown {:s} param when calling addAccount(): {:s}",
-                 Conf::CONFIG_ACCOUNT_TYPE,
-                 accountType);
+                   Conf::CONFIG_ACCOUNT_TYPE,
+                   accountType);
         return "";
     }
 
