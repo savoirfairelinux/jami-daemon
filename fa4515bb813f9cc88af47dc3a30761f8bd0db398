@@ -167,6 +167,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "601bb53a_73e15837",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 873,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-01-04T15:27:58Z",
+      "side": 1,
+      "message": "https://stackoverflow.com/a/15359685",
+      "parentUuid": "a4201af5_853f9e2b",
+      "range": {
+        "startLine": 872,
+        "startChar": 21,
+        "endLine": 873,
+        "endChar": 21
+      },
+      "revId": "fa4515bb813f9cc88af47dc3a30761f8bd0db398",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e8ee9411_fee3c518",
         "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
         "patchSetId": 7
