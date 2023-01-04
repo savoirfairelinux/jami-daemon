@@ -42,6 +42,8 @@ constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
 
 namespace jami {
 
+static const std::regex regex_display_name("<|>");
+
 inline std::string_view
 as_view(const git_blob* blob)
 {
@@ -89,6 +91,17 @@ public:
             return {nullptr, git_repository_free};
         }
         return {std::move(repo), git_repository_free};
+    }
+
+    std::string getDisplayName() const {
+        auto shared = account_.lock();
+        if (!shared)
+            return {};
+        auto deviceId = std::string(shared->currentDeviceId());
+        auto name = shared->getDisplayName();
+        if (name.empty())
+            name = deviceId;
+        return std::regex_replace(name, regex_display_name, "");
     }
 
     GitSignature signature();
@@ -471,6 +484,7 @@ initial_commit(GitRepository& repo,
     auto name = account->getDisplayName();
     if (name.empty())
         name = deviceId;
+    name = std::regex_replace(name, regex_display_name, "");
 
     git_signature* sig_ptr = nullptr;
     git_index* index_ptr = nullptr;
@@ -563,15 +577,13 @@ GitSignature
 ConversationRepository::Impl::signature()
 {
     auto account = account_.lock();
-    if (!account)
+    auto name = getDisplayName();
+    if (!account || name.empty())
         return {nullptr, git_signature_free};
-    auto deviceId = std::string(account->currentDeviceId());
-    auto name = account->getDisplayName();
-    if (name.empty())
-        name = deviceId;
 
     git_signature* sig_ptr = nullptr;
     // Sign commit's buffer
+    auto deviceId = std::string(account->currentDeviceId());
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
         JAMI_ERR("Unable to create a commit signature.");
         return {nullptr, git_signature_free};
@@ -1636,15 +1648,13 @@ ConversationRepository::Impl::commit(const std::string& msg)
     if (!validateDevice())
         return {};
     auto account = account_.lock();
-    if (!account)
+    auto name = getDisplayName();
+    if (!account || name.empty())
         return {};
-    auto deviceId = std::string(account->currentDeviceId());
-    auto name = account->getDisplayName();
-    if (name.empty())
-        name = deviceId;
 
     git_signature* sig_ptr = nullptr;
     // Sign commit's buffer
+    auto deviceId = std::string(account->currentDeviceId());
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
         JAMI_ERR("Unable to create a commit signature.");
         return {};
@@ -2816,9 +2826,9 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
     if (!account)
         return {};
     auto deviceId = std::string(account->currentDeviceId());
-    auto name = account->getDisplayName();
+    auto name = pimpl_->getDisplayName();
     if (name.empty())
-        name = deviceId;
+        return {};
 
     git_signature* sig_ptr = nullptr;
     git_oid tree_id, commit_id;
