@@ -18,6 +18,23 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b7fdd746_3d261029",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 957
+      },
+      "writtenOn": "2023-01-04T18:26:16Z",
+      "side": 1,
+      "message": "Sending files from jami-web to other clients has been successfully done with this branch.\n\nReceiving files has not been done.",
+      "revId": "90537812684c5ee82b7907ac71f2e9ee70f84ea8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f3b1cc3d_7d715af4",
