@@ -159,7 +159,7 @@ getConversationMembers(const std::string& accountId, const std::string& conversa
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto convModule = acc->convModule())
-            return convModule->getConversationMembers(conversationId);
+            return convModule->getConversationMembers(conversationId, true);
     return {};
 }
 
