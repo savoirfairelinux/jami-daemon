@@ -490,7 +490,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         }
                         // Notify peers that a new commit is there (DRT)
                         if (not commitId.empty()) {
-                            sendMessageNotification(conversationId, false, deviceId);
+                            sendMessageNotification(conversationId, false, commitId, deviceId);
                         }
                         if (syncCnt.fetch_sub(1) == 1) {
                             if (auto account = account_.lock())
@@ -824,7 +824,6 @@ void
 ConversationModule::Impl::sendMessageNotification(const std::string& conversationId,
                                                   bool sync,
                                                   const std::string& commitId,
-
                                                   const std::string& deviceId)
 {
     std::lock_guard<std::mutex> lk(conversationsMtx_);
