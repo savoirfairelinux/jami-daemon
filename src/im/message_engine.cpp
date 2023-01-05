@@ -177,12 +177,8 @@ MessageEngine::onMessageSent(const std::string& peer,
     auto& m = deviceId.empty() ? messages_ : messagesDevices_;
 
     auto p = m.find(deviceId.empty() ? peer : deviceId);
-    if (p == m.end()) {
-        JAMI_DEBUG("[message {:d}] Can't find peer / deviceId {}",
-                   token,
-                   deviceId.empty() ? peer : deviceId);
+    if (p == m.end())
         return;
-    }
 
     auto f = p->second.find(token);
     if (f != p->second.end()) {
