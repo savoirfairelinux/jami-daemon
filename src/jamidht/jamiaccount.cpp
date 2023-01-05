@@ -4222,7 +4222,6 @@ JamiAccount::syncSwarmChannel(const std::string& deviceId, const std::string& co
 {
     auto channelName = fmt::format("swarm://{}", convId);
     [this](const auto& deviceId, const auto& channelName, auto&& cb, const auto& connectionType) {
-        JAMI_ERROR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
         runOnMainThread([w = weak(), deviceId, channelName, cb, connectionType] {
             auto shared = w.lock();
             if (!shared)

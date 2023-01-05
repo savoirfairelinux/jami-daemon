@@ -404,6 +404,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
              peer.c_str(),
              deviceId.c_str());
 
+
     /*     if (auto account = account_.lock())
             account->monitor(); */
 
@@ -589,7 +590,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         conversation->bootstrap(
             std::bind(&ConversationModule::Impl::boostrapCb, this, conversation->id()));
         auto removeRepo = false;
-
         {
             std::lock_guard<std::mutex> lk(conversationsMtx_);
             // Note: a removeContact while cloning. In this case, the conversation
@@ -617,8 +617,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
                 replay_.erase(replayIt);
             }
         }
-        if (!commitId.empty())
+        if (!commitId.empty()) {
             sendMessageNotification(conversationId, false, commitId);
+        }
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
         needsSyncingCb_({});
@@ -838,7 +839,6 @@ void
 ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                   bool sync,
                                                   const std::string& commitId,
-
                                                   const std::string& deviceId)
 {
     Json::Value message;
@@ -862,16 +862,41 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     {
         std::lock_guard<std::mutex> lk(notSyncedNotificationMtx_);
         devices = conversation.peersToSyncWith();
+        // TODO check if swarmManager connected and not only git (else we want notSynced!)
         if (devices.empty()) {
-            JAMI_DEBUG("[Conversation {}] Not yet bootstraped, save notification",
-                       conversation.id());
-            notSyncedNotification_[conversation.id()] = commit;
+            // Here we are not bootstraped. There is two cases:
+            // For multiple conversations, we know that someone left, so we are sure
+            // we're disconnected.
+            // For 1:1 we do not know that a peer left, so they will not get new invites.
+            // In the second case, we should try to connect to peer.
+            if (conversation.mode() == ConversationMode::ONE_TO_ONE) {
+                JAMI_DEBUG("[Conversation {}] Not yet bootstraped, send message to other peer",
+                        conversation.id());
+                auto members = conversation.memberUris(username_, {});
+                for (const auto& member : members) {
+                    refreshMessage[member] = sendMsgCb_(member,
+                                                        {},
+                                                        std::map<std::string, std::string> {
+                                                            {"application/im-gitmessage-id", text}},
+                                                        refreshMessage[member]);
+                }
+            } else {
+                JAMI_DEBUG("[Conversation {}] Not yet bootstraped, save notification",
+                        conversation.id());
+                notSyncedNotification_[conversation.id()] = commit;
+            }
             return;
+        }
+        if (!conversation.isBoostraped()) {
+            // Because we can get some git channels but not bootstraped, we should keep this
+            // to refresh when bootstraped.
+            notSyncedNotification_[conversation.id()] = commit;
         }
     }
     for (const auto& device : devices) {
         auto deviceIdStr = device.toString();
         auto memberUri = conversation.uriFromDevice(deviceIdStr);
+        JAMI_ERROR("@@@ SEND TO {} {} (our: {})", memberUri, deviceIdStr, username_);
         if (memberUri.empty() || deviceIdStr == deviceId)
             continue;
         refreshMessage[deviceIdStr] = sendMsgCb_(memberUri,

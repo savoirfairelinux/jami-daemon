@@ -442,6 +442,9 @@ public:
     std::shared_ptr<ChannelSocket> gitSocket(std::string_view deviceId,
                                              std::string_view convId) const;
     void removeGitSocket(std::string_view deviceId, std::string_view convId);
+    void addGitSocket(std::string_view deviceId,
+                      std::string_view convId,
+                      std::shared_ptr<ChannelSocket> channel);
     void shutdownConnections();
     void addSwarmChannel(const std::string& conversationId, std::shared_ptr<ChannelSocket>);
     void connectivityChange();
