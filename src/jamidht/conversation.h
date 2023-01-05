@@ -205,6 +205,7 @@ public:
                                                      MemberRole::BANNED}) const;
 
     std::vector<NodeId> peersToSyncWith() const;
+    bool isBoostraped() const;
     /**
      * Retrieve the uri from a deviceId
      * @note used by swarm manager (peersToSyncWith)

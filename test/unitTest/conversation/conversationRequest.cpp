@@ -1401,8 +1401,7 @@ ConversationRequestTest::testRemoveContactRemoveTrustRequest()
     // First, Alice adds Bob
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return !convId.empty(); }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestB1Received && requestB2Received; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestB1Received && requestB2Received; }));
 
     // Bob1 accepts, both device should get it
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));

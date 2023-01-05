@@ -20,6 +20,7 @@
 
 #include "conversation_module.h"
 
+#include <algorithm>
 #include <fstream>
 
 #include <opendht/thread_pool.h>
@@ -404,6 +405,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
              peer.c_str(),
              deviceId.c_str());
 
+
     /*     if (auto account = account_.lock())
             account->monitor(); */
 
@@ -589,7 +591,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         conversation->bootstrap(
             std::bind(&ConversationModule::Impl::boostrapCb, this, conversation->id()));
         auto removeRepo = false;
-
         {
             std::lock_guard<std::mutex> lk(conversationsMtx_);
             // Note: a removeContact while cloning. In this case, the conversation
@@ -617,8 +618,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
                 replay_.erase(replayIt);
             }
         }
-        if (!commitId.empty())
+        if (!commitId.empty()) {
             sendMessageNotification(conversationId, false, commitId);
+        }
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
         needsSyncingCb_({});
@@ -838,9 +840,11 @@ void
 ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                   bool sync,
                                                   const std::string& commitId,
-
                                                   const std::string& deviceId)
 {
+    auto acc = account_.lock();
+    if (!acc)
+        return;
     Json::Value message;
     auto commit = commitId == "" ? conversation.lastCommitId() : commitId;
     message["id"] = conversation.id();
@@ -862,16 +866,44 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     {
         std::lock_guard<std::mutex> lk(notSyncedNotificationMtx_);
         devices = conversation.peersToSyncWith();
-        if (devices.empty()) {
+
+        // In some case, a device can appear without knowing the conversation
+        // e.g. import an old archive without other devices connected
+        // In this case, we need to send an invite. So here we want to try
+        // to send messages to members that aren't connected to the conversation.
+        auto members = conversation.memberUris(username_, {});
+        std::vector<std::string> connectedMembers;
+        for (const auto& device : devices) {
+            auto cert = tls::CertificateStore::instance().getCertificate(device.toString());
+            if (cert && cert->issuer)
+                connectedMembers.emplace_back(cert->issuer->getId().toString());
+        }
+        std::vector<std::string> nonConnectedMembers;
+        std::sort(std::begin(members), std::end(members));
+        std::sort(std::begin(connectedMembers), std::end(connectedMembers));
+        std::set_difference(members.begin(), members.end(), connectedMembers.begin(), connectedMembers.end(),
+            std::inserter(nonConnectedMembers, nonConnectedMembers.begin()));
+        std::shuffle(nonConnectedMembers.begin(), nonConnectedMembers.end(), acc->rand);
+        nonConnectedMembers.resize(2);
+        for (const auto& member : nonConnectedMembers) {
+            refreshMessage[member] = sendMsgCb_(member,
+                                                {},
+                                                std::map<std::string, std::string> {
+                                                    {"application/im-gitmessage-id", text}},
+                                                refreshMessage[member]);
+        }
+        if (!conversation.isBoostraped()) {
             JAMI_DEBUG("[Conversation {}] Not yet bootstraped, save notification",
-                       conversation.id());
+                    conversation.id());
+            // Because we can get some git channels but not bootstraped, we should keep this
+            // to refresh when bootstraped.
             notSyncedNotification_[conversation.id()] = commit;
-            return;
         }
     }
     for (const auto& device : devices) {
         auto deviceIdStr = device.toString();
         auto memberUri = conversation.uriFromDevice(deviceIdStr);
+        JAMI_ERROR("@@@ SEND TO {} {} (our: {})", memberUri, deviceIdStr, username_);
         if (memberUri.empty() || deviceIdStr == deviceId)
             continue;
         refreshMessage[deviceIdStr] = sendMsgCb_(memberUri,

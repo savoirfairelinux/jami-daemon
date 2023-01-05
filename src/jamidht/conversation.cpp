@@ -845,6 +845,7 @@ Conversation::removeGitSocket(const DeviceId& deviceId)
 void
 Conversation::removeGitSockets()
 {
+    JAMI_ERROR("@@@@@@@@ REMOVE GIT SOCKETS");
     pimpl_->gitSocketList_.clear();
     pimpl_->swarmManager_->shutdown();
     pimpl_->checkedMembers_.clear();
@@ -994,6 +995,13 @@ Conversation::peersToSyncWith() const
         if (std::find(s.cbegin(), s.cend(), deviceId) == s.cend())
             s.emplace_back(deviceId);
     return s;
+}
+
+bool
+Conversation::isBoostraped() const
+{
+    const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
+    return !routingTable.getNodes().empty();
 }
 
 std::string
