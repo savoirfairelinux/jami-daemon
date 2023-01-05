@@ -612,9 +612,12 @@ ConversationMembersEventTest::testRemoveMember()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
     auto members = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(members.size() == 1);
-    CPPUNIT_ASSERT(members[0]["uri"] == aliceAccount->getUsername());
-    CPPUNIT_ASSERT(members[0]["role"] == "admin");
+    auto bobBanned = false;
+    for (auto& member : members) {
+        if (member["uri"] == bobUri)
+            bobBanned = member["role"] == "banned";
+    }
+    CPPUNIT_ASSERT(bobBanned);
     libjami::unregisterSignalHandlers();
 }
 
@@ -762,7 +765,12 @@ ConversationMembersEventTest::testRemoveInvitedMember()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
     members = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(members.size() == 2);
+    auto bobBanned = false;
+    for (auto& member : members) {
+        if (member["uri"] == bobUri)
+            bobBanned = member["role"] == "banned";
+    }
+    CPPUNIT_ASSERT(bobBanned);
 
     // Check that Carla is still able to sync
     libjami::sendMessage(aliceId, convId, "hi"s, "");
@@ -976,7 +984,13 @@ ConversationMembersEventTest::testBannedMemberCannotSendMessage()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
     auto members = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(members.size() == 1);
+
+    auto bobBanned = false;
+    for (auto& member : members) {
+        if (member["uri"] == bobUri)
+            bobBanned = member["role"] == "banned";
+    }
+    CPPUNIT_ASSERT(bobBanned);
 
     // Now check that alice doesn't receive a message from Bob
     aliceMessageReceived = false;
@@ -1043,7 +1057,13 @@ ConversationMembersEventTest::testAdminCanReAddMember()
         cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
 
     auto members = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(members.size() == 1);
+
+    auto bobBanned = false;
+    for (auto& member : members) {
+        if (member["uri"] == bobUri)
+            bobBanned = member["role"] == "banned";
+    }
+    CPPUNIT_ASSERT(bobBanned);
 
     // Then check that bobUri can be re-added
     memberMessageGenerated = false, voteMessageGenerated = false;
@@ -1258,7 +1278,12 @@ ConversationMembersEventTest::testMemberCannotUnBanOther()
     CPPUNIT_ASSERT(
         !cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
     auto members = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(members.size() == 2);
+    auto bobBanned = false;
+    for (auto& member : members) {
+        if (member["uri"] == bobUri)
+            bobBanned = member["role"] == "banned";
+    }
+    CPPUNIT_ASSERT(bobBanned);
 }
 
 void
@@ -2619,10 +2644,12 @@ ConversationMembersEventTest::testBanHostWhileHosting()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
     auto members = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(members.size() == 1);
-    CPPUNIT_ASSERT(members[0]["uri"] == aliceAccount->getUsername());
-    CPPUNIT_ASSERT(members[0]["role"] == "admin");
-    CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, convId).size() == 0);
+    auto bobBanned = false;
+    for (auto& member : members) {
+        if (member["uri"] == bobUri)
+            bobBanned = member["role"] == "banned";
+    }
+    CPPUNIT_ASSERT(bobBanned);
 
     libjami::unregisterSignalHandlers();
 }

@@ -93,10 +93,11 @@ public:
     /**
      * Get members
      * @param conversationId
+     * @param includeBanned
      * @return a map of members with their role and details
      */
     std::vector<std::map<std::string, std::string>> getConversationMembers(
-        const std::string& conversationId) const;
+        const std::string& conversationId, bool includeBanned = false) const;
 
     /**
      * Remove a repository and all files
@@ -664,12 +665,12 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
 }
 
 std::vector<std::map<std::string, std::string>>
-ConversationModule::Impl::getConversationMembers(const std::string& conversationId) const
+ConversationModule::Impl::getConversationMembers(const std::string& conversationId, bool includeBanned) const
 {
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second)
-        return conversation->second->getMembers(true, true);
+        return conversation->second->getMembers(true, true, includeBanned);
 
     lk.unlock();
     std::lock_guard<std::mutex> lkCI(convInfosMtx_);
@@ -1809,9 +1810,9 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
 }
 
 std::vector<std::map<std::string, std::string>>
-ConversationModule::getConversationMembers(const std::string& conversationId) const
+ConversationModule::getConversationMembers(const std::string& conversationId, bool includeBanned) const
 {
-    return pimpl_->getConversationMembers(conversationId);
+    return pimpl_->getConversationMembers(conversationId, includeBanned);
 }
 
 uint32_t
