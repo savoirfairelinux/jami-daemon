@@ -122,7 +122,7 @@ ConversationRequest::toMap() const
 class Conversation::Impl
 {
 public:
-    Impl(const std::weak_ptr<JamiAccount>& account,
+    Impl(const std::shared_ptr<JamiAccount>& account,
          ConversationMode mode,
          const std::string& otherMember = "")
         : repository_(ConversationRepository::createConversation(account, mode, otherMember))
@@ -134,7 +134,7 @@ public:
         init();
     }
 
-    Impl(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId)
+    Impl(const std::shared_ptr<JamiAccount>& account, const std::string& conversationId)
         : account_(account)
     {
         repository_ = std::make_unique<ConversationRepository>(account, conversationId);
@@ -144,7 +144,7 @@ public:
         init();
     }
 
-    Impl(const std::weak_ptr<JamiAccount>& account,
+    Impl(const std::shared_ptr<JamiAccount>& account,
          const std::string& remoteDevice,
          const std::string& conversationId)
         : account_(account)
@@ -153,10 +153,8 @@ public:
                                                                 remoteDevice,
                                                                 conversationId);
         if (!repository_) {
-            if (auto shared = account.lock()) {
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    shared->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
-            }
+            emitSignal<libjami::ConversationSignal::OnConversationError>(
+                account->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
             throw std::logic_error("Couldn't clone repository");
         }
         init();
@@ -745,18 +743,18 @@ Conversation::Impl::loadMessages(const LogOptions& options)
     return repository_->convCommitToMap(convCommits);
 }
 
-Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
+Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
                            ConversationMode mode,
                            const std::string& otherMember)
     : pimpl_ {new Impl {account, mode, otherMember}}
 {}
 
-Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
+Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
                            const std::string& conversationId)
     : pimpl_ {new Impl {account, conversationId}}
 {}
 
-Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
+Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
                            const std::string& remoteDevice,
                            const std::string& conversationId)
     : pimpl_ {new Impl {account, remoteDevice, conversationId}}

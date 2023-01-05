@@ -127,11 +127,12 @@ using NeedSocketCb
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
 public:
-    Conversation(const std::weak_ptr<JamiAccount>& account,
+    Conversation(const std::shared_ptr<JamiAccount>& account,
                  ConversationMode mode,
                  const std::string& otherMember = "");
-    Conversation(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId = "");
-    Conversation(const std::weak_ptr<JamiAccount>& account,
+    Conversation(const std::shared_ptr<JamiAccount>& account,
+                 const std::string& conversationId = "");
+    Conversation(const std::shared_ptr<JamiAccount>& account,
                  const std::string& remoteDevice,
                  const std::string& conversationId);
     ~Conversation();

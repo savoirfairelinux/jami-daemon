@@ -140,7 +140,7 @@ public:
      * @return  the conversation repository object
      */
     static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
-        const std::weak_ptr<JamiAccount>& account,
+        const std::shared_ptr<JamiAccount>& account,
         ConversationMode mode = ConversationMode::INVITES_ONLY,
         const std::string& otherMember = "");
 
@@ -153,7 +153,7 @@ public:
      * @param socket            Socket used to clone
      */
     static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
-        const std::weak_ptr<JamiAccount>& account,
+        const std::shared_ptr<JamiAccount>& account,
         const std::string& deviceId,
         const std::string& conversationId);
 

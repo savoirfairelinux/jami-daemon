@@ -127,7 +127,7 @@ ConversationRepositoryTest::testCreateRepository()
     auto aliceDeviceId = DeviceId(std::string(aliceAccount->currentDeviceId()));
     auto uri = aliceAccount->getUsername();
 
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
@@ -190,7 +190,7 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
@@ -243,7 +243,7 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
     bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
     GitServer gs(aliceId, repository->id(), sendSocket);
 
-    auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(),
+    auto cloned = ConversationRepository::cloneConversation(bobAccount,
                                                             aliceDeviceId.toString(),
                                                             repository->id());
     gs.stop();
@@ -307,7 +307,7 @@ void
 ConversationRepositoryTest::testAddSomeMessages()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
 
     auto id1 = repository->commitMessage("Commit 1");
     auto id2 = repository->commitMessage("Commit 2");
@@ -346,7 +346,7 @@ void
 ConversationRepositoryTest::testLogMessages()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
 
     auto id1 = repository->commitMessage("Commit 1");
     auto id2 = repository->commitMessage("Commit 2");
@@ -381,7 +381,7 @@ ConversationRepositoryTest::testFetch()
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
@@ -437,7 +437,7 @@ ConversationRepositoryTest::testFetch()
     // Clone repository
     auto id1 = repository->commitMessage("Commit 1");
 
-    auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(),
+    auto cloned = ConversationRepository::cloneConversation(bobAccount,
                                                             aliceDeviceId.toString(),
                                                             repository->id());
     gs.stop();
@@ -617,7 +617,7 @@ void
 ConversationRepositoryTest::testMerge()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
@@ -652,7 +652,7 @@ void
 ConversationRepositoryTest::testFFMerge()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
@@ -689,7 +689,7 @@ ConversationRepositoryTest::testDiff()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto aliceDeviceId = DeviceId(std::string(aliceAccount->currentDeviceId()));
     auto uri = aliceAccount->getUsername();
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
 
     auto id1 = repository->commitMessage("Commit 1");
     auto id2 = repository->commitMessage("Commit 2");
@@ -708,7 +708,7 @@ void
 ConversationRepositoryTest::testMergeProfileWithConflict()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repository = ConversationRepository::createConversation(aliceAccount);
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
@@ -835,9 +835,10 @@ name) { return true; });
     GitServer gs(aliceId, repository.id(), sendSocket);
 
     JAMI_ERR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-    auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(),
+    auto cloned = ConversationRepository::cloneConversation(bobAccount,
                                                             aliceDeviceId,
                                                             repository.id());
+    CPPUNIT_ASSERT(cloned);
     gs.stop();
     JAMI_ERR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ END CLONE");
 

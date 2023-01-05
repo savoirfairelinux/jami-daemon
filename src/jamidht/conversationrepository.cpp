@@ -2452,17 +2452,14 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 //////////////////////////////////
 
 std::unique_ptr<ConversationRepository>
-ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account,
+ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& account,
                                            ConversationMode mode,
                                            const std::string& otherMember)
 {
-    auto shared = account.lock();
-    if (!shared)
-        return {};
     // Create temporary directory because we can't know the first hash for now
     std::uniform_int_distribution<uint64_t> dist {0, std::numeric_limits<uint64_t>::max()};
     random_device rdev;
-    auto conversationsPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+    auto conversationsPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                              + DIR_SEPARATOR_STR + "conversations";
     fileutils::check_dir(conversationsPath.c_str());
     auto tmpPath = conversationsPath + DIR_SEPARATOR_STR + std::to_string(dist(rdev));
@@ -2480,14 +2477,14 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     }
 
     // Add initial files
-    if (!add_initial_files(repo, shared, mode, otherMember)) {
+    if (!add_initial_files(repo, account, mode, otherMember)) {
         JAMI_ERR("Error when adding initial files");
         fileutils::removeAll(tmpPath, true);
         return {};
     }
 
     // Commit changes
-    auto id = initial_commit(repo, shared, mode, otherMember);
+    auto id = initial_commit(repo, account, mode, otherMember);
     if (id.empty()) {
         JAMI_ERR("Couldn't create initial commit in %s", tmpPath.c_str());
         fileutils::removeAll(tmpPath, true);
@@ -2508,20 +2505,16 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
 }
 
 std::unique_ptr<ConversationRepository>
-ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& account,
+ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& account,
                                           const std::string& deviceId,
                                           const std::string& conversationId)
 {
-    auto shared = account.lock();
-    if (!shared)
-        return {};
-    auto conversationsPath = fileutils::get_data_dir() + "/" + shared->getAccountID() + "/"
+    auto conversationsPath = fileutils::get_data_dir() + "/" + account->getAccountID() + "/"
                              + "conversations";
     fileutils::check_dir(conversationsPath.c_str());
     auto path = conversationsPath + "/" + conversationId;
     git_repository* rep = nullptr;
-    std::stringstream url;
-    url << "git://" << deviceId << '/' << conversationId;
+    auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 
     git_clone_options clone_options;
     git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
@@ -2550,10 +2543,12 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     }
 
     JAMI_INFO("Start clone in %s", path.c_str());
-    if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) < 0) {
+    if (git_clone(&rep, url.c_str(), path.c_str(), nullptr) < 0) {
         const git_error* err = giterr_last();
         if (err)
             JAMI_ERR("Error when retrieving remote conversation: %s %s", err->message, path.c_str());
+        else
+            JAMI_ERR("Unkown error when retrieving remote conversation");
         return nullptr;
     }
     git_repository_free(rep);

@@ -556,6 +556,9 @@ void
 ConversationModule::Impl::handlePendingConversation(const std::string& conversationId,
                                                     const std::string& deviceId)
 {
+    auto acc = account_.lock();
+    if (!acc)
+        return;
     auto erasePending = [&] {
         std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
         auto oldFetch = pendingConversationsFetch_.find(conversationId);
@@ -564,7 +567,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         pendingConversationsFetch_.erase(conversationId);
     };
     try {
-        auto conversation = std::make_shared<Conversation>(account_, deviceId, conversationId);
+        auto conversation = std::make_shared<Conversation>(acc, deviceId, conversationId);
         {
             std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
             auto oldFetch = pendingConversationsFetch_.find(conversationId);
@@ -649,10 +652,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             askForProfile = cert && cert->issuer && cert->issuer->getId().toString() == username_;
         }
         if (askForProfile) {
-            if (auto acc = account_.lock()) {
-                for (const auto& member : conversation->memberUris(username_)) {
-                    acc->askForProfile(conversationId, deviceId, member);
-                }
+            for (const auto& member : conversation->memberUris(username_)) {
+                acc->askForProfile(conversationId, deviceId, member);
             }
         }
     } catch (const std::exception& e) {
@@ -1067,7 +1068,7 @@ ConversationModule::loadConversations()
     std::set<std::string> toRm;
     for (const auto& repository : conversationsRepositories) {
         try {
-            auto conv = std::make_shared<Conversation>(pimpl_->account_, repository);
+            auto conv = std::make_shared<Conversation>(acc, repository);
             conv->onLastDisplayedUpdated(
                 [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); });
             conv->onNeedSocket(pimpl_->onNeedSwarmSocket_);
@@ -1419,10 +1420,13 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
 std::string
 ConversationModule::startConversation(ConversationMode mode, const std::string& otherMember)
 {
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return {};
     // Create the conversation object
     std::shared_ptr<Conversation> conversation;
     try {
-        conversation = std::make_shared<Conversation>(pimpl_->account_, mode, otherMember);
+        conversation = std::make_shared<Conversation>(acc, mode, otherMember);
         conversation->onLastDisplayedUpdated(
             [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); });
         conversation->onNeedSocket(pimpl_->onNeedSwarmSocket_);
@@ -2540,6 +2544,20 @@ ConversationModule::gitSocket(std::string_view deviceId, std::string_view convId
         return it->second.socket;
     return nullptr;
 }
+
+void
+ConversationModule::addGitSocket(std::string_view deviceId,
+                                 std::string_view convId,
+                                 std::shared_ptr<ChannelSocket> channel)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto convIt = pimpl_->conversations_.find(convId);
+    if (convIt != pimpl_->conversations_.end())
+        convIt->second->addGitSocket(DeviceId(deviceId), channel);
+    else
+        JAMI_WARNING("addGitSocket: can't find conversation {:s}", convId);
+}
+
 void
 ConversationModule::removeGitSocket(std::string_view deviceId, std::string_view convId)
 {
