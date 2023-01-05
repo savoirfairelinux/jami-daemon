@@ -2513,7 +2513,6 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
                              + "conversations";
     fileutils::check_dir(conversationsPath.c_str());
     auto path = conversationsPath + "/" + conversationId;
-    git_repository* rep = nullptr;
     auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 
     git_clone_options clone_options;
@@ -2542,13 +2541,13 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
         fileutils::removeAll(path, true);
     }
 
-    JAMI_INFO("Start clone in %s", path.c_str());
-    if (git_clone(&rep, url.c_str(), path.c_str(), nullptr) < 0) {
-        const git_error* err = giterr_last();
-        if (err)
-            JAMI_ERR("Error when retrieving remote conversation: %s %s", err->message, path.c_str());
+    JAMI_DEBUG("Start clone of {:s} to {:s}", url, path);
+    git_repository* rep = nullptr;
+    if (auto err = git_clone(&rep, url.c_str(), path.c_str(), nullptr)) {
+        if (const git_error* gerr = giterr_last())
+            JAMI_ERROR("Error when retrieving remote conversation: {:s} {:s}", gerr->message, path);
         else
-            JAMI_ERR("Unkown error when retrieving remote conversation");
+            JAMI_ERROR("Unknown error {:d} when retrieving remote conversation", err);
         return nullptr;
     }
     git_repository_free(rep);
