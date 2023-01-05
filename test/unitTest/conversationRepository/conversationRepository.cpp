@@ -52,7 +52,8 @@ public:
     ConversationRepositoryTest()
     {
         // Init daemon
-        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(
+            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
@@ -240,12 +241,15 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(receiverConnected);
 
-    bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
+    bobAccount->convModule()->addGitSocket(aliceDeviceId.toString(),
+                                           repository->id(),
+                                           channelSocket);
     GitServer gs(aliceId, repository->id(), sendSocket);
 
     auto cloned = ConversationRepository::cloneConversation(bobAccount,
                                                             aliceDeviceId.toString(),
                                                             repository->id());
+    CPPUNIT_ASSERT(cloned);
     gs.stop();
 
     CPPUNIT_ASSERT(cloned != nullptr);
@@ -382,6 +386,7 @@ ConversationRepositoryTest::testFetch()
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     auto repository = ConversationRepository::createConversation(aliceAccount);
+    std::cout << "@@@@@@@ CONVERSATION REPO: " << repository->id() << std::endl;
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
@@ -430,8 +435,13 @@ ConversationRepositoryTest::testFetch()
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(receiverConnected);
     CPPUNIT_ASSERT(repository != nullptr);
+    std::cout << "@@@@@@@ ADD GIT SOCKET ALICEDEVICE ID: " << aliceDeviceId.toString()
+              << "  REPO ID: " << repository->id() << "  CHANNEL ID: " << channelSocket->deviceId()
+              << std::endl;
 
-    bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
+    bobAccount->convModule()->addGitSocket(aliceDeviceId.toString(),
+                                           repository->id(),
+                                           channelSocket);
     GitServer gs(aliceId, repository->id(), sendSocket);
 
     // Clone repository
@@ -440,9 +450,9 @@ ConversationRepositoryTest::testFetch()
     auto cloned = ConversationRepository::cloneConversation(bobAccount,
                                                             aliceDeviceId.toString(),
                                                             repository->id());
+    CPPUNIT_ASSERT(cloned);
     gs.stop();
-    bobAccount->removeGitSocket(aliceDeviceId, repository->id());
-
+    bobAccount->convModule()->removeGitSocket(aliceDeviceId.toString(), repository->id());
     // Add some new messages to fetch
     auto id2 = repository->commitMessage("Commit 2");
     auto id3 = repository->commitMessage("Commit 3");
@@ -462,14 +472,18 @@ ConversationRepositoryTest::testFetch()
     rcv.wait_for(lk, std::chrono::seconds(10));
     scv.wait_for(lk, std::chrono::seconds(10));
     ccv.wait_for(lk, std::chrono::seconds(10));
-    bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
+
+    bobAccount->convModule()->addGitSocket(aliceDeviceId.toString(),
+                                           repository->id(),
+                                           channelSocket);
+
     GitServer gs2(aliceId, repository->id(), sendSocket);
 
     CPPUNIT_ASSERT(cloned->fetch(aliceDeviceId.toString()));
     CPPUNIT_ASSERT(id3 == cloned->remoteHead(aliceDeviceId.toString()));
 
     gs2.stop();
-    bobAccount->removeGitSocket(aliceDeviceId, repository->id());
+    bobAccount->convModule()->removeGitSocket(aliceDeviceId.toString(), repository->id());
 
     auto messages = cloned->log({id3});
     CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
