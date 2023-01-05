@@ -159,6 +159,7 @@ public:
     /**
      * @param includeInvited        If we want invited members
      * @param includeLeft           If we want left members
+     * @param includeBanned         If we want banned members
      * @return a vector of member details:
      * {
      *  "uri":"xxx",
@@ -168,7 +169,8 @@ public:
      * }
      */
     std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited = false,
-                                                               bool includeLeft = false) const;
+                                                               bool includeLeft = false,
+                                                               bool includeBanned = false) const;
 
     /**
      * @param filter           If we want to remove one member

@@ -306,10 +306,11 @@ public:
     /**
      * Get members
      * @param conversationId
+     * @param includeBanned
      * @return a map of members with their role and details
      */
     std::vector<std::map<std::string, std::string>> getConversationMembers(
-        const std::string& conversationId) const;
+        const std::string& conversationId, bool includeBanned = false) const;
     /**
      * Retrieve the number of interactions from interactionId to HEAD
      * @param convId

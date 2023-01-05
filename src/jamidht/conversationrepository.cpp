@@ -2320,11 +2320,13 @@ ConversationRepository::Impl::initMembers()
     std::vector<std::string> paths = {repoPath + "/" + "admins",
                                       repoPath + "/" + "members",
                                       repoPath + "/" + "invited",
-                                      repoPath + "/" + "banned" + "/" + "members"};
+                                      repoPath + "/" + "banned" + "/" + "members",
+                                      repoPath + "/" + "banned" + "/" + "invited"};
     std::vector<MemberRole> roles = {
         MemberRole::ADMIN,
         MemberRole::MEMBER,
         MemberRole::INVITED,
+        MemberRole::BANNED,
         MemberRole::BANNED,
     };
 

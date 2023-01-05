@@ -530,6 +530,8 @@ public:
         return {};
     }
 
+    std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited,
+                                                               bool includeLeft, bool includeBanned) const;
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
@@ -580,6 +582,32 @@ Conversation::Impl::isAdmin() const
         return false;
     auto uri = cert->issuer->getId().toString();
     return fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::Impl::getMembers(bool includeInvited, bool includeLeft, bool includeBanned) const
+{
+    std::vector<std::map<std::string, std::string>> result;
+    auto members = repository_->members();
+    std::lock_guard<std::mutex> lk(lastDisplayedMtx_);
+    for (const auto& member : members) {
+        if (member.role == MemberRole::BANNED && !includeBanned) {
+            continue;
+        }
+        if (member.role == MemberRole::INVITED && !includeInvited)
+            continue;
+        if (member.role == MemberRole::LEFT && !includeLeft)
+            continue;
+        auto mm = member.map();
+        std::string lastDisplayed;
+        auto itDisplayed = lastDisplayed_.find(member.uri);
+        if (itDisplayed != lastDisplayed_.end()) {
+            lastDisplayed = itDisplayed->second;
+        }
+        mm[ConversationMapKeys::LAST_DISPLAYED] = std::move(lastDisplayed);
+        result.emplace_back(std::move(mm));
+    }
+    return result;
 }
 
 std::vector<std::string>
@@ -844,28 +872,9 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
 }
 
 std::vector<std::map<std::string, std::string>>
-Conversation::getMembers(bool includeInvited, bool includeLeft) const
+Conversation::getMembers(bool includeInvited, bool includeLeft, bool includeBanned) const
 {
-    std::vector<std::map<std::string, std::string>> result;
-    auto members = pimpl_->repository_->members();
-    std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
-    for (const auto& member : members) {
-        if (member.role == MemberRole::BANNED)
-            continue;
-        if (member.role == MemberRole::INVITED && !includeInvited)
-            continue;
-        if (member.role == MemberRole::LEFT && !includeLeft)
-            continue;
-        auto mm = member.map();
-        std::string lastDisplayed;
-        auto itDisplayed = pimpl_->lastDisplayed_.find(member.uri);
-        if (itDisplayed != pimpl_->lastDisplayed_.end()) {
-            lastDisplayed = itDisplayed->second;
-        }
-        mm[ConversationMapKeys::LAST_DISPLAYED] = std::move(lastDisplayed);
-        result.emplace_back(std::move(mm));
-    }
-    return result;
+    return pimpl_->getMembers(includeInvited, includeLeft, includeBanned);
 }
 
 std::vector<std::string>
