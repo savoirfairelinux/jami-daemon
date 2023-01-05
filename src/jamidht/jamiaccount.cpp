@@ -2220,9 +2220,27 @@ JamiAccount::convModule()
                     shared->connectionManager_
                         ->connectDevice(DeviceId(deviceId),
                                         fmt::format("swarm://{}", convId),
-                                        [cb = std::move(cb)](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId&) {
-                                            // IF OSOCKET requestSIPconn
+                                        [w, cb = std::move(cb)](std::shared_ptr<ChannelSocket> socket,
+                                                             const DeviceId& deviceId) {
+                                            if (socket) {
+                                                // It's possible to have a swarm socket, but not a SIP one
+                                                // opened. We can quickly open this connection has it will trigger
+                                                // syncing.
+                                                auto shared = w.lock();
+                                                if (!shared)
+                                                    return;
+                                                auto remoteCert = socket->peerCertificate();
+                                                auto uri = remoteCert->issuer->getId().toString();
+                                                std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
+                                                // Verify that the connection is not already cached
+                                                SipConnectionKey key(uri, deviceId.toString());
+                                                auto it = shared->sipConns_.find(key);
+                                                if (it == shared->sipConns_.end()) {
+                                                    lk.unlock();
+                                                    shared->requestSIPConnection(uri, deviceId, "");
+                                                }
+                                            }
+
                                             cb(socket);
                                         });
                 });
