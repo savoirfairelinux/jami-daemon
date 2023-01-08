@@ -123,7 +123,6 @@ libjami_sources = files(
     'sip/siptransport.cpp',
     'sip/sipvoiplink.cpp',
     'scheduled_executor.cpp',
-    'smartools.cpp',
     'string_utils.cpp',
     'threadloop.cpp',
     'uri.cpp',
