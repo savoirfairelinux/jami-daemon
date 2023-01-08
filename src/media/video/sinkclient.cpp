@@ -37,7 +37,6 @@
 #include "jami/videomanager_interface.h"
 #include "libav_utils.h"
 #include "video_scaler.h"
-#include "smartools.h"
 #include "media_filter.h"
 #include "filter_transpose.h"
 
@@ -422,8 +421,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     ++frameCount_;
     if (seconds > std::chrono::seconds(1)) {
         auto fps = frameCount_ / std::chrono::duration<double>(seconds).count();
-        // Send the framerate in smartInfo
-        Smartools::getInstance().setFrameRate(id_, std::to_string(fps));
+        JAMI_WARNING("Sink {}, {} FPS", id_, fps);
         frameCount_ = 0;
         lastFrameDebug_ = currentTime;
     }

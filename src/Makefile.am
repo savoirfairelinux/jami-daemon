@@ -109,8 +109,6 @@ libjami_la_SOURCES = \
 		map_utils.h \
 		ring_api.cpp \
 		rational.h \
-		smartools.cpp \
-		smartools.h \
 		base64.h \
 		base64.cpp \
 		data_transfer.cpp \
