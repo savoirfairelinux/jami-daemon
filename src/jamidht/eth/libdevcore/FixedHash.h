@@ -332,6 +332,9 @@ public:
                              ConstructFromHashType _t = FixedHash<T>::AlignLeft)
         : FixedHash<T>(_h, _t)
     {}
+    SecureFixedHash(SecureFixedHash<T> const& _h)
+        : FixedHash<T>(_h.makeInsecure())
+    {}
     template<unsigned M>
     explicit SecureFixedHash(SecureFixedHash<M> const& _h,
                              ConstructFromHashType _t = FixedHash<T>::AlignLeft)
