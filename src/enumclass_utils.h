@@ -17,11 +17,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef ENUM_CLASS_UTILS_H
-#define ENUM_CLASS_UTILS_H
+#pragma once
+
+#include "logger.h"
 
 #include <map>
-#include "logger.h"
 #include <type_traits>
 #include <vector>
 #include <cassert>
@@ -30,10 +30,9 @@ namespace jami {
 
 /**
  * This function adds a safe way to get an enum class size
- * @note it cannot be unsigned to avoid some compiler warnings
  */
 template<typename A>
-constexpr inline int
+constexpr inline size_t
 enum_class_size()
 {
     return size_t(A::COUNT__);
@@ -65,7 +64,7 @@ struct Matrix1D
     class EnumClassIter
     {
     public:
-        EnumClassIter(const Matrix1D<Row, Value, A>* p_vec, int pos)
+        EnumClassIter(const Matrix1D<Row, Value, A>* p_vec, size_t pos)
             : pos_(pos)
             , p_vec_(p_vec)
         {}
@@ -75,7 +74,7 @@ struct Matrix1D
         const EnumClassIter& operator++();
 
     private:
-        int pos_;
+        size_t pos_;
         const Matrix1D<Row, Value, A>* p_vec_;
     };
 
@@ -112,7 +111,7 @@ struct Matrix0D
     class EnumClassIter
     {
     public:
-        EnumClassIter(const Matrix0D<EnumClass>* p_vec, int pos)
+        EnumClassIter(const Matrix0D<EnumClass>* p_vec, size_t pos)
             : pos_(pos)
             , p_vec_(p_vec)
         {}
@@ -122,7 +121,7 @@ struct Matrix0D
         const EnumClassIter& operator++();
 
     private:
-        int pos_;
+        size_t pos_;
         const Matrix0D<EnumClass>* p_vec_;
     };
 
@@ -308,5 +307,3 @@ Matrix1D<Row, Value, Accessor>::end()
 }
 
 } // namespace jami
-
-#endif // ENUM_CLASS_UTILS_H
