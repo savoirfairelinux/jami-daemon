@@ -28,7 +28,6 @@
 #include "logger.h"
 #include "manager.h"
 #include "media_device.h"
-#include "smartools.h"
 #include "sip/sipcall.h"
 #ifdef RING_ACCEL
 #include "accel.h"
@@ -63,10 +62,6 @@ VideoSender::VideoSender(const std::string& dest,
     videoEncoder_->addStream(args.codec->systemCodecInfo);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_->getContext());
-    // Send local video codec in SmartInfo
-    Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getVideoCodec());
-    // Send the resolution in smartInfo
-    Smartools::getInstance().setResolution("local", opts.width, opts.height);
 }
 
 void

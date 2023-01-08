@@ -37,8 +37,6 @@
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 
-#include "smartools.h"
-
 namespace libjami {
 
 void
@@ -226,13 +224,13 @@ isConferenceParticipant(const std::string& accountId, const std::string& callId)
 void
 startSmartInfo(uint32_t refreshTimeMs)
 {
-    jami::Smartools::getInstance().start(std::chrono::milliseconds(refreshTimeMs));
+    JAMI_WARNING("startSmartInfo is deprecated and does nothing.");
 }
 
 void
 stopSmartInfo()
 {
-    jami::Smartools::getInstance().stop();
+    JAMI_WARNING("stopSmartInfo is deprecated and does nothing.");
 }
 
 bool
