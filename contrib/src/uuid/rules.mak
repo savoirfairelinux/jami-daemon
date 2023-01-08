@@ -1,6 +1,6 @@
 # libuuid part of util-linux
 
-UUID_VERSION := 1.0.2
+UUID_VERSION := 1.0.3
 UUID_URL := $(SF)/libuuid/files/libuuid-$(UUID_VERSION).tar.gz/download
 
 ifndef HAVE_IOS
@@ -18,7 +18,7 @@ $(TARBALLS)/libuuid-$(UUID_VERSION).tar.gz:
 
 uuid: libuuid-$(UUID_VERSION).tar.gz .sum-uuid
 	$(UNPACK)
-	$(APPLY) $(SRC)/uuid/android.patch
+#	$(APPLY) $(SRC)/uuid/android.patch
 	$(MOVE)
 
 .uuid: uuid
