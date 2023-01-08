@@ -28,7 +28,6 @@
 #include "client/videomanager.h"
 #include "sinkclient.h"
 #include "logger.h"
-#include "smartools.h"
 
 extern "C" {
 #include <libavutil/display.h>
@@ -245,12 +244,6 @@ VideoReceiveThread::configureVideoOutput()
 
     if (useSink_)
         startSink();
-
-    // Send remote video codec in SmartInfo
-    Smartools::getInstance().setRemoteVideoCodec(videoDecoder_->getDecoderName(), id_);
-
-    // Send the resolution in smartInfo
-    Smartools::getInstance().setResolution(id_, dstWidth_, dstHeight_);
 
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_VIDEO, 1);

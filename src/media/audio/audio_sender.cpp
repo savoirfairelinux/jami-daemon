@@ -27,7 +27,6 @@
 #include "media_io_handle.h"
 #include "media_stream.h"
 #include "resampler.h"
-#include "smartools.h"
 
 #include <memory>
 
@@ -75,9 +74,6 @@ AudioSender::setup(SocketPair& socketPair)
         JAMI_ERR("%s", e.what());
         return false;
     }
-
-    Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getAudioCodec());
-
 #ifdef DEBUG_SDP
     audioEncoder_->print_sdp();
 #endif

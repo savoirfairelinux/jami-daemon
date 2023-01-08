@@ -43,7 +43,6 @@
 #include "client/videomanager.h"
 #include "manager.h"
 #include "observer.h"
-#include "smartools.h"
 #include <sstream>
 
 namespace jami {
