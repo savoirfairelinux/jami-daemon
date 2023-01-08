@@ -28,7 +28,6 @@
 #include "resampler.h"
 #include "ringbuffer.h"
 #include "ringbufferpool.h"
-#include "smartools.h"
 #include "tracepoint.h"
 
 #include <future>

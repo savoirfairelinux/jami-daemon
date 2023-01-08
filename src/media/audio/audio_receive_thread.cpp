@@ -28,7 +28,6 @@
 #include "media_recorder.h"
 #include "ringbuffer.h"
 #include "ringbufferpool.h"
-#include "smartools.h"
 
 #include <memory>
 
@@ -86,7 +85,6 @@ AudioReceiveThread::setup()
         JAMI_ERR("decoder IO startup failed");
         return false;
     }
-    Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
 
