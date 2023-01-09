@@ -34,20 +34,31 @@ libressl: $(LIBRESSL_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
 
+LIBRESSL_CONF := \
+	-DLIBRESSL_TESTS=Off \
+	-DLIBRESSL_APPS=Off  \
+	-DDESTDIR=$(PREFIX)
+
+ifdef HAVE_ANDROID
+ifeq ($(ARCH),x86_64)
+LIBRESSL_CONF += -DENABLE_ASM=Off
+endif
+else ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
+LIBRESSL_CONF += -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch arm64'
+else ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+LIBRESSL_CONF += -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch x86_64'
+else ifeq ($(HOST_ARCH),arm-linux-gnueabihf)
+LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=arm -DENABLE_ASM=Off -DCMAKE_C_FLAGS='-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard'
+endif
+
 .libressl: libressl .sum-libressl
 	mkdir -p "$(PREFIX)/include"
 ifdef HAVE_WIN32
 	cd $< && $(HOSTVARS) CPPFLAGS=-D__MINGW_USE_VC2005_COMPAT ./configure $(HOSTCONF) && $(MAKE) && $(MAKE) install
 else ifdef HAVE_WIN64
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) && $(MAKE) && $(MAKE) install
-else ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
-	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch arm64' .. && $(MAKE) && $(MAKE) install
-else ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
-	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch x86_64' .. && $(MAKE) && $(MAKE) install
-else ifeq ($(HOST_ARCH),arm-linux-gnueabihf)
-	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_SYSTEM_PROCESSOR=arm -DENABLE_ASM=Off -DCMAKE_C_FLAGS='-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard' .. && $(MAKE) && $(MAKE) install
 else
-	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) .. && $(MAKE) && $(MAKE) install
+	cd $< && mkdir -p build && cd build && $(CMAKE) $(LIBRESSL_CONF) .. && $(MAKE) && $(MAKE) install
 endif
 	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.*
 	touch $@
