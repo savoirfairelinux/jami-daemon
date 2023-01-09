@@ -28,6 +28,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sipaccountbase.h"
 #include "sip/sipvoiplink.h"
+#include  "../jami/account_const.h"
 #include "logger.h"
 #include "sdp.h"
 #include "manager.h"
@@ -3005,8 +3006,14 @@ SIPCall::getDetails() const
                 if (auto codec = rtpSession->getCodec()) {
                     details.emplace(libjami::Call::Details::AUDIO_CODEC,
                                     codec->systemCodecInfo.name);
-                } else
+                    const auto* codecInfo = static_cast<const SystemAudioCodecInfo*>(&codec->systemCodecInfo);
+                    details.emplace(libjami::Call::Details::AUDIO_SAMPLE_RATE,
+                                    codecInfo->getCodecSpecifications()
+                                    [libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE]);
+                } else {
                     details.emplace(libjami::Call::Details::AUDIO_CODEC, "");
+                    details.emplace(libjami::Call::Details::AUDIO_SAMPLE_RATE, "");
+                }
             }
         }
     }
