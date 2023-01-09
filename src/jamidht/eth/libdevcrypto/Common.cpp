@@ -118,16 +118,3 @@ crypto::kdf(Secret const& _priv, h256 const& _hash)
         throw InvalidState();
     return s;
 }
-
-Secret
-Nonce::next()
-{
-    std::lock_guard<std::mutex> l(x_value);
-    if (!m_value) {
-        m_value = Secret::random();
-        if (!m_value)
-            throw InvalidState();
-    }
-    m_value = sha3Secure(m_value.ref());
-    return sha3(~m_value);
-}

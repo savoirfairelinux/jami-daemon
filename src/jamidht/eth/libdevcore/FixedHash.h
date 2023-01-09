@@ -323,10 +323,6 @@ public:
                              ConstructFromHashType _t = FixedHash<T>::FailIfDifferent)
         : FixedHash<T>(_b, _t)
     {}
-    explicit SecureFixedHash(bytesSec const& _b,
-                             ConstructFromHashType _t = FixedHash<T>::FailIfDifferent)
-        : FixedHash<T>(_b.ref(), _t)
-    {}
     template<unsigned M>
     explicit SecureFixedHash(FixedHash<M> const& _h,
                              ConstructFromHashType _t = FixedHash<T>::AlignLeft)
@@ -360,8 +356,6 @@ public:
     }
 
     using FixedHash<T>::size;
-
-    bytesSec asBytesSec() const { return bytesSec(ref()); }
 
     FixedHash<T> const& makeInsecure() const { return static_cast<FixedHash<T> const&>(*this); }
     FixedHash<T>& writable()

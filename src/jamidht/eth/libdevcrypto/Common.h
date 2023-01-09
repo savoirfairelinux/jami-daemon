@@ -126,35 +126,6 @@ public:
 /// Key derivation
 h256 kdf(Secret const& _priv, h256 const& _hash);
 
-/**
- * @brief Generator for non-repeating nonce material.
- * The Nonce class should only be used when a non-repeating nonce
- * is required and, in its current form, not recommended for signatures.
- * This is primarily because the key-material for signatures is
- * encrypted on disk whereas the seed for Nonce is not.
- * Thus, Nonce's primary intended use at this time is for networking
- * where the key is also stored in plaintext.
- */
-class Nonce
-{
-public:
-    /// Returns the next nonce (might be read from a file).
-    static Secret get()
-    {
-        static Nonce s;
-        return s.next();
-    }
-
-private:
-    Nonce() = default;
-
-    /// @returns the next nonce.
-    Secret next();
-
-    std::mutex x_value;
-    Secret m_value;
-};
-
 } // namespace crypto
 
 } // namespace dev
