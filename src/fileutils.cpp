@@ -1044,9 +1044,9 @@ ofstream(const std::string& path, std::ios_base::openmode mode)
 int64_t
 size(const std::string& path)
 {
-    std::ifstream file;
-    int64_t size;
+    int64_t size = 0;
     try {
+        std::ifstream file;
         openStream(file, path, std::ios::binary | std::ios::in);
         file.seekg(0, std::ios_base::end);
         size = file.tellg();
