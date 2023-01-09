@@ -22,6 +22,30 @@
       },
       "revId": "5bb3bcce561488126d225531c356c5cd3c4893d8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8a5321dd_f28c840e",
+        "filename": "contrib/src/ffmpeg/SHA512SUMS",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-09T20:21:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "25e4c6d7_08977176",
+      "range": {
+        "startLine": 1,
+        "startChar": 133,
+        "endLine": 1,
+        "endChar": 143
+      },
+      "revId": "5bb3bcce561488126d225531c356c5cd3c4893d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
