@@ -214,9 +214,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
     socket->onShutdown([w = weak(), deviceId = socket->deviceId()] {
         auto shared = w.lock();
         if (shared && !shared->isShutdown_) {
-            std::lock_guard<std::mutex> lock(shared->mutex);
-            shared->removeNodeInternal(deviceId);
-            shared->maintainBuckets();
+            shared->removeNode(deviceId);
             JAMI_ERROR("MB FROM SD RCV {} FROM {}", shared->id_.toString(), deviceId.toString());
         }
     });
@@ -254,10 +252,10 @@ SwarmManager::tryConnect(const NodeId& nodeId)
 
     if (needSocketCb_)
         needSocketCb_(nodeId.toString(),
-                      [w=weak(), nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
+                      [w = weak(), nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
                           auto shared = w.lock();
                           if (!shared)
-                            return true;
+                              return true;
                           if (socket) {
                               shared->addChannel(socket);
                               JAMI_ERROR("{}  ADDED {}",
@@ -342,4 +340,12 @@ SwarmManager::changeMobility(const NodeId& nodeId, bool isMobile)
     bucket->changeMobility(nodeId, isMobile);
 }
 
+void
+SwarmManager::shutdown()
+{
+    isShutdown_ = true;
+    std::lock_guard<std::mutex> lock(mutex);
+    JAMI_ERROR("{} SHUTTING DOWN NODES", id_.toString());
+    routing_table.shutdownAllNodes();
+}
 } // namespace jami

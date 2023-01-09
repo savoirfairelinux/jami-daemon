@@ -62,7 +62,6 @@ bool
 Bucket::removeNode(const NodeId& nodeId)
 {
     auto node = nodes.find(nodeId);
-    // node->second.socket->shutdown();
     if (node == nodes.end())
         return false;
     nodes.erase(nodeId);

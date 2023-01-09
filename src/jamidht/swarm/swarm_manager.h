@@ -73,12 +73,7 @@ public:
     RoutingTable& getRoutingTable() { return routing_table; };
     std::list<Bucket>& getBuckets() { return routing_table.getBuckets(); };
 
-    void shutdown()
-    {
-        isShutdown_ = true;
-        JAMI_ERROR("{} SHUTTING DOWN NODES", id_.toString());
-        routing_table.shutdownAllNodes();
-    }
+    void shutdown();
 
     void display()
     {
