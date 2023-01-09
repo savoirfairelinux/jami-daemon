@@ -1,9 +1,9 @@
 # UPNP
-UPNP_VERSION := 1.14.13
+UPNP_VERSION := 1.14.15
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
-ifeq ($(call need_pkg,"libupnp >= 1.14.2"),)
+ifeq ($(call need_pkg,"libupnp >= 1.14.15"),)
 PKGS_FOUND += upnp
 endif
 
@@ -17,6 +17,7 @@ upnp: pupnp-release-$(UPNP_VERSION).tar.gz .sum-upnp
 ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
 endif
+	$(APPLY) $(SRC)/upnp/debug.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub
 	$(MOVE)
 
@@ -35,7 +36,7 @@ ifdef HAVE_WIN32
 	cd $< && $(HOSTVARS) CFLAGS="-DUPNP_STATIC_LIB" ./configure $(PUPNP_OPTIONS) $(HOSTCONF)
 else
 	$(RECONF)
-	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -DUPNP_STATIC_LIB" ./configure $(PUPNP_OPTIONS) $(HOSTCONF)
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -DUPNP_STATIC_LIB" ./configure $(PUPNP_OPTIONS) $(HOSTCONF) --enable-debug
 endif
 	cd $< && $(MAKE) install
 	touch $@
