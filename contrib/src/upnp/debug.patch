@@ -1,0 +1,24 @@
+ upnp/src/genlib/net/http/httpreadwrite.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/upnp/src/genlib/net/http/httpreadwrite.c b/upnp/src/genlib/net/http/httpreadwrite.c
+index f2eb3568..440a6eca 100644
+--- a/upnp/src/genlib/net/http/httpreadwrite.c
++++ b/upnp/src/genlib/net/http/httpreadwrite.c
+@@ -677,9 +677,15 @@ int http_SendMessage(SOCKINFO *info, int *TimeOut, const char *fmt, ...)
+ 					num_written);
+ 				if (num_written != buf_length) {
+ 					RetVal = 0;
+-					goto ExitFunction;
+ 				}
++				printf("@@@@@@@@@@@@@ nw %d\n", nw);
++				printf("@@@@@@@@@@@@@ num_written %u\n", num_written);
++				printf("@@@@@@@@@@@@@ buf_length %u\n", buf_length);
++				printf("@@@@@@@@@@@@@\n");
++				printf("@@@@@@@@@@@@@\n");
++				printf("@@@@@@@@@@@@@\n");
+ 			}
++			goto ExitFunction;
+ 		}
+ 	}
+
