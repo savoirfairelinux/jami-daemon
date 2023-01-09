@@ -59,6 +59,7 @@ constexpr static char VIDEO_MUTED[] = "VIDEO_MUTED";
 constexpr static char VIDEO_SOURCE[] = "VIDEO_SOURCE";
 constexpr static char AUDIO_ONLY[] = "AUDIO_ONLY";
 constexpr static char AUDIO_CODEC[] = "AUDIO_CODEC";
+constexpr static char AUDIO_SAMPLE_RATE[] = "AUDIO_SAMPLE_RATE";
 constexpr static char VIDEO_CODEC[] = "VIDEO_CODEC";
 constexpr static char SOCKETS[] = "SOCKETS";
 constexpr static char VIDEO_MIN_BITRATE[] = "VIDEO_MIN_BITRATE";
