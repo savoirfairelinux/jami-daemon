@@ -1,0 +1,68 @@
+ upnp/src/genlib/net/http/httpreadwrite.c | 10 ++++++++++
+ upnp/src/genlib/net/sock.c               |  5 +++++
+ 2 files changed, 15 insertions(+)
+
+diff --git a/upnp/src/genlib/net/http/httpreadwrite.c b/upnp/src/genlib/net/http/httpreadwrite.c
+index 27e9c3a5..dc429fe3 100644
+--- a/upnp/src/genlib/net/http/httpreadwrite.c
++++ b/upnp/src/genlib/net/http/httpreadwrite.c
+@@ -695,6 +695,10 @@ int http_SendMessage(SOCKINFO *info, int *TimeOut, const char *fmt, ...)
+ 				buf = va_arg(argp, char *);
+ 				buf_length = va_arg(argp, size_t);
+ 				if (buf_length > (size_t)0) {
++					if (buf[buf_length] != '\0') {
++						printf("@@@@@@@@@@@@@ BUF! %d\n", (int)buf[buf_length]);
++						//buf[buf_length] = '\0';
++					}
+ 					nw = sock_write(
+ 						info, buf, buf_length, TimeOut);
+ 					num_written = (size_t)nw;
+@@ -712,6 +716,12 @@ int http_SendMessage(SOCKINFO *info, int *TimeOut, const char *fmt, ...)
+ 						num_written);
+ 					if (num_written != buf_length) {
+ 						RetVal = 0;
++						printf("@@@@@@@@@@@@@ nw %d\n", nw);
++						printf("@@@@@@@@@@@@@ num_written %u\n", num_written);
++						printf("@@@@@@@@@@@@@ buf_length %u\n", buf_length);
++						printf("@@@@@@@@@@@@@\n");
++						printf("@@@@@@@@@@@@@\n");
++						printf("@@@@@@@@@@@@@\n");
+ 						goto ExitFunction;
+ 					}
+ 				}
+diff --git a/upnp/src/genlib/net/sock.c b/upnp/src/genlib/net/sock.c
+index 396c692a..a70e2d04 100644
+--- a/upnp/src/genlib/net/sock.c
++++ b/upnp/src/genlib/net/sock.c
+@@ -240,6 +240,7 @@ static int sock_read_write(
+ 					num_written = SSL_write(info->ssl,
+ 						buffer + bytes_sent,
+ 						byte_left);
++					printf("@@@ SSL written: %d sent: %d  left: %d\n", num_written, bytes_sent, byte_left);
+ 				} else {
+ #endif
+ 					/* write data. */
+@@ -247,6 +248,7 @@ static int sock_read_write(
+ 						buffer + bytes_sent,
+ 						byte_left,
+ 						MSG_DONTROUTE | MSG_NOSIGNAL);
++					printf("@@@ written: %d sent: %d  left: %d\n", num_written, bytes_sent, byte_left);
+ #ifdef UPNP_ENABLE_OPEN_SSL
+ 				}
+ #endif
+@@ -258,12 +260,15 @@ static int sock_read_write(
+ 						&old,
+ 						olen);
+ #endif
++					printf("@@@ RET -1\n");
+ 					return (int)num_written;
+ 				}
+ 				byte_left -= (size_t)num_written;
+ 				bytes_sent += (long)num_written;
++				printf("@@@ new byte_left: %d bytes_sent: %d\n", byte_left, bytes_sent);
+ 			}
+ 			numBytes = bytes_sent;
++			printf("@@@ new numBytes: %d\n", numBytes);
+ 		}
+ #ifdef SO_NOSIGPIPE
+ 		setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, &old, olen);
