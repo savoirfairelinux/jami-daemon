@@ -34,7 +34,6 @@ libjami_sources = files(
     'connectivity/utf8_utils.cpp',
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
-    'jamidht/eth/libdevcore/Common.cpp',
     'jamidht/eth/libdevcore/CommonData.cpp',
     'jamidht/eth/libdevcore/FixedHash.cpp',
     'jamidht/eth/libdevcore/SHA3.cpp',

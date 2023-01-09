@@ -104,30 +104,3 @@ KeyPair::create()
             return keyPair;
     }
 }
-
-h256
-crypto::kdf(Secret const& _priv, h256 const& _hash)
-{
-    // H(H(r||k)^h)
-    h256 s;
-    sha3mac(Secret::random().ref(), _priv.ref(), s.ref());
-    s ^= _hash;
-    sha3(s.ref(), s.ref());
-
-    if (!s || !_hash || !_priv)
-        throw InvalidState();
-    return s;
-}
-
-Secret
-Nonce::next()
-{
-    std::lock_guard<std::mutex> l(x_value);
-    if (!m_value) {
-        m_value = Secret::random();
-        if (!m_value)
-            throw InvalidState();
-    }
-    m_value = sha3Secure(m_value.ref());
-    return sha3(~m_value);
-}

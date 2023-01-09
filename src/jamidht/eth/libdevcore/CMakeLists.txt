@@ -3,7 +3,6 @@
 ################################################################################
 list (APPEND Source_Files__jamidht__eth__libdevcore
       "${CMAKE_CURRENT_SOURCE_DIR}/Address.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/Common.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/Common.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/CommonData.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/CommonData.h"

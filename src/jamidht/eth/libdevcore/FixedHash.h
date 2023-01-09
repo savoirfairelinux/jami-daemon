@@ -27,7 +27,6 @@
 #include <cstdint>
 #include <algorithm>
 #include <random>
-#include <sstream>
 #include <opendht/rng.h>
 
 #include "CommonData.h"
@@ -323,10 +322,6 @@ public:
                              ConstructFromHashType _t = FixedHash<T>::FailIfDifferent)
         : FixedHash<T>(_b, _t)
     {}
-    explicit SecureFixedHash(bytesSec const& _b,
-                             ConstructFromHashType _t = FixedHash<T>::FailIfDifferent)
-        : FixedHash<T>(_b.ref(), _t)
-    {}
     template<unsigned M>
     explicit SecureFixedHash(FixedHash<M> const& _h,
                              ConstructFromHashType _t = FixedHash<T>::AlignLeft)
@@ -360,8 +355,6 @@ public:
     }
 
     using FixedHash<T>::size;
-
-    bytesSec asBytesSec() const { return bytesSec(ref()); }
 
     FixedHash<T> const& makeInsecure() const { return static_cast<FixedHash<T> const&>(*this); }
     FixedHash<T>& writable()
@@ -492,25 +485,6 @@ FixedHash<32>::operator==(FixedHash<32> const& _other) const
            && (hash1[3] == hash2[3]);
 }
 
-/// Stream I/O for the FixedHash class.
-template<unsigned N>
-inline std::ostream&
-operator<<(std::ostream& _out, FixedHash<N> const& _h)
-{
-    _out << toHex(_h);
-    return _out;
-}
-
-/// Stream I/O for the SecureFixedHash class.
-template<unsigned N>
-inline std::ostream&
-operator<<(std::ostream& _out, SecureFixedHash<N> const& _h)
-{
-    _out << "SecureFixedHash#" << std::hex << typename FixedHash<N>::hash()(_h.makeInsecure())
-         << std::dec;
-    return _out;
-}
-
 // Common types of FixedHash.
 using h2048 = FixedHash<256>;
 using h1024 = FixedHash<128>;
@@ -535,17 +509,6 @@ right160(h256 const& _t)
     h160 ret;
     memcpy(ret.data(), _t.data() + 12, 20);
     return ret;
-}
-
-inline std::string
-toString(h256s const& _bs)
-{
-    std::ostringstream out;
-    out << "[ ";
-    for (h256 const& i : _bs)
-        out << i.abridged() << ", ";
-    out << "]";
-    return out.str();
 }
 
 } // namespace dev

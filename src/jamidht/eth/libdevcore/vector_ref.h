@@ -58,12 +58,6 @@ public:
         : m_data(reinterpret_cast<_T*>(_data.data()))
         , m_count(_data.size() / sizeof(_T))
     {}
-#if DEV_LDB
-    vector_ref(ldb::Slice const& _s)
-        : m_data(reinterpret_cast<_T*>(_s.data()))
-        , m_count(_s.size() / sizeof(_T))
-    {}
-#endif
     explicit operator bool() const { return m_data && m_count; }
 
     bool contentsEqual(std::vector<mutable_value_type> const& _c) const
@@ -138,30 +132,6 @@ public:
         m_data = _t.data();
         m_count = _t.size();
     }
-    template<class T>
-    bool overlapsWith(vector_ref<T> _t) const
-    {
-        void const* f1 = data();
-        void const* t1 = data() + size();
-        void const* f2 = _t.data();
-        void const* t2 = _t.data() + _t.size();
-        return f1 < t2 && t1 > f2;
-    }
-    /// Copies the contents of this vector_ref to the contents of @a _t, up to the max size of @a _t.
-    void copyTo(vector_ref<typename std::remove_const<_T>::type> _t) const
-    {
-        if (overlapsWith(_t))
-            memmove(_t.data(), m_data, std::min(_t.size(), m_count) * sizeof(_T));
-        else
-            memcpy(_t.data(), m_data, std::min(_t.size(), m_count) * sizeof(_T));
-    }
-    /// Copies the contents of this vector_ref to the contents of @a _t, and zeros further trailing
-    /// elements in @a _t.
-    void populate(vector_ref<typename std::remove_const<_T>::type> _t) const
-    {
-        copyTo(_t);
-        memset(_t.data() + m_count, 0, std::max(_t.size(), m_count) - m_count);
-    }
     /// Securely overwrite the memory.
     /// @note adapted from OpenSSL's implementation.
     void cleanse()
@@ -205,10 +175,6 @@ public:
         return m_data == _cmp.m_data && m_count == _cmp.m_count;
     }
     bool operator!=(vector_ref<_T> const& _cmp) const { return !operator==(_cmp); }
-
-#if DEV_LDB
-    operator ldb::Slice() const { return ldb::Slice((char const*) m_data, m_count * sizeof(_T)); }
-#endif
 
     void reset()
     {
