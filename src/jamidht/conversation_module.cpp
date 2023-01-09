@@ -884,7 +884,8 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         std::set_difference(members.begin(), members.end(), connectedMembers.begin(), connectedMembers.end(),
             std::inserter(nonConnectedMembers, nonConnectedMembers.begin()));
         std::shuffle(nonConnectedMembers.begin(), nonConnectedMembers.end(), acc->rand);
-        nonConnectedMembers.resize(2);
+        if (nonConnectedMembers.size() > 2)
+            nonConnectedMembers.resize(2);
         for (const auto& member : nonConnectedMembers) {
             refreshMessage[member] = sendMsgCb_(member,
                                                 {},

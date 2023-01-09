@@ -3039,11 +3039,11 @@ JamiAccount::sendTextMessage(const std::string& to,
     try {
         toUri = parseJamiUri(to);
     } catch (...) {
-        JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
+        JAMI_ERROR("Failed to send a text message due to an invalid URI {}", to);
         return 0;
     }
     if (payloads.size() != 1) {
-        JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
+        JAMI_ERROR("Multi-part im is not supported yet by JamiAccount");
         return 0;
     }
     return SIPAccountBase::sendTextMessage(toUri, payloads, refreshToken);
@@ -3531,7 +3531,7 @@ JamiAccount::sendInstantMessage(const std::string& convId,
                                 const std::map<std::string, std::string>& msg)
 {
     auto members = convModule()->getConversationMembers(convId);
-    if (members.empty()) {
+    if (convId.empty() && members.empty()) {
         // TODO remove, it's for old API for contacts
         sendTextMessage(convId, msg);
         return;
