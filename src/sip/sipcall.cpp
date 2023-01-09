@@ -37,6 +37,7 @@
 #include "audio/audio_rtp_session.h"
 #include "system_codec_container.h"
 #include "im/instant_messaging.h"
+#include "jami/account_const.h"
 #include "jami/call_const.h"
 #include "jami/media_const.h"
 #include "client/ring_signal.h"
@@ -3005,8 +3006,14 @@ SIPCall::getDetails() const
                 if (auto codec = rtpSession->getCodec()) {
                     details.emplace(libjami::Call::Details::AUDIO_CODEC,
                                     codec->systemCodecInfo.name);
-                } else
+                    const auto* codecInfo = static_cast<const SystemAudioCodecInfo*>(&codec->systemCodecInfo);
+                    details.emplace(libjami::Call::Details::AUDIO_SAMPLE_RATE,
+                                    codecInfo->getCodecSpecifications()
+                                    [libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE]);
+                } else {
                     details.emplace(libjami::Call::Details::AUDIO_CODEC, "");
+                    details.emplace(libjami::Call::Details::AUDIO_SAMPLE_RATE, "");
+                }
             }
         }
     }
