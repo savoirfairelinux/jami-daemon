@@ -1,6 +1,6 @@
 # speex
 
-SPEEX_HASH := 9172c7ef85fbf058027528d48ededbc7ca847908
+SPEEX_HASH := Speex-1.2.1
 SPEEX_GITURL := https://gitlab.xiph.org/xiph/speex/-/archive/$(SPEEX_HASH)/speex-$(SPEEX_HASH).tar.gz
 
 PKGS += speex
@@ -25,9 +25,6 @@ SPEEX_CONF += --enable-fixed-point
 ifeq ($(ARCH),arm)
 SPEEX_CONF += --enable-arm5e-asm
 endif
-endif
-ifeq ($(ARCH),aarch64)
-SPEEX_CONF += --disable-neon
 endif
 
 .speex: speex .sum-speex
