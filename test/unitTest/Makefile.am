@@ -194,12 +194,6 @@ check_PROGRAMS += ut_auto_answer
 ut_auto_answer_SOURCES = media_negotiation/auto_answer.cpp common.cpp
 
 #
-# compability
-#
-check_PROGRAMS += ut_compability
-ut_compability_SOURCES = conversation/compability.cpp
-
-#
 # conversationRequest
 #
 check_PROGRAMS += ut_conversationRequest
