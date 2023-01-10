@@ -62,12 +62,6 @@ check_PROGRAMS += ut_fileutils
 ut_fileutils_SOURCES = fileutils/testFileutils.cpp common.cpp
 
 #
-# smartools
-#
-check_PROGRAMS += ut_smartools
-ut_smartools_SOURCES = smartools/testSmartools.cpp common.cpp
-
-#
 # utf8_utils
 #
 check_PROGRAMS += ut_utf8_utils
