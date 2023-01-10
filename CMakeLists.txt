@@ -10,6 +10,7 @@ option(JAMI_NATPMP "Build with NAT-PMP" ON)
 option(JAMI_PUPNP "Build with PUPNP" ON)
 option(JAMI_PLUGIN "Build with plugin support" ON)
 option(JAMI_JNI "Build the JNI binding" OFF)
+option(JAMI_DBUS "Build the DBUS binding" OFF)
 option(JAMI_VIDEO "Build with video support" ON)
 option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
 option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
@@ -119,6 +120,10 @@ if(NOT MSVC)
             set(JAMI_PUPNP Off)
         endif()
     endif()
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        pkg_search_module (udev REQUIRED IMPORTED_TARGET libudev)
+        pkg_search_module (pulseaudio REQUIRED IMPORTED_TARGET libpulse)
+    endif()
 endif()
 
 ################################################################################
@@ -200,8 +205,18 @@ if (ANDROID)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/opensl/audio_recorder.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/opensl/opensllayer.cpp
     )
-endif()
-if(MSVC)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if (JAMI_VIDEO)
+        list (APPEND ALL_FILES ${ALL_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/v4l2/video_device_impl.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/v4l2/video_device_monitor_impl.cpp
+        )
+    endif()
+    list (APPEND ALL_FILES ${ALL_FILES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/audiostream.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/pulselayer.cpp
+    )
+elseif(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
          "${Source_Files__media__audio__portaudio}"
          "${Source_Files__media__video__uwpvideo}"
@@ -498,6 +513,11 @@ else()
     )
     if (ANDROID)
         target_link_libraries(${PROJECT_NAME} PRIVATE OpenSLES log)
+    elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        target_link_libraries(${PROJECT_NAME} PRIVATE
+            PkgConfig::udev
+            PkgConfig::pulseaudio
+        )
     endif()
     if (JAMI_NATPMP)
         target_link_libraries(${PROJECT_NAME} PRIVATE natpmp)
@@ -512,10 +532,71 @@ else()
         target_link_directories(${PROJECT_NAME}-jni PRIVATE ${CONTRIB_PATH}/lib)
         target_link_libraries(${PROJECT_NAME}-jni ${PROJECT_NAME} android log)
         set_target_properties(${PROJECT_NAME}-jni PROPERTIES CXX_STANDARD 17)
+        target_compile_options(${PROJECT_NAME}-jni PRIVATE
+            -fvisibility=hidden
+            -Wall -Wextra
+            -Wnon-virtual-dtor
+            -Wno-deprecated
+            -Wno-deprecated-declarations
+            -Wno-unknown-pragmas
+            -Wno-unused-function
+            -Wno-unused-parameter
+        )
         target_link_options(${PROJECT_NAME}-jni PRIVATE
             -Wl,-Bsymbolic
             -Wall -Wextra
         )
+    endif()
+
+    if (JAMI_DBUS)
+        find_program(DBusXml2Cpp dbusxx-xml2cpp REQUIRED)
+        pkg_search_module (DBusCpp REQUIRED IMPORTED_TARGET dbus-c++-1)
+        configure_file(
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/net.jami.daemon.service.in
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.service
+            @ONLY)
+        set(DBUS_XML_FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.CallManager.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.ConfigurationManager.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.Instance.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.PresenceManager.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.VideoManager.xml
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.PluginManagerInterface.xml
+        )
+        set(DBUS_ADAPTOR_FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuscallmanager.adaptor.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusconfigurationmanager.adaptor.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusinstance.adaptor.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuspresencemanager.adaptor.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusvideomanager.adaptor.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuspluginmanagerinterface.adaptor.h
+        )
+        set(DBUS_FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuscallmanager.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusclient.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusconfigurationmanager.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusinstance.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuspresencemanager.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/main.cpp
+        )
+
+        # XML adaptors
+        foreach(DBUS_XML_FILE ${DBUS_XML_FILES})
+            list(FIND DBUS_XML_FILES ${DBUS_XML_FILE} DBUS_XML_FILE_INDEX)
+            list(GET DBUS_ADAPTOR_FILES ${DBUS_XML_FILE_INDEX} DBUS_ADAPTOR_FILE)
+            add_custom_command(
+                OUTPUT ${DBUS_ADAPTOR_FILE}
+                COMMAND ${DBusXml2Cpp} ${DBUS_XML_FILE} --adaptor=${DBUS_ADAPTOR_FILE}
+                DEPENDS ${DBUS_XML_FILE}
+            )
+        endforeach()
+
+        # Jamid
+        add_executable(jamid
+            ${DBUS_FILES}
+            ${DBUS_ADAPTOR_FILES}
+        )
+        target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
     endif()
 
 endif()
