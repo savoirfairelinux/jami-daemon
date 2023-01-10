@@ -845,7 +845,6 @@ Conversation::removeGitSocket(const DeviceId& deviceId)
 void
 Conversation::removeGitSockets()
 {
-    JAMI_ERROR("@@@@@@@@ REMOVE GIT SOCKETS");
     pimpl_->gitSocketList_.clear();
     pimpl_->swarmManager_->shutdown();
     pimpl_->checkedMembers_.clear();

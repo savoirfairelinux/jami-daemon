@@ -396,10 +396,6 @@ ConversationTest::testSendMessageWithBadDisplayName()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::map<std::string, std::string> details;
-    details[ConfProperties::DISPLAYNAME] = "<o>";
-    libjami::setAccountDetails(aliceId, details);
-
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
@@ -433,7 +429,23 @@ ConversationTest::testSendMessageWithBadDisplayName()
                 cv.notify_one();
             }
         }));
+    bool aliceRegistered = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    aliceRegistered = true;
+                    cv.notify_one();
+                }
+            }));
     libjami::registerSignalHandlers(confHandlers);
+
+    std::map<std::string, std::string> details;
+    details[ConfProperties::DISPLAYNAME] = "<o>";
+    libjami::setAccountDetails(aliceId, details);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceRegistered; }));
 
     auto convId = libjami::startConversation(aliceId);
 

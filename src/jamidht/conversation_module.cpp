@@ -138,6 +138,15 @@ public:
         std::lock_guard<std::mutex> lk(conversationsMtx_);
         return conversations_.find(convId) != conversations_.end();
     }
+    /**
+     * @return if a convId is an accepted conversation
+     */
+    bool isAcceptedConversation(const std::string& convId) const
+    {
+        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        auto itConv = convInfos_.find(convId);
+        return itConv != convInfos_.end() && !itConv->second.removed;
+    }
 
     void addConvInfo(const ConvInfo& info)
     {
@@ -904,7 +913,6 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     for (const auto& device : devices) {
         auto deviceIdStr = device.toString();
         auto memberUri = conversation.uriFromDevice(deviceIdStr);
-        JAMI_ERROR("@@@ SEND TO {} {} (our: {})", memberUri, deviceIdStr, username_);
         if (memberUri.empty() || deviceIdStr == deviceId)
             continue;
         refreshMessage[deviceIdStr] = sendMsgCb_(memberUri,
@@ -1323,15 +1331,11 @@ ConversationModule::onTrustRequest(const std::string& uri,
                   "clone the old one");
         return;
     }
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-        auto itConv = pimpl_->conversations_.find(conversationId);
-        if (itConv != pimpl_->conversations_.end()) {
-            JAMI_INFO("[Account %s] Received a request for a conversation "
-                      "already handled. Ignore",
-                      pimpl_->accountId_.c_str());
-            return;
-        }
+    if (pimpl_->isAcceptedConversation(conversationId)) {
+        JAMI_INFO("[Account %s] Received a request for a conversation "
+                    "already handled. Ignore",
+                    pimpl_->accountId_.c_str());
+        return;
     }
     if (pimpl_->getRequest(conversationId) != std::nullopt) {
         JAMI_INFO("[Account %s] Received a request for a conversation "
@@ -1368,6 +1372,9 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     auto convId = req.conversationId;
     req.from = from;
 
+    // Already accepted request, do nothing
+    if (pimpl_->isAcceptedConversation(convId))
+        return;
     if (pimpl_->getRequest(convId) != std::nullopt) {
         JAMI_INFO("[Account %s] Received a request for a conversation already existing. "
                   "Ignore",
@@ -1818,7 +1825,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     }
 
     for (const auto& [convId, req] : msg.cr) {
-        if (pimpl_->isConversation(convId)) {
+        if (pimpl_->isAcceptedConversation(convId)) {
             // Already accepted request
             pimpl_->rmConversationRequest(convId);
             continue;
