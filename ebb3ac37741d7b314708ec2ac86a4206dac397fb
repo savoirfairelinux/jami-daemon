@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8499077_fdf1e83a",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-10T14:16:43Z",
+      "side": 1,
+      "message": "To debug\n\nUnwanted packet received: 00000032have 0b21a8fb806c23a04b3e4254e5b24c483b1f0f3f\n0032have a93d5979a9f7223b80850233381c762272967605\n0032have 9ce17e0d642252889d47b711aeff3ebddc2fb5a5\n0032have 6de18771ccfccb2a2db27589eb66326a8c80c513\n0032have c752a2a0cc585eb825cc47a602592ababcda4f41\n0032have 57f4e81e961ac049e7262424c14588a9d5e853ea\n0032have 3ff738928673861dee5b627e268abca8a7a68741\n0032have cc7f3ae024490005599a9bd71c4b8ea18a3845bc\n0032have 4d5f5624b73ab7a82da5a747b7844c1ea5743b1f\n0032have 95b34d149f0dcfecc0066cdd77f89019d2baa821\n0032have 9622bfdd78c5f9a0a335bf8d0348b153d61d9305\n0032have c90a71b8b21b1b43c5aa87fc4da22ba338eb7fce\n0032have c46a9e4e1cc550cc3053bc5b7dbe3f079e894511\n0032have 7203d3a0d209d8dcbe62171bb9410a5953148de8\n0032have 166008378d205231e3e9e542f5e5050757fe287e\n0032have f481cbfaff8cdd5f2c02cc51ad3d2c807712b38f\n0032have 1d21995ec43e0e1e02312f0336fffbb80e11f4c4\n0032have b39e3cfdd29b8d0e812ea2997529b1fc8844f6e0\n0032have a4ef538fcc3f1f8e70e201d1b558bc4dcb3c9913\n0032have 6faa2d6c6aad634a93f97aa0b3f01e8198bdb901\n0000\n\nWhich is a flush + HAVE list",
+      "range": {
+        "startLine": 199,
+        "startChar": 25,
+        "endLine": 199,
+        "endChar": 40
+      },
+      "revId": "ebb3ac37741d7b314708ec2ac86a4206dac397fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
