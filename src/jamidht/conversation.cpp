@@ -1768,9 +1768,9 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
         },
         [w = weak(), devices, members = std::move(members), uri](bool ok) {
             auto sthis = w.lock();
-            if (!ok || !sthis)
+            if (!sthis)
                 return;
-            if (devices->size() != 0) {
+            if (ok && devices->size() != 0) {
 #ifdef LIBJAMI_TESTABLE
                 if (sthis->pimpl_->bootstrapCbTest_)
                     sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FALLBACK);

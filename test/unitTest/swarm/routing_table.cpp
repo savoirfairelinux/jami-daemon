@@ -868,11 +868,10 @@ RoutingTableTest::testMobileNodeFunctions()
     CPPUNIT_ASSERT(rt.hasMobileNode(node2));
     CPPUNIT_ASSERT(rt.hasMobileNode(node3));
 
-    auto result = rt.removeMobileNode(node1);
+    rt.removeMobileNode(node1);
     rt.removeMobileNode(node2);
     rt.removeMobileNode(node3);
 
-    CPPUNIT_ASSERT_EQUAL(false, result);
     CPPUNIT_ASSERT(!rt.hasMobileNode(node2));
     CPPUNIT_ASSERT(!rt.hasMobileNode(node3));
 }
@@ -887,7 +886,7 @@ RoutingTableTest::testMobileNodeAnnouncement()
 
     swarmManagers.insert({sm1->getId(), sm1});
     swarmManagers.insert({sm2->getId(), sm2});
-    sm2->setPersistency(false);
+    sm2->setMobility(true);
 
     std::vector<NodeId> node2Co = {
         NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")};

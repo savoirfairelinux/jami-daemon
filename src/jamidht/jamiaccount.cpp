@@ -1939,6 +1939,13 @@ JamiAccount::doRegister_()
                 },
                 [this] {
                     deviceAnnounced_ = true;
+
+
+                    // Bootstrap at the end to avoid to be long to load.
+                    dht::ThreadPool::io().run([w = weak()] {
+                        if (auto shared = w.lock())
+                            shared->convModule()->bootstrap();
+                    });
                     emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                         accountID_, getVolatileAccountDetails());
                 });
@@ -2114,19 +2121,11 @@ JamiAccount::doRegister_()
             return true;
         });
 
-        {
-            std::lock_guard<std::mutex> lock(buddyInfoMtx);
-            for (auto& buddy : trackedBuddies_) {
-                buddy.second.devices_cnt = 0;
-                trackPresence(buddy.first, buddy.second);
-            }
+        std::lock_guard<std::mutex> lock(buddyInfoMtx);
+        for (auto& buddy : trackedBuddies_) {
+            buddy.second.devices_cnt = 0;
+            trackPresence(buddy.first, buddy.second);
         }
-
-        // Bootstrap at the end to avoid to be long to load.
-        dht::ThreadPool::io().run([w = weak()] {
-            if (auto shared = w.lock())
-                shared->convModule()->bootstrap();
-        });
     } catch (const std::exception& e) {
         JAMI_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
