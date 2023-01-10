@@ -215,7 +215,6 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
         auto shared = w.lock();
         if (shared && !shared->isShutdown_) {
             shared->removeNode(deviceId);
-            JAMI_ERROR("MB FROM SD RCV {} FROM {}", shared->id_.toString(), deviceId.toString());
         }
     });
 }
@@ -258,9 +257,6 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                               return true;
                           if (socket) {
                               shared->addChannel(socket);
-                              JAMI_ERROR("{}  ADDED {}",
-                                         shared->getId().toString(),
-                                         socket->deviceId().toString());
                               return true;
                           }
                           std::unique_lock<std::mutex> lk(shared->mutex);
@@ -345,7 +341,6 @@ SwarmManager::shutdown()
 {
     isShutdown_ = true;
     std::lock_guard<std::mutex> lock(mutex);
-    JAMI_ERROR("{} SHUTTING DOWN NODES", id_.toString());
     routing_table.shutdownAllNodes();
 }
 } // namespace jami

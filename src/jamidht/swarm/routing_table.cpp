@@ -65,13 +65,10 @@ Bucket::removeNode(const NodeId& nodeId)
     if (node == nodes.end())
         return false;
     nodes.erase(nodeId);
-    if (node->second.isMobile_) {
-        JAMI_ERROR("ADDING {} IN MOBILE NODES {}", nodeId.toString(), addMobileNode(nodeId));
-
-    } else {
-        JAMI_ERROR("ADDING {} IN KNOWN NODES {}", nodeId.toString(), addKnownNode(nodeId));
-    }
-
+    if (node->second.isMobile_)
+        addMobileNode(nodeId);
+    else
+        addKnownNode(nodeId);
     return true;
 }
 
@@ -87,12 +84,7 @@ Bucket::getNodeIds() const
 bool
 Bucket::hasNode(const NodeId& nodeId) const
 {
-    auto found = nodes.find(nodeId);
-    if (found != nodes.end()) {
-        return true;
-    }
-
-    return false;
+    return nodes.find(nodeId) != nodes.end();
 }
 
 bool

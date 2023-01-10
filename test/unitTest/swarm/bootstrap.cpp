@@ -74,13 +74,13 @@ private:
 
     void testBootstrapOk();
     void testBootstrapFailed();
-    void testBootstrapFallback();
+    void testBootstrapNeverNewDevice();
     void testBootstrapCompat();
 
     CPPUNIT_TEST_SUITE(BootstrapTest);
     CPPUNIT_TEST(testBootstrapOk);
     CPPUNIT_TEST(testBootstrapFailed);
-    CPPUNIT_TEST(testBootstrapFallback);
+    CPPUNIT_TEST(testBootstrapNeverNewDevice);
     CPPUNIT_TEST(testBootstrapCompat);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -266,7 +266,7 @@ BootstrapTest::testBootstrapFailed()
 }
 
 void
-BootstrapTest::testBootstrapFallback()
+BootstrapTest::testBootstrapNeverNewDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceData.accountId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
@@ -349,10 +349,8 @@ BootstrapTest::testBootstrapFallback()
 
     // Alice bootstrap should go to fallback (because bob2 never wrote into the conversation) & Connected
     Manager::instance().sendRegister(aliceData.accountId, true);
+    // Wait for announcement, ICE fallback + delay
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return aliceData.bootstrap == Conversation::BootstrapStatus::FALLBACK;
-    }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS;
     }));
 }
