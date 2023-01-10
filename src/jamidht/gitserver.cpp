@@ -34,7 +34,6 @@ using namespace std::string_view_literals;
 constexpr auto FLUSH_PKT = "0000"sv;
 constexpr auto NAK_PKT = "0008NAK\n"sv;
 constexpr auto DONE_PKT = "0009done\n"sv;
-constexpr auto DONE_CMD = "done\n"sv;
 constexpr auto WANT_CMD = "want"sv;
 constexpr auto HAVE_CMD = "have"sv;
 constexpr auto SERVER_CAPABILITIES
@@ -81,7 +80,7 @@ public:
     void ACKCommon();
     bool ACKFirst();
     void sendPackData();
-    std::map<std::string, std::string> getParameters(std::string_view pkt_line);
+    std::map<std::string, std::string> getParameters(const std::string& pkt_line);
 
     std::string repositoryId_ {};
     std::string repository_ {};
@@ -98,63 +97,34 @@ public:
 bool
 GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
 {
-    std::string pkt = std::move(cachedPkt_);
+    std::string pkt = cachedPkt_;
     if (buf)
-        pkt += std::string_view((const char*)buf, len);
+        pkt += std::string({buf, buf + len});
+    cachedPkt_.clear();
 
     // Parse pkt len
     // Reference: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L51
     // The first four bytes define the length of the packet and 0000 is a FLUSH pkt
 
-    unsigned int pkt_len = 0;
-    auto [p, ec] = std::from_chars(pkt.data(), pkt.data() + 4, pkt_len, 16);
-    if (ec != std::errc()) {
-        JAMI_ERROR("Can't parse packet size");
-    }
+    unsigned int pkt_len;
+    std::from_chars(pkt.data(), pkt.data() + 4, pkt_len, 16);
     if (pkt_len != pkt.size()) {
         // Store next packet part
         if (pkt_len == 0) {
             // FLUSH_PKT
             pkt_len = 4;
         }
-        cachedPkt_ = pkt.substr(pkt_len);
+        cachedPkt_ = pkt.substr(pkt_len, pkt.size() - pkt_len);
     }
+    // NOTE: do not remove the size to detect the 0009done packet
+    pkt = pkt.substr(0, pkt_len);
 
-    auto pack = std::string_view(pkt).substr(4, pkt_len);
-    if (pack == DONE_CMD) {
-        // Reference:
-        // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390 Do
-        // not do multi-ack, just send ACK + pack file
-        // In case of no common base, send NAK
-        JAMI_INFO("Peer negotiation is done. Answering to want order");
-        bool sendData;
-        if (common_.empty())
-            sendData = NAK();
-        else
-            sendData = ACKFirst();
-        if (sendData)
-            sendPackData();
-        return !cachedPkt_.empty();
-    } else if (pack.empty()) {
-        if (!haveRefs_.empty()) {
-            // Reference:
-            // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390
-            // Do not do multi-ack, just send ACK + pack file In case of no common base ACK
-            ACKCommon();
-            NAK();
-        }
-        return !cachedPkt_.empty();
-    }
-
-    auto lim = pack.find(' ');
-    auto cmd = pack.substr(0, lim);
-    auto dat = (lim < pack.size()) ? pack.substr(lim+1) : std::string_view{};
-    if (cmd == UPLOAD_PACK_CMD) {
+    if (pkt.find(UPLOAD_PACK_CMD) == 4) {
         // Cf: https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
         // References discovery
         JAMI_INFO("Upload pack command detected.");
         auto version = 1;
-        auto parameters = getParameters(dat);
+        auto parameters = getParameters(pkt);
         auto versionIt = parameters.find("version");
         bool sendVersion = false;
         if (versionIt != parameters.end()) {
@@ -162,7 +132,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
                 version = std::stoi(versionIt->second);
                 sendVersion = true;
             } catch (...) {
-                JAMI_WARNING("Invalid version detected: {}", versionIt->second);
+                JAMI_WARN("Invalid version detected: %s", versionIt->second.c_str());
             }
         }
         if (version == 1) {
@@ -170,14 +140,18 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
         } else {
             JAMI_ERR("That protocol version is not yet supported (version: %u)", version);
         }
-    } else if (cmd == WANT_CMD) {
+    } else if (pkt.find(WANT_CMD) == 4) {
         // Reference:
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L229
         // TODO can have more want
-        wantedReference_ = dat.substr(0, 40);
+        auto content = pkt.substr(5, pkt_len - 5);
+        auto commit = content.substr(4, 40);
+        wantedReference_ = commit;
         JAMI_INFO("Peer want ref: %s", wantedReference_.c_str());
-    } else if (cmd == HAVE_CMD) {
-        const auto& commit = haveRefs_.emplace_back(dat.substr(0, 40));
+    } else if (pkt.find(HAVE_CMD) == 4) {
+        auto content = pkt.substr(5, pkt_len - 5);
+        auto commit = content.substr(4, 40);
+        haveRefs_.emplace_back(commit);
         if (common_.empty()) {
             // Detect first common commit
             // Reference:
@@ -195,8 +169,29 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
                 common_ = commit;
             }
         }
+    } else if (pkt == DONE_PKT) {
+        // Reference:
+        // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390 Do
+        // not do multi-ack, just send ACK + pack file
+        // In case of no common base, send NAK
+        JAMI_INFO("Peer negotiation is done. Answering to want order");
+        bool sendData;
+        if (common_.empty())
+            sendData = NAK();
+        else
+            sendData = ACKFirst();
+        if (sendData)
+            sendPackData();
+    } else if (pkt == FLUSH_PKT) {
+        if (!haveRefs_.empty()) {
+            // Reference:
+            // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390
+            // Do not do multi-ack, just send ACK + pack file In case of no common base ACK
+            ACKCommon();
+            NAK();
+        }
     } else {
-        JAMI_WARNING("Unwanted packet received: {}", pkt);
+        JAMI_WARN("Unwanted packet received: %s", pkt.c_str());
     }
     return !cachedPkt_.empty();
 }
@@ -437,17 +432,18 @@ GitServer::Impl::sendPackData()
 }
 
 std::map<std::string, std::string>
-GitServer::Impl::getParameters(std::string_view pkt_line)
+GitServer::Impl::getParameters(const std::string& pkt_line)
 {
     std::map<std::string, std::string> parameters;
     std::string key, value;
     auto isKey = true;
     auto nullChar = 0;
-    for (auto letter: pkt_line) {
+    for (std::size_t i = 0; i < pkt_line.size(); ++i) {
+        auto letter = pkt_line[i];
         if (letter == '\0') {
             // parameters such as host or version are after the first \0
             if (nullChar != 0 && !key.empty()) {
-                parameters[std::move(key)] = std::move(value);
+                parameters[key] = value;
             }
             nullChar += 1;
             isKey = true;
