@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d7c9c7a9_4d52243d",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 8
+      },
+      "lineNbr": 369,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-11T19:03:05Z",
+      "side": 1,
+      "message": "remove the patch if un-needed",
+      "range": {
+        "startLine": 369,
+        "startChar": 16,
+        "endLine": 369,
+        "endChar": 52
+      },
+      "revId": "55e233ff2d9356e02c2bb64a05578331b89a467e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
