@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "54f2cffb_75f4b88c",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 10
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-11T19:02:26Z",
+      "side": 1,
+      "message": "ok to keep this, but don\u0027t know if you wanted to push this log",
+      "range": {
+        "startLine": 449,
+        "startChar": 11,
+        "endLine": 449,
+        "endChar": 44
+      },
+      "revId": "7d5f2f1ee8976c293fe1c70a589f48df151e1eb5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
