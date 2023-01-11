@@ -261,6 +261,31 @@ VideoInput::configureFilePlayback(const std::string&,
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
 }
 
+#ifdef WIN32
+BOOL CALLBACK
+EnumWindowsProcMy(HWND hwnd, LPARAM lParam)
+{
+    std::pair<DWORD, std::string>* dataPair = reinterpret_cast<std::pair<DWORD, std::string>*>(lParam);
+    DWORD lpdwProcessId;
+    if (auto parent = GetWindow(hwnd, GW_OWNER))
+        GetWindowThreadProcessId(parent, &lpdwProcessId);
+    else
+        GetWindowThreadProcessId(hwnd, &lpdwProcessId);
+    int len = GetWindowTextLength(hwnd) + 1;
+    std::vector<wchar_t> buf(len);
+    GetWindowText(hwnd, &buf[0], len);
+    std::wstring wide = &buf[0];
+
+    if (lpdwProcessId == dataPair->first) {
+        if (!IsWindowVisible(hwnd))
+            return TRUE;
+        dataPair->second = to_string(wide);
+        return FALSE;
+    }
+    return TRUE;
+}
+#endif
+
 void
 VideoInput::createDecoder()
 {
@@ -286,6 +311,23 @@ VideoInput::createDecoder()
 
     bool ready = false, restartSink = false;
     if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab") && !decOpts_.is_area) {
+#ifdef WIN32
+        // if window is not find, it might have changed its name
+        // in that case we must search for the parent process window
+        auto hwnd = FindWindow(NULL, to_wstring(decOpts_.name.substr(6)).c_str());
+        if (!hwnd) {
+            std::pair<DWORD, std::string> idName(wProcessId, {});
+            LPARAM lParam = reinterpret_cast<LPARAM>(&idName);
+            EnumWindows(EnumWindowsProcMy, lParam);
+            if (!idName.second.empty()) {
+                auto newTitle = "title=" + idName.second;
+                if (decOpts_.name != newTitle || decOpts_.input != newTitle) {
+                    decOpts_.name = newTitle;
+                    decOpts_.input = newTitle;
+                }
+            }
+        }
+#endif
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
@@ -484,6 +526,12 @@ VideoInput::initWindowsGrab(const std::string& display)
     if (winIdPos != std::string::npos) {
         p.input = display.substr(winIdPos + windowIdStr.size()); // "TITLE";
         p.name  = display.substr(winIdPos + windowIdStr.size()); // "TITLE";
+
+        auto hwnd = FindWindow(NULL, to_wstring(p.name.substr(6)).c_str());
+        if (auto parent = GetWindow(hwnd, GW_OWNER))
+            GetWindowThreadProcessId(parent, &wProcessId);
+        else
+            GetWindowThreadProcessId(hwnd, &wProcessId);
         p.is_area = 0;
     } else {
         p.input = display.substr(1);
