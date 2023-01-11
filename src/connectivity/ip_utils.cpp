@@ -149,7 +149,7 @@ ip_utils::getHostName(char* out, size_t out_len)
         i += sizeof *pifReq;
         // See if this is the sort of interface we want to deal with.
         memset(ifReq.ifr_name, 0, sizeof(ifReq.ifr_name));
-        strncpy(ifReq.ifr_name, pifReq->ifr_name, sizeof(ifReq.ifr_name) - 1);
+        strncpy(ifReq.ifr_name, pifReq->ifr_name, sizeof(ifReq.ifr_name));
         ioctl(localSock, SIOCGIFFLAGS, &ifReq);
         // Skip loopback, point-to-point and down interfaces.
         // except don't skip down interfaces if we're trying to get

@@ -179,13 +179,6 @@ public:
 
     inline operator const sockaddr*() const { return reinterpret_cast<const sockaddr*>(&addr); }
 
-    inline operator sockaddr_storage()
-    {
-        sockaddr_storage ss;
-        memcpy(&ss, &addr, getLength());
-        return ss;
-    }
-
     inline const pj_sockaddr* pjPtr() const { return &addr; }
 
     inline pj_sockaddr* pjPtr() { return &addr; }

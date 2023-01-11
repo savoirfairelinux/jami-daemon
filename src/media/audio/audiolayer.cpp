@@ -47,6 +47,7 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
     , isPlaybackMuted_(pref.getPlaybackMuted())
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
+    , pref_(pref)
     , mainRingBuffer_(
           Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
     , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
@@ -54,7 +55,6 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
     , resampler_(new Resampler)
     , lastNotificationTime_()
-    , pref_(pref)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 

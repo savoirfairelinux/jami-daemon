@@ -243,6 +243,8 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         mediaType = AVMEDIA_TYPE_VIDEO;
     else if (systemCodecInfo.mediaType == MEDIA_AUDIO)
         mediaType = AVMEDIA_TYPE_AUDIO;
+    else
+        throw MediaEncoderException("Unsuported media type");
 
     AVStream* stream {nullptr};
 

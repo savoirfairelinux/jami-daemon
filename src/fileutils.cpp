@@ -79,6 +79,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <limits>
+#include <array>
 
 #include <cstdlib>
 #include <cstring>
@@ -931,32 +932,25 @@ eraseFile_posix(const std::string& path, bool dosync)
         return false;
     }
 
-    uintmax_t size_blocks = st.st_size / ERASE_BLOCK;
-    if (st.st_size % ERASE_BLOCK)
-        size_blocks++;
+    lseek(fd, 0, SEEK_SET);
 
-    char* buffer;
-    try {
-        buffer = new char[ERASE_BLOCK];
-    } catch (std::bad_alloc& ba) {
-        JAMI_WARN("Can not allocate buffer for erasing %s.", path.c_str());
-        close(fd);
-        return false;
+    std::array<char, ERASE_BLOCK> buffer;
+    buffer.fill(0);
+    decltype(st.st_size) written(0);
+    while (written < st.st_size) {
+        auto ret = write(fd, buffer.data(), buffer.size());
+        if (ret < 0) {
+            JAMI_WARNING("Error while overriding file with zeros.");
+            break;
+        } else
+            written += ret;
     }
-    memset(buffer, 0x00, ERASE_BLOCK);
-
-    for (uintmax_t i = 0; i < size_blocks; i++) {
-        lseek(fd, i * ERASE_BLOCK, SEEK_SET);
-        write(fd, buffer, ERASE_BLOCK);
-    }
-
-    delete[] buffer;
 
     if (dosync)
         fsync(fd);
 
     close(fd);
-    return true;
+    return written >= st.st_size;
 }
 #endif
 
