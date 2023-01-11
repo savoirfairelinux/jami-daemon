@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "969dfb3d_4233691c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-11T19:00:36Z",
+      "side": 1,
+      "message": "[ \u001b[36mERROR   \u001b[0m \u001b[35m1673463229.535049\u001b[0m \u001b[1;30m   resolve\u001b[0m:\u001b[1;30m 480\u001b[0m ] \u001b[31m Make daemon failed!\u001b[0m\n[WinError 2] The system cannot find the file specified: \u0027C:\\\\Users\\\\jenkins-jami\\\\jenkins\\\\workspace\\\\daemon-msvc\\\\daemon\\\\build\\\\ring-daemon.vcxproj\u0027 -\u003e \u0027C:\\\\Users\\\\jenkins-jami\\\\jenkins\\\\workspace\\\\daemon-msvc\\\\daemon\\\\build\\\\ring-daemon.vcxproj.bak\u0027\n\nBreaks the daemon (seems to build on master)",
+      "revId": "896dd0fc22ff5ca3ed3b99d11d8f9d7efd1e35a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
