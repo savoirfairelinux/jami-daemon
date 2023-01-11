@@ -76,16 +76,6 @@ static constexpr unsigned MIN_REGISTRATION_TIME = 60;                  // second
 using yaml_utils::parseValueOptional;
 using yaml_utils::parseVectorMap;
 
-static void
-addRangeToDetails(std::map<std::string, std::string>& a,
-                  const char* minKey,
-                  const char* maxKey,
-                  const std::pair<uint16_t, uint16_t>& range)
-{
-    a.emplace(minKey, std::to_string(range.first));
-    a.emplace(maxKey, std::to_string(range.second));
-}
-
 void
 SipAccountConfig::serialize(YAML::Emitter& out) const
 {
@@ -255,17 +245,6 @@ SipAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort);
     parseBool(details, Conf::CONFIG_PRESENCE_ENABLED, presenceEnabled);
     parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType);
-
-    int tmpMin = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
-    int tmpMax = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
-    updateRange(tmpMin, tmpMax, audioPortRange);
-    tmpMin = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
-    tmpMax = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
-    updateRange(tmpMin, tmpMax, videoPortRange);
 
     // srtp settings
     parseBool(details, Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback);
