@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(jami CXX)
+project(jami-daemon CXX)
 set(PACKAGE_NAME "Jami Daemon")
 
 ################################################################################
@@ -131,25 +131,30 @@ endif()
 add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
 set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    LIBJAMI_BUILD
-    HAVE_RINGNS
-    ENABLE_VIDEO
-    JAMI_DATADIR="${JAMI_DATADIR}"
-    PACKAGE_NAME="${PACKAGE_NAME}"
-    PACKAGE="jami"
-    PJ_AUTOCONF=1
-    ASIO_STANDALONE
-    MSGPACK_NO_BOOST
-)
-target_compile_options(${PROJECT_NAME} PRIVATE
-    -fvisibility=hidden
-    -Wall -Wextra
-    -Wnon-virtual-dtor
-    -Wno-deprecated
-    -Wno-deprecated-declarations
-    -Wno-unknown-pragmas
-)
+
+if (NOT MSVC)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        LIBJAMI_BUILD
+        HAVE_RINGNS
+        ENABLE_VIDEO
+        JAMI_DATADIR="${JAMI_DATADIR}"
+        PACKAGE_NAME="${PACKAGE_NAME}"
+        PACKAGE="jami"
+        PJ_AUTOCONF=1
+        ASIO_STANDALONE
+        MSGPACK_NO_BOOST
+    )
+
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        -fvisibility=hidden
+        -Wall -Wextra
+        -Wnon-virtual-dtor
+        -Wno-deprecated
+        -Wno-deprecated-declarations
+        -Wno-unknown-pragmas
+    )
+endif()
+
 if (JAMI_PLUGIN)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_PLUGIN)
 endif()
@@ -256,23 +261,30 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        target_compile_definitions(${PROJECT_NAME} PRIVATE
-           "_WIN32_WINNT=0x0A00;"
-           "STATIC_GETOPT;"
-           "LIBARCHIVE_STATIC;"
-           "OPENDHT_PROXY_CLIENT;"
-           "OPENDHT_PROXY_SERVER;"
-           "OPENDHT_PUSH_NOTIFICATIONS;"
-           "NATPMP_STATICLIB;"
-           "NDEBUG;"
-           "_USE_MATH_DEFINES;"
-           "_SCL_SECURE_NO_WARNINGS;"
-           "_CRT_SECURE_NO_WARNINGS;"
-           "NOMINMAX;"
-           "HAVE_CONFIG_H;"
-           "WIN32_LEAN_AND_MEAN;"
-           "WEBRTC_WIN;"
-           "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
-           "WEBRTC_NS_FLOAT;"
+            _WIN32_WINNT=0x0A00
+            STATIC_GETOPT
+            LIBARCHIVE_STATIC
+            OPENDHT_PROXY_CLIENT
+            OPENDHT_PROXY_SERVER
+            OPENDHT_PUSH_NOTIFICATIONS
+            NATPMP_STATICLIB
+            NDEBUG
+            _USE_MATH_DEFINES
+            _SCL_SECURE_NO_WARNINGS
+            _CRT_SECURE_NO_WARNINGS
+            NOMINMAX
+            HAVE_CONFIG_H
+            WIN32_LEAN_AND_MEAN
+            WEBRTC_WIN
+            WEBRTC_AUDIO_PROCESSING_ONLY_BUILD
+            WEBRTC_NS_FLOAT
+            LIBJAMI_BUILD
+            HAVE_RINGNS
+            ENABLE_VIDEO
+            PACKAGE_NAME="${PACKAGE_NAME}"
+            PACKAGE="jami"
+            ASIO_STANDALONE
+            MSGPACK_NO_BOOST
        )
    endif()
 
