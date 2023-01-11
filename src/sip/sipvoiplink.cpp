@@ -1665,7 +1665,7 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
 
     case PJ_SUCCESS:
         port = pj_sockaddr_in_get_port(&mapped_addr);
-        addr = IpAddr((const pj_sockaddr&) mapped_addr).toString();
+        addr = IpAddr((const sockaddr_in&) mapped_addr).toString();
         JAMI_DBG("STUN server %.*s replied '%s:%u'",
                  (int) stunServerName->slen,
                  stunServerName->ptr,
