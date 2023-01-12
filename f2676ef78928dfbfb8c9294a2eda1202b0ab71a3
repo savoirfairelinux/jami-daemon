@@ -22,6 +22,30 @@
       },
       "revId": "f2676ef78928dfbfb8c9294a2eda1202b0ab71a3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "49c3370d_a4806fe0",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1667,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-12T18:26:12Z",
+      "side": 0,
+      "message": "port is now printed with toString(true)",
+      "parentUuid": "5d6f0d1c_d7c08e1f",
+      "range": {
+        "startLine": 1667,
+        "startChar": 9,
+        "endLine": 1667,
+        "endChar": 38
+      },
+      "revId": "f2676ef78928dfbfb8c9294a2eda1202b0ab71a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
