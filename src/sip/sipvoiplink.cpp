@@ -1654,9 +1654,8 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
 
     switch (stunStatus) {
     case PJLIB_UTIL_ESTUNNOTRESPOND:
-        JAMI_ERR("No response from STUN server %.*s",
-                 (int) stunServerName->slen,
-                 stunServerName->ptr);
+        JAMI_ERROR("No response from STUN server {:s}",
+                 sip_utils::as_view(*stunServerName));
         return false;
 
     case PJLIB_UTIL_ESTUNSYMMETRIC:
@@ -1664,19 +1663,13 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
         return false;
 
     case PJ_SUCCESS:
-        port = pj_sockaddr_in_get_port(&mapped_addr);
-        addr = IpAddr((const sockaddr_in&) mapped_addr).toString();
-        JAMI_DBG("STUN server %.*s replied '%s:%u'",
-                 (int) stunServerName->slen,
-                 stunServerName->ptr,
-                 addr.c_str(),
-                 port);
+        addr = IpAddr((const sockaddr_in&) mapped_addr).toString(true);
+        JAMI_DEBUG("STUN server {:s} replied '{}'", sip_utils::as_view(*stunServerName), addr);
         return true;
 
     default: // use given address, silent any not handled error
-        JAMI_WARN("Error from STUN server %.*s, using source address",
-                  (int) stunServerName->slen,
-                  stunServerName->ptr);
+        JAMI_WARNING("Error from STUN server {:s}, using source address",
+                  sip_utils::as_view(*stunServerName));
         return false;
     }
 }
