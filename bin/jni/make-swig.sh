@@ -37,17 +37,18 @@ if [[ $SWIGVER1 -lt 4 ]]; then
     exit 3
 fi
 
-mkdir -p $PACKAGEDIR
+PACKAGE_PATH="$PACKAGEDIR/${PACKAGE//.//}"
+mkdir -p $PACKAGE_PATH
 
-echo "Generating jami_wrapper.cpp..."
+echo "Generating jami_wrapper.cpp and java bindings to $PACKAGE_PATH"
 swig -v -c++ -java \
 -package $PACKAGE \
--outdir $PACKAGEDIR \
+-outdir $PACKAGE_PATH \
 -o $JNIDIR/jami_wrapper.cpp $JNIDIR/jni_interface.i
 
 echo "Generating jamiservice_loader.c..."
 python $JNIDIR/JavaJNI2CJNI_Load.py \
--i $PACKAGEDIR/JamiServiceJNI.java \
+-i $PACKAGE_PATH/JamiServiceJNI.java \
 -o $JNIDIR/jamiservice_loader.c \
 -t $JNIDIR/jamiservice.c.template \
 -m JamiService \
