@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5a2d26aa_92b26348",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-12T20:27:47Z",
+      "side": 1,
+      "message": "on Fedora at least:\n\ncmake -DJAMI_DBUS\u003dOff -DCMAKE_BUILD_TYPE\u003dRelease -DBUILD_CONTRIB\u003dOn -DBUILD_EXTRAS\u003dOff ..\n\nFirst weird thing: It creates \"daemon/contrib/native-\" (instead of \"/native\")\n\ne.g. \"make[1]: Leaving directory \u0027/home/amarok/Projects/jami/client-qt/daemon/contrib/native-/webrtc-audio-processing\u0027\"",
+      "range": {
+        "startLine": 13,
+        "startChar": 28,
+        "endLine": 13,
+        "endChar": 32
+      },
+      "revId": "2687af240267b33d98425f350d68e60b3404fa80",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a04e2d9_b66af6c7",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-12T20:27:47Z",
+      "side": 1,
+      "message": "Second weird thing, contrib are not found in \"/home/amarok/Projects/jami/client-qt/daemon/contrib/x86_64-redhat-linux/lib/\"",
+      "range": {
+        "startLine": 14,
+        "startChar": 7,
+        "endLine": 14,
+        "endChar": 17
+      },
+      "revId": "2687af240267b33d98425f350d68e60b3404fa80",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cab6a526_9e912b27",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-12T20:27:47Z",
+      "side": 1,
+      "message": "it\u0027s because that CMAKE_LIBRARY_ARCHITECTURE can be empty\n\nhttps://bugzilla.redhat.com/show_bug.cgi?id\u003d1531678\nhttps://github.com/darlinghq/darling/issues/231\n\nOne way to fallback would be EXECUTE_PROCESS( COMMAND gcc -dumpmachine  COMMAND tr -d \u0027\\n\u0027 OUTPUT_VARIABLE TARGET )\n\nNote: not really related to this patch but on the whole cmake build",
+      "range": {
+        "startLine": 32,
+        "startChar": 17,
+        "endLine": 32,
+        "endChar": 43
+      },
+      "revId": "2687af240267b33d98425f350d68e60b3404fa80",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
