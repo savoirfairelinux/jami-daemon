@@ -68,6 +68,24 @@
       "message": "What about `src/media/srtp.c` and `src/winsyslog.c`? If these files can be compiled with a C++ compiler, it would be better to rename them.",
       "revId": "896dd0fc22ff5ca3ed3b99d11d8f9d7efd1e35a8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71ab0b83_47db6016",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 15
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-12T20:02:38Z",
+      "side": 1,
+      "message": "indeed",
+      "parentUuid": "64fa7267_7408b41f",
+      "revId": "896dd0fc22ff5ca3ed3b99d11d8f9d7efd1e35a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
