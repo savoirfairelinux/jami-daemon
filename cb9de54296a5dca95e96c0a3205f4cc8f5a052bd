@@ -18,6 +18,23 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "94fae070_d835d291",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-12T16:27:42Z",
+      "side": 1,
+      "message": "ChatGPT version:\n\n  std::string EnumWindowsProcMy(HWND hwnd, DWORD processId)\n  {\n    DWORD windowProcessId;\n\n    if (auto parent \u003d GetWindow(hwnd, GW_OWNER))\n        GetWindowThreadProcessId(parent, \u0026windowProcessId);\n    else\n        GetWindowThreadProcessId(hwnd, \u0026windowProcessId);\n\n    if (windowProcessId !\u003d processId || !IsWindowVisible(hwnd))\n        return \"\";\n\n    int len \u003d GetWindowTextLength(hwnd) + 1;\n    std::vector\u003cwchar_t\u003e buf(len);\n    GetWindowText(hwnd, \u0026buf[0], len);\n    return std::wstring_convert\u003cstd::codecvt_utf8\u003cwchar_t\u003e\u003e().to_bytes(buf.data());\n  }",
+      "revId": "cb9de54296a5dca95e96c0a3205f4cc8f5a052bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eb311337_4b6fca67",
