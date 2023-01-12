@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9a8232e8_e4b5f58a",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 8
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-12T20:38:46Z",
+      "side": 1,
+      "message": "seems jamid not generated?",
+      "range": {
+        "startLine": 552,
+        "startChar": 14,
+        "endLine": 552,
+        "endChar": 38
+      },
+      "revId": "eab2ac59c638adbe97f1ec87c673c518c974c8aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
