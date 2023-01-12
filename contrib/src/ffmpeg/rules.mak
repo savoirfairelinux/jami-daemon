@@ -332,6 +332,9 @@ endif
 ifeq ($(ARCH),arm64)
 FFMPEGCONF += --arch=aarch64
 endif
+ifeq ($(ARCH),armv7a)
+FFMPEGCONF += --arch=arm --enable-neon --enable-armv6 --enable-vfpv3
+endif
 
 # Windows
 ifdef HAVE_WIN32

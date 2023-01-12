@@ -11,6 +11,91 @@ option(JAMI_PUPNP "Build with PUPNP" ON)
 option(JAMI_PLUGIN "Build with plugin support" ON)
 option(JAMI_JNI "Build the JNI binding" OFF)
 option(JAMI_VIDEO "Build with video support" ON)
+option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
+option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
+
+################################################################################
+# Contrib
+################################################################################
+
+# Android target mapping for contrib
+if (ANDROID_ABI STREQUAL "x86")
+    set(TARGET i686-linux-android)
+elseif (ANDROID_ABI STREQUAL "x86_64")
+    set(TARGET x86_64-linux-android)
+elseif (ANDROID_ABI STREQUAL "arm64-v8a")
+    set(TARGET aarch64-linux-android)
+elseif (ANDROID_ABI STREQUAL "armeabi-v7a")
+    set(TARGET armv7a-linux-androideabi)
+else()
+    set(TARGET ${CMAKE_LIBRARY_ARCHITECTURE})
+    if (NOT TARGET)
+        execute_process(COMMAND gcc -dumpmachine  COMMAND tr -d '\n' OUTPUT_VARIABLE TARGET)
+    endif()
+endif()
+set(CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
+
+if (BUILD_EXTRA_TOOLS)
+    set(ENV{PATH} "${CMAKE_CURRENT_SOURCE_DIR}/extras/tools/build/bin:$ENV{PATH}")
+    execute_process(
+        COMMAND ./bootstrap
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
+    execute_process(
+        COMMAND make
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
+    execute_process(
+        COMMAND make .pkg-config
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
+    execute_process(
+        COMMAND make .gas
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
+endif()
+if (JAMI_JNI)
+    # Generate swig binding
+    add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp
+        COMMAND env PACKAGEDIR=${JAMI_JNI_PACKAGEDIR} "./make-swig.sh"
+        DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/make-swig.sh
+        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jni_interface.i
+        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/callmanager.i
+        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/configurationmanager.i
+        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/conversation.i
+        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/managerimpl.i
+        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/data_view.i
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni
+    )
+endif()
+if (BUILD_CONTRIB)
+    set(CONTRIB_BUILD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/native-${TARGET})
+    file(MAKE_DIRECTORY ${CONTRIB_BUILD_PATH})
+    file(MAKE_DIRECTORY ${CONTRIB_PATH})
+
+    if (ANDROID)
+        # See https://developer.android.com/ndk/guides/other_build_systems
+        set(ENV{ANDROID_NDK} ${ANDROID_NDK})
+        set(ENV{ANDROID_ABI} ${ANDROID_ABI})
+        set(ENV{ANDROID_API} ${ANDROID_PLATFORM})
+        set(ENV{TOOLCHAIN} ${ANDROID_TOOLCHAIN_ROOT})
+        set(ENV{TARGET} ${TARGET})
+        set(ENV{API} ${ANDROID_PLATFORM_LEVEL})
+        set(ENV{CC} $ENV{TOOLCHAIN}/bin/${TARGET}$ENV{API}-clang)
+        set(ENV{CXX} $ENV{TOOLCHAIN}/bin/${TARGET}$ENV{API}-clang++)
+        set(ENV{AS} "$ENV{CC} -c")
+        set(ENV{AR} ${CMAKE_AR})
+        set(ENV{RANLIB} ${CMAKE_RANLIB})
+        set(ENV{STRIP} ${CMAKE_STRIP})
+        set(ENV{LD} $ENV{TOOLCHAIN}/bin/ld)
+    endif()
+
+    execute_process(
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bootstrap --host=${TARGET}
+        WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+    execute_process(COMMAND make list
+        WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+    execute_process(COMMAND make
+        WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+endif()
 
 ################################################################################
 # Check dependencies
@@ -18,11 +103,21 @@ option(JAMI_VIDEO "Build with video support" ON)
 
 if(NOT MSVC)
     include(FindPkgConfig)
-    if (JAMI_NATPNP)
-        pkg_search_module (natpmp REQUIRED IMPORTED_TARGET natpmp)
+    if (JAMI_NATPMP)
+        pkg_search_module (natpmp IMPORTED_TARGET natpmp)
+        if (NOT natpmp_FOUND)
+            find_library(natpmp natpmp)
+            if (natpmp_NOTFOUND)
+                message("NAT-PMP not found: disabling")
+                set(JAMI_NATPMP Off)
+            endif()
+        endif()
     endif()
     if (JAMI_PUPNP)
-        pkg_search_module (upnp REQUIRED IMPORTED_TARGET upnp libupnp)
+        pkg_search_module (upnp IMPORTED_TARGET upnp libupnp)
+        if (NOT upnp_FOUND)
+            set(JAMI_PUPNP Off)
+        endif()
     endif()
 endif()
 
@@ -66,20 +161,6 @@ if(MSVC)
    source_group("Source Files\\media\\audio\\portaudio" FILES ${Source_Files__media__audio__portaudio})
    source_group("Source Files\\media\\video\\winvideo" FILES ${Source_Files__media__video__winvideo})
 endif()
-
-# Android target mapping for contrib
-if (ANDROID_ABI STREQUAL "x86")
-    set(TARGET "i686-linux-android")
-elseif (ANDROID_ABI STREQUAL "x86_64")
-    set(TARGET "x86_64-linux-android")
-elseif (ANDROID_ABI STREQUAL "arm64-v8a")
-    set(TARGET "aarch64-linux-android")
-elseif (ANDROID_ABI STREQUAL "armeabi-v7a")
-    set(TARGET "arm-linux-androideabi")
-else()
-    set(TARGET ${TARGET})
-endif()
-set(CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
 
 list (APPEND ALL_FILES
       ${Source_Files}
@@ -167,7 +248,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src/media;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht/eth;"
-    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src;" "${CMAKE_CURRENT_SOURCE_DIR}/src/jami;"
+    PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/src;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/jami;"
 )
 
 if(MSVC)
@@ -358,6 +441,7 @@ if(MSVC)
 
    set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
 else()
+    message("Contrib path: ${CONTRIB_PATH}")
     list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
     list(APPEND CMAKE_PREFIX_PATH ${CONTRIB_PATH})
@@ -380,7 +464,6 @@ else()
     pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale)
     pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil)
 
-    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${CONTRIB_PATH}/include)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         PkgConfig::opendht
         PkgConfig::pjproject
@@ -424,20 +507,6 @@ else()
     endif()
 
     if (JAMI_JNI)
-        # Generate swig binding
-        add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp
-            COMMAND env PACKAGEDIR=${JAMI_JNI_PACKAGEDIR} "./make-swig.sh"
-            DEPENDS
-            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/make-swig.sh
-            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jni_interface.i
-            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/callmanager.i
-            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/configurationmanager.i
-            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/conversation.i
-            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/managerimpl.i
-            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/data_view.i
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni
-        )
         # Build jni binding
         add_library(${PROJECT_NAME}-jni SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp)
         target_link_directories(${PROJECT_NAME}-jni PRIVATE ${CONTRIB_PATH}/lib)
