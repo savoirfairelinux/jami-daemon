@@ -298,6 +298,10 @@ public:
         peerUri_ = peerUri;
     }
 
+    std::string_view peerUri() const {
+        return peerUri_;
+    }
+
     // Create a new ICE media session. If we already have an instance,
     // it will be destroyed first.
     bool createIceMediaTransport(bool isReinvite);

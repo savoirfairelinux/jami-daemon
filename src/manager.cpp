@@ -679,10 +679,12 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
     if (call.isConferenceParticipant())
         base_.detachParticipant(callId);
 
-    JAMI_DBG("[call:%s] bind to conference %s (callState=%s)",
-             callId.c_str(),
-             confId.c_str(),
-             state.c_str());
+
+
+    JAMI_DEBUG("[call:{}] bind to conference {} (callState={})",
+             callId,
+             confId,
+             state);
 
     base_.getRingBufferPool().unBindAll(callId);
 
@@ -700,9 +702,9 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
         conf.bindParticipant(callId);
         base_.answerCall(call);
     } else
-        JAMI_WARN("[call:%s] call state %s not recognized for conference",
-                  callId.c_str(),
-                  state.c_str());
+        JAMI_WARNING("[call:{}] call state {} not recognized for conference",
+                  callId,
+                  state);
 }
 
 //==============================================================================

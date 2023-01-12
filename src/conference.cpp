@@ -56,7 +56,8 @@ namespace jami {
 
 Conference::Conference(const std::shared_ptr<Account>& account,
                        const std::string& confId,
-                       bool attachHost)
+                       bool attachHost,
+                       const std::vector<MediaAttribute>& hostAttr)
     : id_(confId.empty() ? Manager::instance().callFactory.getNewCallID() : confId)
     , account_(account)
 #ifdef ENABLE_VIDEO
@@ -88,7 +89,12 @@ Conference::Conference(const std::shared_ptr<Account>& account,
      */
 
     JAMI_INFO("Create new conference %s", id_.c_str());
-    setLocalHostDefaultMediaSource();
+    if (hostAttr.empty()) {
+        setLocalHostDefaultMediaSource();
+    } else {
+        hostSources_ = hostAttr;
+        reportMediaNegotiationStatus();
+    }
     duration_start_ = clock::now();
 
 #ifdef ENABLE_VIDEO
@@ -223,6 +229,10 @@ Conference::Conference(const std::shared_ptr<Account>& account,
         });
     });
 
+    if (attachHost && itVideo == hostSources_.end()) {
+        // If no video, we still want to attach outself
+        videoMixer_->addAudioOnlySource("", "host_audio_0");
+    }
     auto conf_res = split_string_to_unsigned(jami::Manager::instance()
                                                  .videoPreferences.getConferenceResolution(),
                                              'x');
@@ -675,7 +685,7 @@ Conference::addParticipant(const std::string& participant_id)
             return;
     }
 
-    if (auto call = getCall(participant_id)) {
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(participant_id))) {
         // Check if participant was muted before conference
         if (call->isPeerMuted())
             participantsMuted_.emplace(call->getCallId());
@@ -709,10 +719,12 @@ Conference::addParticipant(const std::string& participant_id)
         // In conference, if a participant joins with an audio only
         // call, it must be listed in the audioonlylist.
         auto mediaList = call->getMediaAttributeList();
-        if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
-            videoMixer_->addAudioOnlySource(call->getCallId(),
-                                            sip_utils::streamId(call->getCallId(),
-                                                                sip_utils::DEFAULT_AUDIO_STREAMID));
+        if (call->peerUri().find("swarm:") != 0) { // We're hosting so it's already ourself.
+            if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
+                videoMixer_->addAudioOnlySource(call->getCallId(),
+                                                sip_utils::streamId(call->getCallId(),
+                                                                    sip_utils::DEFAULT_AUDIO_STREAMID));
+            }
         }
         call->enterConference(shared_from_this());
         // Continue the recording for the conference if one participant was recording
