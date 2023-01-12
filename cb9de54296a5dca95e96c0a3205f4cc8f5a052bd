@@ -102,6 +102,29 @@
       },
       "revId": "cb9de54296a5dca95e96c0a3205f4cc8f5a052bd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e5cda25_71bc7c00",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 530,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-12T19:06:17Z",
+      "side": 1,
+      "message": "mandatory to cast in wstring then c_str() and not directl;y in c_str()?",
+      "range": {
+        "startLine": 530,
+        "startChar": 37,
+        "endLine": 530,
+        "endChar": 73
+      },
+      "revId": "cb9de54296a5dca95e96c0a3205f4cc8f5a052bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
