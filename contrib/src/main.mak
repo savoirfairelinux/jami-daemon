@@ -403,7 +403,8 @@ CMAKE = cmake . -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolch
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX)
 else
 CMAKE = cmake . -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
-		-DCMAKE_INSTALL_PREFIX=$(PREFIX)
+		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+		-DCMAKE_INSTALL_LIBDIR=$(PREFIX)/lib
 endif
 
 #
