@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(jami-daemon CXX)
+project(jami-daemon C CXX)
 set(PACKAGE_NAME "Jami Daemon")
 
 ################################################################################
