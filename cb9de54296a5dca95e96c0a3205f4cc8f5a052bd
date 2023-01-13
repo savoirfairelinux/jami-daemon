@@ -58,6 +58,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "298e7ae8_e5828611",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-13T11:09:33Z",
+      "side": 1,
+      "message": "https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ms633498(v\u003dvs.85)",
+      "parentUuid": "eb311337_4b6fca67",
+      "range": {
+        "startLine": 268,
+        "startChar": 0,
+        "endLine": 268,
+        "endChar": 103
+      },
+      "revId": "cb9de54296a5dca95e96c0a3205f4cc8f5a052bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8acae502_7ea7e31c",
@@ -71,6 +95,30 @@
       "writtenOn": "2023-01-12T16:27:23Z",
       "side": 1,
       "message": "write directly to wide",
+      "range": {
+        "startLine": 275,
+        "startChar": 0,
+        "endLine": 277,
+        "endChar": 32
+      },
+      "revId": "cb9de54296a5dca95e96c0a3205f4cc8f5a052bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7156457d_b4e99c70",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 277,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-13T11:09:33Z",
+      "side": 1,
+      "message": "using directly wide causes a throw",
+      "parentUuid": "8acae502_7ea7e31c",
       "range": {
         "startLine": 275,
         "startChar": 0,
@@ -104,6 +152,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "23b44b04_da25ce9f",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 320,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-13T11:09:33Z",
+      "side": 1,
+      "message": "https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ms633498(v\u003dvs.85)",
+      "parentUuid": "5030e7c2_8b4753a3",
+      "range": {
+        "startLine": 320,
+        "startChar": 12,
+        "endLine": 320,
+        "endChar": 62
+      },
+      "revId": "cb9de54296a5dca95e96c0a3205f4cc8f5a052bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1e5cda25_71bc7c00",
@@ -117,6 +189,30 @@
       "writtenOn": "2023-01-12T19:06:17Z",
       "side": 1,
       "message": "mandatory to cast in wstring then c_str() and not directl;y in c_str()?",
+      "range": {
+        "startLine": 530,
+        "startChar": 37,
+        "endLine": 530,
+        "endChar": 73
+      },
+      "revId": "cb9de54296a5dca95e96c0a3205f4cc8f5a052bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "70cb4e4e_26b71720",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 530,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-13T11:09:33Z",
+      "side": 1,
+      "message": "yes due to utf8 vs utf16;",
+      "parentUuid": "1e5cda25_71bc7c00",
       "range": {
         "startLine": 530,
         "startChar": 37,
