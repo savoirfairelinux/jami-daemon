@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1f90f527_e9114958",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 8
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-13T15:45:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4c154c35_395cae96",
+      "range": {
+        "startLine": 552,
+        "startChar": 14,
+        "endLine": 552,
+        "endChar": 38
+      },
+      "revId": "eab2ac59c638adbe97f1ec87c673c518c974c8aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "48adc21a_7610913e",
@@ -61,6 +85,24 @@
       "writtenOn": "2023-01-13T15:45:34Z",
       "side": 1,
       "message": "jamid generated here",
+      "revId": "eab2ac59c638adbe97f1ec87c673c518c974c8aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "72350faf_404bce66",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 8
+      },
+      "lineNbr": 592,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-13T15:45:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "48adc21a_7610913e",
       "revId": "eab2ac59c638adbe97f1ec87c673c518c974c8aa",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
