@@ -214,6 +214,12 @@ public:
 
     void setFEC(bool enable) { fecEnabled_ = enable; }
 
+    void setContextCallback(const std::function<void()>& cb)
+    {
+        firstDecode_ = true;
+        contextCallback_ = cb;
+    }
+
 private:
     NON_COPYABLE(MediaDecoder);
 
@@ -252,6 +258,9 @@ private:
     int height_;
 
     bool fecEnabled_ {false};
+
+    std::function<void()> contextCallback_;
+    bool firstDecode_ = true;
 
 protected:
     AVDictionary* options_ = nullptr;
