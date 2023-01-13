@@ -651,7 +651,14 @@ Conversation::Impl::loadMessages(const LogOptions& options)
         return {};
     std::vector<ConversationCommit> convCommits;
     convCommits = repository_->log(options);
-    return repository_->convCommitToMap(convCommits);
+    auto res = repository_->convCommitToMap(convCommits);
+
+    for (const auto& commit : res) {
+        if (commit.at("type") == "application/call-history+json") {
+            updateActiveCalls(commit, true);
+        }
+    }
+    return res;
 }
 
 Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
