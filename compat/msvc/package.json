@@ -16,5 +16,5 @@
         "libgit2"
     ],
     "configuration": "ReleaseLib_win32",
-    "project_paths": ["ring-daemon.vcxproj"]
+    "project_paths": ["jami-daemon.vcxproj"]
 }
