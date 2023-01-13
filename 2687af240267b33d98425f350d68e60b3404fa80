@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3b8b8e9_fc9e3de5",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-13T15:45:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5a2d26aa_92b26348",
+      "range": {
+        "startLine": 13,
+        "startChar": 28,
+        "endLine": 13,
+        "endChar": 32
+      },
+      "revId": "2687af240267b33d98425f350d68e60b3404fa80",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8a04e2d9_b66af6c7",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "718118da_8375aaa2",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-13T15:45:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8a04e2d9_b66af6c7",
+      "range": {
+        "startLine": 14,
+        "startChar": 7,
+        "endLine": 14,
+        "endChar": 17
+      },
+      "revId": "2687af240267b33d98425f350d68e60b3404fa80",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cab6a526_9e912b27",
@@ -60,6 +108,30 @@
       "writtenOn": "2023-01-12T20:27:47Z",
       "side": 1,
       "message": "it\u0027s because that CMAKE_LIBRARY_ARCHITECTURE can be empty\n\nhttps://bugzilla.redhat.com/show_bug.cgi?id\u003d1531678\nhttps://github.com/darlinghq/darling/issues/231\n\nOne way to fallback would be EXECUTE_PROCESS( COMMAND gcc -dumpmachine  COMMAND tr -d \u0027\\n\u0027 OUTPUT_VARIABLE TARGET )\n\nNote: not really related to this patch but on the whole cmake build",
+      "range": {
+        "startLine": 32,
+        "startChar": 17,
+        "endLine": 32,
+        "endChar": 43
+      },
+      "revId": "2687af240267b33d98425f350d68e60b3404fa80",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7f6479b3_cfd7b11a",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 6
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-13T15:45:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cab6a526_9e912b27",
       "range": {
         "startLine": 32,
         "startChar": 17,
