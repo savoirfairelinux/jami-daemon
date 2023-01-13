@@ -71,6 +71,9 @@ public:
         onSuccessfulSetup_ = cb;
     }
 
+    void setRecorderCallback(const std::function<void(Observable<std::shared_ptr<MediaFrame>>* obs,
+                                                      const MediaStream& ms)>& cb);
+
 private:
     void readFromDevice();
     void readFromFile();
@@ -114,6 +117,9 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> wakeUp_;
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(Observable<std::shared_ptr<MediaFrame>>* obs, const MediaStream& ms)>
+        recorderCallback_;
+    bool settingMS_ = true;
 };
 
 } // namespace jami

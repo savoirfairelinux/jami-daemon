@@ -128,10 +128,11 @@ private:
     void reset();
 
     int initRecord();
-    MediaStream setupVideoOutput();
+    void setupVideoOutput();
     std::string buildVideoFilter(const std::vector<MediaStream>& peers,
                                  const MediaStream& local) const;
-    MediaStream setupAudioOutput();
+    void setupAudioOutput();
+    std::mutex mutexStreamSetup_;
     std::string buildAudioFilter(const std::vector<MediaStream>& peers,
                                  const MediaStream& local) const;
 
@@ -148,11 +149,12 @@ private:
     std::string description_;
 
     std::unique_ptr<MediaEncoder> encoder_;
+    std::unique_ptr<MediaFilter> outputVideoFilter_;
+    std::unique_ptr<MediaFilter> outputAudioFilter_;
+
     std::unique_ptr<MediaFilter> videoFilter_;
     std::unique_ptr<MediaFilter> audioFilter_;
 
-    bool hasAudio_ {false};
-    bool hasVideo_ {false};
     int videoIdx_ = -1;
     int audioIdx_ = -1;
     bool isRecording_ = false;
