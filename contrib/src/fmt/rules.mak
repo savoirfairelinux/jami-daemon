@@ -8,8 +8,7 @@ PKGS_FOUND += fmt
 endif
 
 FMT_CMAKECONF = -DBUILD_SHARED_LIBS=Off \
-				-DFMT_TEST=Off \
-                CMAKE_INSTALL_LIBDIR=$(PREFIX)/lib
+				-DFMT_TEST=Off
 
 $(TARBALLS)/fmt-$(FMT_VERSION).tar.gz:
 	$(call download,$(FMT_URL))

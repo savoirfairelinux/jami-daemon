@@ -23,6 +23,6 @@ libgit2: libgit2-v$(LIBGIT2_VERSION).tar.gz .sum-libgit2
 # TODO windows pcre?
 .libgit2: libgit2
 	cd $< && mkdir -p build && cd build \
-    && $(CMAKE) -DCMAKE_C_FLAGS=-fPIC -DCMAKE_INSTALL_PREFIX=$(PREFIX) -DUSE_HTTPS=OFF -DCURL=OFF -DUSE_HTTP_PARSER=system -DBUILD_CLAR=OFF -DBUILD_SHARED_LIBS=OFF -DUSE_SSH=OFF -DREGEX_BACKEND=regcomp .. \
+    && $(CMAKE) -DCMAKE_C_FLAGS=-fPIC -DUSE_HTTPS=OFF -DCURL=OFF -DUSE_HTTP_PARSER=system -DBUILD_CLAR=OFF -DBUILD_SHARED_LIBS=OFF -DUSE_SSH=OFF -DREGEX_BACKEND=regcomp .. \
     && $(MAKE) install
 	touch $@
