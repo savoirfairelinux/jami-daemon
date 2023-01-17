@@ -240,8 +240,6 @@ MediaRecorder::stopRecording()
         isRecording_ = false;
         emitSignal<libjami::CallSignal::RecordPlaybackStopped>(getPath());
     }
-    //flush();
-    //reset();
 }
 
 Observer<std::shared_ptr<MediaFrame>>*
@@ -292,6 +290,8 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
 {
     if (not isRecording_ || interrupted_)
         return;
+
+    std::lock_guard<std::mutex> lk(mutexStreamSetup_);
 
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     std::unique_ptr<MediaFrame> clone;

@@ -2217,9 +2217,6 @@ void
 SIPCall::stopAllMedia()
 {
     JAMI_DBG("[call:%s] Stopping all media", getCallId().c_str());
-    if (Call::isRecording())
-        stopRecording(); // if call stops, finish recording
-    deinitRecorder();
 
 #ifdef ENABLE_VIDEO
     {
@@ -3477,10 +3474,9 @@ SIPCall::rtpSetupSuccess()
     std::lock_guard<std::mutex> lk {setupSuccessMutex_};
 
     // make recorder audio and video if available
-    isAudioOnly_ = !hasVideo();;
-#ifdef ENABLE_VIDEO
+    isAudioOnly_ = !hasVideo();
+
     readyToRecord_ = true; // We're ready to record whenever a stream is ready
-#endif
 
     if (pendingRecord_ && readyToRecord_)
         toggleRecording();
