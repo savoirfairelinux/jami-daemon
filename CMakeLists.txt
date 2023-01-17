@@ -14,87 +14,89 @@ option(JAMI_VIDEO "Build with video support" ON)
 option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
 option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 
-################################################################################
-# Contrib
-################################################################################
+if(NOT MSVC)
+    ################################################################################
+    # Contrib
+    ################################################################################
 
-# Android target mapping for contrib
-if (ANDROID_ABI STREQUAL "x86")
-    set(TARGET i686-linux-android)
-elseif (ANDROID_ABI STREQUAL "x86_64")
-    set(TARGET x86_64-linux-android)
-elseif (ANDROID_ABI STREQUAL "arm64-v8a")
-    set(TARGET aarch64-linux-android)
-elseif (ANDROID_ABI STREQUAL "armeabi-v7a")
-    set(TARGET armv7a-linux-androideabi)
-else()
-    set(TARGET ${CMAKE_LIBRARY_ARCHITECTURE})
-    if (NOT TARGET)
-        execute_process(COMMAND gcc -dumpmachine  COMMAND tr -d '\n' OUTPUT_VARIABLE TARGET)
+    # Android target mapping for contrib
+    if (ANDROID_ABI STREQUAL "x86")
+        set(TARGET i686-linux-android)
+    elseif (ANDROID_ABI STREQUAL "x86_64")
+        set(TARGET x86_64-linux-android)
+    elseif (ANDROID_ABI STREQUAL "arm64-v8a")
+        set(TARGET aarch64-linux-android)
+    elseif (ANDROID_ABI STREQUAL "armeabi-v7a")
+        set(TARGET armv7a-linux-androideabi)
+    else()
+        set(TARGET ${CMAKE_LIBRARY_ARCHITECTURE})
+        if (NOT TARGET)
+            execute_process(COMMAND gcc -dumpmachine  COMMAND tr -d '\n' OUTPUT_VARIABLE TARGET)
+        endif()
     endif()
-endif()
-set(CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
+    set(CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
 
-if (BUILD_EXTRA_TOOLS)
-    set(ENV{PATH} "${CMAKE_CURRENT_SOURCE_DIR}/extras/tools/build/bin:$ENV{PATH}")
-    execute_process(
-        COMMAND ./bootstrap
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
-    execute_process(
-        COMMAND make
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
-    execute_process(
-        COMMAND make .pkg-config
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
-    execute_process(
-        COMMAND make .gas
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
-endif()
-if (JAMI_JNI)
-    # Generate swig binding
-    add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp
-        COMMAND env PACKAGEDIR=${JAMI_JNI_PACKAGEDIR} "./make-swig.sh"
-        DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/make-swig.sh
-        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jni_interface.i
-        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/callmanager.i
-        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/configurationmanager.i
-        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/conversation.i
-        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/managerimpl.i
-        ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/data_view.i
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni
-    )
-endif()
-if (BUILD_CONTRIB)
-    set(CONTRIB_BUILD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/native-${TARGET})
-    file(MAKE_DIRECTORY ${CONTRIB_BUILD_PATH})
-    file(MAKE_DIRECTORY ${CONTRIB_PATH})
-
-    if (ANDROID)
-        # See https://developer.android.com/ndk/guides/other_build_systems
-        set(ENV{ANDROID_NDK} ${ANDROID_NDK})
-        set(ENV{ANDROID_ABI} ${ANDROID_ABI})
-        set(ENV{ANDROID_API} ${ANDROID_PLATFORM})
-        set(ENV{TOOLCHAIN} ${ANDROID_TOOLCHAIN_ROOT})
-        set(ENV{TARGET} ${TARGET})
-        set(ENV{API} ${ANDROID_PLATFORM_LEVEL})
-        set(ENV{CC} $ENV{TOOLCHAIN}/bin/${TARGET}$ENV{API}-clang)
-        set(ENV{CXX} $ENV{TOOLCHAIN}/bin/${TARGET}$ENV{API}-clang++)
-        set(ENV{AS} "$ENV{CC} -c")
-        set(ENV{AR} ${CMAKE_AR})
-        set(ENV{RANLIB} ${CMAKE_RANLIB})
-        set(ENV{STRIP} ${CMAKE_STRIP})
-        set(ENV{LD} $ENV{TOOLCHAIN}/bin/ld)
+    if (BUILD_EXTRA_TOOLS)
+        set(ENV{PATH} "${CMAKE_CURRENT_SOURCE_DIR}/extras/tools/build/bin:$ENV{PATH}")
+        execute_process(
+            COMMAND ./bootstrap
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
+        execute_process(
+            COMMAND make
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
+        execute_process(
+            COMMAND make .pkg-config
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
+        execute_process(
+            COMMAND make .gas
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
     endif()
+    if (JAMI_JNI)
+        # Generate swig binding
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp
+            COMMAND env PACKAGEDIR=${JAMI_JNI_PACKAGEDIR} "./make-swig.sh"
+            DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/make-swig.sh
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jni_interface.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/callmanager.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/configurationmanager.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/conversation.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/managerimpl.i
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/data_view.i
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni
+        )
+    endif()
+    if (BUILD_CONTRIB)
+        set(CONTRIB_BUILD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/native-${TARGET})
+        file(MAKE_DIRECTORY ${CONTRIB_BUILD_PATH})
+        file(MAKE_DIRECTORY ${CONTRIB_PATH})
 
-    execute_process(
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bootstrap --host=${TARGET}
-        WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
-    execute_process(COMMAND make list
-        WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
-    execute_process(COMMAND make
-        WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+        if (ANDROID)
+            # See https://developer.android.com/ndk/guides/other_build_systems
+            set(ENV{ANDROID_NDK} ${ANDROID_NDK})
+            set(ENV{ANDROID_ABI} ${ANDROID_ABI})
+            set(ENV{ANDROID_API} ${ANDROID_PLATFORM})
+            set(ENV{TOOLCHAIN} ${ANDROID_TOOLCHAIN_ROOT})
+            set(ENV{TARGET} ${TARGET})
+            set(ENV{API} ${ANDROID_PLATFORM_LEVEL})
+            set(ENV{CC} $ENV{TOOLCHAIN}/bin/${TARGET}$ENV{API}-clang)
+            set(ENV{CXX} $ENV{TOOLCHAIN}/bin/${TARGET}$ENV{API}-clang++)
+            set(ENV{AS} "$ENV{CC} -c")
+            set(ENV{AR} ${CMAKE_AR})
+            set(ENV{RANLIB} ${CMAKE_RANLIB})
+            set(ENV{STRIP} ${CMAKE_STRIP})
+            set(ENV{LD} $ENV{TOOLCHAIN}/bin/ld)
+        endif()
+
+        execute_process(
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bootstrap --host=${TARGET}
+            WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+        execute_process(COMMAND make list
+            WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+        execute_process(COMMAND make
+            WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+    endif()
 endif()
 
 ################################################################################
