@@ -240,8 +240,6 @@ MediaRecorder::stopRecording()
         isRecording_ = false;
         emitSignal<libjami::CallSignal::RecordPlaybackStopped>(getPath());
     }
-    //flush();
-    //reset();
 }
 
 Observer<std::shared_ptr<MediaFrame>>*
@@ -293,6 +291,9 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     if (not isRecording_ || interrupted_)
         return;
 
+    if (!mutexStreamSetup_.try_lock())
+        return;
+
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     std::unique_ptr<MediaFrame> clone;
     const auto& ms = streams_[name]->info;
@@ -307,6 +308,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
                     static_cast<AVPixelFormat>(ms.format));
             } catch (const std::runtime_error& e) {
                 JAMI_ERR("Accel failure: %s", e.what());
+                mutexStreamSetup_.unlock();
                 return;
             }
         } else {
@@ -353,6 +355,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
         frameBuff_.emplace_back(std::move(filteredFrame));
         cv_.notify_one();
     }
+    mutexStreamSetup_.unlock();
 }
 
 int
