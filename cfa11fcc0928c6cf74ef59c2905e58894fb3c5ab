@@ -714,6 +714,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4d214f35_c7b97fea",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T19:23:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "460283a7_5cb0b585",
+      "range": {
+        "startLine": 248,
+        "startChar": 20,
+        "endLine": 250,
+        "endChar": 19
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2619d210_d3d16557",
@@ -727,6 +751,30 @@
       "writtenOn": "2023-01-18T19:21:16Z",
       "side": 1,
       "message": "move routing table changes in previous patch",
+      "range": {
+        "startLine": 395,
+        "startChar": 13,
+        "endLine": 396,
+        "endChar": 15
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a6b0cba_892b0e50",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T19:23:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2619d210_d3d16557",
       "range": {
         "startLine": 395,
         "startChar": 13,
@@ -760,6 +808,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "053d860f_55e442d6",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T19:23:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e2d2d0ca_09695e08",
+      "range": {
+        "startLine": 103,
+        "startChar": 28,
+        "endLine": 106,
+        "endChar": 26
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e80b9218_f1251172",
@@ -783,6 +855,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e20f8b08_1b80b974",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T19:23:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e80b9218_f1251172",
+      "range": {
+        "startLine": 186,
+        "startChar": 0,
+        "endLine": 200,
+        "endChar": 43
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7ee6f3bb_849f2416",
@@ -796,6 +892,30 @@
       "writtenOn": "2023-01-18T19:21:16Z",
       "side": 1,
       "message": "move to previous patch",
+      "range": {
+        "startLine": 76,
+        "startChar": 10,
+        "endLine": 76,
+        "endChar": 20
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8d5b05e_4def636c",
+        "filename": "src/jamidht/swarm/swarm_manager.h",
+        "patchSetId": 28
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T19:23:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7ee6f3bb_849f2416",
       "range": {
         "startLine": 76,
         "startChar": 10,
