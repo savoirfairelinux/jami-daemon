@@ -235,6 +235,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3310133e_0019f621",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T21:32:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d131b20d_6b6ea196",
+      "range": {
+        "startLine": 345,
+        "startChar": 24,
+        "endLine": 345,
+        "endChar": 34
+      },
+      "revId": "d501f4b1597720aa1f519476784f839bf7928b61",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8d86a4bc_6914cc83",
