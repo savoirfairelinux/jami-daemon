@@ -46,6 +46,29 @@
       },
       "revId": "d47b15ec97e8a59864bc7dbbdba1d6dd7b1b4ee3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e53c06a0_48077a1f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2217,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T15:25:29Z",
+      "side": 1,
+      "message": "Note, that we should add a test (I guess a test doing a 10sec call with a change after 5 secs and then checking the duration can do the job)",
+      "range": {
+        "startLine": 2217,
+        "startChar": 9,
+        "endLine": 2217,
+        "endChar": 21
+      },
+      "revId": "d47b15ec97e8a59864bc7dbbdba1d6dd7b1b4ee3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
