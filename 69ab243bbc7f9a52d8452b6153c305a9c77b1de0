@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71bb8faa_78fe8b33",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T20:12:57Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 242,
+        "startChar": 5,
+        "endLine": 244,
+        "endChar": 14
+      },
+      "revId": "69ab243bbc7f9a52d8452b6153c305a9c77b1de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1920f27e_b15cb475",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3479,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T20:12:57Z",
+      "side": 1,
+      "message": "Bug I see:\nDo a call, start recording, stop the call, start a second call with the same contact \u003d\u003e Recording is on",
+      "range": {
+        "startLine": 3479,
+        "startChar": 40,
+        "endLine": 3479,
+        "endChar": 49
+      },
+      "revId": "69ab243bbc7f9a52d8452b6153c305a9c77b1de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce92df08_040a1527",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3480,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T20:12:57Z",
+      "side": 1,
+      "message": "two questions:\n\n1. What do we want if both sides stops video?\n2. What do we want if one side stops video? (For now, seems frame frozen)",
+      "range": {
+        "startLine": 3480,
+        "startChar": 17,
+        "endLine": 3480,
+        "endChar": 18
+      },
+      "revId": "69ab243bbc7f9a52d8452b6153c305a9c77b1de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
