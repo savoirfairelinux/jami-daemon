@@ -16,6 +16,24 @@
       "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
       "revId": "b95b63aa3d2eb81dd1dc78ae016e849935102570",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb9f0679_af478495",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 2181,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-18T19:21:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "368ea6c1_e7f372da",
+      "revId": "b95b63aa3d2eb81dd1dc78ae016e849935102570",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
