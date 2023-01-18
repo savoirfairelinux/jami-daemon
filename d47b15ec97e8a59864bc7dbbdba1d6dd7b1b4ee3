@@ -50,6 +50,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d11c6190_f0df3449",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-18T20:07:03Z",
+      "side": 1,
+      "message": "recorder stays attached to device even with mic/camera set to mute",
+      "revId": "d47b15ec97e8a59864bc7dbbdba1d6dd7b1b4ee3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "e53c06a0_48077a1f",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 2
