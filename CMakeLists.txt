@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(jami-daemon C CXX)
+project(jami-daemon
+    VERSION 13.7.0
+    LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
 
 ################################################################################
@@ -216,6 +218,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
 set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     PACKAGE_NAME="${PACKAGE_NAME}"
+    PACKAGE_VERSION="${PROJECT_VERSION}"
     PACKAGE="jami"
     LIBJAMI_BUILD
     HAVE_RINGNS
