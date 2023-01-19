@@ -197,9 +197,22 @@ RecorderTest::testRecordCall()
 
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttributeA
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+        {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+        {libjami::Media::MediaAttributeKey::LABEL, "audio_0"},
+        {libjami::Media::MediaAttributeKey::SOURCE, ""}};
+    std::map<std::string, std::string> mediaAttributeV
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+        {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+        {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+        {libjami::Media::MediaAttributeKey::LABEL, "video_0"},
+        {libjami::Media::MediaAttributeKey::SOURCE, ""}};
+    mediaList.emplace_back(mediaAttributeA);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
-    Manager::instance().answerCall(bobId, bobCall.callId);
+    libjami::acceptWithMedia(bobId, bobCall.callId, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.mediaStatus
                == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
@@ -215,16 +228,78 @@ RecorderTest::testRecordCall()
     CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
 
     // Check Recorder streams
-    auto streams = 0;
-    if (auto call = aliceAccount->getCall(callId))
-        streams = call->getRecordedStreams();
+    {
+        auto streams = 0;
+        if (auto call = aliceAccount->getCall(callId))
+            streams = call->getRecordedStreams();
 
-    if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
-        JAMI_INFO() << "Check recorder streams if video device available.";
-        CPPUNIT_ASSERT(streams == 4);
-    } else {
-        JAMI_INFO() << "Check recorder streams if no video device available.";
         CPPUNIT_ASSERT(streams == 2);
+    }
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return recordedFile.empty(); }));
+
+    // add local video
+    {
+        auto newMediaList = mediaList;
+        newMediaList.emplace_back(mediaAttributeV);
+
+        // Request Media Change
+        libjami::requestMediaChange(aliceId, callId, newMediaList);
+
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobCall.changeRequested; }));
+
+        // Answer the change request
+        bobCall.mediaStatus = "";
+        newMediaList[1][libjami::Media::MediaAttributeKey::MUTED] = TRUE_STR;
+        libjami::answerMediaChangeRequest(bobId, bobCall.callId, newMediaList);
+        bobCall.changeRequested = false;
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
+            return bobCall.mediaStatus
+                == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS;
+        }));
+
+        // give time to start camera
+        std::this_thread::sleep_for(5s);
+
+        auto streams = 0;
+        if (auto call = aliceAccount->getCall(callId))
+            streams = call->getRecordedStreams();
+
+        if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
+            JAMI_INFO() << "Check recorder streams if video device available.";
+            CPPUNIT_ASSERT(streams == 3);
+        } else {
+            JAMI_INFO() << "Check recorder streams if no video device available.";
+            CPPUNIT_ASSERT(streams == 2);
+        }
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return recordedFile.empty(); }));
+    }
+
+    // mute local video
+    {
+        mediaAttributeV[libjami::Media::MediaAttributeKey::MUTED] = TRUE_STR;
+        auto newMediaList = mediaList;
+        newMediaList.emplace_back(mediaAttributeV);
+
+        // Mute Bob video
+        libjami::requestMediaChange(aliceId, callId, newMediaList);
+
+        std::this_thread::sleep_for(10s);
+
+        // Check Recorder streams
+        {
+            auto streams = 0;
+            if (auto call = aliceAccount->getCall(callId))
+                streams = call->getRecordedStreams();
+
+            if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
+                JAMI_INFO() << "Check recorder streams if video device available.";
+                CPPUNIT_ASSERT(streams == 2);
+            } else {
+                JAMI_INFO() << "Check recorder streams if no video device available.";
+                CPPUNIT_ASSERT(streams == 2);
+            }
+        }
     }
 
     // Stop recorder after a few seconds

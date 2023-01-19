@@ -2217,9 +2217,6 @@ void
 SIPCall::stopAllMedia()
 {
     JAMI_DBG("[call:%s] Stopping all media", getCallId().c_str());
-    if (Call::isRecording())
-        stopRecording(); // if call stops, finish recording
-    deinitRecorder();
 
 #ifdef ENABLE_VIDEO
     {
