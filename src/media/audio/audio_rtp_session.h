@@ -24,6 +24,7 @@
 #include "audiobuffer.h"
 #include "media_device.h"
 #include "rtp_session.h"
+#include "media_stream.h"
 
 #include "threadloop.h"
 
@@ -50,7 +51,9 @@ struct RTCPInfo
 class AudioRtpSession : public RtpSession
 {
 public:
-    AudioRtpSession(const std::string& callId, const std::string& streamId);
+    AudioRtpSession(const std::string& callId,
+                    const std::string& streamId,
+                    const std::shared_ptr<MediaRecorder>& rec);
     virtual ~AudioRtpSession();
 
     void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
@@ -58,8 +61,8 @@ public:
     void stop() override;
     void setMuted(bool muted, Direction dir = Direction::SEND) override;
 
-    void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
-    void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
+    void initRecorder() override;
+    void deinitRecorder() override;
 
     std::shared_ptr<AudioInput>& getAudioLocal() { return audioInput_; }
     std::unique_ptr<AudioReceiveThread>& getAudioReceive() { return receiveThread_; }
@@ -91,6 +94,8 @@ private:
     std::chrono::seconds rtcp_checking_interval {4};
 
     std::function<void(bool)> voiceCallback_;
+
+    void attachRecorder(Observable<std::shared_ptr<MediaFrame>>* obs, const MediaStream& ms);
 };
 
 } // namespace jami
