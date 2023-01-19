@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3e584a78_3319ce0c",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 2588,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-19T19:30:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027channel\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "7bb3feb7bf7758950895861bbd4e91f3a64b507a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "deca2dc3_ad36f719",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 2216,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-19T19:30:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "7bb3feb7bf7758950895861bbd4e91f3a64b507a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c078b04_2b90d1b3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 2222,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-19T19:30:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "7bb3feb7bf7758950895861bbd4e91f3a64b507a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f494da4d_27adddf5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 4223,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-19T19:30:30Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nexpression result unused\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-unused-value",
+      "revId": "7bb3feb7bf7758950895861bbd4e91f3a64b507a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cba0b8a9_d6d3660e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 4231,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-19T19:30:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "7bb3feb7bf7758950895861bbd4e91f3a64b507a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "20c18dbf_a8e47da3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 4237,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-19T19:30:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "7bb3feb7bf7758950895861bbd4e91f3a64b507a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
