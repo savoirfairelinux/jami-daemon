@@ -97,6 +97,13 @@ public:
     Observer<std::shared_ptr<MediaFrame>>* addStream(const MediaStream& ms);
 
     /**
+     * @brief Removes a stream from the recorder.
+     *
+     * Caller must then detach this from the media source.
+     */
+    void removeStream(const MediaStream& ms);
+
+    /**
      * @brief Gets the stream observer.
      *
      * This is so the caller can detach it from the media source.
@@ -117,6 +124,8 @@ public:
      */
     void stopRecording();
 
+    int streamsCount = 0;
+
 private:
     NON_COPYABLE(MediaRecorder);
 
@@ -128,10 +137,11 @@ private:
     void reset();
 
     int initRecord();
-    MediaStream setupVideoOutput();
+    void setupVideoOutput();
     std::string buildVideoFilter(const std::vector<MediaStream>& peers,
                                  const MediaStream& local) const;
-    MediaStream setupAudioOutput();
+    void setupAudioOutput();
+    std::mutex mutexStreamSetup_;
     std::string buildAudioFilter(const std::vector<MediaStream>& peers,
                                  const MediaStream& local) const;
 
@@ -148,15 +158,17 @@ private:
     std::string description_;
 
     std::unique_ptr<MediaEncoder> encoder_;
+    std::unique_ptr<MediaFilter> outputVideoFilter_;
+    std::unique_ptr<MediaFilter> outputAudioFilter_;
+
     std::unique_ptr<MediaFilter> videoFilter_;
     std::unique_ptr<MediaFilter> audioFilter_;
 
-    bool hasAudio_ {false};
-    bool hasVideo_ {false};
     int videoIdx_ = -1;
     int audioIdx_ = -1;
     bool isRecording_ = false;
     bool audioOnly_ = false;
+    int lastVideoPts_ = 0;
 
     std::condition_variable cv_;
     std::atomic_bool interrupted_ {false};

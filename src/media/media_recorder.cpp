@@ -69,7 +69,12 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
         : info(ms)
         , cb_(func) {};
 
-    ~StreamObserver() {};
+    ~StreamObserver()
+    {
+        for (auto& obs : observables_) {
+            obs->detach(this);
+        }
+    };
 
     void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/,
                 const std::shared_ptr<MediaFrame>& m) override
@@ -117,10 +122,23 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
 #endif
     }
 
+    void attached(Observable<std::shared_ptr<MediaFrame>>* obs) override
+    {
+        observables_.insert(obs);
+    }
+
+    void detached(Observable<std::shared_ptr<MediaFrame>>* obs) override
+    {
+        auto it = observables_.find(obs);
+        if (it != observables_.end())
+            observables_.erase(it);
+    }
+
 private:
     std::function<void(const std::shared_ptr<MediaFrame>&)> cb_;
     std::unique_ptr<MediaFilter> videoRotationFilter_ {};
     int rotation_ = 0;
+    std::set<Observable<std::shared_ptr<MediaFrame>>*> observables_;
 };
 
 MediaRecorder::MediaRecorder() {}
@@ -191,9 +209,15 @@ MediaRecorder::startRecording()
                 }
                 try {
                     // encode frame
-                    if (frame && frame->pointer()) {
+                    if (rec->encoder_ && frame && frame->pointer()) {
 #ifdef ENABLE_VIDEO
                         bool isVideo = (frame->pointer()->width > 0 && frame->pointer()->height > 0);
+                        if (isVideo) {
+                            if (rec->lastVideoPts_ < frame->pointer()->pts)
+                                rec->lastVideoPts_ = frame->pointer()->pts;
+                            else if(frame->pointer()->pts < rec->lastVideoPts_)
+                                frame->pointer()->pts = rec->lastVideoPts_++;
+                        }
                         rec->encoder_->encode(frame->pointer(),
                                               isVideo ? rec->videoIdx_ : rec->audioIdx_);
 #else
@@ -208,12 +232,14 @@ MediaRecorder::startRecording()
             rec->reset(); // allows recorder to be reused in same call
         });
     }
+    interrupted_ = false;
     return 0;
 }
 
 void
 MediaRecorder::stopRecording()
 {
+    streamsCount = 0;
     interrupted_ = true;
     cv_.notify_all();
     if (isRecording_) {
@@ -226,32 +252,56 @@ MediaRecorder::stopRecording()
 Observer<std::shared_ptr<MediaFrame>>*
 MediaRecorder::addStream(const MediaStream& ms)
 {
+    std::lock_guard<std::mutex> lk(mutexStreamSetup_);
     if (audioOnly_ && ms.isVideo) {
         JAMI_ERR() << "Trying to add video stream to audio only recording";
         return nullptr;
     }
-    if (ms.isVideo && ms.format < 0) {
-        JAMI_ERR() << "Trying to add invalid video stream to recording";
+    if (ms.format < 0 || ms.name.empty()) {
+        JAMI_ERR() << "Trying to add invalid stream to recording";
         return nullptr;
     }
 
-    auto ptr = std::make_unique<StreamObserver>(ms,
-                                                [this,
-                                                 ms](const std::shared_ptr<MediaFrame>& frame) {
-                                                    onFrame(ms.name, frame);
-                                                });
-    auto p = streams_.insert(std::make_pair(ms.name, std::move(ptr)));
-    if (p.second) {
+    auto it = streams_.find(ms.name);
+    if (it == streams_.end()) {
+        auto streamPtr = std::make_unique<StreamObserver>(ms,
+                                                          [this,
+                                                           ms](const std::shared_ptr<MediaFrame>& frame) {
+                                                              onFrame(ms.name, frame);
+                                                          });
+        auto p = streams_.insert(std::make_pair(ms.name, std::move(streamPtr)));
+        it = p.first;
+        streamsCount++;
         JAMI_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
-        if (ms.isVideo)
-            hasVideo_ = true;
-        else
-            hasAudio_ = true;
-        return p.first->second.get();
     } else {
         JAMI_WARN() << "Recorder already has '" << ms.name << "' as input";
-        return p.first->second.get();
     }
+
+    if (ms.isVideo)
+        setupVideoOutput();
+    else
+        setupAudioOutput();
+    return it->second.get();
+}
+
+void
+MediaRecorder::removeStream(const MediaStream& ms)
+{
+    std::lock_guard<std::mutex> lk(mutexStreamSetup_);
+
+    auto it = streams_.find(ms.name);
+    if (it == streams_.end()) {
+        JAMI_DBG() << "Recorder no stream to remove";
+    } else {
+        JAMI_WARN() << "Recorder removing '" << ms.name << "'";
+        streams_.erase(it);
+        streamsCount--;
+        if (ms.isVideo)
+            setupVideoOutput();
+        else
+            setupAudioOutput();
+    }
+    return;
 }
 
 Observer<std::shared_ptr<MediaFrame>>*
@@ -266,8 +316,10 @@ MediaRecorder::getStream(const std::string& name) const
 void
 MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame>& frame)
 {
-    if (not isRecording_)
+    if (not isRecording_ || interrupted_)
         return;
+
+    std::lock_guard<std::mutex> lk(mutexStreamSetup_);
 
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     std::unique_ptr<MediaFrame> clone;
@@ -303,15 +355,23 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
                                                                      | AV_ROUND_PASS_MINMAX));
     std::unique_ptr<MediaFrame> filteredFrame;
 #ifdef ENABLE_VIDEO
-    if (ms.isVideo) {
+    if (ms.isVideo && videoFilter_ && outputVideoFilter_) {
         std::lock_guard<std::mutex> lk(mutexFilterVideo_);
         videoFilter_->feedInput(clone->pointer(), name);
-        filteredFrame = videoFilter_->readOutput();
-    } else {
+        auto videoFilterOutput = videoFilter_->readOutput();
+        if (videoFilterOutput) {
+            outputVideoFilter_->feedInput(videoFilterOutput->pointer(), "input");
+            filteredFrame = outputVideoFilter_->readOutput();
+        }
+    } else if (audioFilter_ && outputAudioFilter_) {
 #endif // ENABLE_VIDEO
         std::lock_guard<std::mutex> lk(mutexFilterAudio_);
         audioFilter_->feedInput(clone->pointer(), name);
-        filteredFrame = audioFilter_->readOutput();
+        auto audioFilterOutput = audioFilter_->readOutput();
+        if (audioFilterOutput) {
+            outputAudioFilter_->feedInput(audioFilterOutput->pointer(), "input");
+            filteredFrame = outputAudioFilter_->readOutput();
+        }
 #ifdef ENABLE_VIDEO
     }
 #endif // ENABLE_VIDEO
@@ -348,32 +408,17 @@ MediaRecorder::initRecord()
 #ifdef RING_ACCEL
     encoder_->enableAccel(false); // TODO recorder has problems with hardware encoding
 #endif
-
-    videoFilter_.reset();
-    if (hasVideo_) {
-        const MediaStream& videoStream = setupVideoOutput();
-        if (videoStream.format < 0) {
-            JAMI_ERR() << "Could not retrieve video recorder stream properties";
-            return -1;
-        }
-        MediaDescription args;
-        args.mode = RateMode::CQ;
-        encoder_->setOptions(videoStream);
-        encoder_->setOptions(args);
-    }
 #endif // ENABLE_VIDEO
 
-    audioFilter_.reset();
-    if (hasAudio_) {
-        const MediaStream& audioStream = setupAudioOutput();
-        if (audioStream.format < 0) {
-            JAMI_ERR() << "Could not retrieve audio recorder stream properties";
-            return -1;
-        }
+    {
+        MediaStream audioStream;
+        audioStream.name = "audioOutput";
+        audioStream.format = 1;
+        audioStream.timeBase = rational<int>(1, 48000);
+        audioStream.sampleRate = 48000;
+        audioStream.nbChannels = 2;
         encoder_->setOptions(audioStream);
-    }
 
-    if (hasAudio_) {
         auto audioCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(
             getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO));
         audioIdx_ = encoder_->addStream(*audioCodec.get());
@@ -384,7 +429,23 @@ MediaRecorder::initRecord()
     }
 
 #ifdef ENABLE_VIDEO
-    if (hasVideo_) {
+    if (!audioOnly_) {
+        MediaStream videoStream;
+
+        videoStream.name = "videoOutput";
+        videoStream.format = 0;
+        videoStream.isVideo = true;
+        videoStream.timeBase = rational<int>(0, 1);
+        videoStream.width = 1280;
+        videoStream.height = 720;
+        videoStream.frameRate = rational<int>(30, 1);
+        videoStream.bitrate = Manager::instance().videoPreferences.getRecordQuality();
+
+        MediaDescription args;
+        args.mode = RateMode::CQ;
+        encoder_->setOptions(videoStream);
+        encoder_->setOptions(args);
+
         auto videoCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
             getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
         videoIdx_ = encoder_->addStream(*videoCodec.get());
@@ -392,6 +453,13 @@ MediaRecorder::initRecord()
             JAMI_ERR() << "Failed to add video stream to encoder";
             return -1;
         }
+
+        std::shared_ptr<VideoFrame> videoFrame = std::make_shared<VideoFrame>();
+        videoFrame->reserve(AV_PIX_FMT_YUV420P, 1280, 720);
+        videoFrame->pointer()->pts = lastVideoPts_;
+        jami::libav_utils::fillWithBlack(videoFrame->pointer());
+        std::lock_guard<std::mutex> lk(mutexFrameBuff_);
+        frameBuff_.emplace_back(std::move(videoFrame));
     }
 #endif // ENABLE_VIDEO
 
@@ -401,7 +469,7 @@ MediaRecorder::initRecord()
     return 0;
 }
 
-MediaStream
+void
 MediaRecorder::setupVideoOutput()
 {
     MediaStream encoderStream, peer, local, mixer;
@@ -432,7 +500,14 @@ MediaRecorder::setupVideoOutput()
     int streams = peer.isValid() + local.isValid() + mixer.isValid();
     switch (streams) {
     case 0: {
-        JAMI_ERR("Trying to record a stream but none is valid");
+        std::shared_ptr<VideoFrame> videoFrame = std::make_shared<VideoFrame>();
+        videoFrame->reserve(AV_PIX_FMT_YUV420P, 1280, 720);
+        videoFrame->pointer()->pts = lastVideoPts_;
+        jami::libav_utils::fillWithBlack(videoFrame->pointer());
+        JAMI_WARN() << "Trying to record a stream but none is valid";
+        std::lock_guard<std::mutex> lk(mutexFrameBuff_);
+        frameBuff_.emplace_back(std::move(videoFrame));
+        cv_.notify_one();
         break;
     }
     case 1: {
@@ -460,16 +535,33 @@ MediaRecorder::setupVideoOutput()
     }
 
 #ifdef ENABLE_VIDEO
-    if (ret >= 0) {
-        encoderStream = videoFilter_->getOutputParams();
-        encoderStream.bitrate = Manager::instance().videoPreferences.getRecordQuality();
-        JAMI_DBG() << "Recorder output: " << encoderStream;
-    } else {
+    if (ret < 0) {
         JAMI_ERR() << "Failed to initialize video filter";
     }
+
+    // setup output filter
+    if (!videoFilter_)
+        return;
+    MediaStream secondaryFilter = videoFilter_->getOutputParams();
+    secondaryFilter.name = "input";
+    if (outputVideoFilter_) {
+        outputVideoFilter_->flush();
+        outputVideoFilter_.reset();
+    }
+
+    outputVideoFilter_.reset(new MediaFilter);
+    ret = outputVideoFilter_->initialize("[input]scale=-2:720,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=pix_fmts=yuv420p,fps=30",
+        {secondaryFilter});
+
+    if (ret >= 0) {
+        JAMI_DBG() << "Recorder output: " << encoderStream.name;
+    } else {
+        JAMI_ERR() << "Failed to initialize output video filter";
+    }
+
 #endif
 
-    return encoderStream;
+    return;
 }
 
 std::string
@@ -509,7 +601,7 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
     return v.str();
 }
 
-MediaStream
+void
 MediaRecorder::setupAudioOutput()
 {
     MediaStream encoderStream, peer, local, mixer;
@@ -562,14 +654,33 @@ MediaRecorder::setupAudioOutput()
         break;
     }
 
-    if (ret >= 0) {
-        encoderStream = audioFilter_->getOutputParams();
-        JAMI_DBG() << "Recorder output: " << encoderStream;
-    } else {
+    if (ret < 0) {
         JAMI_ERR() << "Failed to initialize audio filter";
+        return;
     }
 
-    return encoderStream;
+    // setup output filter
+    if (!audioFilter_)
+        return;
+    MediaStream secondaryFilter = audioFilter_->getOutputParams();
+    secondaryFilter.name = "input";
+    if (outputAudioFilter_) {
+        outputAudioFilter_->flush();
+        outputAudioFilter_.reset();
+    }
+
+    outputAudioFilter_.reset(new MediaFilter);
+    ret = outputAudioFilter_
+            ->initialize("[input]aformat=sample_fmts=s16:sample_rates=48000:channel_layouts=stereo",
+                                       {secondaryFilter});
+
+    if (ret >= 0) {
+        JAMI_DBG() << "Recorder output: " << encoderStream.name;
+    } else {
+        JAMI_ERR() << "Failed to initialize output audio filter";
+    }
+
+    return;
 }
 
 std::string
@@ -606,7 +717,16 @@ MediaRecorder::flush()
         std::lock_guard<std::mutex> lk(mutexFilterAudio_);
         audioFilter_->flush();
     }
-    encoder_->flush();
+    if (outputAudioFilter_) {
+        std::lock_guard<std::mutex> lk(mutexFilterAudio_);
+        outputAudioFilter_->flush();
+    }
+    if (outputVideoFilter_) {
+        std::lock_guard<std::mutex> lk(mutexFilterAudio_);
+        outputVideoFilter_->flush();
+    }
+    if (encoder_)
+        encoder_->flush();
 }
 
 void
@@ -616,11 +736,13 @@ MediaRecorder::reset()
         std::lock_guard<std::mutex> lk(mutexFrameBuff_);
         frameBuff_.clear();
     }
-    streams_.clear();
     videoIdx_ = audioIdx_ = -1;
     audioOnly_ = false;
+    lastVideoPts_ = 0;
     videoFilter_.reset();
     audioFilter_.reset();
+    outputAudioFilter_.reset();
+    outputVideoFilter_.reset();
     encoder_.reset();
 }
 
