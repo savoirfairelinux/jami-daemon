@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b4911a2a_1f424bb2",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-19T20:11:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "71bb8faa_78fe8b33",
+      "range": {
+        "startLine": 242,
+        "startChar": 5,
+        "endLine": 244,
+        "endChar": 14
+      },
+      "revId": "69ab243bbc7f9a52d8452b6153c305a9c77b1de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1920f27e_b15cb475",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e95211f6_8c103869",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3479,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-19T20:11:58Z",
+      "side": 1,
+      "message": "Client issue: https://review.jami.net/c/jami-client-qt/+/23707",
+      "parentUuid": "1920f27e_b15cb475",
+      "range": {
+        "startLine": 3479,
+        "startChar": 40,
+        "endLine": 3479,
+        "endChar": 49
+      },
+      "revId": "69ab243bbc7f9a52d8452b6153c305a9c77b1de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ce92df08_040a1527",
@@ -60,6 +108,30 @@
       "writtenOn": "2023-01-18T20:12:57Z",
       "side": 1,
       "message": "two questions:\n\n1. What do we want if both sides stops video?\n2. What do we want if one side stops video? (For now, seems frame frozen)",
+      "range": {
+        "startLine": 3480,
+        "startChar": 17,
+        "endLine": 3480,
+        "endChar": 18
+      },
+      "revId": "69ab243bbc7f9a52d8452b6153c305a9c77b1de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cedadef8_84535f67",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3480,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-19T20:11:58Z",
+      "side": 1,
+      "message": "1. recording should start/continue normally.\n\nIn a call every record is treated like a audio/video. So if we add a video to a audio only call, it should be added to the recording as well. On the other way, the video should be empty as only the audio continues. If video is re-added, it should reappear on the recording file.\n\n2. first/last frame is now  set to black to not have this apparent freeze.\n\nNote: the current recorder filters still do not support multistream. This should be addressed on another issue/patch.",
+      "parentUuid": "ce92df08_040a1527",
       "range": {
         "startLine": 3480,
         "startChar": 17,
