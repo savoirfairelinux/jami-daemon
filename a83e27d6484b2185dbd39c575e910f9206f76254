@@ -16,6 +16,24 @@
       "message": "This patch needs ut_recorder changes as some of the tests are broken.",
       "revId": "a83e27d6484b2185dbd39c575e910f9206f76254",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e19704e_01e06c4a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-20T15:03:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f4759517_5f77be69",
+      "revId": "a83e27d6484b2185dbd39c575e910f9206f76254",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
