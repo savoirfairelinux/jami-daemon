@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "15dbf0b3_f0050ace",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 2581,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "44c88d66_73483999",
+      "revId": "8cb7e07ec6935c71fde39931806f3e8337a79917",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a2dcee42_868a475e",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd8811c7_2221be18",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 2216,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a2dcee42_868a475e",
+      "revId": "8cb7e07ec6935c71fde39931806f3e8337a79917",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "10432ae5_fc8e8ded",
@@ -48,6 +84,24 @@
       "writtenOn": "2023-01-19T22:14:42Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "8cb7e07ec6935c71fde39931806f3e8337a79917",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e2dcc003_13efe48b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 2222,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "10432ae5_fc8e8ded",
       "revId": "8cb7e07ec6935c71fde39931806f3e8337a79917",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }

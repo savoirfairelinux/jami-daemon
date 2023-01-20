@@ -306,6 +306,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5b755a94_e0b01512",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 1731,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e54d0ef0_7a92244d",
+      "range": {
+        "startLine": 1731,
+        "startChar": 14,
+        "endLine": 1731,
+        "endChar": 34
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7d0614d3_36de2e0e",
@@ -319,6 +343,30 @@
       "writtenOn": "2023-01-18T19:21:16Z",
       "side": 1,
       "message": "comment + cleanup",
+      "range": {
+        "startLine": 1815,
+        "startChar": 9,
+        "endLine": 1848,
+        "endChar": 17
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b380ffac_b6ea242f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 1848,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7d0614d3_36de2e0e",
       "range": {
         "startLine": 1815,
         "startChar": 9,
@@ -483,6 +531,30 @@
       "writtenOn": "2023-01-18T19:21:16Z",
       "side": 1,
       "message": "docstrings",
+      "range": {
+        "startLine": 469,
+        "startChar": 9,
+        "endLine": 469,
+        "endChar": 29
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "18f54e48_552358d7",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 28
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d84391db_0a3f3aea",
       "range": {
         "startLine": 469,
         "startChar": 9,
@@ -704,6 +776,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "38963f5f_471626eb",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 924,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "88029bcb_a8c67785",
+      "range": {
+        "startLine": 865,
+        "startChar": 7,
+        "endLine": 924,
+        "endChar": 5
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "861c1510_3949d195",
@@ -791,6 +887,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0a4b7f3a_49a168a4",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 2592,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9b954344_bf48c6d4",
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c5759848_2b0745d7",
@@ -861,6 +975,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d68a192_38e50c6b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 2159,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bd8b8384_2d196ac5",
+      "range": {
+        "startLine": 2159,
+        "startChar": 16,
+        "endLine": 2159,
+        "endChar": 31
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5c4c2a73_d009b9a4",
@@ -878,6 +1016,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "caf0dd3e_03ea13b1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 2216,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5c4c2a73_d009b9a4",
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fef1ac22_873c13dd",
@@ -891,6 +1047,24 @@
       "writtenOn": "2023-01-18T19:28:52Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "87713e3b_5a56f98d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 2222,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fef1ac22_873c13dd",
       "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -1012,6 +1186,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f47feb72_8a183605",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 3290,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c66d5b89_509d4607",
+      "range": {
+        "startLine": 3163,
+        "startChar": 29,
+        "endLine": 3290,
+        "endChar": 26
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fb65290e_0fa4bfd8",
@@ -1072,6 +1270,30 @@
       "writtenOn": "2023-01-18T19:21:16Z",
       "side": 1,
       "message": "cleanup \u0026 do we really want to retrigger in ioPool there?",
+      "range": {
+        "startLine": 3559,
+        "startChar": 0,
+        "endLine": 3570,
+        "endChar": 11
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e3436607_f536b82f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 3570,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8a54c08e_fb5b0437",
       "range": {
         "startLine": 3559,
         "startChar": 0,
@@ -1146,6 +1368,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "03fc0d21_1e8ca65b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 4223,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "135363ca_fac00b91",
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "241f7296_be1fe6c8",
@@ -1159,6 +1399,30 @@
       "writtenOn": "2023-01-18T19:21:16Z",
       "side": 1,
       "message": "run on main thread? Stay there?",
+      "range": {
+        "startLine": 4224,
+        "startChar": 8,
+        "endLine": 4224,
+        "endChar": 23
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c0158c0_591b7c71",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 4224,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "241f7296_be1fe6c8",
       "range": {
         "startLine": 4224,
         "startChar": 8,
@@ -1186,6 +1450,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f905bcc3_e104de9c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 4231,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3cd4210e_a90ee2c8",
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "eb9f8a7e_13c5b08d",
@@ -1199,6 +1481,24 @@
       "writtenOn": "2023-01-18T19:28:52Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "22bc2a63_97de6fe8",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 4237,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-20T16:35:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eb9f8a7e_13c5b08d",
       "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
