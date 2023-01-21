@@ -4,7 +4,7 @@
 ut_includedirs = ['unitTest', '../src', libjami_includedirs]
 ut_dependencies = [depjami, depcppunit, libjami_dependencies]
 ut_workdir = meson.project_source_root() / 'test' / 'unitTest'
-ut_library = static_library('ut_library',
+ut_library = static_library('common',
     sources: files('unitTest/common.cpp'),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies
@@ -18,16 +18,6 @@ ut_account_archive = executable('ut_account_archive',
     link_with: ut_library
 )
 test('account_archive', ut_account_archive,
-    workdir: ut_workdir, is_parallel: false, timeout: 1800
-)
-
-ut_migration = executable('ut_migration',
-    sources: files('unitTest/account_archive/migration.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library
-)
-test('migration', ut_migration,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
@@ -98,17 +88,6 @@ test('certificate_store', ut_certificate_store,
 )
 
 
-ut_compatibility = executable('ut_compatibility',
-    sources: files('unitTest/conversation/compability.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library
-)
-test('compatibility', ut_compatibility,
-    workdir: ut_workdir, is_parallel: false, timeout: 1800
-)
-
-
 ut_conference = executable('ut_conference',
     sources: files('unitTest/call/conference.cpp'),
     include_directories: ut_includedirs,
@@ -119,16 +98,6 @@ test('conference', ut_conference,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
-
-ut_recorder = executable('ut_recorder',
-    sources: files('unitTest/call/recorder.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library
-)
-test('conference', ut_recorder,
-    workdir: ut_workdir, is_parallel: false, timeout: 1800
-)
 
 ut_connection_manager = executable('ut_connection_manager',
     sources: files('unitTest/connectionManager/connectionManager.cpp'),
@@ -150,6 +119,19 @@ ut_conversation = executable('ut_conversation',
     link_with: ut_library
 )
 test('conversation', ut_conversation,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
+
+
+ut_conversation_call = executable('ut_conversation_call',
+    sources: files(
+        'unitTest/conversation/conversationcommon.cpp',
+        'unitTest/conversation/call.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('conversation_call', ut_conversation_call,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
@@ -310,6 +292,17 @@ test('media_frame', ut_media_frame,
 )
 
 
+ut_media_player = executable('ut_media_player',
+    sources: files('unitTest/media/test_media_player.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('media_player', ut_media_player,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
+
+
 ut_media_negotiation = executable('ut_media_negotiation',
     sources: files('unitTest/media_negotiation/media_negotiation.cpp'),
     include_directories: ut_includedirs,
@@ -317,6 +310,28 @@ ut_media_negotiation = executable('ut_media_negotiation',
     link_with: ut_library
 )
 test('media_negotiation', ut_media_negotiation,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
+
+
+ut_migration = executable('ut_migration',
+    sources: files('unitTest/account_archive/migration.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('migration', ut_migration,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
+
+
+ut_recorder = executable('ut_recorder',
+    sources: files('unitTest/call/recorder.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('recorder', ut_recorder,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
@@ -365,17 +380,6 @@ test('sip_basic_calls', ut_sip_basic_calls,
 )
 
 
-#ut_sip_empty_offer = executable('ut_sip_empty_offer',
-#    sources: files('unitTest/sip_account/sip_empty_offer.cpp'),
-#    include_directories: ut_includedirs,
-#    dependencies: ut_dependencies,
-#    link_with: ut_library
-#)
-#test('sip_empty_offer', ut_sip_empty_offer,
-#    workdir: ut_workdir, is_parallel: false, timeout: 1800
-#)
-
-
 ut_sip_srtp = executable('ut_sip_srtp',
     sources: files('unitTest/sip_account/sip_srtp.cpp'),
     include_directories: ut_includedirs,
@@ -383,17 +387,6 @@ ut_sip_srtp = executable('ut_sip_srtp',
     link_with: ut_library
 )
 test('sip_srtp', ut_sip_srtp,
-    workdir: ut_workdir, is_parallel: false, timeout: 1800
-)
-
-
-ut_smart_tools = executable('ut_smart_tools',
-    sources: files('unitTest/smartools/testSmartools.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library
-)
-test('smart_tools', ut_smart_tools,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
@@ -432,6 +425,17 @@ test('utf8_utils', ut_utf8_utils,
 
 
 if conf.get('ENABLE_VIDEO')
+    ut_plugins = executable('ut_plugins',
+        sources: files('unitTest/plugins/plugins.cpp'),
+        include_directories: ut_includedirs,
+        dependencies: ut_dependencies,
+        link_with: ut_library
+    )
+    test('plugins', ut_plugins,
+        workdir: ut_workdir, is_parallel: false, timeout: 1800
+    )
+
+
     ut_video_input = executable('ut_video_input',
         sources: files('unitTest/media/video/testVideo_input.cpp'),
         include_directories: ut_includedirs,
@@ -450,17 +454,6 @@ if conf.get('ENABLE_VIDEO')
         link_with: ut_library
     )
     test('video_scaler', ut_video_scaler,
-        workdir: ut_workdir, is_parallel: false, timeout: 1800
-    )
-
-
-    ut_plugins = executable('ut_plugins',
-        sources: files('unitTest/plugins/plugins.cpp'),
-        include_directories: ut_includedirs,
-        dependencies: ut_dependencies,
-        link_with: ut_library
-    )
-    test('plugins', ut_plugins,
         workdir: ut_workdir, is_parallel: false, timeout: 1800
     )
 endif

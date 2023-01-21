@@ -6,7 +6,6 @@ project('jami-daemon', ['c', 'cpp'],
        )
 
 modpkgconfig = import('pkgconfig')
-modcmake = import('cmake')
 
 if host_machine.system() == 'darwin'
     add_languages('objcpp')
@@ -15,24 +14,24 @@ endif
 #################################################
 # Required dependencies
 #################################################
-depthreads = dependency('threads')
-depopendht = dependency('opendht', version: '>= 2.1.0')
-depgnutls = dependency('gnutls', version: '>= 3.6.7')
-depnettle = dependency('nettle', version: '>= 3.0.0')
-deplibpjproject = dependency('libpjproject')
-deplibgit2 = dependency('libgit2', version: '>= 1.1.0')
-deplibsecp256k1 = dependency('libsecp256k1', version: '>= 0.1')
-deplibavcodec = dependency('libavcodec', version: '>= 56.60.100')
-deplibavfilter = dependency('libavfilter', version: '>= 5.40.101')
-deplibavdevice = dependency('libavdevice', version: '>= 56.4.100')
-deplibavformat = dependency('libavformat', version: '>= 56.40.101')
-deplibswscale = dependency('libswscale', version: '>= 3.1.101')
-deplibswresample = dependency('libswresample', version: '>= 1.2.101')
-deplibavutil = dependency('libavutil', version: '>= 55.75.100')
-depfmt = dependency('fmt', version: '>= 5.3')
-depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1')
-depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5')
-depzlib = dependency('zlib')
+depthreads        = dependency('threads')
+depopendht        = dependency('opendht', version: '>= 2.1.0')
+depgnutls         = dependency('gnutls', version: '>= 3.6.7')
+depnettle         = dependency('nettle', version: '>= 3.0.0')
+deplibpjproject   = dependency('libpjproject') # a custom fork, see contrib/src/pjproject/rules.mak
+deplibgit2        = dependency('libgit2', version: '>= 1.1.0')
+deplibsecp256k1   = dependency('libsecp256k1', version: '>= 0.1')
+deplibavcodec     = dependency('libavcodec', version: '>= 56.60.100')
+deplibavfilter    = dependency('libavfilter', version: '>= 5.40.101')
+deplibavdevice    = dependency('libavdevice', version: '>= 56.4.100')
+deplibavformat    = dependency('libavformat', version: '>= 56.40.101')
+deplibswscale     = dependency('libswscale', version: '>= 3.1.101')
+deplibswresample  = dependency('libswresample', version: '>= 1.2.101')
+deplibavutil      = dependency('libavutil', version: '>= 55.75.100')
+depfmt            = dependency('fmt', version: '>= 5.3')
+depyamlcpp        = dependency('yaml-cpp', version: '>= 0.5.1')
+depjsoncpp        = dependency('jsoncpp', version: '>= 1.6.5')
+depzlib           = dependency('zlib')
 
 if get_option('interfaces').contains('dbus')
     depdbuscpp = dependency('dbus-c++-1')
@@ -147,8 +146,7 @@ configure_file(
     output: 'config.h',
     configuration: conf
 )
-add_project_arguments('-DHAVE_CONFIG_H', language: 'cpp')
-add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
+add_project_arguments('-DHAVE_CONFIG_H', language: ['c', 'cpp'])
 
 #################################################
 # Build targets
