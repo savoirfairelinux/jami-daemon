@@ -776,6 +776,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a5c7600f_fecde4c5",
+        "filename": "src/jamidht/swarm/swarm_channel_handler.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "50f707f2_d38365a0",
+      "range": {
+        "startLine": 4,
+        "startChar": 5,
+        "endLine": 5,
+        "endChar": 2
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "50c32da0_3473c83e",
