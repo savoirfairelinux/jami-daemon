@@ -1,4 +1,4 @@
-From 000d467635e4ef42d805fd4cc17efdb2f986ce5e Mon Sep 17 00:00:00 2001
+From 8d019ca2f88cb4636af2d0c5feefc7cf146b1583 Mon Sep 17 00:00:00 2001
 From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
 Date: Thu, 29 Dec 2022 12:59:19 -0300
 Subject: [PATCH] Add dxgi support
@@ -7,15 +7,15 @@ Subject: [PATCH] Add dxgi support
  configure                        |   1 +
  libavdevice/Makefile             |   4 +
  libavdevice/alldevices.c         |   1 +
- libavdevice/d3dHelpers.h         |  59 ++++++++
- libavdevice/direct3d11.interop.h |  51 +++++++
- libavdevice/dxgigrab.cpp         | 229 +++++++++++++++++++++++++++++++
- libavdevice/dxgigrab.h           |  83 +++++++++++
- libavdevice/dxgigrab_c.c         |  59 ++++++++
- libavdevice/dxgigrab_c.h         |  98 +++++++++++++
- libavdevice/windows_capture.cpp  | 184 +++++++++++++++++++++++++
- libavdevice/windows_capture.h    |  82 +++++++++++
- 11 files changed, 851 insertions(+)
+ libavdevice/d3dHelpers.h         |  59 +++++++
+ libavdevice/direct3d11.interop.h |  51 ++++++
+ libavdevice/dxgigrab.cpp         | 266 +++++++++++++++++++++++++++++++
+ libavdevice/dxgigrab.h           |  83 ++++++++++
+ libavdevice/dxgigrab_c.c         |  59 +++++++
+ libavdevice/dxgigrab_c.h         |  98 ++++++++++++
+ libavdevice/windows_capture.cpp  | 184 +++++++++++++++++++++
+ libavdevice/windows_capture.h    |  82 ++++++++++
+ 11 files changed, 888 insertions(+)
  create mode 100644 libavdevice/d3dHelpers.h
  create mode 100644 libavdevice/direct3d11.interop.h
  create mode 100644 libavdevice/dxgigrab.cpp
@@ -194,10 +194,10 @@ index 0000000000..62c9b0843e
 +}
 diff --git a/libavdevice/dxgigrab.cpp b/libavdevice/dxgigrab.cpp
 new file mode 100644
-index 0000000000..da16b026a5
+index 0000000000..821daa1e74
 --- /dev/null
 +++ b/libavdevice/dxgigrab.cpp
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,266 @@
 +/*
 + * DXGI video grab interface
 + *
@@ -228,6 +228,13 @@ index 0000000000..da16b026a5
 +
 +#include "dxgigrab.h"
 +
++#include <dwmapi.h>
++#include <string>
++#include <iostream>
++#include <sstream>
++#include <bitset>
++#include <iomanip>
++
 +#ifdef __cplusplus
 +extern "C" {
 +#endif
@@ -236,6 +243,7 @@ index 0000000000..da16b026a5
 +}
 +#endif
 +
++#pragma optimize("", off)
 +static BOOL CALLBACK enumMonitor(HMONITOR handle, HDC hdc, LPRECT rect,
 +                    LPARAM lParam)
 +{
@@ -249,6 +257,30 @@ index 0000000000..da16b026a5
 +    }
 +
 +    return (monitorData->desiredId > monitorData->curId++);
++}
++
++BOOL CALLBACK
++EnumWindowsProcCB(HWND hwnd, LPARAM lParam)
++{
++    const size_t MAX_WINDOW_NAME = 256;
++    TCHAR windowName[MAX_WINDOW_NAME];
++    GetWindowText(hwnd, windowName, MAX_WINDOW_NAME);
++    // Do not show windows that has no caption
++    if (0 == windowName[0])
++        return TRUE;
++
++    std::pair<std::wstring, HWND>* dataPair = reinterpret_cast<std::pair<std::wstring, HWND>*>(lParam);
++
++    std::wstringstream ss;
++    ss << std::hex << L"0x" << std::setw(16) << std::setfill(L'0') << *reinterpret_cast<uint64_t*>(&hwnd);
++
++    if (ss.str() == dataPair->first) {
++        if (!IsWindowVisible(hwnd))
++            return TRUE;
++        dataPair->second = hwnd;
++        return FALSE;
++    }
++    return TRUE;
 +}
 +
 +int dxgigrab_read_header(AVFormatContext *s1)
@@ -265,9 +297,10 @@ index 0000000000..da16b026a5
 +    std::string name;
 +    AVStream   *st       = NULL;
 +
-+    if (!strncmp(s1->url, "title=", 6)) {
-+        if (!s->hwnd) {
-+            name = s1->url + 6;
++    if (!strncmp(s1->url, "id=", 3)) {
++		if (!s->hwnd) {
++            name = s1->url + 3;
++
 +            int srcLength = (int) name.length();
 +            int requiredSize = MultiByteToWideChar(CP_UTF8, 0, name.c_str(), srcLength, nullptr, 0);
 +            if (!requiredSize) {
@@ -277,10 +310,14 @@ index 0000000000..da16b026a5
 +            if (!MultiByteToWideChar(CP_UTF8, 0, name.c_str(), srcLength, &(*wName.begin()), requiredSize)) {
 +                return AVERROR_EXTERNAL;
 +            }
-+            s->hwnd = FindWindowW(NULL, &(*wName.begin()));
++
++            std::pair<std::wstring, HWND> idName(wName, {});
++            LPARAM lParam = reinterpret_cast<LPARAM>(&idName);
++            EnumWindows(EnumWindowsProcCB, lParam);
++            s->hwnd = idName.second;
 +            if (!s->hwnd) {
 +                av_log(s1, AV_LOG_ERROR,
-+                       "Can't find window '%s', aborting.\n", name.c_str());
++                       "Can't find window from process '%s', aborting.\n", name.c_str());
 +                return AVERROR_EXTERNAL;
 +            }
 +        }
@@ -289,7 +326,7 @@ index 0000000000..da16b026a5
 +        char *display_number = av_strdup(s1->url);
 +        if (!sscanf(s1->url, "%[^+]+%d,%d ", display_number, &s->offset_x, &s->offset_y)) {
 +            av_log(s1, AV_LOG_ERROR,
-+                "Please use \"<screenNumber>+<X,Y> <WidthxHeight>\" or \"title=<windowname>\" to specify your target.\n");
++                "Please use \"<screenNumber>+<X,Y> <WidthxHeight>\" or \"id=<windowprocessid>\" to specify your target.\n");
 +            return AVERROR_EXTERNAL;
 +        }
 +        if (s->offset_x || s->offset_y) {
@@ -312,7 +349,7 @@ index 0000000000..da16b026a5
 +
 +    if (!s->hmnt && !s->hwnd) {
 +        av_log(s1, AV_LOG_ERROR,
-+               "Please use \"<screenNumber>+<X,Y> <WidthxHeight>\" or \"title=<windowname>\" to "
++               "Please use \"<screenNumber>+<X,Y> <WidthxHeight>\" or \"id=<windowprocessid>\" to "
 +               "specify your target.\n");
 +        return AVERROR_EXTERNAL;
 +    }
@@ -963,6 +1000,6 @@ index 0000000000..3e9269ed58
 +    std::mutex mtx_;
 +    bool running_;
 +};
---
+-- 
 2.30.2.windows.1
 
