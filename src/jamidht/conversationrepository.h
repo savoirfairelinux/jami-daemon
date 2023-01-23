@@ -60,7 +60,7 @@ struct LogOptions
     std::string from {};
     std::string to {};
     uint64_t nbOfCommits {0}; // maximum number of commits wanted
-
+    bool skipMerge {false};    // Do not include merge commits in the log. Used by the module to get last interaction without potential merges
     bool includeTo {false};    // If we want or not the "to" commit [from-to] or [from-to)
     bool fastLog {false};      // Do not parse content, used mostly to count
     bool logIfNotFound {true}; // Add a warning in the log if commit is not found

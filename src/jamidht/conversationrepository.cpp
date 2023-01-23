@@ -2052,10 +2052,13 @@ ConversationRepository::Impl::log(const LogOptions& options) const
     auto startLogging = options.from == "";
     auto breakLogging = false;
     forEachCommit(
-        [&](const auto& id, const auto& author, const auto&) {
+        [&](const auto& id, const auto& author, const auto& commit) {
             if (!commits.empty()) {
                 // Set linearized parent
                 commits.rbegin()->linearized_parent = id;
+            }
+            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
+                return CallbackResult::Skip;
             }
 
             if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))

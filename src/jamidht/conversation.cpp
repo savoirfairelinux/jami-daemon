@@ -1033,6 +1033,7 @@ Conversation::lastCommitId() const
 {
     LogOptions options;
     options.nbOfCommits = 1;
+    options.skipMerge = true;
     auto messages = pimpl_->loadMessages(options);
     if (messages.empty())
         return {};
