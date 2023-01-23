@@ -631,7 +631,6 @@ MediaDecoder::decode(AVPacket& packet)
         }
 #endif
         avcodec_flush_buffers(decoderCtx_);
-        setupStream();
         return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
     }
 
