@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0965b09f_bac95958",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-01-23T16:32:41Z",
+      "side": 1,
+      "message": "I wonder if it\u0027s necessary to prefix the 32 high-bits and hex notation specifier?",
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e5f64df_23369ea4",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-01-23T16:32:41Z",
+      "side": 1,
+      "message": "this should simplify to just `hwnd`. it supposed to be an index and not a pointer",
+      "range": {
+        "startLine": 275,
+        "startChar": 71,
+        "endLine": 275,
+        "endChar": 106
+      },
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96f6b70f_d51da03a",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-01-23T16:32:41Z",
+      "side": 1,
+      "message": "this should be `id` or `hwnd` or `handle` right?\nif so, then I think the following code shouldn\u0027t need wide-string conversions, and \"name\" shouldn\u0027t be referenced anymore",
+      "range": {
+        "startLine": 302,
+        "startChar": 13,
+        "endLine": 302,
+        "endChar": 18
+      },
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2de6da6a_155098ea",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-01-23T16:32:41Z",
+      "side": 1,
+      "message": "Just to confirm, the objective of EnumWindowsProcCB is to:\n1. filter captionless windows\n2. filter invisible windows\n3. strip \"0x00000000\" and convert the id string to a window handle\n?",
+      "range": {
+        "startLine": 316,
+        "startChar": 13,
+        "endLine": 317,
+        "endChar": 37
+      },
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
