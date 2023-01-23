@@ -1,4 +1,4 @@
-From 000d467635e4ef42d805fd4cc17efdb2f986ce5e Mon Sep 17 00:00:00 2001
+From 5215039eb485d3a17b9b69f67f2a7a72350eb639 Mon Sep 17 00:00:00 2001
 From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
 Date: Thu, 29 Dec 2022 12:59:19 -0300
 Subject: [PATCH] Add dxgi support
@@ -9,13 +9,13 @@ Subject: [PATCH] Add dxgi support
  libavdevice/alldevices.c         |   1 +
  libavdevice/d3dHelpers.h         |  59 ++++++++
  libavdevice/direct3d11.interop.h |  51 +++++++
- libavdevice/dxgigrab.cpp         | 229 +++++++++++++++++++++++++++++++
- libavdevice/dxgigrab.h           |  83 +++++++++++
+ libavdevice/dxgigrab.cpp         | 225 +++++++++++++++++++++++++++++++
+ libavdevice/dxgigrab.h           |  83 ++++++++++++
  libavdevice/dxgigrab_c.c         |  59 ++++++++
- libavdevice/dxgigrab_c.h         |  98 +++++++++++++
+ libavdevice/dxgigrab_c.h         |  98 ++++++++++++++
  libavdevice/windows_capture.cpp  | 184 +++++++++++++++++++++++++
  libavdevice/windows_capture.h    |  82 +++++++++++
- 11 files changed, 851 insertions(+)
+ 11 files changed, 847 insertions(+)
  create mode 100644 libavdevice/d3dHelpers.h
  create mode 100644 libavdevice/direct3d11.interop.h
  create mode 100644 libavdevice/dxgigrab.cpp
@@ -194,10 +194,10 @@ index 0000000000..62c9b0843e
 +}
 diff --git a/libavdevice/dxgigrab.cpp b/libavdevice/dxgigrab.cpp
 new file mode 100644
-index 0000000000..da16b026a5
+index 0000000000..9774e72ab1
 --- /dev/null
 +++ b/libavdevice/dxgigrab.cpp
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,225 @@
 +/*
 + * DXGI video grab interface
 + *
@@ -227,6 +227,9 @@ index 0000000000..da16b026a5
 + */
 +
 +#include "dxgigrab.h"
++
++#include <dwmapi.h>
++#include <sstream>
 +
 +#ifdef __cplusplus
 +extern "C" {
@@ -262,25 +265,18 @@ index 0000000000..da16b026a5
 +    monitorData.rect.left = 0;
 +    monitorData.rect.bottom = 0;
 +    monitorData.rect.right = 0;
-+    std::string name;
++    std::string handle;
 +    AVStream   *st       = NULL;
 +
-+    if (!strncmp(s1->url, "title=", 6)) {
++    if (!strncmp(s1->url, "hwnd=", 5)) {
 +        if (!s->hwnd) {
-+            name = s1->url + 6;
-+            int srcLength = (int) name.length();
-+            int requiredSize = MultiByteToWideChar(CP_UTF8, 0, name.c_str(), srcLength, nullptr, 0);
-+            if (!requiredSize) {
-+                return AVERROR_EXTERNAL;
-+            }
-+            std::wstring wName((size_t) requiredSize, 0);
-+            if (!MultiByteToWideChar(CP_UTF8, 0, name.c_str(), srcLength, &(*wName.begin()), requiredSize)) {
-+                return AVERROR_EXTERNAL;
-+            }
-+            s->hwnd = FindWindowW(NULL, &(*wName.begin()));
++            handle = s1->url + 5;
++            try {
++                s->hwnd = reinterpret_cast<HWND>(std::stoull(handle, nullptr, 16));
++            } catch (...) {}
 +            if (!s->hwnd) {
 +                av_log(s1, AV_LOG_ERROR,
-+                       "Can't find window '%s', aborting.\n", name.c_str());
++                       "Can't find window from handle '%s', aborting.\n", handle.c_str());
 +                return AVERROR_EXTERNAL;
 +            }
 +        }
@@ -289,7 +285,7 @@ index 0000000000..da16b026a5
 +        char *display_number = av_strdup(s1->url);
 +        if (!sscanf(s1->url, "%[^+]+%d,%d ", display_number, &s->offset_x, &s->offset_y)) {
 +            av_log(s1, AV_LOG_ERROR,
-+                "Please use \"<screenNumber>+<X,Y> <WidthxHeight>\" or \"title=<windowname>\" to specify your target.\n");
++                "Please use \"<screenNumber>+<X,Y> <WidthxHeight>\" or \"hwnd=<windowHandle>\" to specify your target.\n");
 +            return AVERROR_EXTERNAL;
 +        }
 +        if (s->offset_x || s->offset_y) {
@@ -312,7 +308,7 @@ index 0000000000..da16b026a5
 +
 +    if (!s->hmnt && !s->hwnd) {
 +        av_log(s1, AV_LOG_ERROR,
-+               "Please use \"<screenNumber>+<X,Y> <WidthxHeight>\" or \"title=<windowname>\" to "
++               "Please use \"<screenNumber>+<X,Y> <WidthxHeight>\" or \"hwnd=<windowHandle>\" to "
 +               "specify your target.\n");
 +        return AVERROR_EXTERNAL;
 +    }
@@ -362,8 +358,8 @@ index 0000000000..da16b026a5
 +        x_internal->m_capture.reset(new WindowsCapture(m_device, windowItem, monitorData));
 +        x_internal->m_capture->StartCapture();
 +        x_internal->m_capture->checkNewFrameArrived();
-+        x_internal->m_capture->window = name;
-+        x_internal->windowName = name;
++        x_internal->m_capture->window = handle;
++        x_internal->windowHandle = handle;
 +    }
 +
 +    s->time_base   = av_inv_q(s->framerate);
@@ -429,7 +425,7 @@ index 0000000000..da16b026a5
 +}
 diff --git a/libavdevice/dxgigrab.h b/libavdevice/dxgigrab.h
 new file mode 100644
-index 0000000000..a247077e7d
+index 0000000000..92cad7dab8
 --- /dev/null
 +++ b/libavdevice/dxgigrab.h
 @@ -0,0 +1,83 @@
@@ -511,7 +507,7 @@ index 0000000000..a247077e7d
 +
 +struct dxgigrab_internal {
 +    std::unique_ptr<WindowsCapture> m_capture{ nullptr };
-+    std::string windowName;
++    std::string windowHandle;
 +    std::mutex mtx;
 +};
 +
@@ -963,6 +959,6 @@ index 0000000000..3e9269ed58
 +    std::mutex mtx_;
 +    bool running_;
 +};
---
+-- 
 2.30.2.windows.1
 

@@ -261,30 +261,6 @@ VideoInput::configureFilePlayback(const std::string&,
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
 }
 
-#ifdef WIN32
-BOOL CALLBACK
-EnumWindowsProcMy(HWND hwnd, LPARAM lParam)
-{
-    std::pair<DWORD, std::string>* dataPair = reinterpret_cast<std::pair<DWORD, std::string>*>(lParam);
-    DWORD lpdwProcessId;
-    if (auto parent = GetWindow(hwnd, GW_OWNER))
-        GetWindowThreadProcessId(parent, &lpdwProcessId);
-    else
-        GetWindowThreadProcessId(hwnd, &lpdwProcessId);
-    int len = GetWindowTextLength(hwnd) + 1;
-    std::vector<wchar_t> buf(len);
-    GetWindowText(hwnd, &buf[0], len);
-
-    if (lpdwProcessId == dataPair->first) {
-        if (!IsWindowVisible(hwnd))
-            return TRUE;
-        dataPair->second = to_string(&buf[0]);
-        return FALSE;
-    }
-    return TRUE;
-}
-#endif
-
 void
 VideoInput::createDecoder()
 {
@@ -310,23 +286,6 @@ VideoInput::createDecoder()
 
     bool ready = false, restartSink = false;
     if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab") && !decOpts_.is_area) {
-#ifdef WIN32
-        // if window is not find, it might have changed its name
-        // in that case we must search for the parent process window
-        auto hwnd = FindWindow(NULL, to_wstring(decOpts_.name.substr(6)).c_str());
-        if (!hwnd) {
-            std::pair<DWORD, std::string> idName(wProcessId, {});
-            LPARAM lParam = reinterpret_cast<LPARAM>(&idName);
-            EnumWindows(EnumWindowsProcMy, lParam);
-            if (!idName.second.empty()) {
-                auto newTitle = "title=" + idName.second;
-                if (decOpts_.name != newTitle || decOpts_.input != newTitle) {
-                    decOpts_.name = newTitle;
-                    decOpts_.input = newTitle;
-                }
-            }
-        }
-#endif
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
@@ -516,21 +475,15 @@ VideoInput::initWindowsGrab(const std::string& display)
     // Patterns
     // full screen sharing : :1+0,0 2560x1440 - SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440
     // area sharing : :1+882,211 1532x779 - SCREEN 1, POSITION 882x211, RESOLUTION 1532x779
-    // window sharing : :+1,0 0x0 window-id:TITLE - POSITION 0X0
+    // window sharing : :+1,0 0x0 window-id:HANDLE - POSITION 0X0
     size_t space = display.find(' ');
     std::string windowIdStr = "window-id:";
-    size_t winIdPos = display.find(windowIdStr);
+    size_t winHandlePos = display.find(windowIdStr);
 
     DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
-    if (winIdPos != std::string::npos) {
-        p.input = display.substr(winIdPos + windowIdStr.size()); // "TITLE";
-        p.name  = display.substr(winIdPos + windowIdStr.size()); // "TITLE";
-
-        auto hwnd = FindWindow(NULL, to_wstring(p.name.substr(6)).c_str());
-        if (auto parent = GetWindow(hwnd, GW_OWNER))
-            GetWindowThreadProcessId(parent, &wProcessId);
-        else
-            GetWindowThreadProcessId(hwnd, &wProcessId);
+    if (winHandlePos != std::string::npos) {
+        p.input = display.substr(winHandlePos + windowIdStr.size()); // "HANDLE";
+        p.name  = display.substr(winHandlePos + windowIdStr.size()); // "HANDLE";
         p.is_area = 0;
     } else {
         p.input = display.substr(1);
