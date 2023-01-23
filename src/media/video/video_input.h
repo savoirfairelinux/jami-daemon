@@ -137,7 +137,6 @@ private:
     bool initFile(std::string path);
 #ifdef WIN32
     bool initWindowsGrab(const std::string& display);
-    DWORD wProcessId;
 #endif
 
     bool isCapturing() const noexcept;
