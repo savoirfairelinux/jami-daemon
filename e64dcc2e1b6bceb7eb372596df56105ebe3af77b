@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "136c7ea0_6cd06a58",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 2440,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-23T17:17:45Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027channel\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "e64dcc2e1b6bceb7eb372596df56105ebe3af77b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d0a84968_7d8cc769",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 2193,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-23T17:17:45Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "e64dcc2e1b6bceb7eb372596df56105ebe3af77b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "746c96ec_3f0c7228",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 2198,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-23T17:17:45Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "e64dcc2e1b6bceb7eb372596df56105ebe3af77b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7cb8a552_7dfb0c60",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-23T17:17:45Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027channel\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "e64dcc2e1b6bceb7eb372596df56105ebe3af77b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
