@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "887f354d_286d5a35",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-23T19:21:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0965b09f_bac95958",
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6e5f64df_23369ea4",
@@ -31,6 +49,30 @@
       "writtenOn": "2023-01-23T16:32:41Z",
       "side": 1,
       "message": "this should simplify to just `hwnd`. it supposed to be an index and not a pointer",
+      "range": {
+        "startLine": 275,
+        "startChar": 71,
+        "endLine": 275,
+        "endChar": 106
+      },
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dc7e55ed_f3826539",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-23T19:21:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6e5f64df_23369ea4",
       "range": {
         "startLine": 275,
         "startChar": 71,
@@ -64,6 +106,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4e0f5d7f_e86ca0aa",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-23T19:21:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "96f6b70f_d51da03a",
+      "range": {
+        "startLine": 302,
+        "startChar": 13,
+        "endLine": 302,
+        "endChar": 18
+      },
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2de6da6a_155098ea",
@@ -77,6 +143,30 @@
       "writtenOn": "2023-01-23T16:32:41Z",
       "side": 1,
       "message": "Just to confirm, the objective of EnumWindowsProcCB is to:\n1. filter captionless windows\n2. filter invisible windows\n3. strip \"0x00000000\" and convert the id string to a window handle\n?",
+      "range": {
+        "startLine": 316,
+        "startChar": 13,
+        "endLine": 317,
+        "endChar": 37
+      },
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e50405d_37d186e0",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-23T19:21:31Z",
+      "side": 1,
+      "message": "the objective is to find the handler that matches with the parsed id",
+      "parentUuid": "2de6da6a_155098ea",
       "range": {
         "startLine": 316,
         "startChar": 13,
