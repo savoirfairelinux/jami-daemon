@@ -22,6 +22,30 @@
       },
       "revId": "3c1b042bed38c38ad2ee32bc0e1974fc893a49f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9c1bad50_a6a6b193",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "375b4619_8c8734e8",
+      "range": {
+        "startLine": 51,
+        "startChar": 4,
+        "endLine": 51,
+        "endChar": 19
+      },
+      "revId": "3c1b042bed38c38ad2ee32bc0e1974fc893a49f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

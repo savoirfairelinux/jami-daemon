@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab684673_01999acc",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "16d60a50_d4a34d6c",
+      "range": {
+        "startLine": 111,
+        "startChar": 12,
+        "endLine": 111,
+        "endChar": 40
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "62c15143_6d596807",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "emplace_back({NodeId::zero()})",
+      "range": {
+        "startLine": 160,
+        "startChar": 6,
+        "endLine": 160,
+        "endChar": 41
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1914532f_42de915d",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "62c15143_6d596807",
       "range": {
         "startLine": 160,
         "startChar": 6,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c4dab23_31ef9ecb",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 181,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "acde5871_72e1255d",
+      "range": {
+        "startLine": 181,
+        "startChar": 31,
+        "endLine": 181,
+        "endChar": 40
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2043915c_f4f77cee",
@@ -83,6 +155,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "std::find_if exists, also avoid while(true) we can check buckets.end() here",
+      "range": {
+        "startLine": 193,
+        "startChar": 21,
+        "endLine": 193,
+        "endChar": 26
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8360eb1_458385a2",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2043915c_f4f77cee",
       "range": {
         "startLine": 193,
         "startChar": 21,
@@ -116,6 +212,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ba534e48_6e93b5e6",
+        "filename": "src/jamidht/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 351,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "636bbdf2_20046206",
+      "range": {
+        "startLine": 351,
+        "startChar": 48,
+        "endLine": 351,
+        "endChar": 58
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "204d6d97_f79ba9db",
@@ -129,6 +249,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "only needed in cpp?",
+      "range": {
+        "startLine": 31,
+        "startChar": 25,
+        "endLine": 32,
+        "endChar": 54
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c8463f9_3034cd62",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "204d6d97_f79ba9db",
       "range": {
         "startLine": 31,
         "startChar": 25,
@@ -162,6 +306,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c3de9b4_8dd2940b",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c25b42d0_4299a7f6",
+      "range": {
+        "startLine": 33,
+        "startChar": 1,
+        "endLine": 33,
+        "endChar": 34
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aae4085f_80714957",
@@ -175,6 +343,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "if you want a copy constructor, you should at least follow the rule of three https://en.cppreference.com/w/cpp/language/rule_of_three",
+      "range": {
+        "startLine": 45,
+        "startChar": 0,
+        "endLine": 45,
+        "endChar": 3
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "774d0cfe_e57b5032",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aae4085f_80714957",
       "range": {
         "startLine": 45,
         "startChar": 0,
@@ -208,6 +400,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4ff2c105_0e046d9d",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "37d68bb5_6d9ec148",
+      "range": {
+        "startLine": 79,
+        "startChar": 49,
+        "endLine": 79,
+        "endChar": 60
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fa36d540_8c584c64",
@@ -231,6 +447,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5727bb85_00c487b6",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa36d540_8c584c64",
+      "range": {
+        "startLine": 125,
+        "startChar": 7,
+        "endLine": 127,
+        "endChar": 12
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2f56db14_418e1844",
@@ -244,6 +484,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "we generally add \"_\" at the end of class members",
+      "range": {
+        "startLine": 168,
+        "startChar": 42,
+        "endLine": 168,
+        "endChar": 52
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f7647d6b_5b326841",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2f56db14_418e1844",
       "range": {
         "startLine": 168,
         "startChar": 42,
@@ -300,6 +564,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b9ebdb63_3028ecb1",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2f0d111c_087cecc7",
+      "range": {
+        "startLine": 187,
+        "startChar": 15,
+        "endLine": 189,
+        "endChar": 15
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "087034fe_c98175b9",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "354f823d_bf80703e",
+      "range": {
+        "startLine": 176,
+        "startChar": 15,
+        "endLine": 189,
+        "endChar": 16
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1a732d5d_4e987617",
@@ -313,6 +625,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "const?",
+      "range": {
+        "startLine": 242,
+        "startChar": 66,
+        "endLine": 242,
+        "endChar": 70
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1f78c414_45bc1900",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1a732d5d_4e987617",
       "range": {
         "startLine": 242,
         "startChar": 66,
@@ -346,6 +682,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b17355b4_d18c55ba",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "153289fa_8c7cdd38",
+      "range": {
+        "startLine": 264,
+        "startChar": 22,
+        "endLine": 264,
+        "endChar": 29
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8b274101_0db3e69b",
@@ -359,6 +719,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "unsigned",
+      "range": {
+        "startLine": 274,
+        "startChar": 4,
+        "endLine": 274,
+        "endChar": 7
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bcc87769_98117488",
+        "filename": "src/jamidht/swarm/routing_table.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8b274101_0db3e69b",
       "range": {
         "startLine": 274,
         "startChar": 4,
@@ -415,6 +799,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "312e1bae_28d45753",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "50c32da0_3473c83e",
+      "range": {
+        "startLine": 38,
+        "startChar": 40,
+        "endLine": 38,
+        "endChar": 42
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7839ce26_f2420588",
@@ -428,6 +836,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "remove debug logs",
+      "range": {
+        "startLine": 48,
+        "startChar": 0,
+        "endLine": 48,
+        "endChar": 48
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8245c2f7_9cfbc930",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7839ce26_f2420588",
       "range": {
         "startLine": 48,
         "startChar": 0,
@@ -461,6 +893,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c88403de_a91d2ab9",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7312b0e3_433cc277",
+      "range": {
+        "startLine": 66,
+        "startChar": 16,
+        "endLine": 66,
+        "endChar": 24
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f14315b6_c4532df5",
@@ -484,6 +940,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "228afb12_529a0561",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f14315b6_c4532df5",
+      "range": {
+        "startLine": 163,
+        "startChar": 33,
+        "endLine": 166,
+        "endChar": 28
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c3d297a0_3e5ce146",
@@ -497,6 +977,30 @@
       "writtenOn": "2022-11-02T15:33:59Z",
       "side": 1,
       "message": "id_?",
+      "range": {
+        "startLine": 45,
+        "startChar": 36,
+        "endLine": 45,
+        "endChar": 40
+      },
+      "revId": "b08f1f0123b26d5c67563b95f9ca59e631d7b43b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "723e09b4_8522fe99",
+        "filename": "src/jamidht/swarm/swarm_manager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T15:16:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c3d297a0_3e5ce146",
       "range": {
         "startLine": 45,
         "startChar": 36,
