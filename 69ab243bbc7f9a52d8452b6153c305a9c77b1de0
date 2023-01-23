@@ -140,6 +140,30 @@
       },
       "revId": "69ab243bbc7f9a52d8452b6153c305a9c77b1de0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dca5dd7b_117dfc9b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3480,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-23T18:03:48Z",
+      "side": 1,
+      "message": "* When recording an audio call/conference the recording should be an audio file (for user convenience).\n\n* We don\u0027t want a single video file where the video stream starts/stop during the file, for compatibility with various video players.\nIt\u0027s ok to have multiple video files for multiple parts of a single call/conference if the media list changes over time.",
+      "parentUuid": "cedadef8_84535f67",
+      "range": {
+        "startLine": 3480,
+        "startChar": 17,
+        "endLine": 3480,
+        "endChar": 18
+      },
+      "revId": "69ab243bbc7f9a52d8452b6153c305a9c77b1de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
