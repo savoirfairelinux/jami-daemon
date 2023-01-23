@@ -212,6 +212,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "11e3cd47_37a3c5bb",
+        "filename": "src/jamidht/conversation.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T16:07:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a3dfba14_a5eda60c",
+      "range": {
+        "startLine": 399,
+        "startChar": 17,
+        "endLine": 401,
+        "endChar": 17
+      },
+      "revId": "d501f4b1597720aa1f519476784f839bf7928b61",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d131b20d_6b6ea196",

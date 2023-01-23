@@ -71,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2cbce594_d2e83100",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 542,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T16:07:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0331004c_ffe43534",
+      "range": {
+        "startLine": 538,
+        "startChar": 39,
+        "endLine": 542,
+        "endChar": 39
+      },
+      "revId": "a64d66fd87e61176e075924e30164ca509fd44e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f4522aa1_2c95d3f4",
@@ -84,6 +108,30 @@
       "writtenOn": "2022-11-21T19:59:02Z",
       "side": 1,
       "message": "you want to invert the if (fixed in my patch)",
+      "range": {
+        "startLine": 2344,
+        "startChar": 2,
+        "endLine": 2344,
+        "endChar": 22
+      },
+      "revId": "a64d66fd87e61176e075924e30164ca509fd44e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "680383c9_bbf6c32f",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2344,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-23T16:07:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f4522aa1_2c95d3f4",
       "range": {
         "startLine": 2344,
         "startChar": 2,
