@@ -175,6 +175,30 @@
       },
       "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "53d9afec_172918b7",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-23T19:21:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5e50405d_37d186e0",
+      "range": {
+        "startLine": 316,
+        "startChar": 13,
+        "endLine": 317,
+        "endChar": 37
+      },
+      "revId": "b79168ac5caf4226f63102a16004084457ce0cdb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
