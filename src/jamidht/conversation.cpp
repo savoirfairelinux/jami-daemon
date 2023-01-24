@@ -271,15 +271,21 @@ public:
             auto confId = commit.at("confId");
             auto uri = commit.at("uri");
             auto device = commit.at("device");
+            std::lock_guard<std::mutex> lk(activeCallsMtx_);
+            auto itActive = std::find_if(activeCalls_.begin(),
+                                            activeCalls_.end(),
+                                            [&](auto value) {
+                                                return value["id"] == confId && value["uri"] == uri
+                                                    && value["device"] == device;
+                                            });
             if (commit.find("duration") == commit.end()) {
-                if (!eraseOnly) {
+                if (itActive == activeCalls_.end() && !eraseOnly) {
                     JAMI_DEBUG(
                         "swarm:{:s} new current call detected: {:s} on device {:s}, account {:s}",
                         convId,
                         confId,
                         device,
                         uri);
-                    std::lock_guard<std::mutex> lk(activeCallsMtx_);
                     std::map<std::string, std::string> activeCall;
                     activeCall["id"] = confId;
                     activeCall["uri"] = uri;
@@ -291,13 +297,6 @@ public:
                                                                                  activeCalls_);
                 }
             } else {
-                std::lock_guard<std::mutex> lk(activeCallsMtx_);
-                auto itActive = std::find_if(activeCalls_.begin(),
-                                             activeCalls_.end(),
-                                             [&](auto value) {
-                                                 return value["id"] == confId && value["uri"] == uri
-                                                        && value["device"] == device;
-                                             });
                 if (itActive != activeCalls_.end()) {
                     activeCalls_.erase(itActive);
                     if (eraseOnly) {
