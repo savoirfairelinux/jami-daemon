@@ -97,7 +97,7 @@ public:
 class IceTransport::Impl
 {
 public:
-    Impl(const char* name);
+    Impl(std::string_view name);
     ~Impl();
 
     void initIceInstance(const IceTransportOptions& options);
@@ -153,7 +153,7 @@ public:
     std::condition_variable_any iceCV_ {};
 
     std::string sessionName_ {};
-    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_ {};
+    std::unique_ptr<pj_pool_t, decltype(&pj_pool_release)> pool_ {nullptr, pj_pool_release};
     bool isTcp_ {false};
     bool upnpEnabled_ {false};
     IceTransportCompleteCb on_initdone_cb_ {};
@@ -325,12 +325,10 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 
 //==============================================================================
 
-IceTransport::Impl::Impl(const char* name)
+IceTransport::Impl::Impl(std::string_view name)
     : sessionName_(name)
-    , pool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
-    , thread_()
 {
-    JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\"", this, name);
+    JAMI_DEBUG("[ice:{}] Creating IceTransport session for \"{:s}\"", fmt::ptr(this), name);
 }
 
 IceTransport::Impl::~Impl()
@@ -559,7 +557,7 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
 bool
 IceTransport::Impl::_isInitialized() const
 {
-    if (auto icest = icest_) {
+    if (auto *icest = icest_) {
         auto state = pj_ice_strans_get_state(icest);
         return state >= PJ_ICE_STRANS_STATE_SESS_READY and state != PJ_ICE_STRANS_STATE_FAILED;
     }
@@ -569,7 +567,7 @@ IceTransport::Impl::_isInitialized() const
 bool
 IceTransport::Impl::_isStarted() const
 {
-    if (auto icest = icest_) {
+    if (auto *icest = icest_) {
         auto state = pj_ice_strans_get_state(icest);
         return state >= PJ_ICE_STRANS_STATE_NEGO and state != PJ_ICE_STRANS_STATE_FAILED;
     }
@@ -579,7 +577,7 @@ IceTransport::Impl::_isStarted() const
 bool
 IceTransport::Impl::_isRunning() const
 {
-    if (auto icest = icest_) {
+    if (auto *icest = icest_) {
         auto state = pj_ice_strans_get_state(icest);
         return state >= PJ_ICE_STRANS_STATE_RUNNING and state != PJ_ICE_STRANS_STATE_FAILED;
     }
@@ -589,7 +587,7 @@ IceTransport::Impl::_isRunning() const
 bool
 IceTransport::Impl::_isFailed() const
 {
-    if (auto icest = icest_)
+    if (auto *icest = icest_)
         return pj_ice_strans_get_state(icest) == PJ_ICE_STRANS_STATE_FAILED;
     return false;
 }
@@ -1142,7 +1140,7 @@ IceTransport::Impl::_waitForInitialization(std::chrono::milliseconds timeout)
 
 //==============================================================================
 
-IceTransport::IceTransport(const char* name)
+IceTransport::IceTransport(std::string_view name)
     : pimpl_ {std::make_unique<Impl>(name)}
 {}
 
@@ -1155,7 +1153,6 @@ void
 IceTransport::initIceInstance(const IceTransportOptions& options)
 {
     pimpl_->initIceInstance(options);
-
     jami_tracepoint(ice_transport_context, reinterpret_cast<uint64_t>(this));
 }
 
@@ -1828,7 +1825,7 @@ IceTransportFactory::IceTransportFactory()
 IceTransportFactory::~IceTransportFactory() {}
 
 std::shared_ptr<IceTransport>
-IceTransportFactory::createTransport(const char* name)
+IceTransportFactory::createTransport(std::string_view name)
 {
     try {
         return std::make_shared<IceTransport>(name);
@@ -1839,7 +1836,7 @@ IceTransportFactory::createTransport(const char* name)
 }
 
 std::unique_ptr<IceTransport>
-IceTransportFactory::createUTransport(const char* name)
+IceTransportFactory::createUTransport(std::string_view name)
 {
     try {
         return std::make_unique<IceTransport>(name);
