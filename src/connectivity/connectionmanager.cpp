@@ -640,7 +640,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             ice_config.streamsCount = JamiAccount::ICE_STREAMS_COUNT;
             ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
             info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-                sthis->account.getAccountID().c_str());
+                sthis->account.getAccountID());
             if (!info->ice_) {
                 JAMI_ERR("Cannot initialize ICE session.");
                 eraseInfo();
@@ -1014,7 +1014,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
         ice_config.master = true;
         info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-            shared->account.getAccountID().c_str());
+            shared->account.getAccountID());
         if (not info->ice_) {
             JAMI_ERR("Cannot initialize ICE session.");
             eraseInfo();
