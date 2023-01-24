@@ -129,7 +129,7 @@ public:
     /**
      * Constructor
      */
-    IceTransport(const char* name);
+    IceTransport(std::string_view name);
     ~IceTransport();
 
     void initIceInstance(const IceTransportOptions& options);
@@ -256,9 +256,9 @@ public:
     IceTransportFactory();
     ~IceTransportFactory();
 
-    std::shared_ptr<IceTransport> createTransport(const char* name);
+    std::shared_ptr<IceTransport> createTransport(std::string_view name);
 
-    std::unique_ptr<IceTransport> createUTransport(const char* name);
+    std::unique_ptr<IceTransport> createUTransport(std::string_view name);
 
     /**
      * PJSIP specifics

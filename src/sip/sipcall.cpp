@@ -3227,7 +3227,7 @@ SIPCall::createIceMediaTransport(bool isReinvite)
 {
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
 
-    auto mediaTransport = iceTransportFactory.createTransport(getCallId().c_str());
+    auto mediaTransport = iceTransportFactory.createTransport(getCallId());
     if (mediaTransport) {
         JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]",
                  getCallId().c_str(),
