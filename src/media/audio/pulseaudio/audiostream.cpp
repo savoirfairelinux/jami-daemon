@@ -59,6 +59,15 @@ AudioStream::AudioStream(pa_context* c,
     std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl(pa_proplist_new(),
                                                                  pa_proplist_free);
     pa_proplist_sets(pl.get(), PA_PROP_FILTER_WANT, "echo-cancel");
+    pa_proplist_sets(
+        pl.get(), "filter.apply.echo-cancel.parameters", // needs pulseaudio >= 11.0
+        "use_volume_sharing=0"  // share volume with master sink/source
+        " use_master_format=1"  // use format/rate/channels from master sink/source
+        " aec_args=\""
+            "digital_gain_control=1"
+            " analog_gain_control=0"
+            " experimental_agc=1"
+        "\"");
 
     audiostream_ = pa_stream_new_with_proplist(c,
                                                desc,
