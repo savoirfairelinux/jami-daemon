@@ -60,6 +60,11 @@ AudioReceiveThread::setup()
         notify(frame);
         ringbuffer_->put(std::static_pointer_cast<AudioFrame>(frame));
     }));
+    audioDecoder_->setContextCallback([this]() {
+        auto ms = getInfo();
+        if (recorderCallback_)
+            recorderCallback_(this, ms);
+    });
     audioDecoder_->setInterruptCallback(interruptCb, this);
 
     // custom_io so the SDP demuxer will not open any UDP connections
@@ -129,6 +134,20 @@ void
 AudioReceiveThread::addIOContext(SocketPair& socketPair)
 {
     demuxContext_.reset(socketPair.createIOContext(mtu_));
+}
+
+void
+AudioReceiveThread::setRecorderCallback(
+    const std::function<void(Observable<std::shared_ptr<MediaFrame>>* obs,
+                                             const MediaStream& ms)>& cb)
+{
+    recorderCallback_ = cb;
+    if (audioDecoder_)
+        audioDecoder_->setContextCallback([this]() {
+            auto ms = getInfo();
+            if (recorderCallback_)
+                recorderCallback_(this, ms);
+        });
 }
 
 MediaStream

@@ -286,6 +286,19 @@ EnumWindowsProcMy(HWND hwnd, LPARAM lParam)
 #endif
 
 void
+VideoInput::setRecorderCallback(
+    const std::function<void(VideoFrameActiveWriter* vg, const MediaStream& ms)>& cb)
+{
+    recorderCallback_ = cb;
+    if (decoder_)
+        decoder_->setContextCallback([this]() {
+            auto ms = getInfo();
+            if (recorderCallback_)
+                recorderCallback_(this, ms);
+        });
+}
+
+void
 VideoInput::createDecoder()
 {
     deleteDecoder();
@@ -387,10 +400,17 @@ VideoInput::createDecoder()
         onSuccessfulSetup_(MEDIA_VIDEO, 0);
 
     decoder_ = std::move(decoder);
+
     foundDecOpts(decOpts_);
 
     /* Signal the client about readable sink */
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+
+    decoder_->setContextCallback([this]() {
+        auto ms = getInfo();
+        if (recorderCallback_)
+            recorderCallback_(this, ms);
+    });
 }
 
 void

@@ -86,6 +86,9 @@ public:
         onSuccessfulSetup_ = cb;
     }
 
+    void setRecorderCallback(
+        const std::function<void(VideoFrameActiveWriter* vg, const MediaStream& ms)>& cb);
+
 private:
     NON_COPYABLE(VideoReceiveThread);
 
@@ -123,6 +126,7 @@ private:
 
     std::function<void(void)> keyFrameRequestCallback_;
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(VideoFrameActiveWriter* vg, const MediaStream& ms)> recorderCallback_;
 };
 
 } // namespace video
