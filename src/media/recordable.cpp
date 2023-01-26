@@ -114,14 +114,18 @@ Recordable::stopRecording()
 
     recorder_->stopRecording();
     recording_ = false;
-    // new recorder since this one may still be recording
-    recorder_ = std::make_shared<MediaRecorder>();
 }
 
 bool
 Recordable::isAudioOnly() const
 {
     return isAudioOnly_;
+}
+
+int
+Recordable::getRecordedStreams()
+{
+    return recorder_->streamsCount;
 }
 
 } // namespace jami
