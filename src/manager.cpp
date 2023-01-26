@@ -2541,13 +2541,12 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
             [this, incomCall = incomCall.shared_from_this()] { base_.answerCall(*incomCall); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {
         // Test if already calling this person
+        auto peerNumber = incomCall.getPeerNumber();
+        auto currentPeerNumber = currentCall->getPeerNumber();
+        string_replace(peerNumber, "@ring.dht", "");
+        string_replace(currentPeerNumber, "@ring.dht", "");
         if (currentCall->getAccountId() == account->getAccountID()
-            && currentCall->getPeerNumber() == incomCall.getPeerNumber()) {
-            auto device_uid = account->getUsername();
-            if (device_uid.find("ring:") == 0) {
-                // NOTE: in case of a SIP call it's already ready to compare
-                device_uid = device_uid.substr(5); // after ring:
-            }
+            && currentPeerNumber == peerNumber) {
             auto answerToCall = false;
             auto downgradeToAudioOnly = currentCall->isAudioOnly() != incomCall.isAudioOnly();
             if (downgradeToAudioOnly)
@@ -2555,7 +2554,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                 answerToCall = incomCall.isAudioOnly();
             else
                 // Accept the incoming call from the higher id number
-                answerToCall = (device_uid.compare(incomCall.getPeerNumber()) < 0);
+                answerToCall = (account->getUsername().compare(peerNumber) < 0);
 
             if (answerToCall) {
                 runOnMainThread([accountId = currentCall->getAccountId(),
