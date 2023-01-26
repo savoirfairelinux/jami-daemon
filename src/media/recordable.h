@@ -69,6 +69,8 @@ public:
 
     bool isAudioOnly() const;
 
+    int getRecordedStreams();
+
 protected:
     mutable std::mutex apiMutex_;
     bool recording_ {false};
