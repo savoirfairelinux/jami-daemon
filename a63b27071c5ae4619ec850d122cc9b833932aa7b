@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d96db08_489e0625",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-01-26T03:25:38Z",
+      "side": 1,
+      "message": "nice. looks very clean. I\u0027d like to test it then +2",
+      "revId": "a63b27071c5ae4619ec850d122cc9b833932aa7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
