@@ -122,4 +122,10 @@ Recordable::isAudioOnly() const
     return isAudioOnly_;
 }
 
+int
+Recordable::getRecordedStreams()
+{
+    return recorder_->streamsCount;
+}
+
 } // namespace jami

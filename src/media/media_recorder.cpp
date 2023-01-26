@@ -269,6 +269,7 @@ MediaRecorder::addStream(const MediaStream& ms)
                                                               onFrame(ms.name, frame);
                                                           });
         it = streams_.insert(std::make_pair(ms.name, std::move(streamPtr))).first;
+        streamsCount++;
         JAMI_INFO("[Recorder: %p] Recorder input #%ld: %s", this, streams_.size(), ms.name.c_str());
     } else {
         JAMI_WARN("[Recorder: %p] Recorder already has '%s' as input", this, ms.name.c_str());
@@ -292,6 +293,7 @@ MediaRecorder::removeStream(const MediaStream& ms)
     } else {
         JAMI_WARN("[Recorder: %p] Recorder removing '%s'", this, ms.name.c_str());
         streams_.erase(it);
+        streamsCount--;
         if (ms.isVideo)
             setupVideoOutput();
         else

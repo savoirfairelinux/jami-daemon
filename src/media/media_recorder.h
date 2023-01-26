@@ -124,6 +124,8 @@ public:
      */
     void stopRecording();
 
+    int streamsCount = 0;
+
 private:
     NON_COPYABLE(MediaRecorder);
 

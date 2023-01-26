@@ -229,6 +229,15 @@ RecorderTest::testRecordCall()
     std::this_thread::sleep_for(5s);
     CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
 
+    // Check Recorder streams
+    {
+        auto streams = 0;
+        if (auto call = aliceAccount->getCall(callId))
+            streams = call->getRecordedStreams();
+
+        CPPUNIT_ASSERT(streams == 2);
+    }
+
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return recordedFile.empty(); }));
 
     // add local video
@@ -255,6 +264,12 @@ RecorderTest::testRecordCall()
         // give time to start camera
         std::this_thread::sleep_for(10s);
 
+        auto streams = 0;
+        if (auto call = aliceAccount->getCall(callId))
+            streams = call->getRecordedStreams();
+
+        CPPUNIT_ASSERT(streams == 4);
+
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return recordedFile.empty(); }));
     }
 
@@ -272,6 +287,14 @@ RecorderTest::testRecordCall()
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !recordedFile.empty() && recordedFile.find(".webm") != std::string::npos; }));
         recordedFile = "";
         std::this_thread::sleep_for(10s);
+
+        // Check Recorder streams
+        {
+            auto streams = 0;
+            if (auto call = aliceAccount->getCall(callId))
+                streams = call->getRecordedStreams();
+            CPPUNIT_ASSERT(streams == 2);
+        }
     }
 
     // Stop recorder after a few seconds
@@ -317,6 +340,12 @@ RecorderTest::testRecordAudioOnlyCall()
     libjami::toggleRecording(aliceId, callId);
     std::this_thread::sleep_for(5s);
     CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
+
+    auto streams = 0;
+    if (auto call = aliceAccount->getCall(callId))
+        streams = call->getRecordedStreams();
+
+    CPPUNIT_ASSERT(streams == 2);
 
     // Toggle recording
     libjami::toggleRecording(aliceId, callId);
@@ -372,6 +401,13 @@ RecorderTest::testRecordCallOnePersonRdv()
 
     CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
 
+    auto streams = 0;
+    if (auto call = aliceAccount->getCall(callId))
+        streams = call->getRecordedStreams();
+
+    // There is only send audio as there is only bob in the conf
+    CPPUNIT_ASSERT(streams == 1);
+
     // Stop recorder
     libjami::toggleRecording(aliceId, callId);
     CPPUNIT_ASSERT(!libjami::getIsRecording(aliceId, callId));
@@ -426,6 +462,12 @@ RecorderTest::testStopCallWhileRecording()
     std::this_thread::sleep_for(10s);
     CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
 
+    auto streams = 0;
+    if (auto call = aliceAccount->getCall(callId))
+        streams = call->getRecordedStreams();
+
+    CPPUNIT_ASSERT(streams == 4);
+
     // Hangup call
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(
@@ -473,6 +515,12 @@ RecorderTest::testDaemonPreference()
     std::this_thread::sleep_for(5s);
     CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
     std::this_thread::sleep_for(10s);
+
+    auto streams = 0;
+    if (auto call = aliceAccount->getCall(callId))
+        streams = call->getRecordedStreams();
+
+    CPPUNIT_ASSERT(streams == 4);
 
     Manager::instance().hangupCall(aliceId, callId);
     CPPUNIT_ASSERT(
