@@ -291,7 +291,7 @@ SIPCall::setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession)
                     // updates conference info and sends it to others via ConfInfo
                     // (only if there was a change)
                     // also emits signal with updated conference info
-                    conference->setVoiceActivity(streamId, voice);
+                    conference->setVoiceActivity(thisPtr->getRemoteUri(), thisPtr->getRemoteDeviceId(), streamId, voice);
                 } else {
                     // we are in a one-to-one call
                     // send voice activity over SIP
@@ -3551,7 +3551,7 @@ SIPCall::peerVoice(bool voice)
     peerVoice_ = voice;
 
     if (auto conference = conf_.lock()) {
-        conference->setVoiceActivity(sip_utils::streamId(getCallId(), sip_utils::DEFAULT_VIDEO_STREAMID), voice);
+        conference->setVoiceActivity(getRemoteUri(), getRemoteDeviceId(), sip_utils::streamId(getCallId(), sip_utils::DEFAULT_VIDEO_STREAMID), voice);
     } else {
         // one-to-one call
         // maybe emit signal with partner voice activity
