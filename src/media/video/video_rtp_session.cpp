@@ -28,6 +28,7 @@
 #include "connectivity/ice_socket.h"
 #include "socket_pair.h"
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
+#include "sip/sipcall.h"
 #include "manager.h"
 #ifdef ENABLE_PLUGIN
 #include "plugin/streamdata.h"
@@ -269,8 +270,11 @@ VideoRtpSession::startReceiver()
             string_replace(audioId, "video", "audio");
             auto activeStream = videoMixer_->verifyActive(audioId);
             videoMixer_->removeAudioOnlySource(callId_, audioId);
-            if (activeStream)
-                videoMixer_->setActiveStream(streamId_, true);
+            if (activeStream) {
+                // TODO get call from conference
+                if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId_)))
+                    videoMixer_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(), streamId_, true);
+            }
         }
 
     } else {
@@ -282,8 +286,10 @@ VideoRtpSession::startReceiver()
             auto activeStream = videoMixer_->verifyActive(streamId_);
             videoMixer_->addAudioOnlySource(callId_, audioId_);
             receiveThread_->detach(videoMixer_.get());
-            if (activeStream)
-                videoMixer_->setActiveStream(audioId_, true);
+            if (activeStream) {
+                if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId_)))
+                    videoMixer_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(), audioId_, true);
+            }
         }
     }
     if (socketPair_)
@@ -306,8 +312,10 @@ VideoRtpSession::stopReceiver()
         string_replace(audioId, "video", "audio");
         videoMixer_->addAudioOnlySource(callId_, audioId);
         receiveThread_->detach(videoMixer_.get());
-        if (activeStream)
-            videoMixer_->setActiveStream(audioId, true);
+        if (activeStream) {
+            if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId_)))
+                videoMixer_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(), audioId, true);
+        }
     }
 
     // We need to disable the read operation, otherwise the
@@ -546,8 +554,10 @@ VideoRtpSession::exitConference()
             auto activeStream = videoMixer_->verifyActive(streamId_);
             videoMixer_->detachVideo(receiveThread_.get());
             receiveThread_->startSink();
-            if (activeStream)
-                videoMixer_->setActiveStream(streamId_, true);
+            if (activeStream) {
+                if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId_)))
+                    videoMixer_->setActiveStream(call->getRemoteUri(), call->getRemoteDeviceId(), streamId_, true);
+            }
         }
 
         videoMixer_.reset();

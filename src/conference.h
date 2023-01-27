@@ -61,33 +61,28 @@ class VideoMixer;
 }
 #endif
 
-struct ConfInfo : public std::vector<StreamInfo>
+// TODO move into callstreamsmanager
+struct ConfInfo
 {
     int h {0};
     int w {0};
     int v {1}; // Supported conference protocol version
     int layout {0};
+    CallInfoMap callInfo_;
 
-    friend bool operator==(const ConfInfo& c1, const ConfInfo& c2)
+    friend bool operator==(const ConfInfo& p1, const ConfInfo& p2)
     {
-        if (c1.h != c2.h or c1.w != c2.w)
+        if (p1.h != p2.h or p1.w != p2.w)
             return false;
-        if (c1.size() != c2.size())
-            return false;
-
-        for (auto& p1 : c1) {
-            auto it = std::find_if(c2.begin(), c2.end(), [&p1](const StreamInfo& p2) {
-                return p1 == p2;
-            });
-            if (it != c2.end())
-                continue;
-            else
-                return false;
-        }
-        return true;
+        return p1.callInfo_.size() == p2.callInfo_.size() and std::equal(p1.callInfo_.begin(), p1.callInfo_.end(), p2.callInfo_.begin());
     }
 
-    friend bool operator!=(const ConfInfo& c1, const ConfInfo& c2) { return !(c1 == c2); }
+    friend bool operator!=(const ConfInfo& p1, const ConfInfo& p2)
+    {
+        return !(p1 == p2);
+    }
+
+    void mergeJson(const Json::Value& jsonObj);
 
     std::vector<std::map<std::string, std::string>> toVectorMapStringString() const;
     std::string toString() const;
@@ -156,7 +151,7 @@ public:
 
 
     // DONE
-    void setVoiceActivity(const std::string& streamId, const bool& newState);
+    void setVoiceActivity(const std::string& uri, const std::string& deviceId, const std::string& streamId, const bool& newState);
     void setHandRaised(const std::string& uri, const std::string& deviceId, const bool& state);
 
     // TODO
@@ -260,7 +255,7 @@ public:
     void switchInput(const std::string& input);
     void setActiveParticipant(const std::string& participant_id);
     void setRecording(const std::string& uri, const std::string& deviceId, bool state);
-    void setActiveStream(const std::string& streamId, bool state);
+    void setActiveStream(const std::string& uri, const std::string& deviceId, const std::string& streamId, bool state);
     void setLayout(int layout);
 
     void onConfOrder(const std::string& callId, const std::string& order);
@@ -279,7 +274,6 @@ public:
         return confInfo_.toVectorMapStringString();
     }
 
-    void updateConferenceInfo(ConfInfo confInfo);
     void setModerator(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& accountUri, const std::string& deviceId = "");
 
@@ -302,8 +296,6 @@ public:
                     const std::string& streamId,
                     const bool& state);
     void updateMuted();
-
-    void setVoiceActivity();
 
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerId);
 
@@ -382,7 +374,7 @@ private:
      * mode ), this variable will hold the media source states
      * of the local host.
      */
-    std::vector<MediaAttribute> hostSources_;
+    std::vector<MediaAttribute> hostSources_; // TODO remove?
 
     bool localModAdded_ {false};
 
