@@ -586,7 +586,7 @@ setActiveStream(const std::string& accountId,
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            conf->setActiveStream(streamId, state);
+            conf->setActiveStream(accountUri, deviceId, streamId, state);
         } else if (auto call = account->getCall(confId)) {
             if (call->conferenceProtocolVersion() == 1) {
                 Json::Value sinkVal;
