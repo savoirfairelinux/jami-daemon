@@ -1439,7 +1439,9 @@ Manager::joinParticipant(const std::string& accountId,
     }
 
     auto conf = std::make_shared<Conference>(account);
+    JAMI_ERROR("@@@@@@@@@@@@@@ATTACH");
     account->attach(conf);
+    JAMI_ERROR("@@@@@@@@@@@@@@EMIT");
     emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), conf->getConfId());
 
     // Bind calls according to their state
@@ -1453,6 +1455,7 @@ Manager::joinParticipant(const std::string& accountId,
     } else {
         conf->detachLocalParticipant();
     }
+    JAMI_ERROR("@@@@@@@@@@@@@@EMIT2");
     emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
                                                        conf->getConfId(),
                                                        conf->getStateStr());
@@ -3040,31 +3043,34 @@ Manager::createSinkClients(
     std::set<std::string> sinkIdsList {};
 
     // create video sinks
-    for (const auto& participant : infos) {
-        std::string sinkId = participant.sinkId;
-        if (sinkId.empty()) {
-            sinkId = callId;
-            sinkId += string_remove_suffix(participant.uri, '@') + participant.device;
-        }
-        if (participant.w && participant.h && !participant.videoMuted) {
-            auto currentSink = getSinkClient(sinkId);
-            if (currentSink) {
-                currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
-                sinkIdsList.emplace(sinkId);
-                continue;
+    for (const auto& [key, callInfo] : infos.callInfo_) {
+        auto& uri = key.first; auto& device = key.second;
+        for (const auto& [streamId, streamInfo] : callInfo.streams) {
+            auto sinkId = streamId;
+            if (sinkId.empty()) {
+                sinkId = callId;
+                sinkId += uri + device;
             }
-            auto newSink = createSinkClient(sinkId);
-            newSink->start();
-            newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
-            newSink->setFrameSize(participant.w, participant.h);
+            if (streamInfo.w && streamInfo.h && !streamInfo.videoMuted) {
+                auto currentSink = getSinkClient(sinkId);
+                if (currentSink) {
+                    currentSink->setCrop(streamInfo.x, streamInfo.y, streamInfo.w, streamInfo.h);
+                    sinkIdsList.emplace(sinkId);
+                    continue;
+                }
+                auto newSink = createSinkClient(sinkId);
+                newSink->start();
+                newSink->setCrop(streamInfo.x, streamInfo.y, streamInfo.w, streamInfo.h);
+                newSink->setFrameSize(streamInfo.w, streamInfo.h);
 
-            for (auto& videoStream : videoStreams)
-                videoStream->attach(newSink.get());
+                for (auto& videoStream : videoStreams)
+                    videoStream->attach(newSink.get());
 
-            sinksMap.emplace(sinkId, newSink);
-            sinkIdsList.emplace(sinkId);
-        } else {
-            sinkIdsList.erase(sinkId);
+                sinksMap.emplace(sinkId, newSink);
+                sinkIdsList.emplace(sinkId);
+            } else {
+                sinkIdsList.erase(sinkId);
+            }
         }
     }
 

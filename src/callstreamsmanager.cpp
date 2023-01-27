@@ -30,94 +30,102 @@ CallStreamsManager::setLayout(int layout)
         return;
     }
     currentLayout_ = static_cast<Layout>(layout);
-    if (currentLayout_ == Layout::GRID)
-        activeStream_.clear();
+    if (currentLayout_ == Layout::GRID) {
+        if (!activeStream_.second.empty())
+            callInfo_[activeStream_.first].streams[activeStream_.second].active = false;
+        activeStream_ = {};
+    }
     updateInfo();
 }
 
 void
-CallStreamsManager::setVoiceActivity(const std::string& streamId, bool newState)
+CallStreamsManager::setVoiceActivity(const std::string& uri, const std::string& deviceId, const std::string& streamId, bool newState)
 {
-    auto& info = streamsInfo_[streamId];
-    auto updated = info.voiceActivity == newState;
-    info.voiceActivity = newState;
-
-    if (updated)
-        updateInfo();
-}
-
-void
-CallStreamsManager::setActiveStream(const std::string& streamId, bool newState)
-{
-    if (!activeStream_.empty() && newState) {
-        auto& info = streamsInfo_[activeStream_];
-        info.active = false;
+    auto key = std::make_pair(uri, deviceId);
+    auto it = callInfo_.find(key);
+    if (it == callInfo_.end()) {
+        auto itStream = it->second.streams.find(streamId);
+        if (itStream != it->second.streams.end()
+            && itStream->second.voiceActivity != newState) {
+            itStream->second.voiceActivity = newState;
+            updateInfo();
+        }
     }
-    auto& info = streamsInfo_[streamId];
-    bool updated = info.active == newState;
-    info.active = newState;
-    activeStream_ = streamId;
-
-    if (updated)
-        updateInfo();
 }
 
 void
-CallStreamsManager::muteStream(const std::string& streamId, bool newState)
+CallStreamsManager::muteStream(const std::string& uri, const std::string& deviceId, const std::string& streamId, bool newState)
 {
-    auto& info = streamsInfo_[streamId];
-    bool updated = info.audioModeratorMuted;
-    info.audioModeratorMuted = newState;
-
-    if (updated)
-        updateInfo();
+    auto key = std::make_pair(uri, deviceId);
+    auto it = callInfo_.find(key);
+    if (it == callInfo_.end()) {
+        auto itStream = it->second.streams.find(streamId);
+        if (itStream != it->second.streams.end()
+            && itStream->second.audioModeratorMuted != newState) {
+            itStream->second.audioModeratorMuted = newState;
+            updateInfo();
+        }
+    }
 }
 
 bool
-CallStreamsManager::isMuted(const std::string& streamId)
+CallStreamsManager::isMuted(const std::string& uri, const std::string& deviceId, const std::string& streamId)
 {
-    auto it = streamsInfo_.find(streamId);
-    if (it == streamsInfo_.end())
-        return it->second.audioModeratorMuted;
+    auto key = std::make_pair(uri, deviceId);
+    auto it = callInfo_.find(key);
+    if (it == callInfo_.end()) {
+        auto itStream = it->second.streams.find(streamId);
+        if (itStream != it->second.streams.end())
+            return itStream->second.audioModeratorMuted;
+    }
     return false;
 }
 
 void
-CallStreamsManager::detachStream(const std::string& streamId)
+CallStreamsManager::setActiveStream(const std::string& uri, const std::string& deviceId, const std::string& streamId, bool newState)
 {
-    streamsInfo_.erase(streamId);
-    updateInfo();
+    if (!activeStream_.second.empty() && newState)
+        callInfo_[activeStream_.first].streams[activeStream_.second].active = false;
+
+    auto key = std::make_pair(uri, deviceId);
+    auto it = callInfo_.find(key);
+    if (it == callInfo_.end()) {
+        auto itStream = it->second.streams.find(streamId);
+        if (itStream != it->second.streams.end()
+            && itStream->second.active != newState) {
+            itStream->second.active = newState;
+            activeStream_ = std::make_pair(key, streamId);
+            updateInfo();
+        }
+    }
 }
 
 void
 CallStreamsManager::bindCall(const std::shared_ptr<SIPCall>& call)
 {
-    JAMI_ERROR("@@@ BIND {}", call->getCallId());
+    auto callId = call->getCallId();
+    JAMI_ERROR("@@@ BIND {}", callId);
     auto uri = call->getRemoteUri();
     auto deviceId = call->getRemoteDeviceId();
-    auto& sInfo = streamsInfo_[sip_utils::streamId(call->getCallId(), sip_utils::DEFAULT_AUDIO_STREAMID)];
+    auto key = std::make_pair(uri, deviceId);
+    auto& callInfo = callInfo_[key];
+    auto streamId = sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID);
+    StreamInfo sInfo;
     sInfo.videoMuted = not MediaAttribute::hasMediaType(call->getMediaAttributeList(), MediaType::MEDIA_VIDEO);
     sInfo.audioLocalMuted = call->isPeerMuted();
-    // TODO only in deviceInfo
-    sInfo.uri = uri;
-    sInfo.device = deviceId;
-    auto& dInfo = devicesInfo_[std::make_pair(uri, deviceId)];
-    dInfo.recording = call->isRecording();
-    // TODO use only key
-    dInfo.uri = uri;
-    dInfo.device = deviceId;
+    callInfo.streams[streamId] = std::move(sInfo);
+    callInfo.recording = call->isRecording();
     updateInfo();
 }
 
 void
 CallStreamsManager::setHandRaised(const std::string& uri, const std::string& deviceId, bool newState)
 {
-    JAMI_ERROR("@@@@ UPDATE HAND {} {} {} ", newState, uri, deviceId);
+    JAMI_ERROR("@@@@ UPDATE HAND {} {} {} ", uri, deviceId, newState);
     // TOOD check if found!
-    // TODO: group deviceInfo into streamInfo
     auto key = std::make_pair(uri, deviceId);
-    auto it = devicesInfo_.find(key);
-    if (it == devicesInfo_.end()) {
+    auto it = callInfo_.find(key);
+    if (it == callInfo_.end()) {
         if (it->second.handRaised != newState) {
             it->second.handRaised = newState;
             JAMI_ERROR("@@@@ UPDATED");
@@ -129,53 +137,48 @@ CallStreamsManager::setHandRaised(const std::string& uri, const std::string& dev
 void
 CallStreamsManager::setRecording(const std::string& uri, const std::string& deviceId, bool newState)
 {
-    auto& info = devicesInfo_[std::make_pair(uri, deviceId)];
-    bool updated = info.recording == newState;
-    info.recording = newState;
-
-    if (updated)
-        updateInfo();
+    auto key = std::make_pair(uri, deviceId);
+    auto it = callInfo_.find(key);
+    if (it == callInfo_.end()) {
+        if (it->second.recording != newState) {
+            it->second.recording = newState;
+            updateInfo();
+        }
+    }
 }
 
 void
 CallStreamsManager::setModerator(const std::string& uri, const std::string& deviceId, bool newState)
 {
-    auto& info = devicesInfo_[std::make_pair(uri, deviceId)];
-    bool updated = info.isModerator == newState;
-    info.isModerator = newState;
-
-    if (updated)
-        updateInfo();
+    auto key = std::make_pair(uri, deviceId);
+    auto it = callInfo_.find(key);
+    if (it == callInfo_.end()) {
+        if (it->second.isModerator != newState) {
+            it->second.isModerator = newState;
+            JAMI_ERROR("@@@@ UPDATED");
+            updateInfo();
+        }
+    }
 }
 
 void
 CallStreamsManager::removeCall(const std::string& uri, const std::string& deviceId)
 {
     auto key = std::make_pair(uri, deviceId);
-    auto itK = devicesInfo_.find(key);
-    if (itK == devicesInfo_.end())
+    auto itCall = callInfo_.find(key);
+    if (itCall == callInfo_.end())
         return;
-    for (auto it = streamsInfo_.begin(); it != streamsInfo_.end();) {
-        if (it->second.uri == uri && it->second.device == deviceId) {
-            if (it->second.active)
-                activeStream_.clear();
-            it = streamsInfo_.erase(it);
-        }
-        else
-            ++it;
-    }
-    devicesInfo_.erase(itK);
+    callInfo_.erase(itCall);
     updateInfo();
 }
 
 void
 CallStreamsManager::updateInfo()
 {
-    // TODO update streamsInfo_ with devicesInfo_
     // Update upper layers
     if (onInfoUpdated_) {
         JAMI_ERROR("@@@ GO UPDATE");
-        onInfoUpdated_(streamsInfo_);
+        onInfoUpdated_(callInfo_);
     }
 }
 

@@ -29,6 +29,7 @@
 #include "sinkclient.h"
 #include "logger.h"
 #include "filter_transpose.h"
+#include "sip/sipcall.h"
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif
@@ -313,10 +314,13 @@ VideoMixer::process()
         // TODO uses infos to check if videoMuted
         for (auto& [callId, streamId] : audioOnlySources_) {
             auto active = verifyActive(streamId);
-            auto& si = streamsInfo_[streamId];
-            si.x = 0; si.y = 0; si.w = 10; si.h = 10;
-            if (currentLayout_ == Layout::ONE_BIG and active)
-                successfullyRendered = true;
+            if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId))) {
+                auto& si = callInfo_[std::make_pair(call->getRemoteUri(), call->getRemoteDeviceId())].streams[streamId];
+                si.x = 0; si.y = 0; si.w = 10; si.h = 10;
+                if (currentLayout_ == Layout::ONE_BIG and active)
+                    successfullyRendered = true;
+            }
+
         }
         // add video sources
         for (auto& x : sources_) {
@@ -325,8 +329,15 @@ VideoMixer::process()
                 return;
 
             auto sinfo = streamInfo(x->source);
-            auto& si = streamsInfo_[sinfo.streamId];
-            if (currentLayout_ != Layout::ONE_BIG or si.active) {
+            auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(sinfo.callId));
+            if (!call)
+                continue;
+            auto& ci = callInfo_[std::make_pair(call->getRemoteUri(), call->getRemoteDeviceId())];
+            auto si = ci.streams.find(sinfo.streamId);
+            if (si == ci.streams.end())
+                continue;
+
+            if (currentLayout_ != Layout::ONE_BIG or si->second.active) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
                 std::shared_ptr<VideoFrame> input = x->getRenderFrame();
@@ -337,7 +348,7 @@ VideoMixer::process()
                     wantedIndex = 0;
                     activeFound = true;
                 } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-                    if (si.active) {
+                    if (si->second.active) {
                         wantedIndex = 0;
                         activeFound = true;
                     } else if (not activeFound) {
@@ -373,21 +384,21 @@ VideoMixer::process()
                         JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
                 }
 
-                si.videoMuted = !blackFrame && successfullyRendered;
-                if (hasVideo != si.videoMuted) {
+                si->second.videoMuted = !blackFrame && successfullyRendered;
+                if (hasVideo != si->second.videoMuted) {
                     updateLayout();
                     needsUpdate = true;
                 }
-                si.x = x->x;
-                si.y = x->y;
-                si.w = x->w;
-                si.h = x->h;
+                si->second.x = x->x;
+                si->second.y = x->y;
+                si->second.w = x->w;
+                si->second.h = x->h;
             } else if (needsUpdate) {
-                si.x = 0;
-                si.y = 0;
-                si.w = 0;
-                si.h = 0;
-                si.videoMuted = true;
+                si->second.x = 0;
+                si->second.y = 0;
+                si->second.w = 0;
+                si->second.h = 0;
+                si->second.videoMuted = true;
             }
 
             ++i;

@@ -147,7 +147,7 @@ ConfProtocolParser::parseV1()
                             auto streamId = itrm.key().asString();
                             auto mediaVal = *itrm;
                             if (mediaVal.isMember(ProtocolKeys::VOICEACTIVITY)) {
-                                voiceActivity_(streamId,
+                                voiceActivity_(std::string(peerId_), deviceId, streamId,
                                                mediaVal[ProtocolKeys::VOICEACTIVITY].asBool());
                             }
                             if (isPeerModerator) {
@@ -166,7 +166,7 @@ ConfProtocolParser::parseV1()
                                                      mediaVal[ProtocolKeys::MUTEAUDIO].asBool());
                                 }
                                 if (mediaVal.isMember(ProtocolKeys::ACTIVE)) {
-                                    setActiveStream_(streamId,
+                                    setActiveStream_(accountUri, deviceId, streamId,
                                                      mediaVal[ProtocolKeys::ACTIVE].asBool());
                                 }
                             }
