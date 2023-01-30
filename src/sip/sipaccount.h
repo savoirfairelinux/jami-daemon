@@ -175,7 +175,7 @@ public:
     }
 
     virtual void setRegistrationState(RegistrationState state,
-                                      unsigned code = 0,
+                                      int code = 0,
                                       const std::string& detail_str = {}) override;
 
     /**
