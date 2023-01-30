@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c2ec9fe0_d5900ed4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-30T14:30:22Z",
+      "side": 1,
+      "message": "The ut change that prevented the ci job to pass was moved to another patch to not block this change.",
+      "revId": "2e2749377ff2ab2c5fc98f94902db56eaaae135d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
