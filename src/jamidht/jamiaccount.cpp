@@ -3315,21 +3315,27 @@ JamiAccount::storeActiveIpAddress(std::function<void()>&& cb)
     });
 }
 
-void
+bool
 JamiAccount::setPushNotificationToken(const std::string& token)
 {
-    JAMI_WARNING("[Account {:s}] setPushNotificationToken: {:s}", getAccountID(), token);
-    SIPAccountBase::setPushNotificationToken(token);
-    if (dht_)
-        dht_->setPushNotificationToken(token);
+    if (SIPAccountBase::setPushNotificationToken(token)) {
+        JAMI_WARNING("[Account {:s}] setPushNotificationToken: {:s}", getAccountID(), token);
+        if (dht_)
+            dht_->setPushNotificationToken(token);
+        return true;
+    }
+    return false;
 }
 
-void
+bool
 JamiAccount::setPushNotificationTopic(const std::string& topic)
 {
-    SIPAccountBase::setPushNotificationTopic(topic);
-    if (dht_)
-        dht_->setPushNotificationTopic(topic);
+    if (SIPAccountBase::setPushNotificationTopic(topic)) {
+        if (dht_)
+            dht_->setPushNotificationTopic(topic);
+        return true;
+    }
+    return false;
 }
 
 /**
