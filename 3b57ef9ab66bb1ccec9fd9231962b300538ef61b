@@ -1,0 +1,208 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2276a5b7_95aa3ff5",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 658,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "038e20e4_7f2c7d7c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 659,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a0148ae_66f9ee5f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "995b24d9_3adfc348",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 663,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e1f19eec_409b1f7b",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 664,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a81142e_3a17fbd6",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 665,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "177dafb7_e7652237",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 666,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4e77fc65_30fc2c1a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 667,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f3526416_272952f6",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 668,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bb5536a2_370a172c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 669,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2399742_24b1a5f2",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 670,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4cae8b20_ef059c69",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 671,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-01-30T18:27:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nan integer is interpreted as a character code when assigning it to a string; if this is intended, cast the integer to the appropriate character type; if you want a string representation, use the appropriate conversion facility\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-string-integer-assignment",
+      "revId": "3b57ef9ab66bb1ccec9fd9231962b300538ef61b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
