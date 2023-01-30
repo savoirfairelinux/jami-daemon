@@ -455,7 +455,7 @@ protected:
      * The general, protocol neutral registration
      * state of the account
      */
-    RegistrationState registrationState_;
+    RegistrationState registrationState_ {RegistrationState::UNLOADED};
 
     /**
      * Vector containing all system codecs (with default parameters)
