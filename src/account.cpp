@@ -74,8 +74,6 @@ Account::Account(const std::string& accountID)
     , accountID_(accountID)
     , registrationState_(RegistrationState::UNREGISTERED)
     , systemCodecContainer_(getSystemCodecContainer())
-    , accountCodecInfoList_()
-    , ringtonePath_()
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
@@ -165,7 +163,8 @@ Account::loadConfig() {
     // In this case, fallback on the default ringtone path
     if (!fileutils::isFile(ringtonePath_)) {
         JAMI_WARNING("Ringtone {} is not a valid file", ringtonePath_);
-        ringtonePath_ = fileutils::getFullPath(ringtoneDir, DEFAULT_RINGTONE_PATH);;
+        config_->ringtonePath = DEFAULT_RINGTONE_PATH;
+        ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);
     }
     updateUpnpController();
 }
