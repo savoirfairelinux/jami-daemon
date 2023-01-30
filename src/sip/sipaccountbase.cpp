@@ -174,7 +174,7 @@ SIPAccountBase::getVolatileAccountDetails() const
 
 void
 SIPAccountBase::setRegistrationState(RegistrationState state,
-                                     unsigned details_code,
+                                     int details_code,
                                      const std::string& details_str)
 {
     if (state == RegistrationState::REGISTERED

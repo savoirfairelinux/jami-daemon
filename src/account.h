@@ -261,7 +261,7 @@ public:
      * @param state The registration state of underlying VoIPLink
      */
     virtual void setRegistrationState(RegistrationState state,
-                                      unsigned detail_code = 0,
+                                      int detail_code = 0,
                                       const std::string& detail_str = {});
 
     const std::string& getUsername() const { return config().username; }
