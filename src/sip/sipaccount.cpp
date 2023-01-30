@@ -1425,7 +1425,7 @@ SIPAccount::setRegistrationState(RegistrationState state,
     const pj_str_t* description = pjsip_get_status_text(details_code);
     if (description)
         details_str = sip_utils::as_view(*description);
-    setRegistrationStateDetailed({details_code, details_str});
+    registrationStateDetailed_ = {details_code, details_str};
     SIPAccountBase::setRegistrationState(state, details_code, details_str);
 }
 
