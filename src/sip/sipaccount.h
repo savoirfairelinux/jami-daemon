@@ -417,7 +417,7 @@ public:
     void setActiveCodecs(const std::vector<unsigned>& list) override;
     bool isSrtpEnabled() const override { return config().srtpKeyExchange != KeyExchangeProtocol::NONE; }
 
-    void setPushNotificationToken(const std::string& pushDeviceToken = "") override;
+    bool setPushNotificationToken(const std::string& pushDeviceToken = "") override;
 
     /**
      * To be called by clients with relevant data when a push notification is received.

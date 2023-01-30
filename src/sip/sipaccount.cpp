@@ -511,19 +511,16 @@ SIPAccount::mapPortUPnP()
     return false;
 }
 
-void
+bool
 SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
 {
-    JAMI_WARN("[SIP Account %s] setPushNotificationToken: %s",
-              getAccountID().c_str(),
-              pushDeviceToken.c_str());
-
-    if (config().deviceKey == pushDeviceToken)
-        return;
-    SIPAccountBase::setPushNotificationToken(pushDeviceToken);
-
-    if (config().enabled)
-        doUnregister([&](bool /* transport_free */) { doRegister(); });
+    JAMI_WARNING("[SIP Account {}] setPushNotificationToken: {}", getAccountID(), pushDeviceToken);
+    if (SIPAccountBase::setPushNotificationToken(pushDeviceToken)) {
+        if (config().enabled)
+            doUnregister([&](bool /* transport_free */) { doRegister(); });
+        return true;
+    }
+    return false;
 }
 
 void
