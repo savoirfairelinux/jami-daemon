@@ -29,6 +29,7 @@ namespace jami {
 
 /** Contains all the Registration states for an account can be in */
 enum class RegistrationState {
+    UNLOADED,
     UNREGISTERED,
     TRYING,
     REGISTERED,

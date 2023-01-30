@@ -1055,6 +1055,8 @@ SIPAccount::loadConfig()
         transportType_ = PJSIP_TRANSPORT_TLS;
     } else
         transportType_ = PJSIP_TRANSPORT_UDP;
+    if (registrationState_ == RegistrationState::UNLOADED)
+        setRegistrationState(RegistrationState::UNREGISTERED);
 }
 
 bool

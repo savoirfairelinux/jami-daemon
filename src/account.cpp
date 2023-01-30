@@ -72,7 +72,6 @@ const std::string Account::DEFAULT_USER_AGENT = Account::getDefaultUserAgent();
 Account::Account(const std::string& accountID)
     : rand(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
     , accountID_(accountID)
-    , registrationState_(RegistrationState::UNREGISTERED)
     , systemCodecContainer_(getSystemCodecContainer())
 {
     // Initialize the codec order, used when creating a new account
@@ -228,6 +227,7 @@ Account::mapStateNumberToString(RegistrationState state)
         return #X
 
     switch (state) {
+        CASE_STATE(UNLOADED);
         CASE_STATE(UNREGISTERED);
         CASE_STATE(TRYING);
         CASE_STATE(REGISTERED);
