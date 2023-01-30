@@ -380,9 +380,9 @@ public:
                        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                        std::function<void(bool)>&& end = {});
 
-    void setPushNotificationToken(const std::string& pushDeviceToken = "") override;
+    bool setPushNotificationToken(const std::string& pushDeviceToken = "") override;
 
-    void setPushNotificationTopic(const std::string& topic) override;
+    bool setPushNotificationTopic(const std::string& topic) override;
 
     /**
      * To be called by clients with relevant data when a push notification is received.

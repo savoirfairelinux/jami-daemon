@@ -217,18 +217,26 @@ public:
 
     virtual bool cancelMessage(uint64_t /*id*/) { return false; }
 
-    virtual void setPushNotificationToken(const std::string& pushDeviceToken = "")
+    virtual bool setPushNotificationToken(const std::string& pushDeviceToken = "")
     {
-        editConfig([&](AccountConfig& config){
-            config.deviceKey = pushDeviceToken;
-        });
+        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        if (config_->deviceKey != pushDeviceToken) {
+            config_->deviceKey = pushDeviceToken;
+            saveConfig();
+            return true;
+        }
+        return false;
     }
 
-    virtual void setPushNotificationTopic(const std::string& topic = "")
+    virtual bool setPushNotificationTopic(const std::string& topic = "")
     {
-        editConfig([&](AccountConfig& config){
-            config.notificationTopic = topic;
-        });
+        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        if (config_->notificationTopic != topic) {
+            config_->notificationTopic = topic;
+            saveConfig();
+            return true;
+        }
+        return false;
     }
 
     /**
