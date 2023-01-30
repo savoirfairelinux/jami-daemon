@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2023 Savoir-faire Linux Inc.
  *  Author: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify

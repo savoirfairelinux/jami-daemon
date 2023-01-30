@@ -76,7 +76,6 @@ SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
         for (const auto& nodeId : mobile_nodes)
             addMobileNodes(nodeId);
     }
-    maintainBuckets();
 }
 
 void
@@ -179,9 +178,10 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
                 if (msg.is_mobile)
                     shared->changeMobility(socket->deviceId(), msg.is_mobile);
 
-                if (msg.request)
+                if (msg.request) {
                     shared->sendAnswer(socket, msg);
-                else if (msg.response) {
+
+                } else if (msg.response) {
                     shared->setKnownNodes(msg.response->nodes);
                     shared->setMobileNodes(msg.response->mobile_nodes);
                 }
@@ -265,21 +265,23 @@ SwarmManager::tryConnect(const NodeId& nodeId)
 void
 SwarmManager::addChannel(std::shared_ptr<ChannelSocketInterface> channel)
 {
-    auto emit = false;
-    {
-        std::lock_guard<std::mutex> lock(mutex);
-        emit = routing_table.findBucket(getId())->getNodeIds().size() == 0;
-        auto bucket = routing_table.findBucket(channel->deviceId());
-        if (routing_table.addNode(channel, bucket)) {
-            std::error_code ec;
-            resetNodeExpiry(ec, channel, id_);
+    if (channel) {
+        auto emit = false;
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            emit = routing_table.findBucket(getId())->getNodeIds().size() == 0;
+            auto bucket = routing_table.findBucket(channel->deviceId());
+            if (routing_table.addNode(channel, bucket)) {
+                std::error_code ec;
+                resetNodeExpiry(ec, channel, id_);
+            }
         }
-    }
-    receiveMessage(channel);
-    if (emit && onConnectionChanged_) {
-        // If it's the first channel we add, we're now connected!
-        JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
-        onConnectionChanged_(true);
+        receiveMessage(channel);
+        if (emit && onConnectionChanged_) {
+            // If it's the first channel we add, we're now connected!
+            JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
+            onConnectionChanged_(true);
+        }
     }
 }
 
@@ -326,6 +328,9 @@ SwarmManager::changeMobility(const NodeId& nodeId, bool isMobile)
 void
 SwarmManager::shutdown()
 {
+    if (isShutdown_) {
+        return;
+    }
     isShutdown_ = true;
     std::lock_guard<std::mutex> lock(mutex);
     routing_table.shutdownAllNodes();
