@@ -2291,19 +2291,19 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
 void
 JamiAccount::setRegistrationState(RegistrationState state,
-                                  unsigned detail_code,
+                                  int detail_code,
                                   const std::string& detail_str)
 {
     if (registrationState_ != state) {
         if (state == RegistrationState::REGISTERED) {
-            JAMI_WARN("[Account %s] connected", getAccountID().c_str());
+            JAMI_WARNING("[Account {}] connected", getAccountID());
             turnCache_->refresh();
             storeActiveIpAddress();
         } else if (state == RegistrationState::TRYING) {
-            JAMI_WARN("[Account %s] connecting…", getAccountID().c_str());
+            JAMI_WARNING("[Account {}] connecting…", getAccountID());
         } else {
             deviceAnnounced_ = false;
-            JAMI_WARN("[Account %s] disconnected", getAccountID().c_str());
+            JAMI_WARNING("[Account {}] disconnected", getAccountID());
         }
     }
     // Update registrationState_ & emit signals
