@@ -1418,7 +1418,7 @@ SIPAccount::setCredentials(const std::vector<SipAccountConfig::Credentials>& cre
 
 void
 SIPAccount::setRegistrationState(RegistrationState state,
-                                 unsigned details_code,
+                                 int details_code,
                                  const std::string& /*detail_str*/)
 {
     std::string details_str;

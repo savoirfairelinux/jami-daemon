@@ -109,7 +109,7 @@ Account::updateUpnpController()
 
 void
 Account::setRegistrationState(RegistrationState state,
-                              unsigned detail_code,
+                              int detail_code,
                               const std::string& detail_str)
 {
     if (state != registrationState_) {

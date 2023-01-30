@@ -226,7 +226,7 @@ protected:
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
     virtual void setRegistrationState(RegistrationState state,
-                                      unsigned code = 0,
+                                      int code = 0,
                                       const std::string& detail_str = {}) override;
 
     im::MessageEngine messageEngine_;
