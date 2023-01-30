@@ -188,7 +188,7 @@ public:
      * @param state The registration state of underlying VoIPLink
      */
     void setRegistrationState(RegistrationState state,
-                              unsigned detail_code = 0,
+                              int detail_code = 0,
                               const std::string& detail_str = {}) override;
 
     /**
