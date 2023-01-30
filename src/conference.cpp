@@ -893,7 +893,7 @@ Conference::removeParticipant(const std::string& participant_id)
 void
 Conference::attachLocalParticipant()
 {
-    JAMI_INFO("Attach local participant to conference %s", id_.c_str());
+    JAMI_LOG("Attach local participant to conference {}", id_);
 
     if (getState() == State::ACTIVE_DETACHED) {
         setState(State::ACTIVE_ATTACHED);
@@ -1000,7 +1000,7 @@ Conference::unbindParticipant(const std::string& participant_id)
 void
 Conference::bindHost()
 {
-    JAMI_INFO("Bind host to conference %s", id_.c_str());
+    JAMI_LOG("Bind host to conference {}", id_);
 
     auto& rbPool = Manager::instance().getRingBufferPool();
 

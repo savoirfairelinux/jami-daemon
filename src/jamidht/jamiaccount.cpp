@@ -1076,7 +1076,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
-    JAMI_DBG("[Account %s] loading account", getAccountID().c_str());
+    JAMI_DEBUG("[Account {}] loading account", getAccountID());
     AccountManager::OnChangeCallback callbacks {
         [this](const std::string& uri, bool confirmed) {
             if (!id_.first)
@@ -1257,7 +1257,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                const std::map<std::string, std::string>& config,
                                                std::string&& receipt,
                                                std::vector<uint8_t>&& receipt_signature) {
-                    JAMI_INFO("[Account %s] Auth success!", getAccountID().c_str());
+                    JAMI_LOG("[Account {}] Auth success!", getAccountID());
 
                     fileutils::check_dir(idPath_.c_str(), 0700);
 
@@ -3814,11 +3814,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
     // Verify that the connection is not already cached
     SipConnectionKey key(peerId, deviceId);
-    auto it = sipConns_.find(key);
-    if (it == sipConns_.end())
-        it = sipConns_.emplace(key, std::vector<SipConnection> {}).first;
-    auto& connections = it->second;
-    auto conn = std::find_if(connections.begin(), connections.end(), [&](auto v) {
+    auto& connections = sipConns_[key];
+    auto conn = std::find_if(connections.begin(), connections.end(), [&](const auto& v) {
         return v.channel == socket;
     });
     if (conn != connections.end()) {
@@ -3844,14 +3841,13 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
                                                                   socket,
                                                                   std::move(onShutdown));
     if (!sip_tr) {
-        JAMI_ERR() << "No channeled transport found";
+        JAMI_ERROR("No channeled transport found");
         return;
     }
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
-    JAMI_WARN("[Account %s] New SIP channel opened with %s",
-              getAccountID().c_str(),
-              deviceId.to_c_str());
+    JAMI_WARNING("[Account {:s}] New SIP channel opened with {:s}",
+              getAccountID(), deviceId.to_c_str());
     lk.unlock();
 
     convModule()->syncConversations(peerId, deviceId.toString());

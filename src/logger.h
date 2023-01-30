@@ -154,6 +154,11 @@ private:
 namespace log {
 
 template<typename S, typename... Args>
+void info(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_INFO, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+}
+
+template<typename S, typename... Args>
 void dbg(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_DEBUG, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
@@ -181,6 +186,7 @@ void error(const char* file, int line, S&& format, Args&&... args) {
 #define JAMI_XWARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ##__VA_ARGS__)
 #define JAMI_XERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ##__VA_ARGS__)
 
+#define JAMI_LOG(formatstr, ...) ::jami::log::info(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
 #define JAMI_DEBUG(formatstr, ...) if(::jami::Logger::debugEnabled()) { ::jami::log::dbg(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__); }
 #define JAMI_WARNING(formatstr, ...) ::jami::log::warn(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
 #define JAMI_ERROR(formatstr, ...) ::jami::log::error(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
