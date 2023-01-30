@@ -98,11 +98,6 @@ public:
 
     pjsip_host_port getHostPortFromSTUN(pj_pool_t* pool);
 
-    void setRegistrationStateDetailed(const std::pair<int, std::string>& details)
-    {
-        registrationStateDetailed_ = details;
-    }
-
     void updateDialogViaSentBy(pjsip_dialog* dlg);
 
     void resetAutoRegistration();
