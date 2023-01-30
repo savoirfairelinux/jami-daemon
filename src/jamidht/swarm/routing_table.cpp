@@ -262,8 +262,10 @@ RoutingTable::addNode(std::shared_ptr<ChannelSocketInterface> channel,
         if (contains(bucket, id_)) {
             split(bucket);
             bucket = findBucket(nodeId);
-        } else
-            return false;
+
+        } else {
+            return bucket->addNode(std::move(channel));
+        }
     }
     return bucket->addNode(std::move(channel));
 }
@@ -451,7 +453,6 @@ RoutingTable::split(std::list<Bucket>::iterator& bucket)
     NodeId id = middle(bucket);
     // JAMI_ERROR("MIDDLE {}", id.toString());
     auto newBucketIt = buckets.emplace(std::next(bucket), id);
-
     // Re-assign nodes
     auto& nodeSwap = bucket->getNodes();
 

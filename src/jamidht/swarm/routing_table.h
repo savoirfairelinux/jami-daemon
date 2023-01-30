@@ -47,13 +47,17 @@ struct NodeInfo
     NodeInfo(std::shared_ptr<ChannelSocketInterface> socket_)
         : socket(socket_)
     {}
+    NodeInfo(bool mobile, std::shared_ptr<ChannelSocketInterface> socket_)
+        : isMobile_(mobile)
+        , socket(socket_)
+    {}
 };
 
 class Bucket
 
 {
 public:
-    static constexpr int BUCKET_MAX_SIZE = 4;
+    static constexpr int BUCKET_MAX_SIZE = 2;
 
     Bucket() = delete;
     Bucket(const Bucket&) = delete;
