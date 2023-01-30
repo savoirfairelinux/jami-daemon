@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2053e7a_cd2a18cc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-01-30T14:39:08Z",
+      "side": 1,
+      "message": "To check if recorder has the expected number of attached streams, we need to make sure that audio/video devices are available to the call in test.\nIn our CI test environment, that is not a valid supposition in the present, so we need first to improve our test environment or make the test independent of physical devices.\nCurrently the video source is already set to a dummy mp4 file however the same approach did not work for the audio source and need further investigation.",
+      "revId": "42c3384d2501b8dbd5a202a63453b88ff3345b89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
