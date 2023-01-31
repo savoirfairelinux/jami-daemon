@@ -39,13 +39,19 @@ if(NOT MSVC)
     endif()
     set(CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
 
+    include(ProcessorCount)
+    ProcessorCount(NPROC)
+    if(NOT NPROC EQUAL 0)
+        set(CONTRIB_BUILD_FLAGS -j${NPROC})
+    endif()
+
     if (BUILD_EXTRA_TOOLS)
         set(ENV{PATH} "${CMAKE_CURRENT_SOURCE_DIR}/extras/tools/build/bin:$ENV{PATH}")
         execute_process(
             COMMAND ./bootstrap
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
         execute_process(
-            COMMAND make
+            COMMAND make ${CONTRIB_BUILD_FLAGS}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
         execute_process(
             COMMAND make .pkg-config
@@ -97,7 +103,7 @@ if(NOT MSVC)
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
         execute_process(COMMAND make list
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
-        execute_process(COMMAND make
+        execute_process(COMMAND make ${CONTRIB_BUILD_FLAGS}
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
     endif()
 endif()
