@@ -16,6 +16,29 @@
       "message": "nice. looks very clean. I\u0027d like to test it then +2",
       "revId": "a63b27071c5ae4619ec850d122cc9b833932aa7b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d15e23d_00a52f82",
+        "filename": "contrib/src/ffmpeg/windows-dxgi-support.patch",
+        "patchSetId": 5
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-01-31T15:55:20Z",
+      "side": 1,
+      "message": "is it safe to assume that it is impossible that this call will throw either `std::invalid_argument` or `std::out_of_range`?",
+      "range": {
+        "startLine": 275,
+        "startChar": 46,
+        "endLine": 275,
+        "endChar": 57
+      },
+      "revId": "a63b27071c5ae4619ec850d122cc9b833932aa7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
