@@ -61,12 +61,14 @@ constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 
 VideoRtpSession::VideoRtpSession(const string& callId,
                                  const string& streamId,
-                                 const DeviceParams& localVideoParams)
+                                 const DeviceParams& localVideoParams,
+                                 const std::shared_ptr<MediaRecorder>& rec)
     : RtpSession(callId, streamId, MediaType::MEDIA_VIDEO)
     , localVideoParams_(localVideoParams)
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 {
+    recorder_ = rec;
     setupVideoBitrateInfo(); // reset bitrate
     cc = std::make_unique<CongestionControl>();
     JAMI_DBG("[%p] Video RTP session created for call %s", this, callId_.c_str());
@@ -74,6 +76,7 @@ VideoRtpSession::VideoRtpSession(const string& callId,
 
 VideoRtpSession::~VideoRtpSession()
 {
+    deinitRecorder();
     stop();
     JAMI_DBG("[%p] Video RTP session destroyed", this);
 }
@@ -128,6 +131,10 @@ VideoRtpSession::startSender()
             auto input = getVideoInput(input_);
             videoLocal_ = input;
             if (input) {
+                videoLocal_->setRecorderCallback(
+                    [this](const MediaStream& ms) {
+                        attachLocalRecorder(ms);
+                    });
                 auto newParams = input->getParams();
                 try {
                     if (newParams.valid()
@@ -272,6 +279,8 @@ VideoRtpSession::startReceiver()
             if (activeStream)
                 videoMixer_->setActiveStream(streamId_);
         }
+        receiveThread_->setRecorderCallback(
+            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
 
     } else {
         JAMI_DBG("[%p] Video receiver disabled", this);
@@ -417,6 +426,13 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
         }
 
         if ((send_.onHold = mute)) {
+            if (videoLocal_) {
+                auto ms = videoLocal_->getInfo();
+                if (auto ob = recorder_->getStream(ms.name)) {
+                    videoLocal_->detach(ob);
+                    recorder_->removeStream(ms);
+                }
+            }
             stopSender();
         } else {
             restartSender();
@@ -431,6 +447,13 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
     }
 
     if ((receive_.onHold = mute)) {
+        if (receiveThread_) {
+            auto ms = receiveThread_->getInfo();
+            if (auto ob = recorder_->getStream(ms.name)) {
+                receiveThread_->detach(ob);
+                recorder_->removeStream(ms);
+            }
+        }
         stopReceiver();
     } else {
         startReceiver();
@@ -738,35 +761,57 @@ VideoRtpSession::processRtcpChecker()
 }
 
 void
-VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
+VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
-    if (receiveThread_) {
-        if (auto ob = rec->addStream(receiveThread_->getInfo())) {
-            receiveThread_->attach(ob);
-        }
-    }
-    if (Manager::instance().videoPreferences.getRecordPreview()) {
-        if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
-            if (auto ob = rec->addStream(input->getInfo())) {
-                input->attach(ob);
-            }
-        }
+    if (!recorder_ || !receiveThread_)
+        return;
+    if (auto ob = recorder_->addStream(ms)) {
+        receiveThread_->attach(ob);
     }
 }
 
 void
-VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
+VideoRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
-    if (!rec)
+    if (!recorder_ || !videoLocal_)
         return;
+    if (auto ob = recorder_->addStream(ms)) {
+        videoLocal_->attach(ob);
+    }
+}
+
+void
+VideoRtpSession::initRecorder()
+{
+	if (!recorder_)
+		return;
     if (receiveThread_) {
-        if (auto ob = rec->getStream(receiveThread_->getInfo().name)) {
+        receiveThread_->setRecorderCallback(
+            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+    }
+    if (videoLocal_ && !send_.onHold) {
+        videoLocal_->setRecorderCallback(
+            [this](const MediaStream& ms) { attachLocalRecorder(ms); });
+    }
+}
+
+void
+VideoRtpSession::deinitRecorder()
+{
+	if (!recorder_)
+		return;
+    if (receiveThread_) {
+        auto ms = receiveThread_->getInfo();
+        if (auto ob = recorder_->getStream(ms.name)) {
             receiveThread_->detach(ob);
+            recorder_->removeStream(ms);
         }
     }
-    if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
-        if (auto ob = rec->getStream(input->getInfo().name)) {
-            input->detach(ob);
+    if (videoLocal_) {
+        auto ms = videoLocal_->getInfo();
+        if (auto ob = recorder_->getStream(ms.name)) {
+            videoLocal_->detach(ob);
+            recorder_->removeStream(ms);
         }
     }
 }
