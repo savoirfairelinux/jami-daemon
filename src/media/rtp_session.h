@@ -71,8 +71,8 @@ public:
         onSuccessfulSetup_ = cb;
     }
 
-    virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
-    virtual void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
+    virtual void initRecorder() = 0;
+    virtual void deinitRecorder() = 0;
     std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }
     const IpAddr& getSendAddr() const { return send_.addr; };
     const IpAddr& getRecvAddr() const { return receive_.addr; };
@@ -89,7 +89,7 @@ protected:
     MediaDescription send_;
     MediaDescription receive_;
     uint16_t mtu_;
-
+    std::shared_ptr<MediaRecorder> recorder_;
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
 
     std::string getRemoteRtpUri() const { return "rtp://" + send_.addr.toString(true); }

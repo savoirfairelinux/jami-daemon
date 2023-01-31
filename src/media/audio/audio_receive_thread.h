@@ -59,6 +59,8 @@ public:
         onSuccessfulSetup_ = cb;
     }
 
+    void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
+
 private:
     NON_COPYABLE(AudioReceiveThread);
 
@@ -90,6 +92,7 @@ private:
     void cleanup();
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(const MediaStream& ms)> recorderCallback_;
 };
 
 } // namespace jami

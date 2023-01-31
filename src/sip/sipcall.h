@@ -169,7 +169,7 @@ public:
 
     // Override PeerRecorder
     void peerRecording(bool state) override;
-    void peerMuted(bool state) override;
+    void peerMuted(bool state, int streamIdx) override;
     void peerVoice(bool state) override;
     // end override PeerRecorder
 
@@ -342,7 +342,7 @@ private:
 
     void deinitRecorder();
 
-    void rtpSetupSuccess(MediaType type, bool isRemote);
+    void rtpSetupSuccess();
 
     void setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession);
 
@@ -513,12 +513,6 @@ private:
 
     std::atomic_bool waitForIceInit_ {false};
 
-    std::map<const std::string, bool> mediaReady_ {{"a:local", false},
-                                                   {"a:remote", false},
-                                                   {"v:local", false},
-                                                   {"v:remote", false}};
-
-    void resetMediaReady();
     void detachAudioFromConference();
 
     std::mutex setupSuccessMutex_;
