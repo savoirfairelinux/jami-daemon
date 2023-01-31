@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d6c09cd_e0511f01",
+        "filename": "src/account_config.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-31T21:51:59Z",
+      "side": 1,
+      "message": "pupnp is not completely disabled?\n\nhttps://github.com/pupnp/pupnp/issues/328 since then we know this drain and it was still present. natpmp is enabled also?",
+      "range": {
+        "startLine": 117,
+        "startChar": 9,
+        "endLine": 117,
+        "endChar": 20
+      },
+      "revId": "ef113e008a5199d3bacaa426ea7204f947715a90",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
