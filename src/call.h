@@ -426,15 +426,6 @@ public:
 
     virtual void restartMediaSender() = 0;
 
-    /**
-     * Update call details after creation.
-     * @param details to update
-     *
-     * \note No warranty to update any details, only some details can be modified.
-     *       See the implementation for more ... details :-).
-     */
-    void updateDetails(const std::map<std::string, std::string>& details);
-
     // Media status methods
     virtual bool hasVideo() const = 0;
     virtual bool isCaptureDeviceMuted(const MediaType& mediaType) const = 0;
