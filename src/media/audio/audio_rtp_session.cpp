@@ -47,11 +47,14 @@
 
 namespace jami {
 
-AudioRtpSession::AudioRtpSession(const std::string& callId, const std::string& streamId)
+AudioRtpSession::AudioRtpSession(const std::string& callId,
+                                 const std::string& streamId,
+                                 const std::shared_ptr<MediaRecorder>& rec)
     : RtpSession(callId, streamId, MediaType::MEDIA_AUDIO)
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 
 {
+    recorder_ = rec;
     JAMI_DBG("Created Audio RTP session: %p - call Id %s", this, callId_.c_str());
 
     // don't move this into the initializer list or Cthulus will emerge
@@ -60,6 +63,7 @@ AudioRtpSession::AudioRtpSession(const std::string& callId, const std::string& s
 
 AudioRtpSession::~AudioRtpSession()
 {
+    deinitRecorder();
     stop();
     JAMI_DBG("Destroyed Audio RTP session: %p - call Id %s", this, callId_.c_str());
 }
@@ -91,6 +95,7 @@ AudioRtpSession::startSender()
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
     audioInput_ = jami::getAudioInput(callId_);
+    audioInput_->setRecorderCallback([this](const MediaStream& ms) { attachLocalRecorder(ms); });
     audioInput_->setMuted(muteState_);
     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
     auto newParams = audioInput_->switchInput(input_);
@@ -168,6 +173,8 @@ AudioRtpSession::startReceiver()
                                                 accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp,
                                                 mtu_));
+
+    receiveThread_->setRecorderCallback([this](const MediaStream& ms) { attachRemoteRecorder(ms); });
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
     receiveThread_->startReceiver();
@@ -244,12 +251,28 @@ AudioRtpSession::stop()
 }
 
 void
-AudioRtpSession::setMuted(bool muted, Direction)
+AudioRtpSession::setMuted(bool muted, Direction dir)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    muteState_ = muted;
-    if (audioInput_)
-        audioInput_->setMuted(muted);
+    if (dir == Direction::SEND) {
+        muteState_ = muted;
+        if (audioInput_)
+            audioInput_->setMuted(muted);
+    } else {
+        if (receiveThread_) {
+            auto ms = receiveThread_->getInfo();
+            if (muted) {
+                if (auto ob = recorder_->getStream(ms.name)) {
+                    receiveThread_->detach(ob);
+                    recorder_->removeStream(ms);
+                }
+            } else {
+                if (auto ob = recorder_->addStream(ms)) {
+                    receiveThread_->attach(ob);
+                }
+            }
+        }
+    }
 }
 
 void
@@ -342,25 +365,51 @@ AudioRtpSession::processRtcpChecker()
 }
 
 void
-AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
+AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
-    if (receiveThread_)
-        receiveThread_->attach(rec->addStream(receiveThread_->getInfo()));
-    if (auto input = jami::getAudioInput(callId_))
-        input->attach(rec->addStream(input->getInfo()));
+    if (!recorder_ || !receiveThread_)
+        return;
+    if (auto ob = recorder_->addStream(ms)) {
+        receiveThread_->attach(ob);
+    }
 }
 
 void
-AudioRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
+AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
+    if (!recorder_ || !audioInput_)
+        return;
+    if (auto ob = recorder_->addStream(ms)) {
+        audioInput_->attach(ob);
+    }
+}
+
+void
+AudioRtpSession::initRecorder()
+{
+    if (!recorder_)
+        return;
+    if (receiveThread_)
+        receiveThread_->setRecorderCallback(
+            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+    if (audioInput_)
+        audioInput_->setRecorderCallback(
+            [this](const MediaStream& ms) { attachLocalRecorder(ms); });
+}
+
+void
+AudioRtpSession::deinitRecorder()
+{
+    if (!recorder_)
+        return;
     if (receiveThread_) {
-        if (auto ob = rec->getStream(receiveThread_->getInfo().name)) {
+        if (auto ob = recorder_->getStream(receiveThread_->getInfo().name)) {
             receiveThread_->detach(ob);
         }
     }
-    if (auto input = jami::getAudioInput(callId_)) {
-        if (auto ob = rec->getStream(input->getInfo().name)) {
-            input->detach(ob);
+    if (audioInput_) {
+        if (auto ob = recorder_->getStream(audioInput_->getInfo().name)) {
+            audioInput_->detach(ob);
         }
     }
 }

@@ -184,13 +184,14 @@ SIPCall::createRtpSession(RtpStream& stream)
     // To get audio_0 ; video_0
     auto streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
-        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId);
+        stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId, recorder_);
     }
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
         stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_,
                                                                       streamId,
-                                                                      getVideoSettings());
+                                                                      getVideoSettings(),
+                                                                      recorder_);
         std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->setRotation(rotation_);
     }
 #endif
@@ -235,7 +236,7 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
 
     rtpSession->setSuccessfulSetupCb([w = weak()](MediaType type, bool isRemote) {
         if (auto thisPtr = w.lock())
-            thisPtr->rtpSetupSuccess(type, isRemote);
+            thisPtr->rtpSetupSuccess();
     });
 
     if (localMedia.type == MediaType::MEDIA_AUDIO) {
@@ -1471,7 +1472,6 @@ SIPCall::switchInput(const std::string& source)
     }
     if (isRec) {
         readyToRecord_ = false;
-        resetMediaReady();
         pendingRecord_ = true;
     }
 }
@@ -2016,7 +2016,11 @@ SIPCall::hasVideo() const
 {
 #ifdef ENABLE_VIDEO
     std::function<bool(const RtpStream& stream)> videoCheck = [](auto const& stream) {
-        return stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO;
+        bool validVideo = stream.mediaAttribute_
+                          && stream.mediaAttribute_->hasValidVideo();
+        bool validRemoteVideo = stream.remoteMediaAttribute_
+                                && stream.remoteMediaAttribute_->hasValidVideo();
+        return validVideo || validRemoteVideo;
     };
 
     const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), videoCheck);
@@ -2152,7 +2156,6 @@ SIPCall::startAllMedia()
 
     // reset
     readyToRecord_ = false;
-    resetMediaReady();
 
     for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
         if (not iter->mediaAttribute_) {
@@ -2218,9 +2221,6 @@ void
 SIPCall::stopAllMedia()
 {
     JAMI_DBG("[call:%s] Stopping all media", getCallId().c_str());
-    deinitRecorder();
-    if (Call::isRecording())
-        stopRecording(); // if call stops, finish recording
 
 #ifdef ENABLE_VIDEO
     {
@@ -2269,6 +2269,18 @@ SIPCall::updateRemoteMedia()
         auto const& remoteMedia = rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(
             remoteMediaList[idx]);
         if (remoteMedia->type_ == MediaType::MEDIA_VIDEO) {
+            auto previousState = isAudioOnly_;
+            auto newState = !hasVideo();
+
+            if (previousState != newState && Call::isRecording()) {
+                toggleRecording();
+                pendingRecord_ = true;
+            }
+            isAudioOnly_ = newState;
+
+            if (pendingRecord_ && readyToRecord_) {
+                toggleRecording();
+            }
             JAMI_DEBUG("[call:{:s}] Remote media @ {:d}: {:s}",
                        getCallId(),
                        idx,
@@ -2574,6 +2586,18 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         JAMI_DBG("[call:%s] Media change DOES NOT require a new negotiation (re-invite)",
                  getCallId().c_str());
         reportMediaNegotiationStatus();
+        auto previousState = isAudioOnly_;
+        auto newState = !hasVideo();
+
+        if (previousState != newState && Call::isRecording()) {
+            toggleRecording();
+            pendingRecord_ = true;
+        }
+        isAudioOnly_ = newState;
+
+        if (pendingRecord_ && readyToRecord_) {
+            toggleRecording();
+        }
     }
 
     return true;
@@ -3191,7 +3215,7 @@ SIPCall::toggleRecording()
                                  peerUri_);
         recorder_->setMetadata(title, ""); // use default description
         for (const auto& rtpSession : getRtpSessionList())
-            rtpSession->initRecorder(recorder_);
+            rtpSession->initRecorder();
     } else {
         updateRecState(false);
         deinitRecorder();
@@ -3207,7 +3231,7 @@ void
 SIPCall::deinitRecorder()
 {
     for (const auto& rtpSession : getRtpSessionList())
-        rtpSession->deinitRecorder(recorder_);
+        rtpSession->deinitRecorder();
 }
 
 void
@@ -3473,25 +3497,20 @@ SIPCall::newIceSocket(unsigned compId)
 }
 
 void
-SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
+SIPCall::rtpSetupSuccess()
 {
     std::lock_guard<std::mutex> lk {setupSuccessMutex_};
-    if (type == MEDIA_AUDIO) {
-        if (isRemote)
-            mediaReady_.at("a:remote") = true;
-        else
-            mediaReady_.at("a:local") = true;
-    } else {
-        if (isRemote)
-            mediaReady_.at("v:remote") = true;
-        else
-            mediaReady_.at("v:local") = true;
-    }
 
-    isAudioOnly_ = !hasVideo();
-#ifdef ENABLE_VIDEO
     readyToRecord_ = true; // We're ready to record whenever a stream is ready
-#endif
+
+    auto previousState = isAudioOnly_;
+    auto newState = !hasVideo();
+
+    if (previousState != newState && Call::isRecording()) {
+        toggleRecording();
+        pendingRecord_ = true;
+    }
+    isAudioOnly_ = newState;
 
     if (pendingRecord_ && readyToRecord_)
         toggleRecording();
@@ -3515,13 +3534,23 @@ SIPCall::peerRecording(bool state)
 }
 
 void
-SIPCall::peerMuted(bool muted)
+SIPCall::peerMuted(bool muted, int streamIdx)
 {
     if (muted) {
         JAMI_WARN("Peer muted");
     } else {
         JAMI_WARN("Peer un-muted");
     }
+
+    if (streamIdx == -1) {
+        for (const auto& audioRtp : getRtpSessionList(MediaType::MEDIA_AUDIO))
+            audioRtp->setMuted(muted, RtpSession::Direction::RECV);
+    } else if (streamIdx > -1 && streamIdx < static_cast<int>(rtpStreams_.size())) {
+        auto& stream = rtpStreams_[streamIdx];
+        if (stream.rtpSession_ && stream.rtpSession_->getMediaType() == MediaType::MEDIA_AUDIO)
+            stream.rtpSession_->setMuted(muted, RtpSession::Direction::RECV);
+    }
+
     peerMuted_ = muted;
     if (auto conf = conf_.lock())
         conf->updateMuted();
@@ -3538,13 +3567,6 @@ SIPCall::peerVoice(bool voice)
         // one-to-one call
         // maybe emit signal with partner voice activity
     }
-}
-
-void
-SIPCall::resetMediaReady()
-{
-    for (auto& m : mediaReady_)
-        m.second = false;
 }
 
 } // namespace jami
