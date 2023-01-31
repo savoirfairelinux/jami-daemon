@@ -103,6 +103,10 @@ VideoReceiveThread::setup()
                                             displayMatrix.release());
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
+    videoDecoder_->setContextCallback([this]() {
+        if (recorderCallback_)
+            recorderCallback_(getInfo());
+    });
     videoDecoder_->setResolutionChangedCallback([this](int width, int height) {
         dstWidth_ = width;
         dstHeight_ = height;
@@ -186,6 +190,18 @@ void
 VideoReceiveThread::addIOContext(SocketPair& socketPair)
 {
     demuxContext_.reset(socketPair.createIOContext(mtu_));
+}
+
+void
+VideoReceiveThread::setRecorderCallback(
+    const std::function<void(const MediaStream& ms)>& cb)
+{
+    recorderCallback_ = cb;
+    if (videoDecoder_)
+        videoDecoder_->setContextCallback([this]() {
+            if (recorderCallback_)
+                recorderCallback_(getInfo());
+        });
 }
 
 void
