@@ -113,7 +113,11 @@ struct AccountConfig: public Serializable {
     /**
      * UPnP IGD controller and the mutex to access it
      */
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    bool upnpEnabled {false};
+#else
     bool upnpEnabled {true};
+#endif
 
     std::set<std::string> defaultModerators {};
     bool localModeratorsEnabled {true};
