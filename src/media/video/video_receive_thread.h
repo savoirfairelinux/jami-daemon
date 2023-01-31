@@ -50,7 +50,7 @@ namespace video {
 
 class SinkClient;
 
-class VideoReceiveThread : public VideoGenerator
+class VideoReceiveThread : public VideoGenerator, public std::enable_shared_from_this<VideoReceiveThread>
 {
 public:
     VideoReceiveThread(const std::string& id, bool useSink, const std::string& sdp, uint16_t mtu);
@@ -85,6 +85,9 @@ public:
     {
         onSuccessfulSetup_ = cb;
     }
+
+    void setRecorderCallback(
+        const std::function<void(const MediaStream& ms)>& cb);
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -123,6 +126,12 @@ private:
 
     std::function<void(void)> keyFrameRequestCallback_;
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(const MediaStream& ms)> recorderCallback_;
+
+    std::weak_ptr<VideoReceiveThread> weak()
+    {
+        return shared_from_this();
+    }
 };
 
 } // namespace video

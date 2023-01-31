@@ -102,5 +102,7 @@ public:
     // For instance, muting the audio can be done by disabling the
     // audio input (capture) of the encoding session, resulting in
     // sending RTP packets without actual audio (silence).
+
+    bool hasValidVideo();
 };
 } // namespace jami
