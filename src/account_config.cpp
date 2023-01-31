@@ -155,7 +155,9 @@ AccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled);
     parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath);
     parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent);
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled);
+#endif
     std::string defMod;
     parseString(details, Conf::CONFIG_DEFAULT_MODERATORS, defMod);
     defaultModerators = string_split_set(defMod);

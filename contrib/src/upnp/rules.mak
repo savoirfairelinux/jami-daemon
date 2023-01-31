@@ -4,7 +4,9 @@ UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.g
 
 PKGS += upnp
 ifeq ($(call need_pkg,"libupnp >= 1.14.2"),)
+ifndef HAVE_IOS
 PKGS_FOUND += upnp
+endif
 endif
 
 $(TARBALLS)/pupnp-release-$(UPNP_VERSION).tar.gz:

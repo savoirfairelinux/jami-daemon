@@ -34,7 +34,12 @@ struct JamiAccountConfig : public SipAccountBaseConfig {
         turnServerPwd = DEFAULT_TURN_PWD;
         turnServerRealm = DEFAULT_TURN_REALM;
         turnEnabled = true;
+
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+        upnpEnabled = false;
+#else
         upnpEnabled = true;
+#endif
     }
     void serialize(YAML::Emitter& out) const override;
     void unserialize(const YAML::Node& node) override;
