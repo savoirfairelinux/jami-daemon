@@ -262,6 +262,19 @@ VideoInput::configureFilePlayback(const std::string&,
 }
 
 void
+VideoInput::setRecorderCallback(
+    const std::function<void(const std::shared_ptr<VideoFrameActiveWriter>& vg, const MediaStream& ms)>& cb)
+{
+    recorderCallback_ = cb;
+    if (decoder_)
+        decoder_->setContextCallback([shared = shared_from_this()]() {
+            auto ms = shared->getInfo();
+            if (shared->recorderCallback_)
+                shared->recorderCallback_(shared, ms);
+        });
+}
+
+void
 VideoInput::createDecoder()
 {
     deleteDecoder();
@@ -346,10 +359,17 @@ VideoInput::createDecoder()
         onSuccessfulSetup_(MEDIA_VIDEO, 0);
 
     decoder_ = std::move(decoder);
+
     foundDecOpts(decOpts_);
 
     /* Signal the client about readable sink */
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+
+    decoder_->setContextCallback([shared = shared_from_this()]() {
+        auto ms = shared->getInfo();
+        if (shared->recorderCallback_)
+            shared->recorderCallback_(shared, ms);
+    });
 }
 
 void
