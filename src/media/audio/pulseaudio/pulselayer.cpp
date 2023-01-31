@@ -482,6 +482,9 @@ PulseLayer::stopStream(AudioDeviceType type)
     stream->stop();
     stream.reset();
 
+    if (type == AudioDeviceType::PLAYBACK || type == AudioDeviceType::ALL)
+        playbackChanged(false);
+
     std::lock_guard<std::mutex> lk(mutex_);
     if (not playback_ and not ringtone_ and not record_) {
         pendingStreams = 0;
