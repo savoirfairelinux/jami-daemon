@@ -39,7 +39,7 @@ class MediaIOHandle;
 struct MediaStream;
 class RingBuffer;
 
-class AudioReceiveThread : public Observable<std::shared_ptr<MediaFrame>>
+class AudioReceiveThread : public Observable<std::shared_ptr<MediaFrame>>, private std::enable_shared_from_this<AudioReceiveThread>
 {
 public:
     AudioReceiveThread(const std::string& id,
@@ -58,6 +58,9 @@ public:
     {
         onSuccessfulSetup_ = cb;
     }
+
+    void setRecorderCallback(const std::function<void(const std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>& obs,
+                                                      const MediaStream& ms)>& cb);
 
 private:
     NON_COPYABLE(AudioReceiveThread);
@@ -90,6 +93,8 @@ private:
     void cleanup();
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> obs, const MediaStream& ms)>
+        recorderCallback_;
 };
 
 } // namespace jami

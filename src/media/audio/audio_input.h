@@ -43,7 +43,7 @@ struct MediaStream;
 class Resampler;
 class RingBuffer;
 
-class AudioInput : public Observable<std::shared_ptr<MediaFrame>>
+class AudioInput : public Observable<std::shared_ptr<MediaFrame>>, private std::enable_shared_from_this<AudioInput>
 {
 public:
     AudioInput(const std::string& id);
@@ -71,7 +71,12 @@ public:
         onSuccessfulSetup_ = cb;
     }
 
+    void setRecorderCallback(const std::function<void(const std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>& obs,
+                                                      const MediaStream& ms)>& cb);
+
 private:
+    NON_COPYABLE(AudioInput);
+
     void readFromDevice();
     void readFromFile();
     void readFromQueue();
@@ -114,6 +119,9 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> wakeUp_;
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(const std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>& obs, const MediaStream& ms)>
+        recorderCallback_;
+    std::atomic_bool settingMS_ {true};
 };
 
 } // namespace jami
