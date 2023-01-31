@@ -1239,7 +1239,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 try {
                     bool state = std::stoi(matched_pattern[1]);
-                    call.peerMuted(state);
+                    call.peerMuted(state, streamIdx);
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing state remote mute: %s", e.what());
                 }
