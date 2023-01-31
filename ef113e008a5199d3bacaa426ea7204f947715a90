@@ -22,6 +22,30 @@
       },
       "revId": "ef113e008a5199d3bacaa426ea7204f947715a90",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4b67c18_92914941",
+        "filename": "src/account_config.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2023-01-31T22:08:59Z",
+      "side": 1,
+      "message": "https://review.jami.net/c/jami-daemon/+/18287/1/src/account.cpp, this patch was used to disable upnp but it was not merged and with resent changes it has merge conflict.",
+      "parentUuid": "9d6c09cd_e0511f01",
+      "range": {
+        "startLine": 117,
+        "startChar": 9,
+        "endLine": 117,
+        "endChar": 20
+      },
+      "revId": "ef113e008a5199d3bacaa426ea7204f947715a90",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
