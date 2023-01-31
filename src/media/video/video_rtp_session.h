@@ -70,7 +70,10 @@ class VideoRtpSession : public RtpSession
 public:
     using BaseType = RtpSession;
 
-    VideoRtpSession(const std::string& callId, const std::string& streamId, const DeviceParams& localVideoParams);
+    VideoRtpSession(const std::string& callId,
+                    const std::string& streamId,
+                    const DeviceParams& localVideoParams,
+                    const std::shared_ptr<MediaRecorder>& rec);
     ~VideoRtpSession();
 
     void setRequestKeyFrameCallback(std::function<void(void)> cb);
@@ -97,8 +100,8 @@ public:
     void exitConference();
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
-    void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
-    void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
+    void initRecorder() override;
+    void deinitRecorder() override;
 
     const VideoBitrateInfo& getVideoBitrateInfo();
 
@@ -175,6 +178,8 @@ private:
     std::function<void(void)> cbKeyFrameRequest_;
 
     std::atomic<int> rotation_ {0};
+
+    void attachRecorder(std::shared_ptr<VideoFrameActiveWriter> vg, const MediaStream& ms);
 };
 
 } // namespace video

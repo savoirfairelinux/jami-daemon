@@ -697,6 +697,11 @@ MediaDecoder::decode(AVPacket& packet)
 
         if (callback_)
             callback_(std::move(f));
+
+        if (contextCallback_ && firstDecode_.load()) {
+            firstDecode_.exchange(false);
+            contextCallback_();
+        }
         return DecodeStatus::FrameFinished;
     }
     return DecodeStatus::Success;

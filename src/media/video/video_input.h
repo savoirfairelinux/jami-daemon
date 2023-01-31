@@ -87,6 +87,8 @@ public:
     void setupSink();
     void stopSink();
 
+    void setRecorderCallback(const std::function<void(std::shared_ptr<VideoFrameActiveWriter> vg, const MediaStream& ms)>& cb);
+
 #if VIDEO_CLIENT_INPUT
     /*
      * these functions are used to pass buffer from/to the daemon
@@ -170,6 +172,12 @@ private:
     std::atomic_bool paused_ {true};
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(std::shared_ptr<VideoFrameActiveWriter> vg, const MediaStream& ms)> recorderCallback_;
+
+    std::weak_ptr<VideoInput> weak()
+    {
+        return shared_from_this();
+    }
 };
 
 } // namespace video
