@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b98ae6bf_5e71c22b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3802,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-01-31T20:22:04Z",
+      "side": 1,
+      "message": "unneeded copy, use std::string_view:\n\n  std::string_view((const char*)content.data(), content.size())",
+      "range": {
+        "startLine": 3802,
+        "startChar": 84,
+        "endLine": 3802,
+        "endChar": 95
+      },
+      "revId": "035dc2c2901557df5e304120e710f5a96396da51",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
