@@ -3917,7 +3917,8 @@ JamiAccount::dataTransfer(const std::string& id)
 void
 JamiAccount::monitor() const
 {
-    JAMI_DBG("[Account %s] Monitor connections", getAccountID().c_str());
+    JAMI_DEBUG("[Account {:s}] Monitor connections", getAccountID());
+    JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
 
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
