@@ -3481,7 +3481,7 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
     if (type != "devices") {
         for (const auto& certificate : fileutils::readDirectory(devicesPath)) {
             auto certPath = fileutils::getFullPath(devicesPath, certificate);
-            auto deviceCert = fileutils::loadTextFile(certPath);
+            auto deviceCert = fileutils::loadFile(certPath);
             try {
                 crypto::Certificate cert(deviceCert);
                 if (auto issuer = cert.issuer)
@@ -3798,8 +3798,8 @@ ConversationRepository::infos() const
             auto profilePath = repoPath + "profile.vcf";
             std::map<std::string, std::string> result;
             if (fileutils::isFile(profilePath)) {
-                auto content = fileutils::loadTextFile(profilePath);
-                result = ConversationRepository::infosFromVCard(vCard::utils::toMap(content));
+                auto content = fileutils::loadFile(profilePath);
+                result = ConversationRepository::infosFromVCard(vCard::utils::toMap(std::string_view {(const char*)content.data(), content.size()}));
             }
             result["mode"] = std::to_string(static_cast<int>(mode()));
             return result;
