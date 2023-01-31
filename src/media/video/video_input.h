@@ -53,7 +53,7 @@ class SinkClient;
 
 enum class VideoInputMode { ManagedByClient, ManagedByDaemon, Undefined };
 
-class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
+class VideoInput : public VideoGenerator
 {
 public:
     VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined,
@@ -86,6 +86,8 @@ public:
     void setFrameSize(const int width, const int height);
     void setupSink();
     void stopSink();
+
+    void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
 
 #if VIDEO_CLIENT_INPUT
     /*
@@ -169,6 +171,7 @@ private:
     std::atomic_bool paused_ {true};
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(const MediaStream& ms)> recorderCallback_;
 };
 
 } // namespace video
