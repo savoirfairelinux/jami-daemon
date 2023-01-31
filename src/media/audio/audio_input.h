@@ -71,6 +71,8 @@ public:
         onSuccessfulSetup_ = cb;
     }
 
+    void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
+
 private:
     void readFromDevice();
     void readFromFile();
@@ -114,6 +116,8 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> wakeUp_;
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
+    std::function<void(const MediaStream& ms)> recorderCallback_;
+    std::atomic_bool settingMS_ {true};
 };
 
 } // namespace jami

@@ -37,7 +37,7 @@ public:
 
     virtual bool isPeerRecording() const { return peerRecording_; }
 
-    virtual void peerMuted(bool muted) = 0;
+    virtual void peerMuted(bool muted, int streamIdx) = 0;
 
     virtual bool isPeerMuted() const { return peerMuted_; }
 
