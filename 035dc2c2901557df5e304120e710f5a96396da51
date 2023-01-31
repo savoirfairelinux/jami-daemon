@@ -22,6 +22,30 @@
       },
       "revId": "035dc2c2901557df5e304120e710f5a96396da51",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4921f14a_9364b4df",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3802,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-01-31T20:31:03Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b98ae6bf_5e71c22b",
+      "range": {
+        "startLine": 3802,
+        "startChar": 84,
+        "endLine": 3802,
+        "endChar": 95
+      },
+      "revId": "035dc2c2901557df5e304120e710f5a96396da51",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
