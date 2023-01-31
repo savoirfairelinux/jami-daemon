@@ -137,6 +137,11 @@ AudioInput::readFromDevice()
         audioFrame = resampler_->resample(std::move(audioFrame), format_);
     resizer_->enqueue(std::move(audioFrame));
 
+    if (settingMS_.load()) {
+        if (recorderCallback_)
+            recorderCallback_(MediaStream("a:local", format_, sent_samples));
+        settingMS_.exchange(false);
+    }
     jami_tracepoint(audio_input_read_from_device_end, id_.c_str());
 }
 
@@ -329,6 +334,22 @@ AudioInput::foundDevOpts(const DeviceParams& params)
     }
 }
 
+void
+AudioInput::setRecorderCallback(
+    const std::function<void(const MediaStream& ms)>&
+        cb)
+{
+    settingMS_.exchange(true);
+    recorderCallback_ = cb;
+    if (decoder_)
+        decoder_->setContextCallback([this]() {
+            auto ms = getInfo();
+            if (recorderCallback_)
+                recorderCallback_(ms);
+        });
+}
+
+
 bool
 AudioInput::createDecoder()
 {
@@ -366,6 +387,11 @@ AudioInput::createDecoder()
 
     decoder_ = std::move(decoder);
     foundDevOpts(devOpts_);
+    decoder_->setContextCallback([this]() {
+        auto ms = getInfo();
+        if (recorderCallback_)
+            recorderCallback_(ms);
+    });
     return true;
 }
 
