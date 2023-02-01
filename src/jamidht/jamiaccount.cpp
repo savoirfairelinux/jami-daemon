@@ -899,6 +899,8 @@ JamiAccount::loadConfig()
 {
     SIPAccountBase::loadConfig();
     registeredName_ = config().registeredName;
+    if (accountManager_)
+        accountManager_->setAccountDeviceName(config().deviceName);
     try {
         auto str = fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
                                                 std::chrono::hours(24 * 7));
@@ -1352,18 +1354,6 @@ JamiAccount::getVolatileAccountDetails() const
     return a;
 }
 
-void
-JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details)
-{
-    Account::setAccountDetails(details);
-    auto itDeviceName = details.find(libjami::Account::ConfProperties::DEVICE_NAME);
-    if (itDeviceName != details.end()) {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-        if (accountManager_)
-            accountManager_->setAccountDeviceName(itDeviceName->second);
-    }
-}
-
 
 #if HAVE_RINGNS
 void
@@ -1808,6 +1798,7 @@ JamiAccount::doRegister_()
         config.push_node_id = getAccountID();
         config.push_token = conf.deviceKey;
         config.push_topic = conf.notificationTopic;
+        config.push_platform = conf.platform;
         config.threaded = true;
         config.peer_discovery = conf.dhtPeerDiscovery;
         config.peer_publish = conf.dhtPeerDiscovery;
@@ -1836,7 +1827,7 @@ JamiAccount::doRegister_()
         dht::DhtRunner::Context context {};
         context.peerDiscovery = peerDiscovery_;
 
-        auto dht_log_level = Manager::instance().dhtLogLevel.load();
+        auto dht_log_level = 3; // Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
             static auto silent = [](char const* /*m*/, va_list /*args*/) {
             };
@@ -2361,8 +2352,7 @@ JamiAccount::setCertificateStatus(const std::string& cert_id,
 {
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
     if (done) {
-        dht_->findCertificate(dht::InfoHash(cert_id),
-                              [](const std::shared_ptr<dht::crypto::Certificate>& crt) {});
+        findCertificate(cert_id);
         emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
             getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
     }
@@ -3337,6 +3327,20 @@ JamiAccount::setPushNotificationTopic(const std::string& topic)
     }
     return false;
 }
+
+bool
+JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>& data) {
+    if (SIPAccountBase::setPushNotificationConfig(data)) {
+        if (dht_) {
+            dht_->setPushNotificationPlatform(config_->platform);
+            dht_->setPushNotificationTopic(config_->notificationTopic);
+            dht_->setPushNotificationToken(config_->deviceKey);
+        }
+        return true;
+    }
+    return false;
+}
+
 
 /**
  * To be called by clients with relevant data when a push notification is received.
