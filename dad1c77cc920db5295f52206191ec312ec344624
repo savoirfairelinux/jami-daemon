@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf097e3b_98a30a54",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-02-01T19:30:25Z",
+      "side": 1,
+      "message": "SHould not be handled at the settings level. The daemon should simply be built without upnp and properly handle the case where the daemon is built without upnp.",
+      "revId": "dad1c77cc920db5295f52206191ec312ec344624",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
