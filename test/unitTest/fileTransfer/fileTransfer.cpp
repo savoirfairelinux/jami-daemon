@@ -35,6 +35,7 @@
 #include "account_const.h"
 #include "common.h"
 
+using namespace std::literals::chrono_literals;
 using namespace libjami::Account;
 
 namespace jami {
@@ -75,6 +76,7 @@ private:
     void testCancelInTransfer();
     void testCancelOutTransfer();
     void testTransferInfo();
+    void testRemoveHardLink();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
     CPPUNIT_TEST(testConversationFileTransfer);
@@ -85,6 +87,7 @@ private:
     CPPUNIT_TEST(testAskToMultipleParticipants);
     CPPUNIT_TEST(testCancelInTransfer);
     CPPUNIT_TEST(testTransferInfo);
+    CPPUNIT_TEST(testRemoveHardLink);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -211,11 +214,11 @@ FileTransferTest::testConversationFileTransfer()
 
     libjami::addConversationMember(aliceId, convId, bobUri);
     libjami::addConversationMember(aliceId, convId, carlaUri);
-    cv.wait_for(lk, std::chrono::seconds(60), [&]() { return requestReceived == 2; });
+    cv.wait_for(lk, 60s, [&]() { return requestReceived == 2; });
 
     libjami::acceptConversationRequest(bobId, convId);
     libjami::acceptConversationRequest(carlaId, convId);
-    cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    cv.wait_for(lk, 30s, [&]() {
         return conversationReady == 3 && memberJoined == 2;
     });
 
@@ -227,7 +230,7 @@ FileTransferTest::testConversationFileTransfer()
 
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(45), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() {
         return !tidBob.empty() && !tidCarla.empty();
     }));
 
@@ -235,7 +238,7 @@ FileTransferTest::testConversationFileTransfer()
     libjami::downloadFile(carlaId, convId, iidCarla, tidCarla, recv2Path);
 
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(45), [&]() { return finished.size() == 3; }));
+        cv.wait_for(lk, 45s, [&]() { return finished.size() == 3; }));
 
     libjami::unregisterSignalHandlers();
 }
@@ -307,10 +310,10 @@ FileTransferTest::testFileTransferInConversation()
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return conversationReady && bobJoined;
     }));
 
@@ -322,17 +325,17 @@ FileTransferTest::testFileTransferInConversation()
 
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !tidBob.empty(); }));
 
     transferAFinished = false;
     transferBFinished = false;
     libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return transferAFinished && transferBFinished;
     }));
 
     libjami::unregisterSignalHandlers();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(5s);
 }
 
 void
@@ -402,10 +405,10 @@ FileTransferTest::testVcfFileTransferInConversation()
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return conversationReady && bobJoined;
     }));
 
@@ -417,17 +420,17 @@ FileTransferTest::testVcfFileTransferInConversation()
 
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !tidBob.empty(); }));
 
     transferAFinished = false;
     transferBFinished = false;
     libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return transferAFinished && transferBFinished;
     }));
 
     libjami::unregisterSignalHandlers();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(5s);
 }
 
 void
@@ -506,10 +509,10 @@ FileTransferTest::testBadSha3sumOut()
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return conversationReady && memberJoin;
     }));
 
@@ -521,7 +524,7 @@ FileTransferTest::testBadSha3sumOut()
 
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !mid.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !mid.empty(); }));
 
     // modifiy file
     sendFile = std::ofstream(sendPath);
@@ -534,7 +537,7 @@ FileTransferTest::testBadSha3sumOut()
     libjami::downloadFile(bobId, convId, iid, mid, recvPath);
 
     // The file transfer will not be sent as modified
-    CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() {
         return transferAFinished || transferBFinished;
     }));
 
@@ -617,10 +620,10 @@ FileTransferTest::testBadSha3sumIn()
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
         return conversationReady && memberJoin;
     }));
 
@@ -632,7 +635,7 @@ FileTransferTest::testBadSha3sumIn()
 
     aliceAccount->noSha3sumVerification(true);
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !mid.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !mid.empty(); }));
 
     // modifiy file
     sendFile = std::ofstream(sendPath);
@@ -646,8 +649,8 @@ FileTransferTest::testBadSha3sumIn()
     libjami::downloadFile(bobId, convId, iid, mid, recvPath);
 
     // The file transfer will be sent but refused by bob
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferAFinished; }));
-    CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferAFinished; }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return transferBFinished; }));
 
     std::remove(sendPath.c_str());
     libjami::unregisterSignalHandlers();
@@ -734,10 +737,10 @@ FileTransferTest::testAskToMultipleParticipants()
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
         return conversationReady && memberJoin;
     }));
 
@@ -746,10 +749,10 @@ FileTransferTest::testAskToMultipleParticipants()
     memberJoin = false;
 
     libjami::addConversationMember(aliceId, convId, carlaUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(carlaId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
         return conversationReady && memberJoin;
     }));
 
@@ -761,18 +764,18 @@ FileTransferTest::testAskToMultipleParticipants()
 
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return !bobTid.empty() && !carlaTid.empty();
     }));
 
     transferCFinished = false;
     libjami::downloadFile(carlaId, convId, iidCarla, carlaTid, recv2Path);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferCFinished; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferCFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile(recv2Path));
 
     transferBFinished = false;
     libjami::downloadFile(bobId, convId, iidBob, bobTid, recvPath);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferBFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile(recvPath));
 
     libjami::unregisterSignalHandlers();
@@ -847,10 +850,10 @@ FileTransferTest::testCancelInTransfer()
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return conversationReady && bobJoined;
     }));
 
@@ -862,14 +865,14 @@ FileTransferTest::testCancelInTransfer()
 
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !tidBob.empty(); }));
 
     transferBOngoing = false;
     CPPUNIT_ASSERT(libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath));
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBOngoing; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferBOngoing; }));
     transferBCancelled = false;
     libjami::cancelDataTransfer(bobId, convId, tidBob);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBCancelled; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferBCancelled; }));
     CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(tidBob));
 
@@ -943,10 +946,10 @@ FileTransferTest::testTransferInfo()
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return conversationReady && bobJoined;
     }));
 
@@ -957,7 +960,7 @@ FileTransferTest::testTransferInfo()
     sendFile.close();
 
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !tidBob.empty(); }));
 
     int64_t totalSize, bytesProgress;
     std::string path;
@@ -970,7 +973,7 @@ FileTransferTest::testTransferInfo()
     transferAFinished = false;
     transferBFinished = false;
     libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return transferAFinished && transferBFinished;
     }));
     CPPUNIT_ASSERT(libjami::fileTransferInfo(bobId, convId, tidBob, path, totalSize, bytesProgress)
@@ -981,7 +984,76 @@ FileTransferTest::testTransferInfo()
     CPPUNIT_ASSERT(fileutils::isFile(path));
 
     libjami::unregisterSignalHandlers();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(5s);
+}
+
+void
+FileTransferTest::testRemoveHardLink()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+
+    // Enable carla
+    Manager::instance().sendRegister(carlaId, true);
+    wait_for_announcement_of(carlaId);
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    auto messageReceived = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+        [&](const std::string& /*accountId*/,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> message) {
+            messageReceived = true;
+            cv.notify_one();
+        }));
+    auto conversationReady = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
+            conversationReady = true;
+        }));
+    auto conversationRemoved = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
+            conversationRemoved = true;
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    auto convId = libjami::startConversation(aliceId);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return conversationReady;
+    }));
+
+    // Send file
+    std::ofstream sendFile(sendPath);
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << std::string(64000, 'A');
+    sendFile.close();
+
+    libjami::sendFile(aliceId, convId, sendPath, std::filesystem::absolute("SEND"), "");
+
+    messageReceived = false;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() {
+        return messageReceived;
+    }));
+
+    CPPUNIT_ASSERT(libjami::removeConversation(aliceId, convId));
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return conversationRemoved;
+    }));
+
+    auto content = fileutils::loadTextFile(sendPath);
+    CPPUNIT_ASSERT(content.find("AAA") != std::string::npos);
+
+    libjami::unregisterSignalHandlers();
 }
 
 } // namespace test
