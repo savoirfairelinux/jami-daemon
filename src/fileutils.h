@@ -81,6 +81,7 @@ std::string getFullPath(const std::string& base, const std::string& path);
 bool isFile(const std::string& path, bool resolveSymlink = true);
 bool isDirectory(const std::string& path);
 bool isSymLink(const std::string& path);
+bool hasHardLink(const std::string& path);
 
 std::chrono::system_clock::time_point writeTime(const std::string& path);
 

@@ -258,6 +258,17 @@ isDirectoryWritable(const std::string& directory)
 }
 
 bool
+hasHardLink(const std::string& path)
+{
+#ifndef _WIN32
+    struct stat s;
+    if (lstat(path.c_str(), &s) == 0)
+        return s.st_nlink > 1;
+#endif
+    return false;
+}
+
+bool
 isSymLink(const std::string& path)
 {
 #ifndef _WIN32
@@ -967,9 +978,8 @@ eraseFile(const std::string& path, bool dosync)
 int
 remove(const std::string& path, bool erase)
 {
-    if (erase and isFile(path, false)) {
+    if (erase and isFile(path, false) and !hasHardLink(path))
         eraseFile(path, true);
-    }
 
 #ifdef _WIN32
     // use Win32 api since std::remove will not unlink directory in use
