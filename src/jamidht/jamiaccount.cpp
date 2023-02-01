@@ -1940,7 +1940,6 @@ JamiAccount::doRegister_()
                 [this] {
                     deviceAnnounced_ = true;
 
-
                     // Bootstrap at the end to avoid to be long to load.
                     dht::ThreadPool::io().run([w = weak()] {
                         if (auto shared = w.lock())
@@ -2154,7 +2153,7 @@ JamiAccount::convModule()
                 // No need to retrigger, sendTextMessage will call
                 // messageEngine_.sendMessage, already retriggering on
                 // main thread.
-                auto deviceId = device? device.toString() : "";
+                auto deviceId = device ? device.toString() : "";
                 return sendTextMessage(uri, deviceId, msg, token);
             },
             [this](const auto& convId, const auto& deviceId, auto cb, const auto& type) {
@@ -2204,32 +2203,31 @@ JamiAccount::convModule()
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
                     }
-                    shared->connectionManager_
-                        ->connectDevice(DeviceId(deviceId),
-                                        fmt::format("swarm://{}", convId),
-                                        [w, cb](std::shared_ptr<ChannelSocket> socket,
-                                                             const DeviceId& deviceId) {
-                                            if (socket) {
-                                                // It's possible to have a swarm socket, but not a SIP one
-                                                // opened. We can quickly open this connection has it will trigger
-                                                // syncing.
-                                                auto shared = w.lock();
-                                                if (!shared)
-                                                    return;
-                                                auto remoteCert = socket->peerCertificate();
-                                                auto uri = remoteCert->issuer->getId().toString();
-                                                std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
-                                                // Verify that the connection is not already cached
-                                                SipConnectionKey key(uri, deviceId.toString());
-                                                auto it = shared->sipConns_.find(key);
-                                                if (it == shared->sipConns_.end()) {
-                                                    lk.unlock();
-                                                    shared->requestSIPConnection(uri, deviceId, "");
-                                                }
-                                            }
+                    if (!shared->connectionManager_->hasSwarmChannel(DeviceId(deviceId), convId)) {
+                        shared->connectionManager_->connectDevice(
+                            DeviceId(deviceId),
+                            fmt::format("swarm://{}", convId),
+                            [w, cb](std::shared_ptr<ChannelSocket> socket,
+                                    const DeviceId& deviceId) {
+                                if (socket) {
+                                    auto shared = w.lock();
+                                    if (!shared)
+                                        return;
+                                    auto remoteCert = socket->peerCertificate();
+                                    auto uri = remoteCert->issuer->getId().toString();
+                                    std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
+                                    // Verify that the connection is not already cached
+                                    SipConnectionKey key(uri, deviceId.toString());
+                                    auto it = shared->sipConns_.find(key);
+                                    if (it == shared->sipConns_.end()) {
+                                        lk.unlock();
+                                        shared->requestSIPConnection(uri, deviceId, "");
+                                    }
+                                }
 
-                                            cb(socket);
-                                        });
+                                cb(socket);
+                            });
+                    }
                 });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
@@ -3924,7 +3922,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
     JAMI_WARNING("[Account {:s}] New SIP channel opened with {:s}",
-              getAccountID(), deviceId.to_c_str());
+                 getAccountID(),
+                 deviceId.to_c_str());
     lk.unlock();
 
     convModule()->syncConversations(peerId, deviceId.toString());
@@ -4000,9 +3999,9 @@ JamiAccount::monitor()
     JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
 
     convModule()->monitor();
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    /*std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
-        connectionManager_->monitor();
+        connectionManager_->monitor();*/
 }
 
 void

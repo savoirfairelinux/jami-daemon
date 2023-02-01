@@ -290,9 +290,10 @@ public:
     // Receiving new commits
     std::shared_ptr<RepeatedTask> conversationsEventHandler {};
 
-    // When sending a new message, we need to send the notification to some peers of the conversation
-    // However, the conversation may be not bootstraped, so the list will be empty. notSyncedNotification_
-    // will store the notifiaction to announce until we have peers to sync with.
+    // When sending a new message, we need to send the notification to some peers of the
+    // conversation However, the conversation may be not bootstraped, so the list will be empty.
+    // notSyncedNotification_ will store the notifiaction to announce until we have peers to sync
+    // with.
     std::mutex notSyncedNotificationMtx_;
     std::map<std::string, std::string> notSyncedNotification_;
 
@@ -711,7 +712,8 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
 }
 
 std::vector<std::map<std::string, std::string>>
-ConversationModule::Impl::getConversationMembers(const std::string& conversationId, bool includeBanned) const
+ConversationModule::Impl::getConversationMembers(const std::string& conversationId,
+                                                 bool includeBanned) const
 {
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
@@ -870,7 +872,6 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                refreshMessage[username_]);
     }
 
-
     // Then, we announce to 2 random members in the conversation that aren't in the DRT
     // This allow new devices without the ability to sync to their other devices to sync with us.
     // Or they can also use an old backup.
@@ -888,14 +889,17 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         }
         std::sort(std::begin(members), std::end(members));
         std::sort(std::begin(connectedMembers), std::end(connectedMembers));
-        std::set_difference(members.begin(), members.end(), connectedMembers.begin(), connectedMembers.end(),
-            std::inserter(nonConnectedMembers, nonConnectedMembers.begin()));
+        std::set_difference(members.begin(),
+                            members.end(),
+                            connectedMembers.begin(),
+                            connectedMembers.end(),
+                            std::inserter(nonConnectedMembers, nonConnectedMembers.begin()));
         std::shuffle(nonConnectedMembers.begin(), nonConnectedMembers.end(), acc->rand);
         if (nonConnectedMembers.size() > 2)
             nonConnectedMembers.resize(2);
         if (!conversation.isBoostraped()) {
             JAMI_DEBUG("[Conversation {}] Not yet bootstraped, save notification",
-                    conversation.id());
+                       conversation.id());
             // Because we can get some git channels but not bootstraped, we should keep this
             // to refresh when bootstraped.
             notSyncedNotification_[conversation.id()] = commit;
@@ -909,7 +913,6 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                 {"application/im-gitmessage-id", text}},
                                             refreshMessage[member]);
     }
-
 
     // Finally we send to devices that the DRT choose.
     for (const auto& device : devices) {
@@ -1331,8 +1334,8 @@ ConversationModule::onTrustRequest(const std::string& uri,
     }
     if (pimpl_->isAcceptedConversation(conversationId)) {
         JAMI_INFO("[Account %s] Received a request for a conversation "
-                    "already handled. Ignore",
-                    pimpl_->accountId_.c_str());
+                  "already handled. Ignore",
+                  pimpl_->accountId_.c_str());
         return;
     }
     if (pimpl_->getRequest(conversationId) != std::nullopt) {
@@ -1998,7 +2001,8 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
 }
 
 std::vector<std::map<std::string, std::string>>
-ConversationModule::getConversationMembers(const std::string& conversationId, bool includeBanned) const
+ConversationModule::getConversationMembers(const std::string& conversationId,
+                                           bool includeBanned) const
 {
     return pimpl_->getConversationMembers(conversationId, includeBanned);
 }
@@ -2623,7 +2627,7 @@ ConversationModule::addSwarmChannel(const std::string& conversationId,
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto convIt = pimpl_->conversations_.find(conversationId);
     if (convIt != pimpl_->conversations_.end())
-        convIt->second->addSwarmChannel(channel);
+        convIt->second->addSwarmChannel(std::move(channel));
 }
 
 void
