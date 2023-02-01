@@ -74,6 +74,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8fe6cc2d_fca0c5ab",
+        "filename": "src/account_config.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2023-02-01T15:07:12Z",
+      "side": 1,
+      "message": "No we had upnp disabled in production because patch mentioned earlier was used in the packaging. But recently there is merge conflict",
+      "parentUuid": "da40462a_987a4723",
+      "range": {
+        "startLine": 117,
+        "startChar": 9,
+        "endLine": 117,
+        "endChar": 20
+      },
+      "revId": "ef113e008a5199d3bacaa426ea7204f947715a90",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "d1408deb_e1c96e61",
         "filename": "src/account_config.h",
         "patchSetId": 1
@@ -85,6 +109,30 @@
       "writtenOn": "2023-02-01T14:16:06Z",
       "side": 1,
       "message": "Also, did you tried to disabled pupnp in upnp/rules.mak like in natpmp:\n\nifndef HAVE_WIN32\nifndef HAVE_ANDROID\nifndef HAVE_IOS\nPKGS +\u003d natpmp\nendif\nendif\nendif\n\nSo\n\nifndef HAVE_IOS\nPKGS +\u003d upnp\nendif",
+      "range": {
+        "startLine": 118,
+        "startChar": 2,
+        "endLine": 118,
+        "endChar": 5
+      },
+      "revId": "ef113e008a5199d3bacaa426ea7204f947715a90",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3bec342e_0e055ae5",
+        "filename": "src/account_config.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2023-02-01T15:07:12Z",
+      "side": 1,
+      "message": "No, I will try",
+      "parentUuid": "d1408deb_e1c96e61",
       "range": {
         "startLine": 118,
         "startChar": 2,
