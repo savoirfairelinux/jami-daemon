@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2e2b516_db20dddf",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 764,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-02-01T13:11:10Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027vg\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "3fcd4be284ee2a27ce52ef756e9fde800e5916da",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
