@@ -573,11 +573,12 @@ public:
     void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
 
     /**
-     * The DRT component is composed on some special nodes, that are usually present but not connected.
-     * This kind of node corresponds to devices with push notifications & proxy and are
+     * The DRT component is composed on some special nodes, that are usually present but not
+     * connected. This kind of node corresponds to devices with push notifications & proxy and are
      * stored in the mobile nodes
      */
-    bool isMobile() const {
+    bool isMobile() const
+    {
         return config().proxyEnabled and not config().deviceKey.empty();
     }
 

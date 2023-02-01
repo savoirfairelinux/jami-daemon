@@ -62,13 +62,16 @@ bool
 Bucket::removeNode(const NodeId& nodeId)
 {
     auto node = nodes.find(nodeId);
+    auto isMobile = node->second.isMobile_;
     if (node == nodes.end())
         return false;
     nodes.erase(nodeId);
-    if (node->second.isMobile_)
+    if (isMobile) {
         addMobileNode(nodeId);
-    else
+    } else {
         addKnownNode(nodeId);
+    }
+
     return true;
 }
 
@@ -185,6 +188,12 @@ Bucket::printBucket(unsigned number) const
         JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
         nodeNum++;
     }
+    JAMI_ERROR("Connecting_nodes");
+    nodeNum = 0;
+    for (auto it = connecting_nodes.begin(); it != connecting_nodes.end(); ++it) {
+        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
+        nodeNum++;
+    }
 };
 
 bool
@@ -262,8 +271,10 @@ RoutingTable::addNode(std::shared_ptr<ChannelSocketInterface> channel,
         if (contains(bucket, id_)) {
             split(bucket);
             bucket = findBucket(nodeId);
-        } else
-            return false;
+
+        } else {
+            return bucket->addNode(std::move(channel));
+        }
     }
     return bucket->addNode(std::move(channel));
 }
@@ -451,7 +462,6 @@ RoutingTable::split(std::list<Bucket>::iterator& bucket)
     NodeId id = middle(bucket);
     // JAMI_ERROR("MIDDLE {}", id.toString());
     auto newBucketIt = buckets.emplace(std::next(bucket), id);
-
     // Re-assign nodes
     auto& nodeSwap = bucket->getNodes();
 

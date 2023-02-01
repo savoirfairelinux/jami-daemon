@@ -41,10 +41,7 @@ public:
 
     NeedSocketCb needSocketCb_;
 
-    std::weak_ptr<SwarmManager> weak()
-    {
-        return std::static_pointer_cast<SwarmManager>(shared_from_this());
-    }
+    std::weak_ptr<SwarmManager> weak() { return weak_from_this(); }
 
     const NodeId& getId() const { return id_; }
 
@@ -98,6 +95,8 @@ public:
      * Check if we're connected with a specific device
      */
     bool isConnectedWith(const NodeId& deviceId);
+
+    bool isShutdown() { return isShutdown_; };
 
 private:
     /**
