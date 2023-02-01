@@ -223,6 +223,8 @@ std::map<std::string, std::string> getContactDetails(const std::string& accountI
 
 void connectivityChanged();
 
+void setPushNotificationConfig(const std::map<std::string, std::string>& pushConfig);
+
 void setPushNotificationToken(const std::string& pushDeviceToken);
 void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 

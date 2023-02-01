@@ -920,9 +920,8 @@ setCredentials(const std::string& accountID,
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         sipaccount->doUnregister([&](bool /* transport_free */) {
-            sipaccount->editConfig([&](jami::SipAccountConfig& config){
-                config.setCredentials(details);
-            });
+            sipaccount->editConfig(
+                [&](jami::SipAccountConfig& config) { config.setCredentials(details); });
             sipaccount->loadConfig();
             if (sipaccount->isEnabled())
                 sipaccount->doRegister();
@@ -957,9 +956,9 @@ lookupName(const std::string& account, const std::string& nameserver, const std:
     if (account.empty()) {
         auto cb = [name](const std::string& result, jami::NameDirectory::Response response) {
             jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>("",
-                                                                              (int) response,
-                                                                              result,
-                                                                              name);
+                                                                                (int) response,
+                                                                                result,
+                                                                                name);
         };
         if (nameserver.empty())
             jami::NameDirectory::lookupUri(name, "", cb);
@@ -1023,11 +1022,20 @@ setPushNotificationToken(const std::string& token)
         account->setPushNotificationToken(token);
     }
 }
+
 void
 setPushNotificationTopic(const std::string& topic)
 {
     for (const auto& account : jami::Manager::instance().getAllAccounts()) {
         account->setPushNotificationTopic(topic);
+    }
+}
+
+void
+setPushNotificationConfig(const std::map<std::string, std::string>& data)
+{
+    for (const auto& account : jami::Manager::instance().getAllAccounts()) {
+        account->setPushNotificationConfig(data);
     }
 }
 

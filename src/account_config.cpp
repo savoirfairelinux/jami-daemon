@@ -49,6 +49,7 @@ constexpr const char* DEFAULT_MODERATORS_KEY = "defaultModerators";
 constexpr const char* LOCAL_MODERATORS_ENABLED_KEY = "localModeratorsEnabled";
 constexpr const char* ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 constexpr const char* PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
+constexpr const char* PROXY_PUSH_PLATFORM_KEY = "proxyPushPlatform";
 constexpr const char* PROXY_PUSH_TOPIC_KEY = "proxyPushiOSTopic";
 
 using yaml_utils::parseValueOptional;
@@ -62,7 +63,8 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     SERIALIZE_CONFIG(HOSTNAME_KEY, hostname);
     SERIALIZE_CONFIG(USERNAME_KEY, username);
     SERIALIZE_CONFIG(MAILBOX_KEY, mailbox);
-    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"sv));
+    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value
+        << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"sv));
     SERIALIZE_CONFIG(ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
     SERIALIZE_CONFIG(ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
     SERIALIZE_CONFIG(ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous);
@@ -76,6 +78,7 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     SERIALIZE_CONFIG(LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled);
     SERIALIZE_CONFIG(ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled);
     SERIALIZE_CONFIG(PROXY_PUSH_TOKEN_KEY, deviceKey);
+    SERIALIZE_CONFIG(PROXY_PUSH_PLATFORM_KEY, platform);
     SERIALIZE_CONFIG(PROXY_PUSH_TOPIC_KEY, notificationTopic);
     SERIALIZE_CONFIG(VIDEO_ENABLED_KEY, videoEnabled);
 }
@@ -84,7 +87,7 @@ void
 AccountConfig::unserialize(const YAML::Node& node)
 {
     parseValueOptional(node, ALIAS_KEY, alias);
-    //parseValueOptional(node, TYPE_KEY, type);
+    // parseValueOptional(node, TYPE_KEY, type);
     parseValueOptional(node, ACCOUNT_ENABLE_KEY, enabled);
     parseValueOptional(node, HOSTNAME_KEY, hostname);
     parseValueOptional(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
@@ -112,6 +115,7 @@ AccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled);
     parseValueOptional(node, ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled);
     parseValueOptional(node, PROXY_PUSH_TOKEN_KEY, deviceKey);
+    parseValueOptional(node, PROXY_PUSH_PLATFORM_KEY, platform);
     parseValueOptional(node, PROXY_PUSH_TOPIC_KEY, notificationTopic);
 }
 
@@ -165,13 +169,13 @@ AccountConfig::fromMap(const std::map<std::string, std::string>& details)
 
 void
 parsePath(const std::map<std::string, std::string>& details,
-                   const char* key,
-                   std::string& s,
-                   const std::string& base)
+          const char* key,
+          std::string& s,
+          const std::string& base)
 {
     auto it = details.find(key);
     if (it != details.end())
         s = fileutils::getFullPath(base, it->second);
 }
 
-}
+} // namespace jami

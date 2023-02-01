@@ -258,6 +258,9 @@ LIBJAMI_PUBLIC void setPushNotificationToken(const std::string& pushDeviceToken)
  * bundle_id.voip for ios prior 14.5
  */
 LIBJAMI_PUBLIC void setPushNotificationTopic(const std::string& topic);
+
+LIBJAMI_PUBLIC void setPushNotificationConfig(const std::map<std::string, std::string>& data);
+
 /**
  * To be called by clients with relevant data when a push notification is received.
  */

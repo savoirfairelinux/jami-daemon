@@ -2467,7 +2467,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
     auto username = incomCall.toUsername();
     if (username.find('/') != std::string::npos) {
         // Avoid to do heavy stuff in SIPVoIPLink's transaction_request_cb
-        dht::ThreadPool::io().run([this, account, incomCallId, username]() {
+        dht::ThreadPool::io().run([account, incomCallId, username]() {
             if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account))
                 jamiAccount->handleIncomingConversationCall(incomCallId, username);
         });

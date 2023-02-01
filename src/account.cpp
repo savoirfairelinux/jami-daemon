@@ -446,4 +446,30 @@ Account::meetMinimumRequiredVersion(const std::vector<unsigned>& version,
     }
     return true;
 }
+
+bool
+Account::setPushNotificationConfig(const std::map<std::string, std::string>& data)
+{
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    auto platform = data.find("platform");
+    auto topic = data.find("topic");
+    auto token = data.find("token");
+    bool changed = false;
+    if (platform != data.end() && config_->platform != platform->second) {
+        config_->platform = platform->second;
+        changed = true;
+    }
+    if (topic != data.end() && config_->notificationTopic != topic->second) {
+        config_->notificationTopic = topic->second;
+        changed = true;
+    }
+    if (token != data.end() && config_->deviceKey != token->second) {
+        config_->deviceKey = token->second;
+        changed = true;
+    }
+    if (changed)
+        saveConfig();
+    return changed;
+}
+
 } // namespace jami

@@ -82,7 +82,7 @@ public:
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */
 
-class Account: public std::enable_shared_from_this<Account>
+class Account : public std::enable_shared_from_this<Account>
 {
 public:
     Account(const std::string& accountID);
@@ -100,7 +100,8 @@ public:
 
     virtual std::unique_ptr<AccountConfig> buildConfig() const = 0;
 
-    void setConfig(std::unique_ptr<AccountConfig>&& config) {
+    void setConfig(std::unique_ptr<AccountConfig>&& config)
+    {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         config_ = std::move(config);
         loadConfig();
@@ -124,7 +125,7 @@ public:
 
     virtual void saveConfig() const;
 
-    virtual void setAccountDetails(const std::map<std::string, std::string>& details) {
+    void setAccountDetails(const std::map<std::string, std::string>& details) {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (not config_)
             config_ = buildConfig();
@@ -239,6 +240,8 @@ public:
         return false;
     }
 
+    virtual bool setPushNotificationConfig(const std::map<std::string, std::string>& data);
+
     /**
      * Tell if the account is enable or not.
      * @return true if enabled, false otherwise
@@ -257,10 +260,9 @@ public:
 
     bool isUsable() const { return config().enabled and active_; }
 
-    void enableVideo(bool enable) {
-        editConfig([&](AccountConfig& config){
-            config.videoEnabled = enable;
-        });
+    void enableVideo(bool enable)
+    {
+        editConfig([&](AccountConfig& config) { config.videoEnabled = enable; });
     }
     bool isVideoEnabled() const { return config().videoEnabled; }
 
@@ -498,4 +500,3 @@ operator<<(std::ostream& os, const Account& acc)
 }
 
 } // namespace jami
-
