@@ -99,8 +99,13 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
 
     auto idstr = name.substr(16);
     if (idstr == "profile.vcf") {
-        // If it's a profile from sync
-        acc->dataTransfer()->onIncomingProfile(channel);
+        if (!channel->isInitiator()) {
+            acc->dataTransfer()->onIncomingProfile(channel);
+        } else {
+            // If it's a profile from sync
+            std::string path = fmt::format("{}/profile.vcf", idPath_);
+            acc->dataTransfer()->transferFile(channel, idstr, "", path);
+        }
         return;
     }
 
