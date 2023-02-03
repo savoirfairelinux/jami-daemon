@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8aa9b118_f25a1649",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 3
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-03T13:58:45Z",
+      "side": 1,
+      "message": "maybe deprecate (and we may ping iOS team for this)",
+      "range": {
+        "startLine": 228,
+        "startChar": 5,
+        "endLine": 228,
+        "endChar": 29
+      },
+      "revId": "21ff5c56d85398ac9bf6f919d7948ebb3e2f3bbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf3291e3_bc31f63a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1830,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-03T13:58:45Z",
+      "side": 1,
+      "message": "to remove",
+      "range": {
+        "startLine": 1830,
+        "startChar": 28,
+        "endLine": 1830,
+        "endChar": 35
+      },
+      "revId": "21ff5c56d85398ac9bf6f919d7948ebb3e2f3bbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
