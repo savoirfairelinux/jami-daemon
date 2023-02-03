@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9afbbc66_ec5c9e24",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2023-02-03T22:01:43Z",
+      "side": 1,
+      "message": "Here is my sorter:\n```\n#!/usr/bin/gawk -f\n\n@include \"inplace\"\n\nfunction compare(i1, v1, i2, v2,    a1, a2, n1, n2, n)\n{\n    gsub(/^[ \\t]+/, \"\", v1)\n    gsub(/^[ \\t]+/, \"\", v2)\n    n1 \u003d split(v1, a1, \"/\")\n    n2 \u003d split(v2, a2, \"/\")\n    n  \u003d (n1 \u003c n2)? n1 : n2\n\n    for (i \u003d 1; i \u003c\u003d n; i++) {\n        if (i \u003d\u003d n1 \u0026\u0026 i \u003c n2)\n            return 1\n        if (i \u003d\u003d n2 \u0026\u0026 i \u003c n1)\n            return -1\n        if (a1[i] \u003c a2[i])\n            return -1\n        if (a1[i] \u003e a2[i])\n            return 1\n    }\n    return 0\n}\n\nFNR \u003c first { print }\nFNR \u003d\u003d first, FNR \u003d\u003d last { data[FNR] \u003d $0; }\nFNR \u003d\u003d last {\n    n \u003d asort(data, data, \"compare\");\n    for (i \u003d 1; i \u003c\u003d n; i++) {\n        print data[i]\n    }\n}\nFNR \u003e last { print }\n```\n\nThe command:\n```\n./sorter.awk first\u003d9 last\u003d128 ~/ring-daemon/src/meson.build \n```\n\nPlease use it sometimes.",
+      "revId": "c6f9250758c69f638902fcd50b699fa134ed2455",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
