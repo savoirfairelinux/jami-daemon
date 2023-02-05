@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "58c6a897_f4738124",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-05T16:13:21Z",
+      "side": 1,
+      "message": "https://review.jami.net/c/jami-daemon/+/23836 add meson",
+      "range": {
+        "startLine": 7,
+        "startChar": 27,
+        "endLine": 8,
+        "endChar": 39
+      },
+      "revId": "ffbdfa93cc9218a0567e19d0711bfadcb27dd725",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
