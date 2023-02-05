@@ -3,6 +3,29 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "5646b701_d2e88f0d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-05T16:13:59Z",
+      "side": 1,
+      "message": "thanks.\n\nwe will also need to check https://review.jami.net/c/jami-daemon/+/22861 on our side.",
+      "range": {
+        "startLine": 7,
+        "startChar": 14,
+        "endLine": 7,
+        "endChar": 19
+      },
+      "revId": "c6f9250758c69f638902fcd50b699fa134ed2455",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "9afbbc66_ec5c9e24",
         "filename": "/PATCHSET_LEVEL",
         "patchSetId": 1
