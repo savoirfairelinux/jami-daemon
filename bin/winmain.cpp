@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
  *  Author: Edric Milaret <edric.ladent-milaret@savoirfairelinux.com>
  *
@@ -47,7 +47,7 @@ print_title()
 {
     std::cout
         << "Jami Daemon " << libjami::version()
-        << ", by Savoir-faire Linux 2004-2019" << std::endl
+        << ", by Savoir-faire Linux 2004-2023" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
         << "[Video support enabled]" << std::endl

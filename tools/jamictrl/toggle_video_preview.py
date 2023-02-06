@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (C) 2004-2022 Savoir-faire Linux Inc.
+# Copyright (C) 2004-2023 Savoir-faire Linux Inc.
 #
 # Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
 #

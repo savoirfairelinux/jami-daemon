@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
  *  Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>

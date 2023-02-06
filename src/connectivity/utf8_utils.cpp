@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 1999 Tom Tromey
  *  Copyright (C) 2000 Red Hat, Inc.
- *  Copyright (C) 2004-2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
  *  Author: Pascal Potvin <pascal.potvin@extenway.com>
  *

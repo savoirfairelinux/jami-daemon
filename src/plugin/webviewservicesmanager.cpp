@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2022-2023 Savoir-faire Linux Inc.
  *
  *  Author: Tobias Hildebrandt <tobias.hildebrandt@savoirfairelinux.com>
  *

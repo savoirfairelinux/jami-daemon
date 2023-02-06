@@ -1,6 +1,6 @@
 /*
  * Copyright 2015 The Android Open Source Project
- * Copyright 2015-2019 Savoir-faire Linux Inc.
+ * Copyright 2015-2023 Savoir-faire Linux Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

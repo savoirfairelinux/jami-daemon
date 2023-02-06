@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2009 Rémi Denis-Courmont
- *  Copyright (C) 2004-2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
