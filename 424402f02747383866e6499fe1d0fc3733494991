@@ -16,6 +16,46 @@
       "message": "is there any way to use a small(er) test file?  2 MiB is *quite* large in comparison to the few other existing *.mp4 test files in the daemon as well as the overall size of our release tarballs",
       "revId": "424402f02747383866e6499fe1d0fc3733494991",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15fc9db1_f518027e",
+        "filename": "src/media/audio/pulseaudio/pulselayer.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-02-06T22:42:08Z",
+      "side": 1,
+      "message": "is this behavioral change required for any other platform implementations?",
+      "revId": "424402f02747383866e6499fe1d0fc3733494991",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f862b424_24e37278",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-02-06T22:42:08Z",
+      "side": 1,
+      "message": "frames_ or observableFrames_",
+      "range": {
+        "startLine": 141,
+        "startChar": 55,
+        "endLine": 141,
+        "endChar": 67
+      },
+      "revId": "424402f02747383866e6499fe1d0fc3733494991",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
