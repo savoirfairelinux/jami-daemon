@@ -1738,6 +1738,18 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
                                                               "");
 }
 
+constexpr auto silent = [](char const* /*m*/, va_list /*args*/) {
+};
+constexpr auto log_error = [](char const* m, va_list args) {
+    Logger::vlog(LOG_ERR, "opendht", 0, true, m, args);
+};
+constexpr auto log_warn = [](char const* m, va_list args) {
+    Logger::vlog(LOG_WARNING, "opendht", 0, true, m, args);
+};
+constexpr auto log_debug = [](char const* m, va_list args) {
+    Logger::vlog(LOG_DEBUG, "opendht", 0, true, m, args);
+};
+
 void
 JamiAccount::doRegister_()
 {
@@ -1829,42 +1841,9 @@ JamiAccount::doRegister_()
 
         auto dht_log_level = Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
-            static auto silent = [](char const* /*m*/, va_list /*args*/) {
-            };
-            static auto log_error = [](char const* m, va_list args) {
-                Logger::vlog(LOG_ERR, nullptr, 0, true, m, args);
-            };
-            static auto log_warn = [](char const* m, va_list args) {
-                Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args);
-            };
-            static auto log_debug = [](char const* m, va_list args) {
-                Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args);
-            };
-#ifndef _MSC_VER
             context.logger = std::make_shared<dht::Logger>(log_error,
                                                            (dht_log_level > 1) ? log_warn : silent,
                                                            (dht_log_level > 2) ? log_debug : silent);
-#elif RING_UWP
-            static auto log_all = [](char const* m, va_list args) {
-                char tmp[2048];
-                vsprintf(tmp, m, args);
-                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                               std::chrono::steady_clock::now().time_since_epoch())
-                               .count();
-                jami::emitSignal<libjami::ConfigurationSignal::MessageSend>(
-                    std::to_string(now) + " " + std::string(tmp));
-            };
-            context.logger = std::make_shared<dht::Logger>(log_all, log_all, silent);
-#else
-            if (dht_log_level > 2) {
-                context.logger = std::make_shared<dht::Logger>(log_error, log_warn, log_debug);
-            } else if (dht_log_level > 1) {
-                context.logger = std::make_shared<dht::Logger>(log_error, log_warn, silent);
-            } else {
-                context.logger = std::make_shared<dht::Logger>(log_error, silent, silent);
-            }
-#endif
-            // logger_ = std::make_shared<dht::Logger>(log_error, log_warn, log_debug);
         }
         context.certificateStore = [](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
