@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94d37f53_6ec19907",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2023-02-06T21:20:57Z",
+      "side": 1,
+      "message": "is there any way to use a small(er) test file?  2 MiB is *quite* large in comparison to the few other existing *.mp4 test files in the daemon as well as the overall size of our release tarballs",
+      "revId": "424402f02747383866e6499fe1d0fc3733494991",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
