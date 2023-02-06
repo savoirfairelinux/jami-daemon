@@ -27,8 +27,13 @@ using namespace std::literals;
 namespace jami {
 constexpr const char* const DEFAULT_RINGTONE_PATH = "default.opus";
 
-struct AccountConfig: public Serializable {
-    AccountConfig(const std::string& type_, const std::string& id_, const std::string& path_ = {}): type(type_), id(id_), path(path_) {}
+struct AccountConfig : public Serializable
+{
+    AccountConfig(const std::string& type_, const std::string& id_, const std::string& path_ = {})
+        : type(type_)
+        , id(id_)
+        , path(path_)
+    {}
 
     void serializeDiff(YAML::Emitter& out, const AccountConfig& def) const;
 
@@ -123,6 +128,10 @@ struct AccountConfig: public Serializable {
      * Device push notification token.
      */
     std::string deviceKey {};
+    /**
+     * Device push notification platform.
+     */
+    std::string platform {};
 
     /**
      * Push notification topic.
@@ -130,14 +139,16 @@ struct AccountConfig: public Serializable {
     std::string notificationTopic {};
 };
 
-inline void parseString(const std::map<std::string, std::string>& details, const char* key, std::string& s)
+inline void
+parseString(const std::map<std::string, std::string>& details, const char* key, std::string& s)
 {
     auto it = details.find(key);
     if (it != details.end())
         s = it->second;
 }
 
-inline void parseBool(const std::map<std::string, std::string>& details, const char* key, bool& s)
+inline void
+parseBool(const std::map<std::string, std::string>& details, const char* key, bool& s)
 {
     auto it = details.find(key);
     if (it != details.end())
@@ -145,17 +156,17 @@ inline void parseBool(const std::map<std::string, std::string>& details, const c
 }
 
 template<class T>
-inline void parseInt(const std::map<std::string, std::string>& details, const char* key, T& s)
+inline void
+parseInt(const std::map<std::string, std::string>& details, const char* key, T& s)
 {
     auto it = details.find(key);
     if (it != details.end())
         s = to_int<T>(it->second);
 }
 
-void
-parsePath(const std::map<std::string, std::string>& details,
-                   const char* key,
-                   std::string& s,
-                   const std::string& base);
+void parsePath(const std::map<std::string, std::string>& details,
+               const char* key,
+               std::string& s,
+               const std::string& base);
 
-}
+} // namespace jami

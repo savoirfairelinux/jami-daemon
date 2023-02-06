@@ -89,7 +89,10 @@ using sip_utils::CONST_PJ_STR;
 
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
-static constexpr std::string_view VALID_TLS_PROTOS[] = {"Default"sv, "TLSv1.2"sv, "TLSv1.1"sv, "TLSv1"sv};
+static constexpr std::string_view VALID_TLS_PROTOS[] = {"Default"sv,
+                                                        "TLSv1.2"sv,
+                                                        "TLSv1.1"sv,
+                                                        "TLSv1"sv};
 static constexpr std::string_view PN_FCM = "fcm"sv;
 static constexpr std::string_view PN_APNS = "apns"sv;
 
@@ -516,6 +519,16 @@ SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
 {
     JAMI_WARNING("[SIP Account {}] setPushNotificationToken: {}", getAccountID(), pushDeviceToken);
     if (SIPAccountBase::setPushNotificationToken(pushDeviceToken)) {
+        if (config().enabled)
+            doUnregister([&](bool /* transport_free */) { doRegister(); });
+        return true;
+    }
+    return false;
+}
+
+bool
+SIPAccount::setPushNotificationConfig(const std::map<std::string, std::string>& data) {
+    if (SIPAccountBase::setPushNotificationConfig(data)) {
         if (config().enabled)
             doUnregister([&](bool /* transport_free */) { doRegister(); });
         return true;
