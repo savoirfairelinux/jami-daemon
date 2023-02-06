@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "04615a47_f03cffb8",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 393,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-02-06T13:32:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "29ecc860_cc3de609",
+      "range": {
+        "startLine": 393,
+        "startChar": 20,
+        "endLine": 393,
+        "endChar": 34
+      },
+      "revId": "2e2749377ff2ab2c5fc98f94902db56eaaae135d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e83ac55e_bac0c1af",
@@ -195,6 +219,30 @@
       "writtenOn": "2023-01-30T20:45:53Z",
       "side": 1,
       "message": "use JAMI_ERROR/JAMI_WARNING/JAMI_DEBUG/JAMI_LOG",
+      "range": {
+        "startLine": 274,
+        "startChar": 8,
+        "endLine": 274,
+        "endChar": 17
+      },
+      "revId": "2e2749377ff2ab2c5fc98f94902db56eaaae135d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "68290462_34c8ce7c",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-02-06T13:32:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "11fa7c70_aec6b102",
       "range": {
         "startLine": 274,
         "startChar": 8,
