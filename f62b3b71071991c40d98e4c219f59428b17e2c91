@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a35207d_a7f18a47",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-02-06T19:31:50Z",
+      "side": 1,
+      "message": "ubuntu 22.04 + pulseaudio 15.99 is ok",
+      "revId": "f62b3b71071991c40d98e4c219f59428b17e2c91",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
