@@ -148,8 +148,6 @@ public:
      */
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
-    void setAccountDetails(const std::map<std::string, std::string>& details) override;
-
     std::unique_ptr<AccountConfig> buildConfig() const override
     {
         return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_);
@@ -381,8 +379,8 @@ public:
                        std::function<void(bool)>&& end = {});
 
     bool setPushNotificationToken(const std::string& pushDeviceToken = "") override;
-
     bool setPushNotificationTopic(const std::string& topic) override;
+    bool setPushNotificationConfig(const std::map<std::string, std::string>& data) override;
 
     /**
      * To be called by clients with relevant data when a push notification is received.

@@ -165,7 +165,8 @@ public:
 
     bool hasCredentials() const { return not config().credentials.empty(); }
 
-    std::vector<std::map<std::string, std::string>> getCredentials() const {
+    std::vector<std::map<std::string, std::string>> getCredentials() const
+    {
         return config().getCredentials();
     }
 
@@ -221,10 +222,9 @@ public:
      */
     uint16_t getLocalPort() const { return config().localPort; }
 
-    void setLocalPort(uint16_t port) {
-        editConfig([&](SipAccountConfig& config){
-            config.localPort = port;
-        });
+    void setLocalPort(uint16_t port)
+    {
+        editConfig([&](SipAccountConfig& config) { config.localPort = port; });
     }
 
     /**
@@ -263,10 +263,7 @@ public:
      * file, that can be used directly by PJSIP to initialize
      * an alternate UDP transport.
      */
-    std::string getStunServer() const
-    {
-        return config().stunServer;
-    }
+    std::string getStunServer() const { return config().stunServer; }
 
     /**
      * @return pj_str_t "From" uri based on account information.
@@ -418,6 +415,7 @@ public:
     bool isSrtpEnabled() const override { return config().srtpKeyExchange != KeyExchangeProtocol::NONE; }
 
     bool setPushNotificationToken(const std::string& pushDeviceToken = "") override;
+    bool setPushNotificationConfig(const std::map<std::string, std::string>& data) override;
 
     /**
      * To be called by clients with relevant data when a push notification is received.
@@ -465,10 +463,10 @@ private:
 
     struct
     {
-        pj_bool_t active {false};     /**< Flag of reregister status. */
-        pj_timer_entry timer {}; /**< Timer for reregistration.  */
+        pj_bool_t active {false}; /**< Flag of reregister status. */
+        pj_timer_entry timer {};  /**< Timer for reregistration.  */
         unsigned attempt_cnt {0}; /**< Attempt counter.     */
-    } auto_rereg_ {};            /**< Reregister/reconnect data. */
+    } auto_rereg_ {};             /**< Reregister/reconnect data. */
 
     std::uniform_int_distribution<int> delay10ZeroDist_ {-10000, 10000};
     std::uniform_int_distribution<unsigned int> delay10PosDist_ {0, 10000};
