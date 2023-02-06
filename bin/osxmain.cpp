@@ -43,7 +43,7 @@ print_title()
 {
     std::cout
         << "Jami Daemon " << libjami::version()
-        << ", by Savoir-faire Linux 2004-2023" << std::endl
+        << ", by Savoir-faire Linux Inc. 2004-2023" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
         << "[Video support enabled]" << std::endl

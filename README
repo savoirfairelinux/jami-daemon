@@ -48,11 +48,11 @@ Short description of content of source tree
 - bin/ contains applications main code.
 - bin/dbus, the D-Bus XML interfaces, and C++ bindings
 
-About Savoir-faire Linux
-------------------------
+About Savoir-faire Linux Inc.
+-----------------------------
 
-Savoir-faire Linux is a consulting company based in Montreal, Quebec.
-For more information, please check out our website:
+Savoir-faire Linux Inc. is a consulting company based in Montreal,
+Quebec.  For more information, please check out our website:
 https://www.savoirfairelinux.com/
 
 
