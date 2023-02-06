@@ -47,6 +47,8 @@ using namespace std::literals;
 namespace jami {
 namespace sip_utils {
 
+constexpr pj_str_t USER_AGENT_STR = CONST_PJ_STR("User-Agent");
+
 std::string
 PjsipErrorCategory::message(int condition) const
 {
@@ -204,24 +206,19 @@ addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
     if (tdata == nullptr or userAgent.empty())
         return;
 
-    auto pjUserAgent = CONST_PJ_STR(userAgent);
-    constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
-
     // Do nothing if user-agent header is present.
-    if (pjsip_msg_find_hdr_by_name(tdata->msg, &STR_USER_AGENT, nullptr) != nullptr) {
+    if (pjsip_msg_find_hdr_by_name(tdata->msg, &USER_AGENT_STR, nullptr) != nullptr) {
         return;
     }
 
     // Add Header
+    auto pjUserAgent = CONST_PJ_STR(userAgent);
     auto hdr = reinterpret_cast<pjsip_hdr*>(
-        pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pjUserAgent));
+        pjsip_user_agent_hdr_create(tdata->pool, &USER_AGENT_STR, &pjUserAgent));
 
     if (hdr != nullptr) {
-        JAMI_DBG("Add header to SIP message: \"%.*s: %.*s\"",
-                 (int) hdr->name.slen,
-                 hdr->name.ptr,
-                 (int) pjUserAgent.slen,
-                 pjUserAgent.ptr);
+        JAMI_LOG("Add header to SIP message: \"{:s}: {:s}\"",
+                sip_utils::as_view(hdr->name), userAgent);
         pjsip_msg_add_hdr(tdata->msg, hdr);
     }
 }
@@ -234,7 +231,6 @@ getPeerUserAgent(const pjsip_rx_data* rdata)
         return {};
     }
 
-    constexpr auto USER_AGENT_STR = CONST_PJ_STR("User-Agent");
     if (auto uaHdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
                                                                             &USER_AGENT_STR,
                                                                             nullptr)) {
