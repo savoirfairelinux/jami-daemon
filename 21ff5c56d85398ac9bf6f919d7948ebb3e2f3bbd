@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "eaf78cdc_a561acc5",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 3
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-02-06T19:13:57Z",
+      "side": 1,
+      "message": "The API still works when only updating the token, which might be a common case.",
+      "parentUuid": "8aa9b118_f25a1649",
+      "range": {
+        "startLine": 228,
+        "startChar": 5,
+        "endLine": 228,
+        "endChar": 29
+      },
+      "revId": "21ff5c56d85398ac9bf6f919d7948ebb3e2f3bbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "bf3291e3_bc31f63a",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 3
@@ -37,6 +61,30 @@
       "writtenOn": "2023-02-03T13:58:45Z",
       "side": 1,
       "message": "to remove",
+      "range": {
+        "startLine": 1830,
+        "startChar": 28,
+        "endLine": 1830,
+        "endChar": 35
+      },
+      "revId": "21ff5c56d85398ac9bf6f919d7948ebb3e2f3bbd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fdc51e8a_670967d2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1830,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-02-06T19:13:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bf3291e3_bc31f63a",
       "range": {
         "startLine": 1830,
         "startChar": 28,
