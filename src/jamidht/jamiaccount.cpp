@@ -2022,12 +2022,12 @@ JamiAccount::doRegister_()
 
                     // Check if pull from banned device
                     if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
-                        JAMI_WARN("[Account %s] Git server requested for conversation %s, but the "
+                        JAMI_WARNING("[Account {:s}] Git server requested for conversation {:s}, but the "
                                   "device is "
-                                  "unauthorized (%s) ",
-                                  getAccountID().c_str(),
-                                  conversationId.c_str(),
-                                  remoteDevice.c_str());
+                                  "unauthorized ({:s}) ",
+                                  getAccountID(),
+                                  conversationId,
+                                  remoteDevice);
                         channel->shutdown();
                         return;
                     }
@@ -2038,14 +2038,13 @@ JamiAccount::doRegister_()
                         // So it's not the server socket
                         return;
                     }
-                    auto accountId = this->accountID_;
-                    JAMI_WARN("[Account %s] Git server requested for conversation %s, device %s, "
-                              "channel %u",
-                              accountId.c_str(),
-                              conversationId.c_str(),
-                              deviceId.to_c_str(),
+                    JAMI_WARNING("[Account {:s}] Git server requested for conversation {:s}, device {:s}, "
+                              "channel {}",
+                              accountID_,
+                              conversationId,
+                              deviceId.toString(),
                               channel->channel());
-                    auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
+                    auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
                     gs->setOnFetched(
                         [w = weak(), conversationId, deviceId](const std::string& commit) {
                             if (auto shared = w.lock())

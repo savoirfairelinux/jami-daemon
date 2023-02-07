@@ -105,6 +105,24 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
                 return;
             }
         }
+
+        auto convModule = acc->convModule();
+        if (!convModule)
+            return;
+        // Sync conversation's preferences
+        auto p = convModule->convPreferences();
+        if (!p.empty()) {
+            SyncMsg msg;
+            msg.p = std::move(p);
+            msgpack::pack(buffer, msg);
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERR("%s", ec.message().c_str());
+                return;
+            }
+        }
+        buffer.clear();
+
     } else {
         msgpack::pack(buffer, *syncMsg);
         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
@@ -199,12 +217,15 @@ SyncModule::syncWith(const DeviceId& deviceId,
 }
 
 void
-SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg)
+SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg, const DeviceId& deviceId)
 {
     std::lock_guard<std::mutex> lk(pimpl_->syncConnectionsMtx_);
-    for (auto& [_deviceId, sockets] : pimpl_->syncConnections_) {
-        if (not sockets.empty())
-            pimpl_->syncInfos(sockets[0], syncMsg);
+    for (auto& [did, sockets] : pimpl_->syncConnections_) {
+        if (not sockets.empty()) {
+            if (!deviceId || deviceId == did) {
+                pimpl_->syncInfos(sockets[0], syncMsg);
+            }
+        }
     }
 }
 } // namespace jami

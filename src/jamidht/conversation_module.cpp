@@ -44,6 +44,7 @@ struct PendingConversationFetch
     bool cloning {false};
     std::string deviceId {};
     std::string removeId {};
+    std::map<std::string, std::string> preferences {};
     std::set<std::string> connectingTo {};
 };
 
@@ -617,6 +618,15 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
                 }
             }
         }
+        std::map<std::string, std::string> preferences;
+        {
+            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+            auto itFetch = pendingConversationsFetch_.find(conversationId);
+            if (itFetch != pendingConversationsFetch_.end())
+                preferences = std::move(itFetch->second.preferences);
+        }
+        if (!preferences.empty())
+            conversation->updatePreferences(preferences);
     } catch (const std::exception& e) {
         JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
     }
@@ -1610,7 +1620,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                     // Only reclone if re-added, else the peer is not synced yet (could be offline before)
                     continue;
                 }
-                JAMI_DBG("Re-add previously removed conversation %s", convId.c_str());
+                JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
             pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
         } else {
@@ -1651,19 +1661,19 @@ ConversationModule::onSyncData(const SyncMsg& msg,
 
         if (req.declined != 0) {
             // Request declined
-            JAMI_INFO("[Account %s] Declined request detected for conversation %s (device %s)",
-                      pimpl_->accountId_.c_str(),
-                      convId.c_str(),
-                      deviceId.c_str());
+            JAMI_LOG("[Account {:s}] Declined request detected for conversation {:s} (device {:s})",
+                      pimpl_->accountId_,
+                      convId,
+                      deviceId);
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
                                                                                  convId);
             continue;
         }
 
-        JAMI_INFO("[Account %s] New request detected for conversation %s (device %s)",
-                  pimpl_->accountId_.c_str(),
-                  convId.c_str(),
-                  deviceId.c_str());
+        JAMI_LOG("[Account {:s}] New request detected for conversation {:s} (device {:s})",
+                  pimpl_->accountId_,
+                  convId,
+                  deviceId);
 
         emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
                                                                              convId,
@@ -1671,11 +1681,19 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     }
 
     // Updates preferences for conversations
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     for (const auto& [convId, p] : msg.p) {
-        auto itConv = pimpl_->conversations_.find(convId);
-        if (itConv != pimpl_->conversations_.end() && itConv->second)
-            itConv->second->updatePreferences(p);
+        {
+            std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+            auto itConv = pimpl_->conversations_.find(convId);
+            if (itConv != pimpl_->conversations_.end() && itConv->second) {
+                itConv->second->updatePreferences(p);
+                continue;
+            }
+        }
+        std::lock_guard<std::mutex> lk(pimpl_->pendingConversationsFetchMtx_);
+        auto itFetch = pimpl_->pendingConversationsFetch_.find(convId);
+        if (itFetch != pimpl_->pendingConversationsFetch_.end())
+            itFetch->second.preferences = p;
     }
 }
 
@@ -1731,20 +1749,20 @@ ConversationModule::onNewCommit(const std::string& peer,
         // If the conversation is removed and we receives a new commit,
         // it means that the contact was removed but not banned. So we can generate
         // a new trust request
-        JAMI_WARN("[Account %s] Could not find conversation %s, ask for an invite",
-                  pimpl_->accountId_.c_str(),
-                  conversationId.c_str());
+        JAMI_WARNING("[Account {:s}] Could not find conversation {:s}, ask for an invite",
+                  pimpl_->accountId_,
+                  conversationId);
         pimpl_->sendMsgCb_(peer,
                            std::map<std::string, std::string> {
                                {"application/invite", conversationId}},
                            0);
         return;
     }
-    JAMI_DBG("[Account %s] on new commit notification from %s, for %s, commit %s",
-             pimpl_->accountId_.c_str(),
-             peer.c_str(),
-             conversationId.c_str(),
-             commitId.c_str());
+    JAMI_DEBUG("[Account {:s}] on new commit notification from {:s}, for {:s}, commit {:s}",
+             pimpl_->accountId_,
+             peer,
+             conversationId,
+             commitId);
     lk.unlock();
     pimpl_->fetchNewCommits(peer, deviceId, conversationId, commitId);
 }
@@ -1758,14 +1776,14 @@ ConversationModule::addConversationMember(const std::string& conversationId,
     // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end()) {
-        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
         return;
     }
 
     if (it->second->isMember(contactUri, true)) {
-        JAMI_DBG("%s is already a member of %s, resend invite",
-                 contactUri.c_str(),
-                 conversationId.c_str());
+        JAMI_DEBUG("{:s} is already a member of {:s}, resend invite",
+                 contactUri,
+                 conversationId);
         // Note: This should not be necessary, but if for whatever reason the other side didn't join
         // we should not forbid new invites
         auto invite = it->second->generateInvitation();
@@ -1863,7 +1881,7 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end()) {
-        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
         return;
     }
 
@@ -1872,7 +1890,7 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
                                 if (ok && sync) {
                                     pimpl_->sendMessageNotification(conversationId, commitId, true);
                                 } else if (sync)
-                                    JAMI_WARN("Couldn't update infos on %s", conversationId.c_str());
+                                    JAMI_WARNING("Couldn't update infos on {:s}", conversationId);
                             });
 }
 
@@ -1891,7 +1909,7 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
         std::lock_guard<std::mutex> lkCi(pimpl_->convInfosMtx_);
         auto itConv = pimpl_->convInfos_.find(conversationId);
         if (itConv == pimpl_->convInfos_.end()) {
-            JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+            JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
             return {};
         }
         return {{"syncing", "true"}};
@@ -1907,7 +1925,7 @@ ConversationModule::setConversationPreferences(const std::string& conversationId
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end()) {
-        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
         return;
     }
 
@@ -1921,18 +1939,18 @@ ConversationModule::setConversationPreferences(const std::string& conversationId
 }
 
 std::map<std::string, std::string>
-ConversationModule::getConversationPreferences(const std::string& conversationId) const
+ConversationModule::getConversationPreferences(const std::string& conversationId, bool includeCreated) const
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end() or not it->second)
         return {};
 
-    return it->second->preferences(false);
+    return it->second->preferences(includeCreated);
 }
 
 std::map<std::string, std::map<std::string, std::string>>
-ConversationModule::getAllConversationsPreferences() const
+ConversationModule::convPreferences() const
 {
     std::map<std::string, std::map<std::string, std::string>> p;
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
@@ -1953,7 +1971,7 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
     // Add a new member in the conversation
     auto it = pimpl_->conversations_.find(conversationId);
     if (it == pimpl_->conversations_.end() || !it->second) {
-        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
         return {};
     }
 
@@ -2111,7 +2129,7 @@ ConversationModule::call(const std::string& url,
     } else {
         auto parameters = jami::split_string(url, '/');
         if (parameters.size() != 4) {
-            JAMI_ERR("Incorrect url %s", url.c_str());
+            JAMI_ERROR("Incorrect url {:s}", url);
             return;
         }
         conversationId = parameters[0];
@@ -2146,7 +2164,7 @@ ConversationModule::call(const std::string& url,
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     auto conversation = pimpl_->conversations_.find(conversationId);
     if (conversation == pimpl_->conversations_.end() || !conversation->second) {
-        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        JAMI_ERROR("Conversation {:s} not found", conversationId);
         return;
     }
 
@@ -2162,7 +2180,7 @@ ConversationModule::call(const std::string& url,
     if (confId != "") {
         sendCallRequest = true;
         confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
-        JAMI_DBG("Calling self, join conference");
+        JAMI_DEBUG("Calling self, join conference");
     } else if (!activeCalls.empty()) {
         // Else, we try to join active calls
         sendCallRequest = true;
@@ -2170,14 +2188,14 @@ ConversationModule::call(const std::string& url,
         confId = ac.at("id");
         uri = ac.at("uri");
         deviceId = ac.at("device");
-        JAMI_DBG("Calling last active call: %s", callUri.c_str());
+        JAMI_DEBUG("Calling last active call: {:s}", callUri);
     } else if (itRdvAccount != infos.end() && itRdvDevice != infos.end()) {
         // Else, creates "to" (accountId/deviceId/conversationId/confId) and ask remote host
         sendCallRequest = true;
         uri = itRdvAccount->second;
         deviceId = itRdvDevice->second;
         confId = call->getCallId();
-        JAMI_DBG("Remote host detected. Calling %s on device %s", uri.c_str(), deviceId.c_str());
+        JAMI_DEBUG("Remote host detected. Calling {:s} on device {:s}", uri, deviceId);
     }
 
     if (sendCallRequest) {
@@ -2193,7 +2211,7 @@ ConversationModule::call(const std::string& url,
             hostConference(conversationId, confId, call->getCallId());
             return;
         }
-        JAMI_DBG("Calling: %s", callUri.c_str());
+        JAMI_DEBUG("Calling: {:s}", callUri);
         sendCall();
         return;
     }
