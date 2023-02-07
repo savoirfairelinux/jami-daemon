@@ -90,7 +90,7 @@ void removeAccount(const std::string& accountID);
 std::vector<std::string> getAccountList();
 void sendRegister(const std::string& accountID, bool enable);
 void registerAllAccounts(void);
-uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& message);
+uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& message, const int32_t& flag);
 std::vector<Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
 int getMessageStatus(uint64_t id);
 int getMessageStatus(const std::string& accountID, uint64_t id);

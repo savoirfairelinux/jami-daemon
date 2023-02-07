@@ -107,7 +107,8 @@ public:
     void registerAllAccounts(void);
     uint64_t sendTextMessage(const std::string& accoundID,
                              const std::string& to,
-                             const std::map<std::string, std::string>& payloads);
+                             const std::map<std::string, std::string>& payloads,
+                             const int32_t& flags);
     std::vector<RingDBusMessage> getLastMessages(const std::string& accountID,
                                                  const uint64_t& base_timestamp);
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);

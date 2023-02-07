@@ -520,6 +520,12 @@
           <arg type="s" name="to" direction="in"/>
           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
           <arg type="a{ss}" name="payloads" direction="in"/>
+          <arg type="i" name="flag" direction="in">
+            <tp:docstring>
+               The message ID. An ID of 0 means that the message was not sent,
+               likely because one of the parameters was invalid.
+             </tp:docstring>
+          </arg>
           <arg type="t" name="id" direction="out">
              <tp:docstring>
                The message ID. An ID of 0 means that the message was not sent,
