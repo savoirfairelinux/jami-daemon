@@ -67,6 +67,7 @@ public:
                                        const std::string& fakeCert = "");
 
     std::string aliceId;
+    std::string alice2Id;
     std::string bobId;
     std::string bob2Id;
     std::string carlaId;
@@ -89,6 +90,7 @@ private:
     void testSetMessageDisplayed();
     void testSetMessageDisplayedTwice();
     void testSetMessageDisplayedPreference();
+    void testSetMessageDisplayedAfterClone();
     void testVoteNonEmpty();
     void testNoBadFileInInitialCommit();
     void testNoBadCertInInitialCommit();
@@ -139,6 +141,7 @@ private:
     CPPUNIT_TEST(testSetMessageDisplayed);
     CPPUNIT_TEST(testSetMessageDisplayedTwice);
     CPPUNIT_TEST(testSetMessageDisplayedPreference);
+    CPPUNIT_TEST(testSetMessageDisplayedAfterClone);
     CPPUNIT_TEST(testVoteNonEmpty);
     CPPUNIT_TEST(testNoBadFileInInitialCommit);
     CPPUNIT_TEST(testNoBadCertInInitialCommit);
@@ -198,6 +201,11 @@ ConversationTest::tearDown()
 {
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    std::remove(aliceArchive.c_str());
+    if (!alice2Id.empty()) {
+        wait_for_removal_of(alice2Id);
+    }
 
     if (bob2Id.empty()) {
         wait_for_removal_of({aliceId, bobId, carlaId});
@@ -1386,6 +1394,119 @@ ConversationTest::testSetMessageDisplayedPreference()
                                            && infos["lastDisplayed"] == convId;
                                 })
                    != membersInfos.end());
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testSetMessageDisplayedAfterClone()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto convId = libjami::startConversation(aliceId);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool requestReceived = false, memberMessageGenerated = false,
+         msgDisplayed = false, aliceRegistered = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    bool conversationReady = false, conversationAlice2Ready = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId && conversationId == convId) {
+                conversationReady = true;
+            } else if (accountId == alice2Id) {
+                conversationAlice2Ready = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+                cv.notify_one();
+            }
+        }));
+    std::string aliceLastMsg;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                const std::string& peer,
+                const std::string& msgId,
+                int status) {
+                if (conversationId == convId && peer == aliceUri && status == 3) {
+                    if (accountId == bobId && msgId == conversationId)
+                        msgDisplayed = true;
+                    else if (accountId == aliceId)
+                        aliceLastMsg = msgId;
+                    cv.notify_one();
+                }
+            }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    aliceRegistered = true;
+                    cv.notify_one();
+                }
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    aliceLastMsg = "";
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return requestReceived && memberMessageGenerated && !aliceLastMsg.empty();
+    }));
+    memberMessageGenerated = false;
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
+
+    aliceAccount->setMessageDisplayed("swarm:" + convId, convId, 3);
+
+    // Alice creates a second device
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    std::remove(aliceArchive.c_str());
+    aliceAccount->exportArchive(aliceArchive);
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "alice2";
+    details[ConfProperties::ALIAS] = "alice2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+    alice2Id = Manager::instance().addAccount(details);
+
+    // Disconnect alice2, to create a valid conv betwen Alice and alice1
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationAlice2Ready; }));
+
+    // Assert that message is set as displayed for self (for the read status)
+    auto membersInfos = libjami::getConversationMembers(aliceId, convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri
+                                           && infos["lastDisplayed"] == convId;
+                                })
+                   != membersInfos.end());
+
+
+
+
     libjami::unregisterSignalHandlers();
 }
 
