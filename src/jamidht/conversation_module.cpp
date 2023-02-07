@@ -45,6 +45,7 @@ struct PendingConversationFetch
     std::string deviceId {};
     std::string removeId {};
     std::map<std::string, std::string> preferences {};
+    std::map<std::string, std::string> lastDisplayed {};
     std::set<std::string> connectingTo {};
 };
 
@@ -579,6 +580,20 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         }
         if (!commitId.empty())
             sendMessageNotification(conversationId, commitId, false);
+        std::map<std::string, std::string> preferences;
+        std::map<std::string, std::string> lastDisplayed;
+        {
+            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+            auto itFetch = pendingConversationsFetch_.find(conversationId);
+            if (itFetch != pendingConversationsFetch_.end()) {
+                preferences = std::move(itFetch->second.preferences);
+                lastDisplayed = std::move(itFetch->second.lastDisplayed);
+            }
+        }
+        if (!preferences.empty())
+            conversation->updatePreferences(preferences);
+        if (!lastDisplayed.empty())
+            conversation->updateLastDisplayed(lastDisplayed);
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
         needsSyncingCb_({});
@@ -618,15 +633,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
                 }
             }
         }
-        std::map<std::string, std::string> preferences;
-        {
-            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-            auto itFetch = pendingConversationsFetch_.find(conversationId);
-            if (itFetch != pendingConversationsFetch_.end())
-                preferences = std::move(itFetch->second.preferences);
-        }
-        if (!preferences.empty())
-            conversation->updatePreferences(preferences);
     } catch (const std::exception& e) {
         JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
     }
@@ -1466,9 +1472,33 @@ ConversationModule::onMessageDisplayed(const std::string& peer,
 {
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     auto conversation = pimpl_->conversations_.find(conversationId);
-    if (conversation != pimpl_->conversations_.end() && conversation->second)
-        return conversation->second->setMessageDisplayed(peer, interactionId);
+    if (conversation != pimpl_->conversations_.end() && conversation->second) {
+        if (conversation->second->setMessageDisplayed(peer, interactionId)) {
+            auto msg = std::make_shared<SyncMsg>();
+            std::map<std::string, std::map<std::string, std::string>> ld;
+            ld[conversationId] = conversation->second->displayed();
+            msg->ld = std::move(ld);
+            lk.unlock();
+            pimpl_->needsSyncingCb_(std::move(msg));
+            return true;
+        }
+    }
     return false;
+}
+
+std::map<std::string, std::map<std::string, std::string>>
+ConversationModule::convDisplayed() const
+{
+    std::map<std::string, std::map<std::string, std::string>> displayed;
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (const auto& [id, conv] : pimpl_->conversations_) {
+        if (conv) {
+            auto d = conv->displayed();
+            if (!d.empty())
+                displayed[id] = std::move(d);
+        }
+    }
+    return displayed;
 }
 
 uint32_t
@@ -1688,6 +1718,22 @@ ConversationModule::onSyncData(const SyncMsg& msg,
         auto itFetch = pimpl_->pendingConversationsFetch_.find(convId);
         if (itFetch != pimpl_->pendingConversationsFetch_.end())
             itFetch->second.preferences = p;
+    }
+
+    // Updates displayed for conversations
+    for (const auto& [convId, ld] : msg.ld) {
+        {
+            std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+            auto itConv = pimpl_->conversations_.find(convId);
+            if (itConv != pimpl_->conversations_.end() && itConv->second) {
+                itConv->second->updateLastDisplayed(ld);
+                continue;
+            }
+        }
+        std::lock_guard<std::mutex> lk(pimpl_->pendingConversationsFetchMtx_);
+        auto itFetch = pimpl_->pendingConversationsFetch_.find(convId);
+        if (itFetch != pimpl_->pendingConversationsFetch_.end())
+            itFetch->second.lastDisplayed = ld;
     }
 }
 
