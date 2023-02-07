@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e9ff4ba_2058a899",
+        "filename": "bin/dbus/dbusconfigurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-07T21:26:36Z",
+      "side": 1,
+      "message": "int32_t, else t will not build",
+      "range": {
+        "startLine": 180,
+        "startChar": 48,
+        "endLine": 180,
+        "endChar": 56
+      },
+      "revId": "3f4b5fb1aef65c7e30434e5952409a0a412f4789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ddc341b1_501e2164",
+        "filename": "bin/dbus/dbusconfigurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-07T21:26:36Z",
+      "side": 1,
+      "message": "also dbusconfigurationmanager.h must be changed",
+      "range": {
+        "startLine": 183,
+        "startChar": 20,
+        "endLine": 183,
+        "endChar": 42
+      },
+      "revId": "3f4b5fb1aef65c7e30434e5952409a0a412f4789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e54e8de8_180be6b0",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 253,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-07T21:26:36Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 253,
+        "startChar": 35,
+        "endLine": 253,
+        "endChar": 55
+      },
+      "revId": "3f4b5fb1aef65c7e30434e5952409a0a412f4789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbf7eef4_5ea92eae",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-07T21:26:36Z",
+      "side": 1,
+      "message": "debug log?",
+      "range": {
+        "startLine": 189,
+        "startChar": 28,
+        "endLine": 190,
+        "endChar": 59
+      },
+      "revId": "3f4b5fb1aef65c7e30434e5952409a0a412f4789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b99249ba_d4e7c75c",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-07T21:26:36Z",
+      "side": 1,
+      "message": "on another subject, we may have to rediscuss this for DRT. Cause for now it\u0027s only sending to connected devices. This may be complex in a big swarm with DRT",
+      "range": {
+        "startLine": 192,
+        "startChar": 56,
+        "endLine": 192,
+        "endChar": 58
+      },
+      "revId": "3f4b5fb1aef65c7e30434e5952409a0a412f4789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
