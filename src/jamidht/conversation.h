@@ -383,6 +383,17 @@ public:
     void updateLastDisplayed(const std::string& lastDisplayed);
 
     /**
+     * Change last displayed for multiple uris
+     * @param map       New last displayed
+     */
+    void updateLastDisplayed(const std::map<std::string, std::string>& map);
+    /**
+     * Retrieve last displayed id
+     * @return displayed
+     */
+    std::map<std::string, std::string> displayed() const;
+
+    /**
      * Retrieve how many interactions there is from HEAD to interactionId
      * @param toId      "" for getting the whole history
      * @param fromId    "" => HEAD
