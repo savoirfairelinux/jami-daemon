@@ -53,8 +53,9 @@ public:
     /**
      * Send sync to all connected devices
      * @param syncMsg       Default message
+     * @param deviceId      If we need to filter on a device
      */
-    void syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg = nullptr);
+    void syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg = nullptr, const DeviceId& deviceId = {});
 
 private:
     class Impl;
