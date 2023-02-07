@@ -18,11 +18,11 @@ $(TARBALLS)/msgpack-c-$(MSGPACK_VERSION).tar.gz:
 
 .sum-msgpack: msgpack-c-$(MSGPACK_VERSION).tar.gz
 
-msgpack: msgpack-c-$(MSGPACK_VERSION).tar.gz
+msgpack: msgpack-c-$(MSGPACK_VERSION).tar.gz .sum-msgpack
 	$(UNPACK)
 	$(MOVE)
 
-.msgpack: msgpack toolchain.cmake .sum-msgpack
+.msgpack: msgpack toolchain.cmake
 	cd $< && $(HOSTVARS) $(CMAKE) . $(MSGPACK_CMAKECONF)
 	cd $< && $(MAKE) install
 	touch $@
