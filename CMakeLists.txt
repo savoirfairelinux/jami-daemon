@@ -14,6 +14,7 @@ option(JAMI_PLUGIN "Build with plugin support" ON)
 option(JAMI_JNI "Build the JNI binding" OFF)
 option(JAMI_DBUS "Build the DBUS binding" OFF)
 option(JAMI_VIDEO "Build with video support" ON)
+option(JAMI_TESTS "Build unit tests" ON)
 option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
 option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 
@@ -624,6 +625,61 @@ else()
             ${DBUS_ADAPTOR_FILES}
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
+    endif()
+
+    if (JAMI_TESTS)
+        pkg_search_module(Cppunit REQUIRED IMPORTED_TARGET cppunit)
+        list (APPEND test_FILES
+            test/unitTest/common.cpp
+            test/unitTest/conversationRepository/conversationRepository.cpp
+            test/unitTest/revoke/revoke.cpp
+            test/unitTest/plugins/plugins.cpp
+            test/unitTest/syncHistory/syncHistory.cpp
+            test/unitTest/base64/base64.cpp
+            test/unitTest/ice/ice_media_cand_exchange.cpp
+            test/unitTest/ice/ice.cpp
+            test/unitTest/ice/ice_sdp_parser.cpp
+            test/unitTest/scheduler.cpp
+            test/unitTest/account_factory/testAccount_factory.cpp
+            test/unitTest/call/call.cpp
+            test/unitTest/call/conference.cpp
+            test/unitTest/call/recorder.cpp
+            test/unitTest/connectionManager/connectionManager.cpp
+            test/unitTest/account_archive/migration.cpp
+            test/unitTest/account_archive/account_archive.cpp
+            test/unitTest/map_utils/testMap_utils.cpp
+            test/unitTest/sip_account/sip_basic_calls.cpp
+            test/unitTest/sip_account/sip_srtp.cpp
+            test/unitTest/fileTransfer/fileTransfer.cpp
+            test/unitTest/fileutils/testFileutils.cpp
+            test/unitTest/media_negotiation/hold_resume.cpp
+            test/unitTest/media_negotiation/auto_answer.cpp
+            test/unitTest/media_negotiation/media_negotiation.cpp
+            test/unitTest/string_utils/testString_utils.cpp
+            test/unitTest/utf8_utils/testUtf8_utils.cpp
+            test/unitTest/certstore.cpp
+            test/unitTest/conversation/conversationcommon.cpp
+            test/unitTest/conversation/call.cpp
+            test/unitTest/conversation/conversation.cpp
+            test/unitTest/conversation/conversationRequest.cpp
+            test/unitTest/conversation/conversationMembersEvent.cpp
+            test/unitTest/media/test_media_frame.cpp
+            test/unitTest/media/video/test_video_scaler.cpp
+            test/unitTest/media/video/testVideo_input.cpp
+            test/unitTest/media/test_media_encoder.cpp
+            test/unitTest/media/test_media_decoder.cpp
+            test/unitTest/media/audio/test_resampler.cpp
+            test/unitTest/media/audio/test_audio_frame_resizer.cpp
+            test/unitTest/media/test_media_filter.cpp
+            test/unitTest/media/test_media_player.cpp
+        )
+        add_executable(jami_tests ${test_FILES})
+        target_link_libraries(jami_tests ${PROJECT_NAME}
+            ${CMAKE_THREAD_LIBS_INIT}
+            PkgConfig::Cppunit
+        )
+        enable_testing()
+        add_test(TEST jami_tests)
     endif()
 
 endif()
