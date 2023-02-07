@@ -42,7 +42,9 @@ struct SyncMsg
     // p is conversation's preferences. It's not stored in c, as
     // we can update the preferences without touching any confInfo.
     std::map<std::string, std::map<std::string, std::string>> p;
-    MSGPACK_DEFINE(ds, c, cr, p)
+    // Last displayed messages
+    std::map<std::string, std::map<std::string, std::string>> ld;
+    MSGPACK_DEFINE(ds, c, cr, p, ld)
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
@@ -195,6 +197,7 @@ public:
     bool onMessageDisplayed(const std::string& peer,
                             const std::string& conversationId,
                             const std::string& interactionId);
+    std::map<std::string, std::map<std::string, std::string>> convDisplayed() const;
 
     /**
      * Load conversation's messages
