@@ -2956,7 +2956,8 @@ JamiAccount::forEachDevice(const dht::InfoHash& to,
 uint64_t
 JamiAccount::sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
-                             uint64_t refreshToken)
+                             uint64_t refreshToken,
+                             bool onlyConnected)
 {
     Uri uri(to);
     if (uri.scheme() == Uri::Scheme::SWARM) {
@@ -2975,7 +2976,7 @@ JamiAccount::sendTextMessage(const std::string& to,
         JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
         return 0;
     }
-    return SIPAccountBase::sendTextMessage(toUri, payloads, refreshToken);
+    return SIPAccountBase::sendTextMessage(toUri, payloads, refreshToken, onlyConnected);
 }
 
 void
@@ -3024,7 +3025,7 @@ JamiAccount::sendMessage(const std::string& to,
         auto& channel = conn.channel;
 
         // Set input token into callback
-        std::unique_ptr<TextMessageCtx> ctx {std::make_unique<TextMessageCtx>()};
+        auto ctx = std::make_unique<TextMessageCtx>();
         ctx->acc = weak();
         ctx->to = to;
         ctx->deviceId = key.second;
@@ -3462,7 +3463,7 @@ JamiAccount::sendInstantMessage(const std::string& convId,
         return;
     }
     for (const auto& m : members) {
-        auto uri = m.at("uri");
+        const auto& uri = m.at("uri");
         auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
         // Announce to all members that a new message is sent
         sendMessage(uri, msg, token, false, true);

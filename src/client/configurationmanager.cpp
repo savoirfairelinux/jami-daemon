@@ -246,9 +246,11 @@ registerAllAccounts()
 uint64_t
 sendAccountTextMessage(const std::string& accountID,
                        const std::string& to,
-                       const std::map<std::string, std::string>& payloads)
+                       const std::map<std::string, std::string>& payloads,
+                       int32_t flags)
 {
-    return jami::Manager::instance().sendTextMessage(accountID, to, payloads);
+    bool onlyConnected = flags & 0x1;
+    return jami::Manager::instance().sendTextMessage(accountID, to, payloads, onlyConnected);
 }
 
 std::vector<Message>
