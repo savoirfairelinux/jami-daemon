@@ -144,20 +144,8 @@ RANLIB=xcrun ranlib
 EXTRA_COMMON := -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
 EXTRA_CXXFLAGS += -stdlib=libc++
 EXTRA_LDFLAGS += -Wl,-syslibroot,$(MACOSX_SDK)
-ifeq ($(ARCH),x86_64)
 EXTRA_COMMON += -m64
-else
-EXTRA_COMMON += -m32
-endif
-
-XCODE_FLAGS = -sdk macosx$(OSX_VERSION)
-ifeq ($(shell xcodebuild -version 2>/dev/null | tee /dev/null|head -1|cut -d\  -f2|cut -d. -f1),3)
-XCODE_FLAGS += ARCHS=$(ARCH)
-# XCode 3 doesn't support -arch
-else
-XCODE_FLAGS += -arch $(ARCH)
-endif
-
+XCODE_FLAGS = -sdk macosx$(OSX_VERSION) -arch $(ARCH)
 endif
 
 CCAS=$(CC) -c
@@ -552,8 +540,8 @@ endif
 ifdef HAVE_CROSS_COMPILE
 	echo "set(_CMAKE_TOOLCHAIN_PREFIX $(CROSS_COMPILE))" >> $@
 endif
-	echo "set(CMAKE_C_COMPILER $(CC))" >> $@
-	echo "set(CMAKE_CXX_COMPILER $(CXX))" >> $@
+	echo "set(CMAKE_C_COMPILER \"$(CC)\")" >> $@
+	echo "set(CMAKE_CXX_COMPILER \"$(CXX)\")" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH $(PREFIX))" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)" >> $@
