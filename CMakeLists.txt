@@ -188,6 +188,7 @@ list (APPEND ALL_FILES
       ${Source_Files__jamidht}
       ${Source_Files__jamidht__eth__libdevcore}
       ${Source_Files__jamidht__eth__libdevcrypto}
+      ${Source_Files__jamidht__swarm}
       ${Source_Files__media}
       ${Source_Files__media__audio}
       ${Source_Files__media__audio__sound}
