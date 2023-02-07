@@ -53,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "47b523bb_87a6d41d",
+        "filename": "src/media/audio/pulseaudio/pulselayer.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-02-07T01:07:15Z",
+      "side": 1,
+      "message": "okay, I\u0027ll verify for `portaudiolayer`, but independently of this patch",
+      "parentUuid": "13f43c24_3e8c77fc",
+      "revId": "424402f02747383866e6499fe1d0fc3733494991",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f862b424_24e37278",
@@ -90,6 +108,30 @@
       "side": 1,
       "message": "not actually frames...\nif you check `observer.h` the Observable class has a private `observers_` variable, so it look clean to have a `observables_` variable here.",
       "parentUuid": "f862b424_24e37278",
+      "range": {
+        "startLine": 141,
+        "startChar": 55,
+        "endLine": 141,
+        "endChar": 67
+      },
+      "revId": "424402f02747383866e6499fe1d0fc3733494991",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "937f06e5_f54c6625",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-02-07T01:07:15Z",
+      "side": 1,
+      "message": "in the context of the template class Observable, where the type isn\u0027t known until specialization, the term `observers_` makes sense, but here, observable describes a behavioral pattern applied to a specific type; this would be like having a `std::vector\u003cstd::atomic\u003cint\u003e\u003e` called `atomics_`, and doesn\u0027t help readability when looking at the implementation",
+      "parentUuid": "ed125cad_e8b474dc",
       "range": {
         "startLine": 141,
         "startChar": 55,
