@@ -74,7 +74,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
                               buffer.size(),
                               ec);
                 if (ec) {
-                    JAMI_ERR("%s", ec.message().c_str());
+                    JAMI_ERROR("{:s}", ec.message());
                     return;
                 }
             }
@@ -88,7 +88,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERR("%s", ec.message().c_str());
+                JAMI_ERROR("{:s}", ec.message());
                 return;
             }
         }
@@ -101,7 +101,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERR("%s", ec.message().c_str());
+                JAMI_ERROR("{:s}", ec.message());
                 return;
             }
         }
@@ -117,7 +117,20 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERR("%s", ec.message().c_str());
+                JAMI_ERROR("{:s}", ec.message());
+                return;
+            }
+        }
+        buffer.clear();
+        // Sync read's status
+        auto ld = convModule->convDisplayed();
+        if (!ld.empty()) {
+            SyncMsg msg;
+            msg.ld = std::move(ld);
+            msgpack::pack(buffer, msg);
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERROR("{:s}", ec.message());
                 return;
             }
         }
@@ -127,7 +140,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
         msgpack::pack(buffer, *syncMsg);
         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
         if (ec)
-            JAMI_ERR("%s", ec.message().c_str());
+            JAMI_ERROR("{:s}", ec.message());
     }
 }
 
@@ -171,14 +184,14 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             msgpack::object_handle oh = msgpack::unpack(reinterpret_cast<const char*>(buf), len);
             oh.get().convert(msg);
         } catch (const std::exception& e) {
-            JAMI_WARN("[convInfo] error on sync: %s", e.what());
+            JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
             return len;
         }
 
         if (auto manager = dynamic_cast<ArchiveAccountManager*>(acc->accountManager()))
             manager->onSyncData(std::move(msg.ds), false);
 
-        if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty())
+        if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())
             acc->convModule()->onSyncData(msg, peerId, device.toString());
         return len;
     });

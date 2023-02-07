@@ -1528,6 +1528,29 @@ Conversation::setMessageDisplayed(const std::string& uri, const std::string& int
 }
 
 void
+Conversation::updateLastDisplayed(const std::map<std::string, std::string>& map)
+{
+    auto filePath = fmt::format("{}/{}", pimpl_->conversationDataPath_, ConversationMapKeys::LAST_DISPLAYED);
+    auto prefs = map;
+    auto itLast = prefs.find(LAST_MODIFIED);
+    if (itLast != prefs.end()) {
+        if (fileutils::isFile(filePath)) {
+            auto lastModified = fileutils::lastWriteTime(filePath);
+            try {
+                if (lastModified >= std::stoul(itLast->second))
+                    return;
+            } catch (...) {
+                return;
+            }
+        }
+        prefs.erase(itLast);
+    }
+
+    for (const auto& [uri, id]: prefs)
+        setMessageDisplayed(uri, id);
+}
+
+void
 Conversation::updateLastDisplayed(const std::string& lastDisplayed)
 {
     auto acc = pimpl_->account_.lock();
@@ -1575,6 +1598,22 @@ Conversation::updateLastDisplayed(const std::string& lastDisplayed)
     auto commitsSincePreviousLast = pimpl_->repository_->log(options).size();
     if (commitsSincePreviousLast > commitsSinceLast)
         updateLastDisplayed();
+}
+
+std::map<std::string, std::string>
+Conversation::displayed() const
+{
+    try {
+        std::map<std::string, std::string> lastDisplayed;
+        auto filePath = fmt::format("{}/{}", pimpl_->conversationDataPath_, ConversationMapKeys::LAST_DISPLAYED);
+        auto file = fileutils::loadFile(filePath);
+        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+        oh.get().convert(lastDisplayed);
+        lastDisplayed[LAST_MODIFIED] = fmt::format("{}", fileutils::lastWriteTime(filePath));
+        return lastDisplayed;
+    } catch (const std::exception& e) {
+    }
+    return {};
 }
 
 std::vector<std::string>
