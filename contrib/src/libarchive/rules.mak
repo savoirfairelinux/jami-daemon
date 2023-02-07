@@ -25,12 +25,12 @@ $(TARBALLS)/libarchive-$(LIBARCHIVE_VERSION).tar.xz:
 
 .sum-libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz
 
-libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz
+libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz .sum-libarchive
 	$(UNPACK)
 	$(APPLY) $(SRC)/libarchive/0001-disable-shared-library.patch
 	$(MOVE)
 
-.libarchive: libarchive toolchain.cmake .sum-libarchive
+.libarchive: libarchive toolchain.cmake
 	cd $< && mkdir -p buildlib
 ifdef HAVE_ANDROID
 	cd $< && cp -R contrib/android/include/* $(PREFIX)/include
