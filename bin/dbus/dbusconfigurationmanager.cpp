@@ -176,10 +176,11 @@ DBusConfigurationManager::registerAllAccounts(void)
 auto
 DBusConfigurationManager::sendTextMessage(const std::string& accountID,
                                           const std::string& to,
-                                          const std::map<std::string, std::string>& payloads)
-    -> decltype(libjami::sendAccountTextMessage(accountID, to, payloads))
+                                          const std::map<std::string, std::string>& payloads,
+                                          const uint32_t& flags)
+    -> decltype(libjami::sendAccountTextMessage(accountID, to, payloads, flags))
 {
-    return libjami::sendAccountTextMessage(accountID, to, payloads);
+    return libjami::sendAccountTextMessage(accountID, to, payloads, flags);
 }
 
 std::vector<RingDBusMessage>

@@ -187,7 +187,8 @@ public:
      */
     virtual uint64_t sendTextMessage(const std::string& /*to*/,
                                      const std::map<std::string, std::string>& /*payloads*/,
-                                     uint64_t /*refreshToken*/ = 0)
+                                     uint64_t /*refreshToken*/ = 0,
+                                     bool /*onlyConnected*/ = false)
     {
         return 0;
     }

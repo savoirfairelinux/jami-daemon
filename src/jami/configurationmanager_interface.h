@@ -95,7 +95,8 @@ LIBJAMI_PUBLIC void sendRegister(const std::string& accountID, bool enable);
 LIBJAMI_PUBLIC void registerAllAccounts(void);
 LIBJAMI_PUBLIC uint64_t sendAccountTextMessage(const std::string& accountID,
                                                const std::string& to,
-                                               const std::map<std::string, std::string>& payloads);
+                                               const std::map<std::string, std::string>& payloads,
+                                               int32_t flags);
 LIBJAMI_PUBLIC bool cancelMessage(const std::string& accountID, uint64_t message);
 LIBJAMI_PUBLIC std::vector<Message> getLastMessages(const std::string& accountID,
                                                     const uint64_t& base_timestamp);

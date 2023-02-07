@@ -183,8 +183,15 @@ public:
 
     virtual uint64_t sendTextMessage(const std::string& to,
                                      const std::map<std::string, std::string>& payloads,
-                                     uint64_t refreshToken = 0) override
+                                     uint64_t refreshToken = 0,
+                                     bool onlyConnected = false) override
     {
+        if (onlyConnected) {
+            JAMI_WARNING("sendTextMessage ONLY CONNECTED");
+            auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
+            sendMessage(to, payloads, token, false, true);
+            return token;
+        }
         return messageEngine_.sendMessage(to, payloads, refreshToken);
     }
 

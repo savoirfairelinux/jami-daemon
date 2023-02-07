@@ -320,7 +320,8 @@ public:
                      bool onlyConnected = false) override;
     uint64_t sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
-                             uint64_t refreshToken = 0) override;
+                             uint64_t refreshToken = 0,
+                             bool onlyConnected = false) override;
     void sendInstantMessage(const std::string& convId,
                             const std::map<std::string, std::string>& msg);
     void onIsComposing(const std::string& conversationId, const std::string& peer, bool isWriting);
