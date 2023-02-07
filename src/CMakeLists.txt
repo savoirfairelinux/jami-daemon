@@ -86,6 +86,8 @@ set (Source_Files__im ${Source_Files__im} PARENT_SCOPE)
 set (Source_Files__jamidht ${Source_Files__jamidht} PARENT_SCOPE)
 set (Source_Files__jamidht__eth__libdevcore ${Source_Files__jamidht__eth__libdevcore} PARENT_SCOPE)
 set (Source_Files__jamidht__eth__libdevcrypto ${Source_Files__jamidht__eth__libdevcrypto} PARENT_SCOPE)
+set (Source_Files__jamidht__swarm ${Source_Files__jamidht__swarm} PARENT_SCOPE)
+
 set (Source_Files__media ${Source_Files__media} PARENT_SCOPE)
 set (Source_Files__media__audio ${Source_Files__media__audio} PARENT_SCOPE)
 set (Source_Files__media__audio__sound ${Source_Files__media__audio__sound} PARENT_SCOPE)
