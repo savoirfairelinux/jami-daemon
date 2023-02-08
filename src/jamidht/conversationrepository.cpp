@@ -2060,7 +2060,6 @@ ConversationRepository::Impl::log(const LogOptions& options) const
             if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
                 return CallbackResult::Skip;
             }
-
             if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
                 return CallbackResult::Break; // Stop logging
             if (breakLogging)
@@ -2455,17 +2454,14 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 //////////////////////////////////
 
 std::unique_ptr<ConversationRepository>
-ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account,
+ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& account,
                                            ConversationMode mode,
                                            const std::string& otherMember)
 {
-    auto shared = account.lock();
-    if (!shared)
-        return {};
     // Create temporary directory because we can't know the first hash for now
     std::uniform_int_distribution<uint64_t> dist {0, std::numeric_limits<uint64_t>::max()};
     random_device rdev;
-    auto conversationsPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+    auto conversationsPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                              + DIR_SEPARATOR_STR + "conversations";
     fileutils::check_dir(conversationsPath.c_str());
     auto tmpPath = conversationsPath + DIR_SEPARATOR_STR + std::to_string(dist(rdev));
@@ -2483,14 +2479,14 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     }
 
     // Add initial files
-    if (!add_initial_files(repo, shared, mode, otherMember)) {
+    if (!add_initial_files(repo, account, mode, otherMember)) {
         JAMI_ERR("Error when adding initial files");
         fileutils::removeAll(tmpPath, true);
         return {};
     }
 
     // Commit changes
-    auto id = initial_commit(repo, shared, mode, otherMember);
+    auto id = initial_commit(repo, account, mode, otherMember);
     if (id.empty()) {
         JAMI_ERR("Couldn't create initial commit in %s", tmpPath.c_str());
         fileutils::removeAll(tmpPath, true);
@@ -2511,20 +2507,15 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
 }
 
 std::unique_ptr<ConversationRepository>
-ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& account,
+ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& account,
                                           const std::string& deviceId,
                                           const std::string& conversationId)
 {
-    auto shared = account.lock();
-    if (!shared)
-        return {};
-    auto conversationsPath = fileutils::get_data_dir() + "/" + shared->getAccountID() + "/"
+    auto conversationsPath = fileutils::get_data_dir() + "/" + account->getAccountID() + "/"
                              + "conversations";
     fileutils::check_dir(conversationsPath.c_str());
     auto path = conversationsPath + "/" + conversationId;
-    git_repository* rep = nullptr;
-    std::stringstream url;
-    url << "git://" << deviceId << '/' << conversationId;
+    auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 
     git_clone_options clone_options;
     git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
@@ -2533,11 +2524,14 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
                                                               void*) {
         // Uncomment to get advancment
         // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
-        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects, stats->received_bytes/1024);
+        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects,
+        //     stats->received_bytes/1024);
         // If a pack is more than 256Mb, it's anormal.
         if (stats->received_bytes > MAX_FETCH_SIZE) {
             JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
-                stats->received_bytes, stats->received_objects, stats->total_objects);
+                       stats->received_bytes,
+                       stats->received_objects,
+                       stats->total_objects);
             return -1;
         }
         return 0;
@@ -2549,11 +2543,13 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
         fileutils::removeAll(path, true);
     }
 
-    JAMI_INFO("Start clone in %s", path.c_str());
-    if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) < 0) {
-        const git_error* err = giterr_last();
-        if (err)
-            JAMI_ERR("Error when retrieving remote conversation: %s %s", err->message, path.c_str());
+    JAMI_DEBUG("Start clone of {:s} to {:s}", url, path);
+    git_repository* rep = nullptr;
+    if (auto err = git_clone(&rep, url.c_str(), path.c_str(), nullptr)) {
+        if (const git_error* gerr = giterr_last())
+            JAMI_ERROR("Error when retrieving remote conversation: {:s} {:s}", gerr->message, path);
+        else
+            JAMI_ERROR("Unknown error {:d} when retrieving remote conversation", err);
         return nullptr;
     }
     git_repository_free(rep);
@@ -2930,11 +2926,14 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void*) {
         // Uncomment to get advancment
         // if (stats->received_objects % 500 == 0 || stats->received_objects == stats->total_objects)
-        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects, stats->received_bytes/1024);
+        //     JAMI_DEBUG("{}/{} {}kb", stats->received_objects, stats->total_objects,
+        //     stats->received_bytes/1024);
         // If a pack is more than 256Mb, it's anormal.
         if (stats->received_bytes > MAX_FETCH_SIZE) {
             JAMI_ERROR("Abort fetching repository, the fetch is too big: {} bytes ({}/{})",
-                stats->received_bytes, stats->received_objects, stats->total_objects);
+                       stats->received_bytes,
+                       stats->received_objects,
+                       stats->total_objects);
             return -1;
         }
         return 0;
@@ -3700,6 +3699,12 @@ ConversationRepository::pinCertificates(bool blocking)
             tls::CertificateStore::instance().pinCertificatePath(path, {});
         }
     }
+}
+
+std::string
+ConversationRepository::uriFromDevice(const std::string& deviceId) const
+{
+    return pimpl_->uriFromDevice(deviceId);
 }
 
 std::string

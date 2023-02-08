@@ -1793,7 +1793,8 @@ SIPAccount::sendMessage(const std::string& to,
                         const std::map<std::string, std::string>& payloads,
                         uint64_t id,
                         bool,
-                        bool)
+                        bool,
+                        const std::string& deviceId)
 {
     if (to.empty() or payloads.empty()) {
         JAMI_WARN("No sender or payload");
