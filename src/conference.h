@@ -33,13 +33,13 @@
 #include <map>
 #include <functional>
 
-#include "audio/audio_input.h"
 #include "conference_protocol.h"
-#include "media_attribute.h"
+#include "media/audio/audio_input.h"
+#include "media/media_attribute.h"
+#include "media/recordable.h"
 
 #include <json/json.h>
 
-#include "recordable.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/streamdata.h"

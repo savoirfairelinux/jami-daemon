@@ -32,7 +32,7 @@
 #include "registration_states.h"
 #include "im/message_engine.h"
 #include "connectivity/ip_utils.h"
-#include "media_codec.h"
+#include "media/media_codec.h"
 #include "media/media_attribute.h"
 #include "logger.h"
 #include "compiler_intrinsics.h" // include the "UNUSED" macro

@@ -32,7 +32,7 @@
 #include "account_const.h"
 #include "common.h"
 #include "media_const.h"
-#include "video/sinkclient.h"
+#include "media/video/sinkclient.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 

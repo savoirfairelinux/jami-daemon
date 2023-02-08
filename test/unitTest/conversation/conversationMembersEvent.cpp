@@ -429,7 +429,7 @@ ConversationMembersEventTest::testMemberAddedNoBadFile()
     addFile(aliceAccount, convId, "BADFILE");
     generateFakeInvite(aliceAccount, convId, bobUri);
     // Generate conv request
-    aliceAccount->sendTextMessage(bobUri,
+    aliceAccount->sendTextMessage(bobUri, "",
                                   {{"application/invite+json",
                                     "{\"conversationId\":\"" + convId + "\"}"}});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
