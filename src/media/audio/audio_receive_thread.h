@@ -21,12 +21,12 @@
 #pragma once
 
 #include "audiobuffer.h"
-#include "media_buffer.h"
-#include "media_device.h"
-#include "media_codec.h"
+#include "media/media_buffer.h"
+#include "media/media_device.h"
+#include "media/media_codec.h"
 #include "noncopyable.h"
 #include "observer.h"
-#include "socket_pair.h"
+#include "media/socket_pair.h"
 #include "threadloop.h"
 
 #include <functional>

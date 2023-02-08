@@ -26,12 +26,12 @@
 #include <mutex>
 #include <chrono>
 
-#include "audio/audiobuffer.h"
-#include "media_device.h"
-#include "media_buffer.h"
+#include "media/audio/audiobuffer.h"
+#include "media/media_device.h"
+#include "media/media_buffer.h"
 #include "observer.h"
 #include "threadloop.h"
-#include "media_codec.h"
+#include "media/media_codec.h"
 
 namespace jami {
 class AudioDeviceGuard;

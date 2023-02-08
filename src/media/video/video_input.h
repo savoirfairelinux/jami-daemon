@@ -24,10 +24,10 @@
 
 #include "noncopyable.h"
 #include "threadloop.h"
-#include "media_stream.h"
+#include "media/media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
-#include "media_codec.h"
+#include "media/media_codec.h"
 
 #include <map>
 #include <atomic>

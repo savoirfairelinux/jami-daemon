@@ -30,7 +30,7 @@
 
 #include "call.h"
 #include "connectivity/ice_transport.h"
-#include "media_codec.h" // for MediaType enum
+#include "media/media_codec.h" // for MediaType enum
 #include "connectivity/sip_utils.h"
 #include "sip/sdp.h"
 

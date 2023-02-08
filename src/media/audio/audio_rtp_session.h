@@ -22,9 +22,9 @@
 #pragma once
 
 #include "audiobuffer.h"
-#include "media_device.h"
-#include "rtp_session.h"
-#include "media_stream.h"
+#include "media/media_device.h"
+#include "media/rtp_session.h"
+#include "media/media_stream.h"
 
 #include "threadloop.h"
 
