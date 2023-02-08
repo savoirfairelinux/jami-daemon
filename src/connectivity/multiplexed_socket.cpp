@@ -127,19 +127,15 @@ public:
     {
         auto& channelSocket = sockets[channel];
         if (not channelSocket)
-            channelSocket = std::make_shared<ChannelSocket>(parent_.weak(),
-                                                            name,
-                                                            channel,
-                                                            isInitiator,
-                                                            [w = parent_.weak(), channel]() {
-                                                                // Remove socket in another thread to avoid any lock
-                                                                dht::ThreadPool::io().run([w, channel]() {
-                                                                    if (auto shared = w.lock()) {
-                                                                        shared->eraseChannel(channel);
-                                                                    }
-                                                                });
-
-                                                            });
+            channelSocket = std::make_shared<ChannelSocket>(
+                parent_.weak(), name, channel, isInitiator, [w = parent_.weak(), channel]() {
+                    // Remove socket in another thread to avoid any lock
+                    dht::ThreadPool::io().run([w, channel]() {
+                        if (auto shared = w.lock()) {
+                            shared->eraseChannel(channel);
+                        }
+                    });
+                });
         else {
             JAMI_WARN("A channel is already present on that socket, accepting "
                       "the request will close the previous one %s",
@@ -669,8 +665,32 @@ MultiplexedSocket::monitor() const
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (const auto& [_, channel] : pimpl_->sockets) {
         if (channel)
-            JAMI_DEBUG("\t\t- Channel {} (count: {}) with name {:s} Initiator: {}", fmt::ptr(channel.get()), channel.use_count(), channel->name(), channel->isInitiator());
+            JAMI_DEBUG("\t\t- Channel {} (count: {}) with name {:s} Initiator: {}",
+                       fmt::ptr(channel.get()),
+                       channel.use_count(),
+                       channel->name(),
+                       channel->isInitiator());
     }
+}
+
+bool
+MultiplexedSocket::hasSwarmChannel(const DeviceId& device, const std::string& convId)
+{
+    auto cert = peerCertificate();
+    if (!cert || !cert->issuer)
+        return false;
+
+    std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
+    for (const auto& [_, channel] : pimpl_->sockets) {
+        if (channel) {
+            std::size_t found = channel->name().find_last_of("/\\");
+            auto convId_ = channel->name().substr(found + 1);
+
+            if (convId_ == convId && device.toString() == deviceId().to_c_str())
+                return true;
+        }
+    }
+    return false;
 }
 
 void
@@ -791,8 +811,7 @@ ChannelSocketTest::ChannelSocketTest(const DeviceId& deviceId,
     , ioCtx_(*Manager::instance().ioContext())
 {}
 
-ChannelSocketTest::~ChannelSocketTest()
-{}
+ChannelSocketTest::~ChannelSocketTest() {}
 
 void
 ChannelSocketTest::link(const std::shared_ptr<ChannelSocketTest>& socket1,
@@ -925,7 +944,8 @@ ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
                              const uint16_t& channel,
                              bool isInitiator,
                              std::function<void()> rmFromMxSockCb)
-    : pimpl_ {std::make_unique<Impl>(endpoint, name, channel, isInitiator, std::move(rmFromMxSockCb))}
+    : pimpl_ {
+        std::make_unique<Impl>(endpoint, name, channel, isInitiator, std::move(rmFromMxSockCb))}
 {}
 
 ChannelSocket::~ChannelSocket() {}

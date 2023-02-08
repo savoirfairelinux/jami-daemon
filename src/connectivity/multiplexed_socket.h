@@ -115,10 +115,12 @@ public:
      * This will close all channels and send a TLS EOF on the main socket.
      */
     void shutdown();
+
     /**
      * This will wait that eventLoop is stopped and stop it if necessary
      */
     void join();
+
     /**
      * Will trigger that callback when shutdown() is called
      */
@@ -128,6 +130,13 @@ public:
      * Get informations from socket (channels opened)
      */
     void monitor() const;
+
+    /**
+     * Checks if swarm channel is opened
+     * @param DeviceId Device id
+     * @param std::string Conversation id
+     */
+    bool hasSwarmChannel(const DeviceId& device, const std::string& convId);
 
     /**
      * Send a beacon on the socket and close if no response come

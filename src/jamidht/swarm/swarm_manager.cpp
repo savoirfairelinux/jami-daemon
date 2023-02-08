@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2023 Savoir-faire Linux Inc.
+ *
  *  Author: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -13,10 +14,9 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-
-#include <iostream>
 
 #include "swarm_manager.h"
 #include "connectivity/multiplexed_socket.h"
@@ -37,23 +37,8 @@ SwarmManager::SwarmManager(const NodeId& id)
 
 SwarmManager::~SwarmManager()
 {
-    shutdown();
-}
-
-void
-SwarmManager::removeNode(const NodeId& nodeId)
-{
-    {
-        std::lock_guard<std::mutex> lock(mutex);
-        removeNodeInternal(nodeId);
-    }
-    maintainBuckets();
-}
-
-void
-SwarmManager::removeNodeInternal(const NodeId& nodeId)
-{
-    routing_table.removeNode(nodeId);
+    if (!isShutdown_)
+        shutdown();
 }
 
 void
@@ -76,7 +61,64 @@ SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
         for (const auto& nodeId : mobile_nodes)
             addMobileNodes(nodeId);
     }
+}
+
+void
+SwarmManager::addChannel(const std::shared_ptr<ChannelSocketInterface>& channel)
+{
+    if (channel) {
+        auto emit = false;
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            emit = routing_table.findBucket(getId())->getNodeIds().size() == 0;
+            auto bucket = routing_table.findBucket(channel->deviceId());
+            if (routing_table.addNode(channel, bucket)) {
+                std::error_code ec;
+                resetNodeExpiry(ec, channel, id_);
+            }
+        }
+        receiveMessage(channel);
+        if (emit && onConnectionChanged_) {
+            // If it's the first channel we add, we're now connected!
+            JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
+            onConnectionChanged_(true);
+        }
+    }
+}
+
+void
+SwarmManager::removeNode(const NodeId& nodeId)
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        removeNodeInternal(nodeId);
+    }
     maintainBuckets();
+}
+
+void
+SwarmManager::changeMobility(const NodeId& nodeId, bool isMobile)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    auto bucket = routing_table.findBucket(nodeId);
+    bucket->changeMobility(nodeId, isMobile);
+}
+
+bool
+SwarmManager::isConnectedWith(const NodeId& deviceId)
+{
+    return routing_table.hasNode(deviceId);
+}
+
+void
+SwarmManager::shutdown()
+{
+    if (isShutdown_) {
+        return;
+    }
+    isShutdown_ = true;
+    std::lock_guard<std::mutex> lock(mutex);
+    routing_table.shutdownAllNodes();
 }
 
 void
@@ -93,6 +135,31 @@ SwarmManager::addMobileNodes(const NodeId& nodeId)
     if (id_ != nodeId) {
         routing_table.addMobileNode(nodeId);
     }
+}
+
+void
+SwarmManager::maintainBuckets()
+{
+    std::set<NodeId> nodes;
+    std::unique_lock<std::mutex> lock(mutex);
+    auto& buckets = routing_table.getBuckets();
+    for (auto it = buckets.begin(); it != buckets.end(); ++it) {
+        auto& bucket = *it;
+        bool myBucket = routing_table.contains(it, id_);
+        auto connecting_nodes = myBucket ? bucket.getConnectingNodesSize()
+                                         : bucket.getConnectingNodesSize() + bucket.getNodesSize();
+        if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
+            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes,
+                                                         rd);
+            for (auto& node : nodesToTry)
+                routing_table.addConnectingNode(node);
+
+            nodes.insert(nodesToTry.begin(), nodesToTry.end());
+        }
+    }
+    lock.unlock();
+    for (auto& node : nodes)
+        tryConnect(node);
 }
 
 void
@@ -179,9 +246,10 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
                 if (msg.is_mobile)
                     shared->changeMobility(socket->deviceId(), msg.is_mobile);
 
-                if (msg.request)
+                if (msg.request) {
                     shared->sendAnswer(socket, msg);
-                else if (msg.response) {
+
+                } else if (msg.response) {
                     shared->setKnownNodes(msg.response->nodes);
                     shared->setMobileNodes(msg.response->mobile_nodes);
                 }
@@ -201,86 +269,6 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
             shared->removeNode(deviceId);
         }
     });
-}
-
-void
-SwarmManager::maintainBuckets()
-{
-    std::set<NodeId> nodes;
-    std::unique_lock<std::mutex> lock(mutex);
-    auto& buckets = routing_table.getBuckets();
-    for (auto it = buckets.begin(); it != buckets.end(); ++it) {
-        auto& bucket = *it;
-        bool myBucket = routing_table.contains(it, id_);
-        auto connecting_nodes = myBucket ? bucket.getConnectingNodesSize()
-                                         : bucket.getConnectingNodesSize() + bucket.getNodesSize();
-        if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
-            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes,
-                                                         rd);
-            for (auto& node : nodesToTry)
-                routing_table.addConnectingNode(node);
-
-            nodes.insert(nodesToTry.begin(), nodesToTry.end());
-        }
-    }
-    lock.unlock();
-    for (auto& node : nodes)
-        tryConnect(node);
-}
-bool
-SwarmManager::isConnectedWith(const NodeId& deviceId)
-{
-    return routing_table.hasNode(deviceId);
-}
-
-void
-SwarmManager::tryConnect(const NodeId& nodeId)
-{
-    if (needSocketCb_)
-        needSocketCb_(nodeId.toString(),
-                      [w = weak(), nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
-                          auto shared = w.lock();
-                          if (!shared)
-                              return true;
-                          if (socket) {
-                              shared->addChannel(socket);
-                              return true;
-                          }
-                          std::unique_lock<std::mutex> lk(shared->mutex);
-                          auto bucket = shared->routing_table.findBucket(nodeId);
-                          bucket->removeConnectingNode(nodeId);
-                          bucket->addKnownNode(nodeId);
-                          bucket = shared->routing_table.findBucket(shared->getId());
-                          if (bucket->getConnectingNodesSize() == 0
-                              && bucket->getNodeIds().size() == 0 && shared->onConnectionChanged_) {
-                              lk.unlock();
-                              JAMI_WARNING("[SwarmManager {:p}] Bootstrap: all connections failed",
-                                           fmt::ptr(shared.get()));
-                              shared->onConnectionChanged_(false);
-                          }
-                          return true;
-                      });
-}
-
-void
-SwarmManager::addChannel(std::shared_ptr<ChannelSocketInterface> channel)
-{
-    auto emit = false;
-    {
-        std::lock_guard<std::mutex> lock(mutex);
-        emit = routing_table.findBucket(getId())->getNodeIds().size() == 0;
-        auto bucket = routing_table.findBucket(channel->deviceId());
-        if (routing_table.addNode(channel, bucket)) {
-            std::error_code ec;
-            resetNodeExpiry(ec, channel, id_);
-        }
-    }
-    receiveMessage(channel);
-    if (emit && onConnectionChanged_) {
-        // If it's the first channel we add, we're now connected!
-        JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
-        onConnectionChanged_(true);
-    }
 }
 
 void
@@ -316,18 +304,38 @@ SwarmManager::resetNodeExpiry(const asio::error_code& ec,
 }
 
 void
-SwarmManager::changeMobility(const NodeId& nodeId, bool isMobile)
+SwarmManager::tryConnect(const NodeId& nodeId)
 {
-    std::lock_guard<std::mutex> lock(mutex);
-    auto bucket = routing_table.findBucket(nodeId);
-    bucket->changeMobility(nodeId, isMobile);
+    if (needSocketCb_)
+        needSocketCb_(nodeId.toString(),
+                      [w = weak(), nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
+                          auto shared = w.lock();
+                          if (!shared)
+                              return true;
+                          if (socket) {
+                              shared->addChannel(socket);
+                              return true;
+                          }
+                          std::unique_lock<std::mutex> lk(shared->mutex);
+                          auto bucket = shared->routing_table.findBucket(nodeId);
+                          bucket->removeConnectingNode(nodeId);
+                          bucket->addKnownNode(nodeId);
+                          bucket = shared->routing_table.findBucket(shared->getId());
+                          if (bucket->getConnectingNodesSize() == 0
+                              && bucket->getNodeIds().size() == 0 && shared->onConnectionChanged_) {
+                              lk.unlock();
+                              JAMI_WARNING("[SwarmManager {:p}] Bootstrap: all connections failed",
+                                           fmt::ptr(shared.get()));
+                              shared->onConnectionChanged_(false);
+                          }
+                          return true;
+                      });
 }
 
 void
-SwarmManager::shutdown()
+SwarmManager::removeNodeInternal(const NodeId& nodeId)
 {
-    isShutdown_ = true;
-    std::lock_guard<std::mutex> lock(mutex);
-    routing_table.shutdownAllNodes();
+    routing_table.removeNode(nodeId);
 }
+
 } // namespace jami
