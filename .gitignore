@@ -43,7 +43,7 @@ libtool
 *-glue.h
 
 # Ignored folders
-build-local/
+build-*/
 
 # Ignore rendered docs
 doc/doxygen/core-doc
