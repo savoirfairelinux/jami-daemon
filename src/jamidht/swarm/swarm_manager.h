@@ -17,6 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+
 #pragma once
 
 #include "routing_table.h"
@@ -41,40 +42,67 @@ public:
 
     NeedSocketCb needSocketCb_;
 
-    std::weak_ptr<SwarmManager> weak()
-    {
-        return std::static_pointer_cast<SwarmManager>(shared_from_this());
-    }
+    std::weak_ptr<SwarmManager> weak() { return weak_from_this(); }
 
+    /**
+     * Get swarm manager id
+     * @return NodeId
+     */
     const NodeId& getId() const { return id_; }
 
     /**
-     * Add list of nodes to the known nodes list
-     * @param vector<NodeId>& known_nodes
+     * Set list of nodes to the routing table known_nodes
+     * @param known_nodes
      */
     void setKnownNodes(const std::vector<NodeId>& known_nodes);
 
     /**
-     * Add list of nodes to the mobile nodes list
-     * @param vector<NodeId>& mobile_nodes
+     * Set list of nodes to the routing table mobile_nodes
+     * @param mobile_nodes
      */
     void setMobileNodes(const std::vector<NodeId>& mobile_nodes);
 
     /**
      * Add channel to routing table
-     * @param shared_ptr<ChannelSocketInterface>& channel
+     * @param channel
      */
-    void addChannel(std::shared_ptr<ChannelSocketInterface> channel);
+    void addChannel(const std::shared_ptr<ChannelSocketInterface>& channel);
 
+    /**
+     * Remove channel from routing table
+     * @param channel
+     */
     void removeNode(const NodeId& nodeId);
+
+    /**
+     * Change mobility of specific node
+     * @param nodeId
+     * @param isMobile
+     */
     void changeMobility(const NodeId& nodeId, bool isMobile);
 
-    /** For testing */
+    // For tests
+
+    /**
+     * Get routing table
+     * @return RoutingTable
+     */
     RoutingTable& getRoutingTable() { return routing_table; };
+
+    /**
+     * Get buckets of routing table
+     * @return buckets list
+     */
     std::list<Bucket>& getBuckets() { return routing_table.getBuckets(); };
 
+    /**
+     * Shutdown swarm manager
+     */
     void shutdown();
 
+    /**
+     * Display swarm manager info
+     */
     void display()
     {
         JAMI_DEBUG("SwarmManager {:s} has {:d} nodes in table [P = {}]",
@@ -83,10 +111,22 @@ public:
                    isMobile_);
     }
 
+    /*
+     * Callback for connection changed
+     * @param cb
+     */
     void onConnectionChanged(OnConnectionChanged cb) { onConnectionChanged_ = std::move(cb); }
 
+    /**
+     * Set mobility of swarm manager
+     * @param isMobile
+     */
     void setMobility(bool isMobile) { isMobile_ = isMobile; }
 
+    /**
+     * Get mobility of swarm manager
+     * @return true if mobile, false if not
+     */
     bool isMobile() const { return isMobile_; }
 
     /**
@@ -96,28 +136,36 @@ public:
 
     /**
      * Check if we're connected with a specific device
+     * @param deviceId
+     * @return true if connected, false if not
      */
     bool isConnectedWith(const NodeId& deviceId);
+
+    /**
+     * Check if swarm manager is shutdown
+     * @return true if shutdown, false if not
+     */
+    bool isShutdown() { return isShutdown_; };
 
 private:
     /**
      * Add node to the known_nodes list
-     * @param NodeId nodeId
+     * @param nodeId
      */
     void addKnownNodes(const NodeId& nodeId);
 
     /**
      * Add node to the mobile_Nodes list
-     * @param NodeId nodeId
+     * @param nodeId
      */
     void addMobileNodes(const NodeId& nodeId);
 
     /**
      * Send nodes request to fill known_nodes list
-     * @param shared_ptr<ChannelSocketInterface>& socket
-     * @param NodeId& nodeId
-     * @param Query q
-     * @param int numberNodes
+     * @param socket
+     * @param nodeId
+     * @param q
+     * @param numberNodes
      */
     void sendRequest(const std::shared_ptr<ChannelSocketInterface>& socket,
                      NodeId& nodeId,
@@ -126,22 +174,22 @@ private:
 
     /**
      * Send answer to request
-     * @param std::shared_ptr<ChannelSocketInterface>& socket
-     * @param Message msg
+     * @param socket
+     * @param msg
      */
     void sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, const Message& msg_);
 
     /**
      * Interpret received message
-     * @param std::shared_ptr<ChannelSocketInterface>& socket
+     * @param socket
      */
     void receiveMessage(const std::shared_ptr<ChannelSocketInterface>& socket);
 
     /**
-     * Add list of nodes to the known nodes list
-     * @param asio::error_code& ec
-     * @param shared_ptr<ChannelSocketInterface>& socket
-     * @param NodeId node
+     * Reset node's timer expiry
+     * @param ec
+     * @param socket
+     * @param node
      */
     void resetNodeExpiry(const asio::error_code& ec,
                          const std::shared_ptr<ChannelSocketInterface>& socket,
@@ -149,10 +197,14 @@ private:
 
     /**
      * Try to establich connexion with specific node
-     * @param NodeId nodeId
+     * @param nodeId
      */
     void tryConnect(const NodeId& nodeId);
 
+    /**
+     * Remove node from routing table
+     * @param nodeId
+     */
     void removeNodeInternal(const NodeId& nodeId);
 
     const NodeId id_;

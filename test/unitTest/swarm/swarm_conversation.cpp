@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2022 Savoir-faire Linux Inc.
+ *  Copyright (C) 2023 Savoir-faire Linux Inc.
+ *
  *  Author: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -13,8 +14,10 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -57,9 +60,9 @@ struct ConvData
 class SwarmConversationTest : public CppUnit::TestFixture
 {
 public:
-    SwarmConversationTest();
     ~SwarmConversationTest();
     static std::string name() { return "SwarmConversationTest"; }
+    void setUp();
 
     std::map<std::string, ConvData> accountMap;
     std::vector<std::string> accountIds;
@@ -76,15 +79,14 @@ private:
     void testSendMessage();
 
     CPPUNIT_TEST_SUITE(SwarmConversationTest);
-
     CPPUNIT_TEST(testSendMessage);
-
     CPPUNIT_TEST_SUITE_END();
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SwarmConversationTest, SwarmConversationTest::name());
 
-SwarmConversationTest::SwarmConversationTest()
+void
+SwarmConversationTest::setUp()
 {
     libjami::init(
         libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
@@ -128,8 +130,10 @@ SwarmConversationTest::connectSignals()
             const std::string& conversationId,
             std::map<std::string, std::string> message) {
             for (const auto& accId : accountIds) {
+                std::cout << " ACCOUNT ID 1 " << accId << std::endl;
                 if (accountId == accId && accountMap[accId].id == conversationId) {
                     accountMap[accId].messages.emplace_back(message);
+                    std::cout << " MESSAGE ADDED  " << accId << std::endl;
                 }
             }
             cv.notify_one();
@@ -140,8 +144,10 @@ SwarmConversationTest::connectSignals()
                 const std::string&,
                 std::map<std::string, std::string>) {
                 for (const auto& accId : accountIds) {
+                    std::cout << " ACCOUNT ID 2 " << accId << std::endl;
                     if (accountId == accId) {
                         accountMap[accId].requestReceived = true;
+                        std::cout << " REQUEST RECEIVED  " << accId << std::endl;
                     }
                 }
                 cv.notify_one();
@@ -153,40 +159,56 @@ SwarmConversationTest::connectSignals()
 void
 SwarmConversationTest::testSendMessage()
 {
-    /*     std::map<std::string, std::shared_ptr<JamiAccount>> jamiAccounts;
+    std::map<std::string, std::shared_ptr<JamiAccount>> jamiAccounts;
 
-        for (const auto& accId : accountIds) {
-            jamiAccounts.insert({accId, Manager::instance().getAccount<JamiAccount>(accId)});
-            std::cout << "created account for: " << accId << std::endl;
-        }
+    for (const auto& accId : accountIds) {
+        jamiAccounts.insert({accId, Manager::instance().getAccount<JamiAccount>(accId)});
+        std::cout << "created account for: " << accId << std::endl;
+    }
 
-        std::mutex mtx;
-        std::unique_lock<std::mutex> lk {mtx};
-        std::condition_variable cv;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
 
-        connectSignals();
+    connectSignals();
 
-        auto aliceId = jamiAccounts.begin()->first;
-        auto convId = libjami::startConversation(aliceId); */
+    auto aliceId = jamiAccounts.begin()->first;
+    auto convId = libjami::startConversation(aliceId);
 
-    /*     for (const auto jAcc : jamiAccounts) {
-            auto userUri = jAcc.second->getUsername();
-            libjami::addConversationMember(aliceId, convId, userUri);
-        } */
+    std::cout << "started conversation: " << convId << std::endl;
 
-    /*     CPPUNIT_ASSERT(
-            cv.wait_for(lk, 30s, [&]() { return accountMap[accountIds.at(1)].requestReceived; }));
+    for (auto it = std::next(jamiAccounts.begin()); it != jamiAccounts.end(); ++it) {
+        auto userUri = it->second->getUsername();
+        std::cout << "adding member: " << userUri << std::endl;
+        libjami::addConversationMember(aliceId, convId, userUri);
 
-        for (auto it = std::next(accountIds.begin()); it != accountIds.end(); ++it) {
-            libjami::acceptConversationRequest(*it, convId);
-        } */
-
-    /*     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-            return accountMap[accountIds.at(1)].id == convId;
+        CPPUNIT_ASSERT_EQUAL_MESSAGE("ERROR", true, cv.wait_for(lk, 30s, [&]() {
+            return accountMap[it->first].requestReceived == true;
         }));
 
-     libjami::sendMessage(aliceId, convId, "hi"s, "");
-        CPPUNIT_ASSERT(true); */
+        libjami::acceptConversationRequest(it->first, convId);
+    }
+
+    std::cout << "waiting for conversation ready" << std::endl;
+    for (size_t i = 1; i < accountIds.size(); i++) {
+        CPPUNIT_ASSERT(
+            cv.wait_for(lk, 30s, [&]() { return accountMap[accountIds.at(i)].id == convId; }));
+    }
+    std::cout << "messages size " << accountMap[accountIds.at(0)].messages.size() << std::endl;
+
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 60s, [&]() { return accountMap[accountIds.at(0)].messages.size() >= 2; }));
+
+    libjami::sendMessage(aliceId, convId, "hi"s, "");
+
+    for (size_t i = 1; i < accountIds.size(); i++) {
+        std::cout << "COUNTER: " << i << " messages size "
+                  << accountMap[accountIds.at(i)].messages.size() << std::endl;
+
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+            return accountMap[accountIds.at(i)].messages.size() >= 1;
+        }));
+    }
 
     libjami::unregisterSignalHandlers();
 }
