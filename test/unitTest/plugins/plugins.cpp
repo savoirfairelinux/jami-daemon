@@ -37,6 +37,8 @@
 
 #include "common.h"
 
+#include <yaml-cpp/yaml.h>
+
 using namespace libjami::Account;
 
 namespace jami {

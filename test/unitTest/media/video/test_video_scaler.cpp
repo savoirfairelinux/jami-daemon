@@ -24,7 +24,7 @@
 
 #include "jami.h"
 #include "videomanager_interface.h"
-#include "video/video_scaler.h"
+#include "media/video/video_scaler.h"
 
 #include "../../../test_runner.h"
 

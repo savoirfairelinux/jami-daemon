@@ -27,7 +27,7 @@
 #include "connectivity/sip_utils.h"
 #include "connectivity/ip_utils.h"
 #include "connectivity/ice_transport.h"
-#include "media_codec.h"
+#include "media/media_codec.h"
 #include "media/media_attribute.h"
 #include "connectivity/sip_utils.h"
 
