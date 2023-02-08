@@ -28,13 +28,13 @@
 #include <mutex>
 #include <string>
 
-#include "audio/audio_input.h"
+#include "media/audio/audio_input.h"
 #ifdef ENABLE_VIDEO
-#include "video/video_device_monitor.h"
-#include "video/video_base.h"
-#include "video/video_input.h"
+#include "media/video/video_device_monitor.h"
+#include "media/video/video_base.h"
+#include "media/video/video_input.h"
 #endif
-#include "media_player.h"
+#include "media/media_player.h"
 
 namespace jami {
 

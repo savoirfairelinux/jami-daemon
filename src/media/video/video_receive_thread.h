@@ -24,14 +24,14 @@
 #define _VIDEO_RECEIVE_THREAD_H_
 
 #include "video_base.h"
-#include "media_codec.h"
-#include "media_io_handle.h"
-#include "media_codec.h"
-#include "media_device.h"
-#include "media_stream.h"
+#include "media/media_codec.h"
+#include "media/media_io_handle.h"
+#include "media/media_codec.h"
+#include "media/media_device.h"
+#include "media/media_stream.h"
 #include "threadloop.h"
 #include "noncopyable.h"
-#include "libav_utils.h"
+#include "media/libav_utils.h"
 
 #include <functional>
 #include <map>

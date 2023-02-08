@@ -24,8 +24,8 @@
 
 #include "jami.h"
 #include "videomanager_interface.h"
-#include "libav_deps.h"
-#include "audio/resampler.h"
+#include "media/libav_deps.h"
+#include "media/audio/resampler.h"
 
 #include "../test_runner.h"
 
