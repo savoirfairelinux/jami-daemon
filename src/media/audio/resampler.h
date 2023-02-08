@@ -23,7 +23,7 @@
 #pragma once
 
 #include "audiobuffer.h"
-#include "media_buffer.h"
+#include "media/media_buffer.h"
 #include "noncopyable.h"
 
 extern "C" {

@@ -17,6 +17,8 @@ option(JAMI_VIDEO "Build with video support" ON)
 option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
 option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 
+include(CTest)
+
 if(NOT MSVC)
     ################################################################################
     # Contrib
@@ -538,7 +540,7 @@ else()
         if (natpmp_FOUND)
             target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::natpmp)
         elseif (natpmp_LIBRARIES)
-            target_link_libraries(${PROJECT_NAME} PRIVATE natpmp_LIBRARIES)
+            target_link_libraries(${PROJECT_NAME} PRIVATE ${natpmp_LIBRARIES})
         endif()
     endif()
     if (JAMI_PUPNP)
@@ -624,6 +626,221 @@ else()
             ${DBUS_ADAPTOR_FILES}
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
+    endif()
+
+    if (BUILD_TESTING)
+        pkg_search_module(Cppunit REQUIRED IMPORTED_TARGET cppunit)
+
+        add_library(ut_library STATIC test/unitTest/common.cpp)
+        target_link_libraries(ut_library
+            PUBLIC
+            ${PROJECT_NAME}
+            ${CMAKE_THREAD_LIBS_INIT}
+            PkgConfig::Cppunit
+            PkgConfig::opendht
+            PkgConfig::pjproject
+            PkgConfig::git2
+            PkgConfig::archive
+            PkgConfig::gnutls
+            PkgConfig::webrtcap
+            PkgConfig::avformat
+            PkgConfig::avdevice
+            PkgConfig::avfilter
+            PkgConfig::avcodec
+            PkgConfig::swresample
+            PkgConfig::swscale
+            jsoncpp
+            yaml-cpp
+            PkgConfig::fmt
+            PkgConfig::secp256k1
+        )
+        target_include_directories(ut_library PUBLIC
+            "${CMAKE_CURRENT_SOURCE_DIR}/test;"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test/unitTest;"
+        )
+        target_compile_options(ut_library PUBLIC
+            -fvisibility=hidden
+            -Wall -Wextra
+            -Wnon-virtual-dtor
+            -Wno-deprecated
+            -Wno-deprecated-declarations
+            -Wno-unknown-pragmas
+        )
+        target_compile_definitions(ut_library PUBLIC
+            JAMI_DATADIR="${JAMI_DATADIR}"
+            PJ_AUTOCONF=1
+            HAVE_RINGNS
+            ASIO_STANDALONE
+            MSGPACK_NO_BOOST
+        )
+        if (JAMI_PLUGIN)
+            target_compile_definitions(ut_library PUBLIC ENABLE_PLUGIN)
+        endif()
+        if (JAMI_VIDEO)
+            target_compile_definitions(ut_library PUBLIC ENABLE_VIDEO)
+        endif()
+
+        add_executable(ut_conversationRepository test/unitTest/conversationRepository/conversationRepository.cpp)
+        target_link_libraries(ut_conversationRepository ut_library)
+        add_test(NAME conversationRepository COMMAND ut_conversationRepository)
+
+        add_executable(ut_revoke test/unitTest/revoke/revoke.cpp)
+        target_link_libraries(ut_revoke ut_library)
+        add_test(NAME revoke COMMAND ut_revoke)
+
+        add_executable(ut_syncHistory test/unitTest/syncHistory/syncHistory.cpp)
+        target_link_libraries(ut_syncHistory ut_library)
+        add_test(NAME syncHistory COMMAND ut_syncHistory)
+
+        add_executable(ut_base64 test/unitTest/base64/base64.cpp)
+        target_link_libraries(ut_base64 ut_library)
+        add_test(NAME base64 COMMAND ut_base64)
+
+        add_executable(ut_ice_media_cand_exchange test/unitTest/ice/ice_media_cand_exchange.cpp)
+        target_link_libraries(ut_ice_media_cand_exchange ut_library)
+        add_test(NAME ice_media_cand_exchange COMMAND ut_ice_media_cand_exchange)
+
+        add_executable(ut_ice test/unitTest/ice/ice.cpp)
+        target_link_libraries(ut_ice ut_library)
+        add_test(NAME ice COMMAND ut_ice)
+
+        add_executable(ut_ice_sdp_parser test/unitTest/ice/ice_sdp_parser.cpp)
+        target_link_libraries(ut_ice_sdp_parser ut_library)
+        add_test(NAME ice_sdp_parser COMMAND ut_ice_sdp_parser)
+
+        add_executable(ut_scheduler test/unitTest/scheduler.cpp)
+        target_link_libraries(ut_scheduler ut_library)
+        add_test(NAME scheduler COMMAND ut_scheduler)
+
+        add_executable(ut_testAccount_factory test/unitTest/account_factory/testAccount_factory.cpp)
+        target_link_libraries(ut_testAccount_factory ut_library)
+        add_test(NAME testAccount_factory COMMAND ut_testAccount_factory)
+
+        add_executable(ut_call test/unitTest/call/call.cpp)
+        target_link_libraries(ut_call ut_library)
+        add_test(NAME call COMMAND ut_call)
+
+        add_executable(ut_conference test/unitTest/call/conference.cpp)
+        target_link_libraries(ut_conference ut_library)
+        add_test(NAME conference COMMAND ut_conference)
+
+        add_executable(ut_recorder test/unitTest/call/recorder.cpp)
+        target_link_libraries(ut_recorder ut_library)
+        add_test(NAME recorder COMMAND ut_recorder)
+
+        add_executable(ut_connectionManager test/unitTest/connectionManager/connectionManager.cpp)
+        target_link_libraries(ut_connectionManager ut_library)
+        add_test(NAME connectionManager COMMAND ut_connectionManager)
+
+        add_executable(ut_migration test/unitTest/account_archive/migration.cpp)
+        target_link_libraries(ut_migration ut_library)
+        add_test(NAME migration COMMAND ut_migration)
+
+        add_executable(ut_accountArchive test/unitTest/account_archive/account_archive.cpp)
+        target_link_libraries(ut_accountArchive ut_library)
+        add_test(NAME accountArchive COMMAND ut_accountArchive)
+
+        add_executable(ut_mapUtils test/unitTest/map_utils/testMap_utils.cpp)
+        target_link_libraries(ut_mapUtils ut_library)
+        add_test(NAME mapUtils COMMAND ut_mapUtils)
+
+        add_executable(ut_sipBasicCalls test/unitTest/sip_account/sip_basic_calls.cpp)
+        target_link_libraries(ut_sipBasicCalls ut_library)
+        add_test(NAME sipBasicCalls COMMAND ut_sipBasicCalls)
+
+        add_executable(ut_sipSrtp test/unitTest/sip_account/sip_srtp.cpp)
+        target_link_libraries(ut_sipSrtp ut_library)
+        add_test(NAME sipSrtp COMMAND ut_sipSrtp)
+
+        add_executable(ut_fileTransfer test/unitTest/fileTransfer/fileTransfer.cpp)
+        target_link_libraries(ut_fileTransfer ut_library)
+        add_test(NAME fileTransfer COMMAND ut_fileTransfer)
+
+        add_executable(ut_fileutils test/unitTest/fileutils/testFileutils.cpp)
+        target_link_libraries(ut_fileutils ut_library)
+        add_test(NAME fileutils COMMAND ut_fileutils)
+
+        add_executable(ut_holdResume test/unitTest/media_negotiation/hold_resume.cpp)
+        target_link_libraries(ut_holdResume ut_library)
+        add_test(NAME holdResume COMMAND ut_holdResume)
+
+        add_executable(ut_autoAnswer test/unitTest/media_negotiation/auto_answer.cpp)
+        target_link_libraries(ut_autoAnswer ut_library)
+        add_test(NAME autoAnswer COMMAND ut_autoAnswer)
+
+        add_executable(ut_mediaNegotiation test/unitTest/media_negotiation/media_negotiation.cpp)
+        target_link_libraries(ut_mediaNegotiation ut_library)
+        add_test(NAME mediaNegotiation COMMAND ut_mediaNegotiation)
+
+        add_executable(ut_stringUtils test/unitTest/string_utils/testString_utils.cpp)
+        target_link_libraries(ut_stringUtils ut_library)
+        add_test(NAME stringUtils COMMAND ut_stringUtils)
+
+        add_executable(ut_utf8_utils test/unitTest/utf8_utils/testUtf8_utils.cpp)
+        target_link_libraries(ut_utf8_utils ut_library)
+        add_test(NAME utf8_utils COMMAND ut_utf8_utils)
+
+        add_executable(ut_certstore test/unitTest/certstore.cpp)
+        target_link_libraries(ut_certstore ut_library)
+        add_test(NAME certstore COMMAND ut_certstore)
+
+        add_executable(ut_conversationCall test/unitTest/conversation/call.cpp test/unitTest/conversation/conversationcommon.cpp)
+        target_link_libraries(ut_conversationCall ut_library)
+        add_test(NAME conversationCall COMMAND ut_conversationCall)
+
+        add_executable(ut_conversation test/unitTest/conversation/conversation.cpp test/unitTest/conversation/conversationcommon.cpp)
+        target_link_libraries(ut_conversation ut_library)
+        add_test(NAME conversation COMMAND ut_conversation)
+
+        add_executable(ut_conversationRequest test/unitTest/conversation/conversationRequest.cpp test/unitTest/conversation/conversationcommon.cpp)
+        target_link_libraries(ut_conversationRequest ut_library)
+        add_test(NAME conversationRequest COMMAND ut_conversationRequest)
+
+        add_executable(ut_conversationMembersEvent test/unitTest/conversation/conversationMembersEvent.cpp test/unitTest/conversation/conversationcommon.cpp)
+        target_link_libraries(ut_conversationMembersEvent ut_library)
+        add_test(NAME conversationMembersEvent COMMAND ut_conversationMembersEvent)
+
+        add_executable(ut_test_media_frame test/unitTest/media/test_media_frame.cpp)
+        target_link_libraries(ut_test_media_frame ut_library)
+        add_test(NAME test_media_frame COMMAND ut_test_media_frame)
+
+        add_executable(ut_test_video_scaler test/unitTest/media/video/test_video_scaler.cpp)
+        target_link_libraries(ut_test_video_scaler ut_library)
+        add_test(NAME test_video_scaler COMMAND ut_test_video_scaler)
+
+        add_executable(ut_testVideo_input test/unitTest/media/video/testVideo_input.cpp)
+        target_link_libraries(ut_testVideo_input ut_library)
+        add_test(NAME testVideo_input COMMAND ut_testVideo_input)
+
+        add_executable(ut_test_media_encoder test/unitTest/media/test_media_encoder.cpp)
+        target_link_libraries(ut_test_media_encoder ut_library)
+        add_test(NAME test_media_encoder COMMAND ut_test_media_encoder)
+
+        add_executable(ut_test_media_decoder test/unitTest/media/test_media_decoder.cpp)
+        target_link_libraries(ut_test_media_decoder ut_library)
+        add_test(NAME test_media_decoder COMMAND ut_test_media_decoder)
+
+        add_executable(ut_test_resampler test/unitTest/media/audio/test_resampler.cpp)
+        target_link_libraries(ut_test_resampler ut_library)
+        add_test(NAME test_resampler COMMAND ut_test_resampler)
+
+        add_executable(ut_test_audio_frame_resizer test/unitTest/media/audio/test_audio_frame_resizer.cpp)
+        target_link_libraries(ut_test_audio_frame_resizer ut_library)
+        add_test(NAME test_audio_frame_resizer COMMAND ut_test_audio_frame_resizer)
+
+        add_executable(ut_test_media_filter test/unitTest/media/test_media_filter.cpp)
+        target_link_libraries(ut_test_media_filter ut_library)
+        add_test(NAME test_media_filter COMMAND ut_test_media_filter)
+
+        add_executable(ut_test_media_player test/unitTest/media/test_media_player.cpp)
+        target_link_libraries(ut_test_media_player ut_library)
+        add_test(NAME test_media_player COMMAND ut_test_media_player)
+
+        if (JAMI_PLUGIN)
+            add_executable(ut_plugins test/unitTest/plugins/plugins.cpp)
+            target_link_libraries(ut_plugins ut_library)
+            add_test(NAME plugins COMMAND ut_plugins)
+        endif()
     endif()
 
 endif()
