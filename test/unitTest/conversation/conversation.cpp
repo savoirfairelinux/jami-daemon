@@ -2010,7 +2010,7 @@ ConversationTest::testVoteNoBadFile()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          voteMessageGenerated = false, messageBobReceived = false, messageCarlaReceived = false,
-         carlaConnected = true;
+         carlaConnected = false;
     ;
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(

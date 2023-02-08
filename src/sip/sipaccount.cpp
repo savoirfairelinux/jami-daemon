@@ -1790,6 +1790,7 @@ static pjsip_accept_hdr* im_create_accept(pj_pool_t *pool)
 
 void
 SIPAccount::sendMessage(const std::string& to,
+                        const std::string&,
                         const std::map<std::string, std::string>& payloads,
                         uint64_t id,
                         bool,
