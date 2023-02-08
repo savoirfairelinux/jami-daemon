@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2023 Savoir-faire Linux Inc.
+ *
  *  Author: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -13,20 +14,20 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-
-#include <math.h>
-#include <stdio.h>
-#include <iostream>
-#include <algorithm>
-#include <iterator>
-#include <stdlib.h>
-#include <time.h>
 
 #include "routing_table.h"
 #include "connectivity/multiplexed_socket.h"
 #include "opendht/infohash.h"
+
+#include <math.h>
+#include <stdio.h>
+#include <iostream>
+#include <iterator>
+#include <stdlib.h>
+#include <time.h>
 
 constexpr const std::chrono::minutes FIND_PERIOD {10};
 using namespace std::placeholders;
@@ -40,9 +41,9 @@ Bucket::Bucket(const NodeId& id)
 {}
 
 bool
-Bucket::addNode(std::shared_ptr<ChannelSocketInterface> socket)
+Bucket::addNode(const std::shared_ptr<ChannelSocketInterface>& socket)
 {
-    return addNode(NodeInfo(socket));
+    return addNode(std::move(NodeInfo(socket)));
 }
 
 bool
@@ -62,13 +63,16 @@ bool
 Bucket::removeNode(const NodeId& nodeId)
 {
     auto node = nodes.find(nodeId);
+    auto isMobile = node->second.isMobile_;
     if (node == nodes.end())
         return false;
     nodes.erase(nodeId);
-    if (node->second.isMobile_)
+    if (isMobile) {
         addMobileNode(nodeId);
-    else
+    } else {
         addKnownNode(nodeId);
+    }
+
     return true;
 }
 
@@ -128,7 +132,7 @@ Bucket::addConnectingNode(const NodeId& nodeId)
     if (!hasNode(nodeId)) {
         if (connecting_nodes.emplace(nodeId).second) {
             known_nodes.erase(nodeId);
-            mobile_nodes.erase(nodeId); // not supposed to happen
+            mobile_nodes.erase(nodeId);
             return true;
         }
     }
@@ -162,31 +166,6 @@ Bucket::getNodeTimer(const std::shared_ptr<ChannelSocketInterface>& socket)
     return node->second.refresh_timer;
 }
 
-void
-Bucket::printBucket(unsigned number) const
-{
-    JAMI_ERROR("BUCKET Number: {:d}", number);
-
-    unsigned nodeNum = 1;
-    for (auto it = nodes.begin(); it != nodes.end(); ++it) {
-        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), it->first.toString());
-        nodeNum++;
-    }
-    JAMI_ERROR("Mobile Nodes");
-    nodeNum = 0;
-    for (auto it = mobile_nodes.begin(); it != mobile_nodes.end(); ++it) {
-        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
-        nodeNum++;
-    }
-
-    JAMI_ERROR("Known Nodes");
-    nodeNum = 0;
-    for (auto it = known_nodes.begin(); it != known_nodes.end(); ++it) {
-        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
-        nodeNum++;
-    }
-};
-
 bool
 Bucket::shutdownNode(const NodeId& nodeId)
 {
@@ -213,6 +192,37 @@ Bucket::shutdownAllNodes()
         removeNode(nodeId);
     }
 }
+
+void
+Bucket::printBucket(unsigned number) const
+{
+    JAMI_ERROR("BUCKET Number: {:d}", number);
+
+    unsigned nodeNum = 1;
+    for (auto it = nodes.begin(); it != nodes.end(); ++it) {
+        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), it->first.toString());
+        nodeNum++;
+    }
+    JAMI_ERROR("Mobile Nodes");
+    nodeNum = 0;
+    for (auto it = mobile_nodes.begin(); it != mobile_nodes.end(); ++it) {
+        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
+        nodeNum++;
+    }
+
+    JAMI_ERROR("Known Nodes");
+    nodeNum = 0;
+    for (auto it = known_nodes.begin(); it != known_nodes.end(); ++it) {
+        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
+        nodeNum++;
+    }
+    JAMI_ERROR("Connecting_nodes");
+    nodeNum = 0;
+    for (auto it = connecting_nodes.begin(); it != connecting_nodes.end(); ++it) {
+        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), (*it).toString());
+        nodeNum++;
+    }
+};
 
 void
 Bucket::changeMobility(const NodeId& nodeId, bool isMobile)
@@ -262,8 +272,10 @@ RoutingTable::addNode(std::shared_ptr<ChannelSocketInterface> channel,
         if (contains(bucket, id_)) {
             split(bucket);
             bucket = findBucket(nodeId);
-        } else
-            return false;
+
+        } else {
+            return bucket->addNode(std::move(channel));
+        }
     }
     return bucket->addNode(std::move(channel));
 }
@@ -328,84 +340,6 @@ RoutingTable::removeConnectingNode(const NodeId& nodeId)
     findBucket(nodeId)->removeConnectingNode(nodeId);
 }
 
-/**
- * Returns all routing table's nodes
- */
-std::vector<NodeId>
-RoutingTable::getNodes() const
-{
-    std::vector<NodeId> ret;
-    for (const auto& b : buckets) {
-        const auto& nodes = b.getNodeIds();
-        ret.insert(ret.end(), nodes.begin(), nodes.end());
-    }
-    return ret;
-}
-
-/**
- * Returns all routing table's known nodes
- */
-std::vector<NodeId>
-RoutingTable::getKnownNodes() const
-{
-    std::vector<NodeId> ret;
-    for (const auto& b : buckets) {
-        const auto& nodes = b.getKnownNodes();
-        ret.insert(ret.end(), nodes.begin(), nodes.end());
-    }
-    return ret;
-}
-
-/**
- * Returns all routing table's mobile nodes
- */
-std::vector<NodeId>
-RoutingTable::getMobileNodes() const
-{
-    std::vector<NodeId> ret;
-    for (const auto& b : buckets) {
-        const auto& nodes = b.getMobileNodes();
-        ret.insert(ret.end(), nodes.begin(), nodes.end());
-    }
-    return ret;
-}
-
-/**
- * Returns all routing table's connecting nodes
- */
-std::vector<NodeId>
-RoutingTable::getConnectingNodes() const
-{
-    std::vector<NodeId> ret;
-    for (const auto& b : buckets) {
-        const auto& nodes = b.getConnectingNodes();
-        ret.insert(ret.end(), nodes.begin(), nodes.end());
-    }
-    return ret;
-}
-
-/**
- * Returns mobile nodes corresponding to the swarm's id
- */
-std::vector<NodeId>
-RoutingTable::getBucketMobileNodes() const
-{
-    std::vector<NodeId> ret;
-    auto bucket = findBucket(id_);
-    const auto& nodes = bucket->getMobileNodes();
-    ret.insert(ret.end(), nodes.begin(), nodes.end());
-
-    return ret;
-}
-
-bool
-RoutingTable::contains(const std::list<Bucket>::iterator& bucket, const NodeId& nodeId) const
-{
-    return NodeId::cmp(bucket->getLowerLimit(), nodeId) <= 0
-           && (std::next(bucket) == buckets.end()
-               || NodeId::cmp(nodeId, std::next(bucket)->getLowerLimit()) < 0);
-}
-
 std::list<Bucket>::iterator
 RoutingTable::findBucket(const NodeId& nodeId)
 {
@@ -422,92 +356,6 @@ RoutingTable::findBucket(const NodeId& nodeId)
             return b;
         b = next;
     }
-}
-
-NodeId
-RoutingTable::middle(std::list<Bucket>::iterator& it) const
-{
-    unsigned bit = depth(it);
-    if (bit >= 8 * HASH_LEN)
-        throw std::out_of_range("End of table");
-
-    NodeId id = it->getLowerLimit();
-    id.setBit(bit, true);
-    return id;
-}
-
-unsigned
-RoutingTable::depth(std::list<Bucket>::iterator& bucket) const
-{
-    int bit1 = bucket->getLowerLimit().lowbit();
-    int bit2 = std::next(bucket) != buckets.end() ? std::next(bucket)->getLowerLimit().lowbit()
-                                                  : -1;
-    return std::max(bit1, bit2) + 1;
-}
-
-bool
-RoutingTable::split(std::list<Bucket>::iterator& bucket)
-{
-    NodeId id = middle(bucket);
-    // JAMI_ERROR("MIDDLE {}", id.toString());
-    auto newBucketIt = buckets.emplace(std::next(bucket), id);
-
-    // Re-assign nodes
-    auto& nodeSwap = bucket->getNodes();
-
-    for (auto it = nodeSwap.begin(); it != nodeSwap.end();) {
-        auto& node = *it;
-
-        auto nodeId = it->first;
-
-        if (!contains(bucket, nodeId)) {
-            newBucketIt->addNode(std::move(node.second));
-            it = nodeSwap.erase(it);
-        } else {
-            ++it;
-        }
-    }
-
-    auto connectingSwap = bucket->getConnectingNodes();
-    for (auto it = connectingSwap.begin(); it != connectingSwap.end();) {
-        auto nodeId = *it;
-
-        if (!contains(bucket, nodeId)) {
-            newBucketIt->addConnectingNode(nodeId);
-            it = connectingSwap.erase(it);
-            bucket->removeConnectingNode(nodeId);
-        } else {
-            ++it;
-        }
-    }
-
-    auto knownSwap = bucket->getKnownNodes();
-    for (auto it = knownSwap.begin(); it != knownSwap.end();) {
-        auto nodeId = *it;
-
-        if (!contains(bucket, nodeId)) {
-            newBucketIt->addKnownNode(nodeId);
-            it = knownSwap.erase(it);
-            bucket->removeKnownNode(nodeId);
-        } else {
-            ++it;
-        }
-    }
-
-    auto mobileSwap = bucket->getMobileNodes();
-    for (auto it = mobileSwap.begin(); it != mobileSwap.end();) {
-        auto nodeId = *it;
-
-        if (!contains(bucket, nodeId)) {
-            newBucketIt->addMobileNode(nodeId);
-            it = mobileSwap.erase(it);
-            bucket->removeMobileNode(nodeId);
-        } else {
-            ++it;
-        }
-    }
-
-    return true;
 }
 
 std::vector<NodeId>
@@ -565,6 +413,153 @@ void
 RoutingTable::shutdownNode(const NodeId& nodeId)
 {
     findBucket(nodeId)->shutdownNode(nodeId);
+}
+
+std::vector<NodeId>
+RoutingTable::getNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getNodeIds();
+        ret.insert(ret.end(), nodes.begin(), nodes.end());
+    }
+    return ret;
+}
+
+std::vector<NodeId>
+RoutingTable::getKnownNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getKnownNodes();
+        ret.insert(ret.end(), nodes.begin(), nodes.end());
+    }
+    return ret;
+}
+
+std::vector<NodeId>
+RoutingTable::getMobileNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getMobileNodes();
+        ret.insert(ret.end(), nodes.begin(), nodes.end());
+    }
+    return ret;
+}
+
+std::vector<NodeId>
+RoutingTable::getConnectingNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getConnectingNodes();
+        ret.insert(ret.end(), nodes.begin(), nodes.end());
+    }
+    return ret;
+}
+
+std::vector<NodeId>
+RoutingTable::getBucketMobileNodes() const
+{
+    std::vector<NodeId> ret;
+    auto bucket = findBucket(id_);
+    const auto& nodes = bucket->getMobileNodes();
+    ret.insert(ret.end(), nodes.begin(), nodes.end());
+
+    return ret;
+}
+
+bool
+RoutingTable::contains(const std::list<Bucket>::iterator& bucket, const NodeId& nodeId) const
+{
+    return NodeId::cmp(bucket->getLowerLimit(), nodeId) <= 0
+           && (std::next(bucket) == buckets.end()
+               || NodeId::cmp(nodeId, std::next(bucket)->getLowerLimit()) < 0);
+}
+
+NodeId
+RoutingTable::middle(std::list<Bucket>::iterator& it) const
+{
+    unsigned bit = depth(it);
+    if (bit >= 8 * HASH_LEN)
+        throw std::out_of_range("End of table");
+
+    NodeId id = it->getLowerLimit();
+    id.setBit(bit, true);
+    return id;
+}
+
+unsigned
+RoutingTable::depth(std::list<Bucket>::iterator& bucket) const
+{
+    int bit1 = bucket->getLowerLimit().lowbit();
+    int bit2 = std::next(bucket) != buckets.end() ? std::next(bucket)->getLowerLimit().lowbit()
+                                                  : -1;
+    return std::max(bit1, bit2) + 1;
+}
+
+bool
+RoutingTable::split(std::list<Bucket>::iterator& bucket)
+{
+    NodeId id = middle(bucket);
+    auto newBucketIt = buckets.emplace(std::next(bucket), id);
+    // Re-assign nodes
+    auto& nodeSwap = bucket->getNodes();
+
+    for (auto it = nodeSwap.begin(); it != nodeSwap.end();) {
+        auto& node = *it;
+
+        auto nodeId = it->first;
+
+        if (!contains(bucket, nodeId)) {
+            newBucketIt->addNode(std::move(node.second));
+            it = nodeSwap.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    auto connectingSwap = bucket->getConnectingNodes();
+    for (auto it = connectingSwap.begin(); it != connectingSwap.end();) {
+        auto nodeId = *it;
+
+        if (!contains(bucket, nodeId)) {
+            newBucketIt->addConnectingNode(nodeId);
+            it = connectingSwap.erase(it);
+            bucket->removeConnectingNode(nodeId);
+        } else {
+            ++it;
+        }
+    }
+
+    auto knownSwap = bucket->getKnownNodes();
+    for (auto it = knownSwap.begin(); it != knownSwap.end();) {
+        auto nodeId = *it;
+
+        if (!contains(bucket, nodeId)) {
+            newBucketIt->addKnownNode(nodeId);
+            it = knownSwap.erase(it);
+            bucket->removeKnownNode(nodeId);
+        } else {
+            ++it;
+        }
+    }
+
+    auto mobileSwap = bucket->getMobileNodes();
+    for (auto it = mobileSwap.begin(); it != mobileSwap.end();) {
+        auto nodeId = *it;
+
+        if (!contains(bucket, nodeId)) {
+            newBucketIt->addMobileNode(nodeId);
+            it = mobileSwap.erase(it);
+            bucket->removeMobileNode(nodeId);
+        } else {
+            ++it;
+        }
+    }
+
+    return true;
 }
 
 } // namespace jami

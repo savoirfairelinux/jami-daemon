@@ -2207,33 +2207,31 @@ JamiAccount::convModule()
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
                     }
-                    shared->connectionManager_
-                        ->connectDevice(DeviceId(deviceId),
-                                        fmt::format("swarm://{}", convId),
-                                        [w, cb](std::shared_ptr<ChannelSocket> socket,
-                                                const DeviceId& deviceId) {
-                                            if (socket) {
-                                                // It's possible to have a swarm socket, but not a
-                                                // SIP one opened. We can quickly open this
-                                                // connection has it will trigger syncing.
-                                                auto shared = w.lock();
-                                                if (!shared)
-                                                    return;
-                                                auto remoteCert = socket->peerCertificate();
-                                                auto uri = remoteCert->issuer->getId().toString();
-                                                std::unique_lock<std::mutex> lk(
-                                                    shared->sipConnsMtx_);
-                                                // Verify that the connection is not already cached
-                                                SipConnectionKey key(uri, deviceId.toString());
-                                                auto it = shared->sipConns_.find(key);
-                                                if (it == shared->sipConns_.end()) {
-                                                    lk.unlock();
-                                                    shared->requestSIPConnection(uri, deviceId, "");
-                                                }
-                                            }
+                    if (!shared->connectionManager_->hasSwarmChannel(DeviceId(deviceId), convId)) {
+                        shared->connectionManager_->connectDevice(
+                            DeviceId(deviceId),
+                            fmt::format("swarm://{}", convId),
+                            [w, cb](std::shared_ptr<ChannelSocket> socket,
+                                    const DeviceId& deviceId) {
+                                if (socket) {
+                                    auto shared = w.lock();
+                                    if (!shared)
+                                        return;
+                                    auto remoteCert = socket->peerCertificate();
+                                    auto uri = remoteCert->issuer->getId().toString();
+                                    std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
+                                    // Verify that the connection is not already cached
+                                    SipConnectionKey key(uri, deviceId.toString());
+                                    auto it = shared->sipConns_.find(key);
+                                    if (it == shared->sipConns_.end()) {
+                                        lk.unlock();
+                                        shared->requestSIPConnection(uri, deviceId, "");
+                                    }
+                                }
 
-                                            cb(socket);
-                                        });
+                                cb(socket);
+                            });
+                    }
                 });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
@@ -4020,9 +4018,9 @@ JamiAccount::monitor()
     JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
 
     convModule()->monitor();
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    /*std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
-        connectionManager_->monitor();
+        connectionManager_->monitor();*/
 }
 
 void
