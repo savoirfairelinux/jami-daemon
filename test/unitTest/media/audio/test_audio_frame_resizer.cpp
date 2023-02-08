@@ -22,11 +22,11 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "audio/audio_frame_resizer.h"
-#include "audio/audiobuffer.h"
+#include "media/audio/audio_frame_resizer.h"
+#include "media/audio/audiobuffer.h"
 #include "jami.h"
-#include "libav_deps.h"
-#include "media_buffer.h"
+#include "media/libav_deps.h"
+#include "media/media_buffer.h"
 
 #include "../../../test_runner.h"
 

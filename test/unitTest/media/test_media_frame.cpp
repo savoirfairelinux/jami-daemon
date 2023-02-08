@@ -27,7 +27,7 @@ extern "C" {
 #include <libavutil/pixfmt.h>
 }
 
-#include "audio/audiobuffer.h"
+#include "media/audio/audiobuffer.h"
 #include "jami.h"
 #include "videomanager_interface.h"
 

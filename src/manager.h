@@ -34,7 +34,7 @@
 #include "account_factory.h"
 #include "call_factory.h"
 #include "preferences.h"
-#include "audio/audiolayer.h"
+#include "media/audio/audiolayer.h"
 #include "scheduled_executor.h"
 #include "gittransport.h"
 

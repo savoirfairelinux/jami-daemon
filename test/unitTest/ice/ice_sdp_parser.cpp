@@ -36,6 +36,7 @@
 #include "media/audio/audio_rtp_session.h"
 #include "media/audio/audio_receive_thread.h"
 #include "media/video/video_rtp_session.h"
+#include "media/video/video_receive_thread.h"
 
 #include "common.h"
 

@@ -32,7 +32,7 @@
 #include "account_const.h"
 #include "common.h"
 #include "media_const.h"
-#include "video/sinkclient.h"
+#include "media/video/sinkclient.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 
@@ -469,7 +469,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     startConference();
 
-    auto expectedNumberOfParticipants = 3;
+    size_t expectedNumberOfParticipants = 3;
 
     // Check participants number
     CPPUNIT_ASSERT(

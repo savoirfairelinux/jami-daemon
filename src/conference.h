@@ -33,21 +33,20 @@
 #include <map>
 #include <functional>
 
-#include "audio/audio_input.h"
 #include "conference_protocol.h"
-#include "media_attribute.h"
-
-#include <json/json.h>
-
-#include "recordable.h"
+#include "media/audio/audio_input.h"
+#include "media/media_attribute.h"
+#include "media/recordable.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/streamdata.h"
 #endif
 
 #ifdef ENABLE_VIDEO
-#include <video/sinkclient.h>
+#include "media/video/sinkclient.h"
 #endif
+
+#include <json/json.h>
 
 namespace jami {
 

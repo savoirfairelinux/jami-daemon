@@ -30,7 +30,7 @@ struct AVFrame;
 }
 
 #include "ring_types.h"
-#include "media_buffer.h"
+#include "media/media_buffer.h"
 
 #include <fmt/core.h>
 

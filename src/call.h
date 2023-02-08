@@ -29,11 +29,11 @@
 
 #include "logger.h"
 
-#include "recordable.h"
-#include "peerrecorder.h"
 #include "connectivity/ip_utils.h"
 #include "conference.h"
-#include "media_codec.h"
+#include "media/recordable.h"
+#include "media/peerrecorder.h"
+#include "media/media_codec.h"
 #include "media/media_attribute.h"
 
 #include <atomic>

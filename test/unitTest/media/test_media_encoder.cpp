@@ -24,10 +24,10 @@
 
 #include "jami.h"
 #include "fileutils.h"
-#include "libav_deps.h"
-#include "media_encoder.h"
-#include "media_io_handle.h"
-#include "system_codec_container.h"
+#include "media/libav_deps.h"
+#include "media/media_encoder.h"
+#include "media/media_io_handle.h"
+#include "media/system_codec_container.h"
 
 #include "../../test_runner.h"
 
