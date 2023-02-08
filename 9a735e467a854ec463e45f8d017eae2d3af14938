@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b49a2b6_143dbc25",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 5
+      },
+      "lineNbr": 780,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-08T21:55:46Z",
+      "side": 1,
+      "message": "Seems to build. But something is really weird. Tests are not working (HOME\u003d/tmp ./ut_conversation is all failing and says incorrect jami-sample.yml)\n\n[1675893310.384|8354|manager.cpp             :2786] Preferences node unserialize YAML exception: invalid node; first invalid key: \"preferences\"\n[1675893310.384|8354|manager.cpp             :481 ] Errors while parsing jami-sample.yml\n[1675893310.384|8354|preferences.cpp         :374 ] No audio layer provided",
+      "range": {
+        "startLine": 780,
+        "startChar": 30,
+        "endLine": 780,
+        "endChar": 45
+      },
+      "revId": "9a735e467a854ec463e45f8d017eae2d3af14938",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
