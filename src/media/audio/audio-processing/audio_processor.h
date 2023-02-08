@@ -19,10 +19,10 @@
 #pragma once
 
 #include "noncopyable.h"
-#include "audio/audio_frame_resizer.h"
-#include "audio/resampler.h"
-#include "audio/audiobuffer.h"
-#include "libav_deps.h"
+#include "media/audio/audio_frame_resizer.h"
+#include "media/audio/resampler.h"
+#include "media/audio/audiobuffer.h"
+#include "media/libav_deps.h"
 
 #include <atomic>
 #include <memory>

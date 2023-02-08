@@ -23,9 +23,9 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "jami.h"
-#include "libav_deps.h"
-#include "media_buffer.h"
-#include "media_filter.h"
+#include "media/libav_deps.h"
+#include "media/media_buffer.h"
+#include "media/media_filter.h"
 
 #include "../../test_runner.h"
 
@@ -233,12 +233,12 @@ MediaFilterTest::testVideoFilter()
     const constexpr AVPixelFormat format = AV_PIX_FMT_YUV420P;
 
     // prepare video frame
-    VideoFrame vf1;
+    libjami::VideoFrame vf1;
     auto frame = vf1.pointer();
     frame->format = format;
     frame->width = width1;
     frame->height = height1;
-    VideoFrame vf2;
+    libjami::VideoFrame vf2;
     auto extra = vf2.pointer();
     extra->format = format;
     extra->width = width2;
