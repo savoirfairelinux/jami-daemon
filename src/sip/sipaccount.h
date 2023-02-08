@@ -81,17 +81,19 @@ public:
 
     ~SIPAccount() noexcept;
 
-    const SipAccountConfig& config() const {
+    const SipAccountConfig& config() const
+    {
         return *static_cast<const SipAccountConfig*>(&Account::config());
     }
 
-    std::unique_ptr<AccountConfig> buildConfig() const override {
+    std::unique_ptr<AccountConfig> buildConfig() const override
+    {
         return std::make_unique<SipAccountConfig>(getAccountID());
     }
-    inline void editConfig(std::function<void(SipAccountConfig& conf)>&& edit) {
-        Account::editConfig([&](AccountConfig& conf) {
-            edit(*static_cast<SipAccountConfig*>(&conf));
-        });
+    inline void editConfig(std::function<void(SipAccountConfig& conf)>&& edit)
+    {
+        Account::editConfig(
+            [&](AccountConfig& conf) { edit(*static_cast<SipAccountConfig*>(&conf)); });
     }
 
     std::string_view getAccountType() const override { return ACCOUNT_TYPE; }
@@ -399,7 +401,8 @@ public:
                              const std::map<std::string, std::string>& payloads,
                              uint64_t id,
                              bool retryOnTimeout = true,
-                             bool onlyConnected = false) override;
+                             bool onlyConnected = false,
+                             const std::string& deviceId = {}) override;
 
     void connectivityChanged() override;
 
@@ -412,7 +415,10 @@ public:
     IpAddr createBindingAddress();
 
     void setActiveCodecs(const std::vector<unsigned>& list) override;
-    bool isSrtpEnabled() const override { return config().srtpKeyExchange != KeyExchangeProtocol::NONE; }
+    bool isSrtpEnabled() const override
+    {
+        return config().srtpKeyExchange != KeyExchangeProtocol::NONE;
+    }
 
     bool setPushNotificationToken(const std::string& pushDeviceToken = "") override;
     bool setPushNotificationConfig(const std::map<std::string, std::string>& data) override;
