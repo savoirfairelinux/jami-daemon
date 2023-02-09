@@ -4001,10 +4001,10 @@ JamiAccount::monitor()
     JAMI_DEBUG("[Account {:s}] Monitor connections", getAccountID());
     JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
 
-    convModule()->monitor();
-    /*std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    //convModule()->monitor();
+    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
-        connectionManager_->monitor();*/
+        connectionManager_->monitor();
 }
 
 void
