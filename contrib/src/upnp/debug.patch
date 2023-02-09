@@ -3,7 +3,7 @@
  2 files changed, 15 insertions(+)
 
 diff --git a/upnp/src/genlib/net/http/httpreadwrite.c b/upnp/src/genlib/net/http/httpreadwrite.c
-index 27e9c3a5..dc429fe3 100644
+index 27e9c3a5..873c2ec6 100644
 --- a/upnp/src/genlib/net/http/httpreadwrite.c
 +++ b/upnp/src/genlib/net/http/httpreadwrite.c
 @@ -695,6 +695,10 @@ int http_SendMessage(SOCKINFO *info, int *TimeOut, const char *fmt, ...)
@@ -17,19 +17,19 @@ index 27e9c3a5..dc429fe3 100644
  					nw = sock_write(
  						info, buf, buf_length, TimeOut);
  					num_written = (size_t)nw;
-@@ -712,6 +716,12 @@ int http_SendMessage(SOCKINFO *info, int *TimeOut, const char *fmt, ...)
+@@ -710,6 +714,12 @@ int http_SendMessage(SOCKINFO *info, int *TimeOut, const char *fmt, ...)
+ 						buf,
+ 						buf_length,
  						num_written);
++					printf("@@@@@@@@@@@@@ nw %d\n", nw);
++					printf("@@@@@@@@@@@@@ num_written %u\n", num_written);
++					printf("@@@@@@@@@@@@@ buf_length %u\n", buf_length);
++					printf("@@@@@@@@@@@@@\n");
++					printf("@@@@@@@@@@@@@\n");
++					printf("@@@@@@@@@@@@@\n");
  					if (num_written != buf_length) {
  						RetVal = 0;
-+						printf("@@@@@@@@@@@@@ nw %d\n", nw);
-+						printf("@@@@@@@@@@@@@ num_written %u\n", num_written);
-+						printf("@@@@@@@@@@@@@ buf_length %u\n", buf_length);
-+						printf("@@@@@@@@@@@@@\n");
-+						printf("@@@@@@@@@@@@@\n");
-+						printf("@@@@@@@@@@@@@\n");
  						goto ExitFunction;
- 					}
- 				}
 diff --git a/upnp/src/genlib/net/sock.c b/upnp/src/genlib/net/sock.c
 index 396c692a..a70e2d04 100644
 --- a/upnp/src/genlib/net/sock.c

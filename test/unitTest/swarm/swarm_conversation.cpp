@@ -184,14 +184,10 @@ SwarmConversationTest::testSendMessage()
         }));
 
         libjami::acceptConversationRequest(it->first, convId);
-    }
-
-    std::cout << "waiting for conversation ready" << std::endl;
-    for (size_t i = 1; i < accountIds.size(); i++) {
+        // Wait for ready
         CPPUNIT_ASSERT(
-            cv.wait_for(lk, 30s, [&]() { return accountMap[accountIds.at(i)].id == convId; }));
+            cv.wait_for(lk, 30s, [&]() { return accountMap[it->first].id == convId; }));
     }
-    std::cout << "messages size " << accountMap[accountIds.at(0)].messages.size() << std::endl;
 
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 60s, [&]() { return accountMap[accountIds.at(0)].messages.size() >= 2; }));
