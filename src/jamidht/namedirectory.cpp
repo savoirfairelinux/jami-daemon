@@ -37,6 +37,7 @@
 #include <opendht/log_enable.h>
 #include <opendht/thread_pool.h>
 
+#include <cstddef>
 #include <msgpack.hpp>
 #include <json/json.h>
 
@@ -61,7 +62,7 @@ const std::regex URI_VALIDATOR {
     "^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
 const std::regex NAME_VALIDATOR {"^[a-zA-Z0-9-_]{3,32}$"};
 
-constexpr size_t MAX_RESPONSE_SIZE {1024 * 1024};
+constexpr size_t MAX_RESPONSE_SIZE {1024ul * 1024};
 
 using Request = dht::http::Request;
 
