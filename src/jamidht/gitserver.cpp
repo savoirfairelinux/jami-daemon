@@ -33,7 +33,6 @@
 using namespace std::string_view_literals;
 constexpr auto FLUSH_PKT = "0000"sv;
 constexpr auto NAK_PKT = "0008NAK\n"sv;
-constexpr auto DONE_PKT = "0009done\n"sv;
 constexpr auto DONE_CMD = "done\n"sv;
 constexpr auto WANT_CMD = "want"sv;
 constexpr auto HAVE_CMD = "have"sv;
