@@ -22,6 +22,30 @@
       },
       "revId": "9a735e467a854ec463e45f8d017eae2d3af14938",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "97e1d62c_5d2d9402",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 5
+      },
+      "lineNbr": 780,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-09T15:37:32Z",
+      "side": 1,
+      "message": "Not checked, but probably the actors/account_list.yml missing or similar",
+      "parentUuid": "9b49a2b6_143dbc25",
+      "range": {
+        "startLine": 780,
+        "startChar": 30,
+        "endLine": 780,
+        "endChar": 45
+      },
+      "revId": "9a735e467a854ec463e45f8d017eae2d3af14938",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
