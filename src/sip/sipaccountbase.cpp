@@ -290,7 +290,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
             JAMI_WARN("Dropping invalid message with MIME type %s", m.first.c_str());
             return;
         }
-        if (handleMessage(from, m))
+        if (handleMessage(id, from, m))
             return;
     }
 

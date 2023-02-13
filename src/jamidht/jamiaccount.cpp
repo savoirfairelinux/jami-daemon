@@ -1807,11 +1807,14 @@ JamiAccount::doRegister_()
             config.proxy_server = proxyServerCached_;
 
         if (not config.proxy_server.empty()) {
-            JAMI_LOG("[Account {}] using proxy server {}",
-                      getAccountID(),
-                      config.proxy_server);
+            JAMI_LOG("[Account {}] using proxy server {}", getAccountID(), config.proxy_server);
             if (not config.push_token.empty()) {
-                JAMI_LOG("[Account %s] using push notifications with platform: {}, topic: {}, token: {}", getAccountID(), config.push_platform, config.push_topic, config.push_token);
+                JAMI_LOG(
+                    "[Account %s] using push notifications with platform: {}, topic: {}, token: {}",
+                    getAccountID(),
+                    config.push_platform,
+                    config.push_topic,
+                    config.push_token);
             }
         }
 
@@ -2020,12 +2023,13 @@ JamiAccount::doRegister_()
 
                     // Check if pull from banned device
                     if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
-                        JAMI_WARNING("[Account {:s}] Git server requested for conversation {:s}, but the "
-                                  "device is "
-                                  "unauthorized ({:s}) ",
-                                  getAccountID(),
-                                  conversationId,
-                                  remoteDevice);
+                        JAMI_WARNING(
+                            "[Account {:s}] Git server requested for conversation {:s}, but the "
+                            "device is "
+                            "unauthorized ({:s}) ",
+                            getAccountID(),
+                            conversationId,
+                            remoteDevice);
                         channel->shutdown();
                         return;
                     }
@@ -2036,12 +2040,13 @@ JamiAccount::doRegister_()
                         // So it's not the server socket
                         return;
                     }
-                    JAMI_WARNING("[Account {:s}] Git server requested for conversation {:s}, device {:s}, "
-                              "channel {}",
-                              accountID_,
-                              conversationId,
-                              deviceId.toString(),
-                              channel->channel());
+                    JAMI_WARNING(
+                        "[Account {:s}] Git server requested for conversation {:s}, device {:s}, "
+                        "channel {}",
+                        accountID_,
+                        conversationId,
+                        deviceId.toString(),
+                        channel->channel());
                     auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
                     gs->setOnFetched(
                         [w = weak(), conversationId, deviceId](const std::string& commit) {
@@ -3393,7 +3398,8 @@ JamiAccount::setPushNotificationTopic(const std::string& topic)
 }
 
 bool
-JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>& data) {
+JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>& data)
+{
     if (SIPAccountBase::setPushNotificationConfig(data)) {
         if (dht_) {
             dht_->setPushNotificationPlatform(config_->platform);
@@ -3404,7 +3410,6 @@ JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>&
     }
     return false;
 }
-
 
 /**
  * To be called by clients with relevant data when a push notification is received.
@@ -3533,8 +3538,28 @@ JamiAccount::sendInstantMessage(const std::string& convId,
     }
 }
 
+void
+JamiAccount::sendInstantInfo(const std::string& id,
+                             const std::string& convId,
+                             const std::pair<std::string, std::string>& msg)
+{
+    auto members = convModule()->peersToSyncWith(convId);
+
+    if (convId.empty() && members.empty())
+        return;
+
+    std::map<std::string, std::string> messagToSend;
+    messagToSend.insert(msg);
+
+    for (const auto& m : members) {
+        sendMessage(m.toString(), messagToSend, stoul(id, nullptr, 16), false, true);
+    }
+}
+
 bool
-JamiAccount::handleMessage(const std::string& from, const std::pair<std::string, std::string>& m)
+JamiAccount::handleMessage(const std::string& id,
+                           const std::string& from,
+                           const std::pair<std::string, std::string>& m)
 {
     if (m.first == MIME_TYPE_GIT) {
         Json::Value json;
@@ -3572,21 +3597,31 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         return true;
     } else if (m.first == MIME_TYPE_IM_COMPOSING) {
         try {
-            static const std::regex COMPOSING_REGEX("<state>\\s*(\\w+)\\s*<\\/state>");
-            std::smatch matched_pattern;
-            std::regex_search(m.second, matched_pattern, COMPOSING_REGEX);
-            bool isComposing {false};
-            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
-                isComposing = matched_pattern[1] == "active";
+            if (!isMessageTreated(id)) {
+                JAMI_WARN("Message is already being treated");
+                return false;
+            } else {
+                static const std::regex COMPOSING_REGEX("<state>\\s*(\\w+)\\s*<\\/state>");
+                std::smatch matched_pattern;
+                std::regex_search(m.second, matched_pattern, COMPOSING_REGEX);
+                bool isComposing {false};
+                if (matched_pattern.ready() && !matched_pattern.empty()
+                    && matched_pattern[1].matched) {
+                    isComposing = matched_pattern[1] == "active";
+                }
+                static const std::regex CONVID_REGEX(
+                    "<conversation>\\s*(\\w+)\\s*<\\/conversation>");
+                std::regex_search(m.second, matched_pattern, CONVID_REGEX);
+                std::string conversationId = "";
+                if (matched_pattern.ready() && !matched_pattern.empty()
+                    && matched_pattern[1].matched) {
+                    conversationId = matched_pattern[1];
+                }
+                onIsComposing(conversationId, from, isComposing);
+                sendInstantInfo(id, conversationId, m);
+
+                return true;
             }
-            static const std::regex CONVID_REGEX("<conversation>\\s*(\\w+)\\s*<\\/conversation>");
-            std::regex_search(m.second, matched_pattern, CONVID_REGEX);
-            std::string conversationId = "";
-            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
-                conversationId = matched_pattern[1];
-            }
-            onIsComposing(conversationId, from, isComposing);
-            return true;
         } catch (const std::exception& e) {
             JAMI_WARN("Error parsing composing state: %s", e.what());
         }

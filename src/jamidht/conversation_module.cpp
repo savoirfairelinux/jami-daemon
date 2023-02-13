@@ -897,7 +897,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     std::vector<NodeId> devices;
     {
         std::lock_guard<std::mutex> lk(notSyncedNotificationMtx_);
-        devices = conversation.peersToSyncWith();
+        devices = conversation.peersToSyncWith(true);
         auto members = conversation.memberUris(username_, {});
         std::vector<std::string> connectedMembers;
         for (const auto& device : devices) {
@@ -1276,6 +1276,22 @@ ConversationModule::bootstrap()
         }
     }
 }
+
+std::vector<NodeId>
+ConversationModule::peersToSyncWith(const std::string& convId)
+{
+    std::vector<NodeId> s;
+
+    auto it = pimpl_->conversations_.find(convId);
+    if (it != pimpl_->conversations_.end()) {
+        return s;
+    }
+
+    const auto& peers = it->second->peersToSyncWith(false);
+    s.insert(s.end(), peers.begin(), peers.end());
+    return peers;
+}
+
 void
 ConversationModule::monitor()
 {
@@ -1878,18 +1894,18 @@ ConversationModule::onSyncData(const SyncMsg& msg,
         if (req.declined != 0) {
             // Request declined
             JAMI_LOG("[Account {:s}] Declined request detected for conversation {:s} (device {:s})",
-                      pimpl_->accountId_,
-                      convId,
-                      deviceId);
+                     pimpl_->accountId_,
+                     convId,
+                     deviceId);
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
                                                                                  convId);
             continue;
         }
 
         JAMI_LOG("[Account {:s}] New request detected for conversation {:s} (device {:s})",
-                  pimpl_->accountId_,
-                  convId,
-                  deviceId);
+                 pimpl_->accountId_,
+                 convId,
+                 deviceId);
 
         emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
                                                                              convId,
@@ -1982,8 +1998,8 @@ ConversationModule::onNewCommit(const std::string& peer,
         // it means that the contact was removed but not banned. So we can generate
         // a new trust request
         JAMI_WARNING("[Account {:s}] Could not find conversation {:s}, ask for an invite",
-                  pimpl_->accountId_,
-                  conversationId);
+                     pimpl_->accountId_,
+                     conversationId);
         pimpl_->sendMsgCb_(peer,
                            {},
                            std::map<std::string, std::string> {
@@ -1992,10 +2008,10 @@ ConversationModule::onNewCommit(const std::string& peer,
         return;
     }
     JAMI_DEBUG("[Account {:s}] on new commit notification from {:s}, for {:s}, commit {:s}",
-             pimpl_->accountId_,
-             peer,
-             conversationId,
-             commitId);
+               pimpl_->accountId_,
+               peer,
+               conversationId,
+               commitId);
     lk.unlock();
     pimpl_->fetchNewCommits(peer, deviceId, conversationId, commitId);
 }
@@ -2014,9 +2030,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
     }
 
     if (it->second->isMember(contactUri, true)) {
-        JAMI_DEBUG("{:s} is already a member of {:s}, resend invite",
-                 contactUri,
-                 conversationId);
+        JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUri, conversationId);
         // Note: This should not be necessary, but if for whatever reason the other side didn't join
         // we should not forbid new invites
         auto invite = it->second->generateInvitation();
@@ -2173,7 +2187,8 @@ ConversationModule::setConversationPreferences(const std::string& conversationId
 }
 
 std::map<std::string, std::string>
-ConversationModule::getConversationPreferences(const std::string& conversationId, bool includeCreated) const
+ConversationModule::getConversationPreferences(const std::string& conversationId,
+                                               bool includeCreated) const
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto it = pimpl_->conversations_.find(conversationId);

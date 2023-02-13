@@ -302,11 +302,12 @@ public:
             auto device = commit.at("device");
             std::lock_guard<std::mutex> lk(activeCallsMtx_);
             auto itActive = std::find_if(activeCalls_.begin(),
-                                            activeCalls_.end(),
-                                                [&](const auto& value) {
-                                                    return value.at("id") == confId && value.at("uri") == uri
-                                                        && value.at("device") == device;
-                                                });
+                                         activeCalls_.end(),
+                                         [&](const auto& value) {
+                                             return value.at("id") == confId
+                                                    && value.at("uri") == uri
+                                                    && value.at("device") == device;
+                                         });
             if (commit.find("duration") == commit.end()) {
                 if (itActive == activeCalls_.end() && !eraseOnly) {
                     JAMI_DEBUG(
@@ -330,17 +331,15 @@ public:
                     itActive = activeCalls_.erase(itActive);
                     // Unlikely, but we must ensure that no duplicate exists
                     while (itActive != activeCalls_.end()) {
-                        itActive = std::find_if(itActive, activeCalls_.end(),
-                                                [&](const auto& value) {
-                                                    return value.at("id") == confId && value.at("uri") == uri
-                                                        && value.at("device") == device;
-                                                });
+                        itActive = std::find_if(itActive, activeCalls_.end(), [&](const auto& value) {
+                            return value.at("id") == confId && value.at("uri") == uri
+                                   && value.at("device") == device;
+                        });
                         if (itActive != activeCalls_.end()) {
                             JAMI_ERROR("Duplicate call found. (This is a bug)");
                             itActive = activeCalls_.erase(itActive);
                         }
                     }
-
 
                     if (eraseOnly) {
                         JAMI_WARNING("previous swarm:{:s} call finished detected: {:s} on device "
@@ -553,7 +552,8 @@ public:
     void voteUnban(const std::string& contactUri, const std::string_view type, const OnDoneCb& cb);
 
     std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited,
-                                                               bool includeLeft, bool includeBanned) const;
+                                                               bool includeLeft,
+                                                               bool includeBanned) const;
 
     std::string_view bannedType(const std::string& uri) const
     {
@@ -998,15 +998,22 @@ Conversation::memberUris(std::string_view filter, const std::set<MemberRole>& fi
 }
 
 std::vector<NodeId>
-Conversation::peersToSyncWith() const
+Conversation::peersToSyncWith(bool includeMobile) const
 {
+    std::vector<NodeId> s;
     const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
     const auto& nodes = routingTable.getNodes();
-    const auto& mobiles = routingTable.getMobileNodes();
-    std::vector<NodeId> s;
-    s.reserve(nodes.size() + mobiles.size());
+
+    if (includeMobile) {
+        const auto& mobiles = routingTable.getMobileNodes();
+        s.reserve(nodes.size() + mobiles.size());
+        s.insert(s.end(), mobiles.begin(), mobiles.end());
+    } else {
+        s.reserve(nodes.size());
+    }
+
     s.insert(s.end(), nodes.begin(), nodes.end());
-    s.insert(s.end(), mobiles.begin(), mobiles.end());
+
     for (const auto& [deviceId, _] : pimpl_->gitSocketList_)
         if (std::find(s.cbegin(), s.cend(), deviceId) == s.cend())
             s.emplace_back(deviceId);
@@ -1664,7 +1671,9 @@ Conversation::setMessageDisplayed(const std::string& uri, const std::string& int
 void
 Conversation::updateLastDisplayed(const std::map<std::string, std::string>& map)
 {
-    auto filePath = fmt::format("{}/{}", pimpl_->conversationDataPath_, ConversationMapKeys::LAST_DISPLAYED);
+    auto filePath = fmt::format("{}/{}",
+                                pimpl_->conversationDataPath_,
+                                ConversationMapKeys::LAST_DISPLAYED);
     auto prefs = map;
     auto itLast = prefs.find(LAST_MODIFIED);
     if (itLast != prefs.end()) {
@@ -1680,7 +1689,7 @@ Conversation::updateLastDisplayed(const std::map<std::string, std::string>& map)
         prefs.erase(itLast);
     }
 
-    for (const auto& [uri, id]: prefs)
+    for (const auto& [uri, id] : prefs)
         setMessageDisplayed(uri, id);
 }
 
@@ -1739,7 +1748,9 @@ Conversation::displayed() const
 {
     try {
         std::map<std::string, std::string> lastDisplayed;
-        auto filePath = fmt::format("{}/{}", pimpl_->conversationDataPath_, ConversationMapKeys::LAST_DISPLAYED);
+        auto filePath = fmt::format("{}/{}",
+                                    pimpl_->conversationDataPath_,
+                                    ConversationMapKeys::LAST_DISPLAYED);
         auto file = fileutils::loadFile(filePath);
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(lastDisplayed);

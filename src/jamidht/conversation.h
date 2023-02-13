@@ -229,7 +229,7 @@ public:
      * Get peers to sync with. This is mostly managed by the DRT
      * @return some mobile nodes and all connected nodes
      */
-    std::vector<NodeId> peersToSyncWith() const;
+    std::vector<NodeId> peersToSyncWith(bool includeMobile) const;
     /**
      * Check if we're at least connected to one node
      * @return if the DRT is connected
@@ -512,7 +512,8 @@ public:
     void removeGitSocket(const DeviceId& deviceId);
     void removeGitSockets();
     /**
-     * Used to avoid multiple connections, we just check if we got a swarm channel with a specific device
+     * Used to avoid multiple connections, we just check if we got a swarm channel with a specific
+     * device
      * @param deviceId
      */
     bool hasSwarmChannel(const std::string& deviceId);
@@ -521,6 +522,7 @@ public:
      * If we change from one network to one another, we will need to update the state of the connections
      */
     void connectivityChanged();
+
 private:
     std::shared_ptr<Conversation> shared()
     {

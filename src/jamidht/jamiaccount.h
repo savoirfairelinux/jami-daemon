@@ -322,6 +322,9 @@ public:
                              uint64_t refreshToken = 0) override;
     void sendInstantMessage(const std::string& convId,
                             const std::map<std::string, std::string>& msg);
+    void sendInstantInfo(const std::string& id,
+                         const std::string& convId,
+                         const std::pair<std::string, std::string>& msg);
     void onIsComposing(const std::string& conversationId, const std::string& peer, bool isWriting);
 
     /* Devices */
@@ -458,7 +461,8 @@ public:
 
     // Received a new commit notification
 
-    bool handleMessage(const std::string& from,
+    bool handleMessage(const std::string& id,
+                       const std::string& from,
                        const std::pair<std::string, std::string>& message) override;
 
     void monitor();

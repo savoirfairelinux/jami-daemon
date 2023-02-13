@@ -83,6 +83,11 @@ public:
     void bootstrap();
 
     /**
+     * Connected peers
+     */
+    std::vector<NodeId> peersToSyncWith(const std::string& convId);
+
+    /**
      * Clear not removed fetch
      */
     void clearPendingFetch();
@@ -365,8 +370,8 @@ public:
      */
     void setConversationPreferences(const std::string& conversationId,
                                     const std::map<std::string, std::string>& prefs);
-    std::map<std::string, std::string> getConversationPreferences(
-        const std::string& conversationId, bool includeCreated = false) const;
+    std::map<std::string, std::string> getConversationPreferences(const std::string& conversationId,
+                                                                  bool includeCreated = false) const;
     /**
      * Retrieve all conversation preferences to sync with other devices
      */
