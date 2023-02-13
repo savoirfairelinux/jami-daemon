@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "568a89ce_80af4e98",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-02-13T19:05:52Z",
+      "side": 1,
+      "message": "would it make sense to use a single SyncMsg to transfer multiple things ?",
+      "range": {
+        "startLine": 128,
+        "startChar": 12,
+        "endLine": 128,
+        "endChar": 24
+      },
+      "revId": "c4dbf068e0c766c847927ad9c2c798c775809fd9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
