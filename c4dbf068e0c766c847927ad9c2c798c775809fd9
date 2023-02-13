@@ -22,6 +22,30 @@
       },
       "revId": "c4dbf068e0c766c847927ad9c2c798c775809fd9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50c3ebae_e65d47a2",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-13T19:11:41Z",
+      "side": 1,
+      "message": "It was the case and still a todo. The only problem is that socket-\u003ewrite takes only a buffer of 64K, which can be filled quickly with all the information. Olivier dion started a patch for this, but it was never finished and since then in my TODO.",
+      "parentUuid": "568a89ce_80af4e98",
+      "range": {
+        "startLine": 128,
+        "startChar": 12,
+        "endLine": 128,
+        "endChar": 24
+      },
+      "revId": "c4dbf068e0c766c847927ad9c2c798c775809fd9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
