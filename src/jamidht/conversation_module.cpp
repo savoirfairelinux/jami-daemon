@@ -1108,6 +1108,12 @@ ConversationModule::clearPendingFetch()
     }
 }
 
+void
+ConversationModule::reloadRequests()
+{
+    pimpl_->conversationsRequests_ = convRequests(pimpl_->accountId_);
+}
+
 std::vector<std::string>
 ConversationModule::getConversations() const
 {

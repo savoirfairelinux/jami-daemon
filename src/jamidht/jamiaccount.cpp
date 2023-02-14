@@ -1463,6 +1463,7 @@ void
 JamiAccount::registerAsyncOps()
 {
     auto onLoad = [this, loaded = std::make_shared<std::atomic_uint>()] {
+        convModule()->reloadRequests();
         if (++(*loaded) == 2u) {
             runOnMainThread([w = weak()] {
                 if (auto s = w.lock()) {

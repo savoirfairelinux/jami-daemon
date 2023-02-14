@@ -74,6 +74,11 @@ public:
     void clearPendingFetch();
 
     /**
+     * Reload requests from file
+     */
+    void reloadRequests();
+
+    /**
      * Return all conversation's id (including syncing ones)
      */
     std::vector<std::string> getConversations() const;
