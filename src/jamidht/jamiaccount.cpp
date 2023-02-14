@@ -1453,6 +1453,15 @@ void
 JamiAccount::registerAsyncOps()
 {
     auto onLoad = [this, loaded = std::make_shared<std::atomic_uint>()] {
+        if (auto cm = convModule()) {
+            /*
+             On iOS, when the app is in the background, invitations are received
+             and saved by the notifications extension.
+             When app becomes active requests need to be reloaded, to retrieve invitations
+             received when app was in background.
+             */
+            cm->reloadRequests();
+        }
         if (++(*loaded) == 2u) {
             runOnMainThread([w = weak()] {
                 if (auto s = w.lock()) {
