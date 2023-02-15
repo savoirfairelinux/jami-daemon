@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb99864e_79bc6cb0",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1456,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-02-15T16:00:24Z",
+      "side": 1,
+      "message": "convModule() can be nullptr",
+      "range": {
+        "startLine": 1456,
+        "startChar": 8,
+        "endLine": 1456,
+        "endChar": 18
+      },
+      "revId": "38d872e2a5aaac1cebb80880abd075bc067f4298",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
