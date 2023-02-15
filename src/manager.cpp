@@ -768,7 +768,7 @@ Manager::init(const std::string& config_file)
     // Set the max number of open files.
     struct rlimit nofiles;
     if (getrlimit(RLIMIT_NOFILE, &nofiles) == 0) {
-        if (nofiles.rlim_cur < nofiles.rlim_max && nofiles.rlim_cur < 1024u) {
+        if (nofiles.rlim_cur < nofiles.rlim_max && nofiles.rlim_cur <= 1024u) {
             nofiles.rlim_cur = std::min<rlim_t>(nofiles.rlim_max, 8192u);
             setrlimit(RLIMIT_NOFILE, &nofiles);
         }
