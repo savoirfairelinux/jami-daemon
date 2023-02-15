@@ -234,6 +234,30 @@
       },
       "revId": "3f4b5fb1aef65c7e30434e5952409a0a412f4789",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d34c6dd_6d7f6e6c",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-02-15T15:09:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ce17e2d1_d5dca3a3",
+      "range": {
+        "startLine": 192,
+        "startChar": 56,
+        "endLine": 192,
+        "endChar": 58
+      },
+      "revId": "3f4b5fb1aef65c7e30434e5952409a0a412f4789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
