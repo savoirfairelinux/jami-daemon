@@ -1,0 +1,21 @@
+{
+    "name": "libdatachannel",
+    "version": "v0.18.2",
+    "url": "https://github.com/paullouisageneau/libdatachannel/archive/refs/tags/__VERSION__.tar.gz",
+    "use_cmake": true,
+    "defines": [
+        "USE_GNUTLS=0",
+		"DNO_WEBSOCKET",
+		"DCMAKE_BUILD_TYPE=Release"
+    ],
+    "deps": ["gnutls"],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
