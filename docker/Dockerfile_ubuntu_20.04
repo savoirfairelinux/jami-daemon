@@ -19,7 +19,6 @@ RUN add-apt-repository universe && \
         autoconf \
         automake \
         autopoint \
-        cmake \
         dpkg-dev \
         libdbus-1-dev \
         libdbus-c++-dev \
@@ -73,7 +72,8 @@ RUN add-apt-repository universe && \
         libasio-dev \
         libexpat1 libexpat1-dev \
         lcov gcovr \
-        ninja-build
+        ninja-build \
+        curl
 
 RUN apt-get install -y python3 python3-pip python3-setuptools \
                        python3-wheel
@@ -88,3 +88,10 @@ RUN apt-get install -y -o Acquire::Retries=10 \
 
 RUN apt-get clean
 
+RUN curl -fsSL https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.sh -o /tmp/cmake-install.sh | bash - \
+      && chmod u+x /tmp/cmake-install.sh \
+      && mkdir ./usr/bin/cmake \
+      && /tmp/cmake-install.sh --skip-license --prefix=/usr/bin/cmake \
+      && rm /tmp/cmake-install.sh
+
+ENV PATH="/usr/bin/cmake/bin:${PATH}"
