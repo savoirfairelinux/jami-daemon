@@ -354,7 +354,7 @@ download_git = $(error Trying to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRU
 else
 download_git = $(FLOCK_PREFIX) sh -c "\
   rm -Rf '$(@:.tar.xz=)' && \
-  $(GIT) clone $(2:%=--branch '%') '$(1)' '$(@:.tar.xz=)' && \
+  $(GIT) clone $(2:%=--branch '%') $(5) -- '$(1)' '$(@:.tar.xz=)' && \
   (cd '$(@:.tar.xz=)' && $(GIT) checkout $(3:%= '%')) && \
   (test -z '$(4)' && rm -Rf $(@:%.tar.xz='%')/.git) || true && \
   (cd '$(dir $@)' && tar cJ '$(notdir $(@:.tar.xz=))') > '$@' && \
