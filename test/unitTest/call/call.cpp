@@ -27,6 +27,7 @@
 #include "call_const.h"
 #include "common.h"
 
+#include <rtc/rtc.hpp>
 #include <dhtnet/connectionmanager.h>
 
 #include <cppunit/TestAssert.h>
@@ -73,6 +74,7 @@ private:
     void testSocketInfos();
     void testInvalidTurn();
     void testTransfer();
+    void testWebRtcCall();
 
     CPPUNIT_TEST_SUITE(CallTest);
     CPPUNIT_TEST(testCall);
@@ -83,6 +85,7 @@ private:
     CPPUNIT_TEST(testSocketInfos);
     CPPUNIT_TEST(testInvalidTurn);
     CPPUNIT_TEST(testTransfer);
+    CPPUNIT_TEST(testWebRtcCall);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -565,6 +568,15 @@ CallTest::testTransfer()
     aliceCallStopped = 0;
     Manager::instance().hangupCall(carlaId, carlaCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallStopped.load(); }));
+}
+
+void
+CallTest::testWebRtcCall()
+{
+    // Just testing if it compiles properly for now
+
+    rtc::Configuration config;
+    rtc::PeerConnection pc(config);
 }
 } // namespace test
 } // namespace jami

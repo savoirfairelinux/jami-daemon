@@ -4,3 +4,4 @@
 *.tgz
 *-git/
 .wget-hsts
+libdatachannel*
