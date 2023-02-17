@@ -401,6 +401,7 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
     iceDefaultRemoteAddr_.resize(compCount_);
     initiatorSession_ = options.master;
     accountLocalAddr_ = std::move(options.accountLocalAddr);
+    JAMI_ERROR("@@@ {}", options.accountPublicAddr.toString());
     accountPublicAddr_ = std::move(options.accountPublicAddr);
     stunServers_ = std::move(options.stunServers);
     turnServers_ = std::move(options.turnServers);
@@ -467,6 +468,7 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
         // from upnp candidates.
         if (upnpSrflxCand.empty()
             or (upnpSrflxCand[0].second.toString() != genericSrflxCand[0].second.toString())) {
+            JAMI_ERROR("@@@ {} ", genericSrflxCand[0].second.toString());
             addServerReflexiveCandidates(genericSrflxCand);
             JAMI_DBG("[ice:%p] Added generic srflx candidates:", this);
         }
