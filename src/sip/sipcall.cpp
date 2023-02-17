@@ -3427,7 +3427,7 @@ SIPCall::setupIceResponse(bool isReinvite)
     // Try to use the discovered public address. If not available,
     // fallback on local address.
     opt.accountPublicAddr = account->getPublishedIpAddress();
-    if (opt.accountLocalAddr) {
+    if (opt.accountPublicAddr) {
         opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                           opt.accountPublicAddr.getFamily());
     } else {
