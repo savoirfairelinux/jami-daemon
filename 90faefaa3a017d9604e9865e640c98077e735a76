@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "79da0ab7_07a656b8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 957
+      },
+      "writtenOn": "2023-02-17T21:16:11Z",
+      "side": 1,
+      "message": "On gnulinux, the error is `CMake 3.12 or higher is required.  You are running version 3.10.2`. Could we update the CMake version?\n\nFor osx, ios, android-x86_64 and android-armv7, it mentions undefined symbols while compiling GnuTLS. I\u0027m thinking it could be related problems. Android also mentions something about `Could not find a package configuration file provided by \"yaml-cpp\"`, don\u0027t know if it could be related.\n\nlibdatachannel needs either GnuTLS or OpenSSL as a dependency. I failed to make it work locally with openSSL (that\u0027s why I\u0027ve not tried pushing it). Is there one of the two I should favor trying to make work?\n\nmsvc shows \"SUCCESS\", but I don\u0027t expect it to work since the package.json does not do anything to download the submodules.",
+      "revId": "90faefaa3a017d9604e9865e640c98077e735a76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
