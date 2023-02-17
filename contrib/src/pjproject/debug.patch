@@ -1,0 +1,381 @@
+ pjlib/src/pj/ip_helper_generic.c | 12 ++++++++++--
+ pjnath/src/pjnath/ice_session.c  | 67 ++++++++++++++++++++++++++++++++++++++++++++++---------------------
+ pjnath/src/pjnath/ice_strans.c   | 14 ++++++++++++++
+ pjnath/src/pjnath/stun_sock.c    | 72 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 4 files changed, 136 insertions(+), 29 deletions(-)
+
+diff --git a/pjlib/src/pj/ip_helper_generic.c b/pjlib/src/pj/ip_helper_generic.c
+index ab441a504..330e0e8ea 100644
+--- a/pjlib/src/pj/ip_helper_generic.c
++++ b/pjlib/src/pj/ip_helper_generic.c
+@@ -37,10 +37,11 @@
+ #endif
+ 
+ /* Set to 1 to enable tracing */
+-#if 0
++#if 1
+ #   include <pj/log.h>
+ #   define THIS_FILE	"ip_helper_generic.c"
+ #   define TRACE_(exp)	PJ_LOG(5,exp)
++#   define TRACEMAX_(exp)	PJ_LOG(1,exp)
+     static const char *get_os_errmsg(void)
+     {
+ 	static char errmsg[PJ_ERR_MSG_SIZE];
+@@ -124,11 +125,14 @@ static pj_status_t if_enum_by_af(int af,
+ 	/* Ignore 192.0.0.0/29 address.
+ 	 * Ref: https://datatracker.ietf.org/doc/html/rfc7335#section-4
+ 	 */
++	uint32_t ntohl = pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 4;
++	TRACEMAX_((THIS_FILE, "@@@ %s %u\n", get_addr(ad), ntohl));
+ 	if (af==pj_AF_INET() &&
+-	    (pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 4) ==
++	    ntohl ==
+ 	     201326592) /* 0b1100000000000000000000000000 which is
+ 	                   192.0.0.0 >> 4 */
+ 	{
++		TRACEMAX_((THIS_FILE, "@@@!!! %s %u\n", get_addr(ad), ntohl));
+ 	    TRACE_((THIS_FILE, "  address %s ignored (192.0.0.0/29 class)",
+ 		    get_addr(ad), ad->sa_family));
+ 	    continue;
+@@ -241,6 +245,8 @@ static pj_status_t if_enum_by_af(int af,
+ 	/* Ignore 192.0.0.0/29 address.
+ 	 * Ref: https://datatracker.ietf.org/doc/html/rfc7335#section-4
+ 	 */
++	uint32_t ntohl = pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 4;
++	TRACEMAX_((THIS_FILE, "@@@2 %s %u\n", get_addr(ad), ntohl));
+ 	if (af==pj_AF_INET() &&
+ 	    (pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 4) ==
+ 	     201326592) /* 0b1100000000000000000000000000 which is
+@@ -353,6 +359,8 @@ static pj_status_t if_enum_by_af(int af, unsigned *p_cnt, pj_sockaddr ifs[])
+ 	/* Ignore 192.0.0.0/29 address.
+ 	 * Ref: https://datatracker.ietf.org/doc/html/rfc7335#section-4
+ 	 */
++	uint32_t ntohl = pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 4;
++	TRACEMAX_((THIS_FILE, "@@@3 %s %u\n", get_addr(ad), ntohl));
+ 	if (af==pj_AF_INET() &&
+ 	    (pj_ntohl(((pj_sockaddr_in*)ad)->sin_addr.s_addr) >> 4) ==
+ 	     201326592) /* 0b1100000000000000000000000000 which is
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 3e778be3e..001306868 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2683,7 +2683,7 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+             if (ice->timer_connect.id != TIMER_NONE) {
+                 pj_assert(!"Not expected any timer active");
+             } else {
+-                LOG5((ice->obj_name, 
++                LOG5((ice->obj_name,  
+                     "Scheduling connection time-out for check %s", 
+                     dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), clist, check)));
+ 
+@@ -3100,7 +3100,7 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+ 				    void *token,
+ 				    const void *pkt,
+ 				    pj_size_t pkt_size,
+-				    const pj_sockaddr_t *dst_addr,
++				    	const pj_sockaddr_t *dst_addr,
+ 				    unsigned addr_len)
+ {
+     stun_data *sd = (stun_data*) pj_stun_session_get_user_data(sess);
+@@ -3139,6 +3139,11 @@ static pj_ice_sess_check* get_current_check_at_state(pj_ice_sess *ice,
+         pj_ice_sess_check *c = &ice->clist.checks[i];
+         /* Host candidate not found this this srflx! */
+         if (pj_sockaddr_cmp(remote_addr, &c->rcand->addr) == 0) {
++			
++			char raddr[PJ_INET6_ADDRSTRLEN + 10];
++			PJ_LOG(4, (ice->obj_name,
++					"@@@=> GO %s - state: %u vs %u - cdata: %u %i",
++					pj_sockaddr_print(&remote_addr, raddr, sizeof(raddr), 3), c->state, state, (c->tdata == NULL), i));
+             if (c->tdata == NULL || c->state != state)
+                 continue;
+             /* Match */
+@@ -3159,7 +3164,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+     // connectivity check) This should trigger on_stun_request_complete when
+     // finished
+     if (!remote_addr)
+-	return;
++		return;
+ 
+     pj_grp_lock_acquire(ice->grp_lock);
+ 
+@@ -3167,16 +3172,19 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+     pj_ice_sess_check *check = get_current_check_at_state(ice,remote_addr,
+ 							  PJ_ICE_SESS_CHECK_STATE_PENDING,
+ 							  &current_check);
+-    if (!check) {
+-	// Handle peer reflexive candidates (incoming are still waiting here)
+-	check = get_current_check_at_state(ice, remote_addr,
+-					   PJ_ICE_SESS_CHECK_STATE_WAITING,
+-					   &current_check);
+ 	if (!check) {
+-	    pj_grp_lock_release(ice->grp_lock);
+-	    return;
++		// Handle peer reflexive candidates (incoming are still waiting here)
++		check = get_current_check_at_state(ice, remote_addr,
++					PJ_ICE_SESS_CHECK_STATE_WAITING,
++					&current_check);
++		if (check) {
++			PJ_LOG(4, (ice->obj_name, "@@@ WAITING!!!!"));
++		}
++		if (!check) {
++			pj_grp_lock_release(ice->grp_lock);
++			return;
++		}
+ 	}
+-    }
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+     if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED && (
+@@ -3304,23 +3312,40 @@ void ice_sess_on_peer_reset_connection(pj_ice_sess *ice,
+ 				       pj_sockaddr_t* remote_addr)
+ {
+     // The TCP link is reset
+-    if (!remote_addr)
+-	return;
++    if (!remote_addr) {
++		PJ_LOG(5, (ice->obj_name, "@@@ RET!"));
++		return;
++	}
+ 
+     pj_grp_lock_acquire(ice->grp_lock);
+     pj_ice_sess_check *check = get_current_check_at_state(ice, remote_addr,
+ 							  PJ_ICE_SESS_CHECK_STATE_PENDING,
+ 							  NULL);
+-    if (!check) {
+-	// Just check if it's not the first packet failing
+-	check = get_current_check_at_state(ice, remote_addr,
+-					   PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+-					   NULL);
++
++	if (check) {
++		PJ_LOG(4, (ice->obj_name, "@@@ PENDING!!!!"));
++	}
+ 	if (!check) {
+-	    pj_grp_lock_release(ice->grp_lock);
+-	    return;
++		// Handle peer reflexive candidates (incoming are still waiting here)
++		check = get_current_check_at_state(ice, remote_addr,
++					   PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
++					   NULL);
++		if (check) {
++			PJ_LOG(4, (ice->obj_name, "@@@ PROGRESS!!!!"));
++		}
++
++		if (!check) {
++			// Just check if it's not the first packet failing
++			check = get_current_check_at_state(ice, remote_addr,
++							PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
++							NULL);
++			if (!check) { 
++				pj_grp_lock_release(ice->grp_lock);
++				PJ_LOG(5, (ice->obj_name, "@@@ RET NO CHECK!"));
++				return;
++			}
++    	}
+ 	}
+-    }
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+     if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index fc73f202a..0c0abe770 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2755,6 +2755,12 @@ static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
+     pj_ice_strans_comp     *st_comp = ice_st->comp[lcand->comp_id - 1];
+ 
+     int idx = -1;
++	char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++	PJ_LOG(4,(ice_st->obj_name, 
++			"@@@: ice_wait_tcp_connection %s",
++			pj_sockaddr_print(&rcand->addr,
++				addrinfo, sizeof(addrinfo), 3)));
++
+     for (int i=0; i<ice_st->cfg.stun_tp_cnt; ++i)
+         if (ice_st->cfg.stun_tp[i].af == rcand->addr.addr.sa_family) {
+             idx = i;
+@@ -2779,11 +2785,19 @@ static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
+             &on_peer_reset_connection;
+         pj_stun_session_callback(sess)->on_peer_packet = &on_peer_packet;
+ 
++	PJ_LOG(4,(ice_st->obj_name, 
++			"@@@: ice_wait_tcp_connection %s GO",
++			pj_sockaddr_print(&rcand->addr,
++				addrinfo, sizeof(addrinfo), 3)));
+         return pj_stun_sock_connect_active(st_comp->stun[idx].sock,
+                                            &rcand->addr,
+                                            rcand->addr.addr.sa_family);
+     }
+ 
++	PJ_LOG(4,(ice_st->obj_name, 
++			"@@@: ice_wait_tcp_connection %s RET 2",
++			pj_sockaddr_print(&rcand->addr,
++				addrinfo, sizeof(addrinfo), 3)));
+     return PJ_EINVAL;
+ }
+ 
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index a71352121..b3ecb5ea8 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -587,7 +587,10 @@ static pj_bool_t parse_rx_packet(pj_activesock_t *asock,
+ 
+     pj_stun_sock *stun_sock = (pj_stun_sock*) pj_activesock_get_user_data(asock);
+     if (!stun_sock)
+-	return PJ_FALSE;
++	    return PJ_FALSE;
++    
++    PJ_LOG(4,(stun_sock->obj_name, 
++            "@@@: parse_rx_packet %p", asock));
+ 
+     pj_grp_lock_acquire(stun_sock->grp_lock);
+     pj_uint16_t parsed = 0;
+@@ -743,9 +746,12 @@ static pj_bool_t on_data_read(pj_activesock_t *asock,
+ {
+ 
+     pj_stun_sock *stun_sock;
++    
+ 
+     if (!(stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock)))
+ 	return PJ_FALSE;
++    PJ_LOG(4,(stun_sock->obj_name, 
++            "@@@: on_data_read %p %u", asock, status));
+ 
+     pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
+     /* Log socket error or disconnection */
+@@ -762,6 +768,9 @@ static pj_bool_t on_data_read(pj_activesock_t *asock,
+ 		    && cb
+ 		    && (cb->on_peer_reset_connection))
+ 		{
++            char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++            PJ_LOG(4,(stun_sock->obj_name, 
++                    "@@@: on_peer_reset_connection %p %u %s", asock, status, pj_sockaddr_print(&stun_sock->outgoing_socks[i].addr, addrinfo, sizeof(addrinfo), 3)));
+ 		    (cb->on_peer_reset_connection)(stun_sock->stun_sess,
+ 						   &stun_sock->outgoing_socks[i].addr);
+ 		}
+@@ -774,6 +783,11 @@ static pj_bool_t on_data_read(pj_activesock_t *asock,
+     for (int i = 0; i <= stun_sock->outgoing_nb; ++i)
+ 	if (stun_sock->outgoing_socks[i].sock == asock) {
+ 	    rx_addr       = &stun_sock->outgoing_socks[i].addr;
++
++        char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++        PJ_LOG(4,(stun_sock->obj_name, 
++                "@@@: on_peer_packet %u %p", status, asock));
++
+ 	    sock_addr_len = pj_sockaddr_get_len(rx_addr);
+ 	    if (cb && (cb->on_peer_packet))
+ 		(cb->on_peer_packet)(stun_sock->stun_sess,
+@@ -788,6 +802,9 @@ static pj_bool_t on_data_read(pj_activesock_t *asock,
+ 		sock_addr_len = stun_sock->incoming_socks[i].addr_len;
+ 	    }
+     }
++    
++    char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++    PJ_LOG(4,(stun_sock->obj_name,  "@@@: parse_rx_packet %s %p %u",  pj_sockaddr_print(&rx_addr, addrinfo, sizeof(addrinfo), 3), asock, status));
+     return parse_rx_packet(asock, data, size, rx_addr, sock_addr_len);
+ #else
+     pj_grp_lock_release(stun_sock->grp_lock);
+@@ -1399,9 +1416,15 @@ PJ_DECL(pj_status_t) pj_stun_sock_connect(pj_stun_sock *stun_sock,
+         pj_sockaddr_init(stun_sock->af, addr, NULL, 0);
+         pj_sockaddr_cp(addr, remote_addr);
+ 
++    
+         status = pj_activesock_start_connect(
+                                              *asock, stun_sock->pool, addr,
+                                              os->addr_len);
++        char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++        PJ_LOG(4,(stun_sock->obj_name, 
++                "@@@: pj_stun_sock_connect %s %u %p",
++                pj_sockaddr_print(&addr,
++                    addrinfo, sizeof(addrinfo), 3), status, *asock));
+         if (status == PJ_SUCCESS) {
+             on_connect_complete(*asock, status);
+         } else if (status != PJ_EPENDING) {
+@@ -1431,11 +1454,24 @@ PJ_DECL(pj_status_t) pj_stun_sock_connect_active(pj_stun_sock *stun_sock,
+ 		    pj_stun_session_callback(stun_sock->stun_sess);
+ 		(cb->on_peer_connection)(stun_sock->stun_sess, PJ_SUCCESS,
+ 					 (pj_sockaddr_t *)remote_addr);
++    
++        char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++        PJ_LOG(4,(stun_sock->obj_name, 
++                "@@@: pj_stun_sock_connect_active INCOMING %s %u",
++                pj_sockaddr_print(&remote_addr,
++                    addrinfo, sizeof(addrinfo), 3), i));
+ 		return PJ_SUCCESS;
+ 	    }
+ 	}
+     }
+ 
++    
++    char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++    PJ_LOG(4,(stun_sock->obj_name, 
++            "@@@: pj_stun_sock_connect_active %s",
++            pj_sockaddr_print(&remote_addr,
++                addrinfo, sizeof(addrinfo), 3)));
++
+     /* Create socket and bind socket */
+     stun_sock->outgoing_nb += 1;
+     int nb_check = stun_sock->outgoing_nb;
+@@ -1481,7 +1517,6 @@ PJ_DECL(pj_status_t) pj_stun_sock_close(pj_stun_sock *stun_sock,
+ PJ_DECL(pj_status_t) pj_stun_sock_close_all_except(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr)
+ {
+     stun_sock->no_new_socket = PJ_TRUE;
+-    char addrinfo[PJ_INET6_ADDRSTRLEN+8];
+     for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
+         if (stun_sock->outgoing_socks[i].sock != NULL
+         && pj_sockaddr_cmp(&stun_sock->outgoing_socks[i].addr, remote_addr) != 0) {
+@@ -1503,25 +1538,50 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status)
+     pj_stun_sock *stun_sock;
+     stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
+ 
+-    pj_sockaddr_t* remote_addr = NULL;
++        
++    PJ_LOG(4,(stun_sock->obj_name, 
++            "@@@: on_connect_completex %p", asock));
++
++    pj_sockaddr remote_addr;
++    pj_bool_t addr_found = PJ_FALSE;
++    
+     // Get remote connected address
+     for (int i = 0 ; i <= stun_sock->outgoing_nb ; ++i) {
+         if (stun_sock->outgoing_socks[i].sock == asock) {
+-            remote_addr = &stun_sock->outgoing_socks[i].addr;
++           // pj_sockaddr_init(stun_sock->af, &remote_addr, NULL, 0);
++	        pj_sockaddr_cp(&remote_addr, &stun_sock->outgoing_socks[i].addr);
++            addr_found = PJ_TRUE;
++            char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++            PJ_LOG(4,(stun_sock->obj_name, 
++                    "@@@: on_connect_complete FOUND! %p %s %u", asock, pj_sockaddr_print(&remote_addr,
++                            addrinfo, sizeof(addrinfo), 3), status));
++            break;
+         }
+     }
+-    if (!remote_addr) return PJ_FALSE;
++    if (!addr_found) {
++    PJ_LOG(4,(stun_sock->obj_name, 
++            "@@@: on_connect_complete NOT FOUD! %p", asock));
++        return PJ_FALSE;
++    }
+ 
+     pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
+     if (!cb->on_peer_connection) {
++    PJ_LOG(4,(stun_sock->obj_name, 
++            "@@@: on_connect_complete NO CB! %p", asock));
+         return PJ_FALSE;
+     }
+ 
+-    (cb->on_peer_connection)(stun_sock->stun_sess, status, remote_addr);
++
++    PJ_LOG(4,(stun_sock->obj_name, 
++            "@@@: on_peer_connection => %p %u", asock, status));
+     if (status == PJ_SUCCESS) {
+         status = pj_activesock_start_read(asock, stun_sock->pool,
+                                         stun_sock->cfg.max_pkt_size, 0);
++
++        PJ_LOG(4,(stun_sock->obj_name, 
++                "@@@: on_peer_connection => %p %u", asock, status));
+     }
++    (cb->on_peer_connection)(stun_sock->stun_sess, status, &remote_addr);
+     return status != PJ_SUCCESS;
+ }
+ 
