@@ -2324,6 +2324,7 @@ JamiAccount::connectivityChanged()
             connectionManager_->connectivityChanged();
     }
     // reset cache
+    JAMI_ERROR("@@@ RESET {}", fmt::ptr(this));
     setPublishedAddress({});
 }
 
@@ -3271,6 +3272,7 @@ JamiAccount::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexce
                                                             publishedAddr.getFamily());
             if (interfaceAddr) {
                 opts.accountLocalAddr = interfaceAddr;
+                JAMI_ERROR("@@@ PUB {}", publishedAddr.toString());
                 opts.accountPublicAddr = publishedAddr;
             }
         }
@@ -3289,9 +3291,9 @@ JamiAccount::storeActiveIpAddress(std::function<void()>&& cb)
             if (family == AF_INET) {
                 if (not hasIpv4) {
                     hasIpv4 = true;
-                    JAMI_DBG("[Account %s] Store DHT public IPv4 address : %s",
-                             getAccountID().c_str(),
-                             result.toString().c_str());
+                    JAMI_DEBUG("[Account {:s}] Store DHT public IPv4 address : {:s}",
+                             getAccountID(),
+                             result.toString());
                     setPublishedAddress(*result.get());
                     if (upnpCtrl_) {
                         upnpCtrl_->setPublicAddress(*result.get());
@@ -3300,9 +3302,9 @@ JamiAccount::storeActiveIpAddress(std::function<void()>&& cb)
             } else if (family == AF_INET6) {
                 if (not hasIpv6) {
                     hasIpv6 = true;
-                    JAMI_DBG("[Account %s] Store DHT public IPv6 address : %s",
-                             getAccountID().c_str(),
-                             result.toString().c_str());
+                    JAMI_DEBUG("[Account {:s}] Store DHT public IPv6 address : {:s}",
+                             getAccountID(),
+                             result.toString());
                     setPublishedAddress(*result.get());
                 }
             }

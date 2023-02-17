@@ -245,7 +245,7 @@ setSipLogLevel()
     int level = 0;
 #endif
 
-    pj_log_set_level(level);
+    pj_log_set_level(5);
     pj_log_set_log_func([](int level, const char* data, int /*len*/) {
         if (level < 2)
             JAMI_ERR() << data;
