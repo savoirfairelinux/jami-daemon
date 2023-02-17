@@ -871,6 +871,7 @@ TlsSession::TlsSessionImpl::sendRaw(const void* buf, size_t size)
     unsigned retry_count = 0;
     do {
         auto n = transport_->write(reinterpret_cast<const ValueType*>(buf), size, ec);
+        JAMI_ERROR("@@@ TlsSessionImpl::sendRaw {} - n: {} - size: {}", fmt::ptr(this), n, size);
         if (!ec) {
             // log only on success
             ++stTxRawPacketCnt_;
@@ -1631,6 +1632,7 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
             if (!pimpl_->session_)
                 return 0;
             ret = gnutls_record_recv(pimpl_->session_, data, size);
+            JAMI_ERROR("@@@ TlsSession::read {} - ret: {} - size: {}", fmt::ptr(this), ret, size);
         }
         if (ret > 0) {
             ec.clear();

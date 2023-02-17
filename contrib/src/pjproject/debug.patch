@@ -1,0 +1,157 @@
+ pjnath/src/pjnath/ice_session.c | 47 +++++++++++++++++++++++++++--------------------
+ pjnath/src/pjnath/stun_sock.c   | 20 ++++++++++++--------
+ 2 files changed, 39 insertions(+), 28 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 3e778be3e..7e466d5ac 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2683,7 +2683,7 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+             if (ice->timer_connect.id != TIMER_NONE) {
+                 pj_assert(!"Not expected any timer active");
+             } else {
+-                LOG5((ice->obj_name, 
++                LOG5((ice->obj_name,
+                     "Scheduling connection time-out for check %s", 
+                     dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), clist, check)));
+ 
+@@ -3100,7 +3100,7 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+ 				    void *token,
+ 				    const void *pkt,
+ 				    pj_size_t pkt_size,
+-				    const pj_sockaddr_t *dst_addr,
++					const pj_sockaddr_t *dst_addr,
+ 				    unsigned addr_len)
+ {
+     stun_data *sd = (stun_data*) pj_stun_session_get_user_data(sess);
+@@ -3159,7 +3159,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+     // connectivity check) This should trigger on_stun_request_complete when
+     // finished
+     if (!remote_addr)
+-	return;
++		return;
+ 
+     pj_grp_lock_acquire(ice->grp_lock);
+ 
+@@ -3167,16 +3167,16 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+     pj_ice_sess_check *check = get_current_check_at_state(ice,remote_addr,
+ 							  PJ_ICE_SESS_CHECK_STATE_PENDING,
+ 							  &current_check);
+-    if (!check) {
+-	// Handle peer reflexive candidates (incoming are still waiting here)
+-	check = get_current_check_at_state(ice, remote_addr,
+-					   PJ_ICE_SESS_CHECK_STATE_WAITING,
+-					   &current_check);
+ 	if (!check) {
+-	    pj_grp_lock_release(ice->grp_lock);
+-	    return;
++		// Handle peer reflexive candidates (incoming are still waiting here)
++		check = get_current_check_at_state(ice, remote_addr,
++					PJ_ICE_SESS_CHECK_STATE_WAITING,
++					&current_check);
++		if (!check) {
++			pj_grp_lock_release(ice->grp_lock);
++			return;
++		}
+ 	}
+-    }
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+     if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED && (
+@@ -3305,22 +3305,29 @@ void ice_sess_on_peer_reset_connection(pj_ice_sess *ice,
+ {
+     // The TCP link is reset
+     if (!remote_addr)
+-	return;
++		return;
+ 
+     pj_grp_lock_acquire(ice->grp_lock);
+     pj_ice_sess_check *check = get_current_check_at_state(ice, remote_addr,
+ 							  PJ_ICE_SESS_CHECK_STATE_PENDING,
+ 							  NULL);
+-    if (!check) {
+-	// Just check if it's not the first packet failing
+-	check = get_current_check_at_state(ice, remote_addr,
+-					   PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+-					   NULL);
+ 	if (!check) {
+-	    pj_grp_lock_release(ice->grp_lock);
+-	    return;
++		// Handle peer reflexive candidates (incoming are still waiting here)
++		check = get_current_check_at_state(ice, remote_addr,
++					   PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
++					   NULL);
++
++		if (!check) {
++			// Just check if it's not the first packet failing
++			check = get_current_check_at_state(ice, remote_addr,
++							PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
++							NULL);
++			if (!check) {
++				pj_grp_lock_release(ice->grp_lock);
++				return;
++			}
++		}
+ 	}
+-    }
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+     if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index a71352121..56972b2e1 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -587,7 +587,7 @@ static pj_bool_t parse_rx_packet(pj_activesock_t *asock,
+ 
+     pj_stun_sock *stun_sock = (pj_stun_sock*) pj_activesock_get_user_data(asock);
+     if (!stun_sock)
+-	return PJ_FALSE;
++	    return PJ_FALSE;
+ 
+     pj_grp_lock_acquire(stun_sock->grp_lock);
+     pj_uint16_t parsed = 0;
+@@ -1481,7 +1481,6 @@ PJ_DECL(pj_status_t) pj_stun_sock_close(pj_stun_sock *stun_sock,
+ PJ_DECL(pj_status_t) pj_stun_sock_close_all_except(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr)
+ {
+     stun_sock->no_new_socket = PJ_TRUE;
+-    char addrinfo[PJ_INET6_ADDRSTRLEN+8];
+     for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
+         if (stun_sock->outgoing_socks[i].sock != NULL
+         && pj_sockaddr_cmp(&stun_sock->outgoing_socks[i].addr, remote_addr) != 0) {
+@@ -1503,25 +1502,30 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status)
+     pj_stun_sock *stun_sock;
+     stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
+ 
+-    pj_sockaddr_t* remote_addr = NULL;
++    pj_sockaddr remote_addr;
++    pj_bool_t addr_found = PJ_FALSE;
++
+     // Get remote connected address
+     for (int i = 0 ; i <= stun_sock->outgoing_nb ; ++i) {
+         if (stun_sock->outgoing_socks[i].sock == asock) {
+-            remote_addr = &stun_sock->outgoing_socks[i].addr;
++            pj_sockaddr_cp(&remote_addr, &stun_sock->outgoing_socks[i].addr);
++            addr_found = PJ_TRUE;
++            break;
+         }
+     }
+-    if (!remote_addr) return PJ_FALSE;
++    if (!addr_found)
++        return PJ_FALSE;
+ 
+     pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
+-    if (!cb->on_peer_connection) {
++    if (!cb->on_peer_connection)
+         return PJ_FALSE;
+-    }
+ 
+-    (cb->on_peer_connection)(stun_sock->stun_sess, status, remote_addr);
++
+     if (status == PJ_SUCCESS) {
+         status = pj_activesock_start_read(asock, stun_sock->pool,
+                                         stun_sock->cfg.max_pkt_size, 0);
+     }
++    (cb->on_peer_connection)(stun_sock->stun_sess, status, &remote_addr);
+     return status != PJ_SUCCESS;
+ }
+ 
