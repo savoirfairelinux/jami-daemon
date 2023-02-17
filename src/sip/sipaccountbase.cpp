@@ -317,8 +317,10 @@ SIPAccountBase::onTextMessage(const std::string& id,
 IpAddr
 SIPAccountBase::getPublishedIpAddress(uint16_t family) const
 {
-    if (family == AF_INET)
+    if (family == AF_INET) {
+        JAMI_ERROR("@@@ DAT {} {}", getAccountID(), publishedIp_[0].toString());
         return publishedIp_[0];
+    }
     if (family == AF_INET6)
         return publishedIp_[1];
 
@@ -326,8 +328,11 @@ SIPAccountBase::getPublishedIpAddress(uint16_t family) const
 
     // If family is not set, prefere IPv4 if available. It's more
     // likely to succeed behind NAT.
-    if (publishedIp_[0])
+    if (publishedIp_[0]) {
+        JAMI_ERROR("@@@ DAT {} {}", getAccountID(), publishedIp_[0].toString());
+
         return publishedIp_[0];
+    }
     if (publishedIp_[1])
         return publishedIp_[1];
     return {};
@@ -338,6 +343,7 @@ SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
 {
     if (ip_addr.getFamily() == AF_INET) {
         publishedIp_[0] = ip_addr;
+        JAMI_ERROR("@@@ SET {} {}", getAccountID(), publishedIp_[0].toString());
     } else {
         publishedIp_[1] = ip_addr;
     }
