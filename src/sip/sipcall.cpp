@@ -931,6 +931,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
             auto publicAddr = account->getPublishedIpAddress();
 
             if (publicAddr) {
+                JAMI_ERROR("@@@ PUB {}", publicAddr.toString());
                 opts.accountPublicAddr = publicAddr;
                 if (auto interfaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                                     publicAddr.getFamily())) {
@@ -3426,14 +3427,16 @@ SIPCall::setupIceResponse(bool isReinvite)
 
     // Try to use the discovered public address. If not available,
     // fallback on local address.
+    JAMI_ERROR("@@@ PUB {}", account->getPublishedIpAddress().toString());
     opt.accountPublicAddr = account->getPublishedIpAddress();
-    if (opt.accountLocalAddr) {
+    if (opt.accountPublicAddr) {
         opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                           opt.accountPublicAddr.getFamily());
     } else {
         // Just set the local address for both, most likely the account is not
         // registered.
         opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), AF_INET);
+        JAMI_ERROR("@@@ PUB {}", opt.accountLocalAddr.toString());
         opt.accountPublicAddr = opt.accountLocalAddr;
     }
 
