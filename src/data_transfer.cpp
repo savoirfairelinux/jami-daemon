@@ -203,13 +203,13 @@ IncomingFile::process()
         auto shared = w.lock();
         if (!shared)
             return;
-        auto correct = shared->sha3Sum_.empty();
         auto isEOF = shared->info_.bytesProgress == shared->info_.totalSize;
         if (shared->stream_ && shared->stream_.is_open()) {
             isEOF |= shared->stream_.eof();
             shared->stream_.close();
         }
-        if (!correct) {
+        auto correct = isEOF && shared->sha3Sum_.empty();
+        if (!correct && !shared->sha3Sum_.empty()) {
             // Verify shaSum
             auto sha3Sum = fileutils::sha3File(shared->info_.path);
             if (shared->sha3Sum_ == sha3Sum) {
@@ -306,7 +306,8 @@ TransferManager::transferFile(const std::shared_ptr<ChannelSocket>& channel,
                               const std::string& interactionId,
                               const std::string& path,
                               size_t start,
-                              size_t end)
+                              size_t end,
+                              OnFinishedCb onFinished)
 {
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     if (pimpl_->outgoings_.find(channel) != pimpl_->outgoings_.end())
@@ -316,7 +317,10 @@ TransferManager::transferFile(const std::shared_ptr<ChannelSocket>& channel,
     info.conversationId = pimpl_->to_;
     info.path = path;
     auto f = std::make_shared<OutgoingFile>(channel, fileId, interactionId, info, start, end);
-    f->onFinished([w = weak(), channel](uint32_t) {
+    f->onFinished([w = weak(), channel, onFinished = std::move(onFinished)](uint32_t code) {
+        if (code == uint32_t(libjami::DataTransferEventCode::finished) && onFinished) {
+            onFinished();
+        }
         // schedule destroy outgoing transfer as not needed
         dht::ThreadPool().computation().run([w, channel] {
             if (auto sthis_ = w.lock()) {

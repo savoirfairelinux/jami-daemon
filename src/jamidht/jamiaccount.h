@@ -58,6 +58,7 @@
 #include <pjsip/sip_types.h>
 
 #include <chrono>
+#include <functional>
 #include <future>
 #include <json/json.h>
 #include <list>
@@ -518,7 +519,8 @@ public:
                       const std::string& fileId,
                       const std::string& interactionId,
                       size_t start = 0,
-                      size_t end = 0);
+                      size_t end = 0,
+                      std::function<void()> onFinished = {});
 
     void askForFileChannel(const std::string& conversationId,
                            const std::string& deviceId,

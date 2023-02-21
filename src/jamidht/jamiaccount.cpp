@@ -3687,18 +3687,19 @@ JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, 
         return;
     }
     // We need a new channel
-    transferFile(convId, profilePath(), deviceId, "profile.vcf", "");
-    // Mark the VCard as sent
-    auto sendDir = fmt::format("{}/{}/vcard/{}",
-                                fileutils::get_cache_dir(),
-                                getAccountID(),
-                                peerUri);
-    auto path = fmt::format("{}/{}", sendDir, deviceId);
-    fileutils::recursive_mkdir(sendDir);
-    std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
-    if (fileutils::isFile(path))
-        return;
-    fileutils::ofstream(path);
+    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, std::move([accId = getAccountID(), peerUri, deviceId]() {
+        // Mark the VCard as sent
+        auto sendDir = fmt::format("{}/{}/vcard/{}",
+                                    fileutils::get_cache_dir(),
+                                    accId,
+                                    peerUri);
+        auto path = fmt::format("{}/{}", sendDir, deviceId);
+        fileutils::recursive_mkdir(sendDir);
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
+        if (fileutils::isFile(path))
+            return;
+        fileutils::ofstream(path);
+    }));
 }
 
 bool
@@ -4001,7 +4002,8 @@ JamiAccount::transferFile(const std::string& conversationId,
                           const std::string& fileId,
                           const std::string& interactionId,
                           size_t start,
-                          size_t end)
+                          size_t end,
+                          std::function<void()> onFinished)
 {
     auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf", DATA_TRANSFER_URI)
                         : fmt::format("{}{}/{}/{}",
@@ -4015,7 +4017,7 @@ JamiAccount::transferFile(const std::string& conversationId,
     connectionManager_->connectDevice(
         DeviceId(deviceId),
         channelName,
-        [this, conversationId, path = std::move(path), fileId, interactionId, start, end](
+        [this, conversationId, path = std::move(path), fileId, interactionId, start, end, onFinished = std::move(onFinished)](
             std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
             if (!socket)
                 return;
@@ -4026,10 +4028,11 @@ JamiAccount::transferFile(const std::string& conversationId,
                                        fileId,
                                        interactionId,
                                        start,
-                                       end] {
+                                       end,
+                                       onFinished = std::move(onFinished)] {
                 if (auto shared = w.lock())
                     if (auto dt = shared->dataTransfer(conversationId))
-                        dt->transferFile(socket, fileId, interactionId, path, start, end);
+                        dt->transferFile(socket, fileId, interactionId, path, start, end, std::move(onFinished));
             });
         });
 }
