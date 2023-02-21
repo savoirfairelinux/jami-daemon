@@ -24,10 +24,11 @@
 #include "connectivity/multiplexed_socket.h"
 #include "noncopyable.h"
 
-#include <memory>
-#include <string>
 #include <fstream>
+#include <functional>
+#include <memory>
 #include <optional>
+#include <string>
 
 namespace jami {
 
@@ -52,6 +53,7 @@ struct WaitingRequest
 };
 
 typedef std::function<void(const std::string&)> InternalCompletionCb;
+typedef std::function<void()> OnFinishedCb;
 
 class FileInfo
 {
@@ -137,7 +139,8 @@ public:
                       const std::string& interactionId,
                       const std::string& path,
                       size_t start = 0,
-                      size_t end = 0);
+                      size_t end = 0,
+                      OnFinishedCb onFinished = {});
 
     /**
      * Refuse a transfer
