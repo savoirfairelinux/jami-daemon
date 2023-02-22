@@ -52,7 +52,7 @@ if(NOT MSVC)
             COMMAND ./bootstrap
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
         execute_process(
-            COMMAND make ${CONTRIB_BUILD_FLAGS}
+            COMMAND make ${CONTRIB_BUILD_FLAGS} .automake
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extras/tools)
         execute_process(
             COMMAND make .pkg-config
