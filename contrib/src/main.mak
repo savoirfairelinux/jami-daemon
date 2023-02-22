@@ -540,8 +540,8 @@ endif
 ifdef HAVE_CROSS_COMPILE
 	echo "set(_CMAKE_TOOLCHAIN_PREFIX $(CROSS_COMPILE))" >> $@
 endif
-	echo "set(CMAKE_C_COMPILER \"$(CC)\")" >> $@
-	echo "set(CMAKE_CXX_COMPILER \"$(CXX)\")" >> $@
+#	echo "set(CMAKE_C_COMPILER \"$(CC)\")" >> $@
+#	echo "set(CMAKE_CXX_COMPILER \"$(CXX)\")" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH $(PREFIX))" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)" >> $@
