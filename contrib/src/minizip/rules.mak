@@ -1,5 +1,5 @@
 # MINIZIP
-LIBMINIZIP_VERSION := 3.0.0
+LIBMINIZIP_VERSION := 3.0.8
 LIBMINIZIP_URL := https://github.com/zlib-ng/minizip-ng/archive/refs/tags/$(LIBMINIZIP_VERSION).tar.gz
 
 ifdef HAVE_MACOSX
@@ -7,9 +7,9 @@ PKGS += minizip
 ifeq ($(call need_pkg,"minizip >= 3.0.0"),)
 PKGS_FOUND += minizip
 endif
+DEPS_minizip = zlib iconv
 endif
 
-DEPS_minizip = zlib iconv
 
 LIBMINIZIP_CMAKECONF := \
 		-DCMAKE_BUILD_TYPE=Release \
