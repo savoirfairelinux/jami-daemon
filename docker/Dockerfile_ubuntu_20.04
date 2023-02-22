@@ -73,6 +73,7 @@ RUN add-apt-repository universe && \
         libasio-dev \
         libexpat1 libexpat1-dev \
         lcov gcovr \
+        libxcb-shape0-dev \
         ninja-build
 
 RUN apt-get install -y python3 python3-pip python3-setuptools \
