@@ -472,14 +472,13 @@ else()
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
     list(APPEND CMAKE_PREFIX_PATH ${CONTRIB_PATH})
 
-    find_package (jsoncpp REQUIRED)
-    find_package (yaml-cpp REQUIRED)
+    find_package (jsoncpp CONFIG REQUIRED)
+    find_package (yaml-cpp CONFIG REQUIRED)
     pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
-    pkg_search_module (webrtcap REQUIRED IMPORTED_TARGET webrtc-audio-processing)
+    pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing)
     pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
     pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
     pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
-    pkg_search_module (archive REQUIRED IMPORTED_TARGET libarchive)
     pkg_search_module (secp256k1 REQUIRED IMPORTED_TARGET libsecp256k1)
     pkg_search_module (pjproject REQUIRED IMPORTED_TARGET libpjproject)
     pkg_search_module (avformat REQUIRED IMPORTED_TARGET libavformat)
@@ -489,14 +488,19 @@ else()
     pkg_search_module (swresample REQUIRED IMPORTED_TARGET libswresample)
     pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale)
     pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil)
+    if (JAMI_PLUGIN)
+        if (APPLE)
+            pkg_search_module (archive REQUIRED IMPORTED_TARGET minizip)
+        else()
+            pkg_search_module (archive REQUIRED IMPORTED_TARGET libarchive)
+        endif()
+    endif()
 
     target_link_libraries(${PROJECT_NAME} PRIVATE
         PkgConfig::opendht
         PkgConfig::pjproject
         PkgConfig::git2
-        PkgConfig::archive
         PkgConfig::gnutls
-        PkgConfig::webrtcap
         PkgConfig::avformat
         PkgConfig::avdevice
         PkgConfig::avfilter
@@ -539,6 +543,14 @@ else()
     endif()
     if (JAMI_PUPNP)
         target_link_libraries(${PROJECT_NAME} PRIVATE upnp)
+    endif()
+    if (JAMI_PLUGIN)
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::archive)
+    endif()
+    if (webrtcap_FOUND)
+        target_sources(${PROJECT_NAME} PRIVATE ${Source_Files__media__audio__webrtc} )
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::webrtcap)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
     endif()
 
     if (JAMI_JNI)
