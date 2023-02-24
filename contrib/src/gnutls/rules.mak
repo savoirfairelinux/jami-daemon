@@ -9,6 +9,8 @@ ifeq ($(call need_pkg,"gnutls >= 3.6.7"),)
 PKGS_FOUND += gnutls
 endif
 
+DEPS_gnutls = nettle gmp iconv zlib
+
 $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 	$(call download,$(GNUTLS_URL))
 
@@ -49,8 +51,6 @@ ifdef HAVE_IOS
 	--without-brotli \
 	--without-zstd
 endif
-
-DEPS_gnutls = gmp nettle iconv
 
 
 #Workaround for localtime_r function

@@ -7,6 +7,7 @@ PKGS += nettle
 ifeq ($(call need_pkg,"nettle >= 3.6"),)
 PKGS_FOUND += nettle
 endif
+DEPS_nettle = gmp
 
 $(TARBALLS)/nettle-$(NETTLE_VERSION).tar.gz:
 	$(call download,$(NETTLE_URL))
@@ -18,7 +19,7 @@ nettle: nettle-$(NETTLE_VERSION).tar.gz .sum-nettle
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-DEPS_nettle = gmp
+
 
 .nettle: nettle
 ifdef HAVE_IOS
