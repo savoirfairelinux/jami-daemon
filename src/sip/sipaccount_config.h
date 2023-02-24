@@ -45,7 +45,7 @@ struct SipAccountConfig : public SipAccountBaseConfig {
     /**
      * interface name on which this account is bound
      */
-    std::string interface;
+    std::string interface {ip_utils::DEFAULT_INTERFACE};
 
     /**
      * Determine if STUN public address resolution is required to register this account. In this

@@ -1959,7 +1959,7 @@ SIPAccount::createBindingAddress()
     const auto& conf = config();
 
     IpAddr ret = conf.bindAddress.empty()
-                     ? (conf.interface == ip_utils::DEFAULT_INTERFACE
+                     ? (conf.interface == ip_utils::DEFAULT_INTERFACE || conf.interface.empty()
                             ? ip_utils::getAnyHostAddr(family)
                             : ip_utils::getInterfaceAddr(getLocalInterface(), family))
                      : IpAddr(conf.bindAddress, family);
