@@ -6,13 +6,11 @@ ifndef HAVE_MACOSX
 PKGS += libarchive
 ifeq ($(call need_pkg,"libarchive >= 3.4.0"),)
 PKGS_FOUND += libarchive
-else
-DEPS_libarchive += nettle
 endif
 endif
+DEPS_libarchive += nettle gmp zlib
 
 LIBARCHIVE_CMAKECONF := \
-		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_LIBDIR=lib \
 		-DENABLE_TEST=OFF \
 		-DENABLE_TAR=OFF \
