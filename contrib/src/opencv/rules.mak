@@ -7,7 +7,6 @@ DEPS_opencv += opencv_contrib
 
 OPENCV_CMAKECONF := \
 		-DWITH_FFMPEG=OFF \
-		-DCMAKE_BUILD_TYPE=RELEASE \
 		-DCMAKE_INSTALL_LIBDIR=lib \
 		-DBUILD_SHARED_LIBS=no \
 		-DOPENCV_EXTRA_MODULES_PATH="./../../${HOST}/../opencv_contrib/modules" \
