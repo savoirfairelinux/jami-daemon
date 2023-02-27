@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e72d945d_65cc3a6c",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-02-27T15:45:25Z",
+      "side": 1,
+      "message": "only during cross compilation ?",
+      "range": {
+        "startLine": 284,
+        "startChar": 0,
+        "endLine": 284,
+        "endChar": 23
+      },
+      "revId": "4719c72b0613d5a75b6b991cf7f62e04738355a1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
