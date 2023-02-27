@@ -108,11 +108,42 @@ PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
         deviceInfo = Pa_GetDeviceInfo(i);
         JAMI_DBG("PortAudio device: %d, %s", i, deviceInfo->name);
     }
+
+    HRESULT hr = CoInitialize(NULL);
+
+    // Create an instance of the IMMDeviceEnumerator interface
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL,
+        __uuidof(IMMDeviceEnumerator), (void**)&pDevEnumerator_);
+
+    // Register for device notifications
+    pNotificationClient_ = new CMyNotificationClient;
+    hr = pDevEnumerator_->RegisterEndpointNotificationCallback(pNotificationClient_);
+
+    // Parse message loop on a separate thread
+    hotplugThread_ = std::thread([]() {
+        MSG msg;
+        while (GetMessage(&msg, NULL, 0, 0)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    });
 }
 
 PortAudioLayer::~PortAudioLayer()
 {
     stopStream();
+
+    // Unregister for device notifications
+    HRESULT hr = pDevEnumerator_->UnregisterEndpointNotificationCallback(pNotificationClient_);
+    pNotificationClient_->Release();
+    pDevEnumerator_->Release();
+
+    // Terminate message loop thread
+    PostThreadMessage(GetThreadId(hotplugThread_.native_handle()), WM_QUIT, 0, 0);
+    hotplugThread_.join();
+
+    CoUninitialize();
+
 }
 
 std::vector<std::string>
