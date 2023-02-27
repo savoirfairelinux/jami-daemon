@@ -23,11 +23,109 @@
 
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
+#include "manager.h"
+
+#include <mmdeviceapi.h>
+#include <Functiondiscoverykeys_devpkey.h>
 
 #include <memory>
 #include <array>
 
 namespace jami {
+
+#if !defined(SAFE_RELEASE)
+#define SAFE_RELEASE(punk)  \
+          if ((punk) != NULL)  \
+            { (punk)->Release(); (punk) = NULL; }
+#endif
+
+class CMyNotificationClient : public IMMNotificationClient
+{
+    LONG _cRef;
+
+public:
+    CMyNotificationClient() :
+        _cRef(1)
+    {
+    }
+
+    ULONG STDMETHODCALLTYPE AddRef()
+    {
+        return InterlockedIncrement(&_cRef);
+    }
+
+    ULONG STDMETHODCALLTYPE Release()
+    {
+        ULONG ulRef = InterlockedDecrement(&_cRef);
+        if (0 == ulRef)
+        {
+            delete this;
+        }
+        return ulRef;
+    }
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(
+                                REFIID riid, VOID **ppvInterface)
+    {
+        if (IID_IUnknown == riid)
+        {
+            AddRef();
+            *ppvInterface = (IUnknown*)this;
+        }
+        else if (__uuidof(IMMNotificationClient) == riid)
+        {
+            AddRef();
+            *ppvInterface = (IMMNotificationClient*)this;
+        }
+        else
+        {
+            *ppvInterface = NULL;
+            return E_NOINTERFACE;
+        }
+        return S_OK;
+    }
+
+    // Called when an audio endpoint device is added
+    HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId)
+    {
+        JAMI_DBG() << "************ADD EVENT*******************";
+        return S_OK;
+    }
+
+    // Called when an audio endpoint device is removed
+    HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId)
+    {
+        JAMI_DBG() << "************REMOVE EVENT*******************";
+        return S_OK;
+    }
+
+    // Notifies that the default audio endpoint device for a particular role has changed.
+    HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId)
+    {
+        // Implement this function here
+        JAMI_DBG() << "************OnDefaultDeviceChanged*******************";
+        return S_OK;
+    }
+
+    // Notifies that the state of an audio endpoint device has changed.
+    HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState)
+    {
+        // Implement this function here
+        if (dwNewState == DEVICE_STATE_ACTIVE) {
+            JAMI_DBG() << "************OnDeviceStateChanged*******************";
+            auto currentPlugin = Manager::instance().getCurrentAudioOutputPlugin();
+            Manager::instance().setAudioPlugin(currentPlugin);
+        }
+        return S_OK;
+    }
+
+    // Notifies that the properties of an audio endpoint device have changed.
+    HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key)
+    {
+        // Implement this function here
+        return S_OK;
+    }
+};
 
 class PortAudioLayer final : public AudioLayer
 {
@@ -62,6 +160,10 @@ private:
 
     struct PortAudioLayerImpl;
     std::unique_ptr<PortAudioLayerImpl> pimpl_;
+
+    IMMDeviceEnumerator* pDevEnumerator_ {nullptr};
+    CMyNotificationClient* pNotificationClient_;
+    std::thread hotplugThread_;
 };
 
 } // namespace jami
