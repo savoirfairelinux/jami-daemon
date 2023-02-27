@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "73067273_a2264c2f",
+        "filename": "src/manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2559,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-02-27T14:17:52Z",
+      "side": 1,
+      "message": "not related to the patch objective but:\n\n1. alice starts videocall and bob starts audio call slightly after alice, then final call will be audio only\n\n2. alice starts audiocall and bob starts video call slightly after alice, then final call will be audio + video\n\nimho, 1 should have alice sending and bob receiving but not sending and 2, the opposite.",
+      "range": {
+        "startLine": 2553,
+        "startChar": 12,
+        "endLine": 2559,
+        "endChar": 80
+      },
+      "revId": "bc7b12cd73617b52c3dae041d265ccbeb76dedb2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
