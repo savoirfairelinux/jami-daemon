@@ -103,6 +103,9 @@ PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
         deviceInfo = Pa_GetDeviceInfo(i);
         JAMI_DBG("PortAudio device: %d, %s", i, deviceInfo->name);
     }
+
+    // Notify of device changes in case this layer was reset based on a hotplug event.
+    devicesChanged();
 }
 
 PortAudioLayer::~PortAudioLayer()
