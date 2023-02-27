@@ -50,8 +50,8 @@ struct SyncMsg
 using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
 using NeedSocketCb
     = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
-using SengMsgCb
-    = std::function<uint64_t(const std::string&, std::map<std::string, std::string>, uint64_t)>;
+using SengMsgCb = std::function<
+    uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
 using UpdateConvReq = std::function<void(const std::string&, const std::string&, bool)>;
 
@@ -70,6 +70,17 @@ public:
      * Refresh informations about conversations
      */
     void loadConversations();
+
+#ifdef LIBJAMI_TESTABLE
+    void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);
+#endif
+
+    void monitor();
+
+    /**
+     * Bootstrap swarm managers to other peers
+     */
+    void bootstrap();
 
     /**
      * Clear not removed fetch
