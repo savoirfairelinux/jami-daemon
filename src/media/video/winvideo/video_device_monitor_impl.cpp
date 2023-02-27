@@ -23,6 +23,7 @@
 #include "logger.h"
 #include "noncopyable.h"
 #include "string_utils.h"
+#include "manager.h"
 
 #include <dshow.h>
 #include <dbt.h>
@@ -39,6 +40,10 @@ namespace video {
 
 constexpr GUID guidCamera
     = {0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44};
+
+// HACK: use this monitor to detect audio device changes also
+constexpr GUID guidAudio
+    = {0x65e8773d, 0x8f56, 0x11d0, 0xa3, 0xb9, 0x00, 0xa0, 0xc9, 0x22, 0x31, 0x96};
 
 class VideoDeviceMonitorImpl
 {
@@ -101,25 +106,14 @@ getDeviceUniqueName(PDEV_BROADCAST_DEVICEINTERFACE_A pbdi)
 }
 
 bool
-registerDeviceInterfaceToHwnd(HWND hWnd, HDEVNOTIFY* hDeviceNotify)
+registerDeviceInterfaceToHwnd(HWND hWnd, HDEVNOTIFY* hDeviceNotify, GUID guid)
 {
-    // Use a guid for cameras specifically in order to not get spammed
-    // with device messages.
-    // These are pertinent GUIDs for media devices:
-    //
-    // usb interfaces   { 0xa5dcbf10l, 0x6530, 0x11d2, 0x90, 0x1f, 0x00, 0xc0, 0x4f, 0xb9, 0x51,
-    // 0xed }; image devices    { 0x6bdd1fc6,  0x810f, 0x11d0, 0xbe, 0xc7, 0x08, 0x00, 0x2b, 0xe2,
-    // 0x09, 0x2f }; capture devices  { 0x65e8773d,  0x8f56, 0x11d0, 0xa3, 0xb9, 0x00, 0xa0, 0xc9,
-    // 0x22, 0x31, 0x96 }; camera devices   { 0xe5323777,  0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46,
-    // 0x99, 0xc4, 0x6e, 0x44 }; audio devices    { 0x6994ad04,  0x93ef, 0x11d0, 0xa3, 0xcc, 0x00,
-    // 0xa0, 0xc9, 0x22, 0x31, 0x96 };
-
     DEV_BROADCAST_DEVICEINTERFACE NotificationFilter;
 
     ZeroMemory(&NotificationFilter, sizeof(NotificationFilter));
     NotificationFilter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
     NotificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-    NotificationFilter.dbcc_classguid = guidCamera;
+    NotificationFilter.dbcc_classguid = guid;
 
     *hDeviceNotify = RegisterDeviceNotification(hWnd,
                                                 &NotificationFilter,
@@ -147,7 +141,8 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
         SetLastError(0);
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
-        if (!registerDeviceInterfaceToHwnd(hWnd, &hDeviceNotify)) {
+        if (!registerDeviceInterfaceToHwnd(hWnd, &hDeviceNotify, guidCamera) ||
+            !registerDeviceInterfaceToHwnd(hWnd, &hDeviceNotify, guidAudio)) {
             JAMI_ERR() << "Cannot register for device change notifications";
             SendMessage(hWnd, WM_DESTROY, 0, 0);
         }
@@ -158,20 +153,28 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
         case DBT_DEVICEREMOVECOMPLETE:
         case DBT_DEVICEARRIVAL: {
             PDEV_BROADCAST_DEVICEINTERFACE_A pbdi = (PDEV_BROADCAST_DEVICEINTERFACE_A) lParam;
-            auto unique_name = getDeviceUniqueName(pbdi);
-            if (!unique_name.empty()) {
-                JAMI_DBG() << unique_name
-                           << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
-                if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(
-                        GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
-                    if (wParam == DBT_DEVICEARRIVAL) {
-                        auto captureDeviceList = pThis->enumerateVideoInputDevices();
-                        for (auto id : captureDeviceList) {
-                            if (id.find(unique_name) != std::string::npos)
-                                pThis->monitor_->addDevice(id);
+            auto deviceGuid = pbdi->dbcc_classguid;
+            if (IsEqualGUID(deviceGuid, guidAudio)) {
+                // Force a refresh of the audio plugin as USB cameras can be used as audio
+                // input devices.
+                auto currentPlugin = Manager::instance().getCurrentAudioOutputPlugin();
+                Manager::instance().setAudioPlugin(currentPlugin);
+            } else if (IsEqualGUID(deviceGuid, guidCamera)) {
+                auto unique_name = getDeviceUniqueName(pbdi);
+                if (!unique_name.empty()) {
+                    JAMI_DBG() << unique_name
+                            << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
+                    if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(
+                            GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
+                        if (wParam == DBT_DEVICEARRIVAL) {
+                            auto captureDeviceList = pThis->enumerateVideoInputDevices();
+                            for (auto id : captureDeviceList) {
+                                if (id.find(unique_name) != std::string::npos)
+                                    pThis->monitor_->addDevice(id);
+                            }
+                        } else if (wParam == DBT_DEVICEREMOVECOMPLETE) {
+                            pThis->monitor_->removeDevice(unique_name);
                         }
-                    } else if (wParam == DBT_DEVICEREMOVECOMPLETE) {
-                        pThis->monitor_->removeDevice(unique_name);
                     }
                 }
             }
