@@ -37,6 +37,7 @@
 
 using namespace std::literals::chrono_literals;
 using namespace libjami::Account;
+using namespace std::literals::chrono_literals;
 
 namespace jami {
 namespace test {
@@ -738,18 +739,17 @@ FileTransferTest::testAskToMultipleParticipants()
 
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    requestReceived = false;
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
         return conversationReady && memberJoin;
     }));
 
-    requestReceived = false;
     conversationReady = false;
     memberJoin = false;
-
-    libjami::addConversationMember(aliceId, convId, carlaUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
 
     libjami::acceptConversationRequest(carlaId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
