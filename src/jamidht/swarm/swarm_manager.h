@@ -94,7 +94,10 @@ public:
      */
     void maintainBuckets();
 
-    bool hasChannel(const NodeId& deviceId);
+    /**
+     * Check if we're connected with a specific device
+     */
+    bool isConnectedWith(const NodeId& deviceId);
 
 private:
     /**
