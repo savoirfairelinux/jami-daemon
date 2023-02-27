@@ -2207,33 +2207,31 @@ JamiAccount::convModule()
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
                     }
-                    shared->connectionManager_
-                        ->connectDevice(DeviceId(deviceId),
-                                        fmt::format("swarm://{}", convId),
-                                        [w, cb](std::shared_ptr<ChannelSocket> socket,
-                                                const DeviceId& deviceId) {
-                                            if (socket) {
-                                                // It's possible to have a swarm socket, but not a
-                                                // SIP one opened. We can quickly open this
-                                                // connection has it will trigger syncing.
-                                                auto shared = w.lock();
-                                                if (!shared)
-                                                    return;
-                                                auto remoteCert = socket->peerCertificate();
-                                                auto uri = remoteCert->issuer->getId().toString();
-                                                std::unique_lock<std::mutex> lk(
-                                                    shared->sipConnsMtx_);
-                                                // Verify that the connection is not already cached
-                                                SipConnectionKey key(uri, deviceId.toString());
-                                                auto it = shared->sipConns_.find(key);
-                                                if (it == shared->sipConns_.end()) {
-                                                    lk.unlock();
-                                                    shared->requestSIPConnection(uri, deviceId, "");
-                                                }
-                                            }
+                    if (!shared->connectionManager_->hasSwarmChannel(DeviceId(deviceId), convId)) {
+                        shared->connectionManager_->connectDevice(
+                            DeviceId(deviceId),
+                            fmt::format("swarm://{}", convId),
+                            [w, cb](std::shared_ptr<ChannelSocket> socket,
+                                    const DeviceId& deviceId) {
+                                if (socket) {
+                                    auto shared = w.lock();
+                                    if (!shared)
+                                        return;
+                                    auto remoteCert = socket->peerCertificate();
+                                    auto uri = remoteCert->issuer->getId().toString();
+                                    std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
+                                    // Verify that the connection is not already cached
+                                    SipConnectionKey key(uri, deviceId.toString());
+                                    auto it = shared->sipConns_.find(key);
+                                    if (it == shared->sipConns_.end()) {
+                                        lk.unlock();
+                                        shared->requestSIPConnection(uri, deviceId, "");
+                                    }
+                                }
 
-                                            cb(socket);
-                                        });
+                                cb(socket);
+                            });
+                    }
                 });
             },
             [this](auto&& convId, auto&& contactUri, bool accept) {
@@ -3760,19 +3758,26 @@ JamiAccount::sendProfile(const std::string& convId,
         return;
     }
     // We need a new channel
-    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, std::move([accId = getAccountID(), peerUri, deviceId]() {
-        // Mark the VCard as sent
-        auto sendDir = fmt::format("{}/{}/vcard/{}",
-                                    fileutils::get_cache_dir(),
-                                    accId,
-                                    peerUri);
-        auto path = fmt::format("{}/{}", sendDir, deviceId);
-        fileutils::recursive_mkdir(sendDir);
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
-        if (fileutils::isFile(path))
-            return;
-        fileutils::ofstream(path);
-    }));
+    transferFile(convId,
+                 profilePath(),
+                 deviceId,
+                 "profile.vcf",
+                 "",
+                 0,
+                 0,
+                 std::move([accId = getAccountID(), peerUri, deviceId]() {
+                     // Mark the VCard as sent
+                     auto sendDir = fmt::format("{}/{}/vcard/{}",
+                                                fileutils::get_cache_dir(),
+                                                accId,
+                                                peerUri);
+                     auto path = fmt::format("{}/{}", sendDir, deviceId);
+                     fileutils::recursive_mkdir(sendDir);
+                     std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
+                     if (fileutils::isFile(path))
+                         return;
+                     fileutils::ofstream(path);
+                 }));
 }
 
 bool
@@ -4020,9 +4025,9 @@ JamiAccount::monitor()
     JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
 
     convModule()->monitor();
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    /*std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
-        connectionManager_->monitor();
+        connectionManager_->monitor();*/
 }
 
 void
@@ -4091,27 +4096,40 @@ JamiAccount::transferFile(const std::string& conversationId,
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
-    connectionManager_->connectDevice(
-        DeviceId(deviceId),
-        channelName,
-        [this, conversationId, path = std::move(path), fileId, interactionId, start, end, onFinished = std::move(onFinished)](
-            std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
-            if (!socket)
-                return;
-            dht::ThreadPool::io().run([w = weak(),
-                                       path = std::move(path),
-                                       socket = std::move(socket),
-                                       conversationId = std::move(conversationId),
-                                       fileId,
-                                       interactionId,
-                                       start,
-                                       end,
-                                       onFinished = std::move(onFinished)] {
-                if (auto shared = w.lock())
-                    if (auto dt = shared->dataTransfer(conversationId))
-                        dt->transferFile(socket, fileId, interactionId, path, start, end, std::move(onFinished));
-            });
-        });
+    connectionManager_
+        ->connectDevice(DeviceId(deviceId),
+                        channelName,
+                        [this,
+                         conversationId,
+                         path = std::move(path),
+                         fileId,
+                         interactionId,
+                         start,
+                         end,
+                         onFinished = std::move(onFinished)](std::shared_ptr<ChannelSocket> socket,
+                                                             const DeviceId&) {
+                            if (!socket)
+                                return;
+                            dht::ThreadPool::io().run([w = weak(),
+                                                       path = std::move(path),
+                                                       socket = std::move(socket),
+                                                       conversationId = std::move(conversationId),
+                                                       fileId,
+                                                       interactionId,
+                                                       start,
+                                                       end,
+                                                       onFinished = std::move(onFinished)] {
+                                if (auto shared = w.lock())
+                                    if (auto dt = shared->dataTransfer(conversationId))
+                                        dt->transferFile(socket,
+                                                         fileId,
+                                                         interactionId,
+                                                         path,
+                                                         start,
+                                                         end,
+                                                         std::move(onFinished));
+                            });
+                        });
 }
 
 void

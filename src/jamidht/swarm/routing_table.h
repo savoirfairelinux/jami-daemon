@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2023 Savoir-faire Linux Inc.
+ *
  *  Author: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -13,18 +14,20 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+
 #pragma once
 
 #include "manager.h"
+
 #include <opendht/infohash.h>
 #include <vector>
 #include <memory>
 #include <list>
 #include <set>
 #include <algorithm>
-
 #include <asio.hpp>
 #include <asio/detail/deadline_timer_service.hpp>
 
@@ -47,13 +50,17 @@ struct NodeInfo
     NodeInfo(std::shared_ptr<ChannelSocketInterface> socket_)
         : socket(socket_)
     {}
+    NodeInfo(bool mobile, std::shared_ptr<ChannelSocketInterface> socket_)
+        : isMobile_(mobile)
+        , socket(socket_)
+    {}
 };
 
 class Bucket
 
 {
 public:
-    static constexpr int BUCKET_MAX_SIZE = 4;
+    static constexpr int BUCKET_MAX_SIZE = 2;
 
     Bucket() = delete;
     Bucket(const Bucket&) = delete;
@@ -61,63 +68,75 @@ public:
 
     /**
      * Add Node socket to bucket
-     * @param shared_ptr<ChannelSocketInterface>& socket
+     * @param socket
+     * @return true if node was added, false if not
      */
-    bool addNode(std::shared_ptr<ChannelSocketInterface> socket);
+    bool addNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+
     /**
      * Add NodeInfo to bucket
-     * @param NodeInfo&& nodeInfo
+     * @param nodeInfo
+     * @return true if node was added, false if not
      */
     bool addNode(NodeInfo&& info);
 
     /**
-     * Remove Node socket from bucket
-     * @param NodeId& nodeId
+     * Remove NodeId socket from bucket and insert it in known_nodes or
+     * mobile_nodes depending on its type
+     * @param nodeId
+     * @return true if node was removed, false if not
      */
     bool removeNode(const NodeId& nodeId);
 
     /**
-     * Get Nodes from bucket
+     * Get connected nodes from bucket
+     * @return map of NodeId and NodeInfo
      */
     std::map<NodeId, NodeInfo>& getNodes() { return nodes; }
 
     /**
-     * Get NodeIds from bucket as set
+     * Get NodeIds from bucket
+     * @return set of NodeIds
      */
     std::set<NodeId> getNodeIds() const;
 
     /**
-     * Test if socket exists in nodes as Id
-     * @param const NodeId& nodeId
+     * Test if socket exists in nodes
+     * @param nodeId
+     * @return true if node exists, false if not
      */
     bool hasNode(const NodeId& nodeId) const;
 
     /**
-     * Add NodeId to known_nodes
-     * @param NodeId nodeId
+     * Add NodeId to known_nodes if it doesn't exist in nodes
+     * @param nodeId
+     * @return true if known node was added, false if not
      */
     bool addKnownNode(const NodeId& nodeId);
 
     /**
      * Remove NodeId from known_nodes
-     * @param NodeId nodeId
+     * @param nodeId
      */
     void removeKnownNode(const NodeId& nodeId) { known_nodes.erase(nodeId); }
 
     /**
-     * Get NodeIds of known_nodes
+     * Get NodeIds from known_nodes
+     * @return set of known NodeIds
      */
     const std::set<NodeId>& getKnownNodes() const { return known_nodes; }
 
     /**
-     * Returns indexed NodeId from known_nodes
-     * @param unsigned index
+     * Returns NodeId from known_nodes at index
+     * @param index
+     * @return NodeId
      */
     NodeId getKnownNode(unsigned index) const;
 
     /**
      * Test if NodeId exist in known_nodes
-     * @param NodeId nodeId
+     * @param nodeId
+     * @return true if known node exists, false if not
      */
     bool hasKnownNode(const NodeId& nodeId) const
     {
@@ -125,20 +144,22 @@ public:
     }
 
     /**
-     * Add NodeId to mobile_nodes
-     * @param NodeId nodeId
+     * Add NodeId to mobile_nodes if it doesn't exist in nodes
+     * @param nodeId
+     * @return true if mobile node was added, false if not
      */
     bool addMobileNode(const NodeId& nodeId);
 
     /**
      * Remove NodeId from mobile_nodes
-     * @param NodeId nodeId
+     * @param nodeId
      */
     void removeMobileNode(const NodeId& nodeId) { mobile_nodes.erase(nodeId); }
 
     /**
      * Test if NodeId exist in mobile_nodes
-     * @param NodeId nodeId
+     * @param nodeId
+     * @return true if mobile node exists, false if not
      */
     bool hasMobileNode(const NodeId& nodeId)
     {
@@ -146,30 +167,34 @@ public:
     }
 
     /**
-     * Get NodeIds of mobile_nodes
+     * Get NodeIds from mobile_nodes
+     * @return set of mobile NodeIds
      */
     const std::set<NodeId>& getMobileNodes() const { return mobile_nodes; }
 
     /**
-     * Add NodeId to connecting_nodes
-     * @param NodeId& nodeId
-     * @param NodeInfo&& nodeInfo
+     * Add NodeId to connecting_nodes if it doesn't exist in nodes
+     * @param nodeId
+     * @param nodeInfo
+     * @return true if connecting node was added, false if not
      */
     bool addConnectingNode(const NodeId& nodeId);
 
     /**
      * Remove NodeId from connecting_nodes
-     * @param NodeId nodeId
+     * @param nodeId
      */
     void removeConnectingNode(const NodeId& nodeId) { connecting_nodes.erase(nodeId); }
 
     /** Get NodeIds of connecting_nodes
+     * @return set of connecting NodeIds
      */
     const std::set<NodeId>& getConnectingNodes() const { return connecting_nodes; };
 
     /**
      * Test if NodeId exist in connecting_nodes
-     * @param NodeId nodeId
+     * @param nodeId
+     * @return true if connecting node exists, false if not
      */
     bool hasConnectingNode(const NodeId& nodeId) const
     {
@@ -178,18 +203,22 @@ public:
 
     /**
      * Indicate if bucket is full
+     * @return true if bucket is full, false if not
      */
     bool isFull() const { return nodes.size() == BUCKET_MAX_SIZE; };
 
     /**
      * Returns random numberNodes NodeId from known_nodes
-     * @param unsigned numberNodes
+     * @param numberNodes
+     * @param rd
+     * @return set of numberNodes random known NodeIds
      */
     std::set<NodeId> getKnownNodesRandom(unsigned numberNodes, std::mt19937_64& rd) const;
 
     /**
      * Returns random NodeId from known_nodes
-     * @param std::mt19937_64& rd
+     * @param rd
+     * @return random known NodeId
      */
     NodeId randomId(std::mt19937_64& rd) const
     {
@@ -199,62 +228,69 @@ public:
 
     /**
      * Returns socket's timer
-     * @param shared_ptr<ChannelSocketInterface>& socket
+     * @param socket
+     * @return timer
      */
     asio::steady_timer& getNodeTimer(const std::shared_ptr<ChannelSocketInterface>& socket);
 
     /**
-     * Returns bucket lower limit
-     * @param int index
-     */
-    NodeId getLowerLimit() const { return lowerLimit_; };
-
-    /**
-     * Set bucket lower limit
-     * @param NodeId nodeId
-     */
-    void setLowerLimit(const NodeId& nodeId) { lowerLimit_ = nodeId; }
-
-    /**
-     * Shutdowns node
-     * @param shared_ptr<ChannelSocketInterface>& socket
+     * Shutdowns socket and removes it from nodes.
+     * The corresponding node is moved to known_nodes or mobile_nodes
+     * @param socket
+     * @return true if node was shutdown, false if not found
      */
     bool shutdownNode(const NodeId& nodeId);
 
     /**
-     * Shutdowns all nodes
+     * Shutdowns all sockets in nodes through shutdownNode
      */
     void shutdownAllNodes();
 
     /**
-     * Prints bucket
+     * Prints bucket and bucket's number
      */
     void printBucket(unsigned number) const;
 
     /**
+     * Change mobility of specific node, mobile or not
+     */
+    void changeMobility(const NodeId& nodeId, bool isMobile);
+
+    /**
      * Returns number of nodes in bucket
+     * @return size of nodes
      */
     unsigned getNodesSize() const { return nodes.size(); }
 
     /**
-     * Returns number of known_nodes in bucket
+     * Returns number of knwon_nodes in bucket
+     * @return size of knwon_nodes
      */
     unsigned getKnownNodesSize() const { return known_nodes.size(); }
 
     /**
-     * Returns number of connecting_nodes in bucket
+     * Returns number of mobile_nodes in bucket
+     * @return size of mobile_nodes
      */
     unsigned getConnectingNodesSize() const { return connecting_nodes.size(); }
 
     /**
-     * Change persistency of specific node
+     * Returns bucket lower limit
+     * @return NodeId lower limit
      */
-    void changeMobility(const NodeId& nodeId, bool isMobile);
+    NodeId getLowerLimit() const { return lowerLimit_; };
+
+    /**
+     * Set bucket's lower limit
+     * @param nodeId
+     */
+    void setLowerLimit(const NodeId& nodeId) { lowerLimit_ = nodeId; }
 
     // For tests
 
     /**
      * Get sockets from bucket
+     * @return set of sockets
      */
     std::set<std::shared_ptr<ChannelSocketInterface>> getNodeSockets() const;
 
@@ -276,39 +312,46 @@ public:
 
     /**
      * Add socket to bucket
-     * @param shared_ptr<ChannelSocketInterface>& socket
+     * @param socket
+     * @return true if socket was added, false if not
      */
     bool addNode(std::shared_ptr<ChannelSocketInterface> socket);
 
     /**
-     * Add socket to bucket
-     * @param shared_ptr<ChannelSocketInterface> socket
-     * @param list<Bucket>::iterator bucket
+     * Add socket to specific bucket
+     * @param channel
+     * @param bucket
+     * @return true if socket was added to bucket, false if not
      */
     bool addNode(std::shared_ptr<ChannelSocketInterface> channel,
                  std::list<Bucket>::iterator& bucket);
 
     /**
      * Removes node from routing table
-     * @param shared_ptr<ChannelSocketInterface>& socket
+     * Adds it to known_nodes or mobile_nodes depending on mobility
+     * @param socket
+     * @return true if node was removed, false if not
      */
     bool removeNode(const NodeId& nodeId);
 
     /**
-     * Check if node in routing table
-     * @param shared_ptr<ChannelSocketInterface>& socket
+     * Check if connected node exsits in routing table
+     * @param nodeId
+     * @return true if node exists, false if not
      */
     bool hasNode(const NodeId& nodeId);
 
     /**
-     * Add known node to bucket
-     * @param NodeId nodeId
+     * Add known node to routing table
+     * @param nodeId
+     * @return true if known node was added, false if not
      */
     bool addKnownNode(const NodeId& nodeId);
 
     /**
-     * Check if known node exists in routing table
-     * @param NodeId nodeId
+     * Checks if known node exists in routing table
+     * @param nodeId
+     * @return true if known node exists, false if not
      */
     bool hasKnownNode(const NodeId& nodeId) const
     {
@@ -317,40 +360,44 @@ public:
     }
 
     /**
-     * Add mobile node to bucket
-     * @param NodeId nodeId
+     * Add mobile node to routing table
+     * @param nodeId
+     * @return true if mobile node was added, false if not
      */
     bool addMobileNode(const NodeId& nodeId);
 
     /**
-     * Remove mobile node to bucket
-     * @param NodeId nodeId
+     * Remove mobile node to routing table
+     * @param nodeId
+     * @return true if mobile node was removed, false if not
      */
     void removeMobileNode(const NodeId& nodeId);
 
     /**
      * Check if mobile node exists in routing table
-     * @param NodeId nodeId
+     * @param nodeId
+     * @return true if mobile node exists, false if not
      */
     bool hasMobileNode(const NodeId& nodeId);
 
     /**
-     * Add connecting node to bucket
-     * @param NodeId nodeId
+     * Add connecting node to routing table
+     * @param nodeId
+     * @return true if connecting node was added, false if not
      */
-
     bool addConnectingNode(const NodeId& nodeId);
 
     /**
-     * Remove connecting connecting node to bucket
-     * @param NodeId nodeId
+     * Remove connecting connecting node to routing table
+     * @param  nodeId
+     * @return true if connecting node was removed, false if not
      */
-
     void removeConnectingNode(const NodeId& nodeId);
 
     /**
      * Check if Connecting node exists in routing table
-     * @param NodeId nodeId
+     * @param nodeId
+     * @return true if connecting node exists, false if not
      */
     bool hasConnectingNode(const NodeId& nodeId) const
     {
@@ -360,10 +407,16 @@ public:
 
     /**
      * Returns bucket iterator containing nodeId
-     * @param NodeId nodeId
+     * @param nodeId
+     * @return bucket iterator
      */
     std::list<Bucket>::iterator findBucket(const NodeId& nodeId);
 
+    /**
+     * Returns bucket iterator containing nodeId
+     * @param nodeId
+     * @return bucket iterator
+     */
     inline const std::list<Bucket>::const_iterator findBucket(const NodeId& nodeId) const
     {
         return std::list<Bucket>::const_iterator(
@@ -371,19 +424,22 @@ public:
     }
 
     /**
-     * Returns number nodes of closest nodes to specific nodeId
-     * @param NodeId nodeId
-     * @param int count
+     * Returns the count closest nodes to a specific nodeId
+     * @param nodeId
+     * @param count
+     * @return vector of nodeIds
      */
     std::vector<NodeId> closestNodes(const NodeId& nodeId, unsigned count);
 
     /**
      * Returns number of buckets in routing table
+     * @return size of buckets
      */
     unsigned getRoutingTableSize() const { return buckets.size(); }
 
     /**
      * Returns number of total nodes in routing table
+     * @return size of nodes
      */
     unsigned getRoutingTableNodeCount() const
     {
@@ -400,12 +456,12 @@ public:
 
     /**
      * Shutdowns a node
-     * @param shared_ptr<ChannelSocketInterface>& socket
+     * @param nodeId
      */
     void shutdownNode(const NodeId& nodeId);
 
     /**
-     * Shutdowns all nodes
+     * Shutdowns all nodes in routing table and add them to known_nodes or mobile_nodes
      */
     void shutdownAllNodes()
     {
@@ -415,50 +471,57 @@ public:
 
     /**
      * Sets id for routing table
-     * @param NodeId& node
+     * @param node
      */
     void setId(const NodeId& node) { id_ = node; }
 
     /**
      * Returns id for routing table
-     * @param NodeId& node
+     * @return Nodeid
      */
     NodeId getId() const { return id_; }
 
     /**
-     * Returns buckets
+     * Returns buckets in routing table
+     * @return list buckets
      */
     std::list<Bucket>& getBuckets() { return buckets; }
 
     /**
-     * Returns all routing table's nodes
+     * Returns all routing table's connected nodes
+     * @return vector of nodeIds
      */
     std::vector<NodeId> getNodes() const;
 
     /**
      * Returns all routing table's known nodes
+     *@return vector of nodeIds
      */
     std::vector<NodeId> getKnownNodes() const;
 
     /**
      * Returns all routing table's mobile nodes
+     * @return vector of nodeIds
      */
     std::vector<NodeId> getMobileNodes() const;
 
     /**
      * Returns all routing table's connecting nodes
+     * @return vector of nodeIds
      */
     std::vector<NodeId> getConnectingNodes() const;
 
     /**
      * Returns mobile nodes corresponding to the swarm's id
+     * @return vector of nodeIds
      */
     std::vector<NodeId> getBucketMobileNodes() const;
 
     /**
-     * Test if nodeId is in specific bucket
-     * @param list<Bucket>::iterator it
-     * @param NodeId nodeId
+     * Test if connected nodeId is in specific bucket
+     * @param it
+     * @param nodeId
+     * @return true if nodeId is in bucket, false if not
      */
     bool contains(const std::list<Bucket>::iterator& it, const NodeId& nodeId) const;
 
@@ -468,19 +531,22 @@ private:
 
     /**
      * Returns middle of routing table
-     * @param list<Bucket>::iterator bucket
+     * @param it
+     * @return NodeId
      */
     NodeId middle(std::list<Bucket>::iterator& it) const;
 
     /**
      * Returns depth of routing table
-     * @param list<Bucket>::iterator bucket
+     * @param bucket
+     * @return depth
      */
     unsigned depth(std::list<Bucket>::iterator& bucket) const;
 
     /**
      * Splits bucket
-     * @param list<Bucket>::iterator bucket
+     * @param bucket
+     * @return true if bucket was split, false if not
      */
     bool split(std::list<Bucket>::iterator& bucket);
 

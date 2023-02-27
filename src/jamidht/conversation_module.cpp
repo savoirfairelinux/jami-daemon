@@ -292,9 +292,10 @@ public:
     // Receiving new commits
     std::shared_ptr<RepeatedTask> conversationsEventHandler {};
 
-    // When sending a new message, we need to send the notification to some peers of the conversation
-    // However, the conversation may be not bootstraped, so the list will be empty. notSyncedNotification_
-    // will store the notifiaction to announce until we have peers to sync with.
+    // When sending a new message, we need to send the notification to some peers of the
+    // conversation However, the conversation may be not bootstraped, so the list will be empty.
+    // notSyncedNotification_ will store the notifiaction to announce until we have peers to sync
+    // with.
     std::mutex notSyncedNotificationMtx_;
     std::map<std::string, std::string> notSyncedNotification_;
 
@@ -729,7 +730,8 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
 }
 
 std::vector<std::map<std::string, std::string>>
-ConversationModule::Impl::getConversationMembers(const std::string& conversationId, bool includeBanned) const
+ConversationModule::Impl::getConversationMembers(const std::string& conversationId,
+                                                 bool includeBanned) const
 {
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
@@ -888,7 +890,6 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                refreshMessage[username_]);
     }
 
-
     // Then, we announce to 2 random members in the conversation that aren't in the DRT
     // This allow new devices without the ability to sync to their other devices to sync with us.
     // Or they can also use an old backup.
@@ -906,14 +907,17 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         }
         std::sort(std::begin(members), std::end(members));
         std::sort(std::begin(connectedMembers), std::end(connectedMembers));
-        std::set_difference(members.begin(), members.end(), connectedMembers.begin(), connectedMembers.end(),
-            std::inserter(nonConnectedMembers, nonConnectedMembers.begin()));
+        std::set_difference(members.begin(),
+                            members.end(),
+                            connectedMembers.begin(),
+                            connectedMembers.end(),
+                            std::inserter(nonConnectedMembers, nonConnectedMembers.begin()));
         std::shuffle(nonConnectedMembers.begin(), nonConnectedMembers.end(), acc->rand);
         if (nonConnectedMembers.size() > 2)
             nonConnectedMembers.resize(2);
         if (!conversation.isBoostraped()) {
             JAMI_DEBUG("[Conversation {}] Not yet bootstraped, save notification",
-                    conversation.id());
+                       conversation.id());
             // Because we can get some git channels but not bootstraped, we should keep this
             // to refresh when bootstraped.
             notSyncedNotification_[conversation.id()] = commit;
@@ -927,7 +931,6 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                 {"application/im-gitmessage-id", text}},
                                             refreshMessage[member]);
     }
-
 
     // Finally we send to devices that the DRT choose.
     for (const auto& device : devices) {
@@ -1355,8 +1358,8 @@ ConversationModule::onTrustRequest(const std::string& uri,
     }
     if (pimpl_->isAcceptedConversation(conversationId)) {
         JAMI_INFO("[Account %s] Received a request for a conversation "
-                    "already handled. Ignore",
-                    pimpl_->accountId_.c_str());
+                  "already handled. Ignore",
+                  pimpl_->accountId_.c_str());
         return;
     }
     if (pimpl_->getRequest(conversationId) != std::nullopt) {
@@ -1881,18 +1884,18 @@ ConversationModule::onSyncData(const SyncMsg& msg,
         if (req.declined != 0) {
             // Request declined
             JAMI_LOG("[Account {:s}] Declined request detected for conversation {:s} (device {:s})",
-                      pimpl_->accountId_,
-                      convId,
-                      deviceId);
+                     pimpl_->accountId_,
+                     convId,
+                     deviceId);
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
                                                                                  convId);
             continue;
         }
 
         JAMI_LOG("[Account {:s}] New request detected for conversation {:s} (device {:s})",
-                  pimpl_->accountId_,
-                  convId,
-                  deviceId);
+                 pimpl_->accountId_,
+                 convId,
+                 deviceId);
 
         emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
                                                                              convId,
@@ -1985,8 +1988,8 @@ ConversationModule::onNewCommit(const std::string& peer,
         // it means that the contact was removed but not banned. So we can generate
         // a new trust request
         JAMI_WARNING("[Account {:s}] Could not find conversation {:s}, ask for an invite",
-                  pimpl_->accountId_,
-                  conversationId);
+                     pimpl_->accountId_,
+                     conversationId);
         pimpl_->sendMsgCb_(peer,
                            {},
                            std::map<std::string, std::string> {
@@ -1995,10 +1998,10 @@ ConversationModule::onNewCommit(const std::string& peer,
         return;
     }
     JAMI_DEBUG("[Account {:s}] on new commit notification from {:s}, for {:s}, commit {:s}",
-             pimpl_->accountId_,
-             peer,
-             conversationId,
-             commitId);
+               pimpl_->accountId_,
+               peer,
+               conversationId,
+               commitId);
     lk.unlock();
     pimpl_->fetchNewCommits(peer, deviceId, conversationId, commitId);
 }
@@ -2017,9 +2020,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
     }
 
     if (it->second->isMember(contactUri, true)) {
-        JAMI_DEBUG("{:s} is already a member of {:s}, resend invite",
-                 contactUri,
-                 conversationId);
+        JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUri, conversationId);
         // Note: This should not be necessary, but if for whatever reason the other side didn't join
         // we should not forbid new invites
         auto invite = it->second->generateInvitation();
@@ -2070,7 +2071,8 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
 }
 
 std::vector<std::map<std::string, std::string>>
-ConversationModule::getConversationMembers(const std::string& conversationId, bool includeBanned) const
+ConversationModule::getConversationMembers(const std::string& conversationId,
+                                           bool includeBanned) const
 {
     return pimpl_->getConversationMembers(conversationId, includeBanned);
 }
@@ -2175,7 +2177,8 @@ ConversationModule::setConversationPreferences(const std::string& conversationId
 }
 
 std::map<std::string, std::string>
-ConversationModule::getConversationPreferences(const std::string& conversationId, bool includeCreated) const
+ConversationModule::getConversationPreferences(const std::string& conversationId,
+                                               bool includeCreated) const
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto it = pimpl_->conversations_.find(conversationId);
@@ -2695,7 +2698,7 @@ ConversationModule::addSwarmChannel(const std::string& conversationId,
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto convIt = pimpl_->conversations_.find(conversationId);
     if (convIt != pimpl_->conversations_.end())
-        convIt->second->addSwarmChannel(channel);
+        convIt->second->addSwarmChannel(std::move(channel));
 }
 
 void
