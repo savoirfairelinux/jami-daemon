@@ -165,6 +165,7 @@ source_group("Source Files\\jamidht\\eth\\libdevcrypto" FILES ${Source_Files__ja
 source_group("Source Files\\media" FILES ${Source_Files__media})
 source_group("Source Files\\media\\audio" FILES ${Source_Files__media__audio})
 source_group("Source Files\\media\\audio\\audio-processing" FILES ${Source_Files__media__audio__audio_processing})
+source_group("Source Files\\media\\audio\\audio-processing" FILES ${Source_Files__media__audio__webrtc})
 source_group("Source Files\\media\\audio\\sound" FILES ${Source_Files__media__audio__sound})
 source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
 source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
@@ -231,6 +232,7 @@ elseif(MSVC)
          "${Source_Files__media__audio__portaudio}"
          "${Source_Files__media__video__uwpvideo}"
          "${Source_Files__media__video__winvideo}"
+         "${Source_Files__media__audio__webrtc}"
    )
 endif()
 
