@@ -267,7 +267,7 @@ OpenSLLayer::engineServicePlay()
     sample_buf* buf;
     while (player_ and freePlayBufQueue_.front(&buf)) {
         if (auto dat = getToPlay(hardwareFormat_, hardwareBuffSize_)) {
-            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels
+            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->ch_layout.nb_channels
                          * sizeof(AudioSample);
             if (buf->size_ > buf->cap_) {
                 JAMI_ERR("buf->size_(%zu) > buf->cap_(%zu)", buf->size_, buf->cap_);
@@ -300,7 +300,7 @@ OpenSLLayer::engineServiceRing()
     sample_buf* buf;
     while (ringtone_ and freeRingBufQueue_.front(&buf)) {
         if (auto dat = getToRing(hardwareFormat_, hardwareBuffSize_)) {
-            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels
+            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->ch_layout.nb_channels
                          * sizeof(AudioSample);
             if (buf->size_ > buf->cap_) {
                 JAMI_ERR("buf->size_(%zu) > buf->cap_(%zu)", buf->size_, buf->cap_);

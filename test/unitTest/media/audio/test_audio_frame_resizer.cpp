@@ -74,8 +74,7 @@ AudioFrameResizerTest::getFrame(int n)
     auto frame = std::make_shared<AudioFrame>();
     frame->pointer()->format = format_.sampleFormat;
     frame->pointer()->sample_rate = format_.sample_rate;
-    frame->pointer()->channels = format_.nb_channels;
-    frame->pointer()->channel_layout = av_get_default_channel_layout(format_.nb_channels);
+    av_channel_layout_default(&frame->pointer()->ch_layout, format_.nb_channels);
     frame->pointer()->nb_samples = n;
     CPPUNIT_ASSERT(av_frame_get_buffer(frame->pointer(), 0) >= 0);
     return frame;

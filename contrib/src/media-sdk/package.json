@@ -1,10 +1,10 @@
 {
     "name": "media-sdk",
-    "version": "intel-mediasdk-19.2.0",
+    "version": "intel-mediasdk-23.1.2",
     "url": "https://github.com/Intel-Media-SDK/MediaSDK/archive/__VERSION__.tar.gz",
     "deps": [],
-    "patches": [],
-    "win_patches": ["windows-static-lib-build.patch"],
+  "patches": [ "windows-static-lib-build.patch" ],
+    "win_patches": [],
     "project_paths": ["api/mfx_dispatch/windows/libmfx_vs2015.vcxproj"],
     "with_env" : "",
     "custom_scripts": {

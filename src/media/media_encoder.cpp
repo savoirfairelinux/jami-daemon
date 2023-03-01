@@ -641,14 +641,11 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
         encoderCtx->sample_rate = std::max(8000, audioOpts_.sampleRate);
         encoderCtx->time_base = AVRational {1, encoderCtx->sample_rate};
         if (audioOpts_.nbChannels > 2 || audioOpts_.nbChannels < 1) {
-            encoderCtx->channels = std::clamp(audioOpts_.nbChannels, 1, 2);
+            audioOpts_.nbChannels = std::clamp(audioOpts_.nbChannels, 1, 2);
             JAMI_ERR() << "[" << encoderName
-                       << "] Clamping invalid channel count: " << audioOpts_.nbChannels << " -> "
-                       << encoderCtx->channels;
-        } else {
-            encoderCtx->channels = audioOpts_.nbChannels;
+                       << "] Clamping invalid channel count: " << audioOpts_.nbChannels;
         }
-        encoderCtx->channel_layout = av_get_default_channel_layout(encoderCtx->channels);
+        av_channel_layout_default(&encoderCtx->ch_layout, audioOpts_.nbChannels);
         if (audioOpts_.frameSize) {
             encoderCtx->frame_size = audioOpts_.frameSize;
             JAMI_DBG() << "[" << encoderName << "] Frame size " << encoderCtx->frame_size;

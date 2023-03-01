@@ -596,8 +596,6 @@ MediaDecoder::prepareDecoderContext()
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = inputParams_.framerate;
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
-            decoderCtx_->framerate = av_inv_q(decoderCtx_->time_base);
-        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = {30, 1};
     }
     if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
@@ -643,7 +641,8 @@ MediaDecoder::decode(AVPacket& packet)
 #endif
     auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
-    frame->time_base = decoderCtx_->time_base;
+    frame->time_base.num = decoderCtx_->framerate.den;
+    frame->time_base.den = decoderCtx_->framerate.num;
     if (resolutionChangedCallback_) {
         if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
             JAMI_DBG("Resolution changed from %dx%d to %dx%d",
@@ -663,15 +662,11 @@ MediaDecoder::decode(AVPacket& packet)
         frameFinished = 1;
 
     if (frameFinished) {
-        // channel layout is needed if frame will be resampled
-        if (!frame->channel_layout)
-            frame->channel_layout = av_get_default_channel_layout(frame->channels);
-
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                       {1, AV_TIME_BASE},
-                                      decoderCtx_->time_base,
+                                      {decoderCtx_->framerate.den, decoderCtx_->framerate.num},
                                       static_cast<AVRounding>(AV_ROUND_NEAR_INF
                                                               | AV_ROUND_PASS_MINMAX));
         lastTimestamp_ = frame->pts;

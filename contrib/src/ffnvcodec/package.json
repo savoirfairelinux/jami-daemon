@@ -1,6 +1,6 @@
 {
     "name": "ffnvcodec",
-    "version": "5ee2ae591f74f53bd6028344f8690f1558a1f17a",
+    "version": "n11.1.5.2",
     "url": "https://github.com/FFmpeg/nv-codec-headers/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],
