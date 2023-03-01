@@ -348,9 +348,9 @@ AudioBuffer::append(const AudioFrame& audioFrame)
 {
     auto frame = audioFrame.pointer();
     // FIXME we assume frame is s16 interleaved
-    if (channels() != static_cast<unsigned>(frame->channels)
+    if (channels() != static_cast<unsigned>(frame->ch_layout.nb_channels)
         || getSampleRate() != frame->sample_rate) {
-        auto newFormat = AudioFormat {(unsigned) frame->sample_rate, (unsigned) frame->channels};
+        auto newFormat = AudioFormat {(unsigned) frame->sample_rate, (unsigned) frame->ch_layout.nb_channels};
         setFormat(newFormat);
     }
 

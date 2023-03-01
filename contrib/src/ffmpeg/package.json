@@ -1,6 +1,6 @@
 {
     "name": "ffmpeg",
-    "version": "n5.0",
+    "version": "n6.0",
     "url": "https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/__VERSION__.tar.gz",
     "deps": [
         "vpx",
@@ -16,8 +16,8 @@
         "libopusdec-enable-FEC.patch",
         "windows-configure.patch",
         "windows-configure-ffnvcodec.patch",
-        "windows-configure-libmfx.patch",
-        "windows-dxgi-support.patch"
+        "windows-dxgi-support.patch",
+        "nvenc-fix-reorderqueueflush-crash.patch"
     ],
     "win_patches": [
     ],
