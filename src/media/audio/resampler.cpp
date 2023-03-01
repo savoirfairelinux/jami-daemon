@@ -50,13 +50,11 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
         throw std::bad_alloc();
     }
 
-    av_opt_set_int(swrCtx, "ich", in->channels, 0);
-    av_opt_set_int(swrCtx, "icl", in->channel_layout, 0);
+    av_opt_set_chlayout(swrCtx, "ichl", &in->ch_layout, 0);
     av_opt_set_int(swrCtx, "isr", in->sample_rate, 0);
     av_opt_set_sample_fmt(swrCtx, "isf", static_cast<AVSampleFormat>(in->format), 0);
 
-    av_opt_set_int(swrCtx, "och", out->channels, 0);
-    av_opt_set_int(swrCtx, "ocl", out->channel_layout, 0);
+    av_opt_set_chlayout(swrCtx, "ochl", &out->ch_layout, 0);
     av_opt_set_int(swrCtx, "osr", out->sample_rate, 0);
     av_opt_set_sample_fmt(swrCtx, "osf", static_cast<AVSampleFormat>(out->format), 0);
 
@@ -118,6 +116,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
 int
 Resampler::resample(const AVFrame* input, AVFrame* output)
 {
+    av_channel_layout_copy(&output->ch_layout, &input->ch_layout);
     if (!initCount_)
         reinit(input, output);
 
