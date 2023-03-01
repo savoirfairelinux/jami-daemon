@@ -123,9 +123,8 @@ public:
             throw std::runtime_error("Failed to allocate audio codec context");
 
         codec_ctx_->sample_fmt = (AVSampleFormat)frame->format;
-        codec_ctx_->channel_layout = frame->channel_layout;
+        codec_ctx_->ch_layout = frame->ch_layout;
         codec_ctx_->sample_rate = frame->sample_rate;
-        codec_ctx_->channels = frame->channels;
         if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER)
             codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 

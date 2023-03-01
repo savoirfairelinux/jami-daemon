@@ -736,7 +736,7 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
         return paContinue;
     }
 
-    auto nFrames = toPlay->pointer()->nb_samples * toPlay->pointer()->channels;
+    auto nFrames = toPlay->pointer()->nb_samples * toPlay->pointer()->ch_layout.nb_channels;
     std::copy_n((AudioSample*) toPlay->pointer()->extended_data[0], nFrames, outputBuffer);
     return paContinue;
 }

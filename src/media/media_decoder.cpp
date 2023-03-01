@@ -596,8 +596,6 @@ MediaDecoder::prepareDecoderContext()
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = inputParams_.framerate;
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
-            decoderCtx_->framerate = av_inv_q(decoderCtx_->time_base);
-        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = {30, 1};
     }
     if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
@@ -643,6 +641,15 @@ MediaDecoder::decode(AVPacket& packet)
 #endif
     auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
+    // time_base is not set in AVCodecContext for decoding
+    // fail to set it causes pts to be incorrectly computed down in the function
+    if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO) {
+        decoderCtx_->time_base.num = decoderCtx_->framerate.den;
+        decoderCtx_->time_base.den = decoderCtx_->framerate.num;
+    } else {
+        decoderCtx_->time_base.num = 1;
+        decoderCtx_->time_base.den = decoderCtx_->sample_rate;
+    }
     frame->time_base = decoderCtx_->time_base;
     if (resolutionChangedCallback_) {
         if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
@@ -663,11 +670,8 @@ MediaDecoder::decode(AVPacket& packet)
         frameFinished = 1;
 
     if (frameFinished) {
-        // channel layout is needed if frame will be resampled
-        if (!frame->channel_layout)
-            frame->channel_layout = av_get_default_channel_layout(frame->channels);
-
-        frame->format = (AVPixelFormat) correctPixFmt(frame->format);
+        if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO)
+            frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                       {1, AV_TIME_BASE},
