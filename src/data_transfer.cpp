@@ -203,21 +203,16 @@ IncomingFile::process()
         auto shared = w.lock();
         if (!shared)
             return;
-        auto isEOF = shared->info_.bytesProgress == shared->info_.totalSize;
-        if (shared->stream_ && shared->stream_.is_open()) {
-            isEOF |= shared->stream_.eof();
-            shared->stream_.close();
-        }
-        auto correct = isEOF && shared->sha3Sum_.empty();
-        if (!correct && !shared->sha3Sum_.empty()) {
+        auto correct = shared->sha3Sum_.empty();
+        if (!correct) {
             // Verify shaSum
             auto sha3Sum = fileutils::sha3File(shared->info_.path);
-            if (shared->sha3Sum_ == sha3Sum) {
-                JAMI_INFO() << "New file received: " << shared->info_.path;
-                correct = true;
-            } else if (isEOF || shared->isUserCancelled_) {
+            if (shared->isUserCancelled_) {
                 JAMI_WARN() << "Remove file, invalid sha3sum detected for " << shared->info_.path;
                 fileutils::remove(shared->info_.path, true);
+            } else if (shared->sha3Sum_ == sha3Sum) {
+                JAMI_INFO() << "New file received: " << shared->info_.path;
+                correct = true;
             } else {
                 JAMI_WARN() << "Invalid sha3sum detected, unfinished file: " << shared->info_.path;
             }
@@ -486,12 +481,17 @@ TransferManager::path(const std::string& fileId) const
 }
 
 void
-TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel)
+TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel, const std::string& sha3Sum)
 {
     if (!channel)
         return;
 
     auto name = channel->name();
+    auto sep = name.find_last_of('?');
+    std::string arguments;
+    if (sep != std::string::npos)
+        name = name.substr(0, sep);
+
     auto lastSep = name.find_last_of('/');
     auto fileId = name.substr(lastSep + 1);
 
@@ -521,7 +521,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
     fileutils::recursive_mkdir(recvDir);
     info.path =  fmt::format("{:s}{:s}_{:s}_{}", recvDir, deviceId, uri, tid);
 
-    auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "");
+    auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "", sha3Sum);
     auto res = pimpl_->vcards_.emplace(idx, std::move(ifile));
     if (res.second) {
         res.first->second->onFinished([w = weak(),
