@@ -116,13 +116,12 @@ static void
 fillAudioFrameProps(AVFrame* frame, const MediaStream& ms)
 {
     frame->format = ms.format;
-    frame->channel_layout = av_get_default_channel_layout(ms.nbChannels);
+    av_channel_layout_default(&frame->ch_layout, ms.nbChannels);
     frame->nb_samples = ms.frameSize;
     frame->sample_rate = ms.sampleRate;
-    frame->channels = ms.nbChannels;
     CPPUNIT_ASSERT(frame->format > AV_SAMPLE_FMT_NONE);
     CPPUNIT_ASSERT(frame->nb_samples > 0);
-    CPPUNIT_ASSERT(frame->channel_layout != 0);
+    CPPUNIT_ASSERT(frame->ch_layout.u.mask != 0);
 }
 
 void
@@ -132,7 +131,6 @@ MediaFilterTest::testAudioFilter()
 
     // constants
     const constexpr int nbSamples = 100;
-    const constexpr int64_t channelLayout = AV_CH_LAYOUT_STEREO;
     const constexpr int sampleRate = 44100;
     const constexpr enum AVSampleFormat format = AV_SAMPLE_FMT_S16;
 
@@ -140,17 +138,16 @@ MediaFilterTest::testAudioFilter()
     AudioFrame af;
     auto frame = af.pointer();
     frame->format = format;
-    frame->channel_layout = channelLayout;
+    av_channel_layout_from_mask(&frame->ch_layout, AV_CH_LAYOUT_STEREO);
     frame->nb_samples = nbSamples;
     frame->sample_rate = sampleRate;
-    frame->channels = av_get_channel_layout_nb_channels(channelLayout);
 
     // construct the filter parameters
-    auto params = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame->channels, nbSamples);
+    auto params = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame->ch_layout.nb_channels, nbSamples);
 
     // allocate and fill frame buffers
     CPPUNIT_ASSERT(av_frame_get_buffer(frame, 0) >= 0);
-    fill_samples(reinterpret_cast<uint16_t*>(frame->data[0]), sampleRate, nbSamples, frame->channels, 440.0);
+    fill_samples(reinterpret_cast<uint16_t*>(frame->data[0]), sampleRate, nbSamples, frame->ch_layout.nb_channels, 440.0);
 
     // prepare filter
     std::vector<MediaStream> vec;
@@ -190,17 +187,17 @@ MediaFilterTest::testAudioMixing()
         fillAudioFrameProps(frame1, vec[0]);
         frame1->pts = i * frame1->nb_samples;
         CPPUNIT_ASSERT(av_frame_get_buffer(frame1, 0) >= 0);
-        fill_samples(reinterpret_cast<uint16_t*>(frame1->data[0]), frame1->sample_rate, frame1->nb_samples, frame1->channels, 440.0, t1);
+        fill_samples(reinterpret_cast<uint16_t*>(frame1->data[0]), frame1->sample_rate, frame1->nb_samples, frame1->ch_layout.nb_channels, 440.0, t1);
 
         fillAudioFrameProps(frame2, vec[1]);
         frame2->pts = i * frame2->nb_samples;
         CPPUNIT_ASSERT(av_frame_get_buffer(frame2, 0) >= 0);
-        fill_samples(reinterpret_cast<uint16_t*>(frame2->data[0]), frame2->sample_rate, frame2->nb_samples, frame2->channels, 329.6276, t2);
+        fill_samples(reinterpret_cast<uint16_t*>(frame2->data[0]), frame2->sample_rate, frame2->nb_samples, frame2->ch_layout.nb_channels, 329.6276, t2);
 
         fillAudioFrameProps(frame3, vec[2]);
         frame3->pts = i * frame3->nb_samples;
         CPPUNIT_ASSERT(av_frame_get_buffer(frame3, 0) >= 0);
-        fill_samples(reinterpret_cast<uint16_t*>(frame3->data[0]), frame3->sample_rate, frame3->nb_samples, frame3->channels, 349.2282, t3);
+        fill_samples(reinterpret_cast<uint16_t*>(frame3->data[0]), frame3->sample_rate, frame3->nb_samples, frame3->ch_layout.nb_channels, 349.2282, t3);
 
         // apply filter
         CPPUNIT_ASSERT(filter_->feedInput(frame1, "a1") >= 0);
@@ -318,17 +315,16 @@ MediaFilterTest::testReinit()
     AudioFrame af;
     auto frame = af.pointer();
     frame->format = AV_SAMPLE_FMT_S16;
-    frame->channel_layout = AV_CH_LAYOUT_STEREO;
+    av_channel_layout_from_mask(&frame->ch_layout, AV_CH_LAYOUT_STEREO);
     frame->nb_samples = 100;
     frame->sample_rate = 44100;
-    frame->channels = 2;
 
     // construct the filter parameters with different sample rate
-    auto params = MediaStream("in1", frame->format, rational<int>(1, 16000), 16000, frame->channels, frame->nb_samples);
+    auto params = MediaStream("in1", frame->format, rational<int>(1, 16000), 16000, frame->ch_layout.nb_channels, frame->nb_samples);
 
     // allocate and fill frame buffers
     CPPUNIT_ASSERT(av_frame_get_buffer(frame, 0) >= 0);
-    fill_samples(reinterpret_cast<uint16_t*>(frame->data[0]), frame->sample_rate, frame->nb_samples, frame->channels, 440.0);
+    fill_samples(reinterpret_cast<uint16_t*>(frame->data[0]), frame->sample_rate, frame->nb_samples, frame->ch_layout.nb_channels, 440.0);
 
     // prepare filter
     std::vector<MediaStream> vec;

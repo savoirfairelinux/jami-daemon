@@ -50,13 +50,11 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
         throw std::bad_alloc();
     }
 
-    av_opt_set_int(swrCtx, "ich", in->channels, 0);
-    av_opt_set_int(swrCtx, "icl", in->channel_layout, 0);
+    av_opt_set_chlayout(swrCtx, "ichl", &in->ch_layout, 0);
     av_opt_set_int(swrCtx, "isr", in->sample_rate, 0);
     av_opt_set_sample_fmt(swrCtx, "isf", static_cast<AVSampleFormat>(in->format), 0);
 
-    av_opt_set_int(swrCtx, "och", out->channels, 0);
-    av_opt_set_int(swrCtx, "ocl", out->channel_layout, 0);
+    av_opt_set_chlayout(swrCtx, "ochl", &out->ch_layout, 0);
     av_opt_set_int(swrCtx, "osr", out->sample_rate, 0);
     av_opt_set_sample_fmt(swrCtx, "osf", static_cast<AVSampleFormat>(out->format), 0);
 
@@ -71,10 +69,10 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
      * LFE downmixing is optional, so any coefficient can be used, we use +6dB for mono and
      * +0dB in each channel for stereo.
      */
-    if (in->channel_layout == AV_CH_LAYOUT_5POINT1
-        || in->channel_layout == AV_CH_LAYOUT_5POINT1_BACK) {
+    if (in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1
+        || in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1_BACK) {
         // NOTE MSVC can't allocate dynamic size arrays on the stack
-        if (out->channels == 2) {
+        if (out->ch_layout.nb_channels == 2) {
             double matrix[2][6];
             // L = 1.0*FL + 0.707*FC + 0.707*BL + 1.0*LFE
             matrix[0][0] = 1;
@@ -152,8 +150,7 @@ Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
     AudioFrame resampled;
     auto output = resampled.pointer();
     output->sample_rate = dataOut.getSampleRate();
-    output->channel_layout = av_get_default_channel_layout(dataOut.channels());
-    output->channels = dataOut.channels();
+    av_channel_layout_default(&output->ch_layout, dataOut.channels());
     output->format = AV_SAMPLE_FMT_S16;
 
     if (resample(input, output) < 0)
@@ -162,14 +159,14 @@ Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
     dataOut.resize(output->nb_samples);
     dataOut.deinterleave(reinterpret_cast<const AudioSample*>(output->extended_data[0]),
                          output->nb_samples,
-                         output->channels);
+                         output->ch_layout.nb_channels);
 }
 
 std::unique_ptr<AudioFrame>
 Resampler::resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& format)
 {
     if (in->pointer()->sample_rate == (int) format.sample_rate
-        && in->pointer()->channels == (int) format.nb_channels
+        && in->pointer()->ch_layout.nb_channels == (int) format.nb_channels
         && (AVSampleFormat) in->pointer()->format == format.sampleFormat) {
         return std::move(in);
     }
@@ -191,7 +188,7 @@ Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
     }
 
     if (inPtr->sample_rate == (int) format.sample_rate
-        && inPtr->channels == (int) format.nb_channels
+        && inPtr->ch_layout.nb_channels == (int) format.nb_channels
         && (AVSampleFormat) inPtr->format == format.sampleFormat) {
         return std::move(in);
     }

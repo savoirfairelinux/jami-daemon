@@ -98,8 +98,7 @@ ResamplerTest::testAudioFrame()
     auto output = out.pointer();
     output->format = AV_SAMPLE_FMT_FLT;
     output->sample_rate = 48000;
-    output->channel_layout = AV_CH_LAYOUT_STEREO;
-    output->channels = 2;
+    av_channel_layout_from_mask(&output->ch_layout, AV_CH_LAYOUT_STEREO);
 
     int ret = resampler_->resample(input->pointer(), output);
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
