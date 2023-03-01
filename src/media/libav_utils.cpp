@@ -267,7 +267,7 @@ fillWithSilence(AVFrame* frame)
     int ret = av_samples_set_silence(frame->extended_data,
                                      0,
                                      frame->nb_samples,
-                                     frame->channels,
+                                     frame->ch_layout.nb_channels,
                                      (AVSampleFormat) frame->format);
     if (ret < 0)
         JAMI_ERR() << "Failed to fill frame with silence";

@@ -81,7 +81,7 @@ MediaDecoderTest::testAudioFile()
 
     decoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>&& f) mutable {
         CPPUNIT_ASSERT(f->pointer()->sample_rate == decoder_->getStream().sampleRate);
-        CPPUNIT_ASSERT(f->pointer()->channels == decoder_->getStream().nbChannels);
+        CPPUNIT_ASSERT(f->pointer()->ch_layout.nb_channels == decoder_->getStream().nbChannels);
     }));
     DeviceParams dev;
     dev.input = filename_;
