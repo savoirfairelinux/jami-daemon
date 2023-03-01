@@ -3678,13 +3678,16 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
 void
 JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId)
 {
+    if (not fileutils::isFile(fmt::format("{}/profile.vcf", idPath_)))
+        return;
+    auto currentSha3 = fileutils::sha3File(fmt::format("{}/profile.vcf", idPath_));
     // VCard sync for peerUri
-    if (not needToSendProfile(peerUri, deviceId)) {
+    if (not needToSendProfile(peerUri, deviceId, currentSha3)) {
         JAMI_DEBUG("Peer {} already got an up-to-date vcard", peerUri);
         return;
     }
     // We need a new channel
-    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, std::move([accId = getAccountID(), peerUri, deviceId]() {
+    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, currentSha3, std::move([accId = getAccountID(), peerUri, deviceId]() {
         // Mark the VCard as sent
         auto sendDir = fmt::format("{}/{}/vcard/{}",
                                     fileutils::get_cache_dir(),
@@ -3700,9 +3703,8 @@ JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, 
 }
 
 bool
-JamiAccount::needToSendProfile(const std::string& peerUri, const std::string& deviceId)
+JamiAccount::needToSendProfile(const std::string& peerUri, const std::string& deviceId, const std::string& sha3Sum)
 {
-    auto currentSha3 = fileutils::sha3File(fmt::format("{}/profile.vcf", idPath_));
     std::string previousSha3 {};
     auto vCardPath = fmt::format("{}/vcard", cachePath_);
     auto sha3Path = fmt::format("{}/sha3", vCardPath);
@@ -3710,14 +3712,14 @@ JamiAccount::needToSendProfile(const std::string& peerUri, const std::string& de
     try {
         previousSha3 = fileutils::loadTextFile(sha3Path);
     } catch (...) {
-        fileutils::saveFile(sha3Path, {currentSha3.begin(), currentSha3.end()}, 0600);
+        fileutils::saveFile(sha3Path, {sha3Sum.begin(), sha3Sum.end()}, 0600);
         return true;
     }
-    if (currentSha3 != previousSha3) {
+    if (sha3Sum != previousSha3) {
         // Incorrect sha3 stored. Update it
         fileutils::removeAll(vCardPath, true);
         fileutils::check_dir(vCardPath.c_str(), 0700);
-        fileutils::saveFile(sha3Path, {currentSha3.begin(), currentSha3.end()}, 0600);
+        fileutils::saveFile(sha3Path, {sha3Sum.begin(), sha3Sum.end()}, 0600);
         return true;
     }
     fileutils::recursive_mkdir(fmt::format("{}/{}/", vCardPath, peerUri));
@@ -4000,14 +4002,19 @@ JamiAccount::transferFile(const std::string& conversationId,
                           const std::string& interactionId,
                           size_t start,
                           size_t end,
+                          const std::string& sha3Sum,
                           std::function<void()> onFinished)
 {
-    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf", DATA_TRANSFER_URI)
+    auto fid = fileId;
+    if (fid == "profile.vcf") {
+        fid =  fmt::format("profile.vcf?sha3={}", sha3Sum);
+    }
+    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf?sha3={}", DATA_TRANSFER_URI, sha3Sum)
                         : fmt::format("{}{}/{}/{}",
                                    DATA_TRANSFER_URI,
                                    conversationId,
                                    currentDeviceId(),
-                                   fileId);
+                                   fid);
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;

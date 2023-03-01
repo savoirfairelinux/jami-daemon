@@ -195,7 +195,7 @@ public:
      */
     std::vector<WaitingRequest> waitingRequests() const;
     bool isWaiting(const std::string& fileId) const;
-    void onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel);
+    void onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel, const std::string& sha3Sum = "");
 
     /**
      * @param contactId     contact's id

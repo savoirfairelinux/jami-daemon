@@ -520,6 +520,7 @@ public:
                       const std::string& interactionId,
                       size_t start = 0,
                       size_t end = 0,
+                      const std::string& sha3Sum = "",
                       std::function<void()> onFinished = {});
 
     void askForFileChannel(const std::string& conversationId,
@@ -547,9 +548,10 @@ public:
      * Check (via the cache) if we need to send our profile to a specific device
      * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
+     * @param sha3Sum       SHA3 hash of the profile
      */
     // Note: when swarm will be merged, this can be moved in transferManager
-    bool needToSendProfile(const std::string& peerUri, const std::string& deviceId);
+    bool needToSendProfile(const std::string& peerUri, const std::string& deviceId, const std::string& sha3Sum);
     /**
      * Send Profile via cached SIP connection
      * @param convId        Conversation's identifier (can be empty for self profile on sync)
