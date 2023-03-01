@@ -89,9 +89,9 @@ public:
 
     ~IceLock() { unlock(); }
 
-    void lock() { pj_grp_lock_acquire(lk_); }
+    void lock() { if (lk_) pj_grp_lock_acquire(lk_); }
 
-    void unlock() { pj_grp_lock_release(lk_); }
+    void unlock() { if (lk_) pj_grp_lock_release(lk_); }
 };
 
 class IceTransport::Impl
