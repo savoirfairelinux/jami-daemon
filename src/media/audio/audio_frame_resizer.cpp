@@ -95,10 +95,10 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
 
     int ret = 0;
     auto f = frame->pointer();
-    AudioFormat format(f->sample_rate, f->channels, (AVSampleFormat) f->format);
+    AudioFormat format(f->sample_rate, f->ch_layout.nb_channels, (AVSampleFormat) f->format);
     if (format != format_) {
         JAMI_ERR() << "Expected " << format_ << ", but got "
-                   << AudioFormat(f->sample_rate, f->channels, (AVSampleFormat) f->format);
+                   << AudioFormat(f->sample_rate, f->ch_layout.nb_channels, (AVSampleFormat) f->format);
         setFormat(format, frameSize_);
     }
 
