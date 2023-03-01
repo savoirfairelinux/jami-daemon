@@ -596,8 +596,6 @@ MediaDecoder::prepareDecoderContext()
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = inputParams_.framerate;
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
-            decoderCtx_->framerate = av_inv_q(decoderCtx_->time_base);
-        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = {30, 1};
     }
     if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
@@ -643,7 +641,12 @@ MediaDecoder::decode(AVPacket& packet)
 #endif
     auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
-    frame->time_base = decoderCtx_->time_base;
+    frame->time_base.num = decoderCtx_->framerate.den;
+    frame->time_base.den = decoderCtx_->framerate.num;
+    if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO) {
+        JAMI_DBG("pts %ld",
+                    frame->pts);
+    }
     if (resolutionChangedCallback_) {
         if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
             JAMI_DBG("Resolution changed from %dx%d to %dx%d",
@@ -671,10 +674,14 @@ MediaDecoder::decode(AVPacket& packet)
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                       {1, AV_TIME_BASE},
-                                      decoderCtx_->time_base,
+                                      {decoderCtx_->framerate.den, decoderCtx_->framerate.num},
                                       static_cast<AVRounding>(AV_ROUND_NEAR_INF
                                                               | AV_ROUND_PASS_MINMAX));
         lastTimestamp_ = frame->pts;
+        if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO) {
+            JAMI_DBG("pts %ld",
+                        frame->pts);
+        }
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto startTime = avStream_->start_time == AV_NOPTS_VALUE ? 0 : avStream_->start_time;
             rational<double> frame_time = rational<double>(getTimeBase())

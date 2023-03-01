@@ -98,7 +98,7 @@ struct MediaStream
         , firstTimestamp(startTimestamp)
     {
         if (c) {
-            timeBase = c->time_base;
+            timeBase = {c->framerate.den, c->framerate.num};
             switch (c->codec_type) {
             case AVMEDIA_TYPE_VIDEO:
                 format = c->pix_fmt;
