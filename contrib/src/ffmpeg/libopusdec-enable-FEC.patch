@@ -1,8 +1,8 @@
 diff --git a/libavcodec/libopusdec.c b/libavcodec/libopusdec.c
-index 2a97811d18..40ee7b8fec 100644
+index 9b9a610343..8ec5bfc1ad 100644
 --- a/libavcodec/libopusdec.c
 +++ b/libavcodec/libopusdec.c
-@@ -43,6 +43,8 @@
+@@ -45,6 +45,8 @@ struct libopus_context {
  #ifdef OPUS_SET_PHASE_INVERSION_DISABLED_REQUEST
      int apply_phase_inv;
  #endif
@@ -11,7 +11,7 @@ index 2a97811d18..40ee7b8fec 100644
  };
  
  #define OPUS_HEAD_SIZE 19
-@@ -134,6 +136,8 @@
+@@ -141,6 +143,8 @@ static av_cold int libopus_decode_init(AVCodecContext *avc)
      /* Decoder delay (in samples) at 48kHz */
      avc->delay = avc->internal->skip_samples = opus->pre_skip;
  
@@ -20,10 +20,10 @@ index 2a97811d18..40ee7b8fec 100644
      return 0;
  }
  
-@@ -155,25 +159,81 @@
+@@ -161,27 +165,82 @@ static int libopus_decode(AVCodecContext *avc, AVFrame *frame,
+                           int *got_frame_ptr, AVPacket *pkt)
  {
      struct libopus_context *opus = avc->priv_data;
-     AVFrame *frame               = data;
 -    int ret, nb_samples;
 +    uint8_t *outptr;
 +    int ret, nb_samples = 0, nb_lost_samples = 0, nb_samples_left;
@@ -98,8 +98,8 @@ index 2a97811d18..40ee7b8fec 100644
 -        return ff_opus_error_to_averror(nb_samples);
 +               opus_strerror(ret));
 +        return ff_opus_error_to_averror(ret);
-+    }
-+
+     }
+ 
 +    nb_samples += ret;
 +
 +    if (opus->decode_fec)
@@ -110,10 +110,11 @@ index 2a97811d18..40ee7b8fec 100644
 +        } else {
 +            opus->expected_next_pts = pkt->pts + nb_samples;
 +        }
-     }
- 
++    }
  #ifndef OPUS_SET_GAIN
-@@ -214,6 +274,7 @@
+     {
+         int i = avc->ch_layout.nb_channels * nb_samples;
+@@ -220,6 +279,7 @@ static const AVOption libopusdec_options[] = {
  #ifdef OPUS_SET_PHASE_INVERSION_DISABLED_REQUEST
      { "apply_phase_inv", "Apply intensity stereo phase inversion", OFFSET(apply_phase_inv), AV_OPT_TYPE_BOOL, { .i64 = 1 }, 0, 1, FLAGS },
  #endif
@@ -121,3 +122,6 @@ index 2a97811d18..40ee7b8fec 100644
      { NULL },
  };
  
+-- 
+2.34.1
+

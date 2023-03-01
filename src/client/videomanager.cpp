@@ -111,8 +111,7 @@ void
 AudioFrame::setFormat(const jami::AudioFormat& format)
 {
     auto d = pointer();
-    d->channels = format.nb_channels;
-    d->channel_layout = av_get_default_channel_layout(format.nb_channels);
+    av_channel_layout_default(&d->ch_layout, format.nb_channels);
     d->sample_rate = format.sample_rate;
     d->format = format.sampleFormat;
 }
@@ -121,7 +120,7 @@ jami::AudioFormat
 AudioFrame::getFormat() const
 {
     return {(unsigned) frame_->sample_rate,
-            (unsigned) frame_->channels,
+            (unsigned) frame_->ch_layout.nb_channels,
             (AVSampleFormat) frame_->format};
 }
 
@@ -149,7 +148,7 @@ AudioFrame::mix(const AudioFrame& frame)
 {
     auto& f = *pointer();
     auto& fIn = *frame.pointer();
-    if (f.channels != fIn.channels || f.format != fIn.format || f.sample_rate != fIn.sample_rate) {
+    if (f.ch_layout.nb_channels != fIn.ch_layout.nb_channels || f.format != fIn.format || f.sample_rate != fIn.sample_rate) {
         throw std::invalid_argument("Can't mix frames with different formats");
     }
     if (f.nb_samples == 0) {
@@ -160,8 +159,8 @@ AudioFrame::mix(const AudioFrame& frame)
     }
     AVSampleFormat fmt = (AVSampleFormat) f.format;
     bool isPlanar = av_sample_fmt_is_planar(fmt);
-    unsigned samplesPerChannel = isPlanar ? f.nb_samples : f.nb_samples * f.channels;
-    unsigned channels = isPlanar ? f.channels : 1;
+    unsigned samplesPerChannel = isPlanar ? f.nb_samples : f.nb_samples * f.ch_layout.nb_channels;
+    unsigned channels = isPlanar ? f.ch_layout.nb_channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
         for (unsigned i = 0; i < channels; i++) {
             auto c = (int16_t*) f.extended_data[i];
@@ -192,8 +191,8 @@ AudioFrame::calcRMS() const
     double rms = 0.0;
     auto fmt = static_cast<AVSampleFormat>(frame_->format);
     bool planar = av_sample_fmt_is_planar(fmt);
-    int perChannel = planar ? frame_->nb_samples : frame_->nb_samples * frame_->channels;
-    int channels = planar ? frame_->channels : 1;
+    int perChannel = planar ? frame_->nb_samples : frame_->nb_samples * frame_->ch_layout.nb_channels;
+    int channels = planar ? frame_->ch_layout.nb_channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
         for (int c = 0; c < channels; ++c) {
             auto buf = reinterpret_cast<int16_t*>(frame_->extended_data[c]);
@@ -216,7 +215,7 @@ AudioFrame::calcRMS() const
         return 0.0;
     }
     // divide by the number of multi-byte samples
-    return sqrt(rms / (frame_->nb_samples * frame_->channels));
+    return sqrt(rms / (frame_->nb_samples * frame_->ch_layout.nb_channels));
 }
 
 #ifdef ENABLE_VIDEO

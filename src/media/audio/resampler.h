@@ -47,7 +47,7 @@ public:
      *
      * Resample from @input format to @output format.
      *
-     * NOTE: sample_rate, channel_layout, and format should be set on @output
+     * NOTE: sample_rate, ch_layout, and format should be set on @output
      */
     int resample(const AVFrame* input, AVFrame* output);
 
