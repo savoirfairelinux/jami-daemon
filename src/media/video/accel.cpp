@@ -313,7 +313,6 @@ HardwareAccel::setDetails(AVCodecContext* codecCtx)
     if (type_ == CODEC_DECODER) {
         codecCtx->hw_device_ctx = av_buffer_ref(deviceCtx_);
         codecCtx->get_format = getFormatCb;
-        codecCtx->thread_safe_callbacks = 1;
     } else if (type_ == CODEC_ENCODER) {
         if (framesCtx_)
             // encoder doesn't need a device context, only a frame context
