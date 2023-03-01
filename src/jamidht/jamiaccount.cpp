@@ -3702,6 +3702,8 @@ JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, 
 bool
 JamiAccount::needToSendProfile(const std::string& peerUri, const std::string& deviceId)
 {
+    if (not fileutils::isFile(fmt::format("{}/profile.vcf", idPath_)))
+        return false;
     auto currentSha3 = fileutils::sha3File(fmt::format("{}/profile.vcf", idPath_));
     std::string previousSha3 {};
     auto vCardPath = fmt::format("{}/vcard", cachePath_);
@@ -4002,7 +4004,7 @@ JamiAccount::transferFile(const std::string& conversationId,
                           size_t end,
                           std::function<void()> onFinished)
 {
-    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf", DATA_TRANSFER_URI)
+    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf?sha3={}", DATA_TRANSFER_URI, fileutils::sha3File(path))
                         : fmt::format("{}{}/{}/{}",
                                    DATA_TRANSFER_URI,
                                    conversationId,

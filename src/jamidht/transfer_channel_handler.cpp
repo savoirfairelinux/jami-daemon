@@ -54,22 +54,20 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     auto uri = cert->issuer->getId().toString();
     // Else, check if it's a profile or file in a conversation.
     auto idstr = name.substr(16);
+    // Remove arguments for now
+    auto sep = idstr.find_last_of('?');
+    idstr = idstr.substr(0, sep);
     if (idstr == "profile.vcf") {
         // If it's our profile from another device
         return uri == acc->getUsername();
     }
-    auto sep = idstr.find('/');
+    sep = idstr.find('/');
     auto lastSep = idstr.find_last_of('/');
     auto conversationId = idstr.substr(0, sep);
     auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
     auto fileId = idstr.substr(lastSep + 1);
     if (fileHost == acc->currentDeviceId())
         return false;
-
-    sep = fileId.find_last_of('?');
-    if (sep != std::string::npos) {
-        fileId = fileId.substr(0, sep);
-    }
 
     // Check if peer is member of the conversation
     if (fileId == fmt::format("{}.vcf", acc->getUsername()) || fileId == "profile.vcf") {
@@ -98,9 +96,33 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         return;
 
     auto idstr = name.substr(16);
+    // Parse arguments
+    auto sep = idstr.find_last_of('?');
+    std::string arguments;
+    if (sep != std::string::npos) {
+        arguments = idstr.substr(sep + 1);
+        idstr = idstr.substr(0, sep);
+    }
+
+    auto start = 0u, end = 0u;
+    std::string sha3Sum;
+    for (const auto arg : split_string(arguments, '&')) {
+        auto keyVal = split_string(arg, '=');
+        if (keyVal.size() == 2) {
+            if (keyVal[0] == "start") {
+                start = to_int<unsigned>(keyVal[1]);
+            } else if (keyVal[0] == "end") {
+                end = to_int<unsigned>(keyVal[1]);
+            } else if (keyVal[0] == "sha3") {
+                sha3Sum = keyVal[1];
+            }
+        }
+    }
+
+    // Check if profile
     if (idstr == "profile.vcf") {
         if (!channel->isInitiator()) {
-            acc->dataTransfer()->onIncomingProfile(channel);
+            acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
         } else {
             // If it's a profile from sync
             std::string path = fmt::format("{}/profile.vcf", idPath_);
@@ -124,13 +146,6 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     if (channel->isInitiator())
         return;
 
-    auto sep = fileId.find_last_of('?');
-    std::string arguments;
-    if (sep != std::string::npos) {
-        arguments = fileId.substr(sep + 1);
-        fileId = fileId.substr(0, sep);
-    }
-
     // Profile for a member in the conversation
     if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
         std::string path = fmt::format("{}/profile.vcf", idPath_);
@@ -153,18 +168,6 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     }
     auto interactionId = fileId.substr(0, sep);
     std::string path = dt->path(fileId);
-    auto start = 0u, end = 0u;
-    for (const auto arg : split_string(arguments, '&')) {
-        auto keyVal = split_string(arg, '=');
-        if (keyVal.size() == 2) {
-            if (keyVal[0] == "start") {
-                start = to_int<unsigned>(keyVal[1]);
-            } else if (keyVal[0] == "end") {
-                end = to_int<unsigned>(keyVal[1]);
-            }
-        }
-    }
-
     dt->transferFile(channel, fileId, interactionId, path, start, end);
 }
 
