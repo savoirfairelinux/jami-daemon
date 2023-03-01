@@ -3678,14 +3678,17 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
 void
 JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId)
 {
+    JAMI_WARNING("@@@@@@@@@@@@@@@@ SEND PROFILE?");
     // VCard sync for peerUri
     if (not needToSendProfile(peerUri, deviceId)) {
         JAMI_DEBUG("Peer {} already got an up-to-date vcard", peerUri);
         return;
     }
+    JAMI_WARNING("@@@@@@@@@@@@@@@@ SEND PROFILE!");
     // We need a new channel
     transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, std::move([accId = getAccountID(), peerUri, deviceId]() {
         // Mark the VCard as sent
+        JAMI_ERROR("@@@@ END");
         auto sendDir = fmt::format("{}/{}/vcard/{}",
                                     fileutils::get_cache_dir(),
                                     accId,
@@ -3702,6 +3705,8 @@ JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, 
 bool
 JamiAccount::needToSendProfile(const std::string& peerUri, const std::string& deviceId)
 {
+    if (not fileutils::isFile(fmt::format("{}/profile.vcf", idPath_)))
+        return false;
     auto currentSha3 = fileutils::sha3File(fmt::format("{}/profile.vcf", idPath_));
     std::string previousSha3 {};
     auto vCardPath = fmt::format("{}/vcard", cachePath_);
@@ -4011,11 +4016,13 @@ JamiAccount::transferFile(const std::string& conversationId,
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
+    JAMI_ERROR("@@@@ CONNECT");
     connectionManager_->connectDevice(
         DeviceId(deviceId),
         channelName,
         [this, conversationId, path = std::move(path), fileId, interactionId, start, end, onFinished = std::move(onFinished)](
             std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
+            JAMI_ERROR("@@@@ SOCK?");
             if (!socket)
                 return;
             dht::ThreadPool::io().run([w = weak(),
@@ -4028,8 +4035,11 @@ JamiAccount::transferFile(const std::string& conversationId,
                                        end,
                                        onFinished = std::move(onFinished)] {
                 if (auto shared = w.lock())
-                    if (auto dt = shared->dataTransfer(conversationId))
+                    if (auto dt = shared->dataTransfer(conversationId)) {
+            JAMI_ERROR("@@@@ GO");
+
                         dt->transferFile(socket, fileId, interactionId, path, start, end, std::move(onFinished));
+                    }
             });
         });
 }

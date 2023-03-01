@@ -545,6 +545,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
                     if (code == uint32_t(libjami::DataTransferEventCode::finished)) {
+                        JAMI_ERROR("@@@ RECEIVED VCARD {}", path);
                         emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                   uri,
                                                                                   path);
