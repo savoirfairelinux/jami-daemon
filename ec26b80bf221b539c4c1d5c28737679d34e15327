@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d4a3f97_b7c7eb72",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 4011,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-01T22:43:29Z",
+      "side": 1,
+      "message": "sha3 computed twice, file read twice ?",
+      "range": {
+        "startLine": 4011,
+        "startChar": 115,
+        "endLine": 4011,
+        "endChar": 123
+      },
+      "revId": "ec26b80bf221b539c4c1d5c28737679d34e15327",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
