@@ -171,7 +171,7 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
         if (ms.format != frame->format
             || (ms.isVideo && (ms.width != frame->width || ms.height != frame->height))
             || (!ms.isVideo
-                && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->channels))) {
+                && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->ch_layout.nb_channels))) {
             ms.update(frame);
             if ((ret = reinitialize()) < 0)
                 return fail("Failed to reinitialize filter with new input parameters", ret);
@@ -283,7 +283,7 @@ MediaFilter::initInputFilter(AVFilterInOut* in, const MediaStream& msp)
         buffersrc = avfilter_get_by_name("buffer");
     } else {
         params->sample_rate = msp.sampleRate;
-        params->channel_layout = av_get_default_channel_layout(msp.nbChannels);
+        av_channel_layout_default(&params->ch_layout, msp.nbChannels);
         buffersrc = avfilter_get_by_name("abuffer");
     }
 

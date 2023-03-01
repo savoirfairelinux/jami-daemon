@@ -115,8 +115,7 @@ getAudioFrame(int sampleRate, int nbSamples, int nbChannels)
         return nullptr;
 
     frame->format = AV_SAMPLE_FMT_S16;
-    frame->channels = nbChannels;
-    frame->channel_layout = av_get_default_channel_layout(nbChannels);
+    av_channel_layout_default(&frame->ch_layout, nbChannels);
     frame->nb_samples = nbSamples;
     frame->sample_rate = sampleRate;
 

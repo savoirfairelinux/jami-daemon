@@ -576,7 +576,7 @@ std::string
 MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers,
                                 const MediaStream& local) const
 {
-    std::string baseFilter = "aresample=osr=48000:ocl=stereo:osf=s16";
+    std::string baseFilter = "aresample=osr=48000:ochl=stereo:osf=s16";
     std::stringstream a;
 
     switch (peers.size()) {
