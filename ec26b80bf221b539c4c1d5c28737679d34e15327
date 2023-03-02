@@ -22,6 +22,30 @@
       },
       "revId": "ec26b80bf221b539c4c1d5c28737679d34e15327",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "51396c2d_1890b4cd",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 4011,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-02T14:10:41Z",
+      "side": 1,
+      "message": "not in this method, but anyway needToSendProfile is already computing this, so updated",
+      "parentUuid": "8d4a3f97_b7c7eb72",
+      "range": {
+        "startLine": 4011,
+        "startChar": 115,
+        "endLine": 4011,
+        "endChar": 123
+      },
+      "revId": "ec26b80bf221b539c4c1d5c28737679d34e15327",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
