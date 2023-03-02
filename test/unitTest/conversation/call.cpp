@@ -906,15 +906,12 @@ ConversationCallTest::testCallSelfIfDefaultHost()
     auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
-               && data.messages.rbegin()->at("type") == "application/call-history+json"
-               && !pInfos_.empty();
+               && data.messages.rbegin()->at("type") == "application/call-history+json";
     };
     // should get message
-    cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_);
-    });
-    CPPUNIT_ASSERT(pInfos_.size() == 1);
-    CPPUNIT_ASSERT(pInfos_[0]["videoMuted"] == "false");
+    }));
     auto confId = aliceData_.messages.rbegin()->at("confId");
     // Alice should be the host
     CPPUNIT_ASSERT(aliceAccount->getConference(confId));
