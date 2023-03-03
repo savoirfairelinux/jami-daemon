@@ -43,7 +43,6 @@ libjami_la_LIBADD += \
 	$(LIBSSL_LIBS) \
 	$(LIBCRYPTO_LIBS) \
 	$(ARCHIVE_LIBS) \
-        $(ARCHIVE_LIBS) \
 	$(ZLIB_LIBS)
 
 if ENABLE_PLUGIN
