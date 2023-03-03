@@ -1,7 +1,8 @@
 # opus
 
-OPUS_VERSION := 757c53f775a0b651b0512a1992d67f4b2159a378
-OPUS_URL := https://github.com/xiph/opus/archive/$(OPUS_VERSION).tar.gz
+OPUS_VERSION := 1.3
+
+OPUS_URL := https://archive.mozilla.org/pub/opus/opus-$(OPUS_VERSION).tar.gz
 
 PKGS += opus
 ifeq ($(call need_pkg,"opus >= 0.9.14"),)
@@ -18,7 +19,12 @@ opus: opus-$(OPUS_VERSION).tar.gz .sum-opus
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-.opus: opus toolchain.cmake
-	cd $< && $(CMAKE) . && $(MAKE)
+OPUS_CONF= --disable-extra-programs --disable-doc
+ifndef HAVE_FPU
+OPUS_CONF += --enable-fixed-point
+endif
+
+.opus: opus
+	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) $(OPUS_CONF)
 	cd $< && $(MAKE) install
 	touch $@
