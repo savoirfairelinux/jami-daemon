@@ -203,6 +203,8 @@ IncomingFile::process()
         auto shared = w.lock();
         if (!shared)
             return;
+        if (shared->stream_ && shared->stream_.is_open())
+            shared->stream_.close();
         auto correct = shared->sha3Sum_.empty();
         if (!correct) {
             // Verify shaSum
