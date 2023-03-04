@@ -17,6 +17,7 @@
  */
 
 #include "webrtc.h"
+#include "logger.h"
 
 #include <webrtc/modules/audio_processing/include/audio_processing.h>
 

@@ -17,6 +17,7 @@
 #pragma once
 #include "connectivity/sip_utils.h"
 #include "config/serializable.h"
+#include "string_utils.h"
 
 #include <string>
 #include <string_view>
