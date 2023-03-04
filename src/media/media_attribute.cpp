@@ -20,6 +20,8 @@
 
 #include "media/media_attribute.h"
 #include "jami/media_const.h"
+#include "logger.h"
+#include "string_utils.h"
 
 namespace jami {
 

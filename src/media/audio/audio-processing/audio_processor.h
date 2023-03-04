@@ -23,6 +23,7 @@
 #include "audio/resampler.h"
 #include "audio/audiobuffer.h"
 #include "libav_deps.h"
+#include "logger.h"
 
 #include <atomic>
 #include <memory>
