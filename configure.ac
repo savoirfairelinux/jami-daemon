@@ -621,7 +621,7 @@ AS_IF([test "x$with_natpmp" != xno],
 AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP],
   `if test "x$with_natpmp" != xno; then echo 1; else echo 0; fi`,
   [Define if you have libnatpmp])
-AM_CONDITIONAL([BUILD_NATPMP], test "x$with_natpmp" = "xyes")
+AM_CONDITIONAL([BUILD_NATPMP], test "x$with_natpmp" != "xno")
 
 # SHM
 dnl check for shm
