@@ -54,6 +54,7 @@ FFMPEGCONF += \
 	--enable-muxer=ogg \
 	--enable-muxer=pcm_s16be \
 	--enable-muxer=pcm_s16le \
+	--enable-muxer=wav \
 	--enable-demuxer=rtp \
 	--enable-demuxer=mjpeg \
 	--enable-demuxer=mjpeg_2000 \
@@ -164,7 +165,13 @@ FFMPEGCONF += \
 	--enable-decoder=pcm_s8 \
 	--enable-decoder=pcm_s8_planar \
 	--enable-decoder=pcm_u16be \
-	--enable-decoder=pcm_u16le
+	--enable-decoder=pcm_u16le \
+	--enable-encoder=pcm_u8 \
+	--enable-encoder=pcm_f32le \
+	--enable-encoder=pcm_f64le \
+	--enable-encoder=pcm_s16le \
+	--enable-encoder=pcm_s32le \
+	--enable-encoder=pcm_s64le
 
 #encoders/decoders for images
 FFMPEGCONF += \

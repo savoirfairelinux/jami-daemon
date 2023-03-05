@@ -75,128 +75,122 @@ private:
 };
 
 /**
- * Minimally invasive audio logger. Writes a wav file from raw PCM or AVFrame. Helps debug what goes
- * wrong with audio.
+ * Audio logger. Writes a wav file from raw PCM or AVFrame. Helps debug what goes wrong with audio.
  */
-class WavWriter
-{
+class WavWriter {
 public:
-    WavWriter(std::string filename, AVFrame* frame)
-        : format_(static_cast<AVSampleFormat>(frame->format))
-        , channels_(frame->channels)
-        , planar_(av_sample_fmt_is_planar(format_))
-        , depth_(av_get_bytes_per_sample(format_))
-        , stepPerSample_(planar_ ? depth_ : depth_ * channels_)
+    WavWriter(const char* filename, AVFrame* frame)
     {
-        std::vector<AVSampleFormat> v {AV_SAMPLE_FMT_FLT,
-                                       AV_SAMPLE_FMT_FLTP,
-                                       AV_SAMPLE_FMT_DBL,
-                                       AV_SAMPLE_FMT_DBLP};
-        f_ = std::ofstream(filename, std::ios_base::out | std::ios_base::binary);
-        f_.imbue(std::locale::classic());
-        f_ << "RIFF----WAVEfmt ";
-        if (std::find(v.begin(), v.end(), format_) == v.end()) {
-            write(16, 4); // Chunk size
-            write(1, 2);  // WAVE_FORMAT_PCM
-            write(frame->channels, 2);
-            write(frame->sample_rate, 4);
-            write(frame->sample_rate * depth_ * frame->channels, 4); // Bytes per second
-            write(depth_ * frame->channels, 2);                      // Multi-channel sample size
-            write(8 * depth_, 2);                                    // Bits per sample
-            f_ << "data";
-            dataChunk_ = f_.tellp();
-            f_ << "----";
-        } else {
-            write(18, 4); // Chunk size
-            write(3, 2);  // Non PCM data
-            write(frame->channels, 2);
-            write(frame->sample_rate, 4);
-            write(frame->sample_rate * depth_ * frame->channels, 4); // Bytes per second
-            write(depth_ * frame->channels, 2);                      // Multi-channel sample size
-            write(8 * depth_, 2);                                    // Bits per sample
-            write(0, 2);                                             // Extension size
-            f_ << "fact";
-            write(4, 4); // Chunk size
-            factChunk_ = f_.tellp();
-            f_ << "----";
-            f_ << "data";
-            dataChunk_ = f_.tellp();
-            f_ << "----";
+        JAMI_WARNING("WavWriter(): {} ({}, {})", filename, av_get_sample_fmt_name((AVSampleFormat)frame->format), frame->sample_rate);
+        avformat_alloc_output_context2(&format_ctx_, nullptr, nullptr, filename);
+        if (!format_ctx_)
+            throw std::runtime_error("Failed to allocate output format context");
+
+        AVCodecID codec_id = AV_CODEC_ID_NONE;
+        switch (frame->format) {
+            case AV_SAMPLE_FMT_U8:
+                codec_id = AV_CODEC_ID_PCM_U8;
+                break;
+            case AV_SAMPLE_FMT_S16:
+            case AV_SAMPLE_FMT_S16P:
+                codec_id = AV_CODEC_ID_PCM_S16LE;
+                break;
+            case AV_SAMPLE_FMT_S32:
+            case AV_SAMPLE_FMT_S32P:
+                codec_id = AV_CODEC_ID_PCM_S32LE;
+                break;
+            case AV_SAMPLE_FMT_S64:
+            case AV_SAMPLE_FMT_S64P:
+                codec_id = AV_CODEC_ID_PCM_S64LE;
+                break;
+            case AV_SAMPLE_FMT_FLT:
+            case AV_SAMPLE_FMT_FLTP:
+                codec_id = AV_CODEC_ID_PCM_F32LE;
+                break;
+            case AV_SAMPLE_FMT_DBL:
+                codec_id = AV_CODEC_ID_PCM_F64LE;
+                break;
+            default:
+                throw std::runtime_error("Unsupported audio format");
         }
-    }
 
-    ~WavWriter()
-    {
-        length_ = f_.tellp();
-        f_.seekp(dataChunk_);
-        write(length_ - dataChunk_ + 4, 4); // bytes_per_sample * channels * nb_samples
-        f_.seekp(4);
-        write(length_ - 8, 4);
-        if (factChunk_) {
-            f_.seekp(factChunk_);
-            write((length_ - dataChunk_ + 4) / depth_, 4); // channels * nb_samples
-        }
-        f_.flush();
-    }
+        auto codec = avcodec_find_encoder(codec_id);
+        if (!codec)
+            throw std::runtime_error("Failed to find audio codec");
 
-    template<typename Word>
-    void write(Word value, unsigned size = sizeof(Word))
-    {
-        auto p = reinterpret_cast<unsigned char const*>(&value);
-        for (int i = 0; size; --size, ++i)
-            f_.put(p[i]);
-    }
+        codec_ctx_ = avcodec_alloc_context3(codec);
+        if (!codec_ctx_)
+            throw std::runtime_error("Failed to allocate audio codec context");
 
-    void write(AVFrame* frame)
-    {
-        for (int c = 0; c < frame->channels; ++c) {
-            int offset = planar_ ? 0 : depth_ * c;
-            for (int i = 0; i < frame->nb_samples; ++i) {
-                uint8_t* p = &frame->extended_data[planar_ ? c : 0][i + offset];
-                switch (format_) {
-                case AV_SAMPLE_FMT_U8:
-                case AV_SAMPLE_FMT_U8P:
-                    write<uint8_t>(*(uint8_t*) p);
-                    break;
-                case AV_SAMPLE_FMT_S16:
-                case AV_SAMPLE_FMT_S16P:
-                    write<int16_t>(*(int16_t*) p);
-                    break;
-                case AV_SAMPLE_FMT_S32:
-                case AV_SAMPLE_FMT_S32P:
-                    write<int32_t>(*(int32_t*) p);
-                    break;
-                case AV_SAMPLE_FMT_S64:
-                case AV_SAMPLE_FMT_S64P:
-                    write<int64_t>(*(int64_t*) p);
-                    break;
-                case AV_SAMPLE_FMT_FLT:
-                case AV_SAMPLE_FMT_FLTP:
-                    write<float>(*(float*) p);
-                    break;
-                case AV_SAMPLE_FMT_DBL:
-                case AV_SAMPLE_FMT_DBLP:
-                    write<double>(*(double*) p);
-                    break;
-                default:
-                    break;
-                }
+        codec_ctx_->sample_fmt = (AVSampleFormat)frame->format;
+        codec_ctx_->channel_layout = frame->channel_layout;
+        codec_ctx_->ch_layout = frame->ch_layout;
+        codec_ctx_->sample_rate = frame->sample_rate;
+        codec_ctx_->channels = frame->channels;
+        if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER)
+            codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+        if (avcodec_open2(codec_ctx_, codec, nullptr) < 0)
+            throw std::runtime_error("Failed to open audio codec");
+
+        stream_ = avformat_new_stream(format_ctx_, codec);
+        if (!stream_)
+            throw std::runtime_error("Failed to create audio stream");
+
+        if (avcodec_parameters_from_context(stream_->codecpar, codec_ctx_) < 0)
+            throw std::runtime_error("Failed to copy codec parameters to stream");
+
+        if (!(format_ctx_->oformat->flags & AVFMT_NOFILE)) {
+            if (avio_open(&format_ctx_->pb, filename, AVIO_FLAG_WRITE) < 0) {
+                throw std::runtime_error("Failed to open output file for writing");
             }
         }
-        f_.flush();
+        if (avformat_write_header(format_ctx_, nullptr) < 0)
+            throw std::runtime_error("Failed to write header to output file");
     }
 
+    void write(AVFrame* frame) {
+        int ret = avcodec_send_frame(codec_ctx_, frame);
+        if (ret < 0)
+            JAMI_ERROR("Error sending a frame to the encoder");
+        while (ret >= 0) {
+            AVPacket *pkt = av_packet_alloc();
+            ret = avcodec_receive_packet(codec_ctx_, pkt);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+                break;
+            else if (ret < 0) {
+                JAMI_ERROR("Error encoding a frame");
+                break;
+            }
+            av_packet_rescale_ts(pkt, codec_ctx_->time_base, stream_->time_base);
+            pkt->stream_index = stream_->index;
+            ret = av_write_frame(format_ctx_, pkt);
+            if (ret < 0) {
+                JAMI_ERROR("Error while writing output packet");
+                break;
+            }
+            av_packet_free(&pkt);
+        }
+    }
+
+    ~WavWriter() {
+        if (codec_ctx_) {
+            avcodec_close(codec_ctx_);
+            avcodec_free_context(&codec_ctx_);
+        }
+        if (format_ctx_) {
+            av_write_trailer(format_ctx_);
+            if (!(format_ctx_->oformat->flags & AVFMT_NOFILE))
+                avio_closep(&format_ctx_->pb);
+            avformat_free_context(format_ctx_);
+        }
+    }
 private:
-    std::ofstream f_;
-    size_t dataChunk_ {0};
-    size_t factChunk_ {0};
-    size_t length_ {0};
-    AVSampleFormat format_ {AV_SAMPLE_FMT_NONE};
-    size_t channels_ {0};
-    bool planar_ {false};
-    int depth_ {0};
-    int stepPerSample_ {0};
+    AVFormatContext* format_ctx_ {nullptr};
+    AVCodecContext* codec_ctx_ {nullptr};
+    AVStream* stream_ {nullptr};
 };
+
 
 /**
  * Minimally invasive video writer. Writes raw frames. Helps debug what goes wrong with video.
