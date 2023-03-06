@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "359c0fc2_dd28b659",
+        "filename": "src/account_config.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-06T16:11:32Z",
+      "side": 1,
+      "message": "Included for TRUE_STR",
+      "parentUuid": "76af2553_ee4f9a5d",
+      "range": {
+        "startLine": 19,
+        "startChar": 32,
+        "endLine": 20,
+        "endChar": 25
+      },
+      "revId": "6a58ed1f7c6afafb4d73608eaa930aac619f59d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ed6ad212_d7658495",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-03-06T16:07:05Z",
       "side": 1,
       "message": "used here?",
+      "range": {
+        "startLine": 24,
+        "startChar": 10,
+        "endLine": 24,
+        "endChar": 22
+      },
+      "revId": "6a58ed1f7c6afafb4d73608eaa930aac619f59d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd8120ba_b734d365",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-06T16:11:32Z",
+      "side": 1,
+      "message": "Same, used for TRUE_STR",
+      "parentUuid": "ed6ad212_d7658495",
       "range": {
         "startLine": 24,
         "startChar": 10,
