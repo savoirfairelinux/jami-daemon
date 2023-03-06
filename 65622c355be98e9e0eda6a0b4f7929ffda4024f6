@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d02f1fa6_566a45cc",
+        "filename": "src/debug_utils.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-06T14:16:46Z",
+      "side": 1,
+      "message": "we cast this several times",
+      "range": {
+        "startLine": 125,
+        "startChar": 32,
+        "endLine": 125,
+        "endChar": 63
+      },
+      "revId": "65622c355be98e9e0eda6a0b4f7929ffda4024f6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
