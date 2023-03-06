@@ -27,7 +27,7 @@
 #include "audio/resampler.h"
 #include "tonecontrol.h"
 #include "client/ring_signal.h"
-
+#include "debug_utils.h"
 #include "audio-processing/null_audio_processor.h"
 #include "tracepoint.h"
 #if HAVE_WEBRTC_AP
@@ -248,6 +248,7 @@ AudioLayer::destroyAudioProcessor()
 {
     // delete it
     audioProcessor.reset();
+    writer_.reset();
 }
 
 void
@@ -353,6 +354,11 @@ void
 AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
 {
     std::lock_guard<std::mutex> lock(audioProcessorMutex);
+
+    if (!writer_)
+        writer_ = std::make_unique<debug::WavWriter>("record.wav", frame->pointer());
+    writer_->write(frame->pointer());
+
     if (audioProcessor && playbackStarted_ && recordStarted_) {
         audioProcessor->putRecorded(std::move(frame));
         while (auto rec = audioProcessor->getProcessed()) {

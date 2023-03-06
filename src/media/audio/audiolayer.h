@@ -62,6 +62,10 @@ namespace jami {
 class AudioPreference;
 class Resampler;
 
+namespace debug {
+class WavWriter;
+}
+
 enum class AudioDeviceType { ALL = -1, PLAYBACK = 0, CAPTURE, RINGTONE };
 
 class AudioLayer
@@ -316,6 +320,7 @@ private:
      */
     std::chrono::system_clock::time_point lastNotificationTime_ {
         std::chrono::system_clock::time_point::min()};
+    std::unique_ptr<debug::WavWriter> writer_;
 };
 
 } // namespace jami
