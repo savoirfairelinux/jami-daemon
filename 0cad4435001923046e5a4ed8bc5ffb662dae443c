@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "98a8b808_b3ea27b8",
+        "filename": "src/media/audio/resampler.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-06T23:55:23Z",
+      "side": 1,
+      "message": "The resampler can mix channels, and is used to up-mix or down-mix channels (for instance 5.1 to stereo).\nThis code would override the channel layout provided by the user in the output frame, which is used by swr as a parameter.\n\nIf the problem is that the output-\u003ech_layout is not set, we might infer it from output-\u003echannel_layout instead ?",
+      "revId": "0cad4435001923046e5a4ed8bc5ffb662dae443c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
