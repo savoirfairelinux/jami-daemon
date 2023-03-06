@@ -43,7 +43,7 @@ constexpr const char* PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSuppo
 constexpr const char* PRESENCE_STATUS_KEY = "presenceStatus";
 constexpr const char* PRESENCE_NOTE_KEY = "presenceNote";
 constexpr const char* PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
-constexpr const char* KEEP_ALIVE_ENABLED = "keepAlive";
+constexpr const char* KEEP_ALIVE_ENABLED = "keepAliveEnabled";
 
 constexpr const char* const TLS_KEY = "tls";
 constexpr const char* CERTIFICATE_KEY = "certificate";
@@ -59,13 +59,12 @@ constexpr const char* REQUIRE_CERTIF_KEY = "requireCertif";
 constexpr const char* SERVER_KEY = "server";
 constexpr const char* VERIFY_CLIENT_KEY = "verifyClient";
 constexpr const char* VERIFY_SERVER_KEY = "verifyServer";
-constexpr const char* DISABLE_SECURE_DLG_CHECK = "keepAlive";
+constexpr const char* DISABLE_SECURE_DLG_CHECK = "disableSecureDlgCheck";
 
 constexpr const char* STUN_ENABLED_KEY = "stunEnabled";
 constexpr const char* STUN_SERVER_KEY = "stunServer";
 constexpr const char* CRED_KEY = "credential";
 constexpr const char* SRTP_KEY = "srtp";
-constexpr const char* SRTP_ENABLE_KEY = "enable";
 constexpr const char* KEY_EXCHANGE_KEY = "keyExchange";
 constexpr const char* RTP_FALLBACK_KEY = "rtpFallback";
 } // namespace Conf
@@ -191,6 +190,7 @@ std::map<std::string, std::string>
 SipAccountConfig::toMap() const
 {
     auto a = SipAccountBaseConfig::toMap();
+    // general sip settings
     a.emplace(Conf::CONFIG_ACCOUNT_USERNAME, username);
     a.emplace(Conf::CONFIG_LOCAL_PORT, std::to_string(localPort));
     a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType);
@@ -200,6 +200,12 @@ SipAccountConfig::toMap() const
     a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS, publishedIp);
     a.emplace(Conf::CONFIG_STUN_ENABLE, stunEnabled ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_STUN_SERVER, stunServer);
+    a.emplace(Conf::CONFIG_BIND_ADDRESS, bindAddress);
+    a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute);
+    a.emplace(Conf::CONFIG_ACCOUNT_IP_AUTO_REWRITE, allowIPAutoRewrite ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_PRESENCE_ENABLED, presenceEnabled ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED, registrationRefreshEnabled ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, std::to_string(registrationExpire));
 
     std::string password {};
     if (not credentials.empty()) {
@@ -245,6 +251,8 @@ SipAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort);
     parseBool(details, Conf::CONFIG_PRESENCE_ENABLED, presenceEnabled);
     parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType);
+    parseBool(details, Conf::CONFIG_KEEP_ALIVE_ENABLED, registrationRefreshEnabled);
+    parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
 
     // srtp settings
     parseBool(details, Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback);
