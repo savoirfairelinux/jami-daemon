@@ -73,7 +73,7 @@ struct AudioFormat
     /**
      * Returns bytes necessary to hold one frame of audio data.
      */
-    inline size_t getBytesPerFrame() const { return sizeof(AudioSample) * nb_channels; }
+    inline size_t getBytesPerFrame() const { return av_get_bytes_per_sample(sampleFormat) * nb_channels; }
 
     /**
      * Bytes per second (default), or bytes necessary
