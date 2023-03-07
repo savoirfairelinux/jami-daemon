@@ -36,6 +36,9 @@ using MediaFrame = libjami::MediaFrame;
 using AudioFrame = libjami::AudioFrame;
 using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
 
+[[deprecated("Use AudioFrame and AVSampleFormat")]]
+typedef int16_t AudioSample;
+
 #ifdef ENABLE_VIDEO
 
 using VideoFrame = libjami::VideoFrame;
