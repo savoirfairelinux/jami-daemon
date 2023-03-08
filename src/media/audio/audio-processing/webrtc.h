@@ -42,12 +42,6 @@ public:
 
 private:
     std::unique_ptr<webrtc::AudioProcessing> apm;
-
-    using fChannelBuffer = std::vector<std::vector<float>>;
-    fChannelBuffer fRecordBuffer_;
-    fChannelBuffer fPlaybackBuffer_;
-    AudioBuffer iRecordBuffer_;
-    AudioBuffer iPlaybackBuffer_;
     int analogLevel_ {0};
 };
 } // namespace jami
