@@ -72,6 +72,7 @@ AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 {
     JAMI_DBG("Hardware audio format available : %s %zu", playback.toString().c_str(), bufSize);
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
+    audioInputFormat_.sampleFormat = audioFormat_.sampleFormat;
     urgentRingBuffer_.setFormat(audioFormat_);
     nativeFrameSize_ = bufSize;
 }
@@ -194,11 +195,9 @@ AudioLayer::createAudioProcessor()
         frame_size = sample_rate / 100u;
     }
 
-    JAMI_WARN("Input {%d Hz, %d channels}",
-              audioInputFormat_.sample_rate,
-              audioInputFormat_.nb_channels);
-    JAMI_WARN("Output {%d Hz, %d channels}", audioFormat_.sample_rate, audioFormat_.nb_channels);
-    JAMI_WARN("Starting audio processor with: {%d Hz, %d channels, %d samples/frame}",
+    JAMI_WARNING("Input {}", audioInputFormat_.toString());
+    JAMI_WARNING("Output {}", audioFormat_.toString());
+    JAMI_WARNING("Starting audio processor with: [{} Hz, {} channels, {} samples/frame]",
               sample_rate,
               nb_channels,
               frame_size);
