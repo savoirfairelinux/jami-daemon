@@ -36,6 +36,7 @@ AudioStream::AudioStream(pa_context* c,
                          const char* desc,
                          AudioDeviceType type,
                          unsigned samplrate,
+                         pa_sample_format_t format,
                          const PaDeviceInfos& infos,
                          bool ec,
                          OnReady onReady,
@@ -46,13 +47,14 @@ AudioStream::AudioStream(pa_context* c,
     , mainloop_(m)
     , audioType_(type)
 {
-    pa_sample_spec sample_spec = {PA_SAMPLE_S16LE, // PA_SAMPLE_FLOAT32LE,
+    pa_sample_spec sample_spec = {format,
                                   samplrate,
                                   infos.channel_map.channels};
 
-    JAMI_DBG("%s: Creating stream with device %s (%dHz, %d channels)",
+    JAMI_DEBUG("{}: Creating stream with device {} ({}, {}Hz, {} channels)",
              desc,
-             infos.name.c_str(),
+             infos.name,
+             pa_sample_format_to_string(sample_spec.format),
              samplrate,
              infos.channel_map.channels);
 

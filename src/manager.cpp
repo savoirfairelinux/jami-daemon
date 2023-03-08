@@ -2653,9 +2653,9 @@ Manager::audioFormatUsed(AudioFormat format)
     if (currentFormat == format)
         return format;
 
-    JAMI_DBG("Audio format changed: %s -> %s",
-             currentFormat.toString().c_str(),
-             format.toString().c_str());
+    JAMI_DEBUG("Audio format changed: {} -> {}",
+             currentFormat.toString(),
+             format.toString());
 
     pimpl_->ringbufferpool_->setInternalAudioFormat(format);
     pimpl_->toneCtrl_.setSampleRate(format.sample_rate);

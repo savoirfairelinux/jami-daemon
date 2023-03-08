@@ -408,6 +408,7 @@ PulseLayer::createStream(std::unique_ptr<AudioStream>& stream,
                                  name,
                                  type,
                                  audioFormat_.sample_rate,
+                                 pulseSampleFormatFromAv(audioFormat_.sampleFormat),
                                  dev_infos,
                                  ec,
                                  std::bind(&PulseLayer::onStreamReady, this),
@@ -499,9 +500,9 @@ PulseLayer::writeToSpeaker()
         return;
 
     // available bytes to be written in pulseaudio internal buffer
-    AudioSample* data = nullptr;
+    void* data = nullptr;
     size_t writableBytes = (size_t) -1;
-    int ret = pa_stream_begin_write(playback_->stream(), (void**) &data, &writableBytes);
+    int ret = pa_stream_begin_write(playback_->stream(), &data, &writableBytes);
     if (ret == 0 and data and writableBytes != 0) {
         writableBytes = std::min(pa_stream_writable_size(playback_->stream()), writableBytes);
         const auto& buff = getToPlay(playback_->format(), writableBytes / playback_->frameSize());
@@ -550,9 +551,9 @@ PulseLayer::ringtoneToSpeaker()
     if (!ringtone_ or !ringtone_->isReady())
         return;
 
-    AudioSample* data = nullptr;
+    void* data = nullptr;
     size_t writableBytes = (size_t) -1;
-    int ret = pa_stream_begin_write(ringtone_->stream(), (void**) &data, &writableBytes);
+    int ret = pa_stream_begin_write(ringtone_->stream(), &data, &writableBytes);
     if (ret == 0 and data and writableBytes != 0) {
         writableBytes = std::min(pa_stream_writable_size(ringtone_->stream()), writableBytes);
         const auto& buff = getToRing(ringtone_->format(), writableBytes / ringtone_->frameSize());
@@ -699,17 +700,21 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
     std::lock_guard<std::mutex> lk(context->readyMtx_);
     context->defaultSink_ = {};
     context->defaultSource_ = {};
-    context->defaultAudioFormat_ = {i->sample_spec.rate, i->sample_spec.channels};
+    context->defaultAudioFormat_ = {
+        i->sample_spec.rate,
+        i->sample_spec.channels,
+        sampleFormatFromPulse(i->sample_spec.format)
+    };
     {
         std::lock_guard<std::mutex> lk(context->mutex_);
         context->hardwareFormatAvailable(context->defaultAudioFormat_);
     }
-    if (not context->sinkList_.empty())
+    /*if (not context->sinkList_.empty())
         context->sinkList_.front().channel_map.channels = std::min(i->sample_spec.channels,
                                                                    (uint8_t) 2);
     if (not context->sourceList_.empty())
         context->sourceList_.front().channel_map.channels = std::min(i->sample_spec.channels,
-                                                                     (uint8_t) 2);
+                                                                     (uint8_t) 2);*/
     context->gettingServerInfo_ = false;
     context->readyCv_.notify_all();
 }

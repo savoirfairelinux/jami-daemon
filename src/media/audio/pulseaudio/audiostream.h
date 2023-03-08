@@ -28,6 +28,39 @@
 
 namespace jami {
 
+inline AVSampleFormat
+sampleFormatFromPulse(pa_sample_format_t format) {
+switch (format)
+{
+case PA_SAMPLE_S16LE:
+case PA_SAMPLE_S16BE:
+    return AV_SAMPLE_FMT_S16;
+case PA_SAMPLE_FLOAT32LE:
+case PA_SAMPLE_FLOAT32BE:
+    return AV_SAMPLE_FMT_FLT;
+case PA_SAMPLE_S32LE:
+case PA_SAMPLE_S32BE:
+    return AV_SAMPLE_FMT_S32;
+default:
+    return AV_SAMPLE_FMT_S16;
+}
+}
+
+inline pa_sample_format_t
+pulseSampleFormatFromAv(AVSampleFormat format) {
+switch (format)
+{
+case AV_SAMPLE_FMT_S16:
+    return PA_SAMPLE_S16LE;
+case AV_SAMPLE_FMT_FLT:
+    return PA_SAMPLE_FLOAT32LE;
+case AV_SAMPLE_FMT_S32:
+    return PA_SAMPLE_S32LE;
+default:
+    return PA_SAMPLE_S16LE;
+}
+}
+
 class AudioStream
 {
 public:
@@ -50,6 +83,7 @@ public:
                 const char*,
                 AudioDeviceType,
                 unsigned,
+                pa_sample_format_t,
                 const PaDeviceInfos&,
                 bool,
                 OnReady onReady,
@@ -76,7 +110,7 @@ public:
     inline AudioFormat format() const
     {
         auto s = sampleSpec();
-        return AudioFormat(s->rate, s->channels);
+        return AudioFormat(s->rate, s->channels, sampleFormatFromPulse(s->format));
     }
 
     inline std::string getDeviceName() const
