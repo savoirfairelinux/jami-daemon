@@ -258,7 +258,6 @@ protected:
      * Buffers for audio processing
      */
     std::shared_ptr<RingBuffer> mainRingBuffer_;
-    AudioBuffer ringtoneBuffer_;
     std::unique_ptr<AudioFrameResizer> playbackQueue_;
 
     /**

@@ -57,7 +57,7 @@ public:
      * @param gain The gain [-1.0, 1.0]
      */
     void getNext(AudioBuffer& output, double gain);
-    std::unique_ptr<AudioFrame> getNext(size_t samples = 0);
+    std::unique_ptr<AudioFrame> getNext(size_t samples = 0, double gain = 1);
 
     void seek(double relative_position);
 
