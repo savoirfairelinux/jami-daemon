@@ -267,14 +267,14 @@ SIPAccount::onTransportStateChanged(pjsip_transport_state state,
                                     const pjsip_transport_state_info* info)
 {
     pj_status_t currentStatus = transportStatus_;
-    JAMI_DBG("Transport state changed to %s for account %s !",
+    JAMI_DEBUG("Transport state changed to {:s} for account {:s}!",
              SipTransport::stateToStr(state),
-             accountID_.c_str());
+             accountID_);
     if (!SipTransport::isAlive(state)) {
         if (info) {
             transportStatus_ = info->status;
             transportError_ = sip_utils::sip_strerror(info->status);
-            JAMI_ERR("Transport disconnected: %s", transportError_.c_str());
+            JAMI_ERR("Transport disconnected: {:s}", transportError_);
         } else {
             // This is already the generic error used by pjsip.
             transportStatus_ = PJSIP_SC_SERVICE_UNAVAILABLE;
@@ -300,14 +300,15 @@ SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
     if (t == transport_)
         return;
     if (transport_) {
-        JAMI_DBG("Removing old transport [%p] from account", transport_.get());
+        JAMI_DEBUG("Removing old transport [{}] from account", fmt::ptr(transport_.get()));
+        // NOTE: do not call destroyRegistrationInfo() there as we must call the registration callback if needed
         if (regc_)
             pjsip_regc_release_transport(regc_);
         transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
     }
 
     transport_ = t;
-    JAMI_DBG("Set new transport [%p]", transport_.get());
+    JAMI_DEBUG("Set new transport [{}]", fmt::ptr(transport_.get()));
 
     if (transport_) {
         transport_->addStateListener(reinterpret_cast<uintptr_t>(this),
@@ -317,7 +318,7 @@ SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
                                                std::placeholders::_2));
         // Update contact address and header
         if (not initContactAddress()) {
-            JAMI_DBG("Can not register: invalid address");
+            JAMI_DEBUG("Can not register: invalid address");
             return;
         }
         updateContactHeader();
@@ -347,12 +348,12 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     auto transport = call->getTransport();
     if (!transport) {
-        JAMI_ERR("Unable to start call without transport");
+        JAMI_ERROR("Unable to start call without transport");
         return false;
     }
 
     std::string contact = getContactHeader();
-    JAMI_DBG("contact header: %s / %s -> %s", contact.c_str(), from.c_str(), toUri.c_str());
+    JAMI_DEBUG("contact header: {:s} / {:s} -> {:s}", contact, from, toUri);
 
     pj_str_t pjContact = sip_utils::CONST_PJ_STR(contact);
     auto local_sdp = isEmptyOffersEnabled() ? nullptr : call->getSDP().getLocalSdpSession();
@@ -375,20 +376,20 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     if (hasCredentials()
         and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo())
                 != PJ_SUCCESS) {
-        JAMI_ERR("Could not initialize credentials for invite session authentication");
+        JAMI_ERROR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
     pjsip_tx_data* tdata;
 
     if (pjsip_inv_invite(call->inviteSession_.get(), &tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Could not initialize invite messager for this call");
+        JAMI_ERROR("Could not initialize invite messager for this call");
         return false;
     }
 
     const pjsip_tpselector tp_sel = link_.getTransportSelector(transport->get());
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        JAMI_ERR("Unable to associate transport for invite session dialog");
+        JAMI_ERROR("Unable to associate transport for invite session dialog");
         return false;
     }
 
@@ -396,7 +397,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     sip_utils::addUserAgentHeader(getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Unable to send invite message for this call");
+        JAMI_ERROR("Unable to send invite message for this call");
         return false;
     }
 
@@ -432,7 +433,7 @@ validate(std::string& member, const std::string& param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        JAMI_ERR("Invalid parameter \"%s\"", param.c_str());
+        JAMI_ERROR("Invalid parameter \"{:s}\"", param);
 }
 
 std::map<std::string, std::string>
@@ -481,8 +482,8 @@ SIPAccount::mapPortUPnP()
                            or mapRes->getState() == upnp::MappingState::IN_PROGRESS;
             auto newPort = success ? mapRes->getExternalPort() : accPtr->config().publishedPort;
             if (not success and not accPtr->isRegistered()) {
-                JAMI_WARN("[Account %s] Failed to open port %u: registering SIP account anyway",
-                          accPtr->getAccountID().c_str(),
+                JAMI_WARNING("[Account {:s}] Failed to open port {}: registering SIP account anyway",
+                          accPtr->getAccountID(),
                           oldPort);
                 accPtr->doRegister1_();
                 return;
@@ -490,12 +491,12 @@ SIPAccount::mapPortUPnP()
             if ((oldPort != newPort)
                 or (accPtr->getRegistrationState() != RegistrationState::REGISTERED)) {
                 if (not accPtr->isRegistered())
-                    JAMI_WARN("[Account %s] SIP port %u opened: registering SIP account",
-                              accPtr->getAccountID().c_str(),
+                    JAMI_WARNING("[Account {:s}] SIP port {} opened: registering SIP account",
+                              accPtr->getAccountID(),
                               newPort);
                 else
-                    JAMI_WARN("[Account %s] SIP port changed to %u: re-registering SIP account",
-                              accPtr->getAccountID().c_str(),
+                    JAMI_WARNING("[Account {:s}] SIP port changed to {}: re-registering SIP account",
+                              accPtr->getAccountID(),
                               newPort);
                 accPtr->publishedPortUsed_ = newPort;
             } else {
@@ -540,7 +541,7 @@ void
 SIPAccount::pushNotificationReceived(const std::string& from,
                                      const std::map<std::string, std::string>&)
 {
-    JAMI_WARN("[SIP Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
+    JAMI_WARNING("[SIP Account {:s}] pushNotificationReceived: {:s}", getAccountID(), from);
 
     if (config().enabled)
         doUnregister([&](bool /* transport_free */) { doRegister(); });
@@ -603,14 +604,14 @@ SIPAccount::doRegister2_()
 {
     if (not isIP2IP() and not hostIp_) {
         setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
-        JAMI_ERR("Hostname not resolved.");
+        JAMI_ERROR("Hostname not resolved.");
         return;
     }
 
     IpAddr bindAddress = createBindingAddress();
     if (not bindAddress) {
         setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
-        JAMI_ERR("Can't compute address to bind.");
+        JAMI_ERROR("Can't compute address to bind.");
         return;
     }
 
@@ -620,7 +621,7 @@ SIPAccount::doRegister2_()
 
     // Init TLS settings if the user wants to use TLS
     if (config().tlsEnable) {
-        JAMI_DBG("TLS is enabled for account %s", accountID_.c_str());
+        JAMI_DEBUG("TLS is enabled for account {}", accountID_);
 
         // Dropping current calls already using the transport is currently required
         // with TLS.
@@ -631,7 +632,7 @@ SIPAccount::doRegister2_()
             tlsListener_ = link_.sipTransportBroker->getTlsListener(bindAddress, getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
-                JAMI_ERR("Error creating TLS listener.");
+                JAMI_ERROR("Error creating TLS listener.");
                 return;
             }
         }
@@ -651,7 +652,7 @@ SIPAccount::doRegister2_()
     }
 
     try {
-        JAMI_WARN("Creating transport");
+        JAMI_WARNING("Creating transport");
         transport_.reset();
         if (isTlsEnabled()) {
             setTransport(link_.sipTransportBroker->getTlsTransport(tlsListener_,
@@ -1707,7 +1708,11 @@ SIPAccount::autoReregTimerCb()
     /* Start re-registration */
     ++auto_rereg_.attempt_cnt;
     try {
-        sendRegister();
+        // If attempt_count was 0, we should call doRegister to reset transports if needed.
+        if (auto_rereg_.attempt_cnt == 1)
+            doRegister();
+        else
+            sendRegister();
     } catch (const VoipLinkException& e) {
         JAMI_ERR("Exception during SIP registration: %s", e.what());
         scheduleReregistration();
@@ -1822,7 +1827,7 @@ SIPAccount::sendMessage(const std::string& to,
                                                     nullptr,
                                                     &tdata);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERROR("Unable to create request: {:s}", sip_utils::sip_strerror(status));
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
@@ -1854,7 +1859,7 @@ SIPAccount::sendMessage(const std::string& to,
     status = pjsip_auth_clt_init(t->auth_sess.get(), link_.getEndpoint(), tdata->pool, 0);
 
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to initialize auth session: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERROR("Unable to initialize auth session: {:s}", sip_utils::sip_strerror(status));
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
@@ -1862,7 +1867,7 @@ SIPAccount::sendMessage(const std::string& to,
     status = pjsip_auth_clt_set_credentials(t->auth_sess.get(), getCredentialCount(), getCredInfo());
 
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to set auth session data: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERROR("Unable to set auth session data: {:s}", sip_utils::sip_strerror(status));
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
@@ -1871,7 +1876,7 @@ SIPAccount::sendMessage(const std::string& to,
     status = pjsip_tx_data_set_transport(tdata, &tp_sel);
 
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to set transport: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERROR("Unable to set transport: {:s}", sip_utils::sip_strerror(status));
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
@@ -1882,7 +1887,7 @@ SIPAccount::sendMessage(const std::string& to,
     status = pjsip_endpt_send_request(link_.getEndpoint(), tdata, -1, t.release(), &onComplete);
 
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERROR("Unable to send request: {:s}", sip_utils::sip_strerror(status));
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
@@ -1928,12 +1933,12 @@ SIPAccount::onComplete(void* token, pjsip_event* event)
                                               &onComplete);
 
             if (status != PJ_SUCCESS) {
-                JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+                JAMI_ERROR("Unable to send request: {:s}", sip_utils::sip_strerror(status));
                 acc->messageEngine_.onMessageSent(to, id, false);
             }
             return;
         } else {
-            JAMI_ERR("Unable to add Authorization Header into msg");
+            JAMI_ERROR("Unable to add Authorization Header into msg");
             acc->messageEngine_.onMessageSent(c->to, c->id, false);
             return;
         }
@@ -1976,11 +1981,11 @@ SIPAccount::setActiveCodecs(const std::vector<unsigned>& list)
 {
     Account::setActiveCodecs(list);
     if (!hasActiveCodec(MEDIA_AUDIO)) {
-        JAMI_WARN("All audio codecs disabled, enabling all");
+        JAMI_WARNING("All audio codecs disabled, enabling all");
         setAllCodecsActive(MEDIA_AUDIO, true);
     }
     if (!hasActiveCodec(MEDIA_VIDEO)) {
-        JAMI_WARN("All video codecs disabled, enabling all");
+        JAMI_WARNING("All video codecs disabled, enabling all");
         setAllCodecsActive(MEDIA_VIDEO, true);
     }
     config_->activeCodecs = getActiveCodecs(MEDIA_ALL);
