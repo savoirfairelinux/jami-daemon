@@ -49,8 +49,6 @@ AudioSender::~AudioSender()
 {
     audioEncoder_.reset();
     muxContext_.reset();
-    micData_.clear();
-    resampledData_.clear();
 }
 
 bool

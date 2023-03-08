@@ -21,6 +21,7 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "logger.h"
 #include "media_filter.h"
+#include "media_buffer.h"
 
 extern "C" {
 #include <libavfilter/buffersink.h>

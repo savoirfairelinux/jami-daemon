@@ -26,7 +26,7 @@
 #include <mutex>
 #include <chrono>
 
-#include "audio/audiobuffer.h"
+#include "audio/audio_format.h"
 #include "media_device.h"
 #include "media_buffer.h"
 #include "observer.h"
