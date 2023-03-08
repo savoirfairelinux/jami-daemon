@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "audiobuffer.h"
+#include "audio_format.h"
 #include "noncopyable.h"
 #include "audio_frame_resizer.h"
 #include "resampler.h"
