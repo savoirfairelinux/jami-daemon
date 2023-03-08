@@ -271,18 +271,15 @@ AudioLayer::notifyIncomingCall()
 
     Tone tone("440/160", getSampleRate());
     size_t nbSample = tone.getSize();
-    AudioBuffer buf(nbSample, AudioFormat::MONO());
-    tone.getNext(buf, 1.0);
 
     /* Put the data in the urgent ring buffer */
-    flushUrgent();
-    putUrgent(buf);
+    urgentRingBuffer_.flushAll();
+    urgentRingBuffer_.put(tone.getNext(nbSample, 1.0));
 }
 
 std::shared_ptr<AudioFrame>
 AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
 {
-    ringtoneBuffer_.resize(0);
     if (auto fileToPlay = Manager::instance().getTelephoneFile()) {
         auto fileformat = fileToPlay->getFormat();
         bool resample = format != fileformat;
@@ -292,10 +289,7 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
                                                 .real<size_t>()
                                           : writableSamples;
 
-        ringtoneBuffer_.setFormat(fileformat);
-        ringtoneBuffer_.resize(readableSamples);
-        fileToPlay->getNext(ringtoneBuffer_, isRingtoneMuted_ ? 0. : 1.);
-        return resampler_->resample(ringtoneBuffer_.toAVFrame(), format);
+        return resampler_->resample(fileToPlay->getNext(readableSamples, isRingtoneMuted_ ? 0. : 1.), format);
     }
     return {};
 }

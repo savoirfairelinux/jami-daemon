@@ -148,11 +148,6 @@ private:
      */
     int indexRing_;
 
-    /** Non-interleaved audio buffers */
-    AudioBuffer playbackBuff_;
-    ::AudioBufferList* captureBuff_ {nullptr}; // CoreAudio buffer (pointer is casted rawBuff_)
-    std::unique_ptr<Byte[]> rawBuff_;          // raw allocation of captureBuff_
-
     AudioUnit ioUnit_;
 
     Float64 inSampleRate_;

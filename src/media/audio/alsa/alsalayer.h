@@ -234,10 +234,6 @@ private:
      */
     std::string audioPlugin_;
 
-    /** Non-interleaved audio buffers */
-    AudioBuffer playbackBuff_;
-    AudioBuffer captureBuff_;
-
     bool is_capture_prepared_ {false};
     bool is_playback_running_ {false};
     bool is_capture_running_ {false};

@@ -88,13 +88,13 @@ AudioLoop::onBufferFinish()
 {}
 
 std::unique_ptr<AudioFrame>
-AudioLoop::getNext(size_t samples)
+AudioLoop::getNext(size_t samples, double gain)
 {
     if (samples == 0) {
         samples = buffer_->getSampleRate() / 50;
     }
     AudioBuffer buff(samples, buffer_->getFormat());
-    getNext(buff, 1);
+    getNext(buff, gain);
     return buff.toAVFrame();
 }
 
