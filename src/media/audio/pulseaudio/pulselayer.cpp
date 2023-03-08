@@ -409,6 +409,7 @@ PulseLayer::createStream(std::unique_ptr<AudioStream>& stream,
                                  name,
                                  type,
                                  audioFormat_.sample_rate,
+                                 pulseSampleFormatFromAv(audioFormat_.sampleFormat),
                                  dev_infos,
                                  ec,
                                  std::bind(&PulseLayer::onStreamReady, this),
@@ -697,17 +698,21 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
     std::lock_guard<std::mutex> lk(context->readyMtx_);
     context->defaultSink_ = {};
     context->defaultSource_ = {};
-    context->defaultAudioFormat_ = {i->sample_spec.rate, i->sample_spec.channels};
+    context->defaultAudioFormat_ = {
+        i->sample_spec.rate,
+        i->sample_spec.channels,
+        sampleFormatFromPulse(i->sample_spec.format)
+    };
     {
         std::lock_guard<std::mutex> lk(context->mutex_);
         context->hardwareFormatAvailable(context->defaultAudioFormat_);
     }
-    if (not context->sinkList_.empty())
+    /*if (not context->sinkList_.empty())
         context->sinkList_.front().channel_map.channels = std::min(i->sample_spec.channels,
                                                                    (uint8_t) 2);
     if (not context->sourceList_.empty())
         context->sourceList_.front().channel_map.channels = std::min(i->sample_spec.channels,
-                                                                     (uint8_t) 2);
+                                                                     (uint8_t) 2);*/
     context->gettingServerInfo_ = false;
     context->readyCv_.notify_all();
 }
