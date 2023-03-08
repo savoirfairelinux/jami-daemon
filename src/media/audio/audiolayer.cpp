@@ -20,7 +20,6 @@
  */
 
 #include "audiolayer.h"
-#include "audio/dcblocker.h"
 #include "logger.h"
 #include "manager.h"
 #include "audio/ringbufferpool.h"

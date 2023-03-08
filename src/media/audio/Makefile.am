@@ -15,7 +15,6 @@ libaudio_la_SOURCES = $(RING_SPEEXDSP_SRC) \
 		./media/audio/ringbufferpool.cpp \
 		./media/audio/audiolayer.cpp \
 		./media/audio/resampler.cpp \
-		./media/audio/dcblocker.cpp \
 		./media/audio/audio_sender.cpp \
 		./media/audio/audio_receive_thread.cpp \
 		./media/audio/audio_rtp_session.cpp \
@@ -45,7 +44,6 @@ noinst_HEADERS += $(RING_SPEEXDSP_HEAD) \
 		./media/audio/ringbufferpool.h \
 		./media/audio/audiolayer.h \
 		./media/audio/resampler.h \
-		./media/audio/dcblocker.h \
 		./media/audio/audio_sender.h \
 		./media/audio/audio_receive_thread.h \
 		./media/audio/audio_rtp_session.h \

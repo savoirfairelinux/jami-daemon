@@ -69,7 +69,6 @@ libjami_sources = files(
     'media/audio/audiobuffer.cpp',
     'media/audio/audiolayer.cpp',
     'media/audio/audioloop.cpp',
-    'media/audio/dcblocker.cpp',
     'media/audio/dsp.cpp',
     'media/audio/resampler.cpp',
     'media/audio/ringbuffer.cpp',

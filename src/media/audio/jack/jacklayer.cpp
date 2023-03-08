@@ -383,7 +383,6 @@ void JackLayer::startStream(AudioDeviceType)
         return;
     status_ = Status::Started;
 
-    dcblocker_.reset();
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
         JAMI_ERR("Could not activate JACK client");
         return;

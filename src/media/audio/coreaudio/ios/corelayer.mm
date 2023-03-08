@@ -337,7 +337,6 @@ CoreLayer::startStream(AudioDeviceType stream)
         }
         status_ = Status::Started;
 
-        dcblocker_.reset();
         if (!initAudioLayerIO(stream) || AudioUnitInitialize(ioUnit_) || AudioOutputUnitStart(ioUnit_)) {
             destroyAudioLayer();
             status_ = Status::Idle;

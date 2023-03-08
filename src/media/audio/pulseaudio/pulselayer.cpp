@@ -24,7 +24,6 @@
 #include "compiler_intrinsics.h"
 #include "audiostream.h"
 #include "pulselayer.h"
-#include "audio/dcblocker.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "libav_utils.h"
