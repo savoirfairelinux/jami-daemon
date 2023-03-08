@@ -176,8 +176,7 @@ private:
     void enqueue(AudioFrameResizer& frameResizer, std::shared_ptr<AudioFrame>&& buf)
     {
         if (buf->getFormat() != format_) {
-            auto resampled = resampler_->resample(std::move(buf), format_);
-            frameResizer.enqueue(std::move(resampled));
+            frameResizer.enqueue(resampler_->resample(std::move(buf), format_));
         } else
             frameResizer.enqueue(std::move(buf));
     };

@@ -23,14 +23,16 @@
 
 namespace jami {
 
+inline AudioFormat
+audioFormatToFloatPlanar(AudioFormat format)
+{
+    return {format.sample_rate, format.nb_channels, AV_SAMPLE_FMT_FLTP};
+}
+
 constexpr int webrtcNoError = webrtc::AudioProcessing::kNoError;
 
 WebRTCAudioProcessor::WebRTCAudioProcessor(AudioFormat format, unsigned frameSize)
-    : AudioProcessor(format, frameSize)
-    , fRecordBuffer_(format.nb_channels, std::vector<float>(frameSize_, 0))
-    , fPlaybackBuffer_(format.nb_channels, std::vector<float>(frameSize_, 0))
-    , iRecordBuffer_(frameSize_, format)
-    , iPlaybackBuffer_(frameSize_, format)
+    : AudioProcessor(audioFormatToFloatPlanar(format), frameSize)
 {
     JAMI_DBG("[webrtc-ap] WebRTCAudioProcessor, frame size = %d (=%d ms), channels = %d",
              frameSize,
@@ -137,41 +139,16 @@ WebRTCAudioProcessor::getProcessed()
         return {};
     }
 
-    auto processed = std::make_shared<AudioFrame>(format_, frameSize_);
-
     // webrtc::StreamConfig& sc = streamConfig;
     webrtc::StreamConfig sc((int) format_.sample_rate, (int) format_.nb_channels);
 
-    // analyze deinterleaved float playback data
-    iPlaybackBuffer_.deinterleave((const AudioSample*) playback->pointer()->data[0],
-                                  frameSize_,
-                                  format_.nb_channels);
-    std::vector<float*> playData {format_.nb_channels};
-    for (unsigned channel = 0; channel < format_.nb_channels; ++channel) {
-        // point playData channel to appropriate data location
-        playData[channel] = fPlaybackBuffer_[channel].data();
-
-        // write playback to playData channel
-        iPlaybackBuffer_.channelToFloat(playData[channel], (int) channel);
-    }
-
     // process reverse in place
-    if (apm->ProcessReverseStream(playData.data(), sc, sc, playData.data()) != webrtcNoError) {
+    float** playData = (float**) playback->pointer()->extended_data;
+    if (apm->ProcessReverseStream(playData, sc, sc, playData) != webrtcNoError) {
         JAMI_ERR("[webrtc-ap] ProcessReverseStream failed");
     }
 
     // process deinterleaved float recorded data
-    iRecordBuffer_.deinterleave((const AudioSample*) record->pointer()->data[0],
-                                frameSize_,
-                                format_.nb_channels);
-    std::vector<float*> recData {format_.nb_channels};
-    for (unsigned int channel = 0; channel < format_.nb_channels; ++channel) {
-        // point recData channel to appropriate data location
-        recData[channel] = fRecordBuffer_[channel].data();
-
-        // write data to recData channel
-        iRecordBuffer_.channelToFloat(recData[channel], (int) channel);
-    }
     // TODO: maybe implement this to see if it's better than automatic drift compensation
     // (it MUST be called prior to ProcessStream)
     // delay = (t_render - t_analyze) + (t_process - t_capture)
@@ -185,22 +162,13 @@ WebRTCAudioProcessor::getProcessed()
     apm->echo_cancellation()->set_stream_drift_samples(driftSamples);
 
     // process in place
-    if (apm->ProcessStream(recData.data(), sc, sc, recData.data()) != webrtcNoError) {
+    float** recData = (float**) record->pointer()->extended_data;
+    if (apm->ProcessStream(recData, sc, sc, recData) != webrtcNoError) {
         JAMI_ERR("[webrtc-ap] ProcessStream failed");
     }
 
     analogLevel_ = apm->gain_control()->stream_analog_level();
-
-    // return interleaved s16 data
-    iRecordBuffer_.convertFloatPlanarToSigned16((uint8_t**) recData.data(),
-                                                frameSize_,
-                                                format_.nb_channels);
-    iRecordBuffer_.interleave((AudioSample*) processed->pointer()->data[0]);
-
-    processed->has_voice = apm->voice_detection()->is_enabled()
-                           && getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
-
-    return processed;
+    return record;
 }
 
 } // namespace jami
