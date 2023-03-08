@@ -23,6 +23,7 @@
 #include "libav_deps.h"
 #include "logger.h"
 #include "resampler.h"
+#include "audiobuffer.h"
 
 extern "C" {
 #include <libswresample/swresample.h>

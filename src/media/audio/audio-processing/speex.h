@@ -21,6 +21,7 @@
 #pragma once
 
 #include "audio_processor.h"
+#include "media/audio/audiobuffer.h"
 
 // typedef speex C structs
 extern "C" {

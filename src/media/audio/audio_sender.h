@@ -20,7 +20,6 @@
  */
 #pragma once
 
-#include "audiobuffer.h"
 #include "media_buffer.h"
 #include "media_codec.h"
 #include "noncopyable.h"
@@ -65,8 +64,6 @@ private:
 
     uint64_t sent_samples = 0;
 
-    AudioBuffer micData_;
-    AudioBuffer resampledData_;
     const uint16_t seqVal_;
     uint16_t mtu_;
 
