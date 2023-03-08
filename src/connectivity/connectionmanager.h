@@ -155,6 +155,8 @@ public:
      */
     void monitor() const;
 
+    bool hasSwarmChannel(const DeviceId& deviceId, const std::string& convId);
+
     /**
      * Send beacon on peers supporting it
      */
