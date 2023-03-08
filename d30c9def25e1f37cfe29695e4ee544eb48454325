@@ -22,6 +22,30 @@
       },
       "revId": "d30c9def25e1f37cfe29695e4ee544eb48454325",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a487f7bb_3404f274",
+        "filename": "src/media/media_stream.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-03-08T11:07:57Z",
+      "side": 1,
+      "message": "time_base is not set in decoding ctx what could lead timebase here to be useless.\nreverted and changed media_decoder.cpp to manualy set time_base.",
+      "parentUuid": "e139191a_b728acd1",
+      "range": {
+        "startLine": 101,
+        "startChar": 12,
+        "endLine": 101,
+        "endChar": 60
+      },
+      "revId": "d30c9def25e1f37cfe29695e4ee544eb48454325",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
