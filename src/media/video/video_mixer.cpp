@@ -469,6 +469,11 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
     } else {
         cell_width = width_ / zoom;
         cell_height = height_ / zoom;
+
+        if (n == 1) {
+            cell_width -= 10;
+            cell_height -= 10;
+        }
     }
     if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
         if (index == 0) {
@@ -487,6 +492,10 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
             cellW_off += (width_ - (n % zoom) * cell_width) / 2;
         }
         cellH_off = (index / zoom) * cell_height;
+        if (n == 1) {
+            cellW_off += 5;
+            cellH_off += 5;
+        }
     }
 
     // Compute frame size/position
@@ -515,6 +524,16 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
     source->h = frameH;
     source->x = frameW_off;
     source->y = frameH_off;
+    JAMI_WARN(
+            "@@@! sources_.size(): %d", sources_.size());
+    JAMI_WARN(
+            "@@@! frameW: %d", frameW);
+    JAMI_WARN(
+            "@@@! frameH: %d", frameH);
+    JAMI_WARN(
+            "@@@! frameW_off: %d", frameW_off);
+    JAMI_WARN(
+            "@@@! frameH_off: %d", frameH_off);
 }
 
 void
