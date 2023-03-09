@@ -16,6 +16,24 @@
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027int\u0027 but the argument has type \u0027std::__cxx11::list::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
       "revId": "5615a3317941aa7181f2ab0792db244750b705c8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5901dbd2_e561b985",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 528,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-03-09T16:40:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "93d49ab8_5a5dc23d",
+      "revId": "5615a3317941aa7181f2ab0792db244750b705c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
