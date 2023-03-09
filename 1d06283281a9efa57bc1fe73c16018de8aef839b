@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8e6bb958_c8e6de8c",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 28
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-09T17:06:47Z",
+      "side": 1,
+      "message": "1) test: jami::test::ConferenceTest::testModeratorMuteUpdateParticipantsInfos (F) line: 384 call/conference.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 5s, [\u0026] { return bobCall.moderatorMuted.load(); })\n\n\n2) test: jami::test::ConferenceTest::testAudioVideoMutedStates (F) line: 448 call/conference.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 5s, [\u0026] { return conf-\u003eisMediaSourceMuted(jami::MediaType::MEDIA_AUDIO); })\n\n\n3) test: jami::test::ConferenceTest::testMuteStatusAfterRemove (F) line: 527 call/conference.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 5s, [\u0026] { return daviCall.moderatorMuted.load(); })\n\n\n4) test: jami::test::ConferenceTest::testJoinCallFromOtherAccount (F) line: 694 call/conference.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 5s, [\u0026] { return bobCall.raisedHand.load(); })\n\n5) test: jami::test::ConferenceTest::testBrokenParticipantAudioOnly (F) line: 995 call/conference.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 30s, [\u0026] { return expectedNumberOfParticipants - 1 \u003d\u003d pInfos_.size(); })",
+      "range": {
+        "startLine": 7,
+        "startChar": 15,
+        "endLine": 7,
+        "endChar": 28
+      },
+      "revId": "1d06283281a9efa57bc1fe73c16018de8aef839b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
