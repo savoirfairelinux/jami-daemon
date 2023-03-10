@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0f758a87_0be3e9fb",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-10T15:36:49Z",
+      "side": 1,
+      "message": "Avoid race conditions by exchanging the flag one-shot\n\n    if (settingMS_.exchange(false)) {\n        if (recorderCallback_)\n            recorderCallback_(MediaStream(\"a:local\", format_, sent_samples));\n    }",
+      "range": {
+        "startLine": 140,
+        "startChar": 0,
+        "endLine": 144,
+        "endChar": 5
+      },
+      "revId": "f94f19b65456a22dbf9cd5a9b6de9e07a59ecf21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2785fe8f_f19242f8",
+        "filename": "src/media/audio/audio_receive_thread.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-10T15:36:49Z",
+      "side": 1,
+      "message": "if (recorderCallback_)\n                recorderCallback_(getInfo());",
+      "range": {
+        "startLine": 146,
+        "startChar": 0,
+        "endLine": 148,
+        "endChar": 5
+      },
+      "revId": "f94f19b65456a22dbf9cd5a9b6de9e07a59ecf21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "887f603f_1747421c",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-10T15:36:49Z",
+      "side": 1,
+      "message": "Don\u0027t generate steam info if no callback\n\n            if (recorderCallback_)\n                recorderCallback_(getInfo());",
+      "range": {
+        "startLine": 271,
+        "startChar": 0,
+        "endLine": 273,
+        "endChar": 5
+      },
+      "revId": "f94f19b65456a22dbf9cd5a9b6de9e07a59ecf21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "09c53b92_bcc26bf2",
+        "filename": "src/media/video/video_receive_thread.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-10T15:36:49Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 53,
+        "startChar": 48,
+        "endLine": 53,
+        "endChar": 105
+      },
+      "revId": "f94f19b65456a22dbf9cd5a9b6de9e07a59ecf21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb71fb01_08e75048",
+        "filename": "src/media/video/video_receive_thread.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-10T15:36:49Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 131,
+        "startChar": 38,
+        "endLine": 131,
+        "endChar": 44
+      },
+      "revId": "f94f19b65456a22dbf9cd5a9b6de9e07a59ecf21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
