@@ -30,6 +30,7 @@ extern "C" {
 struct AVFrame;
 struct AVPacket;
 void av_frame_free(AVFrame** frame);
+void av_packet_free(AVPacket** frame);
 }
 
 #include "def.h"
@@ -62,6 +63,12 @@ struct LIBJAMI_PUBLIC AVFrame_deleter {
 
 typedef std::unique_ptr<AVFrame, AVFrame_deleter> FrameBuffer;
 
+struct LIBJAMI_PUBLIC AVPacket_deleter {
+    void operator()(AVPacket* pkt) const { av_packet_free(&pkt); }
+};
+
+typedef std::unique_ptr<AVPacket, AVPacket_deleter> PacketBuffer;
+
 class LIBJAMI_PUBLIC MediaFrame
 {
 public:
@@ -81,7 +88,7 @@ public:
 
     // Fill this MediaFrame with data from o
     void copyFrom(const MediaFrame& o);
-    void setPacket(std::unique_ptr<AVPacket, void (*)(AVPacket*)>&& pkt);
+    void setPacket(PacketBuffer&& pkt);
 
     // Reset internal buffers (return to an empty MediaFrame)
     virtual void reset() noexcept;
@@ -90,7 +97,7 @@ public:
 
 protected:
     FrameBuffer frame_;
-    std::unique_ptr<AVPacket, void (*)(AVPacket*)> packet_;
+    PacketBuffer packet_;
 };
 
 class LIBJAMI_PUBLIC AudioFrame : public MediaFrame
