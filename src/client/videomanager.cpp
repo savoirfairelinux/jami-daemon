@@ -59,12 +59,6 @@ namespace libjami {
 
 MediaFrame::MediaFrame()
     : frame_ {av_frame_alloc()}
-    , packet_(nullptr, [](AVPacket* p) {
-        if (p) {
-            av_packet_unref(p);
-            delete p;
-        }
-    })
 {
     if (not frame_)
         throw std::bad_alloc();
@@ -94,7 +88,7 @@ MediaFrame::reset() noexcept
 }
 
 void
-MediaFrame::setPacket(std::unique_ptr<AVPacket, void (*)(AVPacket*)>&& pkt)
+MediaFrame::setPacket(PacketBuffer&& pkt)
 {
     packet_ = std::move(pkt);
 }
