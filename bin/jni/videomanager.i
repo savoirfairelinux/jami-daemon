@@ -159,9 +159,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_captureVideoPacket(JN
         auto frame = libjami::getNewFrame(input);
         if (not frame)
             return;
-        auto packet = std::unique_ptr<AVPacket, void(*)(AVPacket*)>(av_packet_alloc(), [](AVPacket* pkt){
-            av_packet_free(&pkt);
-        });
+        auto packet = libjami::PacketBuffer(av_packet_alloc());
         if (keyframe)
             packet->flags = AV_PKT_FLAG_KEY;
         setRotation(rotation);

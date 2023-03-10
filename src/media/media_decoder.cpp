@@ -344,12 +344,6 @@ MediaDemuxer::setIOContext(MediaIOHandle* ioctx)
 MediaDemuxer::Status
 MediaDemuxer::decode()
 {
-    auto packet = std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>(av_packet_alloc(),
-                                                                            [](AVPacket* p) {
-                                                                                if (p)
-                                                                                    av_packet_free(
-                                                                                        &p);
-                                                                            });
     if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") {
         auto ret = inputCtx_->iformat->read_header(inputCtx_);
         if (ret == AVERROR_EXTERNAL) {
@@ -366,6 +360,7 @@ MediaDemuxer::decode()
         }
     }
 
+    libjami::PacketBuffer packet(av_packet_alloc());
     int ret = av_read_frame(inputCtx_, packet.get());
     if (ret == AVERROR(EAGAIN)) {
         /*no data available. Calculate time until next frame.
@@ -550,9 +545,10 @@ MediaDecoder::setupStream()
     }
 #endif
 
-    JAMI_DBG() << "Decoding " << av_get_media_type_string(avStream_->codecpar->codec_type)
-               << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
-
+    JAMI_LOG("Using {} ({}) decoder for {}",
+             inputDecoder_->long_name,
+             inputDecoder_->name,
+             av_get_media_type_string(avStream_->codecpar->codec_type));
     decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency() / 2));
     if (emulateRate_)
         JAMI_DBG() << "Using framerate emulation";
