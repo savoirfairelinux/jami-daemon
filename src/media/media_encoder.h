@@ -62,8 +62,9 @@ class MediaEncoderException : public std::runtime_error
 {
 public:
     MediaEncoderException(const char* msg)
-        : std::runtime_error(msg)
-    {}
+        : std::runtime_error(msg){}
+    MediaEncoderException(const std::string& msg)
+        : std::runtime_error(msg){}
 };
 
 class MediaEncoder

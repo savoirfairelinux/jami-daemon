@@ -560,7 +560,7 @@ std::string
 MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
                                 const MediaStream& local) const
 {
-    std::stringstream v;
+    std::ostringstream v;
 
     switch (peers.size()) {
     case 0:
@@ -682,7 +682,7 @@ MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers,
                                 const MediaStream& local) const
 {
     std::string baseFilter = "aresample=osr=48000:ochl=stereo:osf=s16";
-    std::stringstream a;
+    std::ostringstream a;
 
     switch (peers.size()) {
     case 0:
