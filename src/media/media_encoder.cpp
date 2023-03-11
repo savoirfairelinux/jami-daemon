@@ -382,10 +382,7 @@ MediaEncoder::openIOContext()
         if (!(outputCtx_->oformat->flags & AVFMT_NOFILE)) {
             fileIO_ = true;
             if ((ret = avio_open(&outputCtx_->pb, filename, AVIO_FLAG_WRITE)) < 0) {
-                std::stringstream ss;
-                ss << "Could not open IO context for '" << filename
-                   << "': " << libav_utils::getError(ret);
-                throw MediaEncoderException(ss.str().c_str());
+                throw MediaEncoderException(fmt::format("Could not open IO context for '{}': {}", filename, libav_utils::getError(ret)));
             }
         }
     }

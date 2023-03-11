@@ -418,7 +418,7 @@ getDeviceParams(const std::string& deviceId)
 {
     auto params = jami::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceParams(
         deviceId);
-    std::stringstream rate;
+    std::ostringstream rate;
     rate << params.framerate;
     return {{"format", params.format},
             {"width", std::to_string(params.width)},

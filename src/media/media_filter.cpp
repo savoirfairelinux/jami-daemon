@@ -183,10 +183,7 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
         else
             return 0;
     }
-
-    std::stringstream ss;
-    ss << "Specified filter (" << inputName << ") not found";
-    return fail(ss.str(), AVERROR(EINVAL));
+    return fail(fmt::format("Specified filter '{}' not found", inputName), AVERROR(EINVAL));
 }
 
 std::unique_ptr<MediaFrame>
