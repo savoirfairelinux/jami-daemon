@@ -476,8 +476,8 @@ else()
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
     list(APPEND CMAKE_PREFIX_PATH ${CONTRIB_PATH})
 
-    find_package (jsoncpp CONFIG REQUIRED)
     find_package (yaml-cpp CONFIG REQUIRED)
+    pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
     pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
     pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing)
     pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
@@ -511,7 +511,7 @@ else()
         PkgConfig::avcodec
         PkgConfig::swresample
         PkgConfig::swscale
-        jsoncpp
+        PkgConfig::jsoncpp
         yaml-cpp
         PkgConfig::fmt
         PkgConfig::secp256k1
