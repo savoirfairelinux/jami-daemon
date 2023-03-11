@@ -1475,7 +1475,7 @@ JamiAccount::registerAsyncOps()
     loadCachedProxyServer([onLoad](const std::string&) { onLoad(); });
 
     if (upnpCtrl_) {
-        JAMI_DBG("UPnP: Attempting to map ports for Jami account");
+        JAMI_LOG("[Account {:s}] UPnP: attempting to map ports", getAccountID());
 
         // Release current mapping if any.
         if (dhtUpnpMapping_.isValid()) {
@@ -1491,11 +1491,11 @@ JamiAccount::registerAsyncOps()
                                               upnp::Mapping::sharedPtr_t mapRes) {
             if (auto accPtr = w.lock()) {
                 auto& dhtMap = accPtr->dhtUpnpMapping_;
-                auto& accId = accPtr->getAccountID();
+                const auto& accId = accPtr->getAccountID();
 
-                JAMI_WARN("[Account %s] DHT UPNP mapping changed to %s",
-                          accId.c_str(),
-                          mapRes->toString(true).c_str());
+                JAMI_LOG("[Account {:s}] DHT UPNP mapping changed to {:s}",
+                          accId,
+                          mapRes->toString(true));
 
                 if (*update) {
                     // Check if we need to update the mapping and the registration.
@@ -1510,9 +1510,9 @@ JamiAccount::registerAsyncOps()
                             // Update the mapping and restart the registration.
                             dhtMap.updateFrom(mapRes);
 
-                            JAMI_WARN("[Account %s] Allocated port changed to %u. Restarting the "
+                            JAMI_WARNING("[Account {:s}] Allocated port changed to {}. Restarting the "
                                       "registration",
-                                      accId.c_str(),
+                                      accId,
                                       accPtr->dhtPortUsed());
 
                             accPtr->dht_->connectivityChanged();
@@ -1527,13 +1527,13 @@ JamiAccount::registerAsyncOps()
                     // Set connection info and load the account.
                     if (mapRes->getState() == upnp::MappingState::OPEN) {
                         dhtMap.updateFrom(mapRes);
-                        JAMI_DBG("[Account %s] Mapping %s successfully allocated: starting the DHT",
-                                 accId.c_str(),
-                                 dhtMap.toString().c_str());
+                        JAMI_LOG("[Account {:s}] Mapping {:s} successfully allocated: starting the DHT",
+                                 accId,
+                                 dhtMap.toString());
                     } else {
-                        JAMI_WARN(
-                            "[Account %s] Mapping request is in %s state: starting the DHT anyway",
-                            accId.c_str(),
+                        JAMI_WARNING(
+                            "[Account {:s}] Mapping request is in {:s} state: starting the DHT anyway",
+                            accId,
                             mapRes->getStateStr());
                     }
 
@@ -1547,10 +1547,9 @@ JamiAccount::registerAsyncOps()
         auto map = upnpCtrl_->reserveMapping(dhtUpnpMapping_);
         // The returned mapping is invalid. Load the account now since
         // we may never receive the callback.
-        if (not map or not map->isValid()) {
+        if (not map) {
             onLoad();
         }
-
     } else {
         // No UPNP. Load the account and start the DHT. The local DHT
         // might not be reachable for peers if we are behind a NAT.
@@ -1563,11 +1562,11 @@ JamiAccount::doRegister()
 {
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     if (not isUsable()) {
-        JAMI_WARN("Account must be enabled and active to register, ignoring");
+        JAMI_WARNING("[Account {:s}] Account must be enabled and active to register, ignoring", getAccountID());
         return;
     }
 
-    JAMI_DBG("[Account %s] Starting account..", getAccountID().c_str());
+    JAMI_LOG("[Account {:s}] Starting account..", getAccountID());
 
     // invalid state transitions:
     // INITIALIZING: generating/loading certificates, can't register
@@ -2514,12 +2513,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
             ret.status_code = 200;
             cb(ret);
         } catch (const std::exception& e) {
-            JAMI_DBG("Failed to load '%.*s' from '%.*s': %s",
-                     (int) url.size(),
-                     url.c_str(),
-                     (int) cachePath.size(),
-                     cachePath.c_str(),
-                     e.what());
+            JAMI_LOG("Failed to load '{}' from '{}': {}", url, cachePath, e.what());
 
             if (auto sthis = w.lock()) {
                 auto req = std::make_shared<dht::http::Request>(
