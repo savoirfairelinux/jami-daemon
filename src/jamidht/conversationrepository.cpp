@@ -636,8 +636,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         msg_target = wanted_ref.c_str();
     }
 
-    std::stringstream stream;
-    stream << "Merge " << (merge_ref ? "branch" : "commit") << " '" << msg_target << "'";
+    auto commitMsg = fmt::format("Merge {} '{}'", merge_ref ? "branch" : "commit", msg_target);
 
     // Setup our parent commits
     GitCommit parents[2] {{nullptr, git_commit_free}, {nullptr, git_commit_free}};
@@ -687,7 +686,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
                                  sig.get(),
                                  sig.get(),
                                  nullptr,
-                                 stream.str().c_str(),
+                                 commitMsg.c_str(),
                                  tree.get(),
                                  2,
                                  &parents_ptr[0])
@@ -2523,8 +2522,7 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     fileutils::check_dir(conversationsPath.c_str());
     auto path = conversationsPath + "/" + conversationId;
     git_repository* rep = nullptr;
-    std::stringstream url;
-    url << "git://" << deviceId << '/' << conversationId;
+    auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 
     git_clone_options clone_options;
     git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
@@ -2550,7 +2548,7 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     }
 
     JAMI_INFO("Start clone in %s", path.c_str());
-    if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) < 0) {
+    if (git_clone(&rep, url.c_str(), path.c_str(), nullptr) < 0) {
         const git_error* err = giterr_last();
         if (err)
             JAMI_ERR("Error when retrieving remote conversation: %s %s", err->message, path.c_str());
@@ -3285,11 +3283,10 @@ ConversationRepository::leave()
         name = deviceId;
 
     // Remove related files
-    std::string repoPath = git_repository_workdir(repo.get());
-
-    std::string adminFile = repoPath + "admins" + "/" + uri + ".crt";
-    std::string memberFile = repoPath + "members" + "/" + uri + ".crt";
-    std::string crlsPath = repoPath + "CRLs";
+    std::string_view repoPath = git_repository_workdir(repo.get());
+    std::string adminFile = fmt::format("{}admins/{}.crt", repoPath, uri);
+    std::string memberFile = fmt::format("{}members/{}.crt", repoPath, uri);
+    std::string crlsPath = fmt::format("{}CRLs", repoPath);
 
     if (fileutils::isFile(adminFile)) {
         fileutils::removeAll(adminFile, true);
@@ -3303,13 +3300,7 @@ ConversationRepository::leave()
     for (const auto& crl : account->identity().second->getRevocationLists()) {
         if (!crl)
             continue;
-        auto v = crl->getNumber();
-        std::stringstream ss;
-        ss << std::hex;
-        for (const auto& b : v)
-            ss << (unsigned) b;
-        std::string crlPath = crlsPath + "/" + deviceId + "/" + ss.str() + ".crl";
-
+        std::string crlPath = fmt::format("{}/{}/{}.crl", crlsPath, deviceId, dht::toHex(crl->getNumber()));
         if (fileutils::isFile(crlPath)) {
             fileutils::removeAll(crlPath, true);
         }
@@ -3317,7 +3308,7 @@ ConversationRepository::leave()
 
     // Devices
     for (const auto& d : account->getKnownDevices()) {
-        std::string deviceFile = fmt::format("{}/devices/{}.crt", repoPath, d.first);
+        std::string deviceFile = fmt::format("{}devices/{}.crt", repoPath, d.first);
         if (fileutils::isFile(deviceFile)) {
             fileutils::removeAll(deviceFile, true);
         }
@@ -3351,7 +3342,7 @@ ConversationRepository::erase()
     // First, we need to add the member file to the repository if not present
     if (auto repo = pimpl_->repository()) {
         std::string repoPath = git_repository_workdir(repo.get());
-        JAMI_DBG() << "Erasing " << repoPath;
+        JAMI_LOG("Erasing {}", repoPath);
         fileutils::removeAll(repoPath, true);
     }
 }
@@ -3369,7 +3360,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
         return {};
-    std::string repoPath = git_repository_workdir(repo.get());
+    std::string_view repoPath = git_repository_workdir(repo.get());
     auto cert = account->identity().second;
     if (!cert || !cert->issuer)
         return {};
@@ -3386,7 +3377,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     }
 
     auto relativeVotePath = fmt::format("votes/ban/{}/{}", type, uri);
-    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + relativeVotePath;
+    auto voteDirectory = repoPath + relativeVotePath;
     if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
         JAMI_ERR("Error when creating %s. Abort vote", voteDirectory.c_str());
         return {};

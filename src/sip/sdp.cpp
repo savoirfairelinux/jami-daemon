@@ -50,7 +50,6 @@ namespace jami {
 
 using std::string;
 using std::vector;
-using std::stringstream;
 
 static constexpr int POOL_INITIAL_SIZE = 16384;
 static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;

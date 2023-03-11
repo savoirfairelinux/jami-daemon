@@ -307,7 +307,7 @@ ConnectionManager::Impl::connectDeviceStartIce(
     }
 
     auto iceAttributes = ice->getLocalAttributes();
-    std::stringstream icemsg;
+    std::ostringstream icemsg;
     icemsg << iceAttributes.ufrag << "\n";
     icemsg << iceAttributes.pwd << "\n";
     for (const auto& addr : ice->getLocalCandidates(1)) {
@@ -826,7 +826,7 @@ ConnectionManager::Impl::answerTo(IceTransport& ice,
 {
     // NOTE: This is a shortest version of a real SDP message to save some bits
     auto iceAttributes = ice.getLocalAttributes();
-    std::stringstream icemsg;
+    std::ostringstream icemsg;
     icemsg << iceAttributes.ufrag << "\n";
     icemsg << iceAttributes.pwd << "\n";
     for (const auto& addr : ice.getLocalCandidates(1)) {

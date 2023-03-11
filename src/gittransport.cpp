@@ -51,7 +51,7 @@ generateRequest(git_buf* request, const std::string& cmd, const std::string_view
                  + HOST_TAG.size() + deviceId.size() /* device */
                  + nullSeparator.size() /* \0 */;
 
-    std::stringstream streamed;
+    std::ostringstream streamed;
     streamed << std::setw(4) << std::setfill('0') << std::hex << (total & 0x0FFFF) << cmd;
     streamed << " " << conversationId;
     streamed << nullSeparator << HOST_TAG << deviceId << nullSeparator;
