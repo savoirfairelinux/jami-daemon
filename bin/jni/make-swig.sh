@@ -47,7 +47,7 @@ swig -v -c++ -java \
 -o $JNIDIR/jami_wrapper.cpp $JNIDIR/jni_interface.i
 
 echo "Generating jamiservice_loader.c..."
-python $JNIDIR/JavaJNI2CJNI_Load.py \
+python3 $JNIDIR/JavaJNI2CJNI_Load.py \
 -i $PACKAGE_PATH/JamiServiceJNI.java \
 -o $JNIDIR/jamiservice_loader.c \
 -t $JNIDIR/jamiservice.c.template \
