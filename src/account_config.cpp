@@ -165,6 +165,10 @@ AccountConfig::fromMap(const std::map<std::string, std::string>& details)
     defaultModerators = string_split_set(defMod);
     parseBool(details, Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled);
     parseBool(details, Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled);
+
+    parseString(details, libjami::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey);
+    parseString(details, PROXY_PUSH_PLATFORM_KEY, platform);
+    parseString(details, PROXY_PUSH_TOPIC_KEY, notificationTopic);
 }
 
 void
