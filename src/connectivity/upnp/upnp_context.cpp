@@ -354,8 +354,8 @@ UPnPContext::reserveMapping(Mapping& requestedMap)
         mapRes->setNotifyCallback(requestedMap.getNotifyCallback());
         mapRes->enableAutoUpdate(requestedMap.getAutoUpdate());
         // Notify the listener.
-        if (mapRes->getNotifyCallback())
-            mapRes->getNotifyCallback()(mapRes);
+        if (auto cb = mapRes->getNotifyCallback())
+            cb(mapRes);
     }
 
     updateMappingList(true);
