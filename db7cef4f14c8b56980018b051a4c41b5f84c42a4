@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "776aba70_a2641a49",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 474,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-14T15:58:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "62c55d6b_7dce2b95",
+      "range": {
+        "startLine": 474,
+        "startChar": 26,
+        "endLine": 474,
+        "endChar": 28
+      },
+      "revId": "db7cef4f14c8b56980018b051a4c41b5f84c42a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "63c86c5d_33953700",
@@ -61,6 +85,30 @@
       "writtenOn": "2023-03-10T18:08:28Z",
       "side": 1,
       "message": "Would be good to have a comment to explain the value 8",
+      "range": {
+        "startLine": 496,
+        "startChar": 25,
+        "endLine": 496,
+        "endChar": 26
+      },
+      "revId": "db7cef4f14c8b56980018b051a4c41b5f84c42a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9150388f_fbe70ed1",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 496,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-14T15:58:20Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "63c86c5d_33953700",
       "range": {
         "startLine": 496,
         "startChar": 25,
