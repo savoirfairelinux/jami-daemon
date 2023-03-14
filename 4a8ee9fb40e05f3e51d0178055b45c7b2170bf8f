@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "62e0168f_586e6023",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 3119,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-14T19:04:06Z",
+      "side": 1,
+      "message": "Breaks build with --disable-video (method is outside ifdef ENABLE_VIDEO in header but not in cpp)",
+      "range": {
+        "startLine": 3119,
+        "startChar": 9,
+        "endLine": 3119,
+        "endChar": 29
+      },
+      "revId": "4a8ee9fb40e05f3e51d0178055b45c7b2170bf8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
