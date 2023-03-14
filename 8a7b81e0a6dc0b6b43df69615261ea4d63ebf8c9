@@ -99,6 +99,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a660f487_e93a2ea2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3110,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-03-14T12:59:05Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "3a0f052e_7adcb06b",
+      "range": {
+        "startLine": 3093,
+        "startChar": 0,
+        "endLine": 3110,
+        "endChar": 5
+      },
+      "revId": "8a7b81e0a6dc0b6b43df69615261ea4d63ebf8c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a438bc3f_8d0f7d28",
@@ -136,6 +160,30 @@
       "side": 1,
       "message": "remotes video_0 will correspond with local video_0",
       "parentUuid": "a438bc3f_8d0f7d28",
+      "range": {
+        "startLine": 3102,
+        "startChar": 3,
+        "endLine": 3111,
+        "endChar": 0
+      },
+      "revId": "8a7b81e0a6dc0b6b43df69615261ea4d63ebf8c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8691f9bc_8f7a4058",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3111,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-03-14T12:59:05Z",
+      "side": 1,
+      "message": "added check to match rtpstream label and sinkid from the participant info",
+      "parentUuid": "c7206c1d_c2494abc",
       "range": {
         "startLine": 3102,
         "startChar": 3,
