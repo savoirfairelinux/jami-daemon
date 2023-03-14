@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "375e5a2e_3d468204",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-03-14T18:39:10Z",
+      "side": 1,
+      "message": "we can call createSinks before the local video decoder is fully initialized. Sometimes I crashed when retrieving height and width because decoder_ was null.",
+      "parentUuid": "da7c782f_0e2b2072",
+      "range": {
+        "startLine": 134,
+        "startChar": 11,
+        "endLine": 134,
+        "endChar": 19
+      },
+      "revId": "efbe6d13231bb1d7489d2e194b3e2a2a70007db1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "12fbc781_21549d10",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "846c42fe_44d94881",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 3174,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-03-14T18:39:10Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "12fbc781_21549d10",
+      "range": {
+        "startLine": 3159,
+        "startChar": 5,
+        "endLine": 3174,
+        "endChar": 5
+      },
+      "revId": "efbe6d13231bb1d7489d2e194b3e2a2a70007db1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "29666085_86fe99cc",
@@ -60,6 +108,30 @@
       "writtenOn": "2023-03-14T16:44:43Z",
       "side": 1,
       "message": "define older, if \u003e\u003d 1 year, I think we can just ditch this part of the code",
+      "range": {
+        "startLine": 3199,
+        "startChar": 6,
+        "endLine": 3199,
+        "endChar": 35
+      },
+      "revId": "efbe6d13231bb1d7489d2e194b3e2a2a70007db1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "15501c9d_37610e01",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 3199,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-03-14T18:39:10Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "29666085_86fe99cc",
       "range": {
         "startLine": 3199,
         "startChar": 6,
