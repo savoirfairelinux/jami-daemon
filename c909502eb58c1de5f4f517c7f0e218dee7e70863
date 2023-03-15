@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "213a39bf_fd7bc67c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 40
+      },
+      "lineNbr": 687,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2023-03-15T16:32:35Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027uri\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "c909502eb58c1de5f4f517c7f0e218dee7e70863",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "cdce0773_5ac01c2a",
         "filename": "src/media/video/video_rtp_session.cpp",
         "patchSetId": 40
