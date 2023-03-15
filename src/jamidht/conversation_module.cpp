@@ -1958,7 +1958,7 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
             JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
             return {};
         }
-        return {{"syncing", "true"}};
+        return {{"syncing", "true"}, {"created", std::to_string(itConv->second.created)}};
     }
 
     return it->second->infos();

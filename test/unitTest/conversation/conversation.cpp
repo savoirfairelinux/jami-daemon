@@ -2839,6 +2839,7 @@ ConversationTest::testSyncingWhileAccepting()
 
     auto convInfos = libjami::conversationInfos(bobId, convId);
     CPPUNIT_ASSERT(convInfos["syncing"] == "true");
+    CPPUNIT_ASSERT(convInfos.find("created") != convInfos.end());
 
     Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
