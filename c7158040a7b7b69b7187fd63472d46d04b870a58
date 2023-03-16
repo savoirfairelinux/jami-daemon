@@ -22,6 +22,30 @@
       },
       "revId": "c7158040a7b7b69b7187fd63472d46d04b870a58",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d9fbfe3c_fd6dd8ef",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 25
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-16T17:20:39Z",
+      "side": 1,
+      "message": "I\u0027m just dumb",
+      "parentUuid": "e2114f89_3f3a52de",
+      "range": {
+        "startLine": 7,
+        "startChar": 21,
+        "endLine": 7,
+        "endChar": 27
+      },
+      "revId": "c7158040a7b7b69b7187fd63472d46d04b870a58",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
