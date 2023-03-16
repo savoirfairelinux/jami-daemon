@@ -16,6 +16,24 @@
       "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027uri\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
       "revId": "da92a85115242a1f74e1128d2a9f261a461e9db0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4ff1c00b_552ac467",
+        "filename": "src/conference.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-16T13:10:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fd4ccce2_de60f3b2",
+      "revId": "da92a85115242a1f74e1128d2a9f261a461e9db0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
