@@ -38,26 +38,26 @@ ConversationChannelHandler::connect(const DeviceId& deviceId,
 {
     connectionManager_.connectDevice(deviceId,
                                      "git://" + deviceId.toString() + "/" + channelName,
-                                     [cb = std::move(cb)](std::shared_ptr<ChannelSocket> socket,
-                                                          const DeviceId& dev) {
-                                         if (cb)
-                                             cb(socket, dev);
-                                     });
+                                     std::move(cb));
 }
 
 bool
-ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>&,
+ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
                                       const std::string& name)
 {
+    auto acc = account_.lock();
+    if (!cert || !cert->issuer || !acc)
+        return false;
     // Pre-check before acceptance. Sometimes, another device can start a conversation
     // which is still not synced. So, here we decline channel's request in this case
     // to avoid the other device to want to sync with us if we are not ready.
     auto sep = name.find_last_of('/');
     auto conversationId = name.substr(sep + 1);
-    auto remoteDevice = name.substr(6, sep - 6);
+
     if (auto acc = account_.lock())
         if (auto convModule = acc->convModule()) {
-            auto res = !convModule->isBannedDevice(conversationId, remoteDevice);
+            auto res = !convModule->isBannedDevice(conversationId,
+                                                   cert->issuer->getLongId().toString());
             return res;
         }
     return false;
