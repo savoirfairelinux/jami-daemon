@@ -164,6 +164,7 @@ source_group("Source Files\\im" FILES ${Source_Files__im})
 source_group("Source Files\\jamidht" FILES ${Source_Files__jamidht})
 source_group("Source Files\\jamidht\\eth\\libdevcore" FILES ${Source_Files__jamidht__eth__libdevcore})
 source_group("Source Files\\jamidht\\eth\\libdevcrypto" FILES ${Source_Files__jamidht__eth__libdevcrypto})
+source_group("Source Files\\jamidht\\swarm" FILES ${Source_Files__jamidht__swarm})
 source_group("Source Files\\media" FILES ${Source_Files__media})
 source_group("Source Files\\media\\audio" FILES ${Source_Files__media__audio})
 source_group("Source Files\\media\\audio\\audio-processing" FILES ${Source_Files__media__audio__audio_processing})
@@ -191,6 +192,7 @@ list (APPEND ALL_FILES
       ${Source_Files__jamidht}
       ${Source_Files__jamidht__eth__libdevcore}
       ${Source_Files__jamidht__eth__libdevcrypto}
+      ${Source_Files__jamidht__swarm}
       ${Source_Files__media}
       ${Source_Files__media__audio}
       ${Source_Files__media__audio__sound}
