@@ -1818,7 +1818,7 @@ JamiAccount::doRegister_()
                       getAccountID(),
                       config.proxy_server);
             if (not config.push_token.empty()) {
-                JAMI_LOG("[Account %s] using push notifications with platform: {}, topic: {}, token: {}", getAccountID(), config.push_platform, config.push_topic, config.push_token);
+                JAMI_LOG("[Account {}] using push notifications with platform: {}, topic: {}, token: {}", getAccountID(), config.push_platform, config.push_topic, config.push_token);
             }
         }
 
@@ -1826,7 +1826,7 @@ JamiAccount::doRegister_()
         if (conf.accountPeerDiscovery or conf.accountPublish) {
             peerDiscovery_ = std::make_shared<dht::PeerDiscovery>();
             if (conf.accountPeerDiscovery) {
-                JAMI_INFO("[Account %s] starting Jami account discovery...", getAccountID().c_str());
+                JAMI_LOG("[Account {}] starting Jami account discovery...", getAccountID());
                 startAccountDiscovery();
             }
             if (conf.accountPublish)
@@ -1878,8 +1878,8 @@ JamiAccount::doRegister_()
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
             if (auto cert = tls::CertificateStore::instance().getCertificate(pk_id.toString()))
                 ret.emplace_back(std::move(cert));
-            JAMI_DBG("Query for local certificate store: %s: %zu found.",
-                     pk_id.toString().c_str(),
+            JAMI_LOG("Query for local certificate store: {}: {} found.",
+                     pk_id.toString(),
                      ret.size());
             return ret;
         };
