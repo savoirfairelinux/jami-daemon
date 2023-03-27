@@ -36,9 +36,9 @@ class SIPCall;
 
 struct SyncMsg
 {
-    jami::DeviceSync ds;
-    std::map<std::string, jami::ConvInfo> c;
-    std::map<std::string, jami::ConversationRequest> cr;
+    DeviceSync ds;
+    std::map<std::string, ConvInfo> c;
+    std::map<std::string, ConversationRequest> cr;
     // p is conversation's preferences. It's not stored in c, as
     // we can update the preferences without touching any confInfo.
     std::map<std::string, std::map<std::string, std::string>> p;
@@ -50,8 +50,8 @@ struct SyncMsg
 using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
 using NeedSocketCb
     = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
-using SengMsgCb
-    = std::function<uint64_t(const std::string&, std::map<std::string, std::string>, uint64_t)>;
+using SengMsgCb = std::function<
+    uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
 using UpdateConvReq = std::function<void(const std::string&, const std::string&, bool)>;
 
@@ -62,6 +62,7 @@ public:
                        NeedsSyncingCb&& needsSyncingCb,
                        SengMsgCb&& sendMsgCb,
                        NeedSocketCb&& onNeedSocket,
+                       NeedSocketCb&& onNeedSwarmSocket,
                        UpdateConvReq&& updateConvReqCb);
     ~ConversationModule() = default;
 
@@ -69,6 +70,17 @@ public:
      * Refresh informations about conversations
      */
     void loadConversations();
+
+#ifdef LIBJAMI_TESTABLE
+    void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);
+#endif
+
+    void monitor();
+
+    /**
+     * Bootstrap swarm managers to other peers
+     */
+    void bootstrap();
 
     /**
      * Clear not removed fetch
@@ -434,6 +446,38 @@ public:
     static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::string& path);
     void addConvInfo(const ConvInfo& info);
     void setConversationMembers(const std::string& convId, const std::vector<std::string>& members);
+
+    /**
+     * Get a conversation
+     * @param convId
+     */
+    std::shared_ptr<Conversation> getConversation(const std::string& convId);
+    /**
+     * Return current git socket used for a conversation
+     * @param deviceId          Related device
+     * @param conversationId    Related conversation
+     * @return the related socket
+     */
+    std::shared_ptr<ChannelSocket> gitSocket(std::string_view deviceId,
+                                             std::string_view convId) const;
+    void removeGitSocket(std::string_view deviceId, std::string_view convId);
+    void addGitSocket(std::string_view deviceId,
+                      std::string_view convId,
+                      const std::shared_ptr<ChannelSocket>& channel);
+    /**
+     * Clear all connection (swarm channels)
+     */
+    void shutdownConnections();
+    /**
+     * Add a swarm connection
+     * @param conversationId
+     * @param socket
+     */
+    void addSwarmChannel(const std::string& conversationId, std::shared_ptr<ChannelSocket> socket);
+    /**
+     * Triggers a bucket maintainance for DRTs
+     */
+    void connectivityChanged();
 
 private:
     class Impl;
