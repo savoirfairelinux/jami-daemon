@@ -268,8 +268,8 @@ SIPAccount::onTransportStateChanged(pjsip_transport_state state,
 {
     pj_status_t currentStatus = transportStatus_;
     JAMI_DEBUG("Transport state changed to {:s} for account {:s}!",
-             SipTransport::stateToStr(state),
-             accountID_);
+               SipTransport::stateToStr(state),
+               accountID_);
     if (!SipTransport::isAlive(state)) {
         if (info) {
             transportStatus_ = info->status;
@@ -301,7 +301,8 @@ SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
         return;
     if (transport_) {
         JAMI_DEBUG("Removing old transport [{}] from account", fmt::ptr(transport_.get()));
-        // NOTE: do not call destroyRegistrationInfo() there as we must call the registration callback if needed
+        // NOTE: do not call destroyRegistrationInfo() there as we must call the registration
+        // callback if needed
         if (regc_)
             pjsip_regc_release_transport(regc_);
         transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
@@ -482,9 +483,10 @@ SIPAccount::mapPortUPnP()
                            or mapRes->getState() == upnp::MappingState::IN_PROGRESS;
             auto newPort = success ? mapRes->getExternalPort() : accPtr->config().publishedPort;
             if (not success and not accPtr->isRegistered()) {
-                JAMI_WARNING("[Account {:s}] Failed to open port {}: registering SIP account anyway",
-                          accPtr->getAccountID(),
-                          oldPort);
+                JAMI_WARNING(
+                    "[Account {:s}] Failed to open port {}: registering SIP account anyway",
+                    accPtr->getAccountID(),
+                    oldPort);
                 accPtr->doRegister1_();
                 return;
             }
@@ -492,12 +494,13 @@ SIPAccount::mapPortUPnP()
                 or (accPtr->getRegistrationState() != RegistrationState::REGISTERED)) {
                 if (not accPtr->isRegistered())
                     JAMI_WARNING("[Account {:s}] SIP port {} opened: registering SIP account",
-                              accPtr->getAccountID(),
-                              newPort);
+                                 accPtr->getAccountID(),
+                                 newPort);
                 else
-                    JAMI_WARNING("[Account {:s}] SIP port changed to {}: re-registering SIP account",
-                              accPtr->getAccountID(),
-                              newPort);
+                    JAMI_WARNING(
+                        "[Account {:s}] SIP port changed to {}: re-registering SIP account",
+                        accPtr->getAccountID(),
+                        newPort);
                 accPtr->publishedPortUsed_ = newPort;
             } else {
                 accPtr->connectivityChanged();
@@ -528,7 +531,8 @@ SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
 }
 
 bool
-SIPAccount::setPushNotificationConfig(const std::map<std::string, std::string>& data) {
+SIPAccount::setPushNotificationConfig(const std::map<std::string, std::string>& data)
+{
     if (SIPAccountBase::setPushNotificationConfig(data)) {
         if (config().enabled)
             doUnregister([&](bool /* transport_free */) { doRegister(); });
@@ -1795,6 +1799,7 @@ static pjsip_accept_hdr* im_create_accept(pj_pool_t *pool)
 
 void
 SIPAccount::sendMessage(const std::string& to,
+                        const std::string&,
                         const std::map<std::string, std::string>& payloads,
                         uint64_t id,
                         bool,

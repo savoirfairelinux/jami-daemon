@@ -679,12 +679,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
     if (call.isConferenceParticipant())
         base_.detachParticipant(callId);
 
-
-
-    JAMI_DEBUG("[call:{}] bind to conference {} (callState={})",
-             callId,
-             confId,
-             state);
+    JAMI_DEBUG("[call:{}] bind to conference {} (callState={})", callId, confId, state);
 
     base_.getRingBufferPool().unBindAll(callId);
 
@@ -702,9 +697,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
         conf.bindParticipant(callId);
         base_.answerCall(call);
     } else
-        JAMI_WARNING("[call:{}] call state {} not recognized for conference",
-                  callId,
-                  state);
+        JAMI_WARNING("[call:{}] call state {} not recognized for conference", callId, state);
 }
 
 //==============================================================================
@@ -2918,10 +2911,10 @@ Manager::sendTextMessage(const std::string& accountID,
             if (pluginChatManager.hasHandlers()) {
                 auto cm = std::make_shared<JamiMessage>(accountID, to, false, payloads, fromPlugin);
                 pluginChatManager.publishMessage(cm);
-                return acc->sendTextMessage(cm->peerId, cm->data, 0, onlyConnected);
+                return acc->sendTextMessage(cm->peerId, "", cm->data, 0, onlyConnected);
             } else
 #endif // ENABLE_PLUGIN
-                return acc->sendTextMessage(to, payloads, 0, onlyConnected);
+                return acc->sendTextMessage(to, "", payloads, 0, onlyConnected);
         } catch (const std::exception& e) {
             JAMI_ERR("Exception during text message sending: %s", e.what());
         }
@@ -3051,10 +3044,9 @@ Manager::createSinkClients(
         }
         if (participant.w && participant.h && !participant.videoMuted) {
             auto currentSink = getSinkClient(sinkId);
-            if (!accountId.empty() &&
-                currentSink &&
-                string_remove_suffix(participant.uri, '@') == getAccount(accountId)->getUsername() &&
-                participant.device == getAccount<JamiAccount>(accountId)->currentDeviceId()) {
+            if (!accountId.empty() && currentSink
+                && string_remove_suffix(participant.uri, '@') == getAccount(accountId)->getUsername()
+                && participant.device == getAccount<JamiAccount>(accountId)->currentDeviceId()) {
                 // This is a local sink that must already exist
                 continue;
             }
