@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "jamidht/conversation.h"
 #include "contact_list.h"
 #include "logger.h"
 #if HAVE_RINGNS
