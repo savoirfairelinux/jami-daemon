@@ -81,6 +81,16 @@ public:
      */
     void changeMobility(const NodeId& nodeId, bool isMobile);
 
+    /**
+     * get all nodes from the different tables in bucket
+     */
+    std::vector<NodeId> getAllNodes() const;
+
+    /**
+     * Delete nodes from the different tables in bucket
+     */
+    void deleteNode(std::vector<NodeId> nodes);
+
     // For tests
 
     /**

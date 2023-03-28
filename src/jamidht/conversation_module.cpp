@@ -898,8 +898,9 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     {
         std::lock_guard<std::mutex> lk(notSyncedNotificationMtx_);
         devices = conversation.peersToSyncWith();
-        auto members = conversation.memberUris(username_, {});
+        auto members = conversation.memberUris(username_, {MemberRole::BANNED});
         std::vector<std::string> connectedMembers;
+        // print all members
         for (const auto& device : devices) {
             auto cert = tls::CertificateStore::instance().getCertificate(device.toString());
             if (cert && cert->issuer)
@@ -1142,10 +1143,10 @@ ConversationModule::loadConversations()
                 auto convFromDetails = getOneToOneConversation(otherUri);
                 if (convFromDetails != repository) {
                     if (convFromDetails.empty()) {
-                        JAMI_ERROR(
-                            "No conversation detected for {} but one exists ({}). Update details",
-                            otherUri,
-                            repository);
+                        JAMI_ERROR("No conversation detected for {} but one exists ({}). "
+                                   "Update details",
+                                   otherUri,
+                                   repository);
                         acc->updateConvForContact(otherUri, convFromDetails, repository);
                     } else {
                         JAMI_ERROR("Multiple conversation detected for {} but ({} & {})",
@@ -1292,12 +1293,12 @@ ConversationModule::clearPendingFetch()
 {
     if (!pimpl_->pendingConversationsFetch_.empty()) {
         // Note: This is a fallback. convModule() is kept if account is disabled/re-enabled.
-        // iOS uses setAccountActive() a lot, and if for some reason the previous pending fetch is
-        // not erased (callback not called), it will block the new messages as it will not sync. The
-        // best way to debug this is to get logs from the last ICE connection for syncing the
-        // conversation. It may have been killed in some un-expected way avoiding to call the
-        // callbacks. This should never happen, but if it's the case, this will allow new messages
-        // to be synced correctly.
+        // iOS uses setAccountActive() a lot, and if for some reason the previous pending fetch
+        // is not erased (callback not called), it will block the new messages as it will not
+        // sync. The best way to debug this is to get logs from the last ICE connection for
+        // syncing the conversation. It may have been killed in some un-expected way avoiding to
+        // call the callbacks. This should never happen, but if it's the case, this will allow
+        // new messages to be synced correctly.
         JAMI_ERR("This is a bug, seems to still fetch to some device on initializing");
         pimpl_->pendingConversationsFetch_.clear();
     }
@@ -1839,7 +1840,8 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             auto itConv = pimpl_->convInfos_.find(convId);
             if (itConv != pimpl_->convInfos_.end() && itConv->second.removed) {
                 if (itConv->second.removed > convInfo.created) {
-                    // Only reclone if re-added, else the peer is not synced yet (could be offline before)
+                    // Only reclone if re-added, else the peer is not synced yet (could be
+                    // offline before)
                     continue;
                 }
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
@@ -2020,8 +2022,8 @@ ConversationModule::addConversationMember(const std::string& conversationId,
 
     if (it->second->isMember(contactUri, true)) {
         JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUri, conversationId);
-        // Note: This should not be necessary, but if for whatever reason the other side didn't join
-        // we should not forbid new invites
+        // Note: This should not be necessary, but if for whatever reason the other side didn't
+        // join we should not forbid new invites
         auto invite = it->second->generateInvitation();
         lk.unlock();
         pimpl_->sendMsgCb_(contactUri, {}, std::move(invite), 0);
@@ -2524,8 +2526,8 @@ ConversationModule::hostConference(const std::string& conversationId,
                          });
 
     // When conf finished = remove host & commit
-    // Master call, so when it's stopped, the conference will be stopped (as we use the hold state
-    // for detaching the call)
+    // Master call, so when it's stopped, the conference will be stopped (as we use the hold
+    // state for detaching the call)
     conf->onShutdown(
         [w = pimpl_->weak(), accountUri = pimpl_->username_, confId, conversationId, call](
             int duration) {

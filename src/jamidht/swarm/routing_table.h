@@ -525,6 +525,16 @@ public:
      */
     bool contains(const std::list<Bucket>::iterator& it, const NodeId& nodeId) const;
 
+    /**
+     * Return every node from each bucket
+     */
+    std::vector<NodeId> getAllNodes() const;
+
+    /**
+     * Delete node from every table in bucket
+     */
+    void deleteNode(const NodeId& nodeId);
+
 private:
     RoutingTable(const RoutingTable&) = delete;
     RoutingTable& operator=(const RoutingTable&) = delete;

@@ -10,6 +10,7 @@ AM_TESTS_ENVIRONMENT =                    \
 AM_CXXFLAGS += -I$(top_srcdir)/src
 AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libjami.la -static
 check_PROGRAMS =
+
 ####### Unit Test ########
 
 #

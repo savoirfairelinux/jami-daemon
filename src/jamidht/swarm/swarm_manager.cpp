@@ -343,4 +343,27 @@ SwarmManager::removeNodeInternal(const NodeId& nodeId)
     routing_table.removeNode(nodeId);
 }
 
+std::vector<NodeId>
+SwarmManager::getAllNodes() const
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    std::vector<NodeId> nodes;
+    const auto& rtNodes = routing_table.getAllNodes();
+    nodes.insert(nodes.end(), rtNodes.begin(), rtNodes.end());
+
+    return nodes;
+}
+
+void
+SwarmManager::deleteNode(std::vector<NodeId> nodes)
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        for (const auto& node : nodes) {
+            routing_table.deleteNode(node);
+        }
+    }
+    maintainBuckets();
+}
+
 } // namespace jami

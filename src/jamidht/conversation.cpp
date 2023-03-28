@@ -977,7 +977,23 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                 JAMI_WARN("Vote solved for %s. %s banned",
                           contactUri.c_str(),
                           isDevice ? "Device" : "Member");
+
+                const auto nodes = sthis->pimpl_->swarmManager_->getRoutingTable().getAllNodes();
+                // Remove nodes from swarmManager
+                std::vector<NodeId> toRemove;
+                for (const auto node : nodes)
+                    if (contactUri == sthis->uriFromDevice(node.toString()))
+                        toRemove.emplace_back(node);
+                sthis->pimpl_->swarmManager_->deleteNode(toRemove);
+                // Remove git sockets with this member
+                std::vector<DeviceId> gitToRm;
+                for (const auto& [deviceId, _] : sthis->pimpl_->gitSocketList_)
+                    if (contactUri == sthis->uriFromDevice(deviceId.toString()))
+                        gitToRm.emplace_back(deviceId);
+                for (const auto& did: gitToRm)
+                    sthis->removeGitSocket(did);
             }
+
             sthis->pimpl_->announce(commits);
             lk.unlock();
             cb(!lastId.empty(), lastId);
