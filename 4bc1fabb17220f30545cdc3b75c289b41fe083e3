@@ -16,6 +16,24 @@
       "message": "mi::test::ConversationCallTest::testNeedsHost",
       "revId": "4bc1fabb17220f30545cdc3b75c289b41fe083e3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "810862fa_b1f212d8",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-03-28T20:30:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a88e2ca9_73d51967",
+      "revId": "4bc1fabb17220f30545cdc3b75c289b41fe083e3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
