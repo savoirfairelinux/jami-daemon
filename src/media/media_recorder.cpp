@@ -361,7 +361,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
         }
     } else if (audioFilter_ && outputAudioFilter_) {
 #endif // ENABLE_VIDEO
-        std::lock_guard<std::mutex> lk(mutexFilterAudio_);
+        std::lock_guard<std::mutex> lkA(mutexFilterAudio_);
         audioFilter_->feedInput(clone->pointer(), name);
         auto audioFilterOutput = audioFilter_->readOutput();
         if (audioFilterOutput) {
