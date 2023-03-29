@@ -494,6 +494,35 @@ RoutingTable::contains(const std::list<Bucket>::iterator& bucket, const NodeId& 
                || NodeId::cmp(nodeId, std::next(bucket)->getLowerLimit()) < 0);
 }
 
+std::vector<NodeId>
+RoutingTable::getAllNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getNodeIds();
+        const auto& knownNodes = b.getKnownNodes();
+        const auto& mobileNodes = b.getMobileNodes();
+        const auto& connectingNodes = b.getConnectingNodes();
+
+        ret.insert(ret.end(), nodes.begin(), nodes.end());
+        ret.insert(ret.end(), knownNodes.begin(), knownNodes.end());
+        ret.insert(ret.end(), mobileNodes.begin(), mobileNodes.end());
+        ret.insert(ret.end(), connectingNodes.begin(), connectingNodes.end());
+    }
+    return ret;
+}
+
+void
+RoutingTable::deleteNode(const NodeId& nodeId)
+{
+    auto bucket = findBucket(nodeId);
+    shutdownNode(nodeId);
+    bucket->removeNode(nodeId);
+    bucket->removeConnectingNode(nodeId);
+    bucket->removeKnownNode(nodeId);
+    bucket->removeMobileNode(nodeId);
+}
+
 NodeId
 RoutingTable::middle(std::list<Bucket>::iterator& it) const
 {

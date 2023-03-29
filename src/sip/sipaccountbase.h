@@ -175,6 +175,7 @@ public:
     IceTransportOptions getIceOptions() const noexcept;
 
     virtual void sendMessage(const std::string& to,
+                             const std::string& deviceId,
                              const std::map<std::string, std::string>& payloads,
                              uint64_t id,
                              bool retryOnTimeout = true,
@@ -182,16 +183,17 @@ public:
         = 0;
 
     virtual uint64_t sendTextMessage(const std::string& to,
+                                     const std::string& deviceId,
                                      const std::map<std::string, std::string>& payloads,
                                      uint64_t refreshToken = 0,
                                      bool onlyConnected = false) override
     {
         if (onlyConnected) {
             auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
-            sendMessage(to, payloads, token, false, true);
+            sendMessage(to, deviceId, payloads, token, false, true);
             return token;
         }
-        return messageEngine_.sendMessage(to, payloads, refreshToken);
+        return messageEngine_.sendMessage(to, deviceId, payloads, refreshToken);
     }
 
     im::MessageStatus getMessageStatus(uint64_t id) const override
