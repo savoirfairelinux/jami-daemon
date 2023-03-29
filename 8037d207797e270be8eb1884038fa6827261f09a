@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "98173286_87329856",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 46
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-03-29T17:25:00Z",
+      "side": 1,
+      "message": "The code seems to be well-structured and follows the C++ coding standards. However, I have a few suggestions to improve the code:\n\n1. In the `setKnownNodes` function, the for loop is using `NodeId` as the loop variable, which may cause confusion as `NodeId` is also a type name. It is recommended to use a different name for the loop variable, such as `nodeId`.\n\n```cpp\nvoid\nSwarmManager::setKnownNodes(const std::vector\u003cNodeId\u003e\u0026 known_nodes)\n{\n    // ...\n    {\n        std::lock_guard\u003cstd::mutex\u003e lock(mutex);\n        for (const auto\u0026 nodeId : known_nodes)\n            addKnownNodes(std::move(nodeId));\n    }\n    // ...\n}\n```\n\n2. In the `sendRequest` function, the `buffer` variable is not initialized with the desired size. Although this may not cause issues in this specific code, it is a good practice to initialize the buffer with its size to avoid potential issues in the future.\n\n```cpp\nvoid\nSwarmManager::sendRequest(const std::shared_ptr\u003cChannelSocketInterface\u003e\u0026 socket,\n                          NodeId\u0026 nodeId,\n                          Query q,\n                          int numberNodes)\n{\n    // ...\n    msgpack::sbufferbuffer((size_t) 1024);\n    msgpack::packer\u003cmsgpack::sbuffer\u003e pk(\u0026buffer);\n    // ...\n}\n```\n\n4. In the `resetNodeExpiry` function, it is recommended to check if `ec` has an error before proceeding with the rest of the function. This ensures that the function only continues executing when there is no error.\n\n```cpp\nvoid\nSwarmManager::resetNodeExpiry(const asio::error_code\u0026 ec,\n                              const std::shared_ptr\u003cChannelSocketInterface\u003e\u0026 socket,\n                              NodeId node)\n{\n    if (ec) {\n        // Handle the error or return from the function\n        return;\n    }\n    // ...\n}\n```\n\n5. Include necessary header files for the used types, functions, and libraries. For example, you are using `std::set`, `std::list`, and `std::shared_ptr` in your code, so you should include the respective headers:\n\n```cpp\n#include \u003cset\u003e\n#include \u003clist\u003e\n#include \u003cmemory\u003e\n```\n",
+      "revId": "8037d207797e270be8eb1884038fa6827261f09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
