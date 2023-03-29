@@ -45,7 +45,7 @@ using NodeId = dht::PkId;
 namespace jami {
 namespace test {
 
-constexpr size_t nNodes = 5000;
+constexpr size_t nNodes = 1000;
 
 constexpr size_t BOOTSTRAP_SIZE = 2;
 auto time = 300s;

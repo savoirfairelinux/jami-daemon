@@ -243,4 +243,22 @@ ut_plugins_SOURCES = plugins/plugins.cpp common.cpp
 check_PROGRAMS += ut_routing_table
 ut_routing_table_SOURCES = swarm/routing_table.cpp
 
+#
+# Bootstrap
+#
+check_PROGRAMS += ut_bootstrap
+ut_bootstrap_SOURCES = swarm/bootstrap.cpp common.cpp
+
+#
+# SwarmConversation
+#
+check_PROGRAMS += ut_swarm_conversation
+ut_swarm_conversation_SOURCES = swarm/swarm_conversation.cpp common.cpp
+
+#
+# SwarmSpreadTest
+#
+check_PROGRAMS += ut_swarm_spread
+ut_swarm_spread_SOURCES = swarm/swarm_spread.cpp common.cpp
+
 TESTS = $(check_PROGRAMS)
