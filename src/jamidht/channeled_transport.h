@@ -67,6 +67,7 @@ private:
 
     // The SIP transport uses a ChannelSocket to send and receive datas
     std::shared_ptr<ChannelSocket> socket_ {};
+    mutable std::mutex destroyingMtx_ {};
     onShutdownCb shutdownCb_ {};
     IpAddr local_ {};
     IpAddr remote_ {};
