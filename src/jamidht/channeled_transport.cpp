@@ -181,7 +181,9 @@ ChanneledSIPTransport::start()
         return len;
     });
     socket_->onShutdown([this] {
-        disconnected_ = true;
+        std::lock_guard<std::mutex> lk(destroyingMtx_);
+        if (disconnected_.exchange(true))
+            return;
         if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
             JAMI_WARN("[SIPS] process disconnect event");
             pjsip_transport_state_info state_info;
@@ -198,13 +200,17 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
     JAMI_DBG("~ChanneledSIPTransport@%p {tr=%p}", this, &trData_.base);
     auto base = getTransportBase();
 
-    // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
-    // ChanneledSIPTransport is managed by pjsip, so we don't have any weak_ptr available
-    socket_->setOnRecv([](const uint8_t*, size_t len) { return len; });
-    socket_->onShutdown([]() {});
-    // Stop low-level transport first
-    socket_->shutdown();
-    socket_.reset();
+    {
+        std::lock_guard<std::mutex> lk(destroyingMtx_);
+        disconnected_ = true;
+        // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
+        // ChanneledSIPTransport is managed by pjsip, so we don't have any weak_ptr available
+        socket_->setOnRecv([](const uint8_t*, size_t len) { return len; });
+        socket_->onShutdown([]() {});
+        // Stop low-level transport first
+        socket_->shutdown();
+        socket_.reset();
+    }
 
     // If delete not trigged by pjsip_transport_destroy (happen if objet not given to pjsip)
     if (not base->is_shutdown and not base->is_destroying)
