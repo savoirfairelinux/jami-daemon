@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9fd2e510_8e1df977",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 294,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2023-03-29T13:20:26Z",
+      "side": 0,
+      "message": "Ack",
+      "parentUuid": "71aa8443_acf91978",
+      "range": {
+        "startLine": 294,
+        "startChar": 1,
+        "endLine": 294,
+        "endChar": 2
+      },
+      "revId": "0369e1dfbf012bc7b0184f4e065b96d0ba9d59c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b031c998_659d4c59",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-01-18T19:21:16Z",
       "side": 0,
       "message": "TODO cf with Fadi",
+      "range": {
+        "startLine": 145,
+        "startChar": 12,
+        "endLine": 154,
+        "endChar": 11
+      },
+      "revId": "0369e1dfbf012bc7b0184f4e065b96d0ba9d59c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9bffad79_bba58c8b",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2023-03-29T13:20:26Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "b031c998_659d4c59",
       "range": {
         "startLine": 145,
         "startChar": 12,

@@ -870,6 +870,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee6a1959_234d0661",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 1759,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2023-03-29T13:20:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b2b7aca9_b37c8d18",
+      "range": {
+        "startLine": 1757,
+        "startChar": 37,
+        "endLine": 1759,
+        "endChar": 38
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9b954344_bf48c6d4",
@@ -1939,6 +1963,30 @@
       "writtenOn": "2023-01-18T19:21:16Z",
       "side": 1,
       "message": "remove?",
+      "range": {
+        "startLine": 2,
+        "startChar": 18,
+        "endLine": 2,
+        "endChar": 22
+      },
+      "revId": "cfa11fcc0928c6cf74ef59c2905e58894fb3c5ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cc4559d_04c90142",
+        "filename": "test/unitTest/swarm/swarm_conversation.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2023-03-29T13:20:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "83128eab_47758fea",
       "range": {
         "startLine": 2,
         "startChar": 18,
