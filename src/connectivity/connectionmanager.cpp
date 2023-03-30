@@ -98,9 +98,8 @@ public:
 
     void shutdown()
     {
-        if (isDestroying_)
+        if (isDestroying_.exchange(true))
             return;
-        isDestroying_ = true;
         {
             std::lock_guard<std::mutex> lk(connectCbsMtx_);
             // Call all pending callbacks that channel is not ready
@@ -162,7 +161,7 @@ public:
     void onDhtPeerRequest(const PeerConnectionRequest& req,
                           const std::shared_ptr<dht::crypto::Certificate>& cert);
 
-    void addNewMultiplexedSocket(const DeviceId& deviceId, const dht::Value::Id& vid);
+    void addNewMultiplexedSocket(const CallbackId& id, const std::shared_ptr<ConnectionInfo>& info);
     void onPeerResponse(const PeerConnectionRequest& req);
     void onDhtConnected(const dht::crypto::PublicKey& devicePk);
 
@@ -425,8 +424,10 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
     info->tls_->setOnReady(
         [w = weak(), deviceId = std::move(deviceId), vid = std::move(vid), name = std::move(name)](
             bool ok) {
-            if (auto shared = w.lock())
-                shared->onTlsNegotiationDone(ok, deviceId, vid, name);
+            dht::ThreadPool::io().run([w, ok, deviceId = std::move(deviceId), vid = std::move(vid), name = std::move(name)] {
+                if (auto shared = w.lock())
+                    shared->onTlsNegotiationDone(ok, deviceId, vid, name);
+            });
         });
     return true;
 }
@@ -775,8 +776,7 @@ ConnectionManager::Impl::onTlsNegotiationDone(bool ok,
                                               const dht::Value::Id& vid,
                                               const std::string& name)
 {
-    auto info = getInfo(deviceId, vid);
-    if (!info)
+    if (isDestroying_)
         return;
     // Note: only handle pendingCallbacks here for TLS initied by connectDevice()
     // Note: if not initied by connectDevice() the channel name will be empty (because no channel
@@ -805,15 +805,20 @@ ConnectionManager::Impl::onTlsNegotiationDone(bool ok,
                        << " - Initied by connectDevice(). Initied by channel: " << name
                        << " - vid: " << vid;
         }
-        addNewMultiplexedSocket(deviceId, vid);
+
+        std::lock_guard<std::mutex> lk(infosMtx_);
+        auto it = infos_.find({deviceId, vid});
+        if (it == infos_.end())
+            return;
+        addNewMultiplexedSocket(it->first, it->second);
         // Finally, open the channel and launch pending callbacks
-        if (info->socket_) {
+        if (it->second->socket_) {
             // Note: do not remove pending there it's done in sendChannelRequest
             for (const auto& pending : getPendingCallbacks(deviceId)) {
                 JAMI_DBG("Send request on TLS socket for channel %s to %s",
                          pending.name.c_str(),
                          deviceId.to_c_str());
-                sendChannelRequest(info->socket_, pending.name, deviceId, pending.vid);
+                sendChannelRequest(it->second->socket_, pending.name, deviceId, pending.vid);
             }
         }
     }
@@ -1029,12 +1034,9 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
 }
 
 void
-ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const dht::Value::Id& vid)
+ConnectionManager::Impl::addNewMultiplexedSocket(const CallbackId& id, const std::shared_ptr<ConnectionInfo>& info)
 {
-    auto info = getInfo(deviceId, vid);
-    if (!info)
-        return;
-    info->socket_ = std::make_shared<MultiplexedSocket>(deviceId, std::move(info->tls_));
+    info->socket_ = std::make_shared<MultiplexedSocket>(id.first, std::move(info->tls_));
     info->socket_->setOnReady(
         [w = weak()](const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket) {
             if (auto sthis = w.lock())
@@ -1049,7 +1051,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
                 return sthis->channelReqCb_(peer, name);
         return false;
     });
-    info->socket_->onShutdown([w = weak(), deviceId, vid]() {
+    info->socket_->onShutdown([w = weak(), deviceId=id.first, vid=id.second]() {
         // Cancel current outgoing connections
         dht::ThreadPool::io().run([w, deviceId, vid] {
             auto sthis = w.lock();
