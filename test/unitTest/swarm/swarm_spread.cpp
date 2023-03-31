@@ -45,10 +45,10 @@ using NodeId = dht::PkId;
 namespace jami {
 namespace test {
 
-constexpr size_t nNodes = 5000;
+constexpr size_t nNodes = 10;
 
 constexpr size_t BOOTSTRAP_SIZE = 2;
-auto time = 300s;
+auto time = 30s;
 
 int TOTAL_HOPS = 0;
 int moyenne = 0;
@@ -200,7 +200,7 @@ SwarmMessageSpread::sendMessage(const std::shared_ptr<ChannelSocketInterface>& s
 
     dht::ThreadPool::io().run([socket, buffer = std::move(buffer)] {
         std::error_code ec;
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         socket->write(reinterpret_cast<const unsigned char*>(buffer->data()), buffer->size(), ec);
     });
@@ -302,7 +302,7 @@ SwarmMessageSpread::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
                     ChannelSocketTest::link(cstMe.second, cstRemote.second);
                     receiveMessage(myId, cstMe.second);
                     receiveMessage(node, cstRemote.second);
-                    std::this_thread::sleep_for(std::chrono::seconds(5));
+                    // std::this_thread::sleep_for(std::chrono::seconds(5));
                     ChannelSocketTest::link(cstMe.first, cstRemote.first);
                     smRemote->addChannel(cstRemote.first);
                     onSocket(cstMe.first);

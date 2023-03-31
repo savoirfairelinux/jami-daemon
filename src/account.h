@@ -112,12 +112,16 @@ public:
      */
     virtual void loadConfig();
 
-    const AccountConfig& config() const {
-        if (config_) return *config_;
-        else throw std::runtime_error("Account doesn't have a configuration");
+    const AccountConfig& config() const
+    {
+        if (config_)
+            return *config_;
+        else
+            throw std::runtime_error("Account doesn't have a configuration");
     }
 
-    inline void editConfig(std::function<void(AccountConfig& config)>&& edit) {
+    inline void editConfig(std::function<void(AccountConfig& config)>&& edit)
+    {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         edit(*config_);
         saveConfig();
@@ -125,7 +129,8 @@ public:
 
     virtual void saveConfig() const;
 
-    void setAccountDetails(const std::map<std::string, std::string>& details) {
+    void setAccountDetails(const std::map<std::string, std::string>& details)
+    {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (not config_)
             config_ = buildConfig();
@@ -134,7 +139,8 @@ public:
         saveConfig();
     }
 
-    std::map<std::string, std::string> getAccountDetails() const {
+    std::map<std::string, std::string> getAccountDetails() const
+    {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         return config().toMap();
     }
@@ -186,6 +192,7 @@ public:
      * @return a token to query the message status
      */
     virtual uint64_t sendTextMessage(const std::string& /*to*/,
+                                     const std::string& /*deviceId*/,
                                      const std::map<std::string, std::string>& /*payloads*/,
                                      uint64_t /*refreshToken*/ = 0,
                                      bool /*onlyConnected*/ = false)

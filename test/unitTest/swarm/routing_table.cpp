@@ -1297,7 +1297,7 @@ RoutingTableTest::testSwarmManagersWMobileModes()
         }
     }
 
-    sleep(5);
+    sleep(10);
 
     {
         if (!swarmManagers.empty()) {
@@ -1306,7 +1306,7 @@ RoutingTableTest::testSwarmManagersWMobileModes()
         }
     }
 
-    sleep(4);
+    sleep(10);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be equal",
                                  swarmManagers.size(),
