@@ -115,10 +115,12 @@ public:
      * This will close all channels and send a TLS EOF on the main socket.
      */
     void shutdown();
+
     /**
      * This will wait that eventLoop is stopped and stop it if necessary
      */
     void join();
+
     /**
      * Will trigger that callback when shutdown() is called
      */

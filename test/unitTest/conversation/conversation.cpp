@@ -1409,8 +1409,8 @@ ConversationTest::testSetMessageDisplayedAfterClone()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false, memberMessageGenerated = false,
-         msgDisplayed = false, aliceRegistered = false;
+    bool requestReceived = false, memberMessageGenerated = false, msgDisplayed = false,
+         aliceRegistered = false;
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
@@ -1503,9 +1503,6 @@ ConversationTest::testSetMessageDisplayedAfterClone()
                                            && infos["lastDisplayed"] == convId;
                                 })
                    != membersInfos.end());
-
-
-
 
     libjami::unregisterSignalHandlers();
 }
@@ -2010,7 +2007,7 @@ ConversationTest::testVoteNoBadFile()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          voteMessageGenerated = false, messageBobReceived = false, messageCarlaReceived = false,
-         carlaConnected = true;
+         carlaConnected = false;
     ;
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
@@ -3535,15 +3532,12 @@ ConversationTest::testConversationPreferencesBeforeClone()
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReadyBob; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReadyBob; }));
 
     // Set preferences
     Manager::instance().sendRegister(aliceId, false);
     libjami::setConversationPreferences(bobId, convId, {{"foo", "bar"}, {"bar", "foo"}});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return preferencesBob.size() == 2;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return preferencesBob.size() == 2; }));
     CPPUNIT_ASSERT(preferencesBob["foo"] == "bar" && preferencesBob["bar"] == "foo");
 
     // Bob2 should sync preferences
@@ -3556,7 +3550,9 @@ ConversationTest::testConversationPreferencesBeforeClone()
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Started && conversationReadyBob2 && !preferencesBob2.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bob2Started && conversationReadyBob2 && !preferencesBob2.empty();
+    }));
     CPPUNIT_ASSERT(preferencesBob2["foo"] == "bar" && preferencesBob2["bar"] == "foo");
 }
 

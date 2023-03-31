@@ -60,7 +60,7 @@ class Bucket
 
 {
 public:
-    static constexpr int BUCKET_MAX_SIZE = 4;
+    static constexpr int BUCKET_MAX_SIZE = 2;
 
     Bucket() = delete;
     Bucket(const Bucket&) = delete;
@@ -524,6 +524,16 @@ public:
      * @return true if nodeId is in bucket, false if not
      */
     bool contains(const std::list<Bucket>::iterator& it, const NodeId& nodeId) const;
+
+    /**
+     * Return every node from each bucket
+     */
+    std::vector<NodeId> getAllNodes() const;
+
+    /**
+     * Delete node from every table in bucket
+     */
+    void deleteNode(const NodeId& nodeId);
 
 private:
     RoutingTable(const RoutingTable&) = delete;

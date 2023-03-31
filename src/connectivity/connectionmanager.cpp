@@ -60,7 +60,6 @@ struct ConnectionInfo
 
     std::function<void(bool)> onConnected_;
     std::unique_ptr<asio::steady_timer> waitForAnswer_ {};
-
 };
 
 class ConnectionManager::Impl : public std::enable_shared_from_this<ConnectionManager::Impl>
@@ -344,12 +343,17 @@ ConnectionManager::Impl::connectDeviceStartIce(
     }
 
     info->onConnected_ = std::move(onConnected);
-    info->waitForAnswer_ = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext(), std::chrono::steady_clock::now() + DHT_MSG_TIMEOUT);
-    info->waitForAnswer_->async_wait(std::bind(&ConnectionManager::Impl::onResponse, this, std::placeholders::_1, deviceId, vid));
+    info->waitForAnswer_ = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext(),
+                                                                std::chrono::steady_clock::now()
+                                                                    + DHT_MSG_TIMEOUT);
+    info->waitForAnswer_->async_wait(
+        std::bind(&ConnectionManager::Impl::onResponse, this, std::placeholders::_1, deviceId, vid));
 }
 
 void
-ConnectionManager::Impl::onResponse(const asio::error_code& ec, const DeviceId& deviceId, const dht::Value::Id& vid)
+ConnectionManager::Impl::onResponse(const asio::error_code& ec,
+                                    const DeviceId& deviceId,
+                                    const dht::Value::Id& vid)
 {
     if (ec == asio::error::operation_aborted)
         return;
@@ -383,7 +387,6 @@ ConnectionManager::Impl::onResponse(const asio::error_code& ec, const DeviceId& 
     }
     info->onConnected_(true);
 }
-
 
 bool
 ConnectionManager::Impl::connectDeviceOnNegoDone(
@@ -706,7 +709,11 @@ ConnectionManager::Impl::onPeerResponse(const PeerConnectionRequest& req)
         info->responseReceived_ = true;
         info->response_ = std::move(req);
         info->waitForAnswer_->expires_at(std::chrono::steady_clock::now());
-        info->waitForAnswer_->async_wait(std::bind(&ConnectionManager::Impl::onResponse, this, std::placeholders::_1, device, req.id));
+        info->waitForAnswer_->async_wait(std::bind(&ConnectionManager::Impl::onResponse,
+                                                   this,
+                                                   std::placeholders::_1,
+                                                   device,
+                                                   req.id));
     } else {
         JAMI_WARN() << account << " respond received, but cannot find request";
     }
