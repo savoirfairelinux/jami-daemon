@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "402d8e5c_71d67a20",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 43
+      },
+      "lineNbr": 2509,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2023-04-03T18:00:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c512cfd4_37149804",
+      "revId": "a05f42008520cadbf54c323f3c6169e5059b86e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "39de635f_efd9ed47",
@@ -31,6 +49,24 @@
       "writtenOn": "2023-03-24T19:08:23Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "a05f42008520cadbf54c323f3c6169e5059b86e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df1c32e0_155ae725",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 43
+      },
+      "lineNbr": 2191,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2023-04-03T18:00:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "39de635f_efd9ed47",
       "revId": "a05f42008520cadbf54c323f3c6169e5059b86e2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -52,6 +88,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f0bfe111_7b106afc",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 43
+      },
+      "lineNbr": 2196,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2023-04-03T18:00:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d2b2ac2d_aa440845",
+      "revId": "a05f42008520cadbf54c323f3c6169e5059b86e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "70a02db9_db03e737",
@@ -65,6 +119,24 @@
       "writtenOn": "2023-03-24T19:08:23Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027channel\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "a05f42008520cadbf54c323f3c6169e5059b86e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3eb2935a_5b52ba44",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 43
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2023-04-03T18:00:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "70a02db9_db03e737",
       "revId": "a05f42008520cadbf54c323f3c6169e5059b86e2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
