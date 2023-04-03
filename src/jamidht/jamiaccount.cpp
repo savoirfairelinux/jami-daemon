@@ -2062,12 +2062,18 @@ JamiAccount::doRegister_()
                         deviceId.toString(),
                         channel->channel());
                     auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
+                    syncCnt_.fetch_add(1);
                     gs->setOnFetched(
                         [w = weak(), conversationId, deviceId](const std::string& commit) {
-                            if (auto shared = w.lock())
+                            if (auto shared = w.lock()) {
                                 shared->convModule()->setFetched(conversationId,
                                                                  deviceId.toString(),
                                                                  commit);
+                                shared->syncCnt_.fetch_sub(1);
+                                if (shared->syncCnt_.load() == 0) {
+                                    emitSignal<libjami::ConversationSignal::ConversationCloned>(shared->getAccountID().c_str());
+                                }
+                            }
                         });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
