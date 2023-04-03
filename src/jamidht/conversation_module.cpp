@@ -494,15 +494,15 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             return;
                         if (!ok) {
                             JAMI_WARNING("[Account {}] Could not fetch new commit from "
-                                      "{} for {}, other "
-                                      "peer may be disconnected",
-                                      shared->accountId_,
-                                      deviceId,
-                                      conversationId);
+                                         "{} for {}, other "
+                                         "peer may be disconnected",
+                                         shared->accountId_,
+                                         deviceId,
+                                         conversationId);
                             JAMI_LOG("[Account {}] Relaunch sync with {} for {}",
-                                      shared->accountId_,
-                                      deviceId,
-                                      conversationId);
+                                     shared->accountId_,
+                                     deviceId,
+                                     conversationId);
                         }
                         {
                             std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
@@ -510,7 +510,10 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         }
                         // Notify peers that a new commit is there (DRT)
                         if (not commitId.empty()) {
-                            shared->sendMessageNotification(conversationId, false, commitId, deviceId);
+                            shared->sendMessageNotification(conversationId,
+                                                            false,
+                                                            commitId,
+                                                            deviceId);
                         }
                         if (shared->syncCnt.fetch_sub(1) == 1) {
                             if (auto account = shared->account_.lock())
@@ -1528,54 +1531,56 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
         return;
     }
 
-    acc->forEachDevice(memberHash,
-                       [w = pimpl_->weak(), conversationId, oldConvId](
-                           const std::shared_ptr<dht::crypto::PublicKey>& pk) {
-                           auto sthis = w.lock();
-                           auto deviceId = pk->getLongId().toString();
-                           if (!sthis or deviceId == sthis->deviceId_)
-                               return;
-                            {
-                                std::lock_guard<std::mutex> lk(sthis->conversationsMtx_);
-                                if (!sthis->startFetch(conversationId, deviceId, true)) {
-                                    JAMI_WARN("[Account %s] Already fetching %s",
-                                                sthis->accountId_.c_str(),
-                                                conversationId.c_str());
-                                    return;
-                                }
-                            }
+    acc->forEachDevice(
+        memberHash,
+        [w = pimpl_->weak(), conversationId, oldConvId](
+            const std::shared_ptr<dht::crypto::PublicKey>& pk) {
+            auto sthis = w.lock();
+            auto deviceId = pk->getLongId().toString();
+            if (!sthis or deviceId == sthis->deviceId_)
+                return;
+            {
+                std::lock_guard<std::mutex> lk(sthis->conversationsMtx_);
+                if (!sthis->startFetch(conversationId, deviceId, true)) {
+                    JAMI_WARN("[Account %s] Already fetching %s",
+                              sthis->accountId_.c_str(),
+                              conversationId.c_str());
+                    return;
+                }
+            }
 
-                           // We need a onNeedSocket_ with old logic.
-                           sthis->onNeedSocket_(
-                               conversationId,
-                               pk->getLongId().toString(),
-                               [=](const auto& channel) {
-                                    auto acc = sthis->account_.lock();
-                                    std::lock_guard<std::mutex> lk(sthis->conversationsMtx_);
-                                    auto it = sthis->pendingConversationsFetch_.find(conversationId);
-                                    if (it != sthis->pendingConversationsFetch_.end() && !it->second.ready) {
-                                       it->second.removeId = oldConvId;
-                                       if (channel) {
-                                           it->second.ready = true;
-                                           it->second.deviceId = channel->deviceId().toString();
-                                           it->second.socket = channel;
-                                           if (!it->second.cloning) {
-                                                it->second.cloning = true;
-                                                dht::ThreadPool::io().run(
-                                                    [w = sthis->weak(), conversationId, deviceId = it->second.deviceId]() {
-                                                        if (auto sthis = w.lock())
-                                                            sthis->handlePendingConversation(conversationId, deviceId);
-                                                    });
-                                            }
-                                           return true;
-                                       } else {
-                                           sthis->stopFetch(conversationId, deviceId);
-                                       }
-                                   }
-                                   return false;
-                               },
-                               "application/im-gitmessage-id");
-                       });
+            // We need a onNeedSocket_ with old logic.
+            sthis->onNeedSocket_(
+                conversationId,
+                pk->getLongId().toString(),
+                [=](const auto& channel) {
+                    auto acc = sthis->account_.lock();
+                    std::lock_guard<std::mutex> lk(sthis->conversationsMtx_);
+                    auto it = sthis->pendingConversationsFetch_.find(conversationId);
+                    if (it != sthis->pendingConversationsFetch_.end() && !it->second.ready) {
+                        it->second.removeId = oldConvId;
+                        if (channel) {
+                            it->second.ready = true;
+                            it->second.deviceId = channel->deviceId().toString();
+                            it->second.socket = channel;
+                            if (!it->second.cloning) {
+                                it->second.cloning = true;
+                                dht::ThreadPool::io().run([w = sthis->weak(),
+                                                           conversationId,
+                                                           deviceId = it->second.deviceId]() {
+                                    if (auto sthis = w.lock())
+                                        sthis->handlePendingConversation(conversationId, deviceId);
+                                });
+                            }
+                            return true;
+                        } else {
+                            sthis->stopFetch(conversationId, deviceId);
+                        }
+                    }
+                    return false;
+                },
+                "application/im-gitmessage-id");
+        });
     ConvInfo info;
     info.id = conversationId;
     info.created = std::time(nullptr);
@@ -2222,7 +2227,8 @@ ConversationModule::isBanned(const std::string& convId, const std::string& uri) 
     }
     // If 1:1 we check the certificate status
     if (auto acc = pimpl_->account_.lock()) {
-        return acc->accountManager()->getCertificateStatus(uri) == tls::TrustStore::PermissionStatus::BANNED;
+        return acc->accountManager()->getCertificateStatus(uri)
+               == tls::TrustStore::PermissionStatus::BANNED;
     }
     return true;
 }
