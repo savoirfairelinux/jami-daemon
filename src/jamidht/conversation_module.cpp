@@ -381,7 +381,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                 }
                 return false;
             },
-            "application/im-gitmessage-id");
+            "application/clone");
 
         JAMI_INFO("[Account %s] New conversation detected: %s. Ask device %s to clone it",
                   accountId_.c_str(),

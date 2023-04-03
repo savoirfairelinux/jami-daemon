@@ -171,6 +171,12 @@ struct LIBJAMI_PUBLIC ConversationSignal
         using cb_type = void(const std::string& /*accountId*/);
     };
 
+    struct LIBJAMI_PUBLIC ConversationCloned
+    {
+    constexpr static const char* name = "ConversationCloned";
+    using cb_type = void(const std::string& /*accountId*/);
+    };
+
     struct LIBJAMI_PUBLIC CallConnectionRequest
     {
         constexpr static const char* name = "CallConnectionRequest";

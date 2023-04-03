@@ -106,6 +106,7 @@ static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposin
 static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
+static constexpr const char MIME_TYPE_CLONE[] {"application/clone"};
 static constexpr const char FILE_URI[] {"file://"};
 static constexpr const char VCARD_URI[] {"vcard://"};
 static constexpr const char DATA_TRANSFER_URI[] {"data-transfer://"};
@@ -2080,12 +2081,18 @@ JamiAccount::doRegister_()
                         deviceId.toString(),
                         channel->channel());
                     auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
+                    syncCnt_.fetch_add(1);
                     gs->setOnFetched(
                         [w = weak(), conversationId, deviceId](const std::string& commit) {
-                            if (auto shared = w.lock())
+                            if (auto shared = w.lock()) {
                                 shared->convModule()->setFetched(conversationId,
                                                                  deviceId.toString(),
                                                                  commit);
+                                shared->syncCnt_.fetch_sub(1);
+                                if (shared->syncCnt_.load() == 0) {
+                                    emitSignal<libjami::ConversationSignal::ConversationCloned>(shared->getAccountID().c_str());
+                                }
+                            }
                         });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
@@ -3588,7 +3595,7 @@ JamiAccount::sendInstantMessage(const std::string& convId,
 bool
 JamiAccount::handleMessage(const std::string& from, const std::pair<std::string, std::string>& m)
 {
-    if (m.first == MIME_TYPE_GIT) {
+    if (m.first == MIME_TYPE_GIT || m.first == MIME_TYPE_CLONE) {
         Json::Value json;
         std::string err;
         Json::CharReaderBuilder rbuilder;
