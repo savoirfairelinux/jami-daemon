@@ -521,6 +521,7 @@ public:
                       size_t start = 0,
                       size_t end = 0,
                       const std::string& sha3Sum = "",
+                      uint64_t lastWriteTime = 0,
                       std::function<void()> onFinished = {});
 
     void askForFileChannel(const std::string& conversationId,

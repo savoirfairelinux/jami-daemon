@@ -3672,16 +3672,16 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
 void
 JamiAccount::sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId)
 {
-    if (not fileutils::isFile(fmt::format("{}/profile.vcf", idPath_)))
+    if (not fileutils::isFile(profilePath()))
         return;
-    auto currentSha3 = fileutils::sha3File(fmt::format("{}/profile.vcf", idPath_));
+    auto currentSha3 = fileutils::sha3File(profilePath());
     // VCard sync for peerUri
     if (not needToSendProfile(peerUri, deviceId, currentSha3)) {
         JAMI_DEBUG("Peer {} already got an up-to-date vcard", peerUri);
         return;
     }
     // We need a new channel
-    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, currentSha3, std::move([accId = getAccountID(), peerUri, deviceId]() {
+    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, currentSha3, fileutils::lastWriteTime(profilePath()), std::move([accId = getAccountID(), peerUri, deviceId]() {
         // Mark the VCard as sent
         auto sendDir = fmt::format("{}/{}/vcard/{}",
                                     fileutils::get_cache_dir(),
@@ -3717,7 +3717,10 @@ JamiAccount::needToSendProfile(const std::string& peerUri, const std::string& de
         return true;
     }
     fileutils::recursive_mkdir(fmt::format("{}/{}/", vCardPath, peerUri));
-    return not fileutils::isFile(fmt::format("{}/{}/{}", vCardPath, peerUri, deviceId));
+
+    auto path = fmt::format("{}/{}/{}", vCardPath, peerUri, deviceId);
+    auto res = not fileutils::isFile(path);
+    return res;
 }
 
 bool
@@ -3997,13 +4000,18 @@ JamiAccount::transferFile(const std::string& conversationId,
                           size_t start,
                           size_t end,
                           const std::string& sha3Sum,
+                          uint64_t lastWriteTime,
                           std::function<void()> onFinished)
 {
     auto fid = fileId;
-    if (fid == "profile.vcf") {
-        fid =  fmt::format("profile.vcf?sha3={}", sha3Sum);
+    std::string modified;
+    if (lastWriteTime != 0) {
+        modified = fmt::format("&modified={}", lastWriteTime);
     }
-    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf?sha3={}", DATA_TRANSFER_URI, sha3Sum)
+    if (fid == "profile.vcf") {
+        fid =  fmt::format("profile.vcf?sha3={}{}", sha3Sum, modified);
+    }
+    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf?sha3={}{}", DATA_TRANSFER_URI, sha3Sum, modified)
                         : fmt::format("{}{}/{}/{}",
                                    DATA_TRANSFER_URI,
                                    conversationId,
