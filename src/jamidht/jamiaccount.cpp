@@ -1115,23 +1115,27 @@ JamiAccount::loadAccount(const std::string& archive_password,
                time_t received) {
             if (!id_.first)
                 return;
-            clearProfileCache(uri);
-            if (conversationId.empty()) {
-                // Old path
-                emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
-                                                                               conversationId,
-                                                                               uri,
-                                                                               payload,
-                                                                               received);
-                return;
-            }
-            // Here account can be initializing
-            if (auto cm = convModule()) {
-                auto activeConv = cm->getOneToOneConversation(uri);
-                if (activeConv != conversationId) {
-                    cm->onTrustRequest(uri, conversationId, payload, received);
+            dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received] {
+                if (auto shared = w.lock()) {
+                    shared->clearProfileCache(uri);
+                    if (conversationId.empty()) {
+                        // Old path
+                        emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(shared->getAccountID(),
+                                                                                       conversationId,
+                                                                                       uri,
+                                                                                       payload,
+                                                                                       received);
+                        return;
+                    }
+                    // Here account can be initializing
+                    if (auto cm = shared->convModule()) {
+                        auto activeConv = cm->getOneToOneConversation(uri);
+                        if (activeConv != conversationId) {
+                            cm->onTrustRequest(uri, conversationId, payload, received);
+                        }
+                    }
                 }
-            }
+            });
         },
         [this](const std::map<DeviceId, KnownDevice>& devices) {
             std::map<std::string, std::string> ids;
@@ -1151,23 +1155,27 @@ JamiAccount::loadAccount(const std::string& archive_password,
             convModule()->acceptConversationRequest(conversationId);
         },
         [this](const std::string& uri, const std::string& convFromReq) {
-            // Remove cached payload if there is one
-            auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests" + DIR_SEPARATOR_STR
-                               + uri;
-            fileutils::remove(requestPath);
-            if (!convFromReq.empty()) {
-                auto oldConv = convModule()->getOneToOneConversation(uri);
-                // If we previously removed the contact, and re-add it, we may
-                // receive a convId different from the request. In that case,
-                // we need to remove the current conversation and clone the old
-                // one (given by convFromReq).
-                // TODO: In the future, we may want to re-commit the messages we
-                // may have send in the request we sent.
-                if (oldConv != convFromReq && updateConvForContact(uri, oldConv, convFromReq)) {
-                    convModule()->initReplay(oldConv, convFromReq);
-                    convModule()->cloneConversationFrom(convFromReq, uri, oldConv);
+            dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
+                if (auto shared = w.lock()) {
+                    // Remove cached payload if there is one
+                    auto requestPath = shared->cachePath_ + DIR_SEPARATOR_STR + "requests" + DIR_SEPARATOR_STR
+                    + uri;
+                    fileutils::remove(requestPath);
+                    if (!convFromReq.empty()) {
+                        auto oldConv = shared->convModule()->getOneToOneConversation(uri);
+                        // If we previously removed the contact, and re-add it, we may
+                        // receive a convId different from the request. In that case,
+                        // we need to remove the current conversation and clone the old
+                        // one (given by convFromReq).
+                        // TODO: In the future, we may want to re-commit the messages we
+                        // may have send in the request we sent.
+                        if (oldConv != convFromReq && shared->updateConvForContact(uri, oldConv, convFromReq)) {
+                            shared->convModule()->initReplay(oldConv, convFromReq);
+                            shared->convModule()->cloneConversationFrom(convFromReq, uri, oldConv);
+                        }
+                    }
                 }
-            }
+            });
         }};
 
     const auto& conf = config();
