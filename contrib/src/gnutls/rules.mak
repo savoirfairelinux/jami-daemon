@@ -36,7 +36,6 @@ GNUTLS_CONF := \
 	--disable-openssl-compatibility \
 	--disable-guile \
 	--disable-nls \
-	--disable-dtls-srtp-support \
 	--without-libintl-prefix \
 	--without-idn \
 	$(HOSTCONF)
