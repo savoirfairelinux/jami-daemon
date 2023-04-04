@@ -105,6 +105,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     }
 
     auto start = 0u, end = 0u;
+    uint64_t lastModified = 0;
     std::string sha3Sum;
     for (const auto arg : split_string(arguments, '&')) {
         auto keyVal = split_string(arg, '=');
@@ -115,6 +116,10 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
                 end = to_int<unsigned>(keyVal[1]);
             } else if (keyVal[0] == "sha3") {
                 sha3Sum = keyVal[1];
+            } else if (keyVal[0] == "modified") {
+                try {
+                    lastModified = std::stoull(std::string(keyVal[1]));
+                } catch (...) {}
             }
         }
     }
@@ -122,7 +127,11 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     // Check if profile
     if (idstr == "profile.vcf") {
         if (!channel->isInitiator()) {
-            acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
+            // Only accept newest profiles
+            if (lastModified == 0 || lastModified > fileutils::lastWriteTime(acc->profilePath()))
+                acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
+            else
+                channel->shutdown();
         } else {
             // If it's a profile from sync
             std::string path = fmt::format("{}/profile.vcf", idPath_);
