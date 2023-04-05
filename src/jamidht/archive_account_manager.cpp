@@ -480,7 +480,7 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
     auto devId = device.getId();
     DeviceAnnouncement announcement;
     announcement.dev = devId;
-    announcement.pk = std::make_shared<dht::crypto::PublicKey>(device.getPublicKey());
+    announcement.pk = device.getSharedPublicKey();
     dht::Value ann_val {announcement};
     ann_val.sign(*id.first);
 
@@ -529,7 +529,7 @@ ArchiveAccountManager::syncDevices()
         // don't send sync data to ourself
         if (dev.first.toString() == info_->deviceId)
             continue;
-        auto pk = std::make_shared<dht::crypto::PublicKey>(dev.second.certificate->getPublicKey());
+        auto pk = dev.second.certificate->getSharedPublicKey();
         JAMI_DBG("sending device sync to %s %s",
                  dev.second.name.c_str(),
                  dev.first.toString().c_str());

@@ -146,8 +146,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                     auto info = std::make_unique<AccountInfo>();
                                     info->identity.first = ctx->key.get();
                                     info->identity.second = cert;
-                                    info->devicePk = std::make_shared<dht::crypto::PublicKey>(
-                                        cert->getPublicKey());
+                                    info->devicePk = cert->getSharedPublicKey();
                                     info->deviceId = info->devicePk->getLongId().toString();
                                     info->accountId = accountCert->getId().toString();
                                     info->contacts = std::make_unique<ContactList>(accountCert,
