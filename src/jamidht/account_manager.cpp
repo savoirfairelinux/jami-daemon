@@ -139,9 +139,9 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
         return nullptr;
     }
 
-    auto pk = accountCertificate->getPublicKey();
-    JAMI_DBG("[Auth] checking device receipt for %s", pk.getId().toString().c_str());
-    if (!pk.checkSignature({receipt.begin(), receipt.end()}, receiptSignature)) {
+    auto pk = accountCertificate->getSharedPublicKey();
+    JAMI_DBG("[Auth] checking device receipt for %s", pk->getId().toString().c_str());
+    if (!pk->checkSignature({receipt.begin(), receipt.end()}, receiptSignature)) {
         JAMI_ERR("[Auth] device receipt signature check failed");
         return nullptr;
     }
@@ -160,7 +160,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
         return nullptr;
     }
     auto id = root["id"].asString();
-    if (id != pk.getId().toString()) {
+    if (id != pk->getId().toString()) {
         JAMI_ERR("[Auth] account ID mismatch between receipt and certificate");
         return nullptr;
     }
@@ -692,7 +692,7 @@ AccountManager::forEachDevice(
                 return true;
             state->remaining++;
             findCertificate(dev.dev, [state](const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                state->found(cert ? std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey())
+                state->found(cert ? cert->getSharedPublicKey()
                                   : std::shared_ptr<dht::crypto::PublicKey> {});
             });
             return true;
