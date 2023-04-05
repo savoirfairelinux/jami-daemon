@@ -34,7 +34,7 @@ public:
     std::weak_ptr<JamiAccount> account_;
 
     // Sync connections
-    std::mutex syncConnectionsMtx_;
+    std::recursive_mutex syncConnectionsMtx_;
     std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>> syncConnections_;
 
     std::weak_ptr<Impl> weak() { return std::static_pointer_cast<Impl>(shared_from_this()); }
@@ -155,14 +155,14 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                                 const std::string& peerId,
                                 const DeviceId& device)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->syncConnectionsMtx_);
+    std::lock_guard<std::recursive_mutex> lk(pimpl_->syncConnectionsMtx_);
     pimpl_->syncConnections_[device].emplace_back(socket);
 
     socket->onShutdown([w = pimpl_->weak(), peerId, device, socket]() {
         auto shared = w.lock();
         if (!shared)
             return;
-        std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
+        std::lock_guard<std::recursive_mutex> lk(shared->syncConnectionsMtx_);
         auto& connections = shared->syncConnections_[device];
         auto conn = connections.begin();
         while (conn != connections.end()) {
@@ -205,13 +205,13 @@ SyncModule::syncWith(const DeviceId& deviceId,
     if (!socket)
         return;
     {
-        std::lock_guard<std::mutex> lk(pimpl_->syncConnectionsMtx_);
+        std::lock_guard<std::recursive_mutex> lk(pimpl_->syncConnectionsMtx_);
         socket->onShutdown([w = pimpl_->weak(), socket, deviceId]() {
             // When sock is shutdown update syncConnections_ to be able to resync asap
             auto shared = w.lock();
             if (!shared)
                 return;
-            std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
+            std::lock_guard<std::recursive_mutex> lk(shared->syncConnectionsMtx_);
             auto& connections = shared->syncConnections_[deviceId];
             auto conn = connections.begin();
             while (conn != connections.end()) {
@@ -232,7 +232,7 @@ SyncModule::syncWith(const DeviceId& deviceId,
 void
 SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg, const DeviceId& deviceId)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->syncConnectionsMtx_);
+    std::lock_guard<std::recursive_mutex> lk(pimpl_->syncConnectionsMtx_);
     for (auto& [did, sockets] : pimpl_->syncConnections_) {
         if (not sockets.empty()) {
             if (!deviceId || deviceId == did) {
