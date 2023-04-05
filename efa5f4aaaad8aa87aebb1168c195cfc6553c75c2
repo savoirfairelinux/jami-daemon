@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7a195b8c_276789fa",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-05T20:23:34Z",
+      "side": 1,
+      "message": "actually the logic changed,",
+      "parentUuid": "4ee0e40b_832ebec2",
+      "range": {
+        "startLine": 80,
+        "startChar": 0,
+        "endLine": 93,
+        "endChar": 3
+      },
+      "revId": "efa5f4aaaad8aa87aebb1168c195cfc6553c75c2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "938e93ce_e8ab3faf",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-04-01T16:44:55Z",
       "side": 1,
       "message": "The reason for the lock is not to protect a resource (since getInfo is not protected by destroyingMtx_) but to prevent a lock-order issue, which is not so clear from the code. Adding a third mutex in the equation here to prevent this double-lock issue might add its own issues, while fundamentally this is a classic callback lock-order problem, that could be solved by clarifying the lock-order, and typically by calling the callbacks without mutexes locked if possible (see the other comment above).",
+      "range": {
+        "startLine": 787,
+        "startChar": 15,
+        "endLine": 787,
+        "endChar": 22
+      },
+      "revId": "efa5f4aaaad8aa87aebb1168c195cfc6553c75c2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8310de6f_eb13052b",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 787,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-05T20:23:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "938e93ce_e8ab3faf",
       "range": {
         "startLine": 787,
         "startChar": 15,
