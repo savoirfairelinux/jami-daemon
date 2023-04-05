@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := 2.4.11
+OPENDHT_VERSION := 2.5.1
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/v$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -37,6 +37,7 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/opendht/debug.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
 
