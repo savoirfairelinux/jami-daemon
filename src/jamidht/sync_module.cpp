@@ -20,6 +20,8 @@
 
 #include "sync_module.h"
 
+#include <opendht/thread_pool.h>
+
 #include "connectivity/multiplexed_socket.h"
 #include "jamidht/conversation_module.h"
 #include "jamidht/archive_account_manager.h"
@@ -159,18 +161,21 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
     pimpl_->syncConnections_[device].emplace_back(socket);
 
     socket->onShutdown([w = pimpl_->weak(), peerId, device, socket]() {
-        auto shared = w.lock();
-        if (!shared)
-            return;
-        std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
-        auto& connections = shared->syncConnections_[device];
-        auto conn = connections.begin();
-        while (conn != connections.end()) {
-            if (*conn == socket)
-                conn = connections.erase(conn);
-            else
-                conn++;
-        }
+        // Retrigger on io pool to not double lock syncConnectionsMtx_
+        dht::ThreadPool::io().run([w=std::move(w), peerId=std::move(peerId), device=std::move(device), socket=std::move(socket)] {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
+            auto& connections = shared->syncConnections_[device];
+            auto conn = connections.begin();
+            while (conn != connections.end()) {
+                if (*conn == socket)
+                    conn = connections.erase(conn);
+                else
+                    conn++;
+            }
+        });
     });
 
     socket->setOnRecv([acc = pimpl_->account_.lock(), device, peerId](const uint8_t* buf,
