@@ -489,7 +489,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                      noNewSocket,
                      forceNewSocket,
                      connType] {
-        auto devicePk = std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey());
+        auto devicePk = cert->getSharedPublicKey();
         auto deviceId = devicePk->getLongId();
         auto sthis = w.lock();
         if (!sthis || sthis->isDestroying_) {
