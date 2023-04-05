@@ -1,6 +1,6 @@
 {
     "name": "opendht",
-    "version": "2.4.11",
+    "version": "2.5.2",
     "url": "https://github.com/savoirfairelinux/opendht/archive/v__VERSION__.tar.gz",
     "deps": [
         "argon2",
@@ -12,6 +12,7 @@
     ],
     "use_cmake" : true,
     "defines": [
+        "BUILD_SHARED_LIBS=0",
         "OPENDHT_SHARED=0",
         "OPENDHT_PROXY_CLIENT=1",
         "OPENDHT_PROXY_SERVER=1",

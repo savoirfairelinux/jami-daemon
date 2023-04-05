@@ -1669,7 +1669,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                 sthis->findCertificate(
                     dev.dev, [sthis, h](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                         if (cert) {
-                            auto pk = std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey());
+                            auto pk = cert->getSharedPublicKey();
                             if (sthis->convModule()->needsSyncingWith(h.toString(),
                                                                       pk->getLongId().toString()))
                                 sthis->requestSIPConnection(
