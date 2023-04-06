@@ -694,12 +694,12 @@ Manager::ManagerPimpl::bindCallToConference(const std::shared_ptr<SIPCall>& call
         base_.offHoldCall(call->getAccountId(), callId);
     } else if (state == "INCOMING") {
         conf.bindCallId(callId);
-        base_.answerCall(*call);
+        base_.answerCall(call);
     } else if (state == "CURRENT") {
         conf.bindCallId(callId);
     } else if (state == "INACTIVE") {
         conf.bindCallId(callId);
-        base_.answerCall(*call);
+        base_.answerCall(call);
     } else
         JAMI_WARNING("[call:{:s}] call state {:s} not recognized for conference",
                   callId,
@@ -1041,46 +1041,56 @@ Manager::answerCall(const std::string& accountId,
 {
     if (auto account = getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
-            return answerCall(*call, mediaList);
+            return answerCall(call, mediaList);
         }
     }
     return false;
 }
 
 bool
-Manager::answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
+Manager::answerCall(const std::shared_ptr<Call>& call, const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_INFO("Answer call %s", call.getCallId().c_str());
+    JAMI_LOG("Answer call {:s}", call->getCallId());
 
-    if (call.getConnectionState() != Call::ConnectionState::RINGING) {
+    if (call->getConnectionState() != Call::ConnectionState::RINGING) {
         // The call is already answered
         return true;
     }
 
     // If ringing
     stopTone();
-    pimpl_->removeWaitingCall(call.getCallId());
+    pimpl_->removeWaitingCall(call->getCallId());
 
     try {
-        call.answer(mediaList);
+        call->answer(mediaList);
     } catch (const std::runtime_error& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("{:s}", e.what());
         return false;
     }
 
     // if we dragged this call into a conference already
-    if (auto conf = call.getConference())
+    if (auto conf = call->getConference())
         pimpl_->switchCall(conf->getConfId());
     else
-        pimpl_->switchCall(call.getCallId());
+        pimpl_->switchCall(call->getCallId());
 
-    addAudio(call);
+    addAudio(*call);
+
+    if (auto acc = call->getAccount().lock()) {
+        if (!call->getConference()) {
+            auto conf = std::make_shared<Conference>(acc, "", true, call->getMediaAttributeList());
+            acc->attach(conf);
+            conf->bindCall(std::dynamic_pointer_cast<SIPCall>(call));
+
+            emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conf->getConfId());
+        }
+    }
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording()) {
-        auto recResult = call.toggleRecording();
-        emitSignal<libjami::CallSignal::RecordPlaybackFilepath>(call.getCallId(), call.getPath());
-        emitSignal<libjami::CallSignal::RecordingStateChanged>(call.getCallId(), recResult);
+        auto recResult = call->toggleRecording();
+        emitSignal<libjami::CallSignal::RecordPlaybackFilepath>(call->getCallId(), call->getPath());
+        emitSignal<libjami::CallSignal::RecordingStateChanged>(call->getCallId(), recResult);
     }
     return true;
 }
@@ -1131,7 +1141,7 @@ Manager::hangupConference(const std::string& accountId, const std::string& confI
         if (auto conference = account->getConference(confId)) {
             return pimpl_->hangupConference(*conference);
         } else {
-            JAMI_ERR("No such conference %s", confId.c_str());
+            JAMI_ERROR("No such conference {:s}", confId);
         }
     }
     return false;
@@ -2494,7 +2504,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 
     if (account->isRendezVous()) {
         dht::ThreadPool::io().run([this, account, incomCall = incomCall.shared_from_this()] {
-            base_.answerCall(*incomCall);
+            base_.answerCall(incomCall);
 
             for (const auto& callId : account->getCallList()) {
                 if (auto call = account->getCall(callId)) {
@@ -2530,7 +2540,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         });
     } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
         dht::ThreadPool::io().run(
-            [this, incomCall = incomCall.shared_from_this()] { base_.answerCall(*incomCall); });
+            [this, incomCall = incomCall.shared_from_this()] { base_.answerCall(incomCall); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {
         // Test if already calling this person
         auto peerNumber = incomCall.getPeerNumber();
@@ -2553,7 +2563,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                  currentCallID = currentCall->getCallId(),
                                  incomCall = incomCall.shared_from_this()] {
                     auto& mgr = Manager::instance();
-                    mgr.answerCall(*incomCall);
+                    mgr.answerCall(incomCall);
                     mgr.hangupCall(accountId, currentCallID);
                 });
             }
