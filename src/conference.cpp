@@ -330,6 +330,17 @@ Conference::isMediaSourceMuted(MediaType type) const
 bool
 Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
+    // If 1:1, we can avoid th mixer
+    JAMI_ERROR("@@@@@@@@@@@@@@@@@@@@@@ {}", getCallIds().size());
+    if (getCallIds().size() == 1) {
+        JAMI_ERROR("@@@@@@@@@@@@@@@@@@@@@@");
+        if (auto call = getCall(*getCallIds().begin())) {
+            JAMI_ERROR("@@@@@@@@@@@@@@@@@@@@@@=>");
+
+            return call->requestMediaChange(mediaList);
+        }
+    }
+
     if (getState() != State::ACTIVE_ATTACHED) {
         JAMI_ERROR("[conf {:s}] Request media change can be performed only in attached mode", getConfId());
         return false;
