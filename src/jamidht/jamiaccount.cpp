@@ -418,6 +418,10 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
 void
 JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri)
 {
+    auto conf = std::make_shared<Conference>(shared_from_this(), "", true, call->getMediaAttributeList());
+    attach(conf);
+    emitSignal<libjami::CallSignal::ConferenceCreated>(getAccountID(), conf->getConfId());
+
     JAMI_DBG() << this << "Calling peer " << uri.authority();
     try {
         startOutgoingCall(call, uri.authority());
@@ -450,6 +454,11 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
         call->onFailure(ENOENT);
 #endif
     }
+
+    conf->bindCall(call);
+    conf->bindCallId(call->getCallId());
+
+    emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(), conf->getConfId(), conf->getStateStr());
 }
 
 void
@@ -546,7 +555,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         Manager::instance().hangupCall(getAccountID(), callId);
         return;
     }
-    Manager::instance().answerCall(*call);
+    Manager::instance().answerCall(call);
 
     if (isNotHosting) {
         // Create conference and host it.

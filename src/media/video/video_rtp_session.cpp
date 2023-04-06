@@ -512,6 +512,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
 void
 VideoRtpSession::enterConference(Conference& conference)
 {
+
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     exitConference();

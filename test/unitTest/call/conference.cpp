@@ -45,6 +45,7 @@ namespace test {
 struct CallData
 {
     std::string callId {};
+    std::string confId {};
     std::string state {};
     std::string device {};
     std::string streamId {};
@@ -57,6 +58,7 @@ struct CallData
     void reset()
     {
         callId = "";
+        confId = "";
         state = "";
         device = "";
         streamId = "";
@@ -106,6 +108,7 @@ private:
     void testBrokenParticipantAudioAndVideo();
     void testBrokenParticipantAudioOnly();
     void testRemoveConferenceInOneOne();
+    void testOneToOneCall();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -129,6 +132,7 @@ private:
     CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
     CPPUNIT_TEST(testRemoveConferenceInOneOne);
+    CPPUNIT_TEST(testOneToOneCall);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -142,6 +146,7 @@ private:
     std::vector<std::map<std::string, std::string>> pInfos_ {};
     bool confChanged {false};
 
+    CallData aliceCall {};
     CallData bobCall {};
     CallData carlaCall {};
     CallData daviCall {};
@@ -199,7 +204,9 @@ ConferenceTest::registerSignalHandlers()
             const std::string& callId,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
-            if (accountId == bobId) {
+            if (accountId == aliceId) {
+                aliceCall.callId = callId;
+            } else if (accountId == bobId) {
                 bobCall.callId = callId;
             } else if (accountId == carlaId) {
                 carlaCall.callId = callId;
@@ -230,7 +237,15 @@ ConferenceTest::registerSignalHandlers()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceCreated>(
-        [=](const std::string&, const std::string& conferenceId) {
+        [=](const std::string& accountId, const std::string& conferenceId) {
+            if (accountId == aliceId)
+                aliceCall.confId = conferenceId;
+            else if (accountId == bobId)
+                bobCall.confId = conferenceId;
+            else if (accountId == carlaId)
+                carlaCall.confId = conferenceId;
+            else if (accountId == daviId)
+                daviCall.confId = conferenceId;
             confId = conferenceId;
             cv.notify_one();
         }));
@@ -1015,6 +1030,82 @@ ConferenceTest::testRemoveConferenceInOneOne()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty() && bobCall.state == "OVER"; }));
     Manager::instance().hangupCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCall.state == "OVER"; }));
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testOneToOneCall()
+{
+    registerSignalHandlers();
+
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 0);
+
+    startConference();
+
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 1);
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId)[0] == confId);
+
+    hangupConference();
+
+    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 0);
+
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::atomic<int> callStopped {0};
+    std::string bobCallId;
+    std::string aliceCallState;
+    // Watch signals
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string& accountId,
+            const std::string& callId,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
+            if (accountId == bobId)
+                bobCallId = callId;
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& accountId, const std::string&, const std::string& state, signed) {
+            if (accountId == aliceId)
+                aliceCallState = state;
+            if (state == "OVER") {
+                callStopped += 1;
+                if (callStopped == 2)
+                    cv.notify_one();
+            }
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    JAMI_INFO("Start call between alice and Bob");
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, {});
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !bobCallId.empty(); }));
+
+    Manager::instance().answerCall(bobId, bobCallId);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
+        return !aliceCall.confId.empty() && !bobCall.confId.empty() && !bobCall.device.empty();
+    }));
+
+    CPPUNIT_ASSERT(aliceCall.confId != bobCall.confId); // 2 conferences are created (1 for incoming call, 1 for the outgoing)
+
+    // TODO test layout in 1:1
+    // TODO add new media (both sides)
+    // TODO check if no other test is broken
+
+    JAMI_INFO("Stop call between alice and Bob");
+    callStopped = 0;
+    Manager::instance().hangupCall(aliceId, callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
+
     libjami::unregisterSignalHandlers();
 }
 

@@ -129,7 +129,9 @@ Conference::Conference(const std::shared_ptr<Account>& account,
     parser_.onHangupParticipant([&](const auto& accountUri, const auto& deviceId) {
         hangupParticipant(accountUri, deviceId);
     });
-    parser_.onRaiseHand([&](const auto& uri, const auto& deviceId, bool state) { callStreamsMgr_->setHandRaised(uri, deviceId, state); });
+    parser_.onRaiseHand([&](const auto& uri, const auto& deviceId, bool state) {
+        callStreamsMgr_->setHandRaised(uri, deviceId, state);
+    });
     parser_.onSetActiveStream(
         [&](const auto& uri, const auto& deviceId, const auto& streamId, bool state) {
             callStreamsMgr_->setActiveStream(uri, deviceId, streamId, state); });
@@ -389,7 +391,15 @@ Conference::isMediaSourceMuted(MediaType type) const
 bool
 Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
-    if (getState() != State::ACTIVE_ATTACHED) {
+    // If 1:1, we can avoid th mixer
+    if (getCallIds().size() == 1) {
+        if (auto call = getCall(*getCallIds().begin())) {
+            auto res = call->requestMediaChange(mediaList);
+            if (!res)
+                return res;
+            call->enterConference(shared_from_this());
+        }
+    } else  if (getState() != State::ACTIVE_ATTACHED) {
         JAMI_ERROR("[conf {:s}] Request media change can be performed only in attached mode", getConfId());
         return false;
     }
@@ -828,6 +838,9 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& callId)
         }
     } else {
         remoteHosts_.emplace(key, newInfo);
+    }
+    sendConferenceInfos();
+
 }
 
 #ifdef ENABLE_VIDEO
