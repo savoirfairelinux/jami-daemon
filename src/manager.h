@@ -163,7 +163,7 @@ public:
     bool answerCall(const std::string& accountId,
                     const std::string& callId,
                     const std::vector<libjami::MediaMap>& mediaList = {});
-    bool answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList = {});
+    bool answerCall(const std::shared_ptr<Call>& call, const std::vector<libjami::MediaMap>& mediaList = {});
 
     /**
      * Handle incoming call and notify user
