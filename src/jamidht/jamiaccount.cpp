@@ -448,6 +448,13 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
         call->onFailure(ENOENT);
 #endif
     }
+
+    auto conf = std::make_shared<Conference>(shared_from_this(), "", true, call->getMediaAttributeList());
+    attach(conf);
+    conf->bindCall(call);
+    conf->bindCallId(call->getCallId());
+
+    emitSignal<libjami::CallSignal::ConferenceCreated>(getAccountID(), conf->getConfId());
 }
 
 void
@@ -544,7 +551,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         Manager::instance().hangupCall(getAccountID(), callId);
         return;
     }
-    Manager::instance().answerCall(*call);
+    Manager::instance().answerCall(call);
 
     if (isNotHosting) {
         // Create conference and host it.

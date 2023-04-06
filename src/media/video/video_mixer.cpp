@@ -101,20 +101,6 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, boo
     nextProcess_ = std::chrono::steady_clock::now();
 
     JAMI_DBG("[mixer:%s] New instance created", id_.c_str());
-
-
-    auto conf_res = split_string_to_unsigned(jami::Manager::instance()
-                                                 .videoPreferences.getConferenceResolution(),
-                                             'x');
-    if (conf_res.size() == 2u) {
-#if defined(__APPLE__) && TARGET_OS_MAC
-        setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
-#else
-        setParameters(conf_res[0], conf_res[1]);
-#endif
-    } else {
-        JAMI_ERR("Conference resolution is invalid");
-    }
 }
 
 VideoMixer::~VideoMixer()
@@ -185,6 +171,33 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
     sources_.emplace_back(std::move(src));
     JAMI_DEBUG("Total sources: {:d}", sources_.size());
     layoutUpdated_ += 1;
+
+    if (callInfo_.size() <= 2) {
+        // Compute best grid to show videos in 1:1
+        auto n = ceil(sqrt(sources_.size()));
+        auto w = 1280 * n;
+        auto h = 720 * n;
+        lock.unlock();
+#if defined(__APPLE__) && TARGET_OS_MAC
+            setParameters(w, h, AV_PIX_FMT_NV12);
+#else
+            setParameters(w, h);
+#endif
+    } else {
+        auto conf_res = split_string_to_unsigned(jami::Manager::instance()
+                                                    .videoPreferences.getConferenceResolution(),
+                                                'x');
+        lock.unlock();
+        if (conf_res.size() == 2u) {
+#if defined(__APPLE__) && TARGET_OS_MAC
+            setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
+#else
+            setParameters(conf_res[0], conf_res[1]);
+#endif
+        } else {
+            JAMI_ERR("Conference resolution is invalid");
+        }
+    }
 }
 
 void
