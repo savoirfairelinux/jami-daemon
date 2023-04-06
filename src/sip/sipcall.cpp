@@ -2043,6 +2043,20 @@ SIPCall::getRemoteDeviceId()
     return peerDeviceId_;
 }
 
+void
+SIPCall::attachToConference()
+{
+    if (isSubcall()) {
+        std::dynamic_pointer_cast<SIPCall>(parent_)->attachToConference();
+        return;
+    }
+    if (auto conf = pendingConf_.lock()) {
+        conf->bindCall(std::dynamic_pointer_cast<SIPCall>(shared_from_this()));
+        conf->bindCallId(getCallId());
+        emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountId(), conf->getConfId(), conf->getStateStr());
+    }
+    pendingConf_.reset(); // Should be stored in conf_ now
+}
 
 bool
 SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const

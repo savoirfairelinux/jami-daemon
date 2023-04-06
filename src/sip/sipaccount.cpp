@@ -206,6 +206,11 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
 
     auto toUri = getToUri(to);
 
+    auto conf = std::make_shared<Conference>(shared_from_this(), "", true, call->getMediaAttributeList());
+    attach(conf);
+    emitSignal<libjami::CallSignal::ConferenceCreated>(getAccountID(), conf->getConfId());
+    call->setPendingConference(conf);
+
     // Do not init ICE yet if the media list is empty. This may occur
     // if we are sending an invite with no SDP offer.
     if (call->isIceEnabled() and not mediaList.empty()) {
@@ -246,11 +251,12 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;
-        manager.scheduler().run([this, weak_call] {
+        manager.scheduler().run([this, weak_call, conf] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Could not send outgoing INVITE request for new call");
                     call->onFailure();
+                    return false;
                 }
             }
             return false;
@@ -403,6 +409,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     }
 
     call->setState(Call::CallState::ACTIVE, Call::ConnectionState::PROGRESSING);
+    call->attachToConference();
 
     return true;
 }
