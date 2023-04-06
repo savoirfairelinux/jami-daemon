@@ -337,6 +337,9 @@ public:
     std::string getRemoteUri();
     std::string getRemoteDeviceId();
 
+    void setPendingConference(const std::shared_ptr<Conference>& conf) { pendingConf_ = conf; }
+    void attachToConference();
+
 private:
     void generateMediaPorts();
 
@@ -528,6 +531,8 @@ private:
 #ifdef ENABLE_VIDEO
     int rotation_ {0};
 #endif
+
+    std::weak_ptr<Conference> pendingConf_ {};
 };
 
 // Helpers

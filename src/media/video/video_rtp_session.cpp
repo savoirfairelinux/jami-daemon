@@ -263,7 +263,7 @@ VideoRtpSession::startReceiver()
         if (receiveThread_)
             JAMI_WARNING("[{:p}] Already has a receiver, restarting", fmt::ptr(this));
         receiveThread_.reset(
-            new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
+            new VideoReceiveThread(callId_ + "_video_0", true, receive_.receiving_sdp, mtu_)); // TODO HACKY
 
         // ensure that start has been called
         if (not socketPair_)
@@ -513,6 +513,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
 void
 VideoRtpSession::enterConference(Conference& conference)
 {
+
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     exitConference();
