@@ -22,6 +22,30 @@
       },
       "revId": "fdbe14a8f1919e63b17bfcc13d8640d7cd21dc6f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f52012a4_9f5a20d6",
+        "filename": "src/jamidht/channeled_transport.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2023-04-07T14:11:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "40a8a731_b455d25f",
+      "range": {
+        "startLine": 70,
+        "startChar": 4,
+        "endLine": 70,
+        "endChar": 11
+      },
+      "revId": "fdbe14a8f1919e63b17bfcc13d8640d7cd21dc6f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
