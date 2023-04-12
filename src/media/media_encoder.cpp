@@ -839,6 +839,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
         encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
         forcePresetX2645(encoderCtx);
         initH265(encoderCtx, br);
+        av_opt_set_int(encoderCtx, "b_ref_mode", 0, AV_OPT_SEARCH_CHILDREN);
     } else if (avcodecId == AV_CODEC_ID_VP8) {
         initVP8(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_MPEG4) {
