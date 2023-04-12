@@ -748,7 +748,7 @@ Manager::setAutoAnswer(bool enable)
 }
 
 void
-Manager::init(const std::string& config_file)
+Manager::init(const std::string& config_file, libjami::InitFlag flags)
 {
     // FIXME: this is no good
     initialized = true;
@@ -846,7 +846,7 @@ Manager::init(const std::string& config_file)
         }
     }
 
-    {
+    if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_AUDIO)) {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         pimpl_->initAudioDriver();
         if (pimpl_->audiodriver_) {
