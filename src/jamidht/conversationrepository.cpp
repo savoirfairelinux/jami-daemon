@@ -1596,58 +1596,69 @@ ConversationRepository::Impl::validateDevice()
     auto repo = repository();
     auto account = account_.lock();
     if (!account || !repo) {
-        JAMI_WARN("Invalid repository detected");
+        JAMI_WARNING("Invalid repository detected");
         return false;
     }
     auto path = fmt::format("devices/{}.crt", account->currentDeviceId());
     std::string devicePath = git_repository_workdir(repo.get()) + path;
     if (!fileutils::isFile(devicePath)) {
-        JAMI_WARN("Couldn't find file %s", devicePath.c_str());
+        JAMI_WARNING("Couldn't find file {}", devicePath);
         return false;
     }
 
     auto deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
-
     if (!account->isValidAccountDevice(deviceCert)) {
-        JAMI_WARN("Device's certificate is not valid anymore. Trying to replace certificate with "
+        JAMI_WARNING("Device's certificate is not valid anymore. Trying to replace certificate with "
                   "current one.");
         // Replace certificate with current cert
         auto cert = account->identity().second;
-        if (!account->isValidAccountDevice(*cert)) {
-            JAMI_ERR("Current device's certificate is invalid. A migration is needed");
+        if (!cert || !account->isValidAccountDevice(*cert)) {
+            JAMI_ERROR("Current device's certificate is invalid. A migration is needed");
             return false;
         }
         auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            JAMI_ERR("Could not write data to %s", devicePath.c_str());
+            JAMI_ERROR("Could not write data to {}", devicePath);
             return false;
         }
         file << cert->toString(false);
         file.close();
         if (!add(path)) {
-            JAMI_WARN("Couldn't add file %s", devicePath.c_str());
+            JAMI_ERROR("Couldn't add file {}", devicePath);
             return false;
         }
+    }
 
-        auto parentCert = cert->issuer;
-        auto adminPath = fmt::format("admins/{}.crt", account->getUsername());
-        auto memberPath = fmt::format("members/{}.crt", account->getUsername());
-        std::string fullpath = git_repository_workdir(repo.get());
-        if (fileutils::isFile(git_repository_workdir(repo.get()) + adminPath))
-            path = adminPath;
-        else if (fileutils::isFile(git_repository_workdir(repo.get()) + memberPath))
-            path = memberPath;
-        fullpath += path;
-        if (fileutils::isFile(fullpath)) {
-            auto file = fileutils::ofstream(fullpath, std::ios::trunc | std::ios::binary);
+    // Check account cert (a new device can be added but account certifcate can be the old one!)
+    auto adminPath = fmt::format("admins/{}.crt", account->getUsername());
+    auto memberPath = fmt::format("members/{}.crt", account->getUsername());
+    std::string parentPath = git_repository_workdir(repo.get());
+    std::string relativeParentPath;
+    if (fileutils::isFile(git_repository_workdir(repo.get()) + adminPath))
+        relativeParentPath = adminPath;
+    else if (fileutils::isFile(git_repository_workdir(repo.get()) + memberPath))
+        relativeParentPath = memberPath;
+    parentPath += relativeParentPath;
+    if (relativeParentPath.empty()) {
+        JAMI_ERROR("Invalid parent path (not in members or admins");
+        return false;
+    }
+    auto parentCert = dht::crypto::Certificate(fileutils::loadFile(parentPath));
+    if (!account->isValidAccountDevice(parentCert)) {
+        JAMI_WARNING("Account's certificate is not valid anymore. Trying to replace certificate with "
+                  "current one.");
+        auto cert = account->identity().second;
+        auto newCert = cert->issuer;
+        if (newCert && fileutils::isFile(parentPath)) {
+            auto file = fileutils::ofstream(parentPath, std::ios::trunc | std::ios::binary);
             if (!file.is_open()) {
-                JAMI_ERR("Could not write data to %s", path.c_str());
+                JAMI_ERROR("Could not write data to {}", path);
                 return false;
             }
-            file << parentCert->toString(true);
+            file << newCert->toString(true);
             file.close();
-            if (!add(path)) {
-                JAMI_WARN("Couldn't add file %s", path.c_str());
+            if (!add(relativeParentPath)) {
+                JAMI_WARNING("Couldn't add file {}", path);
                 return false;
             }
         }
