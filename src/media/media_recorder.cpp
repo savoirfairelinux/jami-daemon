@@ -71,8 +71,13 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
 
     ~StreamObserver()
     {
-        for (auto& obs : observablesFrames_) {
-            obs->detach(this);
+        while (observablesFrames_.size() > 0) {
+            auto obs = observablesFrames_.begin();
+            (*obs)->detach(this);
+            // it should be erased from observablesFrames_ in detach. If it does not happens erase frame to avoid infinite loop.
+            auto it = observablesFrames_.find(*obs);
+            if (it != observablesFrames_.end())
+                observablesFrames_.erase(it);
         }
     };
 
