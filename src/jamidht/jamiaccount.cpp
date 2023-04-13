@@ -1918,47 +1918,49 @@ JamiAccount::doRegister_()
 
             setRegistrationState(state);
         };
-        context.identityAnnouncedCb = [this](bool ok) {
-            if (!ok)
-                return;
-            accountManager_->startSync(
-                [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                    if (!crt)
-                        return;
-                    auto deviceId = crt->getLongId().toString();
-                    if (accountManager_->getInfo()->deviceId == deviceId)
-                        return;
+        if (jami::Manager::instance().syncOnRegister) {
+            context.identityAnnouncedCb = [this](bool ok) {
+                if (!ok)
+                    return;
+                accountManager_->startSync(
+                                           [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                               if (!crt)
+                                                   return;
+                                               auto deviceId = crt->getLongId().toString();
+                                               if (accountManager_->getInfo()->deviceId == deviceId)
+                                                   return;
 
-                    std::unique_lock<std::mutex> lk(connManagerMtx_);
-                    initConnectionManager();
-                    channelHandlers_[Uri::Scheme::SYNC]
-                        ->connect(crt->getLongId(),
-                                  "",
-                                  [this](std::shared_ptr<ChannelSocket> socket,
-                                         const DeviceId& deviceId) {
-                                      if (socket)
-                                          syncModule()->syncWith(deviceId, socket);
-                                  });
-                    lk.unlock();
-                    requestSIPConnection(
-                        getUsername(),
-                        crt->getLongId(),
-                        "sync"); // For git notifications, will use the same socket as sync
-                },
-                [this] {
-                    deviceAnnounced_ = true;
+                                               std::unique_lock<std::mutex> lk(connManagerMtx_);
+                                               initConnectionManager();
+                                               channelHandlers_[Uri::Scheme::SYNC]
+                                               ->connect(crt->getLongId(),
+                                                         "",
+                                                         [this](std::shared_ptr<ChannelSocket> socket,
+                                                                const DeviceId& deviceId) {
+                                                   if (socket)
+                                                       syncModule()->syncWith(deviceId, socket);
+                                               });
+                                               lk.unlock();
+                                               requestSIPConnection(
+                                                                    getUsername(),
+                                                                    crt->getLongId(),
+                                                                    "sync"); // For git notifications, will use the same socket as sync
+                                           },
+                                           [this] {
+                                               deviceAnnounced_ = true;
 
-                    // Bootstrap at the end to avoid to be long to load.
-                    dht::ThreadPool::io().run([w = weak()] {
-                        if (auto shared = w.lock()) {
-                            std::lock_guard<std::recursive_mutex> lock(shared->configurationMutex_);
-                            shared->convModule()->bootstrap();
-                        }
-                    });
-                    emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-                        accountID_, getVolatileAccountDetails());
-                });
-        };
+                                               // Bootstrap at the end to avoid to be long to load.
+                                               dht::ThreadPool::io().run([w = weak()] {
+                                                   if (auto shared = w.lock()) {
+                                                       std::lock_guard<std::recursive_mutex> lock(shared->configurationMutex_);
+                                                       shared->convModule()->bootstrap();
+                                                   }
+                                               });
+                                               emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+                                                                                                                accountID_, getVolatileAccountDetails());
+                                           });
+            };
+        }
 
         setRegistrationState(RegistrationState::TRYING);
         dht_->run(dhtPortUsed(), config, std::move(context));

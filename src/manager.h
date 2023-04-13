@@ -118,6 +118,8 @@ public:
     static bool isIOSExtension;
 #endif
 
+    static bool syncOnRegister;
+
     /**
      * Initialisation of thread (sound) and map.
      * Init a new VoIPLink, audio codec and audio driver
