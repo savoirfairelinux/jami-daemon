@@ -141,6 +141,8 @@ std::atomic_bool Manager::initialized = {false};
 bool Manager::isIOSExtension = {false};
 #endif
 
+bool Manager::syncOnRegister = {true};
+
 static void
 copy_over(const std::string& srcPath, const std::string& destPath)
 {
