@@ -329,7 +329,7 @@ Conference::initSourcesForHost()
                    false,
                    false,
                    true,
-                   Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice(),
+                   Manager::instance().getVideoManager()->videoDeviceMonitor.getMRLForDefaultDevice(),
                    sip_utils::DEFAULT_VIDEO_STREAMID};
         }
         JAMI_DEBUG("[conf {:s}] Setting local host video source to [{:s}]",
@@ -579,9 +579,16 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         // If video, add to newVideoInputs
 #ifdef ENABLE_VIDEO
         if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
-            auto srcUri = mediaAttr.sourceUri_.empty() ? Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice() : mediaAttr.sourceUri_;
+            auto srcUri = mediaAttr.sourceUri_;
+            // If no sourceUri, use the default video device
+            if (srcUri.empty()) {
+                if (auto vm = Manager::instance().getVideoManager())
+                    srcUri = vm->videoDeviceMonitor.getMRLForDefaultDevice();
+                else
+                    continue;
+            }
             if (!mediaAttr.muted_)
-                newVideoInputs.emplace_back(srcUri);
+                newVideoInputs.emplace_back(std::move(srcUri));
         } else {
 #endif
             hostAudioInputs_[mediaAttr.label_] = jami::getAudioInput(mediaAttr.label_);
