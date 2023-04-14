@@ -538,7 +538,8 @@ ConferenceTest::testCreateParticipantsSinks()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
-    if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
+    auto dm = jami::getVideoDeviceMonitor();
+    if (dm && dm->getDeviceList().empty()) {
         JAMI_INFO() << "Check sinks if video device available.";
         std::lock_guard lock(pInfosMtx_);
         for (auto& info : pInfos_) {

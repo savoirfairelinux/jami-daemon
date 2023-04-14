@@ -237,14 +237,16 @@ Conference::~Conference()
     JAMI_INFO("Destroying conference %s", id_.c_str());
 
 #ifdef ENABLE_VIDEO
+    auto videoManager = Manager::instance().getVideoManager();
+    auto defaultDevice = videoManager ? videoManager->videoDeviceMonitor.getMRLForDefaultDevice() 
+                                      : std::string {};
     foreachCall([&](auto call) {
         call->exitConference();
         // Reset distant callInfo
         call->resetConfInfo();
         // Trigger the SIP negotiation to update the resolution for the remaining call
         // ideally this sould be done without renegotiation
-        call->switchInput(
-            Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
+        call->switchInput(defaultDevice);
 
         // Continue the recording for the call if the conference was recorded
         if (isRecording()) {
@@ -329,7 +331,7 @@ Conference::initSourcesForHost()
                    false,
                    false,
                    true,
-                   Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice(),
+                   Manager::instance().getVideoManager()->videoDeviceMonitor.getMRLForDefaultDevice(),
                    sip_utils::DEFAULT_VIDEO_STREAMID};
         }
         JAMI_DEBUG("[conf {:s}] Setting local host video source to [{:s}]",
@@ -579,9 +581,16 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         // If video, add to newVideoInputs
 #ifdef ENABLE_VIDEO
         if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
-            auto srcUri = mediaAttr.sourceUri_.empty() ? Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice() : mediaAttr.sourceUri_;
+            auto srcUri = mediaAttr.sourceUri_;
+            // If no sourceUri, use the default video device
+            if (srcUri.empty()) {
+                if (auto vm = Manager::instance().getVideoManager())
+                    srcUri = vm->videoDeviceMonitor.getMRLForDefaultDevice();
+                else
+                    continue;
+            }
             if (!mediaAttr.muted_)
-                newVideoInputs.emplace_back(srcUri);
+                newVideoInputs.emplace_back(std::move(srcUri));
         } else {
 #endif
             hostAudioInputs_[mediaAttr.label_] = jami::getAudioInput(mediaAttr.label_);
