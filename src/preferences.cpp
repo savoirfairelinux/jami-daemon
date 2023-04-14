@@ -519,7 +519,8 @@ VideoPreferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
 #endif
     out << YAML::Key << CONFERENCE_RESOLUTION_KEY << YAML::Value << conferenceResolution_;
-    getVideoDeviceMonitor().serialize(out);
+    if (auto dm = getVideoDeviceMonitor())
+        dm->serialize(out);
     out << YAML::EndMap;
 }
 
@@ -549,7 +550,8 @@ VideoPreferences::unserialize(const YAML::Node& in)
     } catch (...) {
         conferenceResolution_ = DEFAULT_CONFERENCE_RESOLUTION;
     }
-    getVideoDeviceMonitor().unserialize(in);
+    if (auto dm = getVideoDeviceMonitor())
+        dm->unserialize(in);
 }
 #endif // ENABLE_VIDEO
 

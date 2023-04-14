@@ -847,7 +847,7 @@ public:
     std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
 
 #endif // ENABLE_VIDEO
-    VideoManager& getVideoManager() const;
+    VideoManager* getVideoManager() const;
 
     unsigned dhtLogLevel {0}; // default = disable
     AccountFactory accountFactory;

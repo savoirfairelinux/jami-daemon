@@ -414,19 +414,10 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , dtmfBuf_(std::make_shared<AudioFrame>())
     , ringbufferpool_(new RingBufferPool)
 #ifdef ENABLE_VIDEO
-    , videoManager_(new VideoManager)
+    , videoManager_(nullptr)
 #endif
 {
     jami::libav_utils::av_init();
-
-    ioContextRunner_ = std::thread([context = ioContext_]() {
-        try {
-            auto work = asio::make_work_guard(*context);
-            context->run();
-        } catch (const std::exception& ex) {
-            JAMI_ERR("Unexpected io_context thread exception: %s", ex.what());
-        }
-    });
 }
 
 bool
@@ -836,6 +827,20 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
                 new DTMF(getRingBufferPool().getInternalSamplingRate(),
                          getRingBufferPool().getInternalAudioFormat().sampleFormat));
         }
+    }
+
+    // Start ASIO event loop
+    pimpl_->ioContextRunner_ = std::thread([context = pimpl_->ioContext_]() {
+        try {
+            auto work = asio::make_work_guard(*context);
+            context->run();
+        } catch (const std::exception& ex) {
+            JAMI_ERR("Unexpected io_context thread exception: %s", ex.what());
+        }
+    });
+    // Create video manager
+    if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_VIDEO)) {
+        videoManager_.reset(new VideoManager);
     }
 
     if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
@@ -3162,10 +3167,10 @@ Manager::getIceTransportFactory()
     return pimpl_->ice_tf_;
 }
 
-VideoManager&
+VideoManager*
 Manager::getVideoManager() const
 {
-    return *pimpl_->videoManager_;
+    return pimpl_->videoManager_.get();
 }
 
 std::vector<libjami::Message>
