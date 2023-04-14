@@ -74,8 +74,8 @@ using namespace libjami::Call;
 static DeviceParams
 getVideoSettings()
 {
-    const auto& videomon = jami::getVideoDeviceMonitor();
-    return videomon.getDeviceParams(videomon.getDefaultDevice());
+    if (auto videomon = jami::getVideoDeviceMonitor())
+        return videomon->getDeviceParams(videomon->getDefaultDevice());
 }
 #endif
 
