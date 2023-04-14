@@ -269,10 +269,12 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
     });
 
     socket->onShutdown([w = weak(), deviceId = socket->deviceId()] {
-        auto shared = w.lock();
-        if (shared && !shared->isShutdown_) {
-            shared->removeNode(deviceId);
-        }
+        dht::ThreadPool::io().run([w, deviceId] {
+            auto shared = w.lock();
+            if (shared && !shared->isShutdown_) {
+                shared->removeNode(deviceId);
+            }
+        });
     });
 }
 
