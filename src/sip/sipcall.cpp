@@ -74,8 +74,9 @@ using namespace libjami::Call;
 static DeviceParams
 getVideoSettings()
 {
-    const auto& videomon = jami::getVideoDeviceMonitor();
-    return videomon.getDeviceParams(videomon.getDefaultDevice());
+    if (auto videomon = jami::getVideoDeviceMonitor())
+        return videomon->getDeviceParams(videomon->getDefaultDevice());
+    return DeviceParams {};
 }
 #endif
 
@@ -289,9 +290,11 @@ SIPCall::setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession)
                 std::string streamId = "";
 
 #ifdef ENABLE_VIDEO
-                if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
-                    // if we have a video device
-                    streamId = sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID);
+                if (auto videoManager = Manager::instance().getVideoManager()) {
+                    if (not videoManager->videoDeviceMonitor.getDeviceList().empty()) {
+                        // if we have a video device
+                        streamId = sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID);
+                    }
                 }
 #endif
 
@@ -1992,8 +1995,10 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
     // Set default media source if empty. Kept for backward compatibility.
 #ifdef ENABLE_VIDEO
     if (stream.mediaAttribute_->sourceUri_.empty()) {
-        stream.mediaAttribute_->sourceUri_
-            = Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
+        if (auto videoManager = Manager::instance().getVideoManager()) {
+            stream.mediaAttribute_->sourceUri_
+                = videoManager->videoDeviceMonitor.getMRLForDefaultDevice();
+        }
     }
 #endif
 
