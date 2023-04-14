@@ -67,7 +67,7 @@ public:
 };
 
 #ifdef ENABLE_VIDEO
-video::VideoDeviceMonitor& getVideoDeviceMonitor();
+video::VideoDeviceMonitor* getVideoDeviceMonitor();
 std::shared_ptr<video::VideoInput> getVideoInput(
     const std::string& resource,
     video::VideoInputMode inputMode = video::VideoInputMode::Undefined,

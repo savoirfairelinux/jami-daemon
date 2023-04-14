@@ -406,8 +406,11 @@ VideoInput::isCapturing() const noexcept
 bool
 VideoInput::initCamera(const std::string& device)
 {
-    decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(device);
-    return true;
+    if (auto dm = jami::getVideoDeviceMonitor()) {
+        decOpts_ = dm->getDeviceParams(device);
+        return true;
+    }
+    return false;
 }
 
 static constexpr unsigned
@@ -420,6 +423,9 @@ round2pow(unsigned i, unsigned n)
 bool
 VideoInput::initLinuxGrab(const std::string& display)
 {
+    auto deviceMonitor = jami::getVideoDeviceMonitor();
+    if (!deviceMonitor)
+        return false;
     // Patterns (all platforms except Linux with Wayland)
     // full screen sharing:            :1+0,0 2560x1440                (SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440)
     // area sharing:                   :1+882,211 1532x779             (SCREEN 1, POSITION 882x211, RESOLUTION 1532x779)
@@ -431,7 +437,7 @@ VideoInput::initLinuxGrab(const std::string& display)
     std::string windowIdStr = "window-id:";
     size_t winIdPos = display.find(windowIdStr);
 
-    DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
+    DeviceParams p = deviceMonitor->getDeviceParams(DEVICE_DESKTOP);
     if (winIdPos != std::string::npos) {
         size_t endPos = display.find(' ', winIdPos + windowIdStr.size());
         p.window_id = display.substr(winIdPos + windowIdStr.size(),
@@ -505,6 +511,10 @@ VideoInput::initLinuxGrab(const std::string& display)
 bool
 VideoInput::initAVFoundation(const std::string& display)
 {
+    auto deviceMonitor = jami::getVideoDeviceMonitor();
+    if (!deviceMonitor)
+        return false;
+
     size_t space = display.find(' ');
 
     clearOptions();
@@ -512,7 +522,7 @@ VideoInput::initAVFoundation(const std::string& display)
     decOpts_.pixel_format = "nv12";
     decOpts_.name = "Capture screen 0";
     decOpts_.input = "Capture screen 0";
-    decOpts_.framerate = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP).framerate;
+    decOpts_.framerate = deviceMonitor->getDeviceParams(DEVICE_DESKTOP).framerate;
 
     if (space != std::string::npos) {
         std::istringstream iss(display.substr(space + 1));
@@ -533,6 +543,10 @@ VideoInput::initAVFoundation(const std::string& display)
 bool
 VideoInput::initWindowsGrab(const std::string& display)
 {
+    auto deviceMonitor = jami::getVideoDeviceMonitor();
+    if (!deviceMonitor)
+        return false;
+
     // Patterns
     // full screen sharing : :1+0,0 2560x1440 - SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440
     // area sharing : :1+882,211 1532x779 - SCREEN 1, POSITION 882x211, RESOLUTION 1532x779
@@ -541,7 +555,7 @@ VideoInput::initWindowsGrab(const std::string& display)
     std::string windowIdStr = "window-id:";
     size_t winHandlePos = display.find(windowIdStr);
 
-    DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
+    DeviceParams p = deviceMonitor->getDeviceParams(DEVICE_DESKTOP);
     if (winHandlePos != std::string::npos) {
         size_t endPos = display.find(' ', winHandlePos + windowIdStr.size());
         p.input = display.substr(winHandlePos + windowIdStr.size(),
@@ -584,7 +598,7 @@ VideoInput::initWindowsGrab(const std::string& display)
 
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupVideo() < 0)
-        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
+        return initCamera(deviceMonitor->getDefaultDevice());
 
     clearOptions();
     decOpts_ = p;
@@ -598,6 +612,10 @@ VideoInput::initWindowsGrab(const std::string& display)
 bool
 VideoInput::initFile(std::string path)
 {
+    auto deviceMonitor = jami::getVideoDeviceMonitor();
+    if (!deviceMonitor)
+        return false;
+
     size_t dot = path.find_last_of('.');
     std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
 
@@ -615,7 +633,7 @@ VideoInput::initFile(std::string path)
     p.name = path;
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
-        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
+        return initCamera(deviceMonitor->getDefaultDevice());
     }
 
     clearOptions();
