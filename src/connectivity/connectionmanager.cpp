@@ -975,7 +975,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 return;
             if (!ok) {
                 JAMI_ERR("Cannot initialize ICE session.");
-                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                 return;
             }
 
@@ -985,7 +985,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                     if (!shared)
                         return;
                     if (!shared->onRequestStartIce(req))
-                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                        eraseInfo();
                 });
         };
 
