@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "49427841_f4c54bdc",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-17T18:34:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4431b85c_89d4b67c",
+      "range": {
+        "startLine": 10,
+        "startChar": 22,
+        "endLine": 10,
+        "endChar": 32
+      },
+      "revId": "14c53e7ffddd03b76d509f86e8377b7d78440fa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "98c84674_ef73a5a6",
@@ -61,6 +85,30 @@
       "side": 1,
       "message": "1) test: jami::test::CallTest::testCachedCall (F) line: 196 call/call.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 30s, [\u0026] { return successfullyConnected.load(); })",
       "parentUuid": "98c84674_ef73a5a6",
+      "range": {
+        "startLine": 11,
+        "startChar": 28,
+        "endLine": 11,
+        "endChar": 33
+      },
+      "revId": "14c53e7ffddd03b76d509f86e8377b7d78440fa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "97b64ba0_74f1f36d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-17T18:34:03Z",
+      "side": 1,
+      "message": "Fixed but not testDeclineMultiDevice",
+      "parentUuid": "1000f08a_c694e9b0",
       "range": {
         "startLine": 11,
         "startChar": 28,
