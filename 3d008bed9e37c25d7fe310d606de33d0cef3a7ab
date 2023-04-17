@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21bc3791_63c98c21",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 8
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-17T14:19:24Z",
+      "side": 1,
+      "message": "1) test: jami::test::ConversationTest::testMergeTwoDifferentHeads (E) \nuncaught exception of type std::exception (or derived).\n- filesystem error: cannot copy: No such file or directory [/tmp/.local/share/jami/a070d71c93829c91/conversations] [/tmp/.local/share/jami/87d528265fc7100f/conversations]\n\n\n2) test: jami::test::ConversationTest::testMergeAfterMigration (F) line: 775 conversation/conversation.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 60s, [\u0026] { return !carlaGotMessage.empty() \u0026\u0026 !aliceGotMessage.empty(); })\n\n\n3) test: jami::test::ConversationTest::testRemoveReaddMultipleDevice (F) line: 3247 conversation/conversation.cpp\nassertion failed\n- Expression: cv.wait_for(lk, 30s, [\u0026]() { return conversationReadyBob \u0026\u0026 conversationReadyBob2 \u0026\u0026 aliceProfileReceivedBob \u0026\u0026 aliceProfileReceivedBob2; })",
+      "range": {
+        "startLine": 7,
+        "startChar": 17,
+        "endLine": 7,
+        "endChar": 20
+      },
+      "revId": "3d008bed9e37c25d7fe310d606de33d0cef3a7ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
