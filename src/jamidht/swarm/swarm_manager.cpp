@@ -272,6 +272,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
         auto shared = w.lock();
         if (shared && !shared->isShutdown_) {
             shared->removeNode(deviceId);
+            JAMI_WARNING("DHT: Node {:s} disconnected from {:s}", deviceId.toString(), shared->id_.toString());
         }
     });
 }
