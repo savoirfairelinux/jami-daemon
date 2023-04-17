@@ -200,7 +200,7 @@ Bucket::printBucket(unsigned number) const
 
     unsigned nodeNum = 1;
     for (auto it = nodes.begin(); it != nodes.end(); ++it) {
-        JAMI_DEBUG("Node {:s}   Id: {:s}", std::to_string(nodeNum), it->first.toString());
+        JAMI_DEBUG("Node {:s}   Id: {:s}  isMobile: {:s}", std::to_string(nodeNum), it->first.toString(), std::to_string(it->second.isMobile_));
         nodeNum++;
     }
     JAMI_ERROR("Mobile Nodes");
@@ -417,6 +417,7 @@ void
 RoutingTable::printRoutingTable() const
 {
     int counter = 1;
+    JAMI_DEBUG("SWARM: {:s} ", id_.toString());
     for (auto it = buckets.begin(); it != buckets.end(); ++it) {
         it->printBucket(counter);
         counter++;

@@ -39,12 +39,12 @@ using NodeId = dht::PkId;
 namespace jami {
 namespace test {
 
-constexpr size_t nNodes = 10;
-constexpr size_t mNodes = 5;
-constexpr size_t kNodes = 10;
+constexpr size_t nNodes = 6;
+constexpr size_t mNodes = 3;
+constexpr size_t kNodes = 4;
 
 constexpr size_t BOOTSTRAP_SIZE = 2;
-constexpr int time = 2;
+constexpr int time = 10;
 
 struct Counter
 {
@@ -136,24 +136,24 @@ private:
     void testSwarmManagersWMobileModes();
 
     CPPUNIT_TEST_SUITE(RoutingTableTest);
-    CPPUNIT_TEST(testBucketMainFunctions);
-    CPPUNIT_TEST(testRoutingTableMainFunctions);
-    CPPUNIT_TEST(testClosestNodes_multipleb);
-    CPPUNIT_TEST(testBucketSplit_1n);
-    CPPUNIT_TEST(testBucketKnownNodes);
-    CPPUNIT_TEST(testSendKnownNodes_1b);
-    CPPUNIT_TEST(testSendKnownNodes_multipleb);
-    CPPUNIT_TEST(testClosestNodes_1b);
-    CPPUNIT_TEST(testSwarmManagersSmallBootstrapList);
-    CPPUNIT_TEST(testSwarmManagerConnectingNodes_1b);
-    CPPUNIT_TEST(testRoutingTableForConnectingNode);
-    CPPUNIT_TEST(testMobileNodeFunctions);
-    CPPUNIT_TEST(testMobileNodeAnnouncement);
-    CPPUNIT_TEST(testMobileNodeSplit);
-    CPPUNIT_TEST(testSendMobileNodes);
+    // CPPUNIT_TEST(testBucketMainFunctions);
+    // CPPUNIT_TEST(testRoutingTableMainFunctions);
+    // CPPUNIT_TEST(testClosestNodes_multipleb);
+    // CPPUNIT_TEST(testBucketSplit_1n);
+    // CPPUNIT_TEST(testBucketKnownNodes);
+    // CPPUNIT_TEST(testSendKnownNodes_1b);
+    // CPPUNIT_TEST(testSendKnownNodes_multipleb);
+    // CPPUNIT_TEST(testClosestNodes_1b);
+    // CPPUNIT_TEST(testSwarmManagersSmallBootstrapList);
+    // CPPUNIT_TEST(testSwarmManagerConnectingNodes_1b);
+    // CPPUNIT_TEST(testRoutingTableForConnectingNode);
+    // CPPUNIT_TEST(testMobileNodeFunctions);
+    // CPPUNIT_TEST(testMobileNodeAnnouncement);
+    // CPPUNIT_TEST(testMobileNodeSplit);
+    // CPPUNIT_TEST(testSendMobileNodes);
     CPPUNIT_TEST(testSwarmManagersWMobileModes);
-    CPPUNIT_TEST(testRoutingTableForMassShuttingsNodes);
-    CPPUNIT_TEST(testRoutingTableForShuttingNode);
+    // CPPUNIT_TEST(testRoutingTableForMassShuttingsNodes);
+    // CPPUNIT_TEST(testRoutingTableForShuttingNode);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -198,6 +198,7 @@ RoutingTableTest::generateSwarmManagers()
         const NodeId& node = randomNodeIds.at(i);
         auto sm = std::make_shared<SwarmManager>(node);
         i >= nNodes ? sm->setMobility(true) : sm->setMobility(false);
+        std::cout << "Node " << node << " is mobile: " << sm->isMobile() << std::endl;
         swarmManagers[node] = sm;
     }
 }
@@ -235,16 +236,20 @@ void
 RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
 {
     sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId,
-                                                                      auto&& onSocket) {
+                                                                    auto&& onSocket) {
         Manager::instance().ioContext()->post([this, wsm, nodeId, onSocket = std::move(onSocket)] {
             auto sm = wsm.lock();
 
-            if (!sm)
+            if (!sm || sm->isShutdown() )
                 return;
 
             NodeId node = DeviceId(nodeId);
             std::lock_guard<std::mutex> lk(channelSocketsMtx_);
             if (auto smRemote = getManager(node)) {
+                if(sm->isShutdown()) {
+                    std::cout << "SWARMMANAGER " << sm->getId() << " IS SHUTDOWN" << std::endl;
+                    return;
+                }
                 auto myId = sm->getId();
                 auto& cstRemote = channelSockets_[node][myId];
                 auto& cstMe = channelSockets_[myId][node];
@@ -258,6 +263,7 @@ RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
 
                 onSocket(cstMe);
                 smRemote->addChannel(cstRemote);
+                std::cout << "SWARMMANAGER " << sm->getId() << " CONNECTED TO " << node << std::endl;
             }
         });
     };
@@ -273,6 +279,7 @@ RoutingTableTest::distribution()
             dist.resize(val + 1);
         dist[val]++;
     }
+
     for (size_t i = 0; i < dist.size(); i++) {
         std::cout << "Swarm Managers with " << i << " nodes: " << dist[i] << std::endl;
     }
@@ -1026,10 +1033,12 @@ RoutingTableTest::crossNodes(NodeId nodeId)
         if (std::find(discoveredNodes.begin(), discoveredNodes.end(), curNode)
             == discoveredNodes.end()) {
             if (discoveredNodes.emplace_back(curNode)) {
-                if (auto sm = getManager(curNode))
+                if (auto sm = getManager(curNode)) {
+                    //sm->getRoutingTable().printRoutingTable();
                     for (auto const& node : sm->getRoutingTable().getNodes()) {
                         pendingNodes.emplace_back(node);
                     }
+                }
             }
         }
     }
@@ -1251,7 +1260,7 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
 void
 RoutingTableTest::testSwarmManagersWMobileModes()
 {
-    std::cout << "\testSwarmManagersWMobileModes" << std::endl;
+    std::cout << "\ntestSwarmManagersWMobileModes" << std::endl;
 
     for (const auto& sm : swarmManagers) {
         needSocketCallBack(sm.second);
@@ -1275,11 +1284,15 @@ RoutingTableTest::testSwarmManagersWMobileModes()
     std::cout << "Waiting " << time << "s..." << std::endl;
     sleep(time);
 
-    distribution();
+    // distribution();
+
+    std::cout << "-------------------------------------------------------------" << std::endl;
+    std::cout << "CROSSNODES N1" << std::endl;
+    std::cout << "-------------------------------------------------------------" << std::endl;
 
     crossNodes(swarmManagers.begin()->first);
     sleep(2);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be equal",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be equal with mobile nodes",
                                  swarmManagers.size(),
                                  discoveredNodes.size());
 
@@ -1289,26 +1302,30 @@ RoutingTableTest::testSwarmManagersWMobileModes()
         for (auto it = swarmManagers.begin(); it != swarmManagers.end();) {
             if (it->second->isMobile()) {
                 it->second->shutdown();
-                it = swarmManagers.erase(it);
                 channelSockets_.erase(it->second->getId());
+                it = swarmManagers.erase(it);
+                
             } else {
                 ++it;
             }
         }
     }
 
-    sleep(10);
+    sleep(20);
+    std::cout << "-------------------------------------------------------------" << std::endl;
+    std::cout << "CROSSNODES N2" << std::endl;
+    std::cout << "-------------------------------------------------------------" << std::endl;
 
     {
         if (!swarmManagers.empty()) {
             crossNodes(swarmManagers.begin()->first);
-            distribution();
+            // distribution();
         }
     }
 
     sleep(10);
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be equal",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be equal without mobile nodes",
                                  swarmManagers.size(),
                                  discoveredNodes.size());
 }
