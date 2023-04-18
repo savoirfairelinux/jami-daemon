@@ -922,7 +922,7 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
             auto shared = w.lock();
             if (!shared)
                 return false;
-            auto crt = shared->account.certStore().getCertificate(ph.toString());
+            auto crt = shared->account.certStore().getCertificate(cert.getLongId().toString());
             if (!crt)
                 return false;
             return crt->getPacked() == cert.getPacked();

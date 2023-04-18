@@ -1087,8 +1087,15 @@ JamiAccount::loadAccount(const std::string& archive_password,
         [this](const std::string& uri, bool confirmed) {
             if (!id_.first)
                 return;
-            runOnMainThread([id = getAccountID(), uri, confirmed] {
-                emitSignal<libjami::ConfigurationSignal::ContactAdded>(id, uri, confirmed);
+            dht::ThreadPool::io().run([w=weak(), uri, confirmed] {
+                if (auto shared = w.lock()) {
+                    if (auto cm = shared->convModule()) {
+                        auto activeConv = cm->getOneToOneConversation(uri);
+                        if (!activeConv.empty())
+                            cm->bootstrap(activeConv);
+                    }
+                    emitSignal<libjami::ConfigurationSignal::ContactAdded>(shared->getAccountID(), uri, confirmed);
+                }
             });
         },
         [this](const std::string& uri, bool banned) {
@@ -2043,7 +2050,7 @@ JamiAccount::doRegister_()
                     }
 
                     // Check if pull from banned device
-                    if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
+                    if (convModule()->isBanned(conversationId, remoteDevice)) {
                         JAMI_WARNING(
                             "[Account {:s}] Git server requested for conversation {:s}, but the "
                             "device is "
@@ -2231,6 +2238,11 @@ JamiAccount::convModule()
                                         return;
                                     auto remoteCert = socket->peerCertificate();
                                     auto uri = remoteCert->issuer->getId().toString();
+                                    if (shared->accountManager()->getCertificateStatus(uri) == tls::TrustStore::PermissionStatus::BANNED) {
+                                        cb(nullptr);
+                                        return;
+                                    }
+
                                     std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
                                     // Verify that the connection is not already cached
                                     SipConnectionKey key(uri, deviceId.toString());
@@ -2862,7 +2874,7 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
     auto conversation = convModule()->getOneToOneConversation(uri);
     if (!confirmed && conversation.empty())
         conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, uri);
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->addContact(uri, confirmed, conversation);
     else

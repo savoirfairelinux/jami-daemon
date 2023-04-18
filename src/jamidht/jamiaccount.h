@@ -738,8 +738,6 @@ private:
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
 
-    std::string bootstrapListUrl_;
-
     /**
      * DHT port preference
      */

@@ -3241,25 +3241,12 @@ Manager::eraseGitTransport(git_smart_subtransport* tr)
 }
 
 tls::CertificateStore&
-Manager::certStore(const std::string& accountUri) const
-{
-    for (const auto& account : getAllAccounts<JamiAccount>()) {
-        if (accountUri == account->getUsername())
-            return account->certStore();
-    }
-
-    throw std::runtime_error("No account found");
-}
-
-tls::CertificateStore&
-Manager::certStoreFromId(const std::string& accountId) const
+Manager::certStore(const std::string& accountId) const
 {
     if (const auto& account = getAccount<JamiAccount>(accountId)) {
         return account->certStore();
     }
-
     throw std::runtime_error("No account found");
 }
-
 
 } // namespace jami

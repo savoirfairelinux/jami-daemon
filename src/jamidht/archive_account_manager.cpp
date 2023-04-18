@@ -769,7 +769,8 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
 }
 
 bool
-ArchiveAccountManager::revokeDevice(const std::string& password,
+ArchiveAccountManager::revokeDevice(
+                                    const std::string& password,
                                     const std::string& device,
                                     RevokeDeviceCallback cb)
 {
@@ -802,8 +803,8 @@ ArchiveAccountManager::revokeDevice(const std::string& password,
                             a.revoked->revoke(*crt);
                             a.revoked->sign(a.id);
                             // add to CRL cache
-                            Manager::instance().certStore(this_.info_->accountId).pinRevocationList(a.id.second->getId().toString(), a.revoked);
-                            Manager::instance().certStore(this_.info_->accountId).loadRevocations(*a.id.second);
+                            this_.certStore().pinRevocationList(a.id.second->getId().toString(), a.revoked);
+                            this_.certStore().loadRevocations(*a.id.second);
 
                             this_.saveArchive(a, password);
                             this_.info_->contacts->removeAccountDevice(crt->getLongId());

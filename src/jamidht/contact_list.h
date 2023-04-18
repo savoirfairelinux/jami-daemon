@@ -62,6 +62,8 @@ public:
                 OnChangeCallback cb);
     ~ContactList();
 
+    const std::string& accountId() const { return accountId_; }
+
     void load();
     void save();
 
@@ -143,7 +145,6 @@ public:
 
     DeviceSync getSyncData() const;
     bool syncDevice(const dht::PkId& device, const time_point& syncDate);
-    // void onSyncData(DeviceSync&& device);
 
 private:
     mutable std::mutex lock;

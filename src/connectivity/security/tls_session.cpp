@@ -55,6 +55,8 @@
 #include <cstdlib>
 #include <unistd.h>
 
+#include "jamidht/jamiaccount.h"
+
 namespace jami {
 namespace tls {
 
@@ -713,14 +715,19 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
         return;
     }
 
-    std::string accountUri;
-    if (params_.cert && params_.cert->issuer)
-        accountUri = params_.cert->issuer->getId().toString();
+    std::string accountId;
+    if (params_.cert && params_.cert->issuer) {
+        for (const auto& acc: Manager::instance().getAllAccounts<JamiAccount>()) {
+            if (acc->currentDeviceId() == params_.cert->getLongId().toString()) {
+                accountId = acc->getAccountID();
+            }
+        }
+    }
 
     sendOcspRequest(aia_uri,
                     std::move(ocsp_req.first),
                     OCSP_REQUEST_TIMEOUT,
-                    [cb = std::move(cb), &cert, nonce = std::move(ocsp_req.second), accountUri](
+                    [cb = std::move(cb), &cert, nonce = std::move(ocsp_req.second), accountId](
                         const dht::http::Response& r) {
                         // Prepare response data
                         // Verify response validity
@@ -755,7 +762,7 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
                         }
                         // Save response into the certificate store
                         try {
-                            Manager::instance().certStore(accountUri).pinOcspResponse(cert);
+                            Manager::instance().certStore(accountId).pinOcspResponse(cert);
                         } catch (std::exception& e) {
                             JAMI_ERROR("{}", e.what());
                         }

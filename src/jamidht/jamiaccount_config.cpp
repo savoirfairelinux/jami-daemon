@@ -175,7 +175,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
 
     if (hostname.empty())
         hostname = DHT_DEFAULT_BOOTSTRAP;
-    parseString(details, libjami::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl);
+    parseString(details, libjami::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapUrl);
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, allowPublicIncoming);
     parseBool(details, libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery);

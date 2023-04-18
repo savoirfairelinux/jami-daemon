@@ -868,9 +868,7 @@ public:
     void insertGitTransport(git_smart_subtransport* tr, std::unique_ptr<P2PSubTransport>&& sub);
     void eraseGitTransport(git_smart_subtransport* tr);
 
-    tls::CertificateStore& certStore(const std::string& accountUri) const;
-    tls::CertificateStore& certStoreFromId(const std::string& accountId) const;
-
+    tls::CertificateStore& certStore(const std::string& accountId) const;
 
 private:
     Manager();

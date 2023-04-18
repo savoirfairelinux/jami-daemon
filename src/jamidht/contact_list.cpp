@@ -42,7 +42,7 @@ ContactList::ContactList(const std::string& accountId,
 {
     if (cert) {
         // TODO share with account.
-        trust_ = std::make_unique<tls::TrustStore>(jami::Manager::instance().certStoreFromId(accountId_));
+        trust_ = std::make_unique<tls::TrustStore>(jami::Manager::instance().certStore(accountId_));
         accountTrust_.add(*cert);
     }
 }
@@ -425,7 +425,7 @@ ContactList::loadKnownDevices()
         std::map<dht::PkId, std::pair<std::string, uint64_t>> knownDevices;
         oh.get().convert(knownDevices);
         for (const auto& d : knownDevices) {
-            if (auto crt = jami::Manager::instance().certStoreFromId(accountId_).getCertificate(d.first.toString())) {
+            if (auto crt = jami::Manager::instance().certStore(accountId_).getCertificate(d.first.toString())) {
                 if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
                     JAMI_WARN("[Contacts] can't add device %s", d.first.toString().c_str());
             } else {
@@ -441,7 +441,7 @@ ContactList::loadKnownDevices()
             std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
             oh.get().convert(knownDevices);
             for (const auto& d : knownDevices) {
-                if (auto crt = jami::Manager::instance().certStoreFromId(accountId_).getCertificate(d.first.toString())) {
+                if (auto crt = jami::Manager::instance().certStore(accountId_).getCertificate(d.first.toString())) {
                     if (not foundAccountDevice(crt,
                                                d.second.first,
                                                clock::from_time_t(d.second.second)))
@@ -515,7 +515,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     auto it = knownDevices_.emplace(id, KnownDevice {crt, name, updated});
     if (it.second) {
         JAMI_DBG("[Contacts] Found account device: %s %s", name.c_str(), id.toString().c_str());
-        jami::Manager::instance().certStoreFromId(accountId_).pinCertificate(crt);
+        jami::Manager::instance().certStore(accountId_).pinCertificate(crt);
         if (crt->ocspResponse) {
             unsigned int status = crt->ocspResponse->getCertificateStatus();
             if (status == GNUTLS_OCSP_CERT_REVOKED) {

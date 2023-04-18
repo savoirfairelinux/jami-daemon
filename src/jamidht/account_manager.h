@@ -264,6 +264,8 @@ public:
                               RegistrationCallback cb)
         = 0;
 
+    tls::CertificateStore& certStore() const;
+
 protected:
     std::string path_;
     OnAsync onAsync_;
