@@ -46,7 +46,7 @@ struct JamiAccountConfig : public SipAccountBaseConfig {
     bool dhtPeerDiscovery {false};
     bool accountPeerDiscovery {false};
     bool accountPublish {false};
-    std::string bootstrapListUrl {"https://config.jami.net/boostrapList"};
+    std::string bootstrapUrl {"https://config.jami.net/bootstrapList"};
 
     bool proxyEnabled {false};
     std::string proxyServer {"dhtproxy.jami.net:[80-95]"};

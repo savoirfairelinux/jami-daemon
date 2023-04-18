@@ -513,8 +513,9 @@ AccountManager::findCertificate(
         dht_->findCertificate(h,
                               [cb = std::move(cb), this](
                                   const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                                  if (crt && info_)
+                                  if (crt && info_) {
                                       Manager::instance().certStore(info_->accountId).pinCertificate(crt);
+                                  }
                                   if (cb)
                                       cb(crt);
                               });
@@ -717,7 +718,13 @@ AccountManager::forEachDevice(
             if (dev.from != to)
                 return true;
             state->remaining++;
+            JAMI_ERROR("@@@@@@@@ FOUND D {}", dev.dev.toString());
             findCertificate(dev.dev, [state](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                if (cert) {
+                    JAMI_ERROR("@@@@@@ GET CERT!");
+                } else {
+                    JAMI_ERROR("@@@@@@ NOP GET CERT!");
+                }
                 state->found(cert ? cert->getSharedPublicKey()
                                   : std::shared_ptr<dht::crypto::PublicKey> {});
             });

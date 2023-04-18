@@ -80,7 +80,7 @@ public:
     /**
      * Bootstrap swarm managers to other peers
      */
-    void bootstrap();
+    void bootstrap(const std::string& convId = "");
 
     /**
      * Clear not removed fetch
@@ -380,11 +380,11 @@ public:
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
     /**
-     * Return if a device is banned from a conversation
+     * Return if a device or member is banned from a conversation
      * @param convId
-     * @param deviceId
+     * @param uri
      */
-    bool isBannedDevice(const std::string& convId, const std::string& deviceId) const;
+    bool isBanned(const std::string& convId, const std::string& uri) const;
 
     // Remove swarm
     /**

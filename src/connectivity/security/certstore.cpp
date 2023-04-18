@@ -135,6 +135,7 @@ CertificateStore::getPinnedCertificates() const
 std::shared_ptr<crypto::Certificate>
 CertificateStore::getCertificate(const std::string& k)
 {
+    JAMI_ERROR("@@@@@@@ {} GET k {}", fmt::ptr(this), k);
     auto getCertificate_ = [this](const std::string& k) -> std::shared_ptr<crypto::Certificate> {
         auto cit = certs_.find(k);
         if (cit == certs_.cend())
@@ -297,6 +298,7 @@ CertificateStore::unpinCertificatePath(const std::string& path)
 std::vector<std::string>
 CertificateStore::pinCertificate(const std::vector<uint8_t>& cert, bool local) noexcept
 {
+    JAMI_ERROR("@@@@@@@ {} PIN {}", fmt::ptr(this), crypto::Certificate(cert).getLongId().toString());
     try {
         return pinCertificate(crypto::Certificate(cert), local);
     } catch (const std::exception& e) {

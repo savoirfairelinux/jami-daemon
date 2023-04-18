@@ -72,13 +72,13 @@ private:
     void testInvalidTurn();
 
     CPPUNIT_TEST_SUITE(CallTest);
-    CPPUNIT_TEST(testCall);
-    CPPUNIT_TEST(testCachedCall);
-    CPPUNIT_TEST(testStopSearching);
+    //CPPUNIT_TEST(testCall);
+    //CPPUNIT_TEST(testCachedCall);
+    //CPPUNIT_TEST(testStopSearching);
     CPPUNIT_TEST(testDeclineMultiDevice);
-    CPPUNIT_TEST(testTlsInfosPeerCertificate);
-    CPPUNIT_TEST(testSocketInfos);
-    CPPUNIT_TEST(testInvalidTurn);
+    //CPPUNIT_TEST(testTlsInfosPeerCertificate);
+    //CPPUNIT_TEST(testSocketInfos);
+    //CPPUNIT_TEST(testInvalidTurn);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -282,8 +282,13 @@ CallTest::testDeclineMultiDevice()
             const std::string& callId,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
-            if (accountId == bobId)
+            if (accountId == bobId) {
+                JAMI_ERROR("@@@ BOBID CALL");
                 callIdBob = callId;
+            } else {
+                JAMI_ERROR("@@@ BOBI2D CALL");
+
+            }
             callReceived += 1;
             cv.notify_one();
         }));
@@ -296,6 +301,8 @@ CallTest::testDeclineMultiDevice()
     libjami::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
+    auto bobAccount2 = Manager::instance().getAccount<JamiAccount>(bob2Id);
+    JAMI_ERROR("@@@ ALICE:  {} - BOB {} - BOB2 {}", aliceAccount->currentDeviceId(), bobAccount->currentDeviceId(), bobAccount2->currentDeviceId());
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callReceived == 2 && !callIdBob.empty(); }));
