@@ -189,12 +189,17 @@ public:
 
     std::map<std::string, std::vector<DeviceId>> devices() const
     {
+        auto repo = repository();
+        if (!repo)
+            return {};
         std::map<std::string, std::vector<DeviceId>> memberDevices;
         std::string deviceDir = fmt::format("{}devices/",
-                                            git_repository_workdir(repository().get()));
+                                            git_repository_workdir(repo.get()));
         for (const auto& file : fileutils::readDirectory(deviceDir)) {
             auto cert = std::make_shared<dht::crypto::Certificate>(
                 fileutils::loadFile(deviceDir + file));
+            if (!cert)
+                continue;
             memberDevices[cert->getIssuerUID()].emplace_back(cert->getPublicKey().getLongId());
         }
         return memberDevices;
