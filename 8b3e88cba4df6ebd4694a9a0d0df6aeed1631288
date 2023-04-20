@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc2a7da9_67240823",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2023-04-20T14:03:07Z",
+      "side": 1,
+      "message": "I don\u0027t know why, but it doesn\u0027t compile.\n\"Directory \u0027/home/pnicolas/jami-client-android/jami-android\u0027 does not contain a Gradle build.\"\n",
+      "revId": "8b3e88cba4df6ebd4694a9a0d0df6aeed1631288",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
