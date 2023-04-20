@@ -198,10 +198,11 @@ public:
 
     /**
      * Add a new commit to the conversation
-     * @param msg     The commit message of the commit
+     * @param msg           The commit message of the commit
+     * @param verifyDevice  If we need to validate that certificates are correct (used for testing)
      * @return <empty> on failure, else the message id
      */
-    std::string commitMessage(const std::string& msg);
+    std::string commitMessage(const std::string& msg, bool verifyDevice = true);
 
     std::vector<std::string> commitMessages(const std::vector<std::string>& msgs);
 

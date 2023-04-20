@@ -72,7 +72,7 @@ addVote(std::shared_ptr<JamiAccount> account,
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
     ConversationRepository cr(account->weak(), convId);
-    cr.commitMessage(Json::writeString(wbuilder, json));
+    cr.commitMessage(Json::writeString(wbuilder, json), false);
 }
 
 void

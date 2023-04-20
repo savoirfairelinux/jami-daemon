@@ -145,7 +145,7 @@ public:
     void addUserDevice();
     // Verify that the device in the repository is still valid
     bool validateDevice();
-    std::string commit(const std::string& msg);
+    std::string commit(const std::string& msg, bool verifyDevice = true);
     ConversationMode mode() const;
 
     // NOTE! GitDiff needs to be deteleted before repo
@@ -1639,9 +1639,9 @@ ConversationRepository::Impl::validateDevice()
     auto memberPath = fmt::format("members/{}.crt", account->getUsername());
     std::string parentPath = git_repository_workdir(repo.get());
     std::string relativeParentPath;
-    if (fileutils::isFile(git_repository_workdir(repo.get()) + adminPath))
+    if (fileutils::isFile(parentPath + adminPath))
         relativeParentPath = adminPath;
-    else if (fileutils::isFile(git_repository_workdir(repo.get()) + memberPath))
+    else if (fileutils::isFile(parentPath + memberPath))
         relativeParentPath = memberPath;
     parentPath += relativeParentPath;
     if (relativeParentPath.empty()) {
@@ -1673,9 +1673,9 @@ ConversationRepository::Impl::validateDevice()
 }
 
 std::string
-ConversationRepository::Impl::commit(const std::string& msg)
+ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
 {
-    if (!validateDevice())
+    if (verifyDevice && !validateDevice())
         return {};
     auto account = account_.lock();
     auto name = getDisplayName();
@@ -3027,10 +3027,10 @@ ConversationRepository::Impl::addUserDevice()
 }
 
 std::string
-ConversationRepository::commitMessage(const std::string& msg)
+ConversationRepository::commitMessage(const std::string& msg, bool verifyDevice)
 {
     pimpl_->addUserDevice();
-    return pimpl_->commit(msg);
+    return pimpl_->commit(msg, verifyDevice);
 }
 
 std::vector<std::string>
@@ -3350,7 +3350,7 @@ ConversationRepository::leave()
         });
     }
 
-    return commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commit(Json::writeString(wbuilder, json), false);
 }
 
 void

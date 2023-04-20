@@ -156,7 +156,6 @@ ConversationMembersEventTest::tearDown()
 {
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
-
     if (bob2Id.empty()) {
         wait_for_removal_of({aliceId, bobId, carlaId});
     } else {
@@ -1588,6 +1587,25 @@ ConversationMembersEventTest::testMemberJoinsNoBadFile()
 
     // Accept for alice and makes different heads
     addFile(carlaAccount, convId, "BADFILE");
+    // add /members + /devices
+    auto cert = carlaAccount->identity().second;
+    auto parentCert = cert->issuer;
+    auto uri = parentCert->getId().toString();
+    std::string membersPath = fmt::format("{}/{}/members/", repoPathCarla, convId);
+    std::string devicesPath = fmt::format("{}/{}/devices/", repoPathCarla, convId);
+    std::string memberFile = fmt::format("{}{}.crt", membersPath, carlaUri);
+    // Add members/uri.crt
+    fileutils::recursive_mkdir(membersPath, 0700);
+    fileutils::recursive_mkdir(devicesPath, 0700);
+    auto file = fileutils::ofstream(memberFile, std::ios::trunc | std::ios::binary);
+    file << parentCert->toString(true);
+    file.close();
+    std::string invitedPath = fmt::format("{}/{}/invited/{}", repoPathCarla, convId, carlaUri);
+    fileutils::remove(invitedPath);
+    std::string devicePath = fmt::format("{}{}.crt", devicesPath, carlaAccount->currentDeviceId());
+    file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    file << cert->toString(false);
+    addAll(carlaAccount, convId);
     ConversationRepository repo(carlaAccount, convId);
 
     // Start Carla, should merge and all messages should be there
@@ -1684,7 +1702,7 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
     ConversationRepository cr(carlaAccount->weak(), convId);
-    cr.commitMessage(Json::writeString(wbuilder, json));
+    cr.commitMessage(Json::writeString(wbuilder, json), false);
 
     // Start Carla, should merge and all messages should be there
     carlaAccount->convModule()->loadConversations(); // Because of the copy
@@ -1768,18 +1786,22 @@ ConversationMembersEventTest::testMemberJoinsInviteRemoved()
     std::remove(ciPathCarla.c_str());
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
-    // Let invited, but add /members + /devices
+    // add /members + /devices
     auto cert = carlaAccount->identity().second;
     auto parentCert = cert->issuer;
     auto uri = parentCert->getId().toString();
-    std::string membersPath = repoPathCarla + "members" + DIR_SEPARATOR_STR;
-    std::string memberFile = membersPath + DIR_SEPARATOR_STR + carlaUri + ".crt";
+    std::string membersPath = fmt::format("{}/{}/members/", repoPathCarla, convId);
+    std::string devicesPath = fmt::format("{}/{}/devices/", repoPathCarla, convId);
+    std::string memberFile = fmt::format("{}{}.crt", membersPath, carlaUri);
     // Add members/uri.crt
     fileutils::recursive_mkdir(membersPath, 0700);
+    fileutils::recursive_mkdir(devicesPath, 0700);
     auto file = fileutils::ofstream(memberFile, std::ios::trunc | std::ios::binary);
     file << parentCert->toString(true);
     file.close();
-
+    std::string devicePath = fmt::format("{}{}.crt", devicesPath, carlaAccount->currentDeviceId());
+    file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    file << cert->toString(false);
     addAll(carlaAccount, convId);
     Json::Value json;
     json["action"] = "join";
