@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce47891b_00c547f7",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-20T19:44:16Z",
+      "side": 1,
+      "message": "TODO how do we detect revoked device? Seems to not regenerate a new device...",
+      "range": {
+        "startLine": 59,
+        "startChar": 16,
+        "endLine": 59,
+        "endChar": 28
+      },
+      "revId": "ca24295aa24c42e3d012f4dc249473dfe9008651",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

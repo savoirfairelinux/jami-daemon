@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c8f18bca_5ecbd421",
+        "filename": "src/connectivity/security/tls_session.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 725,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-20T19:44:16Z",
+      "side": 1,
+      "message": "I don\u0027t see a better way",
+      "range": {
+        "startLine": 719,
+        "startChar": 17,
+        "endLine": 725,
+        "endChar": 5
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f05e550_6b56b11d",
+        "filename": "src/jami/account_const.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-20T19:44:16Z",
+      "side": 1,
+      "message": "wrong",
+      "range": {
+        "startLine": 149,
+        "startChar": 60,
+        "endLine": 149,
+        "endChar": 72
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89bb5d40_9c13b664",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-20T19:44:16Z",
+      "side": 1,
+      "message": "missing TODO",
+      "range": {
+        "startLine": 45,
+        "startChar": 39,
+        "endLine": 45,
+        "endChar": 49
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b989a4ff_b6fc29da",
+        "filename": "src/jamidht/conversation_channel_handler.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-20T19:44:16Z",
+      "side": 1,
+      "message": "extract",
+      "range": {
+        "startLine": 59,
+        "startChar": 36,
+        "endLine": 60,
+        "endChar": 37
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "685ac471_76e691ad",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 601,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-20T19:44:16Z",
+      "side": 1,
+      "message": "extract",
+      "range": {
+        "startLine": 601,
+        "startChar": 49,
+        "endLine": 601,
+        "endChar": 60
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f29a4897_e1a390dc",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1274,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-20T19:44:16Z",
+      "side": 1,
+      "message": "extract",
+      "range": {
+        "startLine": 1274,
+        "startChar": 9,
+        "endLine": 1274,
+        "endChar": 18
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8d245b1_b426a475",
+        "filename": "src/jamidht/swarm/swarm_channel_handler.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-20T19:44:16Z",
+      "side": 1,
+      "message": "extract",
+      "range": {
+        "startLine": 60,
+        "startChar": 43,
+        "endLine": 61,
+        "endChar": 43
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
