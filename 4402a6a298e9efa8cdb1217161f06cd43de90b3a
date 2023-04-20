@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb8797d3_8d8d6964",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2023-04-20T13:41:44Z",
+      "side": 1,
+      "message": "Looks good to me, why did jenkins fail ?",
+      "revId": "4402a6a298e9efa8cdb1217161f06cd43de90b3a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
