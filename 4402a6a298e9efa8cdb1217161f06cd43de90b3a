@@ -16,6 +16,23 @@
       "message": "Looks good to me, why did jenkins fail ?",
       "revId": "4402a6a298e9efa8cdb1217161f06cd43de90b3a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8f917ada_dec8a876",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2023-04-20T13:55:54Z",
+      "side": 1,
+      "message": "I don\u0027t know why, but it doesnt work for me. \n\"Directory \u0027/home/pnicolas/jami-client-android/jami-android\u0027 does not contain a Gradle build.\"",
+      "revId": "4402a6a298e9efa8cdb1217161f06cd43de90b3a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
