@@ -157,6 +157,7 @@ if get_option('default_library') != 'static'
 endif
 
 add_project_arguments('-DASIO_STANDALONE', language: ['c', 'cpp'])
+add_project_arguments('-DMSGPACK_NO_BOOST', language: ['c', 'cpp'])
 
 subdir('src')
 
