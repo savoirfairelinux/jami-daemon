@@ -232,7 +232,7 @@ AS_IF([test "x$enable_shared" == "xyes"],
   [RING_SHARED=no])
 AC_MSG_RESULT([$RING_SHARED])
 
-DAEMONCPPFLAGS+=" -DASIO_STANDALONE"
+DAEMONCPPFLAGS+=" -DASIO_STANDALONE -DMSGPACK_NO_BOOST"
 
 dnl
 dnl  Check for the contrib directory
