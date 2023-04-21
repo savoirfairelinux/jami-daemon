@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d61e52ac_8a1258b7",
+        "filename": "src/connectivity/security/tls_session.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 725,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-21T17:37:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c8f18bca_5ecbd421",
+      "range": {
+        "startLine": 719,
+        "startChar": 17,
+        "endLine": 725,
+        "endChar": 5
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1f05e550_6b56b11d",
