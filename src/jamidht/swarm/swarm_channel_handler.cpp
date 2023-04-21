@@ -57,8 +57,8 @@ SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& 
     auto conversationId = name.substr(sep + 1);
     if (auto acc = account_.lock())
         if (auto convModule = acc->convModule()) {
-            auto res = !convModule->isBannedDevice(conversationId,
-                                                   cert->issuer->getLongId().toString());
+            auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
+            res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
             return res;
         }
     return false;

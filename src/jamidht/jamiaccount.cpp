@@ -2038,7 +2038,7 @@ JamiAccount::doRegister_()
                     }
 
                     // Check if pull from banned device
-                    if (convModule()->isBannedDevice(conversationId, remoteDevice)) {
+                    if (convModule()->isBanned(conversationId, remoteDevice)) {
                         JAMI_WARNING(
                             "[Account {:s}] Git server requested for conversation {:s}, but the "
                             "device is "

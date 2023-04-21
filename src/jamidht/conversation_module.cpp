@@ -2219,12 +2219,22 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
 }
 
 bool
-ConversationModule::isBannedDevice(const std::string& convId, const std::string& deviceId) const
+ConversationModule::isBanned(const std::string& convId, const std::string& uri) const
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    auto conversation = pimpl_->conversations_.find(convId);
-    return conversation == pimpl_->conversations_.end() || !conversation->second
-           || conversation->second->isBanned(deviceId);
+    {
+        std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+        auto conversation = pimpl_->conversations_.find(convId);
+        if (conversation == pimpl_->conversations_.end() || !conversation->second)
+            return true;
+        if (conversation->second->mode() != ConversationMode::ONE_TO_ONE) {
+            return conversation->second->isBanned(uri);
+        }
+    }
+    // If 1:1 we check the certificate status
+    if (auto acc = pimpl_->account_.lock()) {
+        return acc->accountManager()->getCertificateStatus(uri) == tls::TrustStore::PermissionStatus::BANNED;
+    }
+    return true;
 }
 
 void
