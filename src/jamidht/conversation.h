@@ -234,7 +234,7 @@ public:
      * Check if we're at least connected to one node
      * @return if the DRT is connected
      */
-    bool isBoostraped() const;
+    bool isBootstraped() const;
     /**
      * Retrieve the uri from a deviceId
      * @note used by swarm manager (peersToSyncWith)

@@ -252,7 +252,7 @@ public:
                      const std::string& newBody,
                      const std::string& editedId);
 
-    void boostrapCb(const std::string& convId);
+    void bootstrapCb(const std::string& convId);
 
     // The following informations are stored on the disk
     mutable std::mutex convInfosMtx_; // Note, should be locked after conversationsMtx_ if needed
@@ -598,7 +598,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         conversation->onBootstrapStatus(bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
         conversation->bootstrap(
-            std::bind(&ConversationModule::Impl::boostrapCb, this, conversation->id()));
+            std::bind(&ConversationModule::Impl::bootstrapCb, this, conversation->id()));
         auto removeRepo = false;
         {
             std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -916,7 +916,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         std::shuffle(nonConnectedMembers.begin(), nonConnectedMembers.end(), acc->rand);
         if (nonConnectedMembers.size() > 2)
             nonConnectedMembers.resize(2);
-        if (!conversation.isBoostraped()) {
+        if (!conversation.isBootstraped()) {
             JAMI_DEBUG("[Conversation {}] Not yet bootstraped, save notification",
                        conversation.id());
             // Because we can get some git channels but not bootstraped, we should keep this
@@ -1027,7 +1027,7 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
 }
 
 void
-ConversationModule::Impl::boostrapCb(const std::string& convId)
+ConversationModule::Impl::bootstrapCb(const std::string& convId)
 {
     std::string commitId;
     {
@@ -1273,7 +1273,7 @@ ConversationModule::bootstrap()
             conv->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
             conv->bootstrap(
-                std::bind(&ConversationModule::Impl::boostrapCb, pimpl_.get(), conv->id()));
+                std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conv->id()));
         }
     }
 }
@@ -1500,7 +1500,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
         conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
         conversation->bootstrap(
-            std::bind(&ConversationModule::Impl::boostrapCb, pimpl_.get(), conversation->id()));
+            std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conversation->id()));
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] Error while generating a conversation %s",
                  pimpl_->accountId_.c_str(),

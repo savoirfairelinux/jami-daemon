@@ -1030,7 +1030,7 @@ Conversation::peersToSyncWith() const
 }
 
 bool
-Conversation::isBoostraped() const
+Conversation::isBootstraped() const
 {
     const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
     return !routingTable.getNodes().empty();
