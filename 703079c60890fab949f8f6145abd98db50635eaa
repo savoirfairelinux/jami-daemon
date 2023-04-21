@@ -118,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "01596e4a_d4d5d0a5",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-21T18:21:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "89bb5d40_9c13b664",
+      "range": {
+        "startLine": 45,
+        "startChar": 39,
+        "endLine": 45,
+        "endChar": 49
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b989a4ff_b6fc29da",
