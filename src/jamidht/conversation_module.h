@@ -80,7 +80,7 @@ public:
     /**
      * Bootstrap swarm managers to other peers
      */
-    void bootstrap();
+    void bootstrap(const std::string& convId = "");
 
     /**
      * Clear not removed fetch

@@ -1264,16 +1264,26 @@ ConversationModule::loadConversations()
 }
 
 void
-ConversationModule::bootstrap()
+ConversationModule::bootstrap(const std::string& convId)
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    for (auto& [_, conv] : pimpl_->conversations_) {
+    auto bootstrap = [&](auto& conv) {
         if (conv) {
 #ifdef LIBJAMI_TESTABLE
             conv->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
             conv->bootstrap(
                 std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conv->id()));
+        }
+    };
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    if (convId.empty()) {
+        for (auto& [_, conv] : pimpl_->conversations_) {
+            bootstrap(conv);
+        }
+    } else {
+        auto it = pimpl_->conversations_.find(convId);
+        if (it != pimpl_->conversations_.end()) {
+            bootstrap(it->second);
         }
     }
 }
