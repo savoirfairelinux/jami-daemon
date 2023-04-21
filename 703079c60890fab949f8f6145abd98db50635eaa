@@ -93,6 +93,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8577509_67682fe2",
+        "filename": "src/jamidht/conversation_channel_handler.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-21T15:14:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b989a4ff_b6fc29da",
+      "range": {
+        "startLine": 59,
+        "startChar": 36,
+        "endLine": 60,
+        "endChar": 37
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "685ac471_76e691ad",
@@ -106,6 +130,30 @@
       "writtenOn": "2023-04-20T19:44:16Z",
       "side": 1,
       "message": "extract",
+      "range": {
+        "startLine": 601,
+        "startChar": 49,
+        "endLine": 601,
+        "endChar": 60
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4e0a8297_f387766e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 601,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-21T15:14:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "685ac471_76e691ad",
       "range": {
         "startLine": 601,
         "startChar": 49,
@@ -139,6 +187,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "386b5156_d4e3220a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 1274,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-21T15:14:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f29a4897_e1a390dc",
+      "range": {
+        "startLine": 1274,
+        "startChar": 9,
+        "endLine": 1274,
+        "endChar": 18
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f8d245b1_b426a475",
@@ -152,6 +224,30 @@
       "writtenOn": "2023-04-20T19:44:16Z",
       "side": 1,
       "message": "extract",
+      "range": {
+        "startLine": 60,
+        "startChar": 43,
+        "endLine": 61,
+        "endChar": 43
+      },
+      "revId": "703079c60890fab949f8f6145abd98db50635eaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "995080d6_3e378c87",
+        "filename": "src/jamidht/swarm/swarm_channel_handler.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-21T15:14:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f8d245b1_b426a475",
       "range": {
         "startLine": 60,
         "startChar": 43,
