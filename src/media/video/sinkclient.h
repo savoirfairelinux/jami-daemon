@@ -33,7 +33,7 @@
 #include <vector>
 #include <memory>
 
-#define DEBUG_FPS
+//#define DEBUG_FPS
 
 namespace jami {
 class MediaFilter;
