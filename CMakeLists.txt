@@ -558,6 +558,7 @@ else()
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::webrtcap)
         target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
     endif()
+    install (TARGETS ${PROJECT_NAME})
 
     if (JAMI_JNI)
         # Build jni binding
@@ -630,6 +631,7 @@ else()
             ${DBUS_ADAPTOR_FILES}
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
+        install (TARGETS jamid)
     endif()
 
 endif()
