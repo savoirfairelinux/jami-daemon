@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "083eccf2_c9766312",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-04-25T18:46:07Z",
+      "side": 1,
+      "message": "breaks the client and jenkins daemon-gnu-linux. I don\u0027t have a lead yet",
+      "revId": "1364200d2a11653370a3bc570d17dd01a99040d0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
