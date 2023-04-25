@@ -473,6 +473,7 @@ if(MSVC)
 
    set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
 else()
+    include (GNUInstallDirs)
     message("Contrib path: ${CONTRIB_PATH}")
     list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
@@ -558,6 +559,7 @@ else()
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::webrtcap)
         target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
     endif()
+    install (TARGETS ${PROJECT_NAME})
 
     if (JAMI_JNI)
         # Build jni binding
@@ -630,6 +632,7 @@ else()
             ${DBUS_ADAPTOR_FILES}
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
+        install (TARGETS jamid)
     endif()
 
 endif()
