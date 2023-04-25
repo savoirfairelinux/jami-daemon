@@ -995,7 +995,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 return;
             if (!ok) {
                 JAMI_ERR("ICE negotiation failed");
-                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                 return;
             }
 
@@ -1003,7 +1003,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 [w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
                     if (auto shared = w.lock())
                         if (!shared->onRequestOnNegoDone(req))
-                            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                            eraseInfo();
                 });
         };
 
@@ -1029,7 +1029,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         }
         // We need to detect any shutdown if the ice session is destroyed before going to the TLS session;
         info->ice_->setOnShutdown([eraseInfo]() {
-            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+            dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
         });
         info->ice_->initIceInstance(ice_config);
     });
