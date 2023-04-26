@@ -34,6 +34,7 @@
 
 #ifdef HAVE_CXXABI_H
 #include <cxxabi.h>
+#include <string>
 
 template<typename T>
 std::string demangle()
