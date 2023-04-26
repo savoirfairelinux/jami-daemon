@@ -18,6 +18,14 @@ include ./sip/Makefile.am
 
 # libjami
 
+if ENABLE_PLUGIN
+if HAVE_OSX
+LIBARCHIVE = $(MINIZIP_LIBS)
+else
+LIBARCHIVE = $(ARCHIVE_LIBS)
+endif
+endif
+
 libjami_la_LIBADD += \
 	$(ALSA_LIBS) \
 	$(PULSEAUDIO_LIBS) \
@@ -25,6 +33,7 @@ libjami_la_LIBADD += \
 	$(SPEEXDSP_LIBS) \
 	$(PJPROJECT_LIBS) \
 	$(OPENDHT_LIBS) \
+	$(LIBARCHIVE) \
 	$(LIBUPNP_LIBS) \
 	$(LIBGIT2_LIBS) \
 	$(LIBAVCODEC_LIBS) \
@@ -42,16 +51,7 @@ libjami_la_LIBADD += \
 	$(FMT_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBCRYPTO_LIBS) \
-	$(ARCHIVE_LIBS) \
 	$(ZLIB_LIBS)
-
-if ENABLE_PLUGIN
-if HAVE_OSX
-libjami_la_LIBADD += $(MINIZIP_LIBS)
-else
-libjami_la_LIBADD += $(ARCHIVE_LIBS)
-endif
-endif
 
 # XXX: It seems this should be the default value when otherwise left
 # unspecified, but for some reason this is required otherwise the
