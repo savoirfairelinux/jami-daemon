@@ -22,6 +22,7 @@
 
 #include "noncopyable.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <map>
