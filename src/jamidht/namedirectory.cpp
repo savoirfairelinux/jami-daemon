@@ -357,10 +357,10 @@ NameDirectory::registerName(const std::string& addr,
             cb(RegistrationResponse::alreadyTaken);
         return;
     }
-    std::string body = fmt::format("{\"addr\":\"{}\",\"owner\":\"{}\",\"signature\":\"{}\",\"publickey\":\"{}\"}",
-        addr, 
-        owner, 
-        signedname, 
+    std::string body = fmt::format("{{\"addr\":\"{}\",\"owner\":\"{}\",\"signature\":\"{}\",\"publickey\":\"{}\"}}",
+        addr,
+        owner,
+        signedname,
         base64::encode(publickey));
     auto request = std::make_shared<Request>(*httpContext_,
                                              resolver_,

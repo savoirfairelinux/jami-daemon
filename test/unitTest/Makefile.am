@@ -261,4 +261,10 @@ ut_swarm_conversation_SOURCES = swarm/swarm_conversation.cpp common.cpp
 check_PROGRAMS += ut_swarm_spread
 ut_swarm_spread_SOURCES = swarm/swarm_spread.cpp common.cpp
 
+#
+# namedirectory
+#
+check_PROGRAMS += ut_namedirectory
+ut_namedirectory_SOURCES = namedirectory/namedirectory.cpp common.cpp
+
 TESTS = $(check_PROGRAMS)
