@@ -1,0 +1,12 @@
+default-account:
+      type: RING
+      upnpEnabled: "true"
+      archivePassword: ""
+      archivePIN: ""
+      archivePath: ""
+
+accounts:
+
+  alice:
+    displayName: ALICE
+    alias: ALICE
