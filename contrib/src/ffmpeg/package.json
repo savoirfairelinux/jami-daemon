@@ -10,6 +10,7 @@
         "media-sdk"
     ],
     "patches": [
+        "remove-mjpeg-log.patch",
         "change-RTCP-ratio.patch",
         "rtp_ext_abs_send_time.patch",
         "libopusenc-reload-packet-loss-at-encode.patch",
