@@ -87,8 +87,8 @@
             <tp:docstring>
               Once enabled using the startSmartInfo method, this signal is emitted every refreshTimeMS
             </tp:docstring>
-             <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
-             <arg type="a{ss}" name="info" direction="out" />
+             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+             <arg type="a{ss}" name="info"/>
        </signal>
 
         <method name="accept" tp:name-for-bindings="accept">
@@ -761,7 +761,7 @@
                 The caller phone number.
               </tp:docstring>
             </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="VectorMapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="mediaList">
               <tp:docstring>
                 The list of media offered in the incoming call.
@@ -791,7 +791,7 @@
                 Call ID of the incoming call.
               </tp:docstring>
             </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="VectorMapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="mediaList">
               <tp:docstring>
                 The list of media offered in the incoming call.
@@ -807,7 +807,7 @@
             <arg type="s" name="accountId" />
             <arg type="s" name="callId" />
             <arg type="s" name="from" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="MapStringString"/>
             <arg type="a{ss}" name="messages" />
         </signal>
 
