@@ -229,7 +229,7 @@ public:
     virtual bool setPushNotificationToken(const std::string& pushDeviceToken = "")
     {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-        if (config_->deviceKey != pushDeviceToken) {
+        if (config_ && config_->deviceKey != pushDeviceToken) {
             config_->deviceKey = pushDeviceToken;
             saveConfig();
             return true;
@@ -240,7 +240,7 @@ public:
     virtual bool setPushNotificationTopic(const std::string& topic = "")
     {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-        if (config_->notificationTopic != topic) {
+        if (config_ && config_->notificationTopic != topic) {
             config_->notificationTopic = topic;
             saveConfig();
             return true;
