@@ -2815,9 +2815,10 @@ Manager::loadAccountMap(const YAML::Node& node)
                                                          + DIR_SEPARATOR_STR + "config.yml"] {
             if (fileutils::isFile(configFile)) {
                 try {
+                    auto configNode = YAML::LoadFile(configFile);
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
                         auto config = a->buildConfig();
-                        config->unserialize(YAML::LoadFile(configFile));
+                        config->unserialize(configNode);
                         a->setConfig(std::move(config));
                     }
                 } catch (const std::exception& e) {
