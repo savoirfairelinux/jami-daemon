@@ -632,7 +632,7 @@ else()
             ${DBUS_ADAPTOR_FILES}
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
-        install (TARGETS jamid)
+        install (TARGETS jamid DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
     endif()
 
 endif()
