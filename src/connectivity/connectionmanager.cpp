@@ -35,7 +35,6 @@
 #include <set>
 
 static constexpr std::chrono::seconds DHT_MSG_TIMEOUT {30};
-static constexpr int MAX_TENTATIVES {100};
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 using CallbackId = std::pair<jami::DeviceId, dht::Value::Id>;
 
@@ -503,23 +502,18 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             cb(nullptr, deviceId);
             return;
         }
-        dht::Value::Id vid;
-        auto tentatives = 0;
-        do {
-            vid = ValueIdDist(1, JAMI_ID_MAX_VAL)(sthis->account.rand);
-            --tentatives;
-        } while (sthis->getPendingCallbacks(deviceId, vid).size() != 0
-                 && tentatives != MAX_TENTATIVES);
-        if (tentatives == MAX_TENTATIVES) {
-            JAMI_ERR("Couldn't get a current random channel number");
-            cb(nullptr, deviceId);
-            return;
-        }
+        dht::Value::Id vid = ValueIdDist(1, JAMI_ID_MAX_VAL)(sthis->account.rand);
         auto isConnectingToDevice = false;
         {
             std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
-            // Check if already connecting
             auto pendingsIt = sthis->pendingCbs_.find(deviceId);
+            if (pendingsIt != sthis->pendingCbs_.end()) {
+                const auto& pendings = pendingsIt->second;
+                while (std::find_if(pendings.begin(), pendings.end(), [&](const auto& it){ return it.vid == vid; }) != pendings.end()) {
+                    vid = ValueIdDist(1, JAMI_ID_MAX_VAL)(sthis->account.rand);
+                }
+            }
+            // Check if already connecting
             isConnectingToDevice = pendingsIt != sthis->pendingCbs_.end();
             // Save current request for sendChannelRequest.
             // Note: do not return here, cause we can be in a state where first
