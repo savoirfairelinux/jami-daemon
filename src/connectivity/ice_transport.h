@@ -246,7 +246,6 @@ public:
 
 private:
     class Impl;
-    bool isCancelled_ {false};
     std::unique_ptr<Impl> pimpl_;
 };
 
