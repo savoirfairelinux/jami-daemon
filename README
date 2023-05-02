@@ -59,6 +59,17 @@ https://www.savoirfairelinux.com/
 How to compile on Linux
 -----------------------
 
+A) With CMake
+
+mkdir build
+cd build
+cmake .. -DJAMI_DBUS=On
+make -j4
+
+This should build the 'contrib' dependencies, then the daemon
+
+B) With Meson
+
 1) Compile the dependencies first
 
 cd contrib
@@ -67,17 +78,7 @@ cd native
 ../bootstrap
 make
 
-2) Then the jamid application
-
-A) With Autotools (recommended)
-
-cd ../..
-./autogen.sh
-./configure
-make
-make install
-
-B) With Meson
+2) Then the jamid application and/or libjami library
 
 cd ../../
 mkdir build
@@ -87,20 +88,45 @@ cd build
 ninja
 ninja install
 
-Done !
+C) With Autotools
 
-Note:
-If you don't want SHM to be used, you can build with `--without-dbus`
+1) Compile the dependencies first
 
-How to compile on Linux for Android
+cd contrib
+mkdir native
+cd native
+../bootstrap
+make
+
+2) Then the jamid application and/or libjami library
+
+cd ../..
+./autogen.sh
+./configure
+make
+make install
+
+How to compile the daemon for Android (on a Linux or macOS host)
 -----------------------------------
+
+A) With CMake
+
+mkdir build
+cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_API=24 -DBUILD_EXTRA_TOOLS=On -DJAMI_JNI=On -DJAMI_JNI_PACKAGEDIR=java
+make -j4
+
+Replace arm64-v8a with the desired target ABI.
+See the README in jami-client-android for instructions to build the Jami client for Android.
+
+B) With Meson
 
 1) Download and install Android NDK
 2) Compile the dependencies
 
 export ANDROID_NDK=<NDK>
 export ANDROID_ABI=arm64-v8a
-export ANDROID_API=29
+export ANDROID_API=24
 export TOOLCHAIN=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64
 export TARGET=aarch64-linux-android
 export CC=$TOOLCHAIN/bin/$TARGET$ANDROID_API-clang
@@ -170,7 +196,6 @@ docker build --tag jami-daemon .
 docker build --tag jami-daemon --build-arg config_args="--with-nodejs" .
 ```
 
-
 Common Issues
 -------------
 
@@ -189,15 +214,6 @@ Currently it is not possible to use the DBus interface mechanism, and the
 interaction between daemon and client will not work; for each platform where
 D-Bus is not available the client should implement all the methods in the
 *_stub.cpp files.
-
-
-SIP accounts
----------------------
-
-You may register an existing SIP account through the account wizard in both
-clients (KDE and GNOME).
-By doing this, you will be able to call other accounts known to this server.
-
 
 Contributing to Jami
 ------------------------
