@@ -230,12 +230,16 @@ public:
     std::condition_variable waitDataCv_ = {};
     pj_size_t lastSentLen_ {0};
     bool destroying_ {false};
+    bool cancelled_ {false}; // TODO destroying instead
     onShutdownCb scb {};
 
     void cancelOperations()
     {
         for (auto& c : peerChannels_)
             c.stop();
+        std::lock_guard<std::mutex> lk(sendDataMutex_);
+        cancelled_ = true;
+        waitDataCv_.notify_all();
     }
 };
 
@@ -1341,7 +1345,6 @@ IceTransport::startIce(const SDP& sdp)
 void
 IceTransport::cancelOperations()
 {
-    isCancelled_ = true;
     pimpl_->cancelOperations();
 }
 
@@ -1683,7 +1686,7 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
         pimpl_->waitDataCv_.wait(dlk, [&] {
-            return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len) or pimpl_->destroying_;
+            return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len) or pimpl_->destroying_ or pimpl_->cancelled_;
         });
         pimpl_->lastSentLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {

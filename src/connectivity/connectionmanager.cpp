@@ -71,7 +71,7 @@ public:
 
     void removeUnusedConnections(const DeviceId& deviceId = {})
     {
-        std::vector<std::shared_ptr<ConnectionInfo>> unused {};
+         std::vector<std::shared_ptr<ConnectionInfo>> unused {};
 
         {
             std::lock_guard<std::mutex> lk(infosMtx_);
@@ -95,7 +95,7 @@ public:
             if (info->waitForAnswer_)
                 info->waitForAnswer_->cancel();
         }
-        if (!unused.empty())
+        if (!deviceId && !unused.empty())
             dht::ThreadPool::io().run([infos = std::move(unused)]() mutable { infos.clear(); });
     }
 
@@ -189,6 +189,8 @@ public:
 
     std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId, const dht::Value::Id& id)
     {
+        if (isDestroying_)
+            return {};
         std::lock_guard<std::mutex> lk(infosMtx_);
         auto it = infos_.find({deviceId, id});
         if (it != infos_.end())
@@ -552,6 +554,8 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         // all stored structures.
         auto eraseInfo = [w, cbId] {
             if (auto shared = w.lock()) {
+                if (shared->isDestroying_)
+                    return;
                 // If no new socket is specified, we don't try to generate a new socket
                 for (const auto& pending : shared->extractPendingCallbacks(cbId.first, cbId.second))
                     pending.cb(nullptr, cbId.first);
@@ -592,7 +596,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                         JAMI_ERR("Cannot initialize ICE session.");
                     }
                     auto sthis = w.lock();
-                    if (!sthis || !ok) {
+                    if (!sthis|| sthis->isDestroying_ || !ok) {
                         eraseInfo();
                         return;
                     }
@@ -951,6 +955,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         // all stored structures.
         auto eraseInfo = [w, id = req.id, deviceId] {
             if (auto shared = w.lock()) {
+                if (shared->isDestroying_)
+                    return;
                 // If no new socket is specified, we don't try to generate a new socket
                 for (const auto& pending : shared->extractPendingCallbacks(deviceId, id))
                     pending.cb(nullptr, deviceId);
@@ -975,7 +981,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
             dht::ThreadPool::io().run(
                 [w = std::move(w), req = std::move(req), eraseInfo = std::move(eraseInfo)] {
                     auto shared = w.lock();
-                    if (!shared)
+                    if (!shared || shared->isDestroying_)
                         return;
                     if (!shared->onRequestStartIce(req))
                         eraseInfo();
@@ -1050,7 +1056,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const CallbackId& id, const std
         // Cancel current outgoing connections
         dht::ThreadPool::io().run([w, deviceId, vid] {
             auto sthis = w.lock();
-            if (!sthis)
+            if (!sthis || sthis->isDestroying_)
                 return;
 
             std::set<CallbackId> ids;

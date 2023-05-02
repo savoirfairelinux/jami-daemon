@@ -2492,6 +2492,7 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     // Disable video if disabled in the account.
@@ -3093,6 +3094,7 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
 void
 SIPCall::exitConference()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
@@ -3170,7 +3172,8 @@ SIPCall::setRotation(int streamIdx, int rotation)
 void
 SIPCall::createSinks(ConfInfo& infos)
 {
-    std::lock_guard<std::mutex> lk(sinksMtx_);
+    std::lock_guard<std::recursive_mutex> lk(callMutex_);
+    std::lock_guard<std::mutex> lkS(sinksMtx_);
     if (!hasVideo())
         return;
 

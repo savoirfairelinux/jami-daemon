@@ -368,6 +368,12 @@ TlsSession::TlsSessionImpl::~TlsSessionImpl()
     state_ = TlsSessionState::SHUTDOWN;
     stateCondition_.notify_all();
     rxCv_.notify_all();
+    {
+        std::lock_guard<std::mutex> lock(requestsMtx_);
+        for (auto& request : requests_)
+            request->cancel();
+        requests_.clear();
+    }
     thread_.join();
     if (not transport_->isReliable())
         transport_->setOnRecv(nullptr);
