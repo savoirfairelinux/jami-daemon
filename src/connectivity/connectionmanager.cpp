@@ -488,7 +488,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                        const std::string& connType)
 {
     // Avoid dht operation in a DHT callback to avoid deadlocks
-    runOnMainThread([w = weak(),
+    dht::ThreadPool::computation().run([w = weak(),
                      name = std::move(name),
                      cert = std::move(cert),
                      cb = std::move(cb),
@@ -571,7 +571,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                       eraseInfo](auto&& ice_config) {
             auto sthis = w.lock();
             if (!sthis) {
-                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                 return;
             }
             ice_config.tcpEnable = true;
@@ -583,26 +583,22 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                      vid,
                                      connType,
                                      eraseInfo](bool ok) {
-                auto sthis = w.lock();
-                if (!sthis || !ok) {
-                    JAMI_ERR("Cannot initialize ICE session.");
-                    runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-                    return;
-                }
-
                 dht::ThreadPool::io().run([w = std::move(w),
                                            devicePk = std::move(devicePk),
                                            vid = std::move(vid),
                                            eraseInfo,
-                                           connType] {
+                                           connType, ok] {
+                    if (!ok) {
+                        JAMI_ERR("Cannot initialize ICE session.");
+                    }
                     auto sthis = w.lock();
-                    if (!sthis) {
-                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                    if (!sthis || !ok) {
+                        eraseInfo();
                         return;
                     }
                     sthis->connectDeviceStartIce(devicePk, vid, connType, [=](bool ok) {
                         if (!ok) {
-                            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                            dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                         }
                     });
                 });
@@ -613,22 +609,18 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                      cert = std::move(cert),
                                      vid,
                                      eraseInfo](bool ok) {
-                auto sthis = w.lock();
-                if (!sthis || !ok) {
-                    JAMI_ERR("ICE negotiation failed.");
-                    runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-                    return;
-                }
-
                 dht::ThreadPool::io().run([w = std::move(w),
                                            deviceId = std::move(deviceId),
                                            name = std::move(name),
                                            cert = std::move(cert),
                                            vid = std::move(vid),
-                                           eraseInfo = std::move(eraseInfo)] {
+                                           eraseInfo = std::move(eraseInfo),
+                                           ok] {
+                    if (!ok)
+                        JAMI_ERR("ICE negotiation failed.");
                     auto sthis = w.lock();
-                    if (!sthis || !sthis->connectDeviceOnNegoDone(deviceId, name, vid, cert))
-                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                    if (!sthis || !ok || !sthis->connectDeviceOnNegoDone(deviceId, name, vid, cert))
+                        eraseInfo();
                 });
             };
 
@@ -651,7 +643,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             // We need to detect any shutdown if the ice session is destroyed before going to the
             // TLS session;
             info->ice_->setOnShutdown([eraseInfo]() {
-                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
             });
             info->ice_->initIceInstance(ice_config);
         });
