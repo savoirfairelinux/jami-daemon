@@ -510,7 +510,11 @@ public:
     std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const;
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
     void removeGitSocket(const DeviceId& deviceId);
-    void removeGitSockets();
+
+    /**
+     * Stop SwarmManager, bootstrap and gitSockets
+     */
+    void shutdownConnections();
     /**
      * Used to avoid multiple connections, we just check if we got a swarm channel with a specific
      * device
