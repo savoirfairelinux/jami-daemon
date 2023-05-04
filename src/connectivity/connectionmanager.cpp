@@ -90,8 +90,6 @@ public:
                 info->tls_->shutdown();
             if (info->socket_)
                 info->socket_->shutdown();
-            if (info->ice_)
-                info->ice_->cancelOperations();
             if (info->waitForAnswer_)
                 info->waitForAnswer_->cancel();
         }
@@ -1060,8 +1058,6 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const CallbackId& id, const std
                     ids = std::move(info->cbIds_);
                     info->socket_->shutdown();
                 }
-                if (info->ice_)
-                    info->ice_->cancelOperations();
             }
             for (const auto& cbId : ids)
                 for (const auto& pending : sthis->extractPendingCallbacks(cbId.first, cbId.second))
@@ -1141,8 +1137,6 @@ ConnectionManager::closeConnectionsWith(const std::string& peerUri)
         pimpl_->removeUnusedConnections(deviceId);
     }
     for (auto& info : connInfos) {
-        if (info->ice_)
-            info->ice_->cancelOperations();
         if (info->socket_)
             info->socket_->shutdown();
         if (info->waitForAnswer_)
