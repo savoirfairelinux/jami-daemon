@@ -898,6 +898,7 @@ RoutingTableTest::testMobileNodeAnnouncement()
         rt1.hasNode(NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")));
 
     sm2->shutdown();
+    sleep(5);
 
     auto mb1 = rt1.getMobileNodes();
 
