@@ -138,6 +138,7 @@ private:
     std::string carlaId;
     std::string daviId;
     std::string confId {};
+    std::mutex pInfosMtx_ {};
     std::vector<std::map<std::string, std::string>> pInfos_ {};
     bool confChanged {false};
 
@@ -248,6 +249,7 @@ ConferenceTest::registerSignalHandlers()
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
         [=](const std::string&,
             const std::vector<std::map<std::string, std::string>> participantsInfos) {
+            std::lock_guard<std::mutex> lock(pInfosMtx_);
             pInfos_ = participantsInfos;
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
@@ -469,7 +471,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     startConference();
 
-    auto expectedNumberOfParticipants = 3;
+    auto expectedNumberOfParticipants = 3u;
 
     // Check participants number
     CPPUNIT_ASSERT(
@@ -477,6 +479,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
         JAMI_INFO() << "Check sinks if video device available.";
+        std::lock_guard<std::mutex> lock(pInfosMtx_);
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
             if (uri == bobUri) {
@@ -491,6 +494,7 @@ ConferenceTest::testCreateParticipantsSinks()
         }
     } else {
         JAMI_INFO() << "Check sinks if no video device available.";
+        std::lock_guard<std::mutex> lock(pInfosMtx_);
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
             if (uri == bobUri) {
@@ -827,6 +831,7 @@ ConferenceTest::testHostAddRmSecondVideo()
     // Check that alice has two videos attached to the conference
     auto aliceVideos = [&]() {
         int result = 0;
+        std::lock_guard<std::mutex> lock(pInfosMtx_);
         for (auto i = 0u; i < pInfos_.size(); ++i)
             if (pInfos_[i]["uri"].find(aliceUri) != std::string::npos)
                 result += 1;
@@ -835,7 +840,10 @@ ConferenceTest::testHostAddRmSecondVideo()
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideos() == 2; }));
 
     // Alice removes her second video
-    pInfos_.clear();
+    {
+        std::lock_guard<std::mutex> lock(pInfosMtx_);
+        pInfos_.clear();
+    }
     mediaList.pop_back();
     libjami::requestMediaChange(aliceId, confId, mediaList);
 
@@ -891,6 +899,7 @@ ConferenceTest::testParticipantAddRmSecondVideo()
 
     // Check that bob has two videos attached to the conference
     auto bobVideos = [&]() {
+        std::lock_guard<std::mutex> lock(pInfosMtx_);
         int result = 0;
         for (auto i = 0u; i < pInfos_.size(); ++i)
             if (pInfos_[i]["uri"].find(bobUri) != std::string::npos)
@@ -900,7 +909,10 @@ ConferenceTest::testParticipantAddRmSecondVideo()
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 2; }));
 
     // Bob removes his second video
-    pInfos_.clear();
+    {
+        std::lock_guard<std::mutex> lock(pInfosMtx_);
+        pInfos_.clear();
+    }
     mediaList.pop_back();
     libjami::requestMediaChange(bobId, bobCall.callId, mediaList);
 
