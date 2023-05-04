@@ -2492,6 +2492,7 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     // Disable video if disabled in the account.
@@ -3093,6 +3094,7 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
 void
 SIPCall::exitConference()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
@@ -3154,23 +3156,31 @@ SIPCall::setActiveMediaStream(const std::string& accountUri,
 void
 SIPCall::setRotation(int streamIdx, int rotation)
 {
-    rotation_ = rotation;
-    if (streamIdx == -1) {
-        for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
-            std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->setRotation(rotation);
-    } else if (streamIdx > -1 && streamIdx < static_cast<int>(rtpStreams_.size())) {
-        // Apply request for wanted stream
-        auto& stream = rtpStreams_[streamIdx];
-        if (stream.rtpSession_ && stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
-            std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)
-                ->setRotation(rotation);
-    }
+    // Retrigger on another thread to avoid to lock pjsip
+    dht::ThreadPool::io().run([w = weak(), streamIdx, rotation] {
+        if (auto shared = w.lock()) {
+            std::lock_guard<std::recursive_mutex> lk {shared->callMutex_};
+            shared->rotation_ = rotation;
+            if (streamIdx == -1) {
+                for (const auto& videoRtp : shared->getRtpSessionList(MediaType::MEDIA_VIDEO))
+                    std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->setRotation(rotation);
+            } else if (streamIdx > -1 && streamIdx < static_cast<int>(shared->rtpStreams_.size())) {
+                // Apply request for wanted stream
+                auto& stream = shared->rtpStreams_[streamIdx];
+                if (stream.rtpSession_ && stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
+                    std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)
+                        ->setRotation(rotation);
+            }
+        }
+    });
+
 }
 
 void
 SIPCall::createSinks(ConfInfo& infos)
 {
-    std::lock_guard<std::mutex> lk(sinksMtx_);
+    std::lock_guard<std::recursive_mutex> lk(callMutex_);
+    std::lock_guard<std::mutex> lkS(sinksMtx_);
     if (!hasVideo())
         return;
 
