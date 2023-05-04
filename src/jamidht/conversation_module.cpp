@@ -478,33 +478,36 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                 conversation->second->sync(
                     peer,
                     deviceId,
-                    [this,
+                    [w = weak(),
                      conversationId = std::move(conversationId),
                      peer = std::move(peer),
                      deviceId = std::move(deviceId),
                      commitId = std::move(commitId)](bool ok) {
+                        auto shared = w.lock();
+                        if (!shared)
+                            return;
                         if (!ok) {
-                            JAMI_WARN("[Account %s] Could not fetch new commit from "
-                                      "%s for %s, other "
+                            JAMI_WARNING("[Account {}] Could not fetch new commit from "
+                                      "{} for {}, other "
                                       "peer may be disconnected",
-                                      accountId_.c_str(),
-                                      deviceId.c_str(),
-                                      conversationId.c_str());
-                            JAMI_INFO("[Account %s] Relaunch sync with %s for %s",
-                                      accountId_.c_str(),
-                                      deviceId.c_str(),
-                                      conversationId.c_str());
+                                      shared->accountId_,
+                                      deviceId,
+                                      conversationId);
+                            JAMI_LOG("[Account {}] Relaunch sync with {} for {}",
+                                      shared->accountId_,
+                                      deviceId,
+                                      conversationId);
                         }
                         {
-                            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                            pendingConversationsFetch_.erase(conversationId);
+                            std::lock_guard<std::mutex> lk(shared->pendingConversationsFetchMtx_);
+                            shared->pendingConversationsFetch_.erase(conversationId);
                         }
                         // Notify peers that a new commit is there (DRT)
                         if (not commitId.empty()) {
-                            sendMessageNotification(conversationId, false, commitId, deviceId);
+                            shared->sendMessageNotification(conversationId, false, commitId, deviceId);
                         }
-                        if (syncCnt.fetch_sub(1) == 1) {
-                            if (auto account = account_.lock())
+                        if (shared->syncCnt.fetch_sub(1) == 1) {
+                            if (auto account = shared->account_.lock())
                                 emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(
                                     account->getAccountID().c_str());
                         }
