@@ -860,8 +860,9 @@ Conversation::removeGitSocket(const DeviceId& deviceId)
 }
 
 void
-Conversation::removeGitSockets()
+Conversation::shutdownConnections()
 {
+    pimpl_->fallbackTimer_->cancel();
     pimpl_->gitSocketList_.clear();
     pimpl_->swarmManager_->shutdown();
     pimpl_->checkedMembers_.clear();

@@ -2709,7 +2709,7 @@ ConversationModule::shutdownConnections()
     {
         std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
         for (auto& [k, conversation] : pimpl_->conversations_)
-            conversation->removeGitSockets();
+            conversation->shutdownConnections();
     }
     {
         std::lock_guard<std::mutex> lk(pimpl_->pendingConversationsFetchMtx_);
