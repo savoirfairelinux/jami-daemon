@@ -236,6 +236,9 @@ public:
     {
         for (auto& c : peerChannels_)
             c.stop();
+        std::lock_guard<std::mutex> lk(sendDataMutex_);
+        destroying_ = true;
+        waitDataCv_.notify_all();
     }
 };
 
@@ -510,9 +513,6 @@ IceTransport::Impl::initIceInstance(const IceTransportOptions& options)
     icecb.on_destroy = [](pj_ice_strans* ice_st) {
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
             tr->cancelOperations(); // Avoid upper layer to manage this ; Stop read operations
-            std::lock_guard lk(tr->sendDataMutex_);
-            tr->destroying_ = true;
-            tr->waitDataCv_.notify_all(); // Stop write operations
         } else {
             JAMI_WARN("null IceTransport");
         }
@@ -1341,7 +1341,6 @@ IceTransport::startIce(const SDP& sdp)
 void
 IceTransport::cancelOperations()
 {
-    isCancelled_ = true;
     pimpl_->cancelOperations();
 }
 
