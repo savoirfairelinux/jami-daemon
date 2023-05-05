@@ -23,7 +23,7 @@ LIBRESSL_VERSION := libressl-$(SSL_VERSION)
 LIBRESSL_URL := https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/$(LIBRESSL_VERSION).tar.gz
 
 # Check if openssl or libressl is already present on the system
-ifeq ($(or $(call need_pkg,"openssl >= 1.0.0"),$(call need_pkg,"libressl >= 1.0.0")),)
+ifeq ($(filter $(call need_pkg,"openssl >= 1.0.0"), $(call need_pkg,"libressl >= 1.0.0")),)
 PKGS_FOUND += libressl
 endif
 
