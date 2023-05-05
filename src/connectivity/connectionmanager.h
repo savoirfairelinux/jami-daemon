@@ -155,6 +155,10 @@ public:
      */
     void monitor() const;
 
+    std::vector<std::map<std::string, std::string>> getConnectionsList(const std::string& conversationId);
+
+    std::vector<std::map<std::string, std::string>> getChannelsList(const std::string& connectionId);
+
     /**
      * Send beacon on peers supporting it
      */

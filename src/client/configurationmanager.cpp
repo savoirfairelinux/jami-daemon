@@ -97,7 +97,8 @@ validateCertificate(const std::string& accountId, const std::string& certificate
 {
     try {
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-            return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}.getSerializedChecks();
+            return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}
+                .getSerializedChecks();
     } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
     }
@@ -113,7 +114,8 @@ validateCertificatePath(const std::string& accountId,
 {
     try {
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-            return TlsValidator {acc->certStore(), certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
+            return TlsValidator {acc->certStore(), certificate, privateKey, privateKeyPass, caList}
+                .getSerializedChecks();
     } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
@@ -126,7 +128,8 @@ getCertificateDetails(const std::string& accountId, const std::string& certifica
 {
     try {
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-            return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}.getSerializedDetails();
+            return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}
+                .getSerializedDetails();
     } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
     }
@@ -454,6 +457,18 @@ void
 monitor(bool continuous)
 {
     return jami::Manager::instance().monitor(continuous);
+}
+
+std::vector<std::map<std::string, std::string>>
+getConnectionsList(const std::string& accountId, const std::string& conversationId)
+{
+    return jami::Manager::instance().getConnectionsList(accountId, conversationId);
+}
+
+std::vector<std::map<std::string, std::string>>
+getChannelsList(const std::string& accountId, const std::string& connectionId)
+{
+    return jami::Manager::instance().getChannelsList(accountId, connectionId);
 }
 
 void

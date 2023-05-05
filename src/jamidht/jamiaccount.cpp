@@ -291,8 +291,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
     , certStore_ {std::make_unique<tls::CertificateStore>(accountId)}
-{
-}
+{}
 
 JamiAccount::~JamiAccount() noexcept
 {
@@ -1088,14 +1087,16 @@ JamiAccount::loadAccount(const std::string& archive_password,
             if (!id_.first)
                 return;
             if (jami::Manager::instance().syncOnRegister) {
-                dht::ThreadPool::io().run([w=weak(), uri, confirmed] {
+                dht::ThreadPool::io().run([w = weak(), uri, confirmed] {
                     if (auto shared = w.lock()) {
                         if (auto cm = shared->convModule()) {
                             auto activeConv = cm->getOneToOneConversation(uri);
                             if (!activeConv.empty())
                                 cm->bootstrap(activeConv);
                         }
-                        emitSignal<libjami::ConfigurationSignal::ContactAdded>(shared->getAccountID(), uri, confirmed);
+                        emitSignal<libjami::ConfigurationSignal::ContactAdded>(shared->getAccountID(),
+                                                                               uri,
+                                                                               confirmed);
                     }
                 });
             }
@@ -1131,11 +1132,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     shared->clearProfileCache(uri);
                     if (conversationId.empty()) {
                         // Old path
-                        emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(shared->getAccountID(),
-                                                                                       conversationId,
-                                                                                       uri,
-                                                                                       payload,
-                                                                                       received);
+                        emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(
+                            shared->getAccountID(), conversationId, uri, payload, received);
                         return;
                     }
                     // Here account can be initializing
@@ -1169,8 +1167,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
             dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
                 if (auto shared = w.lock()) {
                     // Remove cached payload if there is one
-                    auto requestPath = shared->cachePath_ + DIR_SEPARATOR_STR + "requests" + DIR_SEPARATOR_STR
-                    + uri;
+                    auto requestPath = shared->cachePath_ + DIR_SEPARATOR_STR + "requests"
+                                       + DIR_SEPARATOR_STR + uri;
                     fileutils::remove(requestPath);
                     if (!convFromReq.empty()) {
                         auto oldConv = shared->convModule()->getOneToOneConversation(uri);
@@ -1180,7 +1178,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         // one (given by convFromReq).
                         // TODO: In the future, we may want to re-commit the messages we
                         // may have send in the request we sent.
-                        if (oldConv != convFromReq && shared->updateConvForContact(uri, oldConv, convFromReq)) {
+                        if (oldConv != convFromReq
+                            && shared->updateConvForContact(uri, oldConv, convFromReq)) {
                             shared->convModule()->initReplay(oldConv, convFromReq);
                             shared->convModule()->cloneConversationFrom(convFromReq, uri, oldConv);
                         }
@@ -1842,7 +1841,12 @@ JamiAccount::doRegister_()
         if (not config.proxy_server.empty()) {
             JAMI_LOG("[Account {}] using proxy server {}", getAccountID(), config.proxy_server);
             if (not config.push_token.empty()) {
-                JAMI_LOG("[Account {}] using push notifications with platform: {}, topic: {}, token: {}", getAccountID(), config.push_platform, config.push_topic, config.push_token);
+                JAMI_LOG(
+                    "[Account {}] using push notifications with platform: {}, topic: {}, token: {}",
+                    getAccountID(),
+                    config.push_platform,
+                    config.push_topic,
+                    config.push_token);
             }
         }
 
@@ -1937,42 +1941,43 @@ JamiAccount::doRegister_()
                 if (!ok)
                     return;
                 accountManager_->startSync(
-                                           [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                                               if (!crt)
-                                                   return;
-                                               auto deviceId = crt->getLongId().toString();
-                                               if (accountManager_->getInfo()->deviceId == deviceId)
-                                                   return;
+                    [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                        if (!crt)
+                            return;
+                        auto deviceId = crt->getLongId().toString();
+                        if (accountManager_->getInfo()->deviceId == deviceId)
+                            return;
 
-                                               std::unique_lock<std::mutex> lk(connManagerMtx_);
-                                               initConnectionManager();
-                                               channelHandlers_[Uri::Scheme::SYNC]
-                                               ->connect(crt->getLongId(),
-                                                         "",
-                                                         [this](std::shared_ptr<ChannelSocket> socket,
-                                                                const DeviceId& deviceId) {
-                                                   if (socket)
-                                                       syncModule()->syncWith(deviceId, socket);
-                                               });
-                                               lk.unlock();
-                                               requestSIPConnection(
-                                                                    getUsername(),
-                                                                    crt->getLongId(),
-                                                                    "sync"); // For git notifications, will use the same socket as sync
-                                           },
-                                           [this] {
-                                               deviceAnnounced_ = true;
+                        std::unique_lock<std::mutex> lk(connManagerMtx_);
+                        initConnectionManager();
+                        channelHandlers_[Uri::Scheme::SYNC]
+                            ->connect(crt->getLongId(),
+                                      "",
+                                      [this](std::shared_ptr<ChannelSocket> socket,
+                                             const DeviceId& deviceId) {
+                                          if (socket)
+                                              syncModule()->syncWith(deviceId, socket);
+                                      });
+                        lk.unlock();
+                        requestSIPConnection(
+                            getUsername(),
+                            crt->getLongId(),
+                            "sync"); // For git notifications, will use the same socket as sync
+                    },
+                    [this] {
+                        deviceAnnounced_ = true;
 
-                                               // Bootstrap at the end to avoid to be long to load.
-                                               dht::ThreadPool::io().run([w = weak()] {
-                                                   if (auto shared = w.lock()) {
-                                                       std::lock_guard<std::recursive_mutex> lock(shared->configurationMutex_);
-                                                       shared->convModule()->bootstrap();
-                                                   }
-                                               });
-                                               emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-                                                                                                                accountID_, getVolatileAccountDetails());
-                                           });
+                        // Bootstrap at the end to avoid to be long to load.
+                        dht::ThreadPool::io().run([w = weak()] {
+                            if (auto shared = w.lock()) {
+                                std::lock_guard<std::recursive_mutex> lock(
+                                    shared->configurationMutex_);
+                                shared->convModule()->bootstrap();
+                            }
+                        });
+                        emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+                            accountID_, getVolatileAccountDetails());
+                    });
             };
         }
 
@@ -2230,7 +2235,9 @@ JamiAccount::convModule()
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
                     }
-                    if (!shared->connectionManager_->isConnecting(DeviceId(deviceId), fmt::format("swarm://{}", convId))) {
+                    if (!shared->connectionManager_->isConnecting(DeviceId(deviceId),
+                                                                  fmt::format("swarm://{}",
+                                                                              convId))) {
                         shared->connectionManager_->connectDevice(
                             DeviceId(deviceId),
                             fmt::format("swarm://{}", convId),
@@ -2242,7 +2249,8 @@ JamiAccount::convModule()
                                         return;
                                     auto remoteCert = socket->peerCertificate();
                                     auto uri = remoteCert->issuer->getId().toString();
-                                    if (shared->accountManager()->getCertificateStatus(uri) == tls::TrustStore::PermissionStatus::BANNED) {
+                                    if (shared->accountManager()->getCertificateStatus(uri)
+                                        == tls::TrustStore::PermissionStatus::BANNED) {
                                         cb(nullptr);
                                         return;
                                     }
@@ -2446,10 +2454,11 @@ JamiAccount::setCertificateStatus(const std::string& cert_id,
 
 bool
 JamiAccount::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                              tls::TrustStore::PermissionStatus status,
-                              bool local)
+                                  tls::TrustStore::PermissionStatus status,
+                                  bool local)
 {
-    bool done = accountManager_ ? accountManager_->setCertificateStatus(cert, status, local) : false;
+    bool done = accountManager_ ? accountManager_->setCertificateStatus(cert, status, local)
+                                : false;
     if (done) {
         findCertificate(cert->getId().toString());
         emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
@@ -3511,9 +3520,7 @@ JamiAccount::startAccountDiscovery()
                     dp.cleanupTask->cancel();
                 } else {
                     // Avoid Repeat Reception of Same peer
-                    JAMI_LOG("Account discovered: {}: {}",
-                              v.displayName,
-                              v.accountId.to_c_str());
+                    JAMI_LOG("Account discovered: {}: {}", v.displayName, v.accountId.to_c_str());
                     // Send Added Peer and corrsponding accoundID
                     emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(getAccountID(),
                                                                                 v.accountId
@@ -3799,19 +3806,28 @@ JamiAccount::sendProfile(const std::string& convId,
         return;
     }
     // We need a new channel
-    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, currentSha3, fileutils::lastWriteTime(profilePath()), std::move([accId = getAccountID(), peerUri, deviceId]() {
-        // Mark the VCard as sent
-        auto sendDir = fmt::format("{}/{}/vcard/{}",
-                                    fileutils::get_cache_dir(),
-                                    accId,
-                                    peerUri);
-        auto path = fmt::format("{}/{}", sendDir, deviceId);
-        fileutils::recursive_mkdir(sendDir);
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
-        if (fileutils::isFile(path))
-            return;
-        fileutils::ofstream(path);
-    }));
+    transferFile(convId,
+                 profilePath(),
+                 deviceId,
+                 "profile.vcf",
+                 "",
+                 0,
+                 0,
+                 currentSha3,
+                 fileutils::lastWriteTime(profilePath()),
+                 std::move([accId = getAccountID(), peerUri, deviceId]() {
+                     // Mark the VCard as sent
+                     auto sendDir = fmt::format("{}/{}/vcard/{}",
+                                                fileutils::get_cache_dir(),
+                                                accId,
+                                                peerUri);
+                     auto path = fmt::format("{}/{}", sendDir, deviceId);
+                     fileutils::recursive_mkdir(sendDir);
+                     std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
+                     if (fileutils::isFile(path))
+                         return;
+                     fileutils::ofstream(path);
+                 }));
 }
 
 bool
@@ -4068,6 +4084,22 @@ JamiAccount::monitor()
         connectionManager_->monitor();*/
 }
 
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getConnectionsList(const std::string& conversationId)
+{
+    if (!connectionManager_)
+        return {};
+    return connectionManager_->getConnectionsList(conversationId);
+}
+
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getChannelsList(const std::string& connectionId)
+{
+    if (!connectionManager_)
+        return {};
+    return connectionManager_->getChannelsList(connectionId);
+}
+
 void
 JamiAccount::sendFile(const std::string& conversationId,
                       const std::string& path,
@@ -4133,14 +4165,12 @@ JamiAccount::transferFile(const std::string& conversationId,
         modified = fmt::format("&modified={}", lastWriteTime);
     }
     if (fid == "profile.vcf") {
-        fid =  fmt::format("profile.vcf?sha3={}{}", sha3Sum, modified);
+        fid = fmt::format("profile.vcf?sha3={}{}", sha3Sum, modified);
     }
-    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf?sha3={}{}", DATA_TRANSFER_URI, sha3Sum, modified)
-                        : fmt::format("{}{}/{}/{}",
-                                   DATA_TRANSFER_URI,
-                                   conversationId,
-                                   currentDeviceId(),
-                                   fid);
+    auto channelName
+        = conversationId.empty()
+              ? fmt::format("{}profile.vcf?sha3={}{}", DATA_TRANSFER_URI, sha3Sum, modified)
+              : fmt::format("{}{}/{}/{}", DATA_TRANSFER_URI, conversationId, currentDeviceId(), fid);
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
