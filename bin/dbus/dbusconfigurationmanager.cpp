@@ -75,6 +75,20 @@ DBusConfigurationManager::monitor(const bool& continuous) -> decltype(libjami::m
 }
 
 auto
+DBusConfigurationManager::getConnectionsList(const std::string& accountId, const std::string& conversationId)
+    -> decltype(libjami::getConnectionsList(accountId, conversationId))
+{
+    return libjami::getConnectionsList(accountId, conversationId);
+}
+
+auto
+DBusConfigurationManager::getChannelsList(const std::string& accountId, const std::string& connectionId)
+    -> decltype(libjami::getChannelsList(accountId, connectionId))
+{
+    return libjami::getChannelsList(accountId, connectionId);
+}
+
+auto
 DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::string& password)
     -> decltype(libjami::exportOnRing(accountID, password))
 {

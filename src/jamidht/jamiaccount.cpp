@@ -4062,10 +4062,28 @@ JamiAccount::monitor()
     JAMI_DEBUG("[Account {:s}] Monitor connections", getAccountID());
     JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
 
-    convModule()->monitor();
+    // convModule()->monitor(); AFFICHE TABLE DE ROUTAGE
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
         connectionManager_->monitor();
+}
+
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getConnectionsList(const std::string& conversationId)
+{
+    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    if (!connectionManager_)
+        return {};
+    return connectionManager_->getConnectionsList(conversationId);
+}
+
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getChannelsList(const std::string& connectionId)
+{
+    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    if (!connectionManager_)
+        return {};
+    return connectionManager_->getChannelsList(connectionId);
 }
 
 void

@@ -468,6 +468,9 @@ public:
 
     void monitor();
 
+    std::vector<std::map<std::string, std::string>> getConnectionsList(const std::string& conversationId);
+    std::vector<std::map<std::string, std::string>> getChannelsList(const std::string& connectionId);
+
     // File transfer
     void sendFile(const std::string& conversationId,
                   const std::string& path,

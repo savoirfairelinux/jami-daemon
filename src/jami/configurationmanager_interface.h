@@ -65,6 +65,9 @@ LIBJAMI_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::
 LIBJAMI_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details,
                                       const std::string& accountID = {});
 LIBJAMI_PUBLIC void monitor(bool continuous);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConnectionsList(const std::string& accountId, const std::string& conversationId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getChannelsList(const std::string& accountId, const std::string& connectionId);
+
 LIBJAMI_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
 LIBJAMI_PUBLIC bool exportToFile(const std::string& accountID,
                                  const std::string& destinationPath,
