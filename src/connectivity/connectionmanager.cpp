@@ -85,7 +85,7 @@ public:
                 }
             }
         }
-        for (auto& info: unused) {
+        for (auto& info : unused) {
             if (info->tls_)
                 info->tls_->shutdown();
             if (info->socket_)
@@ -183,7 +183,7 @@ public:
     std::mutex infosMtx_ {};
     // Note: Someone can ask multiple sockets, so to avoid any race condition,
     // each device can have multiple multiplexed sockets.
-    std::map<CallbackId, std::shared_ptr<ConnectionInfo>> infos_ {};
+    std::map<CallbackId, std::shared_ptr<ConnectionInfo>> infos_ {}; // pour get channel
 
     std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId, const dht::Value::Id& id)
     {
@@ -487,12 +487,12 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
 {
     // Avoid dht operation in a DHT callback to avoid deadlocks
     dht::ThreadPool::computation().run([w = weak(),
-                     name = std::move(name),
-                     cert = std::move(cert),
-                     cb = std::move(cb),
-                     noNewSocket,
-                     forceNewSocket,
-                     connType] {
+                                        name = std::move(name),
+                                        cert = std::move(cert),
+                                        cb = std::move(cb),
+                                        noNewSocket,
+                                        forceNewSocket,
+                                        connType] {
         auto devicePk = cert->getSharedPublicKey();
         auto deviceId = devicePk->getLongId();
         auto sthis = w.lock();
@@ -507,7 +507,10 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             auto pendingsIt = sthis->pendingCbs_.find(deviceId);
             if (pendingsIt != sthis->pendingCbs_.end()) {
                 const auto& pendings = pendingsIt->second;
-                while (std::find_if(pendings.begin(), pendings.end(), [&](const auto& it){ return it.vid == vid; }) != pendings.end()) {
+                while (std::find_if(pendings.begin(),
+                                    pendings.end(),
+                                    [&](const auto& it) { return it.vid == vid; })
+                       != pendings.end()) {
                     vid = ValueIdDist(1, JAMI_ID_MAX_VAL)(sthis->account.rand);
                 }
             }
@@ -585,7 +588,8 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                                            devicePk = std::move(devicePk),
                                            vid = std::move(vid),
                                            eraseInfo,
-                                           connType, ok] {
+                                           connType,
+                                           ok] {
                     if (!ok) {
                         JAMI_ERR("Cannot initialize ICE session.");
                     }
@@ -596,7 +600,8 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                     }
                     sthis->connectDeviceStartIce(devicePk, vid, connType, [=](bool ok) {
                         if (!ok) {
-                            dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                            dht::ThreadPool::io().run(
+                                [eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                         }
                     });
                 });
@@ -1027,7 +1032,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
 }
 
 void
-ConnectionManager::Impl::addNewMultiplexedSocket(const CallbackId& id, const std::shared_ptr<ConnectionInfo>& info)
+ConnectionManager::Impl::addNewMultiplexedSocket(const CallbackId& id,
+                                                 const std::shared_ptr<ConnectionInfo>& info)
 {
     info->socket_ = std::make_shared<MultiplexedSocket>(id.first, std::move(info->tls_));
     info->socket_->setOnReady(
@@ -1044,7 +1050,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const CallbackId& id, const std
                 return sthis->channelReqCb_(peer, name);
         return false;
     });
-    info->socket_->onShutdown([w = weak(), deviceId=id.first, vid=id.second]() {
+    info->socket_->onShutdown([w = weak(), deviceId = id.first, vid = id.second]() {
         // Cancel current outgoing connections
         dht::ThreadPool::io().run([w, deviceId, vid] {
             auto sthis = w.lock();
@@ -1194,6 +1200,39 @@ ConnectionManager::monitor() const
     JAMI_DBG("ConnectionManager for account %s (%s), end status.",
              pimpl_->account.getAccountID().c_str(),
              pimpl_->account.getUserUri().c_str());
+}
+
+std::vector<std::map<std::string, std::string>>
+ConnectionManager::getConnectionsList(const std::string& conversationId)
+{
+    // retourner toutes les informations dans un vector de map
+
+    std::vector<std::map<std::string, std::string>> connectionsList;
+    std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
+    for (const auto& [_, ci] : pimpl_->infos_) {
+        if (ci->socket_)
+            connectionsList.push_back(ci->socket_->getConnectionsList(conversationId));
+        for (auto it = connectionsList.begin(); it != connectionsList.end(); ++it) {
+            for (auto it2 = it->begin(); it2 != it->end(); ++it2) {
+                JAMI_DBG("%s |%s|", it2->first, it2->second);
+            }
+        }
+    }
+
+    return connectionsList;
+}
+
+std::vector<std::map<std::string, std::string>>
+ConnectionManager::getChannelsList(const std::string& connectionId)
+{
+    std::vector<std::map<std::string, std::string>> channelsList;
+    std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
+    for (const auto& [_, ci] : pimpl_->infos_) {
+        if (ci->socket_) {
+            channelsList.push_back(ci->socket_->getChannelsList(connectionId));
+        }
+    }
+    return channelsList;
 }
 
 void

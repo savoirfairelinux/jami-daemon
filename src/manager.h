@@ -134,6 +134,9 @@ public:
 
     void monitor(bool continuous);
 
+    std::vector<std::map<std::string, std::string>> getConnectionsList(const std::string& accountId, const std::string& conversationId);
+    std::vector<std::map<std::string, std::string>> getChannelsList(const std::string& accountId, const std::string& connectionId);
+
     /**
      * Accessor to audiodriver.
      * it's multi-thread and use mutex internally

@@ -90,6 +90,8 @@ void setAccountDetails(const std::string& accountID, const std::map<std::string,
 void setAccountActive(const std::string& accountID, bool active);
 std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 void monitor(bool continuous);
+std::vector<std::map<std::string, std::string>> getConnectionsList(const std::string& accountId, const std::string& conversationId);
+std::vector<std::map<std::string, std::string>> getChannelsList(const std::string& accountId, const std::string& connectionId);
 std::string addAccount(const std::map<std::string, std::string>& details);
 void removeAccount(const std::string& accountID);
 std::vector<std::string> getAccountList();

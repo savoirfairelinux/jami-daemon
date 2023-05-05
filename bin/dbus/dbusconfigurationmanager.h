@@ -79,6 +79,8 @@ public:
     void setAccountActive(const std::string& accountID, const bool& active);
     std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
     void monitor(const bool& continuous);
+    std::vector<std::map<std::string, std::string>> getConnectionsList(const std::string& accountId, const std::string& conversationId);
+    std::vector<std::map<std::string, std::string>> getChannelsList(const std::string& accountId, const std::string& connectionId);
     std::string addAccount(const std::map<std::string, std::string>& details);
     bool exportOnRing(const std::string& accountID, const std::string& password);
     bool exportToFile(const std::string& accountID,

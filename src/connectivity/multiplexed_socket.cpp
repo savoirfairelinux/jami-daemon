@@ -673,6 +673,57 @@ MultiplexedSocket::monitor() const
     }
 }
 
+std::map<std::string, std::string>
+MultiplexedSocket::getConnectionsList(const std::string& conversationId) const
+{
+    auto cert = peerCertificate();
+    if (!cert || !cert->issuer)
+        return {};
+
+    std::map<std::string, std::string> connectionInfo;
+    auto userUri = cert->issuer->getId().toString();
+    auto now = clock::now();
+    std::string remoteAddress = pimpl_->endpoint->getRemoteAddress();
+    std::string remoteAddressIp = remoteAddress.substr(0, remoteAddress.find(":"));
+    std::string remoteAddressPort = remoteAddress.substr(remoteAddress.find(":") + 1,
+                                                         remoteAddress.length());
+    connectionInfo["conversationId"] = conversationId;
+    connectionInfo["userUri"] = userUri;
+    connectionInfo["deviceId"] = deviceId().to_c_str();
+    connectionInfo["duration"]
+        = std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_).count();
+    connectionInfo["remoteAdress"] = remoteAddressIp;
+    connectionInfo["remotePort"] = remoteAddressPort;
+
+    return connectionInfo;
+}
+
+std::map<std::string, std::string>
+MultiplexedSocket::getChannelsList(const std::string& connectionId) const
+{
+    auto cert = peerCertificate();
+    if (!cert || !cert->issuer)
+        return {};
+
+    std::map<std::string, std::string> channelInfo;
+    auto userUri = cert->issuer->getId().toString();
+
+    channelInfo["connectionId"] = connectionId;
+    channelInfo["userUri"] = userUri;
+    channelInfo["deviceId"] = deviceId().to_c_str();
+
+    for (const auto& [_, channel] : pimpl_->sockets) {
+        if (channel) {
+            channelInfo["channel"] = std::string(reinterpret_cast<const char*>(fmt::ptr(channel.get())));
+            channelInfo["channelCount"] = channel.use_count();
+            channelInfo["channelName"] = channel->name();
+            channelInfo["channelInitiator"] = channel->isInitiator();
+        }
+
+        return channelInfo;
+    }
+}
+
 void
 MultiplexedSocket::sendBeacon(const std::chrono::milliseconds& timeout)
 {

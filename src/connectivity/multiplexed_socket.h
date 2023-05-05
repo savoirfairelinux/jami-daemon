@@ -131,6 +131,9 @@ public:
      */
     void monitor() const;
 
+    std::map<std::string, std::string> getConnectionsList(const std::string& conversationId) const;
+    std::map<std::string, std::string> getChannelsList(const std::string& connectionId) const;
+
     /**
      * Send a beacon on the socket and close if no response come
      * @param timeout
