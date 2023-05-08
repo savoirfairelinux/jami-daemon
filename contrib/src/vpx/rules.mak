@@ -21,7 +21,9 @@ DEPS_vpx =
 
 ifdef HAVE_CROSS_COMPILE
 ifndef HAVE_IOS
+ifndef HAVE_MACOSX
 VPX_CROSS := $(CROSS_COMPILE)
+endif
 endif
 else
 VPX_CROSS :=
@@ -53,13 +55,8 @@ VPX_OS := linux
 else ifdef HAVE_DARWIN_OS
 ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
 VPX_OS := iphonesimulator
-else ifeq ($(ARCH),armv7)
-VPX_OS := darwin
-else ifeq ($(ARCH),arm64)
-VPX_OS := darwin
 else
-#to support minimum macOS version 10.13
-VPX_OS := darwin17
+VPX_OS := darwin
 endif
 else ifdef HAVE_SOLARIS
 VPX_OS := solaris
@@ -72,9 +69,14 @@ VPX_OS := linux
 endif
 
 VPX_TARGET := generic-gnu
+# To build for macOS, use a generic target. Otherwise, we must specify
+# the Darwin version number. Building for Darwin without a version number
+# will generate a build for iOS.
+ifndef HAVE_MACOSX
 ifdef VPX_ARCH
 ifdef VPX_OS
 VPX_TARGET := $(VPX_ARCH)-$(VPX_OS)-gcc
+endif
 endif
 endif
 
