@@ -21,7 +21,9 @@ DEPS_vpx =
 
 ifdef HAVE_CROSS_COMPILE
 ifndef HAVE_IOS
+ifndef HAVE_MACOSX
 VPX_CROSS := $(CROSS_COMPILE)
+endif
 endif
 else
 VPX_CROSS :=
@@ -53,13 +55,11 @@ VPX_OS := linux
 else ifdef HAVE_DARWIN_OS
 ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
 VPX_OS := iphonesimulator
-else ifeq ($(ARCH),armv7)
-VPX_OS := darwin
-else ifeq ($(ARCH),arm64)
+else ifdef HAVE_IOS
 VPX_OS := darwin
 else
-#to support minimum macOS version 10.13
-VPX_OS := darwin17
+# To build for arm64 on macOS, we need Darwin version 20 or higher
+VPX_OS := darwin20
 endif
 else ifdef HAVE_SOLARIS
 VPX_OS := solaris
