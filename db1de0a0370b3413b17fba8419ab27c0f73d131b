@@ -22,6 +22,30 @@
       },
       "revId": "db1de0a0370b3413b17fba8419ab27c0f73d131b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b29c6eb_3a341eb8",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 16
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-09T17:20:01Z",
+      "side": 1,
+      "message": "+ freeze on 3 people",
+      "parentUuid": "552e44fa_273c4826",
+      "range": {
+        "startLine": 15,
+        "startChar": 26,
+        "endLine": 15,
+        "endChar": 27
+      },
+      "revId": "db1de0a0370b3413b17fba8419ab27c0f73d131b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
