@@ -1,0 +1,7 @@
+Code-Review+2: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Submitted-at: Tue, 09 May 2023 14:12:06 -0400
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/24543
+Project: jami-daemon
+Branch: refs/heads/master
