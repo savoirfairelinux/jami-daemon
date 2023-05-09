@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "552e44fa_273c4826",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 16
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-09T17:15:35Z",
+      "side": 1,
+      "message": "+ cleanup (conf shown in 1:1 when calling)\n+ do not use video-mixer in 1:1\n+ SIPAccount, same\n+ Compatibility (rdv-jami \u0026 no video of self on android)",
+      "range": {
+        "startLine": 15,
+        "startChar": 26,
+        "endLine": 15,
+        "endChar": 27
+      },
+      "revId": "db1de0a0370b3413b17fba8419ab27c0f73d131b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
