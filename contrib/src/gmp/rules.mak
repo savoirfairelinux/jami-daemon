@@ -1,7 +1,12 @@
 # GNU Multiple Precision Arithmetic
 
+ifeq ($(shell uname -s),Darwin) && ifeq ($(ARCH),arm64)
+GMP_VERSION := 6.2.99-20221117121717
+GMP_URL := https://gmplib.org/download/snapshot/gmp-next/gmp-$(GMP_VERSION).tar.zst
+else
 GMP_VERSION := 6.2.1
 GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
+endif
 
 $(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
 	$(call download,$(GMP_URL))
@@ -21,7 +26,7 @@ endif
 .gmp: gmp
 ifdef HAVE_IOS
 	$(RECONF)
-	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -O3" ./configure --disable-assembly --without-clock-gettime $(HOSTCONF)
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -O3" ./configure --without-clock-gettime $(HOSTCONF)
 else
 ifdef HAVE_MACOSX
 	$(RECONF)
