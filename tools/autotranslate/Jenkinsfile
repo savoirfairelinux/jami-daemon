@@ -1,0 +1,64 @@
+// Copyright (C) 2023 Savoir-faire Linux Inc.
+//
+// Author: Fadi Shehadeh <fadi.shehadeh@savoirfairelinux.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// Packaging validation for supported GNU/Linux systems.
+//
+// Note: To work on this script without having to push a commit each
+// time, use the jenkins-cli command (see:
+// https://wiki.savoirfairelinux.com/wiki/Jenkins.jami.net#Usage_CLI_de_Jenkins).
+
+// Configuration globals.
+def TRANSIFEX_TOKEN = 'a43e3c1e-1fb5-4778-8bdf-84173584aa6c'
+
+pipeline {
+    agent any
+
+        stage('Check Files') {
+            steps {
+                script {
+                    def baseDirectory = '/var/cache'
+                    def files = ['pytorch_model.bin', 'config.json', 'tokenizer.json', 'generation_config.json', 'sentencepiece.bpe.model', 'special_tokens_map.json', 'tokenizer_config.json']
+
+                    def missingFiles = []
+                    for (def file in files) {
+                    if (!fileExists("${baseDirectory}/${file}")) {
+                        missingFiles.add(file)
+                    }
+                    }
+
+                    if (missingFiles.isEmpty()) {
+                    echo 'All files exist. Skipping download.'
+                    } else {
+                    echo 'Files do not exist. Downloading the repo'
+                    for (def file in missingFiles) {
+                        sh "wget -P ${baseDirectory} https://huggingface.co/facebook/nllb-200-distilled-600M/resolve/main/${file}"
+                    }
+                    }
+                }
+            }
+        }
+
+        stage('Translate') {
+            steps {
+                script {
+                    echo 'Translating...'
+                    sh "python3 nllbTranslate.py ${TRANSIFEX_TOKEN}"
+                    echo 'Done translating'
+                }
+            }
+        }
+}
