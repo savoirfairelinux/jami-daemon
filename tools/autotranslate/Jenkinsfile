@@ -1,0 +1,56 @@
+node {
+    def TRANSIFEX_TOKEN = 'a43e3c1e-1fb5-4778-8bdf-84173584aa6c'
+    def LANGUAGE = 'ar'
+    def scriptDirectory = 'tools/autotranslate/'
+
+    stage('SCM Checkout') {
+        // Wipe workspace and fetch jami-daemon
+        sh 'env'
+        checkout changelog: true, poll: false,
+            scm: [$class: 'GitSCM',
+                branches: [[name: 'FETCH_HEAD']],
+                doGenerateSubmoduleConfigurations: false,
+                extensions: [
+                    [$class: 'CloneOption', noTags: true, reference: '', shallow: true],
+                    [$class: 'WipeWorkspace']],
+                submoduleCfg: [],
+                userRemoteConfigs: [[refspec: '${GERRIT_REFSPEC}', url: 'https://${RING_GERRIT_URL}/jami-daemon']]]
+    }
+
+    stage('Building Docker Image') {
+        docker.build('translator_docker', "-f ${scriptDirectory}Dockerfile")
+    }
+
+    stage('Check Files') {
+                def baseDirectory = '/var/cache/jami'
+                def files = ['pytorch_model.bin', 'config.json', 'tokenizer.json', 'generation_config.json', 'sentencepiece.bpe.model', 'special_tokens_map.json', 'tokenizer_config.json']
+
+                def missingFiles = []
+                for (def file in files) {
+            if (!fileExists("${baseDirectory}/${file}")) {
+                missingFiles.add(file)
+            }
+                }
+
+                if (missingFiles.isEmpty()) {
+            echo 'All files exist. Skipping download.'
+                } else {
+            echo 'Files do not exist. Downloading the repo'
+            for (def file in missingFiles) {
+                sh "wget -P ${baseDirectory} https://huggingface.co/facebook/nllb-200-distilled-600M/resolve/main/${file}"
+            }
+                }
+    }
+
+        docker.image('translator_docker').withRun('--privileged -t -u ' + jenkinsUser + ' -v ' + pwd() + ':/foo:rw -v ' + ' -v /var/cache/jami:/var/cache/jami:rw ' + '-w /foo -e BATCH_MODE=1', '/bin/bash') {
+        container -> code: {
+            def base_cmd = 'docker exec '+container.id+" sh -c '"
+            def exec_cmd = { cmd -> sh script:base_cmd+cmd+"'" }
+            stage('Translate') {
+                echo 'Translating...'
+                exec_cmd("TRANSIFEX_TOKEN=${TRANSIFEX_TOKEN} LANGUAGE=${LANGUAGE} python3 ${scriptDirectory}nllbTranslate.py")
+                echo 'Done translating'
+            }
+        }
+        }
+}
