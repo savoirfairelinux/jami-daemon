@@ -268,6 +268,8 @@ public:
             // Not pinned, so load certificate from repo
             std::string deviceFile = git_repository_workdir(repo.get())
                                      + fmt::format("devices/{}.crt", deviceId);
+            if (!fileutils::isFile(deviceFile))
+                return {};
             cert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(deviceFile));
             if (!cert)
                 return {};
