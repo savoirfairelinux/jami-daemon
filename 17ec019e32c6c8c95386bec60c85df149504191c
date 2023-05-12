@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3fc11644_21938fc4",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-12T15:38:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "321e7223_902cbb9f",
+      "range": {
+        "startLine": 7,
+        "startChar": 9,
+        "endLine": 7,
+        "endChar": 32
+      },
+      "revId": "17ec019e32c6c8c95386bec60c85df149504191c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "463a56bb_8824c681",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "41c9761b_b705e501",
+        "filename": "contrib/src/gmp/SHA512SUMS",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-12T15:38:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "463a56bb_8824c681",
+      "range": {
+        "startLine": 1,
+        "startChar": 4,
+        "endLine": 1,
+        "endChar": 163
+      },
+      "revId": "17ec019e32c6c8c95386bec60c85df149504191c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "84b68cc3_dcf1f3ee",
@@ -60,6 +108,30 @@
       "writtenOn": "2023-05-11T12:33:12Z",
       "side": 1,
       "message": "If only necessary for iOS, #ifdef can be used to use current stable on all platforms except iOS (and two lines in the SHA512SUMS can be used)",
+      "range": {
+        "startLine": 4,
+        "startChar": 30,
+        "endLine": 4,
+        "endChar": 38
+      },
+      "revId": "17ec019e32c6c8c95386bec60c85df149504191c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b0e54450_5bcfb5c4",
+        "filename": "contrib/src/gmp/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-12T15:38:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "84b68cc3_dcf1f3ee",
       "range": {
         "startLine": 4,
         "startChar": 30,
