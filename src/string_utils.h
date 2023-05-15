@@ -29,6 +29,7 @@
 #include <regex>
 #include <iterator>
 #include <charconv>
+#include <cstdint>
 
 #ifdef _WIN32
 #include <WTypes.h>

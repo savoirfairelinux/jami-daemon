@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <string>
+
 #ifdef ENABLE_TRACEPOINTS
 /*
  * GCC Only.  We use these instead of classic __FILE__ and __LINE__ because
