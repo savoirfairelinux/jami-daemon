@@ -27,6 +27,7 @@
 #include <vector>
 #include <map>
 #include <functional>
+#include <cstdint>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
