@@ -1923,12 +1923,12 @@ JamiAccount::doRegister_()
 
             setRegistrationState(state);
         };
-        if (jami::Manager::instance().syncOnRegister) {
-            context.identityAnnouncedCb = [this](bool ok) {
-                if (!ok)
-                    return;
-                accountManager_->startSync(
-                                           [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+        context.identityAnnouncedCb = [this](bool ok) {
+            if (!ok)
+                return;
+            accountManager_->startSync(
+                                       [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                           if (jami::Manager::instance().syncOnRegister) {
                                                if (!crt)
                                                    return;
                                                auto deviceId = crt->getLongId().toString();
@@ -1950,8 +1950,10 @@ JamiAccount::doRegister_()
                                                                     getUsername(),
                                                                     crt->getLongId(),
                                                                     "sync"); // For git notifications, will use the same socket as sync
-                                           },
-                                           [this] {
+                                           }
+                                       },
+                                       [this] {
+                                           if (jami::Manager::instance().syncOnRegister) {
                                                deviceAnnounced_ = true;
 
                                                // Bootstrap at the end to avoid to be long to load.
@@ -1963,9 +1965,9 @@ JamiAccount::doRegister_()
                                                });
                                                emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                                                                                                                 accountID_, getVolatileAccountDetails());
-                                           });
-            };
-        }
+                                           }
+                                       });
+        };
 
         setRegistrationState(RegistrationState::TRYING);
         dht_->run(dhtPortUsed(), config, std::move(context));
