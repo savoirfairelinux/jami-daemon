@@ -25,6 +25,7 @@
 #include <vector>
 #include <memory>
 #include <cstdint>
+#include <string>
 
 namespace jami {
 namespace tls {
@@ -59,6 +60,8 @@ public:
     std::vector<uint8_t> serialize() const;
 
     static DhParams generate();
+
+    static DhParams loadDhParams(const std::string& path);
 
 private:
     std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)*>
