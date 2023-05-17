@@ -156,7 +156,10 @@ std::string sha3sum(const std::vector<uint8_t>& buffer);
  */
 int accessFile(const std::string& file, int mode);
 
-uint64_t lastWriteTime(const std::string& p);
+/**
+ * Return the last write time (epoch time) of a given file path (in seconds).
+ */
+uint64_t lastWriteTimeInSeconds(const std::string& filePath);
 
 } // namespace fileutils
 } // namespace jami

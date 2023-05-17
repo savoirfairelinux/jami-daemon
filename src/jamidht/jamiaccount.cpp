@@ -3790,7 +3790,9 @@ JamiAccount::sendProfile(const std::string& convId,
         return;
     }
     // We need a new channel
-    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, currentSha3, fileutils::lastWriteTime(profilePath()), std::move([accId = getAccountID(), peerUri, deviceId]() {
+    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, currentSha3,
+                 fileutils::lastWriteTimeInSeconds(profilePath()),
+                 std::move([accId = getAccountID(), peerUri, deviceId]() {
         // Mark the VCard as sent
         auto sendDir = fmt::format("{}/{}/vcard/{}",
                                     fileutils::get_cache_dir(),
