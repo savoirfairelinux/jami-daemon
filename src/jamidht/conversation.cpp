@@ -1842,7 +1842,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
                 sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now());
                 sthis->pimpl_->fallbackTimer_->async_wait(
                     std::bind(&Conversation::checkBootstrapMember,
-                              sthis.get(),
+                              sthis,
                               std::placeholders::_1,
                               std::move(members)));
             }
@@ -1904,7 +1904,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped)
             sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now() + 20s
                                                       - std::chrono::seconds(timeForBootstrap));
             sthis->pimpl_->fallbackTimer_->async_wait(std::bind(&Conversation::checkBootstrapMember,
-                                                                sthis.get(),
+                                                                sthis,
                                                                 std::placeholders::_1,
                                                                 std::move(members)));
         });
