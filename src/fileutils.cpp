@@ -865,6 +865,9 @@ recursive_mkdir(const std::string& path, mode_t mode)
 bool
 eraseFile_win32(const std::string& path, bool dosync)
 {
+    // Note: from https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-deletefilea#remarks
+    // To delete a read-only file, first you must remove the read-only attribute.
+    SetFilesAttributesA(path.c_str(), GetFileAttributesA(path.c_str()) & ~FILE_ATTRIBUTE_READONLY);
     HANDLE h
         = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (h == INVALID_HANDLE_VALUE) {
