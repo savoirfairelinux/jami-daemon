@@ -1124,15 +1124,15 @@ accessFile(const std::string& file, int mode)
 }
 
 uint64_t
-lastWriteTime(const std::string& p)
+lastWriteTimeInSeconds(const std::string& filePath)
 {
 #if USE_STD_FILESYSTEM
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::filesystem::last_write_time(std::filesystem::path(p)).time_since_epoch())
-        .count();
+    return std::chrono::duration_cast<std::chrono::seconds>(
+            std::filesystem::last_write_time(std::filesystem::path(filePath))
+                    .time_since_epoch()).count();
 #else
     struct stat result;
-    if (stat(p.c_str(), &result) == 0)
+    if (stat(filePath.c_str(), &result) == 0)
         return result.st_mtime;
     return 0;
 #endif
