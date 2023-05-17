@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5d7ad4c2_7de75ffc",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 870,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-05-17T20:36:40Z",
+      "side": 1,
+      "message": "FILE_ATTRIBUTE_READONLY ?",
+      "range": {
+        "startLine": 870,
+        "startChar": 74,
+        "endLine": 870,
+        "endChar": 97
+      },
+      "revId": "85b8172d7043d8e6d56a71b9829ed0909c0e13dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0608cade_429d0ef4",
         "filename": "src/jamidht/conversationrepository.cpp",
         "patchSetId": 2
