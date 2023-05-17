@@ -226,11 +226,11 @@ CoreLayer::setupInputBus() {
                                   &inputASBD,
                                   &size));
 
-    Float64 inSampleRate;
-    size = sizeof(Float64);
-    AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareSampleRate,
-                            &size,
-                            &inSampleRate);
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    // Replace AudioSessionGetProperty with AVAudioSession
+    Float64 inSampleRate = session.sampleRate;
+    Float32 bufferDuration = session.IOBufferDuration;
+
     inputASBD.mSampleRate = inSampleRate;
     inputASBD.mFormatID = kAudioFormatLinearPCM;
     inputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
@@ -270,11 +270,6 @@ CoreLayer::setupInputBus() {
                          &flag,
                          sizeof(flag));
 
-    Float32 bufferDuration;
-    size = sizeof(UInt32);
-    AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareIOBufferDuration,
-                            &size,
-                            &bufferDuration);
     UInt32 bufferSizeFrames = std::round(inSampleRate_ * bufferDuration);
     UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
     size = offsetof(AudioBufferList, mBuffers[0]) + (sizeof(AudioBuffer) * inputASBD.mChannelsPerFrame);
@@ -434,6 +429,31 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     if (inNumberFrames <= 0) {
         JAMI_WARN("No frames for input.");
         return;
+    }
+
+    // Check if buffer is large enough for inNumberFrames
+    UInt32 bufferSizeFrames = captureBuff_->mBuffers[0].mDataByteSize / sizeof(Float32);
+
+    if (inNumberFrames > bufferSizeFrames) {
+        // Buffer is too small, need to reallocate
+        JAMI_DBG("Reallocating capture buffer...");
+
+        UInt32 bufferSizeBytes = inNumberFrames * sizeof(Float32);
+        UInt32 size = offsetof(AudioBufferList, mBuffers[0]) + (sizeof(AudioBuffer) * inChannelsPerFrame_);
+
+        rawBuff_.reset(new Byte[size + bufferSizeBytes * inChannelsPerFrame_]);
+        captureBuff_ = reinterpret_cast<::AudioBufferList*>(rawBuff_.get());
+        captureBuff_->mNumberBuffers = inChannelsPerFrame_;
+
+        auto bufferBasePtr = rawBuff_.get() + size;
+        for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i) {
+            captureBuff_->mBuffers[i].mNumberChannels = 1;
+            captureBuff_->mBuffers[i].mDataByteSize = bufferSizeBytes;
+            captureBuff_->mBuffers[i].mData =  bufferBasePtr + bufferSizeBytes * i;
+        }
+
+        // Update bufferSizeFrames
+        bufferSizeFrames = inNumberFrames;
     }
 
     // Write the mic samples in our buffer
