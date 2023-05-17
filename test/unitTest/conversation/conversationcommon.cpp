@@ -197,7 +197,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
     git_signature* sig_ptr = nullptr;
     // Sign commit's buffer
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERR("Unable to create a commit signature.");
+        JAMI_ERROR("Unable to create a commit signature.");
         return {};
     }
     GitSignature sig {sig_ptr, git_signature_free};
@@ -207,38 +207,38 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
     git_repository* repo = nullptr;
     // TODO share this repo with GitServer
     if (git_repository_open(&repo, path.c_str()) != 0) {
-        JAMI_ERR("Could not open repository");
+        JAMI_ERROR("Could not open repository");
         return {};
     }
 
     if (git_repository_index(&index_ptr, repo) < 0) {
-        JAMI_ERR("Could not open repository index");
+        JAMI_ERROR("Could not open repository index");
         return {};
     }
     GitIndex index {index_ptr, git_index_free};
 
     git_oid tree_id;
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
-        JAMI_ERR("Unable to write initial tree from index");
+        JAMI_ERROR("Unable to write initial tree from index");
         return {};
     }
 
     git_tree* tree_ptr = nullptr;
     if (git_tree_lookup(&tree_ptr, repo, &tree_id) < 0) {
-        JAMI_ERR("Could not look up initial tree");
+        JAMI_ERROR("Could not look up initial tree");
         return {};
     }
     GitTree tree = {tree_ptr, git_tree_free};
 
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
-        JAMI_ERR("Cannot get reference for HEAD");
+        JAMI_ERROR("Cannot get reference for HEAD");
         return {};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo, &commit_id) < 0) {
-        JAMI_ERR("Could not look up HEAD commit");
+        JAMI_ERROR("Could not look up HEAD commit");
         return {};
     }
     GitCommit head_commit {head_ptr, git_commit_free};
@@ -248,7 +248,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
     if (git_commit_create_buffer(
             &to_sign, repo, sig.get(), sig.get(), nullptr, msg.c_str(), tree.get(), 1, &head_ref[0])
         < 0) {
-        JAMI_ERR("Could not create commit buffer");
+        JAMI_ERROR("Could not create commit buffer");
         return {};
     }
 
@@ -262,21 +262,26 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
                                          signed_str.c_str(),
                                          "signature")
         < 0) {
-        JAMI_ERR("Could not sign commit");
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERROR("Could not sign commit: {}", err->message);
         return {};
     }
 
     // Move commit to main branch
     git_reference* ref_ptr = nullptr;
     if (git_reference_create(&ref_ptr, repo, "refs/heads/main", &commit_id, true, nullptr) < 0) {
-        JAMI_WARN("Could not move commit to main");
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERROR("Could not move commit to main: {}", err->message);
+        return {};
     }
     git_reference_free(ref_ptr);
     git_repository_free(repo);
 
     auto commit_str = git_oid_tostr_s(&commit_id);
     if (commit_str) {
-        JAMI_INFO("New message added with id: %s", commit_str);
+        JAMI_LOG("New message added with id: {}", commit_str);
         return commit_str;
     }
 
