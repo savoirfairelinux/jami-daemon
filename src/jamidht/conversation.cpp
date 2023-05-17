@@ -1476,7 +1476,7 @@ Conversation::updatePreferences(const std::map<std::string, std::string>& map)
     auto itLast = prefs.find(LAST_MODIFIED);
     if (itLast != prefs.end()) {
         if (fileutils::isFile(filePath)) {
-            auto lastModified = fileutils::lastWriteTime(filePath);
+            auto lastModified = fileutils::lastWriteTimeInSeconds(filePath);
             try {
                 if (lastModified >= std::stoul(itLast->second))
                     return;
@@ -1504,7 +1504,8 @@ Conversation::preferences(bool includeLastModified) const
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(preferences);
         if (includeLastModified)
-            preferences[LAST_MODIFIED] = fmt::format("{}", fileutils::lastWriteTime(filePath));
+            preferences[LAST_MODIFIED] =
+                    std::to_string(fileutils::lastWriteTimeInSeconds(filePath));
         return preferences;
     } catch (const std::exception& e) {
     }
@@ -1688,7 +1689,7 @@ Conversation::updateLastDisplayed(const std::map<std::string, std::string>& map)
     auto itLast = prefs.find(LAST_MODIFIED);
     if (itLast != prefs.end()) {
         if (fileutils::isFile(filePath)) {
-            auto lastModified = fileutils::lastWriteTime(filePath);
+            auto lastModified = fileutils::lastWriteTimeInSeconds(filePath);
             try {
                 if (lastModified >= std::stoul(itLast->second))
                     return;
@@ -1764,7 +1765,8 @@ Conversation::displayed() const
         auto file = fileutils::loadFile(filePath);
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(lastDisplayed);
-        lastDisplayed[LAST_MODIFIED] = fmt::format("{}", fileutils::lastWriteTime(filePath));
+        lastDisplayed[LAST_MODIFIED] =
+                std::to_string(fileutils::lastWriteTimeInSeconds(filePath));
         return lastDisplayed;
     } catch (const std::exception& e) {
     }
