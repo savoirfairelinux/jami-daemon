@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0608cade_429d0ef4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2592,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-05-17T20:31:00Z",
+      "side": 1,
+      "message": "we stop if deletion succeeded ?",
+      "range": {
+        "startLine": 2592,
+        "startChar": 8,
+        "endLine": 2592,
+        "endChar": 47
+      },
+      "revId": "85b8172d7043d8e6d56a71b9829ed0909c0e13dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
