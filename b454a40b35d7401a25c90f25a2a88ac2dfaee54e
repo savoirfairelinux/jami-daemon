@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1aa9deb7_0ac1d611",
+        "filename": "src/media/audio/coreaudio/ios/corelayer.mm",
+        "patchSetId": 2
+      },
+      "lineNbr": 437,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2023-05-17T19:57:41Z",
+      "side": 1,
+      "message": "we could check if inNumberFrames is not equal bufferSizeFrames, as it also could be bigger and cause issue",
+      "revId": "b454a40b35d7401a25c90f25a2a88ac2dfaee54e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
