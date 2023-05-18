@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "770637ba_36dc5dd6",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 870,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-18T12:16:17Z",
+      "side": 1,
+      "message": "facepalm",
+      "parentUuid": "5d7ad4c2_7de75ffc",
+      "range": {
+        "startLine": 870,
+        "startChar": 74,
+        "endLine": 870,
+        "endChar": 97
+      },
+      "revId": "85b8172d7043d8e6d56a71b9829ed0909c0e13dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0608cade_429d0ef4",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-05-17T20:31:00Z",
       "side": 1,
       "message": "we stop if deletion succeeded ?",
+      "range": {
+        "startLine": 2592,
+        "startChar": 8,
+        "endLine": 2592,
+        "endChar": 47
+      },
+      "revId": "85b8172d7043d8e6d56a71b9829ed0909c0e13dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e99c31c4_057fb38d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2592,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-18T12:16:17Z",
+      "side": 1,
+      "message": "gosh.",
+      "parentUuid": "0608cade_429d0ef4",
       "range": {
         "startLine": 2592,
         "startChar": 8,
