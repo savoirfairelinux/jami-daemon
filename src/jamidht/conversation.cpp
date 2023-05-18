@@ -1785,13 +1785,14 @@ void
 Conversation::checkBootstrapMember(const asio::error_code& ec,
                                    std::vector<std::map<std::string, std::string>> members)
 {
+    auto acc = pimpl_->account_.lock();
     if (ec == asio::error::operation_aborted
-        or pimpl_->swarmManager_->getRoutingTable().getNodes().size() > 0)
+        or pimpl_->swarmManager_->getRoutingTable().getNodes().size() > 0
+        or not acc)
         return;
     // We bootstrap the DRT with devices who already wrote in the repository.
     // However, in a conversation, a large number of devices may just watch
     // the conversation, but never write any message.
-    auto acc = pimpl_->account_.lock();
     std::string uri;
     while (!members.empty()) {
         auto member = members.back();
