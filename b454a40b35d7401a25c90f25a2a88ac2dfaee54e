@@ -33,6 +33,24 @@
       "message": "we could check if inNumberFrames is not equal bufferSizeFrames, as it also could be bigger and cause issue",
       "revId": "b454a40b35d7401a25c90f25a2a88ac2dfaee54e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7239fded_b5e0c673",
+        "filename": "src/media/audio/coreaudio/ios/corelayer.mm",
+        "patchSetId": 2
+      },
+      "lineNbr": 437,
+      "author": {
+        "id": 977
+      },
+      "writtenOn": "2023-05-18T15:57:49Z",
+      "side": 1,
+      "message": "I searched about it and being bigger would not cause issue in the sound \nbut if the difference is big would cause unnecessary memory usage.\nI checked them in the debug the difference is not much.",
+      "parentUuid": "1aa9deb7_0ac1d611",
+      "revId": "b454a40b35d7401a25c90f25a2a88ac2dfaee54e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
