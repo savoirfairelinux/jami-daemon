@@ -928,16 +928,17 @@ eraseFile_win32(const std::string& path, bool dosync)
 bool
 eraseFile_posix(const std::string& path, bool dosync)
 {
+    struct stat st;
+    if (stat(path.c_str(), &st) == -1) {
+        JAMI_WARN("Can not erase file %s: fstat() failed.", path.c_str());
+        return false;
+    }
+    // Remove read-only flag if possible
+    chmod(path.c_str(), st.st_mode | (S_IWGRP+S_IWUSR) );
+
     int fd = open(path.c_str(), O_WRONLY);
     if (fd == -1) {
         JAMI_WARN("Can not open file %s for erasing.", path.c_str());
-        return false;
-    }
-
-    struct stat st;
-    if (fstat(fd, &st) == -1) {
-        JAMI_WARN("Can not erase file %s: fstat() failed.", path.c_str());
-        close(fd);
         return false;
     }
 

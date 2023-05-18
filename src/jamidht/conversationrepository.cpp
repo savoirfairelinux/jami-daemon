@@ -2589,7 +2589,7 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
     if (fileutils::isDirectory(path)) {
         // If a crash occurs during a previous clone, just in case
         JAMI_WARNING("Removing existing directory {} (the dir exists and non empty)", path);
-        if (!fileutils::removeAll(path, true))
+        if (fileutils::removeAll(path, true) != 0)
             return nullptr;
     }
 
