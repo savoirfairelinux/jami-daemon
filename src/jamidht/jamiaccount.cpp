@@ -346,26 +346,15 @@ JamiAccount::newIncomingCall(const std::string& from,
     JAMI_DEBUG("New incoming call from {:s} with {:d} media", from, mediaList.size());
 
     if (sipTransp) {
-        std::unique_lock<std::mutex> connLock(sipConnsMtx_);
-        for (auto& [key, value] : sipConns_) {
-            if (key.first == from) {
-                // Search for a matching linked SipTransport in connection list.
-                for (auto conIter = value.rbegin(); conIter != value.rend(); conIter++) {
-                    if (conIter->transport != sipTransp)
-                        continue;
+        auto call = Manager::instance().callFactory.newSipCall(shared(),
+                                                                Call::CallType::INCOMING,
+                                                                mediaList);
+        call->setPeerUri(JAMI_URI_PREFIX + from);
+        call->setPeerNumber(from);
 
-                    auto call = Manager::instance().callFactory.newSipCall(shared(),
-                                                                           Call::CallType::INCOMING,
-                                                                           mediaList);
-                    call->setPeerUri(JAMI_URI_PREFIX + from);
-                    call->setPeerNumber(from);
+        call->setSipTransport(sipTransp, getContactHeader(sipTransp));
 
-                    call->setSipTransport(sipTransp, getContactHeader(sipTransp));
-
-                    return call;
-                }
-            }
-        }
+        return call;
     }
 
     JAMI_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
