@@ -300,10 +300,10 @@ public:
      * SDP offer and configuration respectively
      */
     virtual void setActiveCodecs(const std::vector<unsigned>& list);
-    std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
-    std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(
+    std::shared_ptr<SystemCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
+    std::vector<std::shared_ptr<SystemCodecInfo>> getActiveAccountCodecInfoList(
         MediaType mediaType) const;
-    std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
+    std::shared_ptr<SystemCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
 
     std::string getRingtonePath() const { return ringtonePath_; }
     bool getRingtoneEnabled() const { return config().ringtoneEnabled; }
@@ -474,7 +474,7 @@ protected:
     /**
      * Vector containing all account codecs (set of system codecs with custom parameters)
      */
-    std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecInfoList_;
+    std::vector<std::shared_ptr<SystemCodecInfo>> accountCodecInfoList_;
 
     /**
      * Ringtone .au file used for this account
@@ -493,7 +493,7 @@ protected:
     /**
      * private account codec searching functions
      */
-    std::shared_ptr<AccountCodecInfo> searchCodecByName(const std::string& name,
+    std::shared_ptr<SystemCodecInfo> searchCodecByName(const std::string& name,
                                                         MediaType mediaType);
     std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
     void setAllCodecsActive(MediaType mediaType, bool active);

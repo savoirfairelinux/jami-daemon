@@ -1946,7 +1946,7 @@ SIPCall::getAllRemoteCandidates(IceTransport& transport) const
     return rem_candidates;
 }
 
-std::shared_ptr<AccountCodecInfo>
+std::shared_ptr<SystemCodecInfo>
 SIPCall::getVideoCodec() const
 {
 #ifdef ENABLE_VIDEO
@@ -1959,7 +1959,7 @@ SIPCall::getVideoCodec() const
     return {};
 }
 
-std::shared_ptr<AccountCodecInfo>
+std::shared_ptr<SystemCodecInfo>
 SIPCall::getAudioCodec() const
 {
     // Return first video codec as we negotiate only one codec for the call
@@ -3002,11 +3002,11 @@ SIPCall::getDetails() const
             if (auto const& rtpSession = stream.rtpSession_) {
                 if (auto codec = rtpSession->getCodec()) {
                     details.emplace(libjami::Call::Details::VIDEO_CODEC,
-                                    codec->systemCodecInfo.name);
+                                    codec->name);
                     details.emplace(libjami::Call::Details::VIDEO_MIN_BITRATE,
-                                    std::to_string(codec->systemCodecInfo.minBitrate));
+                                    std::to_string(codec->minBitrate));
                     details.emplace(libjami::Call::Details::VIDEO_MAX_BITRATE,
-                                    std::to_string(codec->systemCodecInfo.maxBitrate));
+                                    std::to_string(codec->maxBitrate));
                     if (const auto& curvideoRtpSession
                         = std::static_pointer_cast<video::VideoRtpSession>(rtpSession)) {
                         details.emplace(libjami::Call::Details::VIDEO_BITRATE,
@@ -3021,10 +3021,9 @@ SIPCall::getDetails() const
             if (auto const& rtpSession = stream.rtpSession_) {
                 if (auto codec = rtpSession->getCodec()) {
                     details.emplace(libjami::Call::Details::AUDIO_CODEC,
-                                    codec->systemCodecInfo.name);
-                    const auto* codecInfo = static_cast<const SystemAudioCodecInfo*>(&codec->systemCodecInfo);
+                                    codec->name);
                     details.emplace(libjami::Call::Details::AUDIO_SAMPLE_RATE,
-                                    codecInfo->getCodecSpecifications()
+                                    codec->getCodecSpecifications()
                                     [libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE]);
                 } else {
                     details.emplace(libjami::Call::Details::AUDIO_CODEC, "");
@@ -3256,7 +3255,7 @@ SIPCall::monitor() const
         JAMI_DBG("\t- Media: %s", stream.mediaAttribute_->toString(true).c_str());
 #ifdef ENABLE_VIDEO
     if (auto codec = getVideoCodec())
-        JAMI_DBG("\t- Video codec: %s", codec->systemCodecInfo.name.c_str());
+        JAMI_DBG("\t- Video codec: %s", codec->name.c_str());
 #endif
     if (auto transport = getIceMedia()) {
         if (transport->isRunning())

@@ -20,6 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "media/media_codec.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -63,7 +64,7 @@ using namespace std::literals;
 
 namespace jami {
 
-// For portability, do not specify the absolute file name of the ringtone. 
+// For portability, do not specify the absolute file name of the ringtone.
 // Instead, specify its base name to be looked in
 // JAMI_DATADIR/ringtones/, where JAMI_DATADIR is a preprocessor macro denoting
 // the data directory prefix that must be set at build time.
@@ -142,12 +143,12 @@ Account::loadDefaultCodecs()
             continue;
 
         if (systemCodec->mediaType & MEDIA_AUDIO) {
-            accountCodecInfoList_.emplace_back(std::make_shared<AccountAudioCodecInfo>(
+            accountCodecInfoList_.emplace_back(std::make_shared<SystemAudioCodecInfo>(
                 *std::static_pointer_cast<SystemAudioCodecInfo>(systemCodec)));
         }
 
         if (systemCodec->mediaType & MEDIA_VIDEO) {
-            accountCodecInfoList_.emplace_back(std::make_shared<AccountVideoCodecInfo>(
+            accountCodecInfoList_.emplace_back(std::make_shared<SystemVideoCodecInfo>(
                 *std::static_pointer_cast<SystemVideoCodecInfo>(systemCodec)));
         }
     }
@@ -185,7 +186,7 @@ bool
 Account::hasActiveCodec(MediaType mediaType) const
 {
     for (auto& codecIt : accountCodecInfoList_)
-        if ((codecIt->systemCodecInfo.mediaType & mediaType) && codecIt->isActive)
+        if ((codecIt->mediaType & mediaType) && codecIt->isActive)
             return true;
     return false;
 }
@@ -215,8 +216,8 @@ Account::sortCodec()
 {
     std::sort(std::begin(accountCodecInfoList_),
               std::end(accountCodecInfoList_),
-              [](const std::shared_ptr<AccountCodecInfo>& a,
-                 const std::shared_ptr<AccountCodecInfo>& b) { return a->order < b->order; });
+              [](const std::shared_ptr<SystemCodecInfo>& a,
+                 const std::shared_ptr<SystemCodecInfo>& b) { return a->order < b->order; });
 }
 
 std::string
@@ -298,39 +299,39 @@ Account::getUPnPActive() const
  * private account codec searching functions
  *
  * */
-std::shared_ptr<AccountCodecInfo>
+std::shared_ptr<SystemCodecInfo>
 Account::searchCodecById(unsigned codecId, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
-            if ((codecIt->systemCodecInfo.id == codecId)
-                && (codecIt->systemCodecInfo.mediaType & mediaType))
+            if ((codecIt->id == codecId)
+                && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }
     return {};
 }
 
-std::shared_ptr<AccountCodecInfo>
+std::shared_ptr<SystemCodecInfo>
 Account::searchCodecByName(const std::string& name, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
-            if (codecIt->systemCodecInfo.name == name
-                && (codecIt->systemCodecInfo.mediaType & mediaType))
+            if (codecIt->name == name
+                && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }
     return {};
 }
 
-std::shared_ptr<AccountCodecInfo>
+std::shared_ptr<SystemCodecInfo>
 Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
             if ((codecIt->payloadType == payload)
-                && (codecIt->systemCodecInfo.mediaType & mediaType))
+                && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }
@@ -345,8 +346,8 @@ Account::getActiveCodecs(MediaType mediaType) const
 
     std::vector<unsigned> idList;
     for (auto& codecIt : accountCodecInfoList_) {
-        if ((codecIt->systemCodecInfo.mediaType & mediaType) && (codecIt->isActive))
-            idList.push_back(codecIt->systemCodecInfo.id);
+        if ((codecIt->mediaType & mediaType) && (codecIt->isActive))
+            idList.push_back(codecIt->id);
     }
     return idList;
 }
@@ -359,8 +360,8 @@ Account::getAccountCodecInfoIdList(MediaType mediaType) const
 
     std::vector<unsigned> idList;
     for (auto& codecIt : accountCodecInfoList_) {
-        if (codecIt->systemCodecInfo.mediaType & mediaType)
-            idList.push_back(codecIt->systemCodecInfo.id);
+        if (codecIt->mediaType & mediaType)
+            idList.push_back(codecIt->id);
     }
 
     return idList;
@@ -372,7 +373,7 @@ Account::setAllCodecsActive(MediaType mediaType, bool active)
     if (mediaType == MEDIA_NONE)
         return;
     for (auto& codecIt : accountCodecInfoList_) {
-        if (codecIt->systemCodecInfo.mediaType & mediaType)
+        if (codecIt->mediaType & mediaType)
             codecIt->isActive = active;
     }
 }
@@ -381,7 +382,7 @@ void
 Account::setCodecActive(unsigned codecId)
 {
     for (auto& codecIt : accountCodecInfoList_) {
-        if (codecIt->systemCodecInfo.avcodecId == codecId)
+        if (codecIt->avcodecId == codecId)
             codecIt->isActive = true;
     }
 }
@@ -390,20 +391,20 @@ void
 Account::setCodecInactive(unsigned codecId)
 {
     for (auto& codecIt : accountCodecInfoList_) {
-        if (codecIt->systemCodecInfo.avcodecId == codecId)
+        if (codecIt->avcodecId == codecId)
             codecIt->isActive = false;
     }
 }
 
-std::vector<std::shared_ptr<AccountCodecInfo>>
+std::vector<std::shared_ptr<SystemCodecInfo>>
 Account::getActiveAccountCodecInfoList(MediaType mediaType) const
 {
     if (mediaType == MEDIA_NONE)
         return {};
 
-    std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecList;
+    std::vector<std::shared_ptr<SystemCodecInfo>> accountCodecList;
     for (auto& codecIt : accountCodecInfoList_) {
-        if ((codecIt->systemCodecInfo.mediaType & mediaType) && (codecIt->isActive))
+        if ((codecIt->mediaType & mediaType) && (codecIt->isActive))
             accountCodecList.push_back(codecIt);
     }
 

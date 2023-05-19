@@ -80,7 +80,7 @@ public:
      * @param List of codec in preference order
      */
     void setLocalMediaCapabilities(
-        MediaType type, const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedCodecs);
+        MediaType type, const std::vector<std::shared_ptr<SystemCodecInfo>>& selectedCodecs);
 
     /**
      *  Read accessor. Get the local passive sdp session information before negotiation
@@ -264,8 +264,8 @@ private:
 
     void addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port);
 
-    std::shared_ptr<AccountCodecInfo> findCodecByPayload(const unsigned payloadType);
-    std::shared_ptr<AccountCodecInfo> findCodecBySpec(std::string_view codecName,
+    std::shared_ptr<SystemCodecInfo> findCodecByPayload(const unsigned payloadType);
+    std::shared_ptr<SystemCodecInfo> findCodecBySpec(std::string_view codecName,
                                                       const unsigned clockrate = 0) const;
 
     // Data members
@@ -291,8 +291,8 @@ private:
     /**
      * Codec Map used for offer
      */
-    std::vector<std::shared_ptr<AccountCodecInfo>> audio_codec_list_;
-    std::vector<std::shared_ptr<AccountCodecInfo>> video_codec_list_;
+    std::vector<std::shared_ptr<SystemCodecInfo>> audio_codec_list_;
+    std::vector<std::shared_ptr<SystemCodecInfo>> video_codec_list_;
 
     std::string publishedIpAddr_;
     pj_uint16_t publishedIpAddrType_;

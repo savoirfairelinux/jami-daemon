@@ -84,41 +84,36 @@ Sdp::~Sdp()
 #endif
 }
 
-std::shared_ptr<AccountCodecInfo>
+std::shared_ptr<SystemCodecInfo>
 Sdp::findCodecBySpec(std::string_view codec, const unsigned clockrate) const
 {
     // TODO : only manage a list?
     for (const auto& accountCodec : audio_codec_list_) {
-        auto audioCodecInfo = std::static_pointer_cast<AccountAudioCodecInfo>(accountCodec);
-        auto& sysCodecInfo = *static_cast<const SystemAudioCodecInfo*>(
-            &audioCodecInfo->systemCodecInfo);
-        if (sysCodecInfo.name == codec
+        auto audioCodecInfo = std::static_pointer_cast<SystemAudioCodecInfo>(accountCodec);
+        if (audioCodecInfo->name == codec
             and (audioCodecInfo->isPCMG722() ? (clockrate == 8000)
-                                             : (sysCodecInfo.audioformat.sample_rate == clockrate)))
+                                             : (audioCodecInfo->audioformat.sample_rate == clockrate)))
             return accountCodec;
     }
 
     for (const auto& accountCodec : video_codec_list_) {
-        auto sysCodecInfo = accountCodec->systemCodecInfo;
-        if (sysCodecInfo.name == codec)
+        if (accountCodec->name == codec)
             return accountCodec;
     }
     return nullptr;
 }
 
-std::shared_ptr<AccountCodecInfo>
+std::shared_ptr<SystemCodecInfo>
 Sdp::findCodecByPayload(const unsigned payloadType)
 {
     // TODO : only manage a list?
     for (const auto& accountCodec : audio_codec_list_) {
-        auto& sysCodecInfo = accountCodec->systemCodecInfo;
-        if (sysCodecInfo.payloadType == payloadType)
+        if (accountCodec->payloadType == payloadType)
             return accountCodec;
     }
 
     for (const auto& accountCodec : video_codec_list_) {
-        auto& sysCodecInfo = accountCodec->systemCodecInfo;
-        if (sysCodecInfo.payloadType == payloadType)
+        if (accountCodec->payloadType == payloadType)
             return accountCodec;
     }
     return nullptr;
@@ -297,10 +292,10 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         unsigned payload;
 
         if (type == MediaType::MEDIA_AUDIO) {
-            auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(
+            auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(
                 audio_codec_list_[i]);
             payload = accountAudioCodec->payloadType;
-            enc_name = accountAudioCodec->systemCodecInfo.name;
+            enc_name = accountAudioCodec->name;
 
             if (accountAudioCodec->audioformat.nb_channels > 1) {
                 channels = std::to_string(accountAudioCodec->audioformat.nb_channels);
@@ -316,7 +311,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         } else {
             // FIXME: get this key from header
             payload = dynamic_payload++;
-            enc_name = video_codec_list_[i]->systemCodecInfo.name;
+            enc_name = video_codec_list_[i]->name;
             rtpmap.clock_rate = 90000;
         }
 
@@ -338,7 +333,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         if (enc_name == "H264") {
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            const auto accountVideoCodec = std::static_pointer_cast<AccountVideoCodecInfo>(
+            const auto accountVideoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(
                 video_codec_list_[i]);
             const auto& profileLevelID = accountVideoCodec->parameters.empty()
                                              ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
@@ -430,7 +425,7 @@ Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media* med)
 
 void
 Sdp::setLocalMediaCapabilities(MediaType type,
-                               const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedCodecs)
+                               const std::vector<std::shared_ptr<SystemCodecInfo>>& selectedCodecs)
 {
     switch (type) {
     case MediaType::MEDIA_AUDIO:
@@ -444,8 +439,8 @@ Sdp::setLocalMediaCapabilities(MediaType type,
         if (not jami::Manager::instance().videoPreferences.getEncodingAccelerated()) {
             video_codec_list_.erase(std::remove_if(video_codec_list_.begin(),
                                                    video_codec_list_.end(),
-                                                   [](const std::shared_ptr<AccountCodecInfo>& i) {
-                                                       return i->systemCodecInfo.name == "H265";
+                                                   [](const std::shared_ptr<SystemCodecInfo>& i) {
+                                                       return i->name == "H265";
                                                    }),
                                     video_codec_list_.end());
         }

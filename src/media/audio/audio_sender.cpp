@@ -64,10 +64,10 @@ AudioSender::setup(SocketPair& socketPair)
         JAMI_DBG("audioEncoder_->openOutput %s", dest_.c_str());
         audioEncoder_->openOutput(dest_, "rtp");
         audioEncoder_->setOptions(args_);
-        auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
+        auto codec = std::static_pointer_cast<SystemAudioCodecInfo>(args_.codec);
         auto ms = MediaStream("audio sender", codec->audioformat);
         audioEncoder_->setOptions(ms);
-        audioEncoder_->addStream(args_.codec->systemCodecInfo);
+        audioEncoder_->addStream(*args_.codec);
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_->getContext());
     } catch (const MediaEncoderException& e) {
