@@ -1213,11 +1213,8 @@ Manager::transferCall(const std::string& accountId, const std::string& callId, c
     if (not account)
         return false;
     if (auto call = account->getCall(callId)) {
-        if (call->isConferenceParticipant()) {
+        if (call->isConferenceParticipant())
             removeParticipant(*call);
-        } /*else if (not isConference(getCurrentCallId())) {
-            pimpl_->unsetCurrentCall();
-        }*/
         call->transfer(to);
     } else
         return false;
