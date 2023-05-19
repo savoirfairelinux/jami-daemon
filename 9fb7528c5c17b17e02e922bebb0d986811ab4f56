@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31c8376d_414f40cd",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3598,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-19T15:07:55Z",
+      "side": 1,
+      "message": "Not related to push notifications",
+      "range": {
+        "startLine": 3598,
+        "startChar": 4,
+        "endLine": 3598,
+        "endChar": 65
+      },
+      "revId": "9fb7528c5c17b17e02e922bebb0d986811ab4f56",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
