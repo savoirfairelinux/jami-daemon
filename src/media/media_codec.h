@@ -90,6 +90,7 @@ struct SystemCodecInfo
                     unsigned m_maxQuality = DEFAULT_NO_QUALITY);
 
     virtual ~SystemCodecInfo();
+    virtual std::map<std::string, std::string> getCodecSpecifications() const;
 
     /* generic codec information */
     unsigned id;        /* id of the codec used with dbus */
@@ -107,6 +108,11 @@ struct SystemCodecInfo
     unsigned maxBitrate = DEFAULT_MAX_BITRATE;
     unsigned minQuality = DEFAULT_NO_QUALITY;
     unsigned maxQuality = DEFAULT_NO_QUALITY;
+
+    // User-preferences from client
+    unsigned order {0}; /*used to define preferred codec list order in UI*/
+    bool isActive {false};
+    unsigned quality;
 };
 
 /*
@@ -129,9 +135,11 @@ struct SystemAudioCodecInfo : SystemCodecInfo
 
     ~SystemAudioCodecInfo();
 
-    std::map<std::string, std::string> getCodecSpecifications() const;
+    std::map<std::string, std::string> getCodecSpecifications() const override;
+    void setCodecSpecifications(const std::map<std::string, std::string>& details);
 
     AudioFormat audioformat {AudioFormat::NONE()};
+    bool isPCMG722() const;
 };
 
 /*
@@ -156,56 +164,9 @@ struct SystemVideoCodecInfo : SystemCodecInfo
 
     ~SystemVideoCodecInfo();
 
-    std::map<std::string, std::string> getCodecSpecifications() const;
-
-    unsigned frameRate;
-    unsigned profileId;
-    std::string parameters;
-};
-
-/*
- * AccountCodecInfo
- * represent information of a codec on a account
- * store account codec values
- */
-struct AccountCodecInfo
-{
-    AccountCodecInfo(const SystemCodecInfo& sysCodecInfo) noexcept;
-    AccountCodecInfo(const AccountCodecInfo&) noexcept = default;
-    AccountCodecInfo(AccountCodecInfo&&) noexcept = delete;
-    AccountCodecInfo& operator=(const AccountCodecInfo&);
-    AccountCodecInfo& operator=(AccountCodecInfo&&) noexcept = delete;
-
-    const SystemCodecInfo& systemCodecInfo;
-    unsigned order {0}; /*used to define preferred codec list order in UI*/
-    bool isActive {false};
-    /* account custom values */
-    unsigned payloadType;
-    unsigned bitrate;
-    unsigned quality;
-    std::map<std::string, std::string> getCodecSpecifications() const;
-};
-
-struct AccountAudioCodecInfo : AccountCodecInfo
-{
-    AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo);
-
-    std::map<std::string, std::string> getCodecSpecifications() const;
     void setCodecSpecifications(const std::map<std::string, std::string>& details);
+    std::map<std::string, std::string> getCodecSpecifications() const override;
 
-    /* account custom values */
-    AudioFormat audioformat {AudioFormat::NONE()};
-    bool isPCMG722() const;
-};
-
-struct AccountVideoCodecInfo : AccountCodecInfo
-{
-    AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo);
-
-    void setCodecSpecifications(const std::map<std::string, std::string>& details);
-    std::map<std::string, std::string> getCodecSpecifications() const;
-
-    /* account custom values */
     unsigned frameRate;
     unsigned profileId;
     std::string parameters;
@@ -286,7 +247,7 @@ struct MediaDescription
     IpAddr rtcp_addr {};
 
     /** RTP */
-    std::shared_ptr<AccountCodecInfo> codec {};
+    std::shared_ptr<SystemCodecInfo> codec {};
     unsigned payload_type {};
     std::string receiving_sdp {};
     unsigned bitrate {};

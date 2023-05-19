@@ -73,7 +73,7 @@ public:
 
     virtual void initRecorder() = 0;
     virtual void deinitRecorder() = 0;
-    std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }
+    std::shared_ptr<SystemCodecInfo> getCodec() const { return send_.codec; }
     const IpAddr& getSendAddr() const { return send_.addr; };
     const IpAddr& getRecvAddr() const { return receive_.addr; };
 

@@ -59,7 +59,6 @@ namespace jami {
 
 class VoIPLink;
 class Account;
-struct AccountVideoCodecInfo;
 class AudioDeviceGuard;
 
 class Call;
@@ -415,11 +414,11 @@ public:
 
     void onTextMessage(std::map<std::string, std::string>&& messages);
 
-    virtual std::shared_ptr<AccountCodecInfo> getAudioCodec() const
+    virtual std::shared_ptr<SystemCodecInfo> getAudioCodec() const
     {
         return {};
     }
-    virtual std::shared_ptr<AccountCodecInfo> getVideoCodec() const
+    virtual std::shared_ptr<SystemCodecInfo> getVideoCodec() const
     {
         return {};
     }

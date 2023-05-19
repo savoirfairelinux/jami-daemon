@@ -132,7 +132,7 @@ AudioRtpSession::startSender()
     }
 
     // NOTE do after sender/encoder are ready
-    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(send_.codec);
+    auto codec = std::static_pointer_cast<SystemAudioCodecInfo>(send_.codec);
     audioInput_->setFormat(codec->audioformat);
     if (audioInput_)
         audioInput_->attach(sender_.get());
@@ -168,7 +168,7 @@ AudioRtpSession::startReceiver()
     if (receiveThread_)
         JAMI_WARN("Restarting audio receiver");
 
-    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
+    auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(receive_.codec);
     receiveThread_.reset(new AudioReceiveThread(callId_,
                                                 accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp,

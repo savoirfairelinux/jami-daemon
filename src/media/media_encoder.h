@@ -50,7 +50,6 @@ struct AVCodec;
 namespace jami {
 
 struct MediaDescription;
-struct AccountCodecInfo;
 
 #ifdef RING_ACCEL
 namespace video {

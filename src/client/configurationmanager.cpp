@@ -513,22 +513,22 @@ setCodecDetails(const std::string& accountId,
         return false;
     }
     try {
-        if (codec->systemCodecInfo.mediaType & jami::MEDIA_AUDIO) {
-            if (auto foundCodec = std::static_pointer_cast<jami::AccountAudioCodecInfo>(codec)) {
+        if (codec->mediaType & jami::MEDIA_AUDIO) {
+            if (auto foundCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(codec)) {
                 foundCodec->setCodecSpecifications(details);
                 jami::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountId);
                 return true;
             }
         }
 
-        if (codec->systemCodecInfo.mediaType & jami::MEDIA_VIDEO) {
-            if (auto foundCodec = std::static_pointer_cast<jami::AccountVideoCodecInfo>(codec)) {
+        if (codec->mediaType & jami::MEDIA_VIDEO) {
+            if (auto foundCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(codec)) {
                 foundCodec->setCodecSpecifications(details);
-                JAMI_WARN("parameters for %s changed ", foundCodec->systemCodecInfo.name.c_str());
+                JAMI_WARN("parameters for %s changed ", foundCodec->name.c_str());
                 if (auto call = jami::Manager::instance().getCurrentCall()) {
                     if (call->getVideoCodec() == foundCodec) {
                         JAMI_WARN("%s running. Need to restart encoding",
-                                  foundCodec->systemCodecInfo.name.c_str());
+                                  foundCodec->name.c_str());
                         call->restartMediaSender();
                     }
                 }
@@ -558,12 +558,12 @@ getCodecDetails(const std::string& accountId, const unsigned& codecId)
         return {};
     }
 
-    if (codec->systemCodecInfo.mediaType & jami::MEDIA_AUDIO)
-        if (auto foundCodec = std::static_pointer_cast<jami::AccountAudioCodecInfo>(codec))
+    if (codec->mediaType & jami::MEDIA_AUDIO)
+        if (auto foundCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(codec))
             return foundCodec->getCodecSpecifications();
 
-    if (codec->systemCodecInfo.mediaType & jami::MEDIA_VIDEO)
-        if (auto foundCodec = std::static_pointer_cast<jami::AccountVideoCodecInfo>(codec))
+    if (codec->mediaType & jami::MEDIA_VIDEO)
+        if (auto foundCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(codec))
             return foundCodec->getCodecSpecifications();
 
     jami::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);

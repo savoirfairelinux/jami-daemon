@@ -59,7 +59,7 @@ VideoSender::VideoSender(const std::string& dest,
     videoEncoder_->enableAccel(enableHwAccel
                                and Manager::instance().videoPreferences.getEncodingAccelerated());
 #endif
-    videoEncoder_->addStream(args.codec->systemCodecInfo);
+    videoEncoder_->addStream(*args.codec);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_->getContext());
 }

@@ -164,7 +164,7 @@ VideoRtpSession::startSender()
         // be sure to not send any packets before saving last RTP seq value
         socketPair_->stopSendOp();
 
-        auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
+        auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
         auto autoQuality = codecVideo->isAutoQualityEnabled;
 
         send_.linkableHW = conference_ == nullptr;
@@ -730,16 +730,15 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
 void
 VideoRtpSession::setupVideoBitrateInfo()
 {
-    auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
+    auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
     if (codecVideo) {
-        auto& info = codecVideo->systemCodecInfo;
         videoBitrateInfo_ = {
             codecVideo->bitrate,
-            info.minBitrate,
-            info.maxBitrate,
+            codecVideo->minBitrate,
+            codecVideo->maxBitrate,
             codecVideo->quality,
-            info.minQuality,
-            info.maxQuality,
+            codecVideo->minQuality,
+            codecVideo->maxQuality,
             videoBitrateInfo_.cptBitrateChecking,
             videoBitrateInfo_.maxBitrateChecking,
             videoBitrateInfo_.packetLostThreshold,
@@ -753,7 +752,7 @@ VideoRtpSession::setupVideoBitrateInfo()
 void
 VideoRtpSession::storeVideoBitrateInfo()
 {
-    if (auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec)) {
+    if (auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec)) {
         codecVideo->bitrate = videoBitrateInfo_.videoBitrateCurrent;
         codecVideo->quality = videoBitrateInfo_.videoQualityCurrent;
     }

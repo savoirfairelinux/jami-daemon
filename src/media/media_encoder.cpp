@@ -492,7 +492,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         }
     }
     int ret = 0;
-    if (streamIdx >= encoders_.size())
+    if (static_cast<size_t>(streamIdx) >= encoders_.size())
         return -1;
     AVCodecContext* encoderCtx = encoders_[streamIdx];
     AVPacket pkt;

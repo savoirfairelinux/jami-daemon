@@ -141,8 +141,8 @@ public:
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
     void restartMediaSender() override;
-    std::shared_ptr<AccountCodecInfo> getAudioCodec() const override;
-    std::shared_ptr<AccountCodecInfo> getVideoCodec() const override;
+    std::shared_ptr<SystemCodecInfo> getAudioCodec() const override;
+    std::shared_ptr<SystemCodecInfo> getVideoCodec() const override;
     void sendKeyframe(int streamIdx = -1) override;
     bool isIceEnabled() const override;
     std::map<std::string, std::string> getDetails() const override;

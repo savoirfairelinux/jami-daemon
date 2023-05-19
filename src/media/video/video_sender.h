@@ -34,7 +34,6 @@
 namespace jami {
 class SocketPair;
 struct DeviceParams;
-struct AccountVideoCodecInfo;
 } // namespace jami
 
 namespace jami {
