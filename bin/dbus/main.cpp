@@ -21,20 +21,34 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "dbusclient.h"
-#include "jami.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <signal.h>
+#include "dbuscallmanager.hpp"
+#include "dbusconfigurationmanager.hpp"
+#include "dbusinstance.hpp"
+#include "dbuspresencemanager.hpp"
+#ifdef ENABLE_VIDEO
+#include "dbusvideomanager.hpp"
+#endif
+#ifdef ENABLE_PLUGIN
+#include "dbuspluginmanagerinterface.hpp"
+#endif
+
+#include <sdbus-c++/sdbus-c++.h>
+#include <jami.h>
+#include <string.h>
+
+#include <csignal>
 #include <getopt.h>
-
 #include <iostream>
-#include <thread>
 #include <memory>
-#include <cstring>
-#include <cstdlib>
+
+bool persistent = false;
+std::unique_ptr<sdbus::IConnection> connection;
 
 static int ringFlags = 0;
-static std::weak_ptr<DBusClient> weakClient;
 
 static void
 print_title()
@@ -67,7 +81,7 @@ print_usage()
 // message accordingly.
 // returns true if we should quit (i.e. help was printed), false otherwise
 static bool
-parse_args(int argc, char *argv[], bool& persistent)
+parse_args(int argc, char *argv[])
 {
     int consoleFlag = false;
     int debugFlag = false;
@@ -148,17 +162,15 @@ parse_args(int argc, char *argv[], bool& persistent)
 static void
 signal_handler(int code)
 {
+    // Unset signal handlers
+    signal(SIGINT, SIG_DFL);
+    signal(SIGHUP, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
+
     std::cerr << "Caught signal " << strsignal(code)
               << ", terminating..." << std::endl;
 
-    // Unset signal handlers
-    signal(SIGHUP, SIG_DFL);
-    signal(SIGINT, SIG_DFL);
-    signal(SIGTERM, SIG_DFL);
-
-    // Interrupt the process
-    if (auto client = weakClient.lock())
-        client->exit();
+    connection->leaveEventLoop();
 }
 
 int
@@ -166,25 +178,47 @@ main(int argc, char *argv [])
 {
     print_title();
 
-    bool persistent = false;
-    if (parse_args(argc, argv, persistent))
+    if (parse_args(argc, argv))
         return 0;
 
-    // TODO: Block signals for all threads but the main thread, decide how/if we should
-    // handle other signals
-    signal(SIGINT, signal_handler);
-    signal(SIGHUP, signal_handler);
-    signal(SIGTERM, signal_handler);
-    signal(SIGPIPE, SIG_IGN);
+    if (!libjami::init(static_cast<libjami::InitFlag>(ringFlags))) {
+        std::cerr << "libjami::init() failed" << std::endl;
+        return 1;
+    }
 
     try {
-        if (auto client = std::make_shared<DBusClient>(ringFlags, persistent))
-        {
-            weakClient = client;
-            return client->event_loop();
+        connection = sdbus::createSessionBusConnection("cx.ring.Ring");
+        DBusCallManager callManager(*connection);
+        DBusConfigurationManager configurationManager(*connection);
+        DBusInstance instanceManager(*connection);
+        DBusPresenceManager presenceManager(*connection);
+#ifdef ENABLE_VIDEO
+        DBusVideoManager videoManager(*connection);
+#endif
+#ifdef ENABLE_PLUGIN
+        DBusPluginManagerInterface pluginManager(*connection);
+#endif
+
+        if (!libjami::start()) {
+            std::cerr << "libjami::start() failed" << std::endl;
+            return 2;
         }
-    } catch (const std::exception& ex) {
-        std::cerr << "Exception in the DBusClient: " << ex.what() << std::endl;
+
+        // TODO: Block signals for all threads but the main thread, decide how/if we should
+        // handle other signals
+        std::signal(SIGINT, signal_handler);
+        std::signal(SIGHUP, signal_handler);
+        std::signal(SIGTERM, signal_handler);
+        std::signal(SIGPIPE, SIG_IGN);
+
+        connection->enterEventLoop();
+
+        libjami::unregisterSignalHandlers();
+
+    } catch (const sdbus::Error& ex) {
+        std::cerr << "sdbus exception: " << ex.what() << std::endl;
     }
-    return 1;
+
+    libjami::fini();
+    return 0;
 }

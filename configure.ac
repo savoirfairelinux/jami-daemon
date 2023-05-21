@@ -406,24 +406,21 @@ AS_IF([test "x$enable_coverage" = "xyes"],
   [DAEMONCXXFLAGS+=" --coverage"
    DAEMONLDFLAGS+=" --coverage"])
 
-# DBUSCPP
-dnl Check for dbuscpp, the C++ bindings for D-Bus
+# SDBUSCPP
+dnl Check for sdbus-c++, the C++ bindings for D-Bus
 AC_ARG_WITH([dbus],
   [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
   [],
   [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"],
-  [PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
+  [PKG_CHECK_MODULES(SDBUSCPP, sdbus-c++,,
      AC_MSG_WARN([Missing dbus development files]))
 
    AC_CONFIG_FILES([bin/dbus/Makefile])
 
-   AC_PATH_PROG([DBUSXX_XML2CPP], dbusxx-xml2cpp,
+   AC_PATH_PROG([SDBUSCPP_XML2CPP], sdbus-c++-xml2cpp,
      [AC_MSG_ERROR([dbusxx-xml2cpp not found])])
 
-   AS_IF([test "x$CLANG" = "xyes"],
-     [AC_MSG_ERROR([dbus does not compile when clang is used,
-                    rerun with --without-dbus])]);
    AM_CONDITIONAL(RING_DBUS, true)],
   [TESTS= $(check_PROGRAMS)
    AM_CONDITIONAL(RING_DBUS, false)]);

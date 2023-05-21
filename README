@@ -204,17 +204,6 @@ gettext is installed, because symlinks are not created.
 Run: 'brew link --force gettext' to fix it.
 
 
-Clang compatibility (developers only)
--------------------------------------
-
-It is possible to compile jamid with Clang by setting CC and CXX variables
-to 'clang' and 'clang++' respectively when calling ./configure.
-
-Currently it is not possible to use the DBus interface mechanism, and the
-interaction between daemon and client will not work; for each platform where
-D-Bus is not available the client should implement all the methods in the
-*_stub.cpp files.
-
 Contributing to Jami
 ------------------------
 
