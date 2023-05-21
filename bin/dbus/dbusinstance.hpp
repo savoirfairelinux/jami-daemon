@@ -18,29 +18,44 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "dbusinstance.h"
+#include "dbusinstance.adaptor.h"
+#include <sdbus-c++/IConnection.h>
+#include <cstdint>
+#include <memory>
 
-DBusInstance::DBusInstance(DBus::Connection& connection,
-                           const OnNoMoreClientFunc& onNoMoreClientFunc)
-    : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/Instance")
-    , onNoMoreClientFunc_(onNoMoreClientFunc)
-    , count_(0)
-{}
+extern bool persistent;
+extern std::unique_ptr<sdbus::IConnection> connection;
 
-void
-DBusInstance::Register(const int32_t& /*pid*/,
-                       const std::string& /*name*/)
+class DBusInstance : public sdbus::AdaptorInterfaces<cx::ring::Ring::Instance_adaptor>
 {
-    ++count_;
-}
-
-
-void
-DBusInstance::Unregister(const int32_t& /*pid*/)
-{
-    --count_;
-
-    if (count_ <= 0 && onNoMoreClientFunc_) {
-        onNoMoreClientFunc_();
+public:
+    DBusInstance(sdbus::IConnection& connection)
+        : AdaptorInterfaces(connection, "/cx/ring/Ring/Instance")
+    {
+        registerAdaptor();
     }
-}
+
+    ~DBusInstance()
+    {
+        unregisterAdaptor();
+    }
+
+    void
+    Register(const int32_t& /*pid*/, const std::string& /*name*/)
+    {
+        ++count_;
+    }
+
+    void
+    Unregister(const int32_t& /*pid*/)
+    {
+        --count_;
+
+        if (!persistent && count_ <= 0) {
+            connection->leaveEventLoop();
+        }
+    }
+
+private:
+    int_least16_t count_;
+};
