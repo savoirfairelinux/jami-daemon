@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "45bd2423_cbf3b3ad",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2023-05-21T14:46:37Z",
+      "side": 1,
+      "message": "AFAIK all GNU/Linux distributions use Meson. Should we support autotools here?",
+      "revId": "1e3645e2096fd5b14c79a065845f2cefdbb9a1de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
