@@ -3,55 +3,48 @@ jamid_includedirs = include_directories(
 )
 
 jamid_sources = files(
-    'dbuscallmanager.cpp',
-    'dbusclient.cpp',
-    'dbusconfigurationmanager.cpp',
-    'dbusinstance.cpp',
-    'dbuspresencemanager.cpp',
     'main.cpp'
 )
 
 jamid_targets = []
 jamid_targets += custom_target('callmanager.adaptor',
-    command: [progdbusxxxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
+    command: [progsdbuscppxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
     input: 'cx.ring.Ring.CallManager.xml',
     output: 'dbuscallmanager.adaptor.h'
 )
 
 jamid_targets += custom_target('configurationmanager.adaptor',
-    command: [progdbusxxxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
+    command: [progsdbuscppxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
     input: 'cx.ring.Ring.ConfigurationManager.xml',
     output: 'dbusconfigurationmanager.adaptor.h'
 )
 
 jamid_targets += custom_target('instance.adaptor',
-    command: [progdbusxxxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
+    command: [progsdbuscppxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
     input: 'cx.ring.Ring.Instance.xml',
     output: 'dbusinstance.adaptor.h'
 )
 
 jamid_targets += custom_target('presencemanager.adaptor',
-    command: [progdbusxxxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
+    command: [progsdbuscppxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
     input: 'cx.ring.Ring.PresenceManager.xml',
     output: 'dbuspresencemanager.adaptor.h'
 )
 
 if conf.get('ENABLE_VIDEO')
     jamid_targets += custom_target('videomanager.adaptor',
-        command: [progdbusxxxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
+        command: [progsdbuscppxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
         input: 'cx.ring.Ring.VideoManager.xml',
         output: 'dbusvideomanager.adaptor.h'
     )
-    jamid_sources += files('dbusvideomanager.cpp')
 endif
 
 if conf.get('ENABLE_PLUGIN')
     jamid_targets += custom_target('pluginmanagerinterface.adaptor',
-        command: [progdbusxxxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
+        command: [progsdbuscppxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
         input: 'cx.ring.Ring.PluginManagerInterface.xml',
         output: 'dbuspluginmanagerinterface.adaptor.h'
     )
-    jamid_sources += files('dbuspluginmanagerinterface.cpp')
 endif
 
 if progpod2man.found()
@@ -68,13 +61,13 @@ jamid = executable('jamid',
     jamid_targets,
     include_directories: jamid_includedirs,
     sources: jamid_sources,
-    dependencies: [depdbuscpp, depjami],
+    dependencies: [depsdbuscpp, depjami],
     install: true,
-    install_dir: get_option('libdir')
+    install_dir: get_option('libexecdir')
 )
 
 configure_file(
-    configuration: {'LIBDIR': get_option('prefix') / get_option('libdir')},
+    configuration: {'LIBEXECDIR': get_option('prefix') / get_option('libexecdir')},
     input: 'net.jami.daemon.service.in',
     output: 'cx.ring.Ring.service',
     install: true,

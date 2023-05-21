@@ -123,7 +123,7 @@ configure
 jami.pc
 bin/dbus/*.adaptor.h
 bin/dbus/cx.ring.Ring.service
-bin/jamid
+bin/dbus/jamid
 doltcompile
 doltlibtool
 __pycache__
