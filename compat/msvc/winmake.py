@@ -49,7 +49,6 @@ log = None
 # project paths
 daemon_msvc_dir = os.path.dirname(os.path.realpath(__file__))
 daemon_dir = os.path.dirname(os.path.dirname(daemon_msvc_dir))
-daemon_build_dir = daemon_dir + r'\build'
 contrib_src_dir = daemon_dir + r'\contrib\src'
 contrib_build_dir = daemon_dir + r'\contrib\build'
 contrib_tmp_dir = daemon_dir + r'\contrib\tarballs'
@@ -244,13 +243,14 @@ def make_daemon(pkg_info, force, sdk_version, toolset):
     env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
     sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
         'with_env', '')
-    build('daemon', daemon_build_dir,
+    build('daemon', daemon_dir,
           pkg_info.get('project_paths', []),
           pkg_info.get('custom_scripts', {}),
           env_set,
           sdk_to_use,
           toolset,
-          conf=pkg_info.get('configuration', 'Release'))
+          conf=pkg_info.get('configuration', 'Release'),
+          use_cmake=pkg_info.get('use_cmake', False))
 
 
 def make(pkg_info, force, sdk_version, toolset, isPlugin):
