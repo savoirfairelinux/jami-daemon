@@ -34,6 +34,24 @@
       "parentUuid": "45bd2423_cbf3b3ad",
       "revId": "1e3645e2096fd5b14c79a065845f2cefdbb9a1de",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "63ee6a7e_7a0fa7a4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-23T14:08:49Z",
+      "side": 1,
+      "message": "Ok discussed with Adrien. You can consider autotools as deprecated indeed.",
+      "parentUuid": "1591fbb0_c9fdd120",
+      "revId": "1e3645e2096fd5b14c79a065845f2cefdbb9a1de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
