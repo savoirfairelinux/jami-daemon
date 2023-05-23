@@ -83,8 +83,6 @@
 
 namespace jami {
 
-using yaml_utils::parseValue;
-using yaml_utils::parseValueOptional;
 using sip_utils::CONST_PJ_STR;
 
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
@@ -137,8 +135,12 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
 SIPAccount::~SIPAccount() noexcept
 {
     // ensure that no registration callbacks survive past this point
-    destroyRegistrationInfo();
-    setTransport();
+    try {
+        destroyRegistrationInfo();
+        setTransport();
+    } catch (...) {
+        JAMI_ERR("Exception in SIPAccount destructor");
+    }
 
     delete presence_;
 }

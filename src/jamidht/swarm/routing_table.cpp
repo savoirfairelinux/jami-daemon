@@ -252,14 +252,14 @@ RoutingTable::RoutingTable()
 }
 
 bool
-RoutingTable::addNode(std::shared_ptr<ChannelSocketInterface> socket)
+RoutingTable::addNode(const std::shared_ptr<ChannelSocketInterface>& socket)
 {
     auto bucket = findBucket(socket->deviceId());
     return addNode(socket, bucket);
 }
 
 bool
-RoutingTable::addNode(std::shared_ptr<ChannelSocketInterface> channel,
+RoutingTable::addNode(const std::shared_ptr<ChannelSocketInterface>& channel,
                       std::list<Bucket>::iterator& bucket)
 {
     NodeId nodeId = channel->deviceId();

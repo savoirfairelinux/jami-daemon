@@ -1712,43 +1712,6 @@ IceTransport::waitForData(unsigned compId, std::chrono::milliseconds timeout, st
     return pimpl_->peerChannels_.at(compId - 1).wait(timeout, ec);
 }
 
-std::vector<SDP>
-IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
-{
-    std::vector<SDP> sdp_list;
-
-    try {
-        size_t off = 0;
-        while (off != msg.size()) {
-            msgpack::unpacked result;
-            msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
-            SDP sdp;
-            if (result.get().type == msgpack::type::POSITIVE_INTEGER) {
-                // Version 1
-                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
-                std::tie(sdp.ufrag, sdp.pwd) = result.get().as<std::pair<std::string, std::string>>();
-                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
-                auto comp_cnt = result.get().as<uint8_t>();
-                while (comp_cnt-- > 0) {
-                    msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
-                    auto candidates = result.get().as<std::vector<std::string>>();
-                    sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
-                    sdp.candidates.insert(sdp.candidates.end(),
-                                          candidates.begin(),
-                                          candidates.end());
-                }
-            } else {
-                result.get().convert(sdp);
-            }
-            sdp_list.emplace_back(std::move(sdp));
-        }
-    } catch (const msgpack::unpack_error& e) {
-        JAMI_WARN("Error parsing sdp: %s", e.what());
-    }
-
-    return sdp_list;
-}
-
 bool
 IceTransport::isTCPEnabled()
 {
