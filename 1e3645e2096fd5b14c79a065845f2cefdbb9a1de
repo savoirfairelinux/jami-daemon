@@ -16,6 +16,24 @@
       "message": "AFAIK all GNU/Linux distributions use Meson. Should we support autotools here?",
       "revId": "1e3645e2096fd5b14c79a065845f2cefdbb9a1de",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1591fbb0_c9fdd120",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-23T12:52:04Z",
+      "side": 1,
+      "message": "for now autotools and is not yet deprecated",
+      "parentUuid": "45bd2423_cbf3b3ad",
+      "revId": "1e3645e2096fd5b14c79a065845f2cefdbb9a1de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
