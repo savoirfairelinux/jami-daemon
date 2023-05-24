@@ -2153,7 +2153,7 @@ JamiAccount::convModule()
         convModule_ = std::make_unique<ConversationModule>(
             weak(),
             [this](auto&& syncMsg) {
-                runOnMainThread([w = weak(), syncMsg] {
+                dht::ThreadPool::io().run([w = weak(), syncMsg] {
                     if (auto shared = w.lock())
                         shared->syncModule()->syncWithConnected(syncMsg);
                 });
@@ -2166,7 +2166,7 @@ JamiAccount::convModule()
                 return sendTextMessage(uri, deviceId, msg, token);
             },
             [this](const auto& convId, const auto& deviceId, auto cb, const auto& type) {
-                runOnMainThread([w = weak(), convId, deviceId, cb = std::move(cb), type] {
+                dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::move(cb), type] {
                     auto shared = w.lock();
                     if (!shared)
                         return;
@@ -2182,6 +2182,7 @@ JamiAccount::convModule()
                         cb({});
                         return;
                     }
+
                     shared->connectionManager_->connectDevice(
                         DeviceId(deviceId),
                         "git://" + deviceId + "/" + convId,
@@ -2203,7 +2204,7 @@ JamiAccount::convModule()
                 });
             },
             [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType) {
-                runOnMainThread([w = weak(), convId, deviceId, cb, connectionType] {
+                dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb, connectionType] {
                     auto shared = w.lock();
                     if (!shared)
                         return;
