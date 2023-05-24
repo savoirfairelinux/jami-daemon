@@ -128,7 +128,8 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     if (idstr == "profile.vcf") {
         if (!channel->isInitiator()) {
             // Only accept newest profiles
-            if (lastModified == 0 || lastModified > fileutils::lastWriteTime(acc->profilePath()))
+            if (lastModified == 0
+                || lastModified > fileutils::lastWriteTimeInSeconds(acc->profilePath()))
                 acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
             else
                 channel->shutdown();

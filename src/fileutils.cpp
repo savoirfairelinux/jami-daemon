@@ -865,6 +865,9 @@ recursive_mkdir(const std::string& path, mode_t mode)
 bool
 eraseFile_win32(const std::string& path, bool dosync)
 {
+    // Note: from https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-deletefilea#remarks
+    // To delete a read-only file, first you must remove the read-only attribute.
+    SetFileAttributesA(path.c_str(), GetFileAttributesA(path.c_str()) & ~FILE_ATTRIBUTE_READONLY);
     HANDLE h
         = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (h == INVALID_HANDLE_VALUE) {
@@ -925,16 +928,17 @@ eraseFile_win32(const std::string& path, bool dosync)
 bool
 eraseFile_posix(const std::string& path, bool dosync)
 {
+    struct stat st;
+    if (stat(path.c_str(), &st) == -1) {
+        JAMI_WARN("Can not erase file %s: fstat() failed.", path.c_str());
+        return false;
+    }
+    // Remove read-only flag if possible
+    chmod(path.c_str(), st.st_mode | (S_IWGRP+S_IWUSR) );
+
     int fd = open(path.c_str(), O_WRONLY);
     if (fd == -1) {
         JAMI_WARN("Can not open file %s for erasing.", path.c_str());
-        return false;
-    }
-
-    struct stat st;
-    if (fstat(fd, &st) == -1) {
-        JAMI_WARN("Can not erase file %s: fstat() failed.", path.c_str());
-        close(fd);
         return false;
     }
 
@@ -1124,15 +1128,15 @@ accessFile(const std::string& file, int mode)
 }
 
 uint64_t
-lastWriteTime(const std::string& p)
+lastWriteTimeInSeconds(const std::string& filePath)
 {
 #if USE_STD_FILESYSTEM
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::filesystem::last_write_time(std::filesystem::path(p)).time_since_epoch())
-        .count();
+    return std::chrono::duration_cast<std::chrono::seconds>(
+            std::filesystem::last_write_time(std::filesystem::path(filePath))
+                    .time_since_epoch()).count();
 #else
     struct stat result;
-    if (stat(p.c_str(), &result) == 0)
+    if (stat(filePath.c_str(), &result) == 0)
         return result.st_mtime;
     return 0;
 #endif

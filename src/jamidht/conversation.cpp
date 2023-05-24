@@ -1476,7 +1476,7 @@ Conversation::updatePreferences(const std::map<std::string, std::string>& map)
     auto itLast = prefs.find(LAST_MODIFIED);
     if (itLast != prefs.end()) {
         if (fileutils::isFile(filePath)) {
-            auto lastModified = fileutils::lastWriteTime(filePath);
+            auto lastModified = fileutils::lastWriteTimeInSeconds(filePath);
             try {
                 if (lastModified >= std::stoul(itLast->second))
                     return;
@@ -1504,7 +1504,8 @@ Conversation::preferences(bool includeLastModified) const
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(preferences);
         if (includeLastModified)
-            preferences[LAST_MODIFIED] = fmt::format("{}", fileutils::lastWriteTime(filePath));
+            preferences[LAST_MODIFIED] =
+                    std::to_string(fileutils::lastWriteTimeInSeconds(filePath));
         return preferences;
     } catch (const std::exception& e) {
     }
@@ -1688,7 +1689,7 @@ Conversation::updateLastDisplayed(const std::map<std::string, std::string>& map)
     auto itLast = prefs.find(LAST_MODIFIED);
     if (itLast != prefs.end()) {
         if (fileutils::isFile(filePath)) {
-            auto lastModified = fileutils::lastWriteTime(filePath);
+            auto lastModified = fileutils::lastWriteTimeInSeconds(filePath);
             try {
                 if (lastModified >= std::stoul(itLast->second))
                     return;
@@ -1764,7 +1765,8 @@ Conversation::displayed() const
         auto file = fileutils::loadFile(filePath);
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(lastDisplayed);
-        lastDisplayed[LAST_MODIFIED] = fmt::format("{}", fileutils::lastWriteTime(filePath));
+        lastDisplayed[LAST_MODIFIED] =
+                std::to_string(fileutils::lastWriteTimeInSeconds(filePath));
         return lastDisplayed;
     } catch (const std::exception& e) {
     }
@@ -1783,13 +1785,14 @@ void
 Conversation::checkBootstrapMember(const asio::error_code& ec,
                                    std::vector<std::map<std::string, std::string>> members)
 {
+    auto acc = pimpl_->account_.lock();
     if (ec == asio::error::operation_aborted
-        or pimpl_->swarmManager_->getRoutingTable().getNodes().size() > 0)
+        or pimpl_->swarmManager_->getRoutingTable().getNodes().size() > 0
+        or not acc)
         return;
     // We bootstrap the DRT with devices who already wrote in the repository.
     // However, in a conversation, a large number of devices may just watch
     // the conversation, but never write any message.
-    auto acc = pimpl_->account_.lock();
     std::string uri;
     while (!members.empty()) {
         auto member = members.back();
@@ -1842,7 +1845,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
                 sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now());
                 sthis->pimpl_->fallbackTimer_->async_wait(
                     std::bind(&Conversation::checkBootstrapMember,
-                              sthis.get(),
+                              sthis,
                               std::placeholders::_1,
                               std::move(members)));
             }
@@ -1904,7 +1907,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped)
             sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now() + 20s
                                                       - std::chrono::seconds(timeForBootstrap));
             sthis->pimpl_->fallbackTimer_->async_wait(std::bind(&Conversation::checkBootstrapMember,
-                                                                sthis.get(),
+                                                                sthis,
                                                                 std::placeholders::_1,
                                                                 std::move(members)));
         });

@@ -315,7 +315,7 @@ public:
      * @param socket
      * @return true if socket was added, false if not
      */
-    bool addNode(std::shared_ptr<ChannelSocketInterface> socket);
+    bool addNode(const std::shared_ptr<ChannelSocketInterface>& socket);
 
     /**
      * Add socket to specific bucket
@@ -323,7 +323,7 @@ public:
      * @param bucket
      * @return true if socket was added to bucket, false if not
      */
-    bool addNode(std::shared_ptr<ChannelSocketInterface> channel,
+    bool addNode(const std::shared_ptr<ChannelSocketInterface>& channel,
                  std::list<Bucket>::iterator& bucket);
 
     /**

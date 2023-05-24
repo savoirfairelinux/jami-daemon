@@ -87,7 +87,7 @@ CertificateStore::loadRevocations(crypto::Certificate& crt) const
     for (const auto& crl : fileutils::readDirectory(dir)) {
         try {
             crt.addRevocationList(std::make_shared<crypto::RevocationList>(
-                fileutils::loadFile(dir + DIR_SEPARATOR_CH + crl)));
+                fileutils::loadFile(fmt::format("{}/{}", dir, crl))));
         } catch (const std::exception& e) {
             JAMI_WARN("Can't load revocation list: %s", e.what());
         }
@@ -95,7 +95,7 @@ CertificateStore::loadRevocations(crypto::Certificate& crt) const
     auto ocsp_dir = ocspPath_ + DIR_SEPARATOR_CH + crt.getId().toString();
     for (const auto& ocsp : fileutils::readDirectory(ocsp_dir)) {
         try {
-            std::string ocsp_filepath = ocsp_dir + DIR_SEPARATOR_CH + ocsp;
+            auto ocsp_filepath = fmt::format("{}/{}", ocsp_dir, ocsp);
             JAMI_DEBUG("Found {:s}", ocsp_filepath);
             auto serial = crt.getSerialNumber();
             if (dht::toHex(serial.data(), serial.size()) != ocsp)
@@ -236,7 +236,7 @@ readCertificates(const std::string& path, const std::string& crl_path)
     if (fileutils::isDirectory(path)) {
         auto files = fileutils::readDirectory(path);
         for (const auto& file : files) {
-            auto certs = readCertificates(path + DIR_SEPARATOR_CH + file, crl_path);
+            auto certs = readCertificates(fmt::format("{}/{}", path, file), crl_path);
             ret.insert(std::end(ret),
                        std::make_move_iterator(std::begin(certs)),
                        std::make_move_iterator(std::end(certs)));

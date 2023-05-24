@@ -1712,43 +1712,6 @@ IceTransport::waitForData(unsigned compId, std::chrono::milliseconds timeout, st
     return pimpl_->peerChannels_.at(compId - 1).wait(timeout, ec);
 }
 
-std::vector<SDP>
-IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
-{
-    std::vector<SDP> sdp_list;
-
-    try {
-        size_t off = 0;
-        while (off != msg.size()) {
-            msgpack::unpacked result;
-            msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
-            SDP sdp;
-            if (result.get().type == msgpack::type::POSITIVE_INTEGER) {
-                // Version 1
-                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
-                std::tie(sdp.ufrag, sdp.pwd) = result.get().as<std::pair<std::string, std::string>>();
-                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
-                auto comp_cnt = result.get().as<uint8_t>();
-                while (comp_cnt-- > 0) {
-                    msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
-                    auto candidates = result.get().as<std::vector<std::string>>();
-                    sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
-                    sdp.candidates.insert(sdp.candidates.end(),
-                                          candidates.begin(),
-                                          candidates.end());
-                }
-            } else {
-                result.get().convert(sdp);
-            }
-            sdp_list.emplace_back(std::move(sdp));
-        }
-    } catch (const msgpack::unpack_error& e) {
-        JAMI_WARN("Error parsing sdp: %s", e.what());
-    }
-
-    return sdp_list;
-}
-
 bool
 IceTransport::isTCPEnabled()
 {
@@ -1845,82 +1808,6 @@ IceTransportFactory::createUTransport(std::string_view name)
         JAMI_ERR("%s", e.what());
         return nullptr;
     }
-}
-
-//==============================================================================
-
-void
-IceSocketTransport::setOnRecv(RecvCb&& cb)
-{
-    return ice_->setOnRecv(compId_, cb);
-}
-
-bool
-IceSocketTransport::isInitiator() const
-{
-    return ice_->isInitiator();
-}
-
-void
-IceSocketTransport::shutdown()
-{
-    ice_->cancelOperations();
-}
-
-int
-IceSocketTransport::maxPayload() const
-{
-    auto ip_header_size = (ice_->getRemoteAddress(compId_).getFamily() == AF_INET)
-                              ? IPV4_HEADER_SIZE
-                              : IPV6_HEADER_SIZE;
-    return STANDARD_MTU_SIZE - ip_header_size - UDP_HEADER_SIZE;
-}
-
-int
-IceSocketTransport::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
-{
-    if (!ice_->isRunning())
-        return -1;
-    return ice_->waitForData(compId_, timeout, ec);
-}
-
-std::size_t
-IceSocketTransport::write(const ValueType* buf, std::size_t len, std::error_code& ec)
-{
-    auto res = ice_->send(compId_, buf, len);
-    if (res < 0) {
-        ec.assign(errno, std::generic_category());
-        return 0;
-    }
-    ec.clear();
-    return res;
-}
-
-std::size_t
-IceSocketTransport::read(ValueType* buf, std::size_t len, std::error_code& ec)
-{
-    if (!ice_->isRunning())
-        return 0;
-    try {
-        auto res = reliable_ ? ice_->recvfrom(compId_, reinterpret_cast<char*>(buf), len, ec)
-                             : ice_->recv(compId_, buf, len, ec);
-        return (res < 0) ? 0 : res;
-    } catch (const std::exception& e) {
-        JAMI_ERR("IceSocketTransport::read exception: %s", e.what());
-    }
-    return 0;
-}
-
-IpAddr
-IceSocketTransport::localAddr() const
-{
-    return ice_->getLocalAddress(compId_);
-}
-
-IpAddr
-IceSocketTransport::remoteAddr() const
-{
-    return ice_->getRemoteAddress(compId_);
 }
 
 //==============================================================================

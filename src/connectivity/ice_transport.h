@@ -229,13 +229,6 @@ public:
     bool setSlaveSession();
     bool setInitiatorSession();
 
-    /**
-     * Get SDP messages list
-     * @param msg     The payload to parse
-     * @return the list of SDP messages
-     */
-    static std::vector<SDP> parseSDPList(const std::vector<uint8_t>& msg);
-
     bool isTCPEnabled();
 
     ICESDP parseIceCandidates(std::string_view sdp_msg);

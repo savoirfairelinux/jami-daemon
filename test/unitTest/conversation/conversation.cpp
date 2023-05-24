@@ -113,6 +113,7 @@ private:
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
     void testRemoveReaddMultipleDevice();
+    void testCloneFromMultipleDevice();
     void testSendReply();
     void testSearchInConv();
     void testConversationPreferences();
@@ -164,6 +165,7 @@ private:
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST(testRemoveReaddMultipleDevice);
+    CPPUNIT_TEST(testCloneFromMultipleDevice);
     CPPUNIT_TEST(testSendReply);
     CPPUNIT_TEST(testSearchInConv);
     CPPUNIT_TEST(testConversationPreferences);
@@ -3330,6 +3332,131 @@ END:VCARD";
         return conversationReadyBob && conversationReadyBob2 && aliceProfileReceivedBob
                && aliceProfileReceivedBob2;
     }));
+}
+
+void
+ConversationTest::testCloneFromMultipleDevice()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    auto requestReceived = false, requestReceivedBob2 = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == bobId)
+                    requestReceived = true;
+                else if (accountId == bob2Id)
+                    requestReceivedBob2 = true;
+                cv.notify_one();
+            }));
+    std::string convId = "";
+    auto conversationReadyBob = false, conversationReadyBob2 = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReadyBob = true;
+            } else if (accountId == bob2Id) {
+                conversationReadyBob2 = true;
+            }
+            cv.notify_one();
+        }));
+    auto memberMessageGenerated = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId) {
+                if (message["type"] == "member")
+                    memberMessageGenerated = true;
+            }
+            cv.notify_one();
+        }));
+    auto bob2Started = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                if (accountId == bob2Id) {
+                    auto daemonStatus = details.at(
+                        libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+                    if (daemonStatus == "true")
+                        bob2Started = true;
+                }
+                cv.notify_one();
+            }));
+    auto conversationRmAlice = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == aliceId)
+                    conversationRmAlice = true;
+                cv.notify_one();
+            }));
+    auto errorDetected = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& /* accountId */,
+                const std::string& /* conversationId */,
+                int code,
+                const std::string& /* what */) {
+                if (code == 1)
+                    errorDetected = true;
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Bob creates a second device
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+    bob2Id = Manager::instance().addAccount(details);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Started; }));
+
+    // Alice adds bob
+    requestReceived = false, requestReceivedBob2 = false;
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived && requestReceivedBob2; }));
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return conversationReadyBob && conversationReadyBob2 && memberMessageGenerated;
+    }));
+
+    // Remove contact
+    aliceAccount->removeContact(bobUri, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationRmAlice; }));
+
+    // wait that connections are closed.
+    std::this_thread::sleep_for(10s);
+
+    // Alice re-adds Bob
+    auto oldConv = convId;
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    // This should retrieve the conversation from Bob and don't show any error
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return errorDetected; }));
+    CPPUNIT_ASSERT(oldConv == convId); // Check that convId didn't change and conversation is ready.
 }
 
 void

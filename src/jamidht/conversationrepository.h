@@ -51,6 +51,7 @@ constexpr auto EFETCH = 1;
 constexpr auto EINVALIDMODE = 2;
 constexpr auto EVALIDFETCH = 3;
 constexpr auto EUNAUTHORIZED = 4;
+constexpr auto ECOMMIT = 5;
 
 class JamiAccount;
 class ChannelSocket;

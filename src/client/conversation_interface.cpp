@@ -247,4 +247,15 @@ searchConversation(const std::string& accountId,
     return res;
 }
 
+void
+reloadConversationsAndRequests(const std::string& accountId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        if (auto convModule = acc->convModule()) {
+            convModule->reloadRequests();
+            convModule->loadConversations();
+        }
+    }
+}
+
 } // namespace libjami

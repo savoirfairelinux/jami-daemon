@@ -71,7 +71,6 @@ constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
 using jami::SIPAccount;
 using jami::JamiAccount;
 using jami::tls::TlsValidator;
-using jami::tls::CertificateStore;
 using jami::AudioDeviceType;
 
 void

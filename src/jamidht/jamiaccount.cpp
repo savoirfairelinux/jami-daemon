@@ -346,26 +346,15 @@ JamiAccount::newIncomingCall(const std::string& from,
     JAMI_DEBUG("New incoming call from {:s} with {:d} media", from, mediaList.size());
 
     if (sipTransp) {
-        std::unique_lock<std::mutex> connLock(sipConnsMtx_);
-        for (auto& [key, value] : sipConns_) {
-            if (key.first == from) {
-                // Search for a matching linked SipTransport in connection list.
-                for (auto conIter = value.rbegin(); conIter != value.rend(); conIter++) {
-                    if (conIter->transport != sipTransp)
-                        continue;
+        auto call = Manager::instance().callFactory.newSipCall(shared(),
+                                                                Call::CallType::INCOMING,
+                                                                mediaList);
+        call->setPeerUri(JAMI_URI_PREFIX + from);
+        call->setPeerNumber(from);
 
-                    auto call = Manager::instance().callFactory.newSipCall(shared(),
-                                                                           Call::CallType::INCOMING,
-                                                                           mediaList);
-                    call->setPeerUri(JAMI_URI_PREFIX + from);
-                    call->setPeerNumber(from);
+        call->setSipTransport(sipTransp, getContactHeader(sipTransp));
 
-                    call->setSipTransport(sipTransp, getContactHeader(sipTransp));
-
-                    return call;
-                }
-            }
-        }
+        return call;
     }
 
     JAMI_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
@@ -1476,15 +1465,6 @@ void
 JamiAccount::registerAsyncOps()
 {
     auto onLoad = [this, loaded = std::make_shared<std::atomic_uint>()] {
-        if (auto cm = convModule()) {
-            /*
-             On iOS, when the app is in the background, invitations are received
-             and saved by the notifications extension.
-             When app becomes active requests need to be reloaded, to retrieve invitations
-             received when app was in background.
-             */
-            cm->reloadRequests();
-        }
         if (++(*loaded) == 2u) {
             runOnMainThread([w = weak()] {
                 if (auto s = w.lock()) {
@@ -1932,12 +1912,12 @@ JamiAccount::doRegister_()
 
             setRegistrationState(state);
         };
-        if (jami::Manager::instance().syncOnRegister) {
-            context.identityAnnouncedCb = [this](bool ok) {
-                if (!ok)
-                    return;
-                accountManager_->startSync(
-                                           [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+        context.identityAnnouncedCb = [this](bool ok) {
+            if (!ok)
+                return;
+            accountManager_->startSync(
+                                       [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                           if (jami::Manager::instance().syncOnRegister) {
                                                if (!crt)
                                                    return;
                                                auto deviceId = crt->getLongId().toString();
@@ -1959,8 +1939,10 @@ JamiAccount::doRegister_()
                                                                     getUsername(),
                                                                     crt->getLongId(),
                                                                     "sync"); // For git notifications, will use the same socket as sync
-                                           },
-                                           [this] {
+                                           }
+                                       },
+                                       [this] {
+                                           if (jami::Manager::instance().syncOnRegister) {
                                                deviceAnnounced_ = true;
 
                                                // Bootstrap at the end to avoid to be long to load.
@@ -1972,9 +1954,9 @@ JamiAccount::doRegister_()
                                                });
                                                emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                                                                                                                 accountID_, getVolatileAccountDetails());
-                                           });
-            };
-        }
+                                           }
+                                       });
+        };
 
         setRegistrationState(RegistrationState::TRYING);
         dht_->run(dhtPortUsed(), config, std::move(context));
@@ -3799,7 +3781,9 @@ JamiAccount::sendProfile(const std::string& convId,
         return;
     }
     // We need a new channel
-    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, currentSha3, fileutils::lastWriteTime(profilePath()), std::move([accId = getAccountID(), peerUri, deviceId]() {
+    transferFile(convId, profilePath(), deviceId, "profile.vcf", "", 0, 0, currentSha3,
+                 fileutils::lastWriteTimeInSeconds(profilePath()),
+                 std::move([accId = getAccountID(), peerUri, deviceId]() {
         // Mark the VCard as sent
         auto sendDir = fmt::format("{}/{}/vcard/{}",
                                     fileutils::get_cache_dir(),
