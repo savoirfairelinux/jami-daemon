@@ -163,7 +163,12 @@ contextHeader(const char* const file, int line)
     }
 
     if (file) {
-        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <24s}:{: <4d}] "), secs, milli, tid, stripDirName(file), line);
+        return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <24s}:{: <4d}] "),
+                           secs,
+                           milli,
+                           tid,
+                           stripDirName(file),
+                           line);
     } else {
         return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}] "), secs, milli, tid);
     }
@@ -185,7 +190,7 @@ formatPrintfArgs(const char* format, va_list ap)
     int size = vsnprintf(ret.data(), ret.size(), format, ap);
 
     /* Not enough space?  Well try again. */
-    if ((size_t)size >= ret.size()) {
+    if ((size_t) size >= ret.size()) {
         ret.resize(size + 1);
         vsnprintf((char*) ret.data(), ret.size(), format, cp);
     }
@@ -257,6 +262,21 @@ public:
 #ifdef _WIN32
     void printLogImpl(jami::Logger::Msg& msg, bool with_color)
     {
+        // If we are using Visual Studio, we can use OutputDebugString to print
+        // to the "Output" window. Otherwise, we just use fputs to stderr.
+        static std::function<void(const char* str)> fputsFunc = [](const char* str) {
+            fputs(str, stderr);
+        };
+        static std::function<void(const char* str)> outputDebugStringFunc = [](const char* str) {
+            OutputDebugStringA(str);
+        };
+        static std::function<void()> putcFunc = []() {
+            putc(ENDL, stderr);
+        };
+        // These next two functions will be used to print the message and line ending.
+        static auto printFunc = IsDebuggerPresent() ? outputDebugStringFunc : fputsFunc;
+        static auto endlFunc = IsDebuggerPresent() ? []() { OutputDebugStringA("\n"); } : putcFunc;
+
         WORD saved_attributes;
         static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         if (with_color) {
@@ -278,18 +298,18 @@ public:
             saved_attributes = consoleInfo.wAttributes;
             SetConsoleTextAttribute(hConsole, color_header);
 
-            fputs(msg.header_.c_str(), stderr);
+            printFunc(msg.header_.c_str());
 
             SetConsoleTextAttribute(hConsole, saved_attributes);
             SetConsoleTextAttribute(hConsole, color_prefix);
         } else {
-            fputs(msg.header_.c_str(), stderr);
+            printFunc(msg.header_.c_str());
         }
 
-        fputs(msg.payload_.c_str(), stderr);
+        printFunc(msg.payload_.c_str());
 
         if (msg.linefeed_) {
-            putc(ENDL, stderr);
+            endlFunc();
         }
 
         if (with_color) {
@@ -396,7 +416,7 @@ public:
 #ifdef __ANDROID__
         __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.c_str());
 #else
-        ::syslog(msg.level_, "%.*s", (int)msg.payload_.size(), msg.payload_.data());
+        ::syslog(msg.level_, "%.*s", (int) msg.payload_.size(), msg.payload_.data());
 #endif
     }
 };
@@ -582,7 +602,8 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
 }
 
 void
-Logger::write(int level, const char* file, int line, std::string&& message) {
+Logger::write(int level, const char* file, int line, std::string&& message)
+{
     /* Timestamp is generated here. */
     Msg msg(level, file, line, true, std::move(message));
 
