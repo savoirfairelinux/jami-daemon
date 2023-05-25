@@ -166,9 +166,11 @@ CertificateStore::getCertificateLegacy(const std::string& k)
 {
     auto oldPath = fmt::format("{}/certificates/{}", fileutils::get_data_dir(), k);
     if (fileutils::isFile(oldPath)) {
-        auto crt = std::make_shared<crypto::Certificate>(oldPath);
-        pinCertificate(crt, true);
-        return crt;
+        try {
+            auto crt = std::make_shared<crypto::Certificate>(fileutils::loadFile(oldPath));
+            pinCertificate(crt, true);
+            return crt;
+        } catch (const std::exception&) {}
     }
     return {};
 }
