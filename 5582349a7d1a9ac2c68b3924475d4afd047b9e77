@@ -117,6 +117,30 @@
       },
       "revId": "5582349a7d1a9ac2c68b3924475d4afd047b9e77",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2838e0b8_06b30d52",
+        "filename": "contrib/src/sdbus-cpp/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-25T18:31:47Z",
+      "side": 1,
+      "message": "I\u0027m ok with this.\n\nJust a note, packaging in client-qt will need to be updated (extras/packaging/gnu-linux/rules/rpm/jami-daemon.spec, extras/packaging/gnu-linux/rules/debian/control, and extras/packaging/gnu-linux/docker). It\u0027s not directly related to this patch, but this is some job to do if we change the daemon to support sdbus-cpp (for me it\u0027s good, as dbuscpp is un-maintained and old)",
+      "parentUuid": "322b2eb4_1984a847",
+      "range": {
+        "startLine": 17,
+        "startChar": 24,
+        "endLine": 17,
+        "endChar": 48
+      },
+      "revId": "5582349a7d1a9ac2c68b3924475d4afd047b9e77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

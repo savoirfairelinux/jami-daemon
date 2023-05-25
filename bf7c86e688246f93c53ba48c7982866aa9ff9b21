@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a88a4eec_f230b226",
+        "filename": ".gitignore",
+        "patchSetId": 5
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-25T18:31:47Z",
+      "side": 1,
+      "message": "seems that line wasn\u0027t working, we can remove it if un-needed",
+      "range": {
+        "startLine": 125,
+        "startChar": 8,
+        "endLine": 125,
+        "endChar": 29
+      },
+      "revId": "bf7c86e688246f93c53ba48c7982866aa9ff9b21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

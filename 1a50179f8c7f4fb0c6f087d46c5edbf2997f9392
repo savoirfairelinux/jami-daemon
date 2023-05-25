@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24163989_ed8f12a7",
+        "filename": "bin/Makefile.am",
+        "patchSetId": 5
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-25T18:31:47Z",
+      "side": 0,
+      "message": "This changes some instructions (INSTALL.md \u0026 tracepoint-analysis.rst) because bin/jamid doesn\u0027t exist anymore (just bin/dbus/jamid)",
+      "range": {
+        "startLine": 26,
+        "startChar": 0,
+        "endLine": 34,
+        "endChar": 21
+      },
+      "revId": "1a50179f8c7f4fb0c6f087d46c5edbf2997f9392",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
