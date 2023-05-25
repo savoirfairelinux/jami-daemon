@@ -1939,11 +1939,8 @@ JamiAccount::doRegister_()
 
                         // Bootstrap at the end to avoid to be long to load.
                         dht::ThreadPool::io().run([w = weak()] {
-                            if (auto shared = w.lock()) {
-                                std::lock_guard<std::recursive_mutex> lock(
-                                    shared->configurationMutex_);
+                            if (auto shared = w.lock())
                                 shared->convModule()->bootstrap();
-                            }
                         });
                         emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                             accountID_, getVolatileAccountDetails());
