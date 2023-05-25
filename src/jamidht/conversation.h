@@ -154,8 +154,9 @@ public:
     /**
      * Bootstrap swarm manager to other peers
      * @param onBootstraped     Callback called when connection is successfully established
+     * @param knownDevices      List of account's known devices
      */
-    void bootstrap(std::function<void()> onBootstraped);
+    void bootstrap(std::function<void()> onBootstraped, const std::vector<DeviceId>& knownDevices);
 
     /**
      * Refresh active calls.
