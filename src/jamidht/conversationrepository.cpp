@@ -196,8 +196,11 @@ public:
         std::string deviceDir = fmt::format("{}devices/",
                                             git_repository_workdir(repo.get()));
         for (const auto& file : fileutils::readDirectory(deviceDir)) {
-            auto cert = std::make_shared<dht::crypto::Certificate>(
-                fileutils::loadFile(deviceDir + file));
+            std::shared_ptr<dht::crypto::Certificate> cert;
+            try {
+                cert = std::make_shared<dht::crypto::Certificate>(
+                    fileutils::loadFile(deviceDir + file));
+            } catch (const std::exception&) {}
             if (!cert)
                 continue;
             memberDevices[cert->getIssuerUID()].emplace_back(cert->getPublicKey().getLongId());
@@ -270,7 +273,9 @@ public:
                                      + fmt::format("devices/{}.crt", deviceId);
             if (!fileutils::isFile(deviceFile))
                 return {};
-            cert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(deviceFile));
+            try {
+                cert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(deviceFile));
+            } catch (const std::exception&) {}
             if (!cert)
                 return {};
         }
@@ -1632,10 +1637,16 @@ ConversationRepository::Impl::validateDevice()
         return false;
     }
 
-    auto deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
-    if (!account->isValidAccountDevice(deviceCert)) {
+    auto wrongDeviceFile = false;
+    try {
+        auto deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
+        wrongDeviceFile = !account->isValidAccountDevice(deviceCert);
+    } catch (const std::exception&) {
+        wrongDeviceFile = true;
+    }
+    if (wrongDeviceFile) {
         JAMI_WARNING("Device's certificate is not valid anymore. Trying to replace certificate with "
-                  "current one.");
+                "current one.");
         // Replace certificate with current cert
         auto cert = account->identity().second;
         if (!cert || !account->isValidAccountDevice(*cert)) {
@@ -1669,8 +1680,14 @@ ConversationRepository::Impl::validateDevice()
         JAMI_ERROR("Invalid parent path (not in members or admins");
         return false;
     }
-    auto parentCert = dht::crypto::Certificate(fileutils::loadFile(parentPath));
-    if (!account->isValidAccountDevice(parentCert)) {
+    wrongDeviceFile = false;
+    try {
+        auto parentCert = dht::crypto::Certificate(fileutils::loadFile(parentPath));
+        wrongDeviceFile = !account->isValidAccountDevice(parentCert);
+    } catch (const std::exception&) {
+        wrongDeviceFile = true;
+    }
+    if (wrongDeviceFile) {
         JAMI_WARNING("Account's certificate is not valid anymore. Trying to replace certificate with "
                   "current one.");
         auto cert = account->identity().second;
@@ -3533,9 +3550,8 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
     if (type != "devices") {
         for (const auto& certificate : fileutils::readDirectory(devicesPath)) {
             auto certPath = fileutils::getFullPath(devicesPath, certificate);
-            auto deviceCert = fileutils::loadFile(certPath);
             try {
-                crypto::Certificate cert(deviceCert);
+                crypto::Certificate cert(fileutils::loadFile(certPath));
                 if (auto issuer = cert.issuer)
                     if (issuer->toString() == uri)
                         fileutils::remove(certPath, true);
