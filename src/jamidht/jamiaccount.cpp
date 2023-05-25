@@ -3077,7 +3077,7 @@ JamiAccount::sendMessage(const std::string& to,
         // TODO: not supported yet
         JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
         if (!onlyConnected)
-            messageEngine_.onMessageSent(toUri, token, false);
+            messageEngine_.onMessageSent(toUri, token, false, deviceId);
         return;
     }
 
@@ -3319,7 +3319,7 @@ JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int co
         // This MUST be done after closing the connection to avoid race condition
         // with messageEngine_
         if (!ctx->onlyConnected)
-            messageEngine_.onMessageSent(ctx->to, ctx->id, false);
+            messageEngine_.onMessageSent(ctx->to, ctx->id, false, ctx->deviceId.toString());
 
         // In that case, the peer typically changed its connectivity.
         // After closing sockets with that peer, we try to re-connect to
