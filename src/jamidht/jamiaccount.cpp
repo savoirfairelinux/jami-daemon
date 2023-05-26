@@ -2369,6 +2369,10 @@ JamiAccount::connectivityChanged()
         // nothing to do
         return;
     }
+    if (not accountManager_ or not accountManager_->getInfo()) {
+        JAMI_WARN("calling connectivityChanged on not configured account");
+        return;
+    }
     convModule()->connectivityChanged();
     dht_->connectivityChanged();
     {
@@ -4045,6 +4049,11 @@ JamiAccount::monitor()
 {
     JAMI_DEBUG("[Account {:s}] Monitor connections", getAccountID());
     JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
+
+    if (not accountManager_ or not accountManager_->getInfo()) {
+        JAMI_WARN("Trying to monitor not configured account");
+        return;
+    }
 
     convModule()->monitor();
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
