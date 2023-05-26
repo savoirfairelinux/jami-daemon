@@ -2707,11 +2707,9 @@ ConversationModule::addSwarmChannel(const std::string& conversationId,
 void
 ConversationModule::connectivityChanged()
 {
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-        for (auto& [k, conversation] : pimpl_->conversations_) {
-            conversation->connectivityChanged();
-        }
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (auto& [k, conversation] : pimpl_->conversations_) {
+        conversation->connectivityChanged();
     }
 }
 } // namespace jami
