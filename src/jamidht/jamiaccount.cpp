@@ -2369,7 +2369,9 @@ JamiAccount::connectivityChanged()
         // nothing to do
         return;
     }
-    convModule()->connectivityChanged();
+
+    if (auto cm = convModule())
+        cm->connectivityChanged();
     dht_->connectivityChanged();
     {
         std::lock_guard<std::mutex> lkCM(connManagerMtx_);
@@ -4046,7 +4048,8 @@ JamiAccount::monitor()
     JAMI_DEBUG("[Account {:s}] Monitor connections", getAccountID());
     JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
 
-    convModule()->monitor();
+    if (auto cm =convModule())
+        cm->monitor();
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
         connectionManager_->monitor();
