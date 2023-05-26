@@ -864,19 +864,23 @@ Conversation::shutdownConnections()
 {
     pimpl_->fallbackTimer_->cancel();
     pimpl_->gitSocketList_.clear();
-    pimpl_->swarmManager_->shutdown();
+    if (pimpl_->swarmManager_)
+        pimpl_->swarmManager_->shutdown();
     pimpl_->checkedMembers_.clear();
 }
 
 void
 Conversation::connectivityChanged()
 {
-    pimpl_->swarmManager_->maintainBuckets();
+    if (pimpl_->swarmManager_)
+        pimpl_->swarmManager_->maintainBuckets();
 }
 
 bool
 Conversation::hasSwarmChannel(const std::string& deviceId)
 {
+    if (!pimpl_->swarmManager_)
+        return false;
     return pimpl_->swarmManager_->isConnectedWith(DeviceId(deviceId));
 }
 
