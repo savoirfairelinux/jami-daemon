@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "47fd3276_84033eb4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-05-29T16:44:43Z",
+      "side": 1,
+      "message": "I let adrien to decide if we keep bin/jamid or not. Not a big fan to change this tbh, but sdbus works ",
+      "revId": "3dd5f4ebfd138e423025fd9d90a879455eb39376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
