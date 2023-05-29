@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(jami-daemon
+project(jami
     VERSION 13.7.0
     LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
@@ -241,6 +241,13 @@ elseif(MSVC)
 endif()
 
 add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
+
+# Add the lib prefix to the output name for MSVC.
+if (MSVC)
+    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+    set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
+endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
 set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 target_compile_definitions(${PROJECT_NAME} PRIVATE

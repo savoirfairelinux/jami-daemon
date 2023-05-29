@@ -864,19 +864,23 @@ Conversation::shutdownConnections()
 {
     pimpl_->fallbackTimer_->cancel();
     pimpl_->gitSocketList_.clear();
-    pimpl_->swarmManager_->shutdown();
+    if (pimpl_->swarmManager_)
+        pimpl_->swarmManager_->shutdown();
     pimpl_->checkedMembers_.clear();
 }
 
 void
 Conversation::connectivityChanged()
 {
-    pimpl_->swarmManager_->maintainBuckets();
+    if (pimpl_->swarmManager_)
+        pimpl_->swarmManager_->maintainBuckets();
 }
 
 bool
 Conversation::hasSwarmChannel(const std::string& deviceId)
 {
+    if (!pimpl_->swarmManager_)
+        return false;
     return pimpl_->swarmManager_->isConnectedWith(DeviceId(deviceId));
 }
 
@@ -1853,7 +1857,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
 }
 
 void
-Conversation::bootstrap(std::function<void()> onBootstraped)
+Conversation::bootstrap(std::function<void()> onBootstraped, const std::vector<DeviceId>& knownDevices)
 {
     if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
         return;
@@ -1861,15 +1865,9 @@ Conversation::bootstrap(std::function<void()> onBootstraped)
     // If this doesn't work, it will try to fallback with checkBootstrapMember
     // If it works, the callback onConnectionChanged will be called with ok=true
     pimpl_->bootstrapCb_ = std::move(onBootstraped);
-    std::vector<DeviceId> devices;
+    std::vector<DeviceId> devices = knownDevices;
     for (const auto& m : pimpl_->repository_->devices())
         devices.insert(devices.end(), m.second.begin(), m.second.end());
-    // Add known devices
-    if (auto acc = pimpl_->account_.lock()) {
-        for (const auto& [id, _] : acc->getKnownDevices()) {
-            devices.emplace_back(id);
-        }
-    }
     JAMI_DEBUG("{}[SwarmManager {}] Bootstrap with {} devices",
                pimpl_->toString(),
                fmt::ptr(pimpl_->swarmManager_.get()),

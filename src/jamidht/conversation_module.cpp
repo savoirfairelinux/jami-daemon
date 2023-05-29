@@ -556,6 +556,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     auto acc = account_.lock();
     if (!acc)
         return;
+    std::vector<DeviceId> kd;
+    for (const auto& [id, _] : acc->getKnownDevices())
+        kd.emplace_back(id);
     auto erasePending = [&] {
         std::string toRm;
         {
@@ -589,7 +592,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         conversation->onBootstrapStatus(bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
         conversation->bootstrap(
-            std::bind(&ConversationModule::Impl::bootstrapCb, this, conversation->id()));
+            std::bind(&ConversationModule::Impl::bootstrapCb, this, conversation->id()), kd);
         auto removeRepo = false;
         {
             std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -1244,13 +1247,17 @@ ConversationModule::loadConversations()
 void
 ConversationModule::bootstrap(const std::string& convId)
 {
+    std::vector<DeviceId> kd;
+    if (auto acc = pimpl_->account_.lock())
+        for (const auto& [id, _] : acc->getKnownDevices())
+            kd.emplace_back(id);
     auto bootstrap = [&](auto& conv) {
         if (conv) {
 #ifdef LIBJAMI_TESTABLE
             conv->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
             conv->bootstrap(
-                std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conv->id()));
+                std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conv->id()), kd);
         }
     };
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
@@ -1477,6 +1484,9 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     auto acc = pimpl_->account_.lock();
     if (!acc)
         return {};
+    std::vector<DeviceId> kd;
+    for (const auto& [id, _] : acc->getKnownDevices())
+        kd.emplace_back(id);
     // Create the conversation object
     std::shared_ptr<Conversation> conversation;
     try {
@@ -1488,7 +1498,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
         conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 #endif // LIBJAMI_TESTABLE
         conversation->bootstrap(
-            std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conversation->id()));
+            std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conversation->id()), kd);
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] Error while generating a conversation %s",
                  pimpl_->accountId_.c_str(),
@@ -2697,11 +2707,9 @@ ConversationModule::addSwarmChannel(const std::string& conversationId,
 void
 ConversationModule::connectivityChanged()
 {
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-        for (auto& [k, conversation] : pimpl_->conversations_) {
-            conversation->connectivityChanged();
-        }
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    for (auto& [k, conversation] : pimpl_->conversations_) {
+        conversation->connectivityChanged();
     }
 }
 } // namespace jami
