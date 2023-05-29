@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "17f73bb9_44222b61",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2023-05-29T13:43:32Z",
+      "side": 1,
+      "message": "Autotools, CMake and Meson work for me. I think this patch is finished. What is the problem with CI?",
+      "revId": "2b8693879cdcb7c6a22c7e0b61d3b5a44f8bbfb0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
