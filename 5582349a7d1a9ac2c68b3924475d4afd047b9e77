@@ -141,6 +141,30 @@
       },
       "revId": "5582349a7d1a9ac2c68b3924475d4afd047b9e77",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "95494992_76526c9b",
+        "filename": "contrib/src/sdbus-cpp/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2023-05-29T08:48:40Z",
+      "side": 1,
+      "message": "In a separate pach.",
+      "parentUuid": "2838e0b8_06b30d52",
+      "range": {
+        "startLine": 17,
+        "startChar": 24,
+        "endLine": 17,
+        "endChar": 48
+      },
+      "revId": "5582349a7d1a9ac2c68b3924475d4afd047b9e77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

@@ -22,6 +22,30 @@
       },
       "revId": "1a50179f8c7f4fb0c6f087d46c5edbf2997f9392",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "26a271c8_8f5ac8c5",
+        "filename": "bin/Makefile.am",
+        "patchSetId": 5
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2023-05-29T08:48:40Z",
+      "side": 0,
+      "message": "INSTALL.md will be fixed in a separate patch.",
+      "parentUuid": "24163989_ed8f12a7",
+      "range": {
+        "startLine": 26,
+        "startChar": 0,
+        "endLine": 34,
+        "endChar": 21
+      },
+      "revId": "1a50179f8c7f4fb0c6f087d46c5edbf2997f9392",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

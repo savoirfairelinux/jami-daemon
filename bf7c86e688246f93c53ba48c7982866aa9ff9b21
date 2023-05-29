@@ -22,6 +22,30 @@
       },
       "revId": "bf7c86e688246f93c53ba48c7982866aa9ff9b21",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1b77087f_370c22d4",
+        "filename": ".gitignore",
+        "patchSetId": 5
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2023-05-29T08:48:40Z",
+      "side": 1,
+      "message": "Just checked. This line is used by Autotools because of in-source build.",
+      "parentUuid": "a88a4eec_f230b226",
+      "range": {
+        "startLine": 125,
+        "startChar": 8,
+        "endLine": 125,
+        "endChar": 29
+      },
+      "revId": "bf7c86e688246f93c53ba48c7982866aa9ff9b21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
