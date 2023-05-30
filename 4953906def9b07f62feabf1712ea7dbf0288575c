@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "24fd4749_a2913ad1",
+        "filename": "bin/dbus/dbusclient.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-05-30T19:05:25Z",
+      "side": 1,
+      "message": "libjami instead of DRing",
+      "range": {
+        "startLine": 150,
+        "startChar": 10,
+        "endLine": 150,
+        "endChar": 15
+      },
+      "revId": "4953906def9b07f62feabf1712ea7dbf0288575c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02341ed8_55f6520d",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 335,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-05-30T19:05:25Z",
+      "side": 1,
+      "message": "need to add data folder in path",
+      "range": {
+        "startLine": 335,
+        "startChar": 29,
+        "endLine": 335,
+        "endChar": 34
+      },
+      "revId": "4953906def9b07f62feabf1712ea7dbf0288575c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "68bea1e4_771619f1",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-05-30T19:05:25Z",
+      "side": 1,
+      "message": "the signatures will be stored a single file(signatures) using a map structure that maps filenames to their corresponding signature hashes",
+      "range": {
+        "startLine": 336,
+        "startChar": 38,
+        "endLine": 337,
+        "endChar": 51
+      },
+      "revId": "4953906def9b07f62feabf1712ea7dbf0288575c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
