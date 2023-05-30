@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb79f077_fe4120db",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 24
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-05-30T21:20:09Z",
+      "side": 1,
+      "message": "typo? `automatically`?",
+      "range": {
+        "startLine": 10,
+        "startChar": 29,
+        "endLine": 10,
+        "endChar": 41
+      },
+      "revId": "05c42bbd54d22c538a6d350223e5b0b923214722",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c700ba98_75eead56",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 24
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-05-30T21:20:09Z",
+      "side": 1,
+      "message": "Is the a GitLab issue? Thank you",
+      "revId": "05c42bbd54d22c538a6d350223e5b0b923214722",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
