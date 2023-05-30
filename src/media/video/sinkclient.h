@@ -40,6 +40,43 @@ namespace video {
 class ShmHolder;
 #endif // ENABLE_SHM
 
+class Timer
+{
+public:
+    Timer(int interval) noexcept
+        : start_(std::chrono::steady_clock::now())
+        , interval_(interval)
+    {
+    }
+
+    std::chrono::milliseconds
+    elapsed() const noexcept
+    {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start_);
+    }
+
+    void update() noexcept
+    {
+        auto elapsed = this->elapsed();
+        if (elapsed >= std::chrono::milliseconds(interval_)) {
+            start_ = std::chrono::steady_clock::now();
+            if (callback_)
+                callback_();
+        }
+    }
+
+    void setCallback(std::function<void()> cb) noexcept
+    {
+        callback_ = cb;
+    }
+
+private:
+    std::chrono::steady_clock::time_point start_;
+    std::function<void()> callback_;
+    int interval_;
+};
+
 class VideoScaler;
 
 class SinkClient : public VideoFramePassiveReader, public VideoFrameActiveWriter
@@ -121,6 +158,9 @@ private:
     std::shared_ptr<ShmHolder> shm_;
     std::atomic_bool doShmTransfer_ {false};
 #endif // ENABLE_SHM
+
+    Timer* timer_;
+    int fakeRotation_ {0};
 };
 
 } // namespace video

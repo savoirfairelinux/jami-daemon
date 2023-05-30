@@ -320,8 +320,17 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
     , frameCount_(0u)
     , lastFrameDebug_(std::chrono::steady_clock::now())
 #endif
+    , timer_(new Timer(500))
 {
     JAMI_DBG("[Sink:%p] Sink [%s] created", this, getId().c_str());
+
+    // Setup the timer used to sim a rotate and restart the sink at a regular interval.
+    timer_->setCallback([this]() {
+        if (not mixer_) {
+            JAMI_DBG("[Sink:%p] Timer callback: rotate", this);
+            fakeRotation_ = (fakeRotation_ + 90) % 360;
+        }
+    });
 }
 
 void
@@ -401,7 +410,8 @@ SinkClient::applyTransform(VideoFrame& frame_p)
 #endif
         frame->copyFrom(frame_p);
 
-    int angle = frame->getOrientation();
+    int angle = fakeRotation_; // frame->getOrientation();
+    
     if (angle != rotation_) {
         filter_ = getTransposeFilter(angle,
                                      FILTER_INPUT_NAME,
@@ -430,6 +440,7 @@ void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
+    timer_->update();
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::steady_clock::now();
     auto seconds = currentTime - lastFrameDebug_;
