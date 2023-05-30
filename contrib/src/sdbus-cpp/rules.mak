@@ -3,7 +3,9 @@ SDBUS_CPP_URL := https://github.com/Kistler-Group/sdbus-cpp/archive/refs/tags/v$
 
 ifdef HAVE_LINUX
 ifndef HAVE_ANDROID
+ifndef HAVE_MACOSX
 PKGS += sdbus-cpp
+endif
 endif
 endif
 
