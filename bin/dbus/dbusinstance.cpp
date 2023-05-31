@@ -2,7 +2,6 @@
  *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *  Author: Vladimir Stoiakin <vstoiakin@lavabit.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,46 +18,29 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#pragma once
+#include "dbusinstance.h"
 
-#include "dbusinstance.adaptor.h"
-#include <sdbus-c++/IConnection.h>
-#include <cstdint>
-#include <memory>
+DBusInstance::DBusInstance(DBus::Connection& connection,
+                           const OnNoMoreClientFunc& onNoMoreClientFunc)
+    : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/Instance")
+    , onNoMoreClientFunc_(onNoMoreClientFunc)
+    , count_(0)
+{}
 
-extern bool persistent;
-extern std::unique_ptr<sdbus::IConnection> connection;
-
-class DBusInstance : public sdbus::AdaptorInterfaces<cx::ring::Ring::Instance_adaptor>
+void
+DBusInstance::Register(const int32_t& /*pid*/,
+                       const std::string& /*name*/)
 {
-public:
-    DBusInstance(sdbus::IConnection& connection)
-        : AdaptorInterfaces(connection, "/cx/ring/Ring/Instance")
-    {
-        registerAdaptor();
+    ++count_;
+}
+
+
+void
+DBusInstance::Unregister(const int32_t& /*pid*/)
+{
+    --count_;
+
+    if (count_ <= 0 && onNoMoreClientFunc_) {
+        onNoMoreClientFunc_();
     }
-
-    ~DBusInstance()
-    {
-        unregisterAdaptor();
-    }
-
-    void
-    Register(const int32_t& /*pid*/, const std::string& /*name*/)
-    {
-        ++count_;
-    }
-
-    void
-    Unregister(const int32_t& /*pid*/)
-    {
-        --count_;
-
-        if (!persistent && count_ <= 0) {
-            connection->leaveEventLoop();
-        }
-    }
-
-private:
-    int_least16_t count_;
-};
+}

@@ -21,8 +21,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "dbusclient.h"
 #include "jami.h"
+
+#if REST_API
+#include "restcpp/restclient.h"
+#else
+#include "dbus/dbusclient.h"
+#endif
+
+#include "fileutils.h"
 
 #include <signal.h>
 #include <getopt.h>
@@ -34,7 +41,13 @@
 #include <cstdlib>
 
 static int ringFlags = 0;
+static int port = 8080;
+
+#if REST_API
+static std::weak_ptr<RestClient> weakClient;
+#else
 static std::weak_ptr<DBusClient> weakClient;
+#endif
 
 static void
 print_title()
@@ -59,6 +72,7 @@ print_usage()
     "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
     "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
     "-p, --persistent \t- Stay alive after client quits" << std::endl <<
+    "--port \t- Port to use for the rest API. Default is 8080" << std::endl <<
     "--auto-answer \t- Force automatic answer to incoming calls" << std::endl <<
     "-h, --help \t- Print help" << std::endl;
 }
@@ -83,6 +97,7 @@ parse_args(int argc, char *argv[], bool& persistent)
         {"help",        no_argument,        nullptr,    'h'},
         {"version",     no_argument,        nullptr,    'v'},
         {"auto-answer", no_argument,        &autoAnswer, true},
+        {"port",        optional_argument,  nullptr,    'x'},
         {nullptr,       0,                  nullptr,     0} /* Sentinel */
     };
 
@@ -90,7 +105,7 @@ parse_args(int argc, char *argv[], bool& persistent)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        auto c = getopt_long(argc, argv, "dcphv:", long_options, &option_index);
+        auto c = getopt_long(argc, argv, "dcphvx:", long_options, &option_index);
 
         // end of the options
         if (c == -1)
@@ -116,6 +131,10 @@ parse_args(int argc, char *argv[], bool& persistent)
 
             case 'v':
                 versionFlag = true;
+                break;
+
+            case 'x':
+                port = std::atoi(optarg);
                 break;
 
             default:
@@ -164,6 +183,19 @@ signal_handler(int code)
 int
 main(int argc, char *argv [])
 {
+    // make a copy as we don't want to modify argv[0], copy it to a vector to
+    // guarantee that memory is correctly managed/exception safe
+    std::string programName {argv[0]};
+    std::vector<char> writable(programName.size() + 1);
+    std::copy(programName.begin(), programName.end(), writable.begin());
+
+    jami::fileutils::set_program_dir(writable.data());
+
+#ifdef TOP_BUILDDIR
+    if (!getenv("CODECS_PATH"))
+        setenv("CODECS_PATH", TOP_BUILDDIR "/src/media/audio/codecs", 1);
+#endif
+
     print_title();
 
     bool persistent = false;
@@ -178,13 +210,17 @@ main(int argc, char *argv [])
     signal(SIGPIPE, SIG_IGN);
 
     try {
+#if REST_API
+        if (auto client = std::make_shared<RestClient>(port, ringFlags, persistent))
+#else
         if (auto client = std::make_shared<DBusClient>(ringFlags, persistent))
+#endif
         {
             weakClient = client;
             return client->event_loop();
         }
     } catch (const std::exception& ex) {
-        std::cerr << "Exception in the DBusClient: " << ex.what() << std::endl;
+        std::cerr << "One does not simply initialize the client: " << ex.what() << std::endl;
     }
     return 1;
 }

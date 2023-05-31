@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     libasio-dev \
     libasound2-dev \
     libdbus-1-dev \
+    libdbus-c++-dev \
     libexpat1-dev \
     libfmt-dev \
     libgmp-dev \
@@ -28,8 +29,6 @@ RUN apt-get update && apt-get install -y \
     libspeex-dev \
     libspeexdsp-dev \
     libssl-dev \
-    libsystemd-dev \
-    libsdbus-c++-bin \
     libtool \
     libudev-dev \
     libupnp-dev \

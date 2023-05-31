@@ -591,8 +591,8 @@ else()
     endif()
 
     if (JAMI_DBUS)
-        find_program(DBusXml2Cpp sdbus-c++-xml2cpp REQUIRED)
-        pkg_search_module (DBusCpp REQUIRED IMPORTED_TARGET sdbus-c++)
+        find_program(DBusXml2Cpp dbusxx-xml2cpp REQUIRED)
+        pkg_search_module (DBusCpp REQUIRED IMPORTED_TARGET dbus-c++-1)
         configure_file(
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/net.jami.daemon.service.in
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.service
@@ -614,6 +614,11 @@ else()
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuspluginmanagerinterface.adaptor.h
         )
         set(DBUS_FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuscallmanager.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusclient.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusconfigurationmanager.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbusinstance.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/dbuspresencemanager.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/main.cpp
         )
 

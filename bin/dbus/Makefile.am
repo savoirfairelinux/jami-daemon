@@ -1,62 +1,69 @@
 include $(top_srcdir)/globals.mk
 
-libexec_PROGRAMS= jamid
+noinst_LTLIBRARIES = libclient_dbus.la
 
 BUILT_SOURCES=                      \
     dbuscallmanager.adaptor.h       \
     dbusconfigurationmanager.adaptor.h \
-    dbusinstance.adaptor.h \
-    dbuspresencemanager.adaptor.h
+    dbusinstance.adaptor.h
 
+BUILT_SOURCES+=dbuspresencemanager.adaptor.h
 dbuspresencemanager.adaptor.h: cx.ring.Ring.PresenceManager.xml Makefile.am
-	$(SDBUSCPP_XML2CPP) $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
+
+if ENABLE_VIDEO
+BUILT_SOURCES+=dbusvideomanager.adaptor.h
+dbusvideomanager.adaptor.h: cx.ring.Ring.VideoManager.xml Makefile.am
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
+endif
 
 # Rule to generate the binding headers
 dbuscallmanager.adaptor.h: cx.ring.Ring.CallManager.xml Makefile.am
-	$(SDBUSCPP_XML2CPP) $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 
 # Rule to generate the binding headers
 dbusconfigurationmanager.adaptor.h: cx.ring.Ring.ConfigurationManager.xml Makefile.am
-	$(SDBUSCPP_XML2CPP) $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 
 # Rule to generate the binding headers
 dbusinstance.adaptor.h: cx.ring.Ring.Instance.xml Makefile.am
-	$(SDBUSCPP_XML2CPP) $< --adaptor=$@
-
-if ENABLE_VIDEO
-dbusvideomanager.adaptor.h: cx.ring.Ring.VideoManager.xml Makefile.am
-	$(SDBUSCPP_XML2CPP) $< --adaptor=$@
-BUILT_SOURCES+= dbusvideomanager.adaptor.h
-endif
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 
 if ENABLE_PLUGIN
+BUILT_SOURCES+=dbuspluginmanagerinterface.adaptor.h
+# Rule to generate the binding headers
 dbuspluginmanagerinterface.adaptor.h: cx.ring.Ring.PluginManagerInterface.xml Makefile.am
-	$(SDBUSCPP_XML2CPP) $< --adaptor=$@
-BUILT_SOURCES+= dbuspluginmanagerinterface.adaptor.h
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 endif
 
-jamid_SOURCES= \
-    main.cpp \
-    dbuscallmanager.hpp \
-    dbusconfigurationmanager.hpp \
-    dbusinstance.hpp \
-    dbuspresencemanager.hpp \
+libclient_dbus_la_SOURCES = \
+    dbuscallmanager.cpp \
+    dbuscallmanager.h \
+    dbusconfigurationmanager.cpp  \
+    dbusconfigurationmanager.h \
+    dbusinstance.cpp  \
+    dbusclient.cpp \
+    dbusclient.h \
+    dbusinstance.h \
+    dbus_cpp.h \
+    dbuspresencemanager.cpp \
+    dbuspresencemanager.h \
     $(BUILT_SOURCES)
 
-if ENABLE_VIDEO
-    jamid_SOURCES+= dbusvideomanager.hpp
-endif
 if ENABLE_PLUGIN
-    jamid_SOURCES+= dbuspluginmanagerinterface.hpp
+libclient_dbus_la_SOURCES += dbuspluginmanagerinterface.cpp dbuspluginmanagerinterface.h
 endif
 
-jamid_CXXFLAGS= ${SDBUSCPP_CFLAGS} -I$(top_srcdir)/src/jami
-jamid_LDADD= ${SDBUSCPP_LIBS} $(top_builddir)/src/libjami.la
+if ENABLE_VIDEO
+libclient_dbus_la_SOURCES += dbusvideomanager.cpp dbusvideomanager.h
+endif
+
+libclient_dbus_la_CXXFLAGS = $(AM_CXXFLAGS) $(DBUSCPP_CFLAGS)
 
 do_subst = $(SED) \
-	-e 's,[@]LIBEXECDIR[@],$(libexecdir),g'
+	-e 's,[@]libexecdir[@],$(libexecdir),g'
 
-cx.ring.Ring.service: net.jami.daemon.service.in Makefile
+cx.ring.Ring.service: cx.ring.Ring.service.in Makefile
 	$(do_subst) < $< > $@
 
 # Dbus service file
@@ -69,13 +76,16 @@ interfacedir = $(datadir)/dbus-1/interfaces
 interface_DATA = cx.ring.Ring.CallManager.xml \
                  cx.ring.Ring.ConfigurationManager.xml \
                  cx.ring.Ring.Instance.xml \
-                 cx.ring.Ring.PresenceManager.xml
+                 cx.ring.Ring.PresenceManager.xml 
 
-if ENABLE_VIDEO
-interface_DATA += cx.ring.Ring.VideoManager.xml
-endif
 if ENABLE_PLUGIN
 interface_DATA += cx.ring.Ring.PluginManagerInterface.xml
 endif
 
-CLEANFILES= $(BUILT_SOURCES) cx.ring.Ring.service
+if ENABLE_VIDEO
+interface_DATA += cx.ring.Ring.VideoManager.xml
+endif
+
+CLEANFILES= \
+    $(BUILT_SOURCES) \
+	cx.ring.Ring.service
