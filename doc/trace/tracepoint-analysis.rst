@@ -127,7 +127,7 @@ You can now start the session with ``lttng start``::
 
   Tracing started for session jami
 
-and run Jami ``./bin/jamid``.
+and run Jami ``./bin/dbus/jamid``.
 
 Let it run a few seconds and stop the Jami's daemon.  Then you can run ``lttng
 destroy`` (or ``lttng stop`` if you do not want to destroy) to stop and destroy

@@ -34,8 +34,8 @@ depjsoncpp        = dependency('jsoncpp', version: '>= 1.6.5')
 depzlib           = dependency('zlib')
 
 if get_option('interfaces').contains('dbus')
-    depdbuscpp = dependency('dbus-c++-1')
-    progdbusxxxml2cpp = find_program('dbusxx-xml2cpp', native: true)
+    depsdbuscpp = dependency('sdbus-c++', version: '>= 1.2.0')
+    progsdbuscppxml2cpp = find_program('sdbus-c++-xml2cpp', native: true)
 endif
 
 if get_option('interfaces').contains('nodejs')
@@ -151,7 +151,7 @@ add_project_arguments('-DHAVE_CONFIG_H', language: ['c', 'cpp'])
 #################################################
 # Build targets
 #################################################
-add_project_arguments('-LIBJAMI_BUILD', language: ['c', 'cpp'])
+add_project_arguments('-DLIBJAMI_BUILD', language: ['c', 'cpp'])
 if get_option('default_library') != 'static'
     add_project_arguments('-Djami_EXPORTS', language: ['c', 'cpp'])
 endif
