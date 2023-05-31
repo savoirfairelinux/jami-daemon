@@ -208,11 +208,11 @@ private:
     {
         using namespace std::placeholders;
 
-        using libjami::exportable_callback;
+        using libjami::exportable_serialized_callback;
         using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
         const std::map<std::string, SharedCallback> pluginEvHandlers = {
-            exportable_callback<libjami::PluginSignal::WebViewMessageReceived>(
+            exportable_serialized_callback<libjami::PluginSignal::WebViewMessageReceived>(
                 std::bind(&DBusPluginManagerInterface::emitWebViewMessageReceived, this, _1, _2, _3, _4)),
         };
 

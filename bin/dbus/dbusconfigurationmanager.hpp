@@ -1019,7 +1019,7 @@ private:
     {
         using namespace std::placeholders;
 
-        using libjami::exportable_callback;
+        using libjami::exportable_serialized_callback;
         using libjami::ConfigurationSignal;
         using libjami::AudioSignal;
         using libjami::DataTransferSignal;
@@ -1028,105 +1028,105 @@ private:
 
         // Configuration event handlers
         const std::map<std::string, SharedCallback> configEvHandlers = {
-            exportable_callback<ConfigurationSignal::VolumeChanged>(
+            exportable_serialized_callback<ConfigurationSignal::VolumeChanged>(
                 std::bind(&DBusConfigurationManager::emitVolumeChanged, this, _1, _2)),
-            exportable_callback<ConfigurationSignal::AccountsChanged>(
+            exportable_serialized_callback<ConfigurationSignal::AccountsChanged>(
                 std::bind(&DBusConfigurationManager::emitAccountsChanged, this)),
-            exportable_callback<ConfigurationSignal::AccountDetailsChanged>(
+            exportable_serialized_callback<ConfigurationSignal::AccountDetailsChanged>(
                 std::bind(&DBusConfigurationManager::emitAccountDetailsChanged, this, _1, _2)),
-            exportable_callback<ConfigurationSignal::StunStatusFailed>(
+            exportable_serialized_callback<ConfigurationSignal::StunStatusFailed>(
                 std::bind(&DBusConfigurationManager::emitStunStatusFailure, this, _1)),
-            exportable_callback<ConfigurationSignal::RegistrationStateChanged>(
+            exportable_serialized_callback<ConfigurationSignal::RegistrationStateChanged>(
                 std::bind(&DBusConfigurationManager::emitRegistrationStateChanged, this, _1, _2, _3, _4)),
-            exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(
+            exportable_serialized_callback<ConfigurationSignal::VolatileDetailsChanged>(
                 std::bind(&DBusConfigurationManager::emitVolatileAccountDetailsChanged, this, _1, _2)),
-            exportable_callback<ConfigurationSignal::Error>(
+            exportable_serialized_callback<ConfigurationSignal::Error>(
                 std::bind(&DBusConfigurationManager::emitErrorAlert, this, _1)),
-            exportable_callback<ConfigurationSignal::IncomingAccountMessage>(
+            exportable_serialized_callback<ConfigurationSignal::IncomingAccountMessage>(
                 std::bind(&DBusConfigurationManager::emitIncomingAccountMessage, this, _1, _2, _3, _4)),
-            exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(
+            exportable_serialized_callback<ConfigurationSignal::AccountMessageStatusChanged>(
                 std::bind(&DBusConfigurationManager::emitAccountMessageStatusChanged, this, _1, _2, _3, _4, _5)),
-            exportable_callback<ConfigurationSignal::ProfileReceived>(
+            exportable_serialized_callback<ConfigurationSignal::ProfileReceived>(
                 std::bind(&DBusConfigurationManager::emitProfileReceived, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::ActiveCallsChanged>(
+            exportable_serialized_callback<ConfigurationSignal::ActiveCallsChanged>(
                 std::bind(&DBusConfigurationManager::emitActiveCallsChanged, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::ComposingStatusChanged>(
+            exportable_serialized_callback<ConfigurationSignal::ComposingStatusChanged>(
                 std::bind(&DBusConfigurationManager::emitComposingStatusChanged, this, _1, _2, _3, _4)),
-            exportable_callback<ConfigurationSignal::IncomingTrustRequest>(
+            exportable_serialized_callback<ConfigurationSignal::IncomingTrustRequest>(
                 std::bind(&DBusConfigurationManager::emitIncomingTrustRequest, this, _1, _2, _3, _4, _5)),
-            exportable_callback<ConfigurationSignal::ContactAdded>(
+            exportable_serialized_callback<ConfigurationSignal::ContactAdded>(
                 std::bind(&DBusConfigurationManager::emitContactAdded, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::ContactRemoved>(
+            exportable_serialized_callback<ConfigurationSignal::ContactRemoved>(
                 std::bind(&DBusConfigurationManager::emitContactRemoved, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::ExportOnRingEnded>(
+            exportable_serialized_callback<ConfigurationSignal::ExportOnRingEnded>(
                 std::bind(&DBusConfigurationManager::emitExportOnRingEnded, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::KnownDevicesChanged>(
+            exportable_serialized_callback<ConfigurationSignal::KnownDevicesChanged>(
                 std::bind(&DBusConfigurationManager::emitKnownDevicesChanged, this, _1, _2)),
-            exportable_callback<ConfigurationSignal::NameRegistrationEnded>(
+            exportable_serialized_callback<ConfigurationSignal::NameRegistrationEnded>(
                 std::bind(&DBusConfigurationManager::emitNameRegistrationEnded, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::UserSearchEnded>(
+            exportable_serialized_callback<ConfigurationSignal::UserSearchEnded>(
                 std::bind(&DBusConfigurationManager::emitUserSearchEnded, this, _1, _2, _3, _4)),
-            exportable_callback<ConfigurationSignal::RegisteredNameFound>(
+            exportable_serialized_callback<ConfigurationSignal::RegisteredNameFound>(
                 std::bind(&DBusConfigurationManager::emitRegisteredNameFound, this, _1, _2, _3, _4)),
-            exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(
+            exportable_serialized_callback<ConfigurationSignal::DeviceRevocationEnded>(
                 std::bind(&DBusConfigurationManager::emitDeviceRevocationEnded, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::AccountProfileReceived>(
+            exportable_serialized_callback<ConfigurationSignal::AccountProfileReceived>(
                 std::bind(&DBusConfigurationManager::emitAccountProfileReceived, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::CertificatePinned>(
+            exportable_serialized_callback<ConfigurationSignal::CertificatePinned>(
                 std::bind(&DBusConfigurationManager::emitCertificatePinned, this, _1)),
-            exportable_callback<ConfigurationSignal::CertificatePathPinned>(
+            exportable_serialized_callback<ConfigurationSignal::CertificatePathPinned>(
                 std::bind(&DBusConfigurationManager::emitCertificatePathPinned, this, _1, _2)),
-            exportable_callback<ConfigurationSignal::CertificateExpired>(
+            exportable_serialized_callback<ConfigurationSignal::CertificateExpired>(
                 std::bind(&DBusConfigurationManager::emitCertificateExpired, this, _1)),
-            exportable_callback<ConfigurationSignal::CertificateStateChanged>(
+            exportable_serialized_callback<ConfigurationSignal::CertificateStateChanged>(
                 std::bind(&DBusConfigurationManager::emitCertificateStateChanged, this, _1, _2, _3)),
-            exportable_callback<ConfigurationSignal::MediaParametersChanged>(
+            exportable_serialized_callback<ConfigurationSignal::MediaParametersChanged>(
                 std::bind(&DBusConfigurationManager::emitMediaParametersChanged, this, _1)),
-            exportable_callback<ConfigurationSignal::MigrationEnded>(
+            exportable_serialized_callback<ConfigurationSignal::MigrationEnded>(
                 std::bind(&DBusConfigurationManager::emitMigrationEnded, this, _1, _2)),
-            exportable_callback<ConfigurationSignal::HardwareDecodingChanged>(
+            exportable_serialized_callback<ConfigurationSignal::HardwareDecodingChanged>(
                 std::bind(&DBusConfigurationManager::emitHardwareDecodingChanged, this, _1)),
-            exportable_callback<ConfigurationSignal::HardwareEncodingChanged>(
+            exportable_serialized_callback<ConfigurationSignal::HardwareEncodingChanged>(
                 std::bind(&DBusConfigurationManager::emitHardwareEncodingChanged, this, _1)),
-            exportable_callback<ConfigurationSignal::MessageSend>(
+            exportable_serialized_callback<ConfigurationSignal::MessageSend>(
                 std::bind(&DBusConfigurationManager::emitMessageSend, this, _1)),
         };
 
         // Audio event handlers
         const std::map<std::string, SharedCallback> audioEvHandlers = {
-            exportable_callback<AudioSignal::DeviceEvent>(
+            exportable_serialized_callback<AudioSignal::DeviceEvent>(
                 std::bind(&DBusConfigurationManager::emitAudioDeviceEvent, this)),
-            exportable_callback<AudioSignal::AudioMeter>(
+            exportable_serialized_callback<AudioSignal::AudioMeter>(
                 std::bind(&DBusConfigurationManager::emitAudioMeter, this, _1, _2)),
         };
 
         const std::map<std::string, SharedCallback> dataXferEvHandlers = {
-            exportable_callback<DataTransferSignal::DataTransferEvent>(
+            exportable_serialized_callback<DataTransferSignal::DataTransferEvent>(
                 std::bind(&DBusConfigurationManager::emitDataTransferEvent, this, _1, _2, _3, _4, _5)),
         };
 
         const std::map<std::string, SharedCallback> convEvHandlers = {
-            exportable_callback<ConversationSignal::ConversationLoaded>(
+            exportable_serialized_callback<ConversationSignal::ConversationLoaded>(
                 std::bind(&DBusConfigurationManager::emitConversationLoaded, this, _1, _2, _3, _4)),
-            exportable_callback<ConversationSignal::MessagesFound>(
+            exportable_serialized_callback<ConversationSignal::MessagesFound>(
                 std::bind(&DBusConfigurationManager::emitMessagesFound, this, _1, _2, _3, _4)),
-            exportable_callback<ConversationSignal::MessageReceived>(
+            exportable_serialized_callback<ConversationSignal::MessageReceived>(
                 std::bind(&DBusConfigurationManager::emitMessageReceived, this, _1, _2, _3)),
-            exportable_callback<ConversationSignal::ConversationProfileUpdated>(
+            exportable_serialized_callback<ConversationSignal::ConversationProfileUpdated>(
                 std::bind(&DBusConfigurationManager::emitConversationProfileUpdated, this, _1, _2, _3)),
-            exportable_callback<ConversationSignal::ConversationRequestReceived>(
+            exportable_serialized_callback<ConversationSignal::ConversationRequestReceived>(
                 std::bind(&DBusConfigurationManager::emitConversationRequestReceived, this, _1, _2, _3)),
-            exportable_callback<ConversationSignal::ConversationRequestDeclined>(
+            exportable_serialized_callback<ConversationSignal::ConversationRequestDeclined>(
                 std::bind(&DBusConfigurationManager::emitConversationRequestDeclined, this, _1, _2)),
-            exportable_callback<ConversationSignal::ConversationReady>(
+            exportable_serialized_callback<ConversationSignal::ConversationReady>(
                 std::bind(&DBusConfigurationManager::emitConversationReady, this, _1, _2)),
-            exportable_callback<ConversationSignal::ConversationRemoved>(
+            exportable_serialized_callback<ConversationSignal::ConversationRemoved>(
                 std::bind(&DBusConfigurationManager::emitConversationRemoved, this, _1, _2)),
-            exportable_callback<ConversationSignal::ConversationMemberEvent>(
+            exportable_serialized_callback<ConversationSignal::ConversationMemberEvent>(
                 std::bind(&DBusConfigurationManager::emitConversationMemberEvent, this, _1, _2, _3, _4)),
-            exportable_callback<ConversationSignal::OnConversationError>(
+            exportable_serialized_callback<ConversationSignal::OnConversationError>(
                 std::bind(&DBusConfigurationManager::emitOnConversationError, this, _1, _2, _3, _4)),
-            exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(
+            exportable_serialized_callback<ConversationSignal::ConversationPreferencesUpdated>(
                 std::bind(&DBusConfigurationManager::emitConversationPreferencesUpdated, this, _1, _2, _3)),
         };
 

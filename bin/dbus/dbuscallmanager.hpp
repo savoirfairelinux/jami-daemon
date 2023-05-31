@@ -463,56 +463,56 @@ private:
     {
         using namespace std::placeholders;
 
-        using libjami::exportable_callback;
+        using libjami::exportable_serialized_callback;
         using libjami::CallSignal;
         using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
         const std::map<std::string, SharedCallback> callEvHandlers
-            = {exportable_callback<CallSignal::StateChange>(
+            = {exportable_serialized_callback<CallSignal::StateChange>(
                     std::bind(&DBusCallManager::emitCallStateChanged, this, _1, _2, _3, _4)),
-                exportable_callback<CallSignal::TransferFailed>(
+                exportable_serialized_callback<CallSignal::TransferFailed>(
                     std::bind(&DBusCallManager::emitTransferFailed, this)),
-                exportable_callback<CallSignal::TransferSucceeded>(
+                exportable_serialized_callback<CallSignal::TransferSucceeded>(
                     std::bind(&DBusCallManager::emitTransferSucceeded, this)),
-                exportable_callback<CallSignal::RecordPlaybackStopped>(
+                exportable_serialized_callback<CallSignal::RecordPlaybackStopped>(
                     std::bind(&DBusCallManager::emitRecordPlaybackStopped, this, _1)),
-                exportable_callback<CallSignal::VoiceMailNotify>(
+                exportable_serialized_callback<CallSignal::VoiceMailNotify>(
                     std::bind(&DBusCallManager::emitVoiceMailNotify, this, _1, _2, _3, _4)),
-                exportable_callback<CallSignal::IncomingMessage>(
+                exportable_serialized_callback<CallSignal::IncomingMessage>(
                     std::bind(&DBusCallManager::emitIncomingMessage, this, _1, _2, _3, _4)),
-                exportable_callback<CallSignal::IncomingCall>(
+                exportable_serialized_callback<CallSignal::IncomingCall>(
                     std::bind(&DBusCallManager::emitIncomingCall, this, _1, _2, _3)),
-                exportable_callback<CallSignal::IncomingCallWithMedia>(
+                exportable_serialized_callback<CallSignal::IncomingCallWithMedia>(
                     std::bind(&DBusCallManager::emitIncomingCallWithMedia, this, _1, _2, _3, _4)),
-                exportable_callback<CallSignal::MediaChangeRequested>(
+                exportable_serialized_callback<CallSignal::MediaChangeRequested>(
                     std::bind(&DBusCallManager::emitMediaChangeRequested, this, _1, _2, _3)),
-                exportable_callback<CallSignal::RecordPlaybackFilepath>(
+                exportable_serialized_callback<CallSignal::RecordPlaybackFilepath>(
                     std::bind(&DBusCallManager::emitRecordPlaybackFilepath, this, _1, _2)),
-                exportable_callback<CallSignal::ConferenceCreated>(
+                exportable_serialized_callback<CallSignal::ConferenceCreated>(
                     std::bind(&DBusCallManager::emitConferenceCreated, this, _1, _2)),
-                exportable_callback<CallSignal::ConferenceChanged>(
+                exportable_serialized_callback<CallSignal::ConferenceChanged>(
                     std::bind(&DBusCallManager::emitConferenceChanged, this, _1, _2, _3)),
-                exportable_callback<CallSignal::UpdatePlaybackScale>(
+                exportable_serialized_callback<CallSignal::UpdatePlaybackScale>(
                     std::bind(&DBusCallManager::emitUpdatePlaybackScale, this, _1, _2, _3)),
-                exportable_callback<CallSignal::ConferenceRemoved>(
+                exportable_serialized_callback<CallSignal::ConferenceRemoved>(
                     std::bind(&DBusCallManager::emitConferenceRemoved, this, _1, _2)),
-                exportable_callback<CallSignal::RecordingStateChanged>(
+                exportable_serialized_callback<CallSignal::RecordingStateChanged>(
                     std::bind(&DBusCallManager::emitRecordingStateChanged, this, _1, _2)),
-                exportable_callback<CallSignal::RtcpReportReceived>(
+                exportable_serialized_callback<CallSignal::RtcpReportReceived>(
                     std::bind(&DBusCallManager::emitOnRtcpReportReceived, this, _1, _2)),
-                exportable_callback<CallSignal::OnConferenceInfosUpdated>(
+                exportable_serialized_callback<CallSignal::OnConferenceInfosUpdated>(
                     std::bind(&DBusCallManager::emitOnConferenceInfosUpdated, this, _1, _2)),
-                exportable_callback<CallSignal::PeerHold>(
+                exportable_serialized_callback<CallSignal::PeerHold>(
                     std::bind(&DBusCallManager::emitPeerHold, this, _1, _2)),
-                exportable_callback<CallSignal::AudioMuted>(
+                exportable_serialized_callback<CallSignal::AudioMuted>(
                     std::bind(&DBusCallManager::emitAudioMuted, this, _1, _2)),
-                exportable_callback<CallSignal::VideoMuted>(
+                exportable_serialized_callback<CallSignal::VideoMuted>(
                     std::bind(&DBusCallManager::emitVideoMuted, this, _1, _2)),
-                exportable_callback<CallSignal::SmartInfo>(
+                exportable_serialized_callback<CallSignal::SmartInfo>(
                     std::bind(&DBusCallManager::emitSmartInfo, this, _1)),
-                exportable_callback<CallSignal::RemoteRecordingChanged>(
+                exportable_serialized_callback<CallSignal::RemoteRecordingChanged>(
                     std::bind(&DBusCallManager::emitRemoteRecordingChanged, this, _1, _2, _3)),
-                exportable_callback<CallSignal::MediaNegotiationStatus>(
+                exportable_serialized_callback<CallSignal::MediaNegotiationStatus>(
                     std::bind(&DBusCallManager::emitMediaNegotiationStatus, this, _1, _2, _3))
             };
 

@@ -106,7 +106,13 @@ LIBJAMI_PUBLIC void logging(const std::string& whom, const std::string& action) 
  * See CallbackWrapper template for details.
  */
 class LIBJAMI_PUBLIC CallbackWrapperBase
-{};
+{
+protected:
+    // Because post() needs Manager, it should be defined in a .cpp
+    // so not in a templated class.
+    // Also we do not want this method to be public in the API.
+    void post(std::function<void()> cb);
+};
 
 /* Concrete class of CallbackWrapperBase.
  * This class wraps callbacks of a specific signature.
@@ -160,6 +166,74 @@ public:
     constexpr explicit operator bool() const noexcept { return static_cast<bool>(cb_); }
 };
 
+/* Concrete class of CallbackWrapperBase.
+ * This class wraps callbacks of a specific signature.
+ * Used to retrigger callbacks on a io context to avoid lock if signals cannot
+ * be emitted while a method is called.
+ * Also used to obtain the user callback from a CallbackWrapperBase shared ptr.
+ *
+ * This class is CopyConstructible, CopyAssignable, MoveConstructible
+ * and MoveAssignable.
+ */
+template<typename TProto>
+class SerializedCallbackWrapper : public CallbackWrapperBase
+{
+private:
+    using TFunc = std::function<TProto>;
+    TFunc cb_; // The user-callback
+
+    // This is quite a ugly method used to transmit templated TFunc with their arguments in the
+    // ioContext of the manager to avoid locks for signals.
+    template <typename TCallback>
+    auto ioContextWrapper(TCallback&& fun)
+    {
+        return [this, fun{std::move(fun)}](auto&&... args) -> decltype(fun(std::forward<decltype(args)>(args)...))
+        {
+            post([fun{std::move(fun)}, forwardArgs=std::make_tuple(std::move(args)...)]() mutable {
+                std::apply(std::move(fun), std::move(forwardArgs));
+            });
+        };
+    }
+
+public:
+    const char* file_;
+    uint32_t linum_;
+
+    // Empty wrapper: no callback associated.
+    // Used to initialize internal callback arrays.
+    SerializedCallbackWrapper() noexcept {}
+
+    // Create and initialize a wrapper to given callback.
+    SerializedCallbackWrapper(TFunc&& func, const char* filename, uint32_t linum) noexcept
+        : file_(filename)
+        , linum_(linum)
+    {
+        cb_ = ioContextWrapper(func);
+    }
+
+    // Create and initialize a wrapper from a generic CallbackWrapperBase
+    // shared pointer.
+    // Note: the given callback is copied into internal storage.
+    SerializedCallbackWrapper(const std::shared_ptr<CallbackWrapperBase>& p) noexcept
+    {
+        if (p) {
+            auto other = (CallbackWrapper<TProto>*) p.get();
+
+            cb_ = ioContextWrapper(other.cb_);
+            file_ = other->file_;
+            linum_ = other->linum_;
+        }
+    }
+
+    // Return user-callback reference.
+    // The returned std::function can be null-initialized if no callback
+    // has been set.
+    constexpr const TFunc& operator*() const noexcept { return cb_; }
+
+    // Return boolean true value if a non-null callback has been set
+    constexpr explicit operator bool() const noexcept { return static_cast<bool>(cb_); }
+};
+
 /**
  * Return an exportable callback object.
  * This object is a std::pair of a string and a CallbackWrapperBase shared_ptr.
@@ -174,6 +248,17 @@ exportable_callback(std::function<typename Ts::cb_type>&& func,
 {
     return std::make_pair((const std::string&) Ts::name,
                           std::make_shared<CallbackWrapper<typename Ts::cb_type>>(
+                              std::forward<std::function<typename Ts::cb_type>>(func), file, linum));
+}
+
+template<typename Ts>
+std::pair<std::string, std::shared_ptr<CallbackWrapperBase>>
+exportable_serialized_callback(std::function<typename Ts::cb_type>&& func,
+                    const char* file = CURRENT_FILENAME(),
+                    uint32_t linum = CURRENT_LINE())
+{
+    return std::make_pair((const std::string&) Ts::name,
+                          std::make_shared<SerializedCallbackWrapper<typename Ts::cb_type>>(
                               std::forward<std::function<typename Ts::cb_type>>(func), file, linum));
 }
 
