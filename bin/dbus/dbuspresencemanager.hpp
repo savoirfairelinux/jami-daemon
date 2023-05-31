@@ -76,20 +76,20 @@ private:
     {
         using namespace std::placeholders;
 
-        using libjami::exportable_callback;
+        using libjami::exportable_serialized_callback;
         using libjami::PresenceSignal;
         using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
         const std::map<std::string, SharedCallback> presEvHandlers = {
-            exportable_callback<PresenceSignal::NewServerSubscriptionRequest>(
+            exportable_serialized_callback<PresenceSignal::NewServerSubscriptionRequest>(
                 std::bind(&DBusPresenceManager::emitNewServerSubscriptionRequest, this, _1)),
-            exportable_callback<PresenceSignal::ServerError>(
+            exportable_serialized_callback<PresenceSignal::ServerError>(
                 std::bind(&DBusPresenceManager::emitServerError, this, _1, _2, _3)),
-            exportable_callback<PresenceSignal::NewBuddyNotification>(
+            exportable_serialized_callback<PresenceSignal::NewBuddyNotification>(
                 std::bind(&DBusPresenceManager::emitNewBuddyNotification, this, _1, _2, _3, _4)),
-            exportable_callback<PresenceSignal::NearbyPeerNotification>(
+            exportable_serialized_callback<PresenceSignal::NearbyPeerNotification>(
                 std::bind(&DBusPresenceManager::emitNearbyPeerNotification, this, _1, _2, _3, _4)),
-            exportable_callback<PresenceSignal::SubscriptionStateChanged>(
+            exportable_serialized_callback<PresenceSignal::SubscriptionStateChanged>(
                 std::bind(&DBusPresenceManager::emitSubscriptionStateChanged, this, _1, _2, _3)),
         };
 

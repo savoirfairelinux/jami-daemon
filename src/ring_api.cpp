@@ -18,6 +18,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+#include <asio.hpp>
 #include <string>
 #include <vector>
 #include <map>
@@ -119,6 +120,12 @@ logging(const std::string& whom, const std::string& action) noexcept
     } else {
         JAMI_ERR("Bad log handler %s", whom.c_str());
     }
+}
+
+void
+CallbackWrapperBase::post(std::function<void()> cb)
+{
+    jami::Manager::instance().ioContext()->post(cb);
 }
 
 } // namespace libjami
