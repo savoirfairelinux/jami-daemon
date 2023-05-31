@@ -158,16 +158,16 @@ private:
     {
         using namespace std::placeholders;
 
-        using libjami::exportable_callback;
+        using libjami::exportable_serialized_callback;
         using libjami::VideoSignal;
         using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
         const std::map<std::string, SharedCallback> videoEvHandlers = {
-            exportable_callback<VideoSignal::DeviceEvent>(
+            exportable_serialized_callback<VideoSignal::DeviceEvent>(
                 std::bind(&DBusVideoManager::emitDeviceEvent, this)),
-            exportable_callback<VideoSignal::DecodingStarted>(
+            exportable_serialized_callback<VideoSignal::DecodingStarted>(
                 std::bind(&DBusVideoManager::emitDecodingStarted, this, _1, _2, _3, _4, _5)),
-            exportable_callback<VideoSignal::DecodingStopped>(
+            exportable_serialized_callback<VideoSignal::DecodingStopped>(
                 std::bind(&DBusVideoManager::emitDecodingStopped, this, _1, _2, _3)),
         };
 
