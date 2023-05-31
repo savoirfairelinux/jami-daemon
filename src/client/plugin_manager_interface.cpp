@@ -19,7 +19,7 @@
  */
 
 #include "plugin_manager_interface.h"
-
+#include <iostream>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif // HAVE_CONFIG_H
@@ -306,4 +306,11 @@ sendWebViewDetach(const std::string& pluginId, const std::string& webViewId)
         .sendWebViewDetach(pluginId, webViewId);
 #endif
 }
+
+void
+answerTrustPlugin(const bool trust, const std::string& path)
+{
+    // TODO: should verify the signature of the plugin and the plugin certificate
+}
+
 } // namespace libjami

@@ -82,6 +82,7 @@ LIBJAMI_PUBLIC std::string sendWebViewAttach(const std::string& pluginId,
 
 LIBJAMI_PUBLIC void sendWebViewDetach(const std::string& pluginId, const std::string& webViewId);
 
+LIBJAMI_PUBLIC void answerTrustPlugin(const bool trust, const std::string& path);
 namespace PluginSignal {
 struct LIBJAMI_PUBLIC WebViewMessageReceived
 {

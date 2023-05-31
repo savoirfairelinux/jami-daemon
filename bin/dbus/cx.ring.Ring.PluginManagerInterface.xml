@@ -243,6 +243,17 @@
             </arg>
         </method>
 
+        <method name="answerTrustPlugin" tp:name-for-bindings="answerTrustPlugin">
+            <tp:added version="13.2.0"/>
+            <tp:docstring>
+              Called by the a client's plugin store to verify the trust of a plugin
+            </tp:docstring>
+            <arg type="b" name="trust" direction="in">
+            </arg>
+            <arg type="s" name="path" direction="in">
+            </arg>
+        </method>
+
         <!-- SIGNALS !-->
         <signal name="webViewMessageReceived" tp:name-for-bindings="webViewMessageReceived">
             <tp:added version="13.2.0"/>

@@ -186,3 +186,9 @@ DBusPluginManagerInterface::sendWebViewDetach(const std::string& pluginId,
 {
     libjami::sendWebViewDetach(pluginId, webViewId);
 }
+
+void
+DBusPluginManagerInterface::answerTrustPlugin(const bool& trust, const std::string& path)
+{
+    libjami::answerTrustPlugin(trust, path);
+}

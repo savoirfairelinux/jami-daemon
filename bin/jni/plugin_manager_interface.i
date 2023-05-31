@@ -45,4 +45,5 @@ std::map<std::string,std::string> getChatHandlerDetails(const std::string& chatH
 std::vector<std::string> getChatHandlerStatus(const std::string& accountId, const std::string& peerId);
 bool getPluginsEnabled();
 void setPluginsEnabled(bool state);
+void answerTrustPlugin(const bool trust, const std::string& path);
 }

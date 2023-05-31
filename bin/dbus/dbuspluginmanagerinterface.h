@@ -97,4 +97,6 @@ public:
                                   const std::string& action);
 
     void sendWebViewDetach(const std::string& pluginId, const std::string& webViewId);
+
+    void answerTrustPlugin(const bool& trust, const std::string& path);
 };
