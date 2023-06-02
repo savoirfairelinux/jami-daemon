@@ -643,7 +643,12 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             info->ice_->setOnShutdown([eraseInfo]() {
                 dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
             });
-            info->ice_->initIceInstance(ice_config);
+            try {
+                info->ice_->initIceInstance(ice_config);
+            } catch (const std::exception& e) {
+                JAMI_ERROR("{}", e.what());
+                dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+            }
         });
     });
 }
@@ -1022,7 +1027,12 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         info->ice_->setOnShutdown([eraseInfo]() {
             dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
         });
-        info->ice_->initIceInstance(ice_config);
+        try {
+            info->ice_->initIceInstance(ice_config);
+        } catch (const std::exception& e) {
+            JAMI_ERROR("{}", e.what());
+            dht::ThreadPool::io().run([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+        }
     });
 }
 
