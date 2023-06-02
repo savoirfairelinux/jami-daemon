@@ -48,6 +48,7 @@ private:
     void testIsDirectoryWritable();
     void testGetCleanPath();
     void testFullPath();
+    void testCopy();
 
     CPPUNIT_TEST_SUITE(FileutilsTest);
     CPPUNIT_TEST(testCheckDir);
@@ -57,6 +58,7 @@ private:
     CPPUNIT_TEST(testIsDirectoryWritable);
     CPPUNIT_TEST(testGetCleanPath);
     CPPUNIT_TEST(testFullPath);
+    CPPUNIT_TEST(testCopy);
     CPPUNIT_TEST_SUITE_END();
 
     static constexpr auto tmpFileName = "temp_file";
@@ -176,6 +178,16 @@ FileutilsTest::testFullPath()
     CPPUNIT_ASSERT(getFullPath(NON_EXISTANT_PATH_BASE, "/tmp").compare("/tmp") == 0);
     //the method is use correctly
     CPPUNIT_ASSERT(getFullPath(NON_EXISTANT_PATH_BASE, "test").compare(NON_EXISTANT_PATH) == 0);
+}
+
+void
+FileutilsTest::testCopy()
+{
+    CPPUNIT_ASSERT(isFile(EXISTANT_FILE));
+    CPPUNIT_ASSERT(!isFile(NON_EXISTANT_PATH_BASE));
+    CPPUNIT_ASSERT(copy(EXISTANT_FILE, NON_EXISTANT_PATH_BASE));
+    CPPUNIT_ASSERT(isFile(NON_EXISTANT_PATH_BASE));
+    CPPUNIT_ASSERT(removeAll(NON_EXISTANT_PATH_BASE) == 0);
 }
 
 }}} // namespace jami::test::fileutils

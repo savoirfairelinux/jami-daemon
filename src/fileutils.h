@@ -85,7 +85,7 @@ bool hasHardLink(const std::string& path);
 
 std::chrono::system_clock::time_point writeTime(const std::string& path);
 
-void createFileLink(const std::string& src, const std::string& dest, bool hard = false);
+bool createFileLink(const std::string& src, const std::string& dest, bool hard = false);
 
 std::string_view getFileExtension(std::string_view filename);
 
@@ -102,6 +102,8 @@ std::vector<std::string> readDirectory(const std::string& dir);
  */
 std::vector<uint8_t> loadFile(const std::string& path, const std::string& default_dir = {});
 std::string loadTextFile(const std::string& path, const std::string& default_dir = {});
+
+bool copy(const std::string& src, const std::string& dest);
 
 void saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t mode = 0644);
 inline void
