@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b51be48_89eac293",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 26
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-06-02T14:39:09Z",
+      "side": 1,
+      "message": "why is this in the jami-daemon repo? I would think it deserves its own repo, no?",
+      "revId": "5547216710a40e645d427286dd0ab06864ef5cec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
