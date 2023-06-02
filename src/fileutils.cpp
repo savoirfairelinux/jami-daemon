@@ -375,11 +375,12 @@ createHardlink(const std::string& linkFile, const std::string& target)
     return true;
 }
 
-void
+bool
 createFileLink(const std::string& linkFile, const std::string& target, bool hard)
 {
     if (not hard or not createHardlink(linkFile, target))
-        createSymlink(linkFile, target);
+        return createSymlink(linkFile, target);
+    return true;
 }
 
 std::string_view
@@ -457,6 +458,19 @@ loadTextFile(const std::string& path, const std::string& default_dir)
     if (!file.read((char*) buffer.data(), size))
         throw std::runtime_error("Can't load file: " + path);
     return buffer;
+}
+
+bool
+copy(const std::string& src, const std::string& dest)
+{
+#if !USE_STD_FILESYSTEM
+    std::ifstream srcStream(src, std::ios::binary);
+    std::ofstream destStream(dest, std::ios::binary);
+    destStream << srcStream.rdbuf();
+    return srcStream && destStream;
+#else
+    return std::filesystem::copy_file(src, dest);
+#endif
 }
 
 void
