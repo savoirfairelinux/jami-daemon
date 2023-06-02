@@ -76,6 +76,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <limits>
@@ -89,16 +90,6 @@
 
 #include <pj/ctype.h>
 #include <pjlib-util/md5.h>
-
-#if (defined __ANDROID__ || defined _WIN32)
-#define USE_STD_FILESYSTEM 1
-#else
-#define USE_STD_FILESYSTEM 0
-#endif
-
-#if USE_STD_FILESYSTEM
-#include <filesystem>
-#endif
 
 #ifndef _MSC_VER
 #define PROTECTED_GETENV(str) \
@@ -340,38 +331,24 @@ writeTime(const std::string& path)
 bool
 createSymlink(const std::string& linkFile, const std::string& target)
 {
-#if !USE_STD_FILESYSTEM
-    if (symlink(target.c_str(), linkFile.c_str())) {
-        JAMI_ERR("Couldn't create soft link: %s", strerror(errno));
-        return false;
-    }
-#else
     try {
         std::filesystem::create_symlink(target, linkFile);
     } catch (const std::exception& e) {
         JAMI_ERR("Couldn't create soft link: %s", e.what());
         return false;
     }
-#endif
     return true;
 }
 
 bool
 createHardlink(const std::string& linkFile, const std::string& target)
 {
-#if !USE_STD_FILESYSTEM
-    if (link(target.c_str(), linkFile.c_str())) {
-        JAMI_ERR("Couldn't create hard link: %s", strerror(errno));
-        return false;
-    }
-#else
     try {
         std::filesystem::create_hard_link(target, linkFile);
     } catch (const std::exception& e) {
         JAMI_ERR("Couldn't create hard link: %s", e.what());
         return false;
     }
-#endif
     return true;
 }
 
@@ -463,14 +440,7 @@ loadTextFile(const std::string& path, const std::string& default_dir)
 bool
 copy(const std::string& src, const std::string& dest)
 {
-#if !USE_STD_FILESYSTEM
-    std::ifstream srcStream(src, std::ios::binary);
-    std::ofstream destStream(dest, std::ios::binary);
-    destStream << srcStream.rdbuf();
-    return srcStream && destStream;
-#else
     return std::filesystem::copy_file(src, dest);
-#endif
 }
 
 void
@@ -1144,16 +1114,9 @@ accessFile(const std::string& file, int mode)
 uint64_t
 lastWriteTimeInSeconds(const std::string& filePath)
 {
-#if USE_STD_FILESYSTEM
     return std::chrono::duration_cast<std::chrono::seconds>(
             std::filesystem::last_write_time(std::filesystem::path(filePath))
                     .time_since_epoch()).count();
-#else
-    struct stat result;
-    if (stat(filePath.c_str(), &result) == 0)
-        return result.st_mtime;
-    return 0;
-#endif
 }
 
 } // namespace fileutils
