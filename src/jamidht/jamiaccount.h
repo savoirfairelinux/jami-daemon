@@ -738,6 +738,7 @@ private:
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
 
+    std::atomic_int syncCnt_ {0};
     /**
      * DHT port preference
      */
