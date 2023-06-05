@@ -138,6 +138,7 @@ getSignalHandlers()
         exported_callback<libjami::ConversationSignal::ConversationRemoved>(),
         exported_callback<libjami::ConversationSignal::ConversationMemberEvent>(),
         exported_callback<libjami::ConversationSignal::ConversationSyncFinished>(),
+        exported_callback<libjami::ConversationSignal::ConversationCloned>(),
         exported_callback<libjami::ConversationSignal::CallConnectionRequest>(),
         exported_callback<libjami::ConversationSignal::OnConversationError>(),
         exported_callback<libjami::ConversationSignal::ConversationPreferencesUpdated>(),
