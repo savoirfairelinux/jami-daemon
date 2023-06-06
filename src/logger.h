@@ -27,7 +27,8 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/chrono.h>
-
+#include <fmt/printf.h>
+#include <opendht/logger.h>
 #include <cinttypes> // for PRIx64
 #include <cstdarg>
 
@@ -103,8 +104,27 @@ public:
         return *this;
     }
 
+    constexpr static int dhtLevel(dht::log::LogLevel level) {
+        switch (level) {
+        case dht::log::LogLevel::debug:
+            return LOG_DEBUG;
+        case dht::log::LogLevel::warning:
+            return LOG_WARNING;
+        case dht::log::LogLevel::error:
+        default:
+                return LOG_ERR;
+        }
+    }
+
     LIBJAMI_PUBLIC
     static void write(int level, const char* file, int line, std::string&& message);
+
+    static inline void writeDht(dht::log::LogLevel level, std::string&& message) {
+        write(dhtLevel(level), nullptr, 0, std::move(message));
+    }
+    static inline std::shared_ptr<dht::log::Logger> dhtLogger() {
+        return std::make_shared<dht::Logger>(&Logger::writeDht);
+    }
 
     ///
     /// Printf fashion logging.
