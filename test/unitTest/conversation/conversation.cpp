@@ -142,7 +142,7 @@ private:
     CPPUNIT_TEST(testSetMessageDisplayed);
     CPPUNIT_TEST(testSetMessageDisplayedTwice);
     CPPUNIT_TEST(testSetMessageDisplayedPreference);
-    CPPUNIT_TEST(testSetMessageDisplayedAfterClone);
+    CPPUNIT_TEST(testSetMessageDisplayedAfterClone)
     CPPUNIT_TEST(testVoteNonEmpty);
     CPPUNIT_TEST(testNoBadFileInInitialCommit);
     CPPUNIT_TEST(testNoBadCertInInitialCommit);
@@ -770,6 +770,9 @@ ConversationTest::testMergeAfterMigration()
     fileutils::recursive_mkdir(p.parent_path());
     std::filesystem::copy(repoPathCarla, repoPathAlice, std::filesystem::copy_options::recursive);
 
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPathAlice));
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPathAlice + "/" + convId));
+
     // Makes different heads
     carlaAccount->convModule()->loadConversations(); // necessary to load conversation
     carlaGotMessage = "";
@@ -788,7 +791,12 @@ ConversationTest::testMergeAfterMigration()
     CPPUNIT_ASSERT(carlaAccount->setValidity("", {}, 10));
     auto now = std::chrono::system_clock::now();
     std::this_thread::sleep_until(now + 20s);
+    carlaConnected = false;
     carlaAccount->forceReloadAccount();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaConnected; }));
+    // Force move certificate in alice's certStore (because forceReloadAccount is different than a real migration)
+    // and DHT state is still the old one
+    aliceAccount->certStore().pinCertificate(carlaAccount->identity().second);
 
     // Start Carla, should merge and all messages should be there
     Manager::instance().sendRegister(aliceId, true);
