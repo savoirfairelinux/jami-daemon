@@ -4095,8 +4095,14 @@ JamiAccount::sendFile(const std::string& conversationId,
                                   auto extension = fileutils::getFileExtension(path);
                                   if (!extension.empty())
                                       filelinkPath += "." + extension;
-                                  if (path != filelinkPath && !fileutils::isSymLink(filelinkPath))
-                                      fileutils::createFileLink(filelinkPath, path, true);
+                                  if (path != filelinkPath && !fileutils::isSymLink(filelinkPath)) {
+                                      if (!fileutils::createFileLink(filelinkPath, path, true)) {
+                                        JAMI_WARNING("Cannot create symlink for file transfer {} - {}. Copy file", filelinkPath, path);
+                                        if (!fileutils::copy(path, filelinkPath)) {
+                                            JAMI_ERROR("Cannot copy file for file transfer {} - {}", filelinkPath, path);
+                                        }
+                                      }
+                                  }
                               });
         }
     });

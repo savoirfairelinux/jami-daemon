@@ -52,8 +52,8 @@ daemon_dir = os.path.dirname(os.path.dirname(daemon_msvc_dir))
 contrib_src_dir = daemon_dir + r'\contrib\src'
 contrib_build_dir = daemon_dir + r'\contrib\build'
 contrib_tmp_dir = daemon_dir + r'\contrib\tarballs'
-plugins_bin_dir = daemon_dir + r'\..\plugins\build'
-plugins_dir = daemon_dir + r'\..\plugins'
+plugins_bin_dir = daemon_dir + r'\..\build'
+plugins_dir = daemon_dir + r'\..'
 
 # SCM
 wget_args = [
