@@ -588,11 +588,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             return;
         }
         conversation->onNeedSocket(onNeedSwarmSocket_);
-#ifdef LIBJAMI_TESTABLE
-        conversation->onBootstrapStatus(bootstrapCbTest_);
-#endif // LIBJAMI_TESTABLE
-        conversation->bootstrap(
-            std::bind(&ConversationModule::Impl::bootstrapCb, this, conversation->id()), kd);
         auto removeRepo = false;
         {
             std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -623,6 +618,13 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         }
         if (!commitId.empty())
             sendMessageNotification(conversationId, false, commitId);
+
+#ifdef LIBJAMI_TESTABLE
+        conversation->onBootstrapStatus(bootstrapCbTest_);
+#endif // LIBJAMI_TESTABLE
+        conversation->bootstrap(
+            std::bind(&ConversationModule::Impl::bootstrapCb, this, conversation->id()), kd);
+
         std::map<std::string, std::string> preferences;
         std::map<std::string, std::string> lastDisplayed;
         {
