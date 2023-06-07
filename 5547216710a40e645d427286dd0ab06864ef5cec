@@ -16,6 +16,24 @@
       "message": "why is this in the jami-daemon repo? I would think it deserves its own repo, no?",
       "revId": "5547216710a40e645d427286dd0ab06864ef5cec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2191ad72_67dd66fd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 26
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-07T17:16:34Z",
+      "side": 1,
+      "message": "yeah not sure where to put this. But at least the scripts are there",
+      "parentUuid": "4b51be48_89eac293",
+      "revId": "5547216710a40e645d427286dd0ab06864ef5cec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
