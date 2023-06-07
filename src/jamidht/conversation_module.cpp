@@ -1262,15 +1262,33 @@ ConversationModule::bootstrap(const std::string& convId)
                 std::bind(&ConversationModule::Impl::bootstrapCb, pimpl_.get(), conv->id()), kd);
         }
     };
+    std::vector<std::string> toClone;
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::unique_lock<std::mutex> lkCi(pimpl_->convInfosMtx_);
     if (convId.empty()) {
-        for (auto& [_, conv] : pimpl_->conversations_) {
-            bootstrap(conv);
+        for (const auto& [key, ci] : pimpl_->convInfos_) {
+            auto it = pimpl_->conversations_.find(key);
+            if (it != pimpl_->conversations_.end() && it->second) {
+                bootstrap(it->second);
+            } else {
+                // Because we're not tracking contact presence in order to sync now,
+                // we need to ask to clone requests when bootstraping all conversations
+                // else it can stay syncing
+                toClone.emplace_back(key);
+            }
         }
     } else {
         auto it = pimpl_->conversations_.find(convId);
-        if (it != pimpl_->conversations_.end()) {
+        if (it != pimpl_->conversations_.end())
             bootstrap(it->second);
+    }
+    lkCi.unlock();
+    lk.unlock();
+    for (const auto& cid: toClone) {
+        auto members = getConversationMembers(cid);
+        for (const auto& member : members) {
+            if (member.at("uri") != pimpl_->username_)
+                cloneConversationFrom(cid, member.at("uri"));
         }
     }
 }
