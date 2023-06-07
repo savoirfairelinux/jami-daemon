@@ -142,7 +142,7 @@ private:
     CPPUNIT_TEST(testSetMessageDisplayed);
     CPPUNIT_TEST(testSetMessageDisplayedTwice);
     CPPUNIT_TEST(testSetMessageDisplayedPreference);
-    CPPUNIT_TEST(testSetMessageDisplayedAfterClone)
+    CPPUNIT_TEST(testSetMessageDisplayedAfterClone);
     CPPUNIT_TEST(testVoteNonEmpty);
     CPPUNIT_TEST(testNoBadFileInInitialCommit);
     CPPUNIT_TEST(testNoBadCertInInitialCommit);
