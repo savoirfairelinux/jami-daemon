@@ -21,11 +21,14 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <opendht/crypto.h>
 #include <filesystem>
+#include <memory>
 #include <string>
 
 #include "manager.h"
 #include "plugin/jamipluginmanager.h"
+#include "plugin/pluginsutils.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"
@@ -113,11 +116,21 @@ private:
 
     std::string name_{};
     std::string jplPath_{};
+    std::string certPath_{};
+    std::string pluginCertNotFound_{};
+    std::string pluginNotSign_{};
+    std::string pluginFileNotSign_{};
+    std::string pluginManifestChanged_{};
+    std::string pluginNotSignByIssuer_{};
+    std::string pluginNotFoundPath_{};
+    std::unique_ptr<dht::crypto::Certificate> cert_{};
     std::string installationPath_{};
     std::vector<std::string> mediaHandlers_{};
     std::vector<std::string> chatHandlers_{};
 
     void testEnable();
+    void testCertificateVerification();
+    void testSignatureVerification();
     void testInstallAndLoad();
     void testHandlers();
     void testDetailsAndPreferences();
@@ -127,6 +140,8 @@ private:
 
     CPPUNIT_TEST_SUITE(PluginsTest);
     CPPUNIT_TEST(testEnable);
+    CPPUNIT_TEST(testCertificateVerification);
+    CPPUNIT_TEST(testSignatureVerification);
     CPPUNIT_TEST(testInstallAndLoad);
     CPPUNIT_TEST(testHandlers);
     CPPUNIT_TEST(testDetailsAndPreferences);
@@ -249,7 +264,7 @@ PluginsTest::setUp()
         }));
 
     libjami::registerSignalHandlers(signalHandlers);
-
+    //TODO: should add cert
     std::ifstream file = jami::fileutils::ifstream("plugins/plugin.yml");
     assert(file.is_open());
     YAML::Node node = YAML::Load(file);
@@ -257,10 +272,20 @@ PluginsTest::setUp()
     assert(node.IsMap());
 
     name_ = node["plugin"].as<std::string>();
+    certPath_ = node["cert"].as<std::string>();
+    cert_ = std::make_unique<dht::crypto::Certificate>(fileutils::loadFile(node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + certPath_));
+    dht::crypto::TrustList trust;
+    trust.add(*cert_);
     jplPath_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + name_ + ".jpl";
     installationPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH + name_;
     mediaHandlers_ = node["mediaHandlers"].as<std::vector<std::string>>();
     chatHandlers_ = node["chatHandlers"].as<std::vector<std::string>>();
+    pluginNotFoundPath_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + "fakePlugin.jpl";
+    pluginCertNotFound_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginCertNotFound"].as<std::string>() + ".jpl";
+    pluginNotSign_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginNotSign"].as<std::string>() + ".jpl";
+    pluginFileNotSign_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginFileNotSign"].as<std::string>() + ".jpl";
+    pluginManifestChanged_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginManifestChanged"].as<std::string>() + ".jpl";
+    pluginNotSignByIssuer_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginNotSignByIssuer"].as<std::string>() + ".jpl";
 }
 
 void
@@ -277,6 +302,52 @@ PluginsTest::testEnable()
     CPPUNIT_ASSERT(Manager::instance().pluginPreferences.getPluginsEnabled());
     Manager::instance().pluginPreferences.setPluginsEnabled(false);
     CPPUNIT_ASSERT(!Manager::instance().pluginPreferences.getPluginsEnabled());
+}
+
+void
+PluginsTest::testSignatureVerification()
+{
+    // Test valid case
+    Manager::instance().pluginPreferences.setPluginsEnabled(true);
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(jplPath_, cert_.get()));
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginSignatureFile(jplPath_));
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginSignature(jplPath_, cert_.get()));
+
+    std::string pluginNotFoundPath = "fakePlugin.jpl";
+    // Test with a plugin that does not exist
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureFile(pluginNotFoundPath_));
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignature(pluginNotFoundPath_, cert_.get()));
+    // Test with a plugin that does not have a signature
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureFile(pluginNotSign_));
+    // Test with a plugin that does not have a file not signed
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureFile(pluginFileNotSign_));
+    auto notCertSign = std::make_unique<dht::crypto::Certificate>();
+    // Test with wrong certificate
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(jplPath_, notCertSign.get()));
+    // Test with wrong signature
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(pluginManifestChanged_, cert_.get()));
+
+}
+
+void
+PluginsTest::testCertificateVerification()
+{
+
+    std::string pluginNotFoundPath = "fakePlugin.jpl";
+    Manager::instance().pluginPreferences.setPluginsEnabled(true);
+    auto pluginCert = PluginUtils::readPluginCertificateFromArchive(jplPath_);
+    Manager::instance().getJamiPluginManager().addPluginAuthority(*pluginCert);
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, true)->toString() == pluginCert->toString());
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, false)->toString() == pluginCert->toString());
+    // create a plugin with not the same certificate
+
+    auto pluginCertNotSignByIssuer = PluginUtils::readPluginCertificateFromArchive(pluginNotSignByIssuer_);
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginNotSignByIssuer_, true)->toString() == pluginCertNotSignByIssuer->toString());
+    // Test with a plugin that does not exist
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginNotFoundPath, false));
+    // Test with a plugin that does not have a certificate
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginCertNotFound_, false));
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginNotSignByIssuer_, false));
 }
 
 void
