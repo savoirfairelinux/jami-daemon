@@ -28,7 +28,7 @@
 #include "callservicesmanager.h"
 #include "chatservicesmanager.h"
 #include "preferenceservicesmanager.h"
-
+#include <opendht/crypto.h>
 #include <vector>
 #include <map>
 #include <list>
@@ -67,6 +67,38 @@ public:
      * @brief Returns a vector with installed plugins
      */
     std::vector<std::string> getInstalledPlugins();
+
+    /**
+     * @brief Check the validity of a plugin certificate
+     * @param cert
+     * @return true if valid
+    */
+
+    bool checkPluginCertificateValidity(dht::crypto::Certificate* cert);
+
+    /**
+     * @brief check if all file are present in the signature file
+     * @param jplPath
+     * return true if valid
+    */
+    bool checkPluginSignatureFile(const std::string& jplPath);
+    /**
+     * @brief Check the validity of a plugin signature
+     * @param jplPath
+     * @param cert
+     * @return true if valid
+    */
+    bool checkPluginSignatureValidity(const std::string& jplPath, dht::crypto::Certificate* cert);
+
+    /**
+     * @brief Checks if the plugin is valid by checking certificate of the plugin and
+     * signature of files.
+     * @param jplPath
+     * @param
+     * @return 0 if the plugin is valid
+     *
+    */
+    int checkPluginValidity(const std::string& jplPath);
 
     /**
      * @brief Checks if the plugin has a valid manifest, installs the plugin if not

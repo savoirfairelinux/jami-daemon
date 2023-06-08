@@ -7,3 +7,5 @@ mediaHandlers:
   - "VideoHandlerTester"
 chatHandlers:
   - "ChatHandlerTester"
+cert:
+  "Test.crt"
