@@ -408,10 +408,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
         }
     }
 
+    JAMI_ERROR("@@@@@@@ ACC NEW INCOMING CALL");
     auto call = account->newIncomingCall(std::string(remote_user),
                                          MediaAttribute::mediaAttributesToMediaMaps(localMediaList),
                                          transport);
-
     if (!call) {
         return PJ_FALSE;
     }

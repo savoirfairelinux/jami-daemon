@@ -1812,6 +1812,7 @@ Manager::incomingCallsWaiting()
 void
 Manager::incomingCall(const std::string& accountId, Call& call)
 {
+    JAMI_ERROR("@@@@@@@@@ MANAGER:: INCOMING CALL");
     if (not accountId.empty()) {
         pimpl_->stripSipPrefix(call);
     }
