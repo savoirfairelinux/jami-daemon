@@ -22,6 +22,9 @@
 #include "logger.h"
 #include "fileutils.h"
 #include "archiver.h"
+
+#include <msgpack.hpp>
+
 #include <fstream>
 #include <regex>
 
@@ -165,6 +168,39 @@ readPluginManifestFromArchive(const std::string& jplPath)
         JAMI_ERR() << e.what();
     }
     return {};
+}
+
+std::unique_ptr<dht::crypto::Certificate>
+readPluginCertificateFromArchive(const std::string& jplPath) {
+    try {
+        auto manifest = readPluginManifestFromArchive(jplPath);
+        const std::string& name = manifest["name"];
+
+        if (name.empty()){
+            return {};
+        }
+        return std::make_unique<dht::crypto::Certificate>(archiver::readFileFromArchive(jplPath, name + ".crt"));
+    } catch(const std::exception& e) {
+        JAMI_ERR() << e.what();
+        return {};
+    }
+}
+
+std::map<std::string, std::vector<uint8_t>>
+readPluginSignatureFromArchive(const std::string& jplPath) {
+    std::vector<uint8_t> vec = archiver::readFileFromArchive(jplPath, "signatures");
+    msgpack::object_handle oh = msgpack::unpack(
+                    reinterpret_cast<const char*>(vec.data()),
+                    vec.size() * sizeof(uint8_t)
+                );
+    msgpack::object obj = oh.get();
+    return obj.as<std::map<std::string, std::vector<uint8_t>>>();
+}
+
+std::vector<uint8_t>
+readSignatureFileFromArchive(const std::string& jplPath)
+{
+    return archiver::readFileFromArchive(jplPath, "signatures.sig");
 }
 
 std::pair<bool, std::string_view>
