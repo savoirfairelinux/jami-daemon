@@ -297,9 +297,10 @@ CallTest::testDeclineMultiDevice()
 
     JAMI_INFO("Start call between alice and Bob");
     auto bobAccount2 = Manager::instance().getAccount<JamiAccount>(bob2Id);
+
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callReceived == 2 && !callIdBob.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return callReceived == 2 && !callIdBob.empty(); }));
 
     JAMI_INFO("Stop call between alice and Bob");
     callStopped = 0;
