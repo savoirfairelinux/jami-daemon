@@ -97,6 +97,68 @@ JamiPluginManager::getInstalledPlugins()
     return pluginsPaths;
 }
 
+bool
+JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert)
+{
+    dht::crypto::TrustList trust;
+    trust.add(crypto::Certificate(fileutils::loadFile("/etc/jami/sfl_plugin_ca.crt")));
+    return cert && *cert && trust.verify(cert)
+}
+
+bool
+JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
+{
+    if (!fileutils::isFile(jplPath))
+        return false;
+    auto signatures = PluginUtils::readPluginSignatureFromArchive(jplPath);
+    auto filesPath = archiver::listFilesFromArchive(jplPath);
+    for (const auto& signature : signatures) {
+        if (std::find(filesPath.begin(), filesPath.end(), signature.first) == filesPath.end() &&
+                (signature.first != "signatures" ||
+                signature.first != "signatures.sig")
+            )
+            return false;
+    }
+    return true;
+}
+
+bool
+JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht::crypto::Certificate* cert)
+{
+    if (!fileutils::isFile(jplPath))
+        return false;
+    const auto& pk = cert->getPublicKey();
+    auto signaturesData = archiver::readFileFromArchive(jplPath, "signatures");
+    auto signatureFile = PluginUtils::readSignatureFileFromArchive(jplPath);
+    if (!pk.checkSignature(signaturesData, signatureFile))
+        return false;
+    auto signatures = PluginUtils::readPluginSignatureFromArchive(jplPath);
+    for (const auto& signature : signatures) {
+        auto file = archiver::readFileFromArchive(jplPath, signature.first);
+        if (!pk.checkSignature(file, signature.second))
+            return false;
+    }
+    return true;
+}
+
+int
+JamiPluginManager::checkPluginValidity(const std::string& jplPath)
+{
+    if (!fileutils::isFile(jplPath))
+        return -1;
+    try {
+        auto cert = PluginUtils::readPluginCertificateFromArchive(jplPath);
+        if (!checkPluginCertificateValidity(cert.get()) ||
+            !checkPluginSignatureValidity(jplPath, cert.get()) ||
+            !checkPluginSignatureFile(jplPath)
+        )
+            return -1;
+    } catch (const std::exception& e) {
+        return -1;
+    }
+    return 0;
+}
+
 int
 JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
 {
@@ -107,6 +169,8 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             const std::string& name = manifestMap["name"];
             if (name.empty())
                 return 0;
+            if(this->checkPluginValidity(jplPath) != 0 && !force)
+                return -1;
             const std::string& version = manifestMap["version"];
             std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins"
                                         + DIR_SEPARATOR_CH + name};
