@@ -270,7 +270,7 @@ MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
     }
 
     onChannelReady_(deviceId, socket);
-    socket->ready();
+    socket->ready(true);
     // Due to the callbacks that can take some time, onAccept can arrive after
     // receiving all the data. In this case, the socket should be removed here
     // as handle by onChannelReady_
@@ -400,7 +400,7 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
 
     if (accept) {
         onChannelReady_(deviceId, channelSocket);
-        channelSocket->ready();
+        channelSocket->ready(true);
     }
 }
 
@@ -428,6 +428,7 @@ MultiplexedSocket::Impl::handleControlPacket(std::vector<uint8_t>&& pkt)
                     std::lock_guard<std::mutex> lkSockets(pimpl.socketsMutex);
                     auto channel = pimpl.sockets.find(req.channel);
                     if (channel != pimpl.sockets.end()) {
+                        channel->second->ready(false);
                         channel->second->stop();
                         pimpl.sockets.erase(channel);
                     }
@@ -1039,10 +1040,10 @@ ChannelSocket::isAnswered() const
 }
 
 void
-ChannelSocket::ready()
+ChannelSocket::ready(bool accepted)
 {
     if (pimpl_->readyCb_)
-        pimpl_->readyCb_();
+        pimpl_->readyCb_(accepted);
 }
 
 void

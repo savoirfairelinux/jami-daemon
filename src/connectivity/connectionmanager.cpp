@@ -227,7 +227,7 @@ public:
 
     std::map<DeviceId, PendingOperations> pendingOperations_ {};
 
-    void executePendingOperations(const DeviceId& deviceId, const dht::Value::Id& vid, const std::shared_ptr<ChannelSocket>& sock)
+    void executePendingOperations(const DeviceId& deviceId, const dht::Value::Id& vid, const std::shared_ptr<ChannelSocket>& sock, bool accepted = true)
     {
         std::vector<PendingCb> ret;
         std::unique_lock<std::mutex> lk(connectCbsMtx_);
@@ -249,7 +249,8 @@ public:
         } else if (auto n = pendingOperations.connecting.extract(vid)) {
             ret.emplace_back(std::move(n.mapped()));
             // If sock is nullptr, execute if it's the last connecting operation
-            if (!sock && pendingOperations.connecting.empty()) {
+            // If accepted is false, it means that underlying socket is ok, but channel is declined
+            if (!sock && pendingOperations.connecting.empty() && accepted) {
                 for (auto& [vid, cb] : pendingOperations.waiting)
                     ret.emplace_back(std::move(cb));
                 pendingOperations.waiting.clear();
@@ -558,7 +559,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         }
 
         if (isConnectingToDevice && !forceNewSocket) {
-            JAMI_DBG("Already connecting to %s, wait for the ICE negotiation", deviceId.to_c_str());
+            JAMI_DEBUG("Already connecting to {}, wait for the ICE negotiation name: {}", deviceId.toString(), name);
             return;
         }
         if (noNewSocket) {
@@ -685,11 +686,11 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
             shared->executePendingOperations(deviceId, vid, nullptr);
     });
     channelSock->onReady(
-        [wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
+        [wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()](bool accepted) {
             auto shared = w.lock();
             auto channelSock = wSock.lock();
             if (shared)
-                shared->executePendingOperations(deviceId, vid, channelSock);
+                shared->executePendingOperations(deviceId, vid, accepted ? channelSock : nullptr, accepted);
         });
 
     ChannelRequest val;

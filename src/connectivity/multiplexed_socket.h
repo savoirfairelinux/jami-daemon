@@ -40,7 +40,7 @@ using OnConnectionRequestCb
                          const std::string& /* name */)>;
 using OnConnectionReadyCb
     = std::function<void(const DeviceId& /* deviceId */, const std::shared_ptr<ChannelSocket>&)>;
-using ChannelReadyCb = std::function<void(void)>;
+using ChannelReadyCb = std::function<void(bool)>;
 using OnShutdownCb = std::function<void(void)>;
 
 static constexpr auto SEND_BEACON_TIMEOUT = std::chrono::milliseconds(3000);
@@ -288,7 +288,7 @@ public:
      */
     void shutdown() override;
 
-    void ready();
+    void ready(bool accepted);
     /**
      * Triggered when a specific channel is ready
      * Used by ConnectionManager::connectDevice()
