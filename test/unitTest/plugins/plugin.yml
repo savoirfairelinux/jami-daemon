@@ -2,8 +2,20 @@ jplDirectory:
   "plugins"
 plugin:
   "TestSuite"
+pluginCertNotFound:
+  "TestSuiteCertNotFound"
+pluginManifestChanged:
+  "TestSuiteManifestChanged"
+pluginNotSignByIssuer:
+  "TestSuitePluginNotSignByIssuer"
+pluginNotSign:
+  "TestSuiteNotSign"
+pluginFileNotSign:
+  "TestSuiteFileNotSign"
 mediaHandlers:
   - "AudioHandlerTester"
   - "VideoHandlerTester"
 chatHandlers:
   - "ChatHandlerTester"
+cert:
+  "Test.crt"
