@@ -22,7 +22,9 @@
 
 #include <map>
 #include <vector>
+
 #include <json/json.h>
+#include <opendht/crypto.h>
 
 namespace jami {
 
@@ -95,6 +97,28 @@ bool checkPluginValidity(const std::string& rootPath);
  * @return Map with manifest contents
  */
 std::map<std::string, std::string> readPluginManifestFromArchive(const std::string& jplPath);
+
+/**
+ * @brief Read plugin certificate without uncompressing the whole archive.and
+ * return an object Certificate
+ * @param jplPath
+ * @return Certificate object pointer
+ */
+std::unique_ptr<dht::crypto::Certificate> readPluginCertificateFromArchive(const std::string& jplPath);
+
+/**
+ * @brief Reads signature file content without uncompressing the whole archive and
+ * @param jplPath
+ * return a map of signature path as key and signature content as value.
+*/
+std::map<std::string, std::vector<uint8_t>> readPluginSignatureFromArchive(const std::string& jplPath);
+
+/**
+ * @brief Read the signature of the file signature without uncompressing the whole archive.
+ * @param jplPath
+ * @return Signature file content
+*/
+std::vector<uint8_t> readSignatureFileFromArchive(const std::string& jplPath);
 
 /**
  * @brief Function used by archiver to extract files from plugin jpl to the plugin
