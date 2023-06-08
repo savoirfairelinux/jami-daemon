@@ -98,6 +98,50 @@ JamiPluginManager::getInstalledPlugins()
 }
 
 int
+JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert)
+{
+    dht::crypto::TrustList trust;
+    trust.add(crypto::Certificate(fileutils::loadFile("/etc/jami/sfl_plugin_ca.crt")));
+    if (!cert || !*cert || !trust.verify(*cert))
+        return -1;
+    return 0;
+}
+
+int
+JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht::crypto::Certificate* cert)
+{
+    if (!fileutils::isFile(jplPath))
+        return -1;
+    const auto& pk = cert->getPublicKey();
+    auto signatureFile = PluginUtils::readSignatureFileFromArchive(jplPath);
+    auto signature = PluginUtils::readSignatureFileFromArchive(jplPath);
+    if (!pk.checkSignature(signatureFile, signature))
+        return -1;
+    auto signatures = PluginUtils::readPluginSignatureFromArchive(jplPath);
+    for (const auto& signature : signatures) {
+        auto file = archiver::readFileFromArchive(jplPath, signature.first);
+        if (!pk.checkSignature(file, signature.second))
+            return -1;
+    }
+    return 0;
+}
+
+int
+JamiPluginManager::checkPluginValidity(const std::string& jplPath)
+{
+    if (!fileutils::isFile(jplPath))
+        return -1;
+    try {
+        auto cert = PluginUtils::readPluginCertificateFromArchive(jplPath);
+        if (checkPluginCertificateValidity(cert.get()) != 0 || checkPluginSignatureValidity(jplPath, cert.get()) != 0)
+            return -1;
+    } catch (const std::exception& e) {
+        return -1;
+    }
+    return 0;
+}
+
+int
 JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
 {
     int r {0};
@@ -107,6 +151,8 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             const std::string& name = manifestMap["name"];
             if (name.empty())
                 return 0;
+            if(this->checkPluginValidity(jplPath) != 0)
+                return -1;
             const std::string& version = manifestMap["version"];
             std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins"
                                         + DIR_SEPARATOR_CH + name};

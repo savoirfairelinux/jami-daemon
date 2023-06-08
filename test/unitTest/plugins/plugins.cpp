@@ -21,7 +21,9 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <opendht/crypto.h>
 #include <filesystem>
+#include <memory>
 #include <string>
 
 #include "manager.h"
@@ -111,11 +113,16 @@ private:
 
     std::string name_{};
     std::string jplPath_{};
+    std::string certPath_{};
+    std::unique_ptr<dht::crypto::Certificate> cert_{};
     std::string installationPath_{};
     std::vector<std::string> mediaHandlers_{};
     std::vector<std::string> chatHandlers_{};
 
     void testEnable();
+    void testCertificateVerification();
+    void testSignatureVerification();
+    void testPluginVerification();
     void testInstallAndLoad();
     void testHandlers();
     void testDetailsAndPreferences();
@@ -125,6 +132,9 @@ private:
 
     CPPUNIT_TEST_SUITE(PluginsTest);
     CPPUNIT_TEST(testEnable);
+    CPPUNIT_TEST(testCertificateVerification);
+    CPPUNIT_TEST(testSignatureVerification);
+    CPPUNIT_TEST(testPluginVerification);
     CPPUNIT_TEST(testInstallAndLoad);
     CPPUNIT_TEST(testHandlers);
     CPPUNIT_TEST(testDetailsAndPreferences);
@@ -247,7 +257,7 @@ PluginsTest::setUp()
         }));
 
     libjami::registerSignalHandlers(signalHandlers);
-
+    //TODO: should add cert
     std::ifstream file = jami::fileutils::ifstream("plugins/plugin.yml");
     assert(file.is_open());
     YAML::Node node = YAML::Load(file);
@@ -255,6 +265,10 @@ PluginsTest::setUp()
     assert(node.IsMap());
 
     name_ = node["plugin"].as<std::string>();
+    certPath_ = node["cert"].as<std::string>();
+    cert_ = std::make_unique<dht::crypto::Certificate>(fileutils::loadFile(node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + certPath_));
+    dht::crypto::TrustList trust;
+    trust.add(*cert_);
     jplPath_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + name_ + ".jpl";
     installationPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH + name_;
     mediaHandlers_ = node["mediaHandlers"].as<std::vector<std::string>>();
@@ -275,6 +289,26 @@ PluginsTest::testEnable()
     CPPUNIT_ASSERT(Manager::instance().pluginPreferences.getPluginsEnabled());
     Manager::instance().pluginPreferences.setPluginsEnabled(false);
     CPPUNIT_ASSERT(!Manager::instance().pluginPreferences.getPluginsEnabled());
+}
+
+void
+PluginsTest::testCertificateVerification()
+{
+    Manager::instance().pluginPreferences.setPluginsEnabled(true);
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(jplPath_, cert_.get()) == 0);
+}
+
+void
+PluginsTest::testSignatureVerification()
+{
+    Manager::instance().pluginPreferences.setPluginsEnabled(true);
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(jplPath_, cert_.get()) == 0);
+}
+void
+PluginsTest::testPluginVerification()
+{
+    Manager::instance().pluginPreferences.setPluginsEnabled(true);
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginValidity(jplPath_) == 0);
 }
 
 void

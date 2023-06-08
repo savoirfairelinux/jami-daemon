@@ -311,6 +311,14 @@ void
 answerTrustPlugin(const bool trust, const std::string& path)
 {
     // TODO: should verify the signature of the plugin and the plugin certificate
+    std::string trustStr = trust ? "trust " : "not trust ";
+    std::cout << "should "  + trustStr + "this request of path " + path << std::endl;
+
+    #ifdef ENABLE_PLUGIN
+    // jami::Manager::instance()
+    // .getJamiPluginManager()
+    // .answerTrustPlugin(trust, path);
+    #endif
 }
 
 } // namespace libjami
