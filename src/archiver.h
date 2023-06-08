@@ -94,6 +94,13 @@ void uncompressArchive(const std::string& path, const std::string& dir, const Fi
  */
 std::vector<uint8_t> readFileFromArchive(const std::string& path,
                                          const std::string& fileRelativePathName);
+
+/**
+ * @brief listFilesFromArchive list all files from an archive
+ * @param path archive path
+ * @return std::vector<std::string> that contains all files relative path names
+ */
+std::vector<std::string> listFilesFromArchive(const std::string& path);
 } // namespace archiver
 
 } // namespace jami
