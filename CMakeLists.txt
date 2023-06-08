@@ -259,6 +259,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     ASIO_STANDALONE
     MSGPACK_NO_BOOST
 )
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+    ASIO_STANDALONE
+    MSGPACK_NO_BOOST
+)
 if (JAMI_VIDEO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_VIDEO)
 endif()
