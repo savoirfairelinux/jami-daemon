@@ -466,10 +466,8 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
         }
 
         std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry) : "";
-
         if (r != ARCHIVE_OK) {
-            throw std::runtime_error("Read file pathname: " + fileEntry + "\t"
-                                     + archive_error_string(archiveReader.get()));
+            throw std::runtime_error(fmt::format("Read file pathname: {}: {}", fileEntry, archive_error_string(archiveReader.get())));
         }
 
         // File is ok and the reader has moved past the header
@@ -503,6 +501,48 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
 #endif
     return fileContent;
 }
+std::vector<std::string>
+listFilesFromArchive(const std::string& path)
+{
+    std::vector<std::string> filePaths;
+#ifdef ENABLE_PLUGIN
+#if defined(__APPLE__)
+    void* zip_handle = NULL;
+    mz_zip_file* info = NULL;
 
+    mz_zip_create(&zip_handle);
+    auto status = mz_zip_reader_open_file(zip_handle, path.c_str());
+    status |= mz_zip_reader_goto_first_entry(zip_handle);
+
+    // read all the file path of the archive
+    while (status == MZ_OK) {
+        status = mz_zip_reader_entry_get_info(zip_handle, &info);
+        if (status != MZ_OK)
+            break;
+        std::string filename(info->filename, (size_t) info->filename_size);
+        filePaths.push_back(filename);
+        status = mz_zip_reader_goto_next_entry(zip_handle);
+    }
+    mz_zip_reader_close(zip_handle);
+    mz_zip_delete(&zip_handle);
+#else
+    ArchivePtr archiveReader = createArchiveReader();
+    struct archive_entry* entry;
+
+    archive_read_support_format_all(archiveReader.get());
+    if(archive_read_open_filename(archiveReader.get(), path.c_str(), 10240)) {
+        throw std::runtime_error("Open Archive: " + path + "\t"
+                                 + archive_error_string(archiveReader.get()));
+    }
+
+    while (archive_read_next_header(archiveReader.get(), &entry) == ARCHIVE_OK) {
+        const char* name = archive_entry_pathname(entry);
+
+        filePaths.push_back(name);
+    }
+#endif
+#endif
+    return filePaths;
+}
 } // namespace archiver
 } // namespace jami
