@@ -31,9 +31,15 @@
 #include "manager.h"
 #include "preferences.h"
 #include "jami/plugin_manager_interface.h"
+#include "storeca.cpp"
 
-#define PLUGIN_ALREADY_INSTALLED 100 /* Plugin already installed with the same version */
-#define PLUGIN_OLD_VERSION       200 /* Plugin already installed with a newer version */
+#define SUCCESS                         0
+#define PLUGIN_ALREADY_INSTALLED        100 /* Plugin already installed with the same version */
+#define PLUGIN_OLD_VERSION              200 /* Plugin already installed with a newer version */
+#define SIGNATURE_VERIFICATION_FAILED   300
+#define CERTIFICATE_VERIFICATION_FAILED 400
+#define INVALID_PLUGIN                  500
+
 
 #ifdef WIN32
 #define LIB_TYPE   ".dll"
@@ -97,16 +103,113 @@ JamiPluginManager::getInstalledPlugins()
     return pluginsPaths;
 }
 
+bool
+JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert)
+{
+    trust_.add(crypto::Certificate(store_ca_crt, sizeof(store_ca_crt)));
+    return cert && *cert && trust_.verify(*cert);
+}
+
+bool
+JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
+{
+    // check if the file exists
+    if (!fileutils::isFile(jplPath)){
+        return false;
+    }
+    try {
+        auto signatures = PluginUtils::readPluginSignatureFromArchive(jplPath);
+        auto manifest = PluginUtils::readPluginManifestFromArchive(jplPath);
+        const std::string& name = manifest["name"];
+        auto filesPath = archiver::listFilesFromArchive(jplPath);
+        for (const auto& file : filesPath) {
+            // we skip the signatures and signatures.sig file
+            if (file == "signatures" || file == "signatures.sig")
+                continue;
+            // we also skip the plugin certificate
+            if (file == name + ".crt")
+                continue;
+
+            if (signatures.count(file) == 0) {
+                return false;
+            }
+        }
+    } catch (const std::exception& e) {
+        return false;
+    }
+    return true;
+}
+
+bool
+JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht::crypto::Certificate* cert)
+{
+    if (!fileutils::isFile(jplPath))
+        return false;
+    try{
+        const auto& pk = cert->getPublicKey();
+        auto signaturesData = archiver::readFileFromArchive(jplPath, "signatures");
+        auto signatureFile = PluginUtils::readSignatureFileFromArchive(jplPath);
+        if (!pk.checkSignature(signaturesData, signatureFile))
+            return false;
+        auto signatures = PluginUtils::readPluginSignatureFromArchive(jplPath);
+        for (const auto& signature : signatures) {
+            auto file = archiver::readFileFromArchive(jplPath, signature.first);
+            if (!pk.checkSignature(file, signature.second)){
+                JAMI_ERROR("{} not correctly signed", signature.first);
+                return false;
+            }
+        }
+    } catch (const std::exception& e) {
+        return false;
+    }
+
+    return true;
+}
+
+bool
+JamiPluginManager::checkPluginSignature(const std::string& jplPath, dht::crypto::Certificate* cert)
+{
+    if (!fileutils::isFile(jplPath) || !cert || !*cert)
+        return false;
+    try {
+        return  checkPluginSignatureValidity(jplPath, cert) &&
+                checkPluginSignatureFile(jplPath);
+    } catch (const std::exception& e) {
+        return false;
+    }
+}
+
+std::unique_ptr<dht::crypto::Certificate>
+JamiPluginManager::checkPluginCertificate(const std::string& jplPath, bool force)
+{
+    if (!fileutils::isFile(jplPath))
+        return {};
+    try {
+        auto cert = PluginUtils::readPluginCertificateFromArchive(jplPath);
+        if(checkPluginCertificateValidity(cert.get()) || force){
+            return cert;
+        }
+        return {};
+    } catch (const std::exception& e) {
+        return {};
+    }
+}
+
 int
 JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
 {
-    int r {0};
+    int r {SUCCESS};
     if (fileutils::isFile(jplPath)) {
         try {
             auto manifestMap = PluginUtils::readPluginManifestFromArchive(jplPath);
             const std::string& name = manifestMap["name"];
             if (name.empty())
-                return 0;
+                return INVALID_PLUGIN;
+            auto cert = checkPluginCertificate(jplPath, force);
+            if (!cert)
+                return CERTIFICATE_VERIFICATION_FAILED;
+            if(!checkPluginSignature(jplPath, cert.get()))
+                return SIGNATURE_VERIFICATION_FAILED;
             const std::string& version = manifestMap["version"];
             std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins"
                                         + DIR_SEPARATOR_CH + name};
@@ -117,7 +220,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             if (!alreadyInstalledManifestMap.empty()) {
                 if (force) {
                     r = uninstallPlugin(destinationDir);
-                    if (r == 0) {
+                    if (r == SUCCESS) {
                         archiver::uncompressArchive(jplPath,
                                                     destinationDir,
                                                     PluginUtils::uncompressJplFunction);
@@ -126,7 +229,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                     std::string installedVersion = alreadyInstalledManifestMap.at("version");
                     if (version > installedVersion) {
                         r = uninstallPlugin(destinationDir);
-                        if (r == 0) {
+                        if (r == SUCCESS) {
                             archiver::uncompressArchive(jplPath,
                                                         destinationDir,
                                                         PluginUtils::uncompressJplFunction);
@@ -363,5 +466,11 @@ JamiPluginManager::registerServices()
     };
 
     pm_.registerService("getPluginAccPreferences", getPluginAccPreferences);
+}
+
+void
+JamiPluginManager::addPluginAuthority(const dht::crypto::Certificate& cert)
+{
+    trust_.add(cert);
 }
 } // namespace jami

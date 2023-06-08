@@ -28,7 +28,7 @@
 #include "callservicesmanager.h"
 #include "chatservicesmanager.h"
 #include "preferenceservicesmanager.h"
-
+#include <opendht/crypto.h>
 #include <vector>
 #include <map>
 #include <list>
@@ -68,6 +68,44 @@ public:
      */
     std::vector<std::string> getInstalledPlugins();
 
+    /**
+     * @brief Check the validity of a plugin certificate
+     * @param cert
+     * @return true if valid
+    */
+
+    bool checkPluginCertificateValidity(dht::crypto::Certificate* cert);
+
+    /**
+     * @brief check if all file are present in the signature file
+     * @param jplPath
+     * return true if valid
+    */
+    bool checkPluginSignatureFile(const std::string& jplPath);
+    /**
+     * @brief Check the validity of a plugin signature
+     * @param jplPath
+     * @param cert
+     * @return true if valid
+    */
+    bool checkPluginSignatureValidity(const std::string& jplPath, dht::crypto::Certificate* cert);
+
+    /**
+     * @brief Checks if the plugin signature mechanism is valid by signature of files and each files is signed.
+     * @param jplPath
+     * @param
+     * @return true if the plugin signature is valid
+     *
+    */
+    bool checkPluginSignature(const std::string& jplPath, dht::crypto::Certificate* cert);
+
+    /**
+     * @brief Checks if the certificate mechanism is valid by checking certificate of the plugin
+     * @param jplPath
+     * @param force
+     * @return return certificate if valid
+    */
+    std::unique_ptr<dht::crypto::Certificate> checkPluginCertificate(const std::string& jplPath, bool force);
     /**
      * @brief Checks if the plugin has a valid manifest, installs the plugin if not
      * previously installed or if installing a newer version of it.
@@ -152,6 +190,10 @@ public:
 
     PreferenceServicesManager& getPreferenceServicesManager() { return preferencesm_; }
 
+#ifdef LIBJAMI_TESTABLE
+    void addPluginAuthority(const dht::crypto::Certificate& cert);
+#endif
+
 private:
     NON_COPYABLE(JamiPluginManager);
 
@@ -162,7 +204,7 @@ private:
 
     // PluginManager instance
     PluginManager pm_;
-
+    dht::crypto::TrustList trust_;
     // Map between plugins installation path and manifest infos.
     std::map<std::string, std::map<std::string, std::string>> pluginDetailsMap_;
 

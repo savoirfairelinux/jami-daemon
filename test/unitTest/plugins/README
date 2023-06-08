@@ -24,6 +24,8 @@ The test configuration file can specify:
 
 * plugin - the plugin name;
 
+* cert - the certificate of the plugin
+
 * mediaHandlers - present media handlers names in the plugin;
 
 * chatHandlers - present chat handlers names in the plugin;
