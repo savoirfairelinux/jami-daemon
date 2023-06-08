@@ -257,6 +257,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     PACKAGE="jami"
     LIBJAMI_BUILD
     HAVE_RINGNS
+)
+target_compile_definitions(${PROJECT_NAME} PUBLIC
     ASIO_STANDALONE
     MSGPACK_NO_BOOST
 )
