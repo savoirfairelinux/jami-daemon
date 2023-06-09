@@ -961,8 +961,8 @@ ConversationCallTest::testNeedsHost()
     Manager::instance().sendRegister(aliceId, false);
     // start call
     auto callId = libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
-    // should get message
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.needsHost; }));
+    // Can fail after 30 seconds if it triggers a new ICE request (before No response from DHT)
+    CPPUNIT_ASSERT(cv.wait_for(lk, 40s, [&]() { return bobData_.needsHost; }));
 }
 
 void
