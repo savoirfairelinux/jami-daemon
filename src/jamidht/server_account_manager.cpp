@@ -114,7 +114,7 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
                     else {
                         do {
                             try {
-                                JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+                                JAMI_WARNING("[Auth] Got server response: {}", response.body);
                                 auto cert = std::make_shared<dht::crypto::Certificate>(
                                     json["certificateChain"].asString());
                                 auto accountCert = cert->issuer;

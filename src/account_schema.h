@@ -75,6 +75,8 @@ static const char* const CONFIG_DEFAULT_MODERATORS = "Account.defaultModerators"
 static const char* const CONFIG_LOCAL_MODERATORS_ENABLED = "Account.localModeratorsEnabled";
 static const char* const CONFIG_ALL_MODERATORS_ENABLED = "Account.allModeratorEnabled";
 
+static const char* const CONFIG_ACCOUNT_UICUSTOMIZATION = "Account.uiCustomization";
+
 // SIP specific parameters
 static const char* const CONFIG_STUN_SERVER = "STUN.server";
 static const char* const CONFIG_STUN_ENABLE = "STUN.enable";
