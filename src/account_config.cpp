@@ -51,6 +51,7 @@ constexpr const char* ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 constexpr const char* PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
 constexpr const char* PROXY_PUSH_PLATFORM_KEY = "proxyPushPlatform";
 constexpr const char* PROXY_PUSH_TOPIC_KEY = "proxyPushiOSTopic";
+constexpr const char* UI_CUSTOMIZATION = "uiCustomization";
 
 using yaml_utils::parseValueOptional;
 
@@ -81,6 +82,7 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     SERIALIZE_CONFIG(PROXY_PUSH_PLATFORM_KEY, platform);
     SERIALIZE_CONFIG(PROXY_PUSH_TOPIC_KEY, notificationTopic);
     SERIALIZE_CONFIG(VIDEO_ENABLED_KEY, videoEnabled);
+    SERIALIZE_CONFIG(UI_CUSTOMIZATION, uiCustomization);
 }
 
 void
@@ -117,6 +119,7 @@ AccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, PROXY_PUSH_TOKEN_KEY, deviceKey);
     parseValueOptional(node, PROXY_PUSH_PLATFORM_KEY, platform);
     parseValueOptional(node, PROXY_PUSH_TOPIC_KEY, notificationTopic);
+    parseValueOptional(node, UI_CUSTOMIZATION, uiCustomization);
 }
 
 std::map<std::string, std::string>
@@ -140,7 +143,8 @@ AccountConfig::toMap() const
             {Conf::CONFIG_UPNP_ENABLED, upnpEnabled ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_DEFAULT_MODERATORS, string_join(defaultModerators)},
             {Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled ? TRUE_STR : FALSE_STR}};
+            {Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ACCOUNT_UICUSTOMIZATION, uiCustomization}};
 }
 
 void
@@ -169,6 +173,8 @@ AccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseString(details, libjami::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey);
     parseString(details, PROXY_PUSH_PLATFORM_KEY, platform);
     parseString(details, PROXY_PUSH_TOPIC_KEY, notificationTopic);
+
+    parseString(details, Conf::CONFIG_ACCOUNT_UICUSTOMIZATION, uiCustomization);
 }
 
 void

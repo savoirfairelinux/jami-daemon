@@ -138,6 +138,11 @@ struct AccountConfig : public Serializable
      * Push notification topic.
      */
     std::string notificationTopic {};
+
+    /**
+     * information about the customization of ui
+     */
+    std::string uiCustomization {};
 };
 
 inline void
