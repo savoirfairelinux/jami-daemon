@@ -123,8 +123,6 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact {}).first;
-    else if (not c->second.isActive() and c->second.banned == ban)
-        return false;
     c->second.removed = std::time(nullptr);
     c->second.confirmed = false;
     c->second.banned = ban;

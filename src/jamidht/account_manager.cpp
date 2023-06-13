@@ -446,9 +446,8 @@ AccountManager::removeContact(const std::string& uri, bool banned)
         JAMI_ERR("addContact(): account not loaded");
         return;
     }
-    if (info_->contacts->removeContact(h, banned)) {
+    if (info_->contacts->removeContact(h, banned))
         syncDevices();
-    }
 }
 
 void
@@ -463,9 +462,8 @@ AccountManager::removeContactConversation(const std::string& uri)
         JAMI_ERR("addContact(): account not loaded");
         return;
     }
-    if (info_->contacts->removeContactConversation(h)) {
+    if (info_->contacts->removeContactConversation(h))
         syncDevices();
-    }
 }
 
 std::vector<std::map<std::string, std::string>>

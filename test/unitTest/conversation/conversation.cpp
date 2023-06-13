@@ -72,6 +72,10 @@ public:
     std::string bob2Id;
     std::string carlaId;
 
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
 private:
     void testCreateConversation();
     void testGetConversation();
@@ -225,9 +229,6 @@ ConversationTest::testCreateConversation()
     auto aliceDeviceId = aliceAccount->currentDeviceId();
     auto uri = aliceAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -290,9 +291,6 @@ ConversationTest::testGetConversationsAfterRm()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -323,9 +321,6 @@ ConversationTest::testRemoveInvalidConversation()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -357,9 +352,6 @@ ConversationTest::testSendMessage()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -420,9 +412,6 @@ ConversationTest::testSendMessageWithBadDisplayName()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -499,9 +488,6 @@ ConversationTest::testReplaceWithBadCertificate()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
@@ -592,9 +578,6 @@ ConversationTest::testSendMessageTriggerMessageReceived()
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageReceived = 0;
     bool conversationReady = false;
@@ -634,9 +617,6 @@ ConversationTest::testMergeTwoDifferentHeads()
     carlaAccount->trackBuddyPresence(aliceUri, true);
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, carlaGotMessage = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -700,9 +680,6 @@ ConversationTest::testMergeAfterMigration()
     aliceAccount->trackBuddyPresence(carlaUri, true);
     carlaAccount->trackBuddyPresence(aliceUri, true);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, conversationAliceReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -821,9 +798,6 @@ ConversationTest::testSendMessageToMultipleParticipants()
 
     // Enable carla
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     bool carlaConnected = false;
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
@@ -914,9 +888,6 @@ ConversationTest::testPingPongMessages()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -989,9 +960,6 @@ ConversationTest::testIsComposing()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          aliceComposing = false;
@@ -1062,9 +1030,6 @@ ConversationTest::testMessageStatus()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
     confHandlers.insert(
@@ -1141,9 +1106,6 @@ ConversationTest::testSetMessageDisplayed()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          msgDisplayed = false;
@@ -1257,9 +1219,6 @@ ConversationTest::testSetMessageDisplayedTwice()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          msgDisplayed = false;
@@ -1341,9 +1300,6 @@ ConversationTest::testSetMessageDisplayedPreference()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          msgDisplayed = false, aliceRegistered = false;
@@ -1451,9 +1407,6 @@ ConversationTest::testSetMessageDisplayedAfterClone()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false, memberMessageGenerated = false, msgDisplayed = false,
          aliceRegistered = false;
@@ -1736,9 +1689,6 @@ ConversationTest::testVoteNonEmpty()
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          voteMessageGenerated = false, messageBobReceived = false, errorDetected = false,
@@ -1831,9 +1781,6 @@ ConversationTest::testNoBadFileInInitialCommit()
 
     auto convId = createFakeConversation(carlaAccount);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -1908,9 +1855,6 @@ ConversationTest::testNoBadCertInInitialCommit()
     // Create a conversation from Carla with Alice's device
     auto convId = createFakeConversation(carlaAccount, fakeCert->toString(false));
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -1976,9 +1920,6 @@ ConversationTest::testPlainTextNoBadFile()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0;
     bool memberMessageGenerated = false;
@@ -2059,9 +2000,6 @@ ConversationTest::testVoteNoBadFile()
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          voteMessageGenerated = false, messageBobReceived = false, messageCarlaReceived = false,
@@ -2155,9 +2093,6 @@ ConversationTest::testETooBigClone()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -2232,9 +2167,6 @@ ConversationTest::testETooBigFetch()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -2326,9 +2258,6 @@ ConversationTest::testUnknownModeDetected()
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
     repo.amend(convId, Json::writeString(wbuilder, json));
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          errorDetected = false;
@@ -2383,9 +2312,6 @@ ConversationTest::testUpdateProfile()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
@@ -2466,9 +2392,6 @@ ConversationTest::testGetProfileRequest()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageAliceReceived = 0;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
@@ -2515,9 +2438,6 @@ ConversationTest::testCheckProfileInConversationRequest()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -2571,9 +2491,6 @@ ConversationTest::testCheckProfileInTrustRequest()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false;
     std::string convId = "";
@@ -2622,9 +2539,6 @@ ConversationTest::testMemberCannotUpdateProfile()
 
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -2693,9 +2607,6 @@ ConversationTest::testUpdateProfileWithBadFile()
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -2775,9 +2686,6 @@ ConversationTest::testFetchProfileUnauthorized()
     auto bobUri = bobAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
@@ -2882,9 +2790,6 @@ ConversationTest::testSyncingWhileAccepting()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false;
     std::string convId = "";
@@ -2934,9 +2839,6 @@ ConversationTest::testCountInteractions()
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto convId = libjami::startConversation(aliceId);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
 
     std::string msgId1 = "", msgId2 = "", msgId3 = "";
     aliceAccount->convModule()
@@ -2974,9 +2876,6 @@ ConversationTest::testReplayConversation()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          conversationRemoved = false, messageReceived = false;
@@ -3064,9 +2963,6 @@ ConversationTest::testSyncWithoutPinnedCert()
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::string convId = "";
     auto requestReceived = false, conversationReady = false, memberMessageGenerated = false,
@@ -3218,9 +3114,6 @@ END:VCARD";
         file.close();
     }
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto requestReceived = false, requestReceivedBob2 = false;
     confHandlers.insert(
@@ -3347,9 +3240,6 @@ ConversationTest::testCloneFromMultipleDevice()
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto requestReceived = false, requestReceivedBob2 = false;
     confHandlers.insert(
@@ -3471,9 +3361,6 @@ ConversationTest::testSendReply()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::vector<std::map<std::string, std::string>> messageBobReceived = {},
                                                     messageAliceReceived = {};
@@ -3545,9 +3432,6 @@ ConversationTest::testSearchInConv()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
          messageReceived = false;
@@ -3639,9 +3523,6 @@ ConversationTest::testConversationPreferences()
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto uri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, conversationRemoved = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -3688,9 +3569,6 @@ ConversationTest::testConversationPreferencesBeforeClone()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto requestReceived = false, requestReceivedBob2 = false;
     confHandlers.insert(
@@ -3785,9 +3663,6 @@ ConversationTest::testConversationPreferencesMultiDevices()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto requestReceived = false, requestReceivedBob2 = false;
     confHandlers.insert(
@@ -3878,9 +3753,6 @@ ConversationTest::testFixContactDetails()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::string convId = "";
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -3917,9 +3789,6 @@ ConversationTest::testRemoveOneToOneNotInDetails()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::string convId = "", secondConv;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -3971,9 +3840,6 @@ ConversationTest::testMessageEdition()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::vector<std::map<std::string, std::string>> messageBobReceived;
     bool conversationReady = false, memberMessageGenerated = false;
@@ -4066,9 +3932,6 @@ ConversationTest::testMessageReaction()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::vector<std::map<std::string, std::string>> messageAliceReceived;
     bool conversationReady = false;
