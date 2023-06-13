@@ -700,6 +700,20 @@ public:
     }
 
     auto
+    getConnectionList(const std::string& accountId, const std::string& conversationId)
+        -> decltype(libjami::getConnectionList(accountId, conversationId))
+    {
+        return libjami::getConnectionList(accountId,conversationId);
+    }
+
+    auto
+    getChannelList(const std::string& accountId, const std::string& connectionId)
+        -> decltype(libjami::getChannelList(accountId, connectionId))
+    {
+        return libjami::getChannelList(accountId,connectionId);
+    }
+
+    auto
     getContacts(const std::string& accountId)
         -> decltype(libjami::getContacts(accountId))
     {

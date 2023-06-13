@@ -77,6 +77,7 @@ private:
     void testConnectivityChangeTriggerBeacon();
     void testOnNoBeaconTriggersShutdown();
     void testShutdownWhileNegotiating();
+    void testGetChannelList();
 
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
     CPPUNIT_TEST(testConnectDevice);
@@ -100,6 +101,7 @@ private:
     CPPUNIT_TEST(testConnectivityChangeTriggerBeacon);
     CPPUNIT_TEST(testOnNoBeaconTriggersShutdown);
     CPPUNIT_TEST(testShutdownWhileNegotiating);
+    CPPUNIT_TEST(testGetChannelList);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1283,6 +1285,69 @@ ConnectionManagerTest::testShutdownWhileNegotiating()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return notConnected; }));
 }
 
+void ConnectionManagerTest::testGetChannelList(){
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
+
+    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    std::unique_lock<std::mutex> lk {mtx};
+    bool successfullyConnected = false;
+    int receiverConnected = 0;
+
+    bobAccount->connectionManager().onChannelRequest(
+        [](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
+
+    bobAccount->connectionManager().onConnectionReady(
+        [&receiverConnected, &cv](const DeviceId&,
+                             const std::string&,
+                             std::shared_ptr<ChannelSocket> socket) {
+            if (socket)
+                receiverConnected += 1;
+            cv.notify_one();
+        });
+    std::string channelId;
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const DeviceId&) {
+                                                        if (socket) {
+                                                            channelId = std::to_string(socket->channel());
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] {
+        return successfullyConnected &&  receiverConnected == 1;
+    }));
+    std::vector<std::map<std::string, std::string>> expectedList = {{{"channel", channelId},
+                                                                    {"channelName", "git://*"}}};
+    auto connectionList = aliceAccount->getConnectionList();
+
+    CPPUNIT_ASSERT(!connectionList.empty());
+    const auto& connectionInfo = connectionList[0];
+    auto it = connectionInfo.find("id");
+    CPPUNIT_ASSERT(it != connectionInfo.end());
+    std::string connectionId = it->second;
+    auto actualList = aliceAccount->getChannelList(connectionId);
+    CPPUNIT_ASSERT(expectedList.size() == actualList.size());
+    CPPUNIT_ASSERT(std::equal(expectedList.begin(), expectedList.end(), actualList.begin()));
+
+    for (const auto& expectedMap : expectedList) {
+        auto it = std::find_if(actualList.begin(), actualList.end(), [&](const std::map<std::string, std::string>& actualMap) {
+            return expectedMap.size() == actualMap.size() && std::equal(expectedMap.begin(), expectedMap.end(), actualMap.begin());
+        });
+        CPPUNIT_ASSERT(it != actualList.end());
+    }
+
+
+}
 } // namespace test
 } // namespace jami
 

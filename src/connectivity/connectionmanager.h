@@ -34,6 +34,8 @@ class JamiAccount;
 class ChannelSocket;
 class ConnectionManager;
 
+enum class ConnectionStatus : int { Connected, TLS, ICE, Connecting, Waiting };
+
 /**
  * A PeerConnectionRequest is a request which ask for an initial connection
  * It contains the ICE request an ID and if it's an answer
@@ -154,6 +156,45 @@ public:
      * Log informations for all sockets
      */
     void monitor() const;
+
+    /**
+     * Retrieve the list of connections.
+     *
+     * @param device The device ID to filter the connections (optional).
+     * @return The list of connections as a vector of maps, where each map represents a connection.
+     *
+     * Note: The connections are represented as maps with string keys and string values. The map
+     *       contains the following key-value pairs:
+     *       - "id": The unique identifier of the connection.
+     *       - "userUri": The user URI associated with the connection (if available).
+     *       - "status": The status of the connection, represented as an integer:
+     *                   - 0: ConnectionStatus::Connected
+     *                   - 1: ConnectionStatus::TLS
+     *                   - 2: ConnectionStatus::ICE
+     *                   - 3: ConnectionStatus::Connecting (for pending operations)
+     *                   - 4: ConnectionStatus::Waiting (for pending operations)
+     *       - "remoteAddress": The remote IP address of the connection (if available).
+     *       - "remotePort": The remote port of the connection (if available).
+     *
+     *       If a specific device ID is provided, the returned list will only include connections
+     *       associated with that device. Otherwise, connections from all devices will be included.
+    */
+    std::vector<std::map<std::string, std::string>> getConnectionList(
+        const jami::DeviceId device = {}) const;
+
+    /**
+      * Retrieve the list of channels associated with a connection.
+    *
+    * @param connectionId The ID of the connection to fetch the channels from.
+    * @return The list of channels as a vector of maps, where each map represents a channel
+    *         and contains key-value pairs of channel ID and channel name.
+    *
+    *       If the specified connection ID is valid and associated with a connection,
+    *       the method returns the list of channels associated with that connection.
+    *       Otherwise, an empty vector is returned.
+    */
+    std::vector<std::map<std::string, std::string>> getChannelList(
+        const std::string& connectionId) const;
 
     /**
      * Send beacon on peers supporting it
