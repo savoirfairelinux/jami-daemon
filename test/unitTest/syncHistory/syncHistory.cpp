@@ -689,8 +689,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     conversationReady = false;
     alice2Id = Manager::instance().addAccount(details);
     // Should retrieve conversation, no need for action as the convInfos is in the archive
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready; }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationReady; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready && conversationReady; }));
 
     messageBobReceived = 0;
     libjami::sendMessage(alice2Id, convId, std::string("hi"), "");
