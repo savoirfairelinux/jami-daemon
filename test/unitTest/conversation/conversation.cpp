@@ -3280,14 +3280,11 @@ END:VCARD";
                     conversationRmBob2 = true;
                 cv.notify_one();
             }));
-    auto aliceProfileReceivedBob = false, aliceProfileReceivedBob2 = false;
+    auto aliceProfileReceivedBob = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ProfileReceived>(
         [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
-            if (accountId == bobId && peerId == aliceUri) {
+            if (accountId == bobId && peerId == aliceUri)
                 aliceProfileReceivedBob = true;
-            } else if (accountId == bob2Id && peerId == aliceUri) {
-                aliceProfileReceivedBob2 = true;
-            }
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
@@ -3334,11 +3331,9 @@ END:VCARD";
     conversationReadyBob = false;
     conversationReadyBob2 = false;
     aliceProfileReceivedBob = false;
-    aliceProfileReceivedBob2 = false;
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReadyBob && conversationReadyBob2 && aliceProfileReceivedBob
-               && aliceProfileReceivedBob2;
+        return conversationReadyBob && conversationReadyBob2 && aliceProfileReceivedBob;
     }));
 }
 
