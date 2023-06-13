@@ -612,6 +612,7 @@ public:
     std::shared_ptr<TransferManager> transferManager_ {};
     std::string conversationDataPath_ {};
     std::string fetchedPath_ {};
+
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
     // Manage last message displayed and status
@@ -859,6 +860,12 @@ Conversation::connectivityChanged()
 {
     if (pimpl_->swarmManager_)
         pimpl_->swarmManager_->maintainBuckets();
+}
+
+std::vector<jami::DeviceId>
+Conversation::getDeviceIdList() const
+{
+    return pimpl_->swarmManager_->getRoutingTable().getAllNodes();
 }
 
 bool
@@ -2045,5 +2052,4 @@ Conversation::currentCalls() const
     std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
     return pimpl_->activeCalls_;
 }
-
 } // namespace jami

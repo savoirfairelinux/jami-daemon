@@ -452,6 +452,9 @@ public:
                        const std::pair<std::string, std::string>& message) override;
 
     void monitor();
+    // conversationId optional
+    std::vector<std::map<std::string, std::string>> getConnectionList(const std::string& conversationId = "");
+    std::vector<std::map<std::string, std::string>> getChannelList(const std::string& connectionId);
 
     // File transfer
     void sendFile(const std::string& conversationId,

@@ -547,6 +547,11 @@ public:
      */
     void connectivityChanged();
 
+    /**
+     * @return getAllNodes()    Nodes that are linked to the conversation
+    */
+    std::vector<jami::DeviceId> getDeviceIdList() const;
+
 private:
     std::shared_ptr<Conversation> shared()
     {

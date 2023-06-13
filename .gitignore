@@ -140,3 +140,8 @@ clang-tidy-report.txt
 sonar-project.properties.save
 compile_commands.json
 
+# Cmake
+*.cmake
+CMakeCache.txt
+Testing
+CMakeFiles

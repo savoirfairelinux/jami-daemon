@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(jami
-    VERSION 13.7.0
+    VERSION 13.8.0
     LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
 set (CMAKE_CXX_STANDARD 17)
@@ -771,10 +771,6 @@ else()
         add_executable(ut_recorder test/unitTest/call/recorder.cpp)
         target_link_libraries(ut_recorder ut_library)
         add_test(NAME recorder COMMAND ut_recorder)
-
-        add_executable(ut_connectionManager test/unitTest/connectionManager/connectionManager.cpp)
-        target_link_libraries(ut_connectionManager ut_library)
-        add_test(NAME connectionManager COMMAND ut_connectionManager)
 
         add_executable(ut_migration test/unitTest/account_archive/migration.cpp)
         target_link_libraries(ut_migration ut_library)

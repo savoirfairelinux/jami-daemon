@@ -3944,6 +3944,36 @@ JamiAccount::monitor()
         connectionManager_->monitor();
 }
 
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getConnectionList(const std::string& conversationId)
+{
+    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    if (conversationId.empty()) {
+        return connectionManager_->getConnectionList();
+    } else if (connectionManager_ && convModule_) {
+        std::vector<std::map<std::string, std::string>> connectionList;
+        if (auto conv = convModule_->getConversation(conversationId)) {
+            for (const auto& deviceId : conv->getDeviceIdList()) {
+                auto connections = connectionManager_->getConnectionList(deviceId);
+                connectionList.reserve(connectionList.size() + connections.size());
+                std::move(connections.begin(), connections.end(), std::back_inserter(connectionList));
+            }
+        }
+        return connectionList;
+    } else {
+        return {};
+    }
+}
+
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getChannelList(const std::string& connectionId)
+{
+    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    if (!connectionManager_)
+        return {};
+    return connectionManager_->getChannelList(connectionId);
+}
+
 void
 JamiAccount::sendFile(const std::string& conversationId,
                       const std::string& path,
@@ -3968,31 +3998,35 @@ JamiAccount::sendFile(const std::string& conversationId,
             value["sha3sum"] = fileutils::sha3File(path);
             value["type"] = "application/data-transfer+json";
 
-            shared->convModule()
-                ->sendMessage(conversationId,
-                              std::move(value),
-                              replyTo,
-                              true,
-                              [accId = shared->getAccountID(), conversationId, tid, path](
-                                  const std::string& commitId) {
-                                  // Create a symlink to answer to re-ask
-                                  auto filelinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                                                      + accId + DIR_SEPARATOR_STR
-                                                      + "conversation_data" + DIR_SEPARATOR_STR
-                                                      + conversationId + DIR_SEPARATOR_STR
-                                                      + commitId + "_" + std::to_string(tid);
-                                  auto extension = fileutils::getFileExtension(path);
-                                  if (!extension.empty())
-                                      filelinkPath += "." + extension;
-                                  if (path != filelinkPath && !fileutils::isSymLink(filelinkPath)) {
-                                      if (!fileutils::createFileLink(filelinkPath, path, true)) {
-                                        JAMI_WARNING("Cannot create symlink for file transfer {} - {}. Copy file", filelinkPath, path);
-                                        if (!fileutils::copy(path, filelinkPath)) {
-                                            JAMI_ERROR("Cannot copy file for file transfer {} - {}", filelinkPath, path);
-                                        }
-                                      }
-                                  }
-                              });
+            shared->convModule()->sendMessage(
+                conversationId,
+                std::move(value),
+                replyTo,
+                true,
+                [accId = shared->getAccountID(), conversationId, tid, path](
+                    const std::string& commitId) {
+                    // Create a symlink to answer to re-ask
+                    auto filelinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accId
+                                        + DIR_SEPARATOR_STR + "conversation_data"
+                                        + DIR_SEPARATOR_STR + conversationId + DIR_SEPARATOR_STR
+                                        + commitId + "_" + std::to_string(tid);
+                    auto extension = fileutils::getFileExtension(path);
+                    if (!extension.empty())
+                        filelinkPath += "." + extension;
+                    if (path != filelinkPath && !fileutils::isSymLink(filelinkPath)) {
+                        if (!fileutils::createFileLink(filelinkPath, path, true)) {
+                            JAMI_WARNING(
+                                "Cannot create symlink for file transfer {} - {}. Copy file",
+                                filelinkPath,
+                                path);
+                            if (!fileutils::copy(path, filelinkPath)) {
+                                JAMI_ERROR("Cannot copy file for file transfer {} - {}",
+                                           filelinkPath,
+                                           path);
+                            }
+                        }
+                    }
+                });
         }
     });
 }

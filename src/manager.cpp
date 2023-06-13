@@ -958,6 +958,66 @@ Manager::monitor(bool continuous)
     Logger::setMonitorLog(continuous);
 }
 
+std::vector<std::map<std::string, std::string>>
+Manager::getConnectionList(const std::string& accountId, const std::string& conversationId)
+{
+    std::vector<std::map<std::string, std::string>> connectionsList;
+
+    if (accountId.empty()) {
+        for (const auto& account : getAllAccounts<JamiAccount>()) {
+            if (account->getRegistrationState() == RegistrationState::INITIALIZING) {
+                const auto& cnl = account->getConnectionList(conversationId);
+                connectionsList.insert(connectionsList.end(), cnl.begin(), cnl.end());
+            }
+        }
+    } else {
+        auto account = getAccount(accountId);
+        if (account) {
+            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account)) {
+                if (acc->getRegistrationState() == RegistrationState::INITIALIZING) {
+                    const auto& cnl = acc->getConnectionList(conversationId);
+                    connectionsList.insert(connectionsList.end(), cnl.begin(), cnl.end());
+                }
+            }
+        }
+    }
+
+    return connectionsList;
+}
+
+std::vector<std::map<std::string, std::string>>
+Manager::getChannelList(const std::string& accountId, const std::string& connectionId)
+{
+    // if account id is empty, return all channels
+    // else return only for specific accountid
+    std::vector<std::map<std::string, std::string>> channelsList;
+
+    if (accountId.empty()) {
+        for (const auto& account : getAllAccounts<JamiAccount>()) {
+            if (account->getRegistrationState() == RegistrationState::INITIALIZING) {
+                // add to channelsList all channels for this account
+                const auto& cnl = account->getChannelList(connectionId);
+                channelsList.insert(channelsList.end(), cnl.begin(), cnl.end());
+            }
+        }
+
+    }
+
+    else {
+        // get the jamiaccount for this accountid and return its channels
+        auto account = getAccount(accountId);
+        if (account) {
+            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account)) {
+                if (acc->getRegistrationState() == RegistrationState::INITIALIZING){
+                    const auto& cnl = acc->getChannelList(connectionId);
+                    channelsList.insert(channelsList.end(), cnl.begin(), cnl.end());}
+            }
+        }
+    }
+
+    return channelsList;
+}
+
 bool
 Manager::isCurrentCall(const Call& call) const
 {

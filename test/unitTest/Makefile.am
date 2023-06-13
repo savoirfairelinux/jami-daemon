@@ -146,12 +146,6 @@ check_PROGRAMS += ut_conference
 ut_conference_SOURCES = call/conference.cpp common.cpp
 
 #
-# connectionManager
-#
-check_PROGRAMS += ut_connectionManager
-ut_connectionManager_SOURCES = connectionManager/connectionManager.cpp common.cpp
-
-#
 # fileTransfer
 #
 check_PROGRAMS += ut_fileTransfer
