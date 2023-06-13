@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4d177ddd_8d6b2bf3",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-06-13T20:37:19Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "15ce16e1_82897e3f",
+      "range": {
+        "startLine": 104,
+        "startChar": 36,
+        "endLine": 104,
+        "endChar": 79
+      },
+      "revId": "cbacc2c69728cb3b190e25f11c6e74bcf91b9aed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f8273c55_8f8e3438",
         "filename": "src/plugin/jamipluginmanager.cpp",
         "patchSetId": 3
@@ -37,6 +61,30 @@
       "writtenOn": "2023-06-13T14:35:02Z",
       "side": 1,
       "message": "return cert \u0026\u0026 *cert \u0026\u0026 trust.verify(cert)",
+      "range": {
+        "startLine": 105,
+        "startChar": 5,
+        "endLine": 107,
+        "endChar": 13
+      },
+      "revId": "cbacc2c69728cb3b190e25f11c6e74bcf91b9aed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0803ff8_e315159f",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-06-13T20:37:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f8273c55_8f8e3438",
       "range": {
         "startLine": 105,
         "startChar": 5,
@@ -60,6 +108,30 @@
       "writtenOn": "2023-06-13T14:35:02Z",
       "side": 1,
       "message": "This doesn\u0027t check if a file is present in the archive but not signed.",
+      "range": {
+        "startLine": 120,
+        "startChar": 33,
+        "endLine": 125,
+        "endChar": 5
+      },
+      "revId": "cbacc2c69728cb3b190e25f11c6e74bcf91b9aed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ec8da941_1c51a9d8",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-06-13T20:37:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1e9a2008_341d3ce3",
       "range": {
         "startLine": 120,
         "startChar": 33,
