@@ -1209,16 +1209,28 @@ ConnectionManager::getConnectionsList(const std::string& conversationId)
 
     std::vector<std::map<std::string, std::string>> connectionsList;
     std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
-    for (const auto& [_, ci] : pimpl_->infos_) {
-        if (ci->socket_)
-            connectionsList.push_back(ci->socket_->getConnectionsList(conversationId));
-        for (auto it = connectionsList.begin(); it != connectionsList.end(); ++it) {
-            for (auto it2 = it->begin(); it2 != it->end(); ++it2) {
-                JAMI_DBG("%s |%s|", it2->first, it2->second);
-            }
+    std::map<std::string, std::string> connectionInfo;
+    for (const auto& [key, ci] : pimpl_->infos_) {
+        connectionInfo["deviceId"] = key.first.to_c_str();
+        auto cert = ci->tls_->peerCertificate();
+        if (cert && cert->issuer) {
+            auto userUri = cert->issuer->getId().toString();
+            connectionInfo["userUri"] = userUri;
         }
+        if (ci->socket_) {
+            connectionInfo["status"] = "Connected";
+        } else {
+            connectionInfo["status"] = "Connecting";
+        }
+        if (ci->tls_) {
+            std::string remoteAddress = ci->tls_->getRemoteAddress();
+            std::string remoteAddressIp = remoteAddress.substr(0, remoteAddress.find(":"));
+            std::string remoteAddressPort = remoteAddress.substr(remoteAddress.find(":") + 1);
+            connectionInfo["remoteAdress"] = remoteAddressIp;
+            connectionInfo["remotePort"] = remoteAddressPort;
+        }
+        connectionsList.push_back(connectionInfo);
     }
-
     return connectionsList;
 }
 

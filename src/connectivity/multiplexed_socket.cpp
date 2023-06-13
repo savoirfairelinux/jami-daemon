@@ -685,13 +685,11 @@ MultiplexedSocket::getConnectionsList(const std::string& conversationId) const
     auto now = clock::now();
     std::string remoteAddress = pimpl_->endpoint->getRemoteAddress();
     std::string remoteAddressIp = remoteAddress.substr(0, remoteAddress.find(":"));
-    std::string remoteAddressPort = remoteAddress.substr(remoteAddress.find(":") + 1,
-                                                         remoteAddress.length());
+    std::string remoteAddressPort = remoteAddress.substr(remoteAddress.find(":") + 1);
     connectionInfo["conversationId"] = conversationId;
     connectionInfo["userUri"] = userUri;
     connectionInfo["deviceId"] = deviceId().to_c_str();
-    connectionInfo["duration"]
-        = std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_).count();
+    connectionInfo["duration"] = std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_).count();
     connectionInfo["remoteAdress"] = remoteAddressIp;
     connectionInfo["remotePort"] = remoteAddressPort;
 

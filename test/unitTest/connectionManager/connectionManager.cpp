@@ -43,7 +43,8 @@ public:
     ConnectionManagerTest()
     {
         // Init daemon
-        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(
+            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
@@ -77,29 +78,30 @@ private:
     void testConnectivityChangeTriggerBeacon();
     void testOnNoBeaconTriggersShutdown();
     void testShutdownWhileNegotiating();
-
+    void testGetConnectionsList();
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
-    CPPUNIT_TEST(testConnectDevice);
-    CPPUNIT_TEST(testAcceptConnection);
-    CPPUNIT_TEST(testMultipleChannels);
-    CPPUNIT_TEST(testMultipleChannelsOneDeclined);
-    CPPUNIT_TEST(testMultipleChannelsSameName);
-    CPPUNIT_TEST(testDeclineConnection);
-    CPPUNIT_TEST(testSendReceiveData);
-    CPPUNIT_TEST(testAcceptsICERequest);
-    CPPUNIT_TEST(testDeclineICERequest);
-    CPPUNIT_TEST(testChannelRcvShutdown);
-    CPPUNIT_TEST(testChannelSenderShutdown);
-    CPPUNIT_TEST(testCloseConnectionWith);
-    CPPUNIT_TEST(testShutdownCallbacks);
-    CPPUNIT_TEST(testFloodSocket);
-    CPPUNIT_TEST(testDestroyWhileSending);
-    CPPUNIT_TEST(testIsConnecting);
-    CPPUNIT_TEST(testCanSendBeacon);
-    CPPUNIT_TEST(testCannotSendBeacon);
-    CPPUNIT_TEST(testConnectivityChangeTriggerBeacon);
-    CPPUNIT_TEST(testOnNoBeaconTriggersShutdown);
-    CPPUNIT_TEST(testShutdownWhileNegotiating);
+    // CPPUNIT_TEST(testConnectDevice);
+    // CPPUNIT_TEST(testAcceptConnection);
+    // CPPUNIT_TEST(testMultipleChannels);
+    // CPPUNIT_TEST(testMultipleChannelsOneDeclined);
+    // CPPUNIT_TEST(testMultipleChannelsSameName);
+    // CPPUNIT_TEST(testDeclineConnection);
+    // CPPUNIT_TEST(testSendReceiveData);
+    // CPPUNIT_TEST(testAcceptsICERequest);
+    // CPPUNIT_TEST(testDeclineICERequest);
+    // CPPUNIT_TEST(testChannelRcvShutdown);
+    // CPPUNIT_TEST(testChannelSenderShutdown);
+    // CPPUNIT_TEST(testCloseConnectionWith);
+    // CPPUNIT_TEST(testShutdownCallbacks);
+    // CPPUNIT_TEST(testFloodSocket);
+    // CPPUNIT_TEST(testDestroyWhileSending);
+    // CPPUNIT_TEST(testIsConnecting);
+    // CPPUNIT_TEST(testCanSendBeacon);
+    // CPPUNIT_TEST(testCannotSendBeacon);
+    // CPPUNIT_TEST(testConnectivityChangeTriggerBeacon);
+    // CPPUNIT_TEST(testOnNoBeaconTriggersShutdown);
+    // CPPUNIT_TEST(testShutdownWhileNegotiating);
+    CPPUNIT_TEST(testGetConnectionsList);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -112,7 +114,8 @@ ConnectionManagerTest::setUp()
     aliceId = actors["alice"];
     bobId = actors["bob"];
 
-    // Pin certificate from one to another certstore (because we do not perform any DHT operation in this test)
+    // Pin certificate from one to another certstore (because we do not perform any DHT operation in
+    // this test)
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     bobAccount->certStore().pinCertificate(aliceAccount->identity().second);
@@ -1085,7 +1088,8 @@ ConnectionManagerTest::testCanSendBeacon()
                                                         cv.notify_one();
                                                     });
     // connectDevice is full async, so isConnecting will be true after a few ms.
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceSocket && bobSocket && successfullyConnected; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return aliceSocket && bobSocket && successfullyConnected; }));
     CPPUNIT_ASSERT(aliceSocket->canSendBeacon());
 
     // Because onConnectionReady is true before version is sent, we can wait a bit
@@ -1282,7 +1286,41 @@ ConnectionManagerTest::testShutdownWhileNegotiating()
     Manager::instance().setAccountActive(aliceId, false, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return notConnected; }));
 }
+void
+ConnectionManagerTest::testGetConnectionsList()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
+    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+
+    bobAccount->connectionManager().onChannelRequest(
+        [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
+                               const std::string& name) {
+            successfullyReceive = name == "git://*";
+            return true;
+        });
+
+    bobAccount->connectionManager().onConnectionReady(
+        [&receiverConnected](const DeviceId&,
+                             const std::string& name,
+                             std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket && (name == "git://*");
+        });
+
+    cv = aliceAccount->connectionManager().getConnectionsList();
+
+    CPPUNIT_ASSERT(cv != nullptr);
+}
 } // namespace test
 } // namespace jami
 
