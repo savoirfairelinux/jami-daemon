@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15ce16e1_82897e3f",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-13T14:35:02Z",
+      "side": 1,
+      "message": "will not work likewise",
+      "range": {
+        "startLine": 104,
+        "startChar": 36,
+        "endLine": 104,
+        "endChar": 79
+      },
+      "revId": "cbacc2c69728cb3b190e25f11c6e74bcf91b9aed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8273c55_8f8e3438",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-13T14:35:02Z",
+      "side": 1,
+      "message": "return cert \u0026\u0026 *cert \u0026\u0026 trust.verify(cert)",
+      "range": {
+        "startLine": 105,
+        "startChar": 5,
+        "endLine": 107,
+        "endChar": 13
+      },
+      "revId": "cbacc2c69728cb3b190e25f11c6e74bcf91b9aed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e9a2008_341d3ce3",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-13T14:35:02Z",
+      "side": 1,
+      "message": "This doesn\u0027t check if a file is present in the archive but not signed.",
+      "range": {
+        "startLine": 120,
+        "startChar": 33,
+        "endLine": 125,
+        "endChar": 5
+      },
+      "revId": "cbacc2c69728cb3b190e25f11c6e74bcf91b9aed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ecc863b9_76401115",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-13T14:35:02Z",
+      "side": 1,
+      "message": "if only -1 and zero is used, a bool is generally more explicit, else error codes may be used",
+      "range": {
+        "startLine": 74,
+        "startChar": 15,
+        "endLine": 74,
+        "endChar": 25
+      },
+      "revId": "cbacc2c69728cb3b190e25f11c6e74bcf91b9aed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
