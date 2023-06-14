@@ -39,7 +39,6 @@ CoreLayer::CoreLayer(const AudioPreference& pref)
     , indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardRingtone())
-    , playbackBuff_(0, audioFormat_)
 {}
 
 CoreLayer::~CoreLayer()
@@ -287,19 +286,6 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
                                   &bufferSizeFrames,
                                   &size));
 
-    UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
-    size = offsetof(AudioBufferList, mBuffers) + (sizeof(AudioBuffer) * info.mChannelsPerFrame);
-    rawBuff_.reset(new Byte[size + bufferSizeBytes * info.mChannelsPerFrame]);
-    captureBuff_ = reinterpret_cast<::AudioBufferList*>(rawBuff_.get());
-    captureBuff_->mNumberBuffers = info.mChannelsPerFrame;
-
-    auto bufferBasePtr = rawBuff_.get() + size;
-    for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i) {
-        captureBuff_->mBuffers[i].mNumberChannels = 1;
-        captureBuff_->mBuffers[i].mDataByteSize = bufferSizeBytes;
-        captureBuff_->mBuffers[i].mData = bufferBasePtr + bufferSizeBytes * i;
-    }
-
     // Input callback setup.
     AURenderCallbackStruct inputCall;
     inputCall.inputProc = inputCallback;
@@ -462,6 +448,18 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
         JAMI_WARN("No frames for input.");
         return;
     }
+    auto format = audioInputFormat_;
+    format.sampleFormat = AV_SAMPLE_FMT_FLTP;
+    auto inBuff = std::make_shared<AudioFrame>(format, inNumberFrames);
+
+    AudioBufferList buffer;
+    UInt32 bufferSize = inNumberFrames * sizeof(Float32);
+    buffer.mNumberBuffers = inChannelsPerFrame_;
+    for (UInt32 i = 0; i < buffer.mNumberBuffers; ++i) {
+        buffer.mBuffers[i].mNumberChannels = 1;
+        buffer.mBuffers[i].mDataByteSize = bufferSize;
+        buffer.mBuffers[i].mData = inBuff->pointer()->extended_data[i];
+    }
 
     // Write the mic samples in our buffer
     checkErr(AudioUnitRender(ioUnit_,
@@ -469,19 +467,10 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
                              inTimeStamp,
                              inBusNumber,
                              inNumberFrames,
-                             captureBuff_));
+                             &buffer));
 
-    auto format = audioInputFormat_;
-    format.sampleFormat = AV_SAMPLE_FMT_FLTP;
-    auto inBuff = std::make_shared<AudioFrame>(format, inNumberFrames);
     if (isCaptureMuted_) {
         libav_utils::fillWithSilence(inBuff->pointer());
-    } else {
-        auto& in = *inBuff->pointer();
-        for (unsigned i = 0; i < inChannelsPerFrame_; ++i)
-            std::copy_n((Float32*) captureBuff_->mBuffers[i].mData,
-                        inNumberFrames,
-                        (Float32*) in.extended_data[i]);
     }
     putRecorded(std::move(inBuff));
 }
