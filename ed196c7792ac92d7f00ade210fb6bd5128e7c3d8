@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02cecf5b_2f01e720",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 537,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-14T16:06:33Z",
+      "side": 1,
+      "message": "break build:\n\nmv -f $depbase.Tpo $depbase.Plo\narchiver.cpp: In function \u0027std::vector\u003cstd::__cxx11::basic_string\u003cchar\u003e \u003e jami::archiver::listFilesFromArchive(const string\u0026)\u0027:\narchiver.cpp:535:32: error: cannot convert \u0027jami::archiver::ArchivePtr\u0027 {aka \u0027std::unique_ptr\u003carchive, void (*)(archive*)\u003e\u0027} to \u0027archive*\u0027\n  535 |     archive_read_open_filename(archiveReader, path.c_str(), 10240);\n      |                                ^~~~~~~~~~~~~\n      |                                |\n      |                                jami::archiver::ArchivePtr {aka std::unique_ptr\u003carchive, void (*)(archive*)\u003e}\nIn file included from archiver.cpp:44:\n/foo/contrib/x86_64-linux-gnu/include/archive.h:528:42: note:   initializing argument 1 of \u0027int archive_read_open_filename(archive*, const char*, size_t)\u0027\n  528 | __LA_DECL int archive_read_open_filename(struct archive *,\n      |                                          ^~~~~~~~~~~~~~~~\narchiver.cpp:537:37: error: cannot convert \u0027jami::archiver::ArchivePtr\u0027 {aka \u0027std::unique_ptr\u003carchive, void (*)(archive*)\u003e\u0027} to \u0027archive*\u0027\n  537 |     while (archive_read_next_header(archiveReader, \u0026entry) \u003d\u003d ARCHIVE_OK) {\n      |                                     ^~~~~~~~~~~~~\n      |                                     |\n      |                                     jami::archiver::ArchivePtr {aka std::unique_ptr\u003carchive, void (*)(archive*)\u003e}\nIn file included from archiver.cpp:44:\n/foo/contrib/x86_64-linux-gnu/include/archive.h:553:40: note:   initializing argument 1 of \u0027int archive_read_next_header(archive*, archive_entry**)\u0027\n  553 | __LA_DECL int archive_read_next_header(struct archive *,\n      |                                        ^~~~~~~~~~~~~~~~",
+      "range": {
+        "startLine": 537,
+        "startChar": 11,
+        "endLine": 537,
+        "endChar": 35
+      },
+      "revId": "ed196c7792ac92d7f00ade210fb6bd5128e7c3d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05658eb1_743892d7",
+        "filename": "test/unitTest/plugins/plugins.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-14T16:06:33Z",
+      "side": 1,
+      "message": "Ideally we should test bad scenarios (incorrectly signed certificate, incorrect plugin content)",
+      "range": {
+        "startLine": 137,
+        "startChar": 17,
+        "endLine": 137,
+        "endChar": 39
+      },
+      "revId": "ed196c7792ac92d7f00ade210fb6bd5128e7c3d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
