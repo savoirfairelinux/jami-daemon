@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fe1b3f4b_e9b7bd03",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 537,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-06-14T22:15:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fc241f96_aebdcb62",
+      "range": {
+        "startLine": 537,
+        "startChar": 11,
+        "endLine": 537,
+        "endChar": 35
+      },
+      "revId": "ed196c7792ac92d7f00ade210fb6bd5128e7c3d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "05658eb1_743892d7",
@@ -61,6 +85,30 @@
       "writtenOn": "2023-06-14T16:06:33Z",
       "side": 1,
       "message": "Ideally we should test bad scenarios (incorrectly signed certificate, incorrect plugin content)",
+      "range": {
+        "startLine": 137,
+        "startChar": 17,
+        "endLine": 137,
+        "endChar": 39
+      },
+      "revId": "ed196c7792ac92d7f00ade210fb6bd5128e7c3d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "725e1df7_6296478d",
+        "filename": "test/unitTest/plugins/plugins.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-06-14T22:15:01Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "05658eb1_743892d7",
       "range": {
         "startLine": 137,
         "startChar": 17,
