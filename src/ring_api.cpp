@@ -125,7 +125,8 @@ logging(const std::string& whom, const std::string& action) noexcept
 void
 CallbackWrapperBase::post(std::function<void()> cb)
 {
-    jami::Manager::instance().ioContext()->post(std::move(cb));
+    if (auto io = jami::Manager::instance().ioContext())
+        io->post(std::move(cb));
 }
 
 } // namespace libjami

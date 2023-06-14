@@ -60,5 +60,5 @@ public:
     }
 
 private:
-    int_least16_t count_;
+    int_least16_t count_ {0};
 };
