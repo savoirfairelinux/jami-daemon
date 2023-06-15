@@ -87,6 +87,13 @@ struct ConversationRequest
         return m.size() == om.size() && std::equal(m.begin(), m.end(), om.begin());
     }
 
+    bool isOneToOne() const {
+        try {
+            return metadatas.at("mode") == "0";
+        } catch (...) {}
+        return true;
+    }
+
     MSGPACK_DEFINE_MAP(from, conversationId, metadatas, received, declined)
 };
 

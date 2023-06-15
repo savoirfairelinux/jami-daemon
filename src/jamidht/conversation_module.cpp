@@ -269,15 +269,21 @@ public:
     {
         ConversationModule::saveConvRequests(accountId_, conversationsRequests_);
     }
+    void declineOtherConversationWith(const std::string& uri) noexcept;
     bool addConversationRequest(const std::string& id, const ConversationRequest& req)
     {
         std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+        // Check that we're not adding a second one to one trust request
+        // NOTE: If a new one to one request is received, we can decline the previous one.
+        if (req.isOneToOne())
+            declineOtherConversationWith(req.from);
         auto it = conversationsRequests_.find(id);
         if (it != conversationsRequests_.end()) {
             // Check if updated
             if (req == it->second)
                 return false;
         }
+        JAMI_DEBUG("Adding conversation request from {} ({})", req.from, id);
         conversationsRequests_[id] = req;
         saveConvRequests();
         return true;
@@ -708,6 +714,22 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
     if (it != details.end())
         return it->second;
     return {};
+}
+
+void
+ConversationModule::Impl::declineOtherConversationWith(const std::string& uri) noexcept
+{
+    // conversationsRequestsMtx_ MUST BE LOCKED
+    for (auto& [id, request] : conversationsRequests_) {
+        if (request.declined)
+            continue; // Ignore already declined requests
+        if (request.isOneToOne() && request.from == uri) {
+            JAMI_WARNING("Decline conversation request ({}) from {}", id, uri);
+            request.declined = std::time(nullptr);
+            emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(accountId_,
+                                                                                id);
+        }
+    }
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -1384,11 +1406,6 @@ ConversationModule::onTrustRequest(const std::string& uri,
                   pimpl_->accountId_.c_str());
         return;
     }
-    emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(pimpl_->accountId_,
-                                                                   conversationId,
-                                                                   uri,
-                                                                   payload,
-                                                                   received);
     ConversationRequest req;
     req.from = uri;
     req.conversationId = conversationId;
@@ -1396,10 +1413,16 @@ ConversationModule::onTrustRequest(const std::string& uri,
     req.metadatas = ConversationRepository::infosFromVCard(vCard::utils::toMap(
         std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size())));
     auto reqMap = req.toMap();
-    pimpl_->addConversationRequest(conversationId, std::move(req));
-    emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
-                                                                         conversationId,
-                                                                         reqMap);
+    if (pimpl_->addConversationRequest(conversationId, std::move(req))) {
+        emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(pimpl_->accountId_,
+                                                                        conversationId,
+                                                                        uri,
+                                                                        payload,
+                                                                        received);
+        emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
+                                                                            conversationId,
+                                                                            reqMap);
+    }
 }
 
 void
@@ -1424,13 +1447,14 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     }
     req.received = std::time(nullptr);
     auto reqMap = req.toMap();
-    pimpl_->addConversationRequest(convId, std::move(req));
-    // Note: no need to sync here because other connected devices should receive
-    // the same conversation request. Will sync when the conversation will be added
+    if (pimpl_->addConversationRequest(convId, std::move(req))) {
+        // Note: no need to sync here because other connected devices should receive
+        // the same conversation request. Will sync when the conversation will be added
 
-    emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
-                                                                         convId,
-                                                                         reqMap);
+        emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
+                                                                            convId,
+                                                                            reqMap);
+    }
 }
 
 std::string

@@ -88,6 +88,7 @@ public:
     void testBanUnbanGotFirstConv();
     void testBanHostWhileHosting();
     void testRemoveContactTwice();
+    void testAddContactTwice();
 
     std::string aliceId;
     std::string bobId;
@@ -132,6 +133,7 @@ private:
     CPPUNIT_TEST(testBanUnbanGotFirstConv);
     CPPUNIT_TEST(testBanHostWhileHosting);
     CPPUNIT_TEST(testRemoveContactTwice);
+    CPPUNIT_TEST(testAddContactTwice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2664,6 +2666,63 @@ ConversationMembersEventTest::testRemoveContactTwice()
     contactRemoved = false;
     bobAccount->removeContact(aliceUri, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return contactRemoved; }));
+}
+
+void
+ConversationMembersEventTest::testAddContactTwice()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool requestReceived = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string&,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
+    std::string convId = "";
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId)
+                convId = conversationId;
+            cv.notify_one();
+        }));
+    auto requestDeclined = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestDeclined>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == bobId)
+                    requestDeclined = true;
+                cv.notify_one();
+            }));
+    auto contactRemoved = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactRemoved>(
+        [&](const std::string& accountId, const std::string& uri, bool) {
+            if (accountId == aliceId && uri == bobUri)
+                contactRemoved = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+    requestReceived = false;
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return requestReceived; }));
+    requestReceived = false;
+    aliceAccount->removeContact(bobUri, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return contactRemoved; }));
+    // wait that connections are closed.
+    std::this_thread::sleep_for(10s);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return requestDeclined && requestReceived; }));
 }
 
 } // namespace test

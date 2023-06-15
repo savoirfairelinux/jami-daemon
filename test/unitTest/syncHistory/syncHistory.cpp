@@ -729,10 +729,11 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
         }));
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
+            [&](const std::string& accountId,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
+                if (accountId == aliceId)
+                    requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -783,6 +784,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Ready; }));
 
     // Should get the same request as before.
+    messageBobReceived = 0;
     libjami::acceptConversationRequest(alice2Id, convId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReady && messageBobReceived == 1; }));
