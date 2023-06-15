@@ -1173,6 +1173,10 @@ ConversationModule::loadConversations()
                 info.members = std::move(members);
                 info.lastDisplayed = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
                 addConvInfo(info);
+            } else if (convInfo->second.removed) {
+                // A conversation was removed, but repository still exists
+                conv->setRemovingFlag();
+                toRm.insert(repository);
             }
             auto commits = conv->refreshActiveCalls();
             if (!commits.empty()) {

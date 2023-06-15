@@ -127,6 +127,7 @@ private:
     void testRemoveOneToOneNotInDetails();
     void testMessageEdition();
     void testMessageReaction();
+    void testLoadPartiallyRemovedConversation();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -179,6 +180,7 @@ private:
     CPPUNIT_TEST(testRemoveOneToOneNotInDetails);
     CPPUNIT_TEST(testMessageEdition);
     CPPUNIT_TEST(testMessageReaction);
+    CPPUNIT_TEST(testLoadPartiallyRemovedConversation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -3965,6 +3967,69 @@ ConversationTest::testMessageReaction()
         cv.wait_for(lk, 10s, [&]() { return messageAliceReceived.size() == msgSize + 1; }));
     CPPUNIT_ASSERT(messageAliceReceived.rbegin()->at("react-to") == reactId);
     CPPUNIT_ASSERT(messageAliceReceived.rbegin()->at("body") == "👋");
+}
+
+void
+ConversationTest::testLoadPartiallyRemovedConversation()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool requestReceived = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+            [&](const std::string& account_id,
+                const std::string& /*from*/,
+                const std::string& /*conversationId*/,
+                const std::vector<uint8_t>& /*payload*/,
+                time_t /*received*/) {
+                if (account_id == bobId)
+                    requestReceived = true;
+                cv.notify_one();
+            }));
+    std::string convId = "";
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            }
+            cv.notify_one();
+        }));
+    bool conversationRemoved = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == aliceId)
+                    conversationRemoved = true;
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+
+    // Copy alice's conversation temporary
+    auto repoPathAlice = fmt::format("{}/{}/conversations/{}", fileutils::get_data_dir(),
+                                     aliceAccount->getAccountID(), convId);
+    std::filesystem::copy(repoPathAlice, fmt::format("./{}", convId), std::filesystem::copy_options::recursive);
+
+    // removeContact
+    aliceAccount->removeContact(bobUri, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationRemoved; }));
+    std::this_thread::sleep_for(10s); // Wait for connection to close and async tasks to finish
+
+    // Copy back alice's conversation
+    std::filesystem::copy(fmt::format("./{}", convId), repoPathAlice, std::filesystem::copy_options::recursive);
+    std::filesystem::remove_all(fmt::format("./{}", convId));
+
+    // Reloading conversation should remove directory
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPathAlice));
+    aliceAccount->convModule()->loadConversations();
+    CPPUNIT_ASSERT(!fileutils::isDirectory(repoPathAlice));
 }
 
 } // namespace test
