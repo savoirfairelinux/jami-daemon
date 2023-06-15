@@ -45,8 +45,6 @@ AlsaLayer::AlsaLayer(const AudioPreference& pref)
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardRingtone())
     , audioPlugin_(pref.getAlsaPlugin())
-    , playbackBuff_(0, audioFormat_)
-    , captureBuff_(0, audioFormat_)
 {
     setHasNativeAEC(false);
     setHasNativeNS(false);

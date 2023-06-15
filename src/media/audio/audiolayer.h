@@ -23,7 +23,6 @@
 #pragma once
 
 #include "ringbuffer.h"
-#include "dcblocker.h"
 #include "noncopyable.h"
 #include "audio_frame_resizer.h"
 #include "audio-processing/audio_processor.h"
@@ -259,7 +258,6 @@ protected:
      * Buffers for audio processing
      */
     std::shared_ptr<RingBuffer> mainRingBuffer_;
-    AudioBuffer ringtoneBuffer_;
     std::unique_ptr<AudioFrameResizer> playbackQueue_;
 
     /**
@@ -289,11 +287,6 @@ protected:
      * Lock for the entire audio layer
      */
     mutable std::mutex mutex_ {};
-
-    /**
-     * Remove audio offset that can be introduced by certain cheap audio device
-     */
-    DcBlocker dcblocker_ {};
 
     /**
      * Manage sampling rate conversion

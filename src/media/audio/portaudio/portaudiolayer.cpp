@@ -681,8 +681,6 @@ PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
         return false;
     }
 
-    parent.dcblocker_.reset();
-
     JAMI_DBG("Open PortAudio Full-duplex input/output stream");
     auto& stream = streams_[Direction::IO];
     openFullDuplexStream(

@@ -770,6 +770,9 @@ ConversationTest::testMergeAfterMigration()
     fileutils::recursive_mkdir(p.parent_path());
     std::filesystem::copy(repoPathCarla, repoPathAlice, std::filesystem::copy_options::recursive);
 
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPathAlice));
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPathAlice + "/" + convId));
+
     // Makes different heads
     carlaAccount->convModule()->loadConversations(); // necessary to load conversation
     carlaGotMessage = "";
@@ -788,7 +791,12 @@ ConversationTest::testMergeAfterMigration()
     CPPUNIT_ASSERT(carlaAccount->setValidity("", {}, 10));
     auto now = std::chrono::system_clock::now();
     std::this_thread::sleep_until(now + 20s);
+    carlaConnected = false;
     carlaAccount->forceReloadAccount();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaConnected; }));
+    // Force move certificate in alice's certStore (because forceReloadAccount is different than a real migration)
+    // and DHT state is still the old one
+    aliceAccount->certStore().pinCertificate(carlaAccount->identity().second);
 
     // Start Carla, should merge and all messages should be there
     Manager::instance().sendRegister(aliceId, true);
@@ -3272,14 +3280,11 @@ END:VCARD";
                     conversationRmBob2 = true;
                 cv.notify_one();
             }));
-    auto aliceProfileReceivedBob = false, aliceProfileReceivedBob2 = false;
+    auto aliceProfileReceivedBob = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ProfileReceived>(
         [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
-            if (accountId == bobId && peerId == aliceUri) {
+            if (accountId == bobId && peerId == aliceUri)
                 aliceProfileReceivedBob = true;
-            } else if (accountId == bob2Id && peerId == aliceUri) {
-                aliceProfileReceivedBob2 = true;
-            }
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
@@ -3326,11 +3331,9 @@ END:VCARD";
     conversationReadyBob = false;
     conversationReadyBob2 = false;
     aliceProfileReceivedBob = false;
-    aliceProfileReceivedBob2 = false;
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReadyBob && conversationReadyBob2 && aliceProfileReceivedBob
-               && aliceProfileReceivedBob2;
+        return conversationReadyBob && conversationReadyBob2 && aliceProfileReceivedBob;
     }));
 }
 

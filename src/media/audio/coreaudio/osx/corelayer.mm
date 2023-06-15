@@ -335,8 +335,6 @@ CoreLayer::startStream(AudioDeviceType stream)
             return;
         status_ = Status::Started;
 
-        dcblocker_.reset();
-
         initAudioLayerIO(stream);
 
         auto inputError = AudioUnitInitialize(ioUnit_);
