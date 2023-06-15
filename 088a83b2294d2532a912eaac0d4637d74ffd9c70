@@ -22,6 +22,30 @@
       },
       "revId": "088a83b2294d2532a912eaac0d4637d74ffd9c70",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92142773_0d0d5a68",
+        "filename": "src/media/video/winvideo/video_device_monitor_impl.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-06-15T14:06:54Z",
+      "side": 1,
+      "message": "good point. I don\u0027t think it\u0027s possible to use different plugins for input/output, perhaps the method/API should be adjusted.",
+      "parentUuid": "47168136_bc47de5c",
+      "range": {
+        "startLine": 161,
+        "startChar": 61,
+        "endLine": 161,
+        "endChar": 88
+      },
+      "revId": "088a83b2294d2532a912eaac0d4637d74ffd9c70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
