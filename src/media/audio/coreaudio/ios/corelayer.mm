@@ -42,7 +42,6 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardRingtone())
-    , playbackBuff_(0, audioFormat_)
 {
      audioConfigurationQueue = dispatch_queue_create("com.savoirfairelinux.audioConfigurationQueueIOS", DISPATCH_QUEUE_SERIAL);
 }
@@ -269,20 +268,6 @@ CoreLayer::setupInputBus() {
                          inputBus,
                          &flag,
                          sizeof(flag));
-
-    UInt32 bufferSizeFrames = std::round(inSampleRate_ * bufferDuration);
-    UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
-    size = offsetof(AudioBufferList, mBuffers[0]) + (sizeof(AudioBuffer) * inputASBD.mChannelsPerFrame);
-    rawBuff_.reset(new Byte[size + bufferSizeBytes * inputASBD.mChannelsPerFrame]);
-    captureBuff_ = reinterpret_cast<::AudioBufferList*>(rawBuff_.get());
-    captureBuff_->mNumberBuffers = inputASBD.mChannelsPerFrame;
-
-    auto bufferBasePtr = rawBuff_.get() + size;
-    for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i) {
-        captureBuff_->mBuffers[i].mNumberChannels = 1;
-        captureBuff_->mBuffers[i].mDataByteSize = bufferSizeBytes;
-        captureBuff_->mBuffers[i].mData =  bufferBasePtr + bufferSizeBytes * i;
-    }
 }
 
 void
@@ -430,29 +415,16 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
         return;
     }
 
-    // Check if buffer is large enough for inNumberFrames
-    UInt32 bufferSizeFrames = captureBuff_->mBuffers[0].mDataByteSize / sizeof(Float32);
-
-    if (inNumberFrames > bufferSizeFrames) {
-        // Buffer is too small, need to reallocate
-        JAMI_DBG("Reallocating capture buffer...");
-
-        UInt32 bufferSizeBytes = inNumberFrames * sizeof(Float32);
-        UInt32 size = offsetof(AudioBufferList, mBuffers[0]) + (sizeof(AudioBuffer) * inChannelsPerFrame_);
-
-        rawBuff_.reset(new Byte[size + bufferSizeBytes * inChannelsPerFrame_]);
-        captureBuff_ = reinterpret_cast<::AudioBufferList*>(rawBuff_.get());
-        captureBuff_->mNumberBuffers = inChannelsPerFrame_;
-
-        auto bufferBasePtr = rawBuff_.get() + size;
-        for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i) {
-            captureBuff_->mBuffers[i].mNumberChannels = 1;
-            captureBuff_->mBuffers[i].mDataByteSize = bufferSizeBytes;
-            captureBuff_->mBuffers[i].mData =  bufferBasePtr + bufferSizeBytes * i;
-        }
-
-        // Update bufferSizeFrames
-        bufferSizeFrames = inNumberFrames;
+    auto format = audioInputFormat_;
+    format.sampleFormat = AV_SAMPLE_FMT_FLTP;
+    auto inBuff = std::make_shared<AudioFrame>(format, inNumberFrames);
+    AudioBufferList buffer;
+    UInt32 bufferSize = inNumberFrames * sizeof(Float32);
+    buffer.mNumberBuffers = inChannelsPerFrame_;
+    for (UInt32 i = 0; i < buffer.mNumberBuffers; ++i) {
+        buffer.mBuffers[i].mNumberChannels = 1;
+        buffer.mBuffers[i].mDataByteSize = bufferSize;
+        buffer.mBuffers[i].mData = inBuff->pointer()->extended_data[i];
     }
 
     // Write the mic samples in our buffer
@@ -461,17 +433,10 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
             inTimeStamp,
             inBusNumber,
             inNumberFrames,
-            captureBuff_));
+            &buffer));
 
-    auto format = audioInputFormat_;
-    format.sampleFormat = AV_SAMPLE_FMT_FLTP;
-    auto inBuff = std::make_shared<AudioFrame>(format, inNumberFrames);
     if (isCaptureMuted_) {
         libav_utils::fillWithSilence(inBuff->pointer());
-    } else {
-        auto& in = *inBuff->pointer();
-        for (unsigned i = 0; i < inChannelsPerFrame_; ++i)
-            std::copy_n((Float32*)captureBuff_->mBuffers[i].mData, inNumberFrames, (Float32*)in.extended_data[i]);
     }
     putRecorded(std::move(inBuff));
 }
