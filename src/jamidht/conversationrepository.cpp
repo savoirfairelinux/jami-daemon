@@ -187,10 +187,11 @@ public:
         return members_;
     }
 
-    std::map<std::string, std::vector<DeviceId>> devices() const
+    std::map<std::string, std::vector<DeviceId>> devices(bool ignoreExpired = true) const
     {
+        auto acc = account_.lock();
         auto repo = repository();
-        if (!repo)
+        if (!repo or !acc)
             return {};
         std::map<std::string, std::vector<DeviceId>> memberDevices;
         std::string deviceDir = fmt::format("{}devices/",
@@ -203,6 +204,11 @@ public:
             } catch (const std::exception&) {}
             if (!cert)
                 continue;
+            if (ignoreExpired && cert->getExpiration() < std::chrono::system_clock::now())
+                continue;
+            if (!acc->certStore().getCertificate(cert->getPublicKey().getLongId().toString())) {
+                acc->certStore().pinCertificate(cert, true); // Pin certificate to local store if not already done
+            }
             memberDevices[cert->getIssuerUID()].emplace_back(cert->getPublicKey().getLongId());
         }
         return memberDevices;
@@ -3730,9 +3736,9 @@ ConversationRepository::memberUris(std::string_view filter,
 }
 
 std::map<std::string, std::vector<DeviceId>>
-ConversationRepository::devices() const
+ConversationRepository::devices(bool ignoreExpired) const
 {
-    return pimpl_->devices();
+    return pimpl_->devices(ignoreExpired);
 }
 
 void

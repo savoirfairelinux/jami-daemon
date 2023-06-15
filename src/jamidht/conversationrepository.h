@@ -352,9 +352,10 @@ public:
 
     /**
      * Get conversation's devices
+     * @param ignoreExpired     If we want to ignore expired devices
      * @return members
      */
-    std::map<std::string, std::vector<DeviceId>> devices() const;
+    std::map<std::string, std::vector<DeviceId>> devices(bool ignoreExpired = true) const;
 
     /**
      * @param filter           If we want to remove one member
