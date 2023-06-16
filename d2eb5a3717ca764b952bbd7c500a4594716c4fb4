@@ -187,6 +187,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "986f6472_89a65b88",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-06-16T15:39:09Z",
+      "side": 1,
+      "message": "A status string is ok IMHO. Not to be displayed directly but as a unique status string.",
+      "parentUuid": "b056fdbf_c01be330",
+      "range": {
+        "startLine": 1259,
+        "startChar": 40,
+        "endLine": 1259,
+        "endChar": 43
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5712a546_41099e22",
         "filename": "src/connectivity/connectionmanager.cpp",
         "patchSetId": 4
