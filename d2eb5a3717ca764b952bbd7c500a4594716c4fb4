@@ -1,0 +1,257 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d62f60ef_639da2af",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 4
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "note, because API changes, we need to update daemon\u0027s version in configure.ac/meson",
+      "range": {
+        "startLine": 93,
+        "startChar": 48,
+        "endLine": 93,
+        "endChar": 66
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0239d96c_906d3037",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 195,
+        "startChar": 73,
+        "endLine": 195,
+        "endChar": 88
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d1bfcbd_af9118e7",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1241,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "should filter via a list of devices passed by jamiaccount, because connectionManager doesn\u0027t care about conversations",
+      "range": {
+        "startLine": 1241,
+        "startChar": 41,
+        "endLine": 1241,
+        "endChar": 66
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d1904ab3_ba941d72",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1241,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "getConnectionList, because a list is already a collection (same for channel)",
+      "range": {
+        "startLine": 1241,
+        "startChar": 19,
+        "endLine": 1241,
+        "endChar": 37
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a7cebc9_73c74f18",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1243,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "french comments to remove",
+      "range": {
+        "startLine": 1243,
+        "startChar": 46,
+        "endLine": 1243,
+        "endChar": 48
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8fe5f64_8de64b21",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1245,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "connectionsList.reserve(pimpl_-\u003einfos_.size()) to avoid several allocations",
+      "range": {
+        "startLine": 1245,
+        "startChar": 52,
+        "endLine": 1245,
+        "endChar": 67
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8152f15c_f8b0b649",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1247,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "configure your IDE to remove trailing spaces",
+      "range": {
+        "startLine": 1247,
+        "startChar": 0,
+        "endLine": 1247,
+        "endChar": 4
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b056fdbf_c01be330",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "Imho, we should use a enum/status that the client will translate into a sentence, because we do not have internationalization on strings there",
+      "range": {
+        "startLine": 1259,
+        "startChar": 40,
+        "endLine": 1259,
+        "endChar": 43
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5712a546_41099e22",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1261,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "ICE",
+      "range": {
+        "startLine": 1261,
+        "startChar": 40,
+        "endLine": 1261,
+        "endChar": 43
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc286163_4a65aeb8",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "add docstrings",
+      "range": {
+        "startLine": 158,
+        "startChar": 10,
+        "endLine": 160,
+        "endChar": 12
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dc64ca52_570261be",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4059,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-16T12:52:52Z",
+      "side": 1,
+      "message": "woops",
+      "range": {
+        "startLine": 4058,
+        "startChar": 26,
+        "endLine": 4059,
+        "endChar": 26
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
