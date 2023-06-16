@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02e6e292_ae4e94fe",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-06-16T16:56:11Z",
+      "side": 1,
+      "message": "log error",
+      "range": {
+        "startLine": 159,
+        "startChar": 12,
+        "endLine": 160,
+        "endChar": 29
+      },
+      "revId": "fac5a141b6c3f78f755850e748e83dbef278bd82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e665d1ad_b13826cb",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-06-16T16:56:11Z",
+      "side": 1,
+      "message": "checkPluginSignature(",
+      "range": {
+        "startLine": 170,
+        "startChar": 19,
+        "endLine": 170,
+        "endChar": 48
+      },
+      "revId": "fac5a141b6c3f78f755850e748e83dbef278bd82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "365c7bfa_f2827e31",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-06-16T16:56:11Z",
+      "side": 1,
+      "message": "return certificate if valid",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 4
+      },
+      "revId": "fac5a141b6c3f78f755850e748e83dbef278bd82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cbf90424_9f6299a0",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-06-16T16:56:11Z",
+      "side": 1,
+      "message": "addPluginAuthority",
+      "range": {
+        "startLine": 468,
+        "startChar": 19,
+        "endLine": 468,
+        "endChar": 44
+      },
+      "revId": "fac5a141b6c3f78f755850e748e83dbef278bd82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
