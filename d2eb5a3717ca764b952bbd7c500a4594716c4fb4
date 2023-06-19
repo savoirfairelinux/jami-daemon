@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "73fb22d7_81762b02",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 4
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:49:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d62f60ef_639da2af",
+      "range": {
+        "startLine": 93,
+        "startChar": 48,
+        "endLine": 93,
+        "endChar": 66
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0239d96c_906d3037",
@@ -355,6 +379,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2f082e76_1dbb2148",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:49:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "986f6472_89a65b88",
+      "range": {
+        "startLine": 1259,
+        "startChar": 40,
+        "endLine": 1259,
+        "endChar": 43
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5712a546_41099e22",
         "filename": "src/connectivity/connectionmanager.cpp",
         "patchSetId": 4
@@ -423,6 +471,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f7ffff4f_1f65dbe7",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:49:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dc286163_4a65aeb8",
+      "range": {
+        "startLine": 158,
+        "startChar": 10,
+        "endLine": 160,
+        "endChar": 12
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dc64ca52_570261be",
@@ -436,6 +508,30 @@
       "writtenOn": "2023-06-16T12:52:52Z",
       "side": 1,
       "message": "woops",
+      "range": {
+        "startLine": 4058,
+        "startChar": 26,
+        "endLine": 4059,
+        "endChar": 26
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "58ef71e2_b2c91472",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4059,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:49:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dc64ca52_570261be",
       "range": {
         "startLine": 4058,
         "startChar": 26,
