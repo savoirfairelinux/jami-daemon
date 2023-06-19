@@ -283,6 +283,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb528c15_efd59a6c",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1245,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:52:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "69c34c1f_bd7fd0cb",
+      "range": {
+        "startLine": 1245,
+        "startChar": 52,
+        "endLine": 1245,
+        "endChar": 67
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8152f15c_f8b0b649",
@@ -391,6 +415,30 @@
       "side": 1,
       "message": "Done",
       "parentUuid": "986f6472_89a65b88",
+      "range": {
+        "startLine": 1259,
+        "startChar": 40,
+        "endLine": 1259,
+        "endChar": 43
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fe107253_b36e0d58",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1259,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:52:19Z",
+      "side": 1,
+      "message": "I added enum class ConnectionStatus : int { Connected, TLS, ICE, Connecting, Waiting };",
+      "parentUuid": "2f082e76_1dbb2148",
       "range": {
         "startLine": 1259,
         "startChar": 40,
