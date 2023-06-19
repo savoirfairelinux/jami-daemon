@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "51c95601_4562b2c1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-19T13:11:37Z",
+      "side": 1,
+      "message": "cf mattermost, Not related to your patch, but on my device I don\u0027t see the audio device at all. So I think there is a bug somewhere.",
+      "revId": "088a83b2294d2532a912eaac0d4637d74ffd9c70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "47168136_bc47de5c",
         "filename": "src/media/video/winvideo/video_device_monitor_impl.cpp",
         "patchSetId": 13
