@@ -47,6 +47,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9345d68e_edabce44",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:16:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0239d96c_906d3037",
+      "range": {
+        "startLine": 195,
+        "startChar": 73,
+        "endLine": 195,
+        "endChar": 88
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3d1bfcbd_af9118e7",
@@ -93,6 +117,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1f7f4465_50688753",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1241,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:16:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3d1bfcbd_af9118e7",
+      "range": {
+        "startLine": 1241,
+        "startChar": 41,
+        "endLine": 1241,
+        "endChar": 66
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b6cd48d_cdc4e991",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1241,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:16:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d1904ab3_ba941d72",
+      "range": {
+        "startLine": 1241,
+        "startChar": 19,
+        "endLine": 1241,
+        "endChar": 37
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0a7cebc9_73c74f18",
@@ -106,6 +178,30 @@
       "writtenOn": "2023-06-16T12:52:52Z",
       "side": 1,
       "message": "french comments to remove",
+      "range": {
+        "startLine": 1243,
+        "startChar": 46,
+        "endLine": 1243,
+        "endChar": 48
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "14d4fc11_0c8359db",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1243,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:16:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0a7cebc9_73c74f18",
       "range": {
         "startLine": 1243,
         "startChar": 46,
@@ -141,6 +237,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "69c34c1f_bd7fd0cb",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1245,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:16:58Z",
+      "side": 1,
+      "message": "I\u0027m not sure that the size of the connection list is equal to the size on infos_. In fact, it\u0027s equal to the size of infos_ + pendingOperations_.connecting+ pendingOperations_.waiting.",
+      "parentUuid": "d8fe5f64_8de64b21",
+      "range": {
+        "startLine": 1245,
+        "startChar": 52,
+        "endLine": 1245,
+        "endChar": 67
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8152f15c_f8b0b649",
         "filename": "src/connectivity/connectionmanager.cpp",
         "patchSetId": 4
@@ -152,6 +272,30 @@
       "writtenOn": "2023-06-16T12:52:52Z",
       "side": 1,
       "message": "configure your IDE to remove trailing spaces",
+      "range": {
+        "startLine": 1247,
+        "startChar": 0,
+        "endLine": 1247,
+        "endChar": 4
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0eceb76c_fa1026ec",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1247,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:16:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8152f15c_f8b0b649",
       "range": {
         "startLine": 1247,
         "startChar": 0,
@@ -222,6 +366,30 @@
       "writtenOn": "2023-06-16T12:52:52Z",
       "side": 1,
       "message": "ICE",
+      "range": {
+        "startLine": 1261,
+        "startChar": 40,
+        "endLine": 1261,
+        "endChar": 43
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2e56e094_a2327cbd",
+        "filename": "src/connectivity/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1261,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-19T18:16:58Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5712a546_41099e22",
       "range": {
         "startLine": 1261,
         "startChar": 40,
