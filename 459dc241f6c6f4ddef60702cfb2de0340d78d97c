@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "898312df_b796c2e7",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 1657,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-20T15:17:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "530eaa9c_76b653b8",
+      "range": {
+        "startLine": 1657,
+        "startChar": 22,
+        "endLine": 1657,
+        "endChar": 40
+      },
+      "revId": "459dc241f6c6f4ddef60702cfb2de0340d78d97c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6e351891_7f1f76cd",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-06-20T14:29:55Z",
       "side": 1,
       "message": "getChannelList",
+      "range": {
+        "startLine": 1670,
+        "startChar": 22,
+        "endLine": 1670,
+        "endChar": 37
+      },
+      "revId": "459dc241f6c6f4ddef60702cfb2de0340d78d97c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9aa240b4_8c4d7e84",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 1670,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-20T15:17:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6e351891_7f1f76cd",
       "range": {
         "startLine": 1670,
         "startChar": 22,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "215be3bf_0e4b87af",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 5
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-20T15:17:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c0c46c40_544df03e",
+      "range": {
+        "startLine": 93,
+        "startChar": 48,
+        "endLine": 93,
+        "endChar": 66
+      },
+      "revId": "459dc241f6c6f4ddef60702cfb2de0340d78d97c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "275252b9_6df40a19",
@@ -83,6 +155,30 @@
       "writtenOn": "2023-06-20T14:29:55Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 88,
+        "startChar": 48,
+        "endLine": 88,
+        "endChar": 66
+      },
+      "revId": "459dc241f6c6f4ddef60702cfb2de0340d78d97c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "855d78ce_e600b7b4",
+        "filename": "bin/nodejs/configurationmanager.i",
+        "patchSetId": 5
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-20T15:17:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "275252b9_6df40a19",
       "range": {
         "startLine": 88,
         "startChar": 48,

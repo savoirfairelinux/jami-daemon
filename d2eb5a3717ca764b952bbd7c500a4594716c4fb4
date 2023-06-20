@@ -72,6 +72,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f3745bf_a63030cc",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 4
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 997
+      },
+      "writtenOn": "2023-06-20T15:17:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f4297e00_30cbcb81",
+      "range": {
+        "startLine": 93,
+        "startChar": 48,
+        "endLine": 93,
+        "endChar": 66
+      },
+      "revId": "d2eb5a3717ca764b952bbd7c500a4594716c4fb4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0239d96c_906d3037",
