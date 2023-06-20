@@ -40,7 +40,10 @@ class Request;
 struct Response;
 class Resolver;
 } // namespace http
-struct Logger;
+namespace log {
+class Logger;
+}
+using Logger = log::Logger;
 } // namespace dht
 
 namespace jami {
