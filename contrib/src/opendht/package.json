@@ -1,6 +1,6 @@
 {
     "name": "opendht",
-    "version": "2.5.4",
+    "version": "a7f459eab9e897b69444b3fddd3210d89b544ee3",
     "url": "https://github.com/savoirfairelinux/opendht/archive/v__VERSION__.tar.gz",
     "deps": [
         "argon2",

@@ -48,12 +48,7 @@ ServerAccountManager::ServerAccountManager(const std::string& path,
                                            const std::string& nameServer)
     : AccountManager(path, std::move(onAsync), nameServer)
     , managerHostname_(managerHostname)
-    , logger_(std::make_shared<dht::Logger>(
-          [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); },
-          [](char const* m, va_list args) { Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args); },
-          [](char const* m, va_list args) {
-              Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args);
-          })) {};
+    , logger_(Logger::dhtLogger()) {}
 
 void
 ServerAccountManager::setAuthHeaderFields(Request& request) const

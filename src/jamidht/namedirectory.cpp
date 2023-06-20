@@ -34,7 +34,7 @@
 #include <opendht/crypto.h>
 #include <opendht/utils.h>
 #include <opendht/http.h>
-#include <opendht/log_enable.h>
+#include <opendht/logger.h>
 #include <opendht/thread_pool.h>
 
 #include <cstddef>
