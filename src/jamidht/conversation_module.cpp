@@ -2300,19 +2300,19 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
     {
         std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
         auto update = false;
-        auto it = pimpl_->conversationsRequests_.begin();
-        while (it != pimpl_->conversationsRequests_.end()) {
-            if (it->second.from == uri) {
+        for (auto it = pimpl_->conversationsRequests_.begin(); it != pimpl_->conversationsRequests_.end(); ++it) {
+            if (it->second.from == uri && !it->second.declined) {
+                JAMI_DEBUG("Declining conversation request {:s} from {:s}", it->first, uri);
                 emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(
                     pimpl_->accountId_, it->first);
                 update = true;
-                it = pimpl_->conversationsRequests_.erase(it);
-            } else {
-                ++it;
+                it->second.declined = std::time(nullptr);
             }
         }
-        if (update)
+        if (update) {
             pimpl_->saveConvRequests();
+            pimpl_->needsSyncingCb_({});
+        }
     }
     if (banned)
         return; // Keep the conversation in banned model

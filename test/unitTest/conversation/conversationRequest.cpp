@@ -64,6 +64,7 @@ public:
     void testAddContactDeleteAndReAdd();
     void testInviteFromMessageAfterRemoved();
     void testRemoveContact();
+    void testRemoveContactMultiDevice();
     void testRemoveSelfDoesntRemoveConversation();
     void testRemoveConversationUpdateContactDetails();
     void testBanContact();
@@ -93,6 +94,7 @@ private:
     CPPUNIT_TEST(testAddContactDeleteAndReAdd);
     CPPUNIT_TEST(testInviteFromMessageAfterRemoved);
     CPPUNIT_TEST(testRemoveContact);
+    CPPUNIT_TEST(testRemoveContactMultiDevice);
     CPPUNIT_TEST(testRemoveSelfDoesntRemoveConversation);
     CPPUNIT_TEST(testRemoveConversationUpdateContactDetails);
     CPPUNIT_TEST(testBanContact);
@@ -713,6 +715,76 @@ ConversationRequestTest::testRemoveContact()
     repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
+}
+
+void
+ConversationRequestTest::testRemoveContactMultiDevice()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
+    // Add second device for Bob
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+
+    bob2Id = Manager::instance().addAccount(details);
+
+    wait_for_announcement_of(bob2Id);
+    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+
+    bool requestB1Removed = false, requestB2Removed = false, requestB1Received = false, requestB2Received = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+            [&](const std::string& account_id,
+                const std::string& /*from*/,
+                const std::string& /*conversationId*/,
+                const std::vector<uint8_t>& /*payload*/,
+                time_t /*received*/) {
+                if (account_id == bobId)
+                    requestB1Received = true;
+                else if (account_id == bob2Id)
+                    requestB2Received = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestDeclined>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == bobId) {
+                    requestB1Removed = true;
+                } else if (accountId == bob2Id) {
+                    requestB2Removed = true;
+                }
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // First, Alice adds Bob
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return requestB1Received && requestB2Received;
+    }));
+
+    // Bob1 decline via removeContact, both device should remove the request
+    bobAccount->removeContact(aliceUri, false);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return requestB1Removed && requestB2Removed; }));
 }
 
 void
