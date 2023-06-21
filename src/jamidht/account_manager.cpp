@@ -112,10 +112,15 @@ AccountManager::loadIdentity(const std::string& accountId,
                              const std::string& key_path,
                              const std::string& key_pwd) const
 {
-    JAMI_DBG("Loading certificate from '%s' and key from '%s' at %s",
-             crt_path.c_str(),
-             key_path.c_str(),
-             path_.c_str());
+    // Return to avoid unnecessary log if certificate or key is missing. Example case: when 
+    // importing an account when the certificate has not been unpacked from the archive.
+    if (crt_path.empty() or key_path.empty())
+        return {};
+
+    JAMI_DEBUG("Loading certificate from '{}' and key from '{}' at {}",
+             crt_path,
+             key_path,
+             path_);
     try {
         dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path, path_));
         dht::crypto::PrivateKey dht_key(fileutils::loadFile(key_path, path_), key_pwd);
