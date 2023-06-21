@@ -188,7 +188,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             return len;
         }
 
-        if (auto manager = dynamic_cast<ArchiveAccountManager*>(acc->accountManager()))
+        if (auto manager = acc->accountManager())
             manager->onSyncData(std::move(msg.ds), false);
 
         if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())

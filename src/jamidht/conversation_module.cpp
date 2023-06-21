@@ -1901,7 +1901,15 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 }
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
-            pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
+            auto clone = false;
+            {
+
+                std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+                auto conversation = pimpl_->conversations_.find(convId);
+                clone = conversation == pimpl_->conversations_.end() || !conversation->second;
+            }
+            if (clone)
+                pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
         } else {
             {
                 std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
