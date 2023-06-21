@@ -273,15 +273,15 @@ public:
     bool addConversationRequest(const std::string& id, const ConversationRequest& req)
     {
         std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
-        // Check that we're not adding a second one to one trust request
-        // NOTE: If a new one to one request is received, we can decline the previous one.
-        if (req.isOneToOne())
-            declineOtherConversationWith(req.from);
         auto it = conversationsRequests_.find(id);
         if (it != conversationsRequests_.end()) {
             // Check if updated
             if (req == it->second)
                 return false;
+        } else if (req.isOneToOne()) {
+            // Check that we're not adding a second one to one trust request
+            // NOTE: If a new one to one request is received, we can decline the previous one.
+            declineOtherConversationWith(req.from);
         }
         JAMI_DEBUG("Adding conversation request from {} ({})", req.from, id);
         conversationsRequests_[id] = req;
