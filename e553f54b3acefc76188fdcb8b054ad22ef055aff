@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc139637_1225f0a9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-21T18:24:40Z",
+      "side": 1,
+      "message": "To merge after DHTNet/prevent JamiAccountUsage",
+      "revId": "e553f54b3acefc76188fdcb8b054ad22ef055aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
