@@ -217,6 +217,10 @@ IncomingFile::process()
                 correct = true;
             } else {
                 JAMI_WARN() << "Invalid sha3sum detected, unfinished file: " << shared->info_.path;
+                if (shared->info_.totalSize != 0 && shared->info_.totalSize < shared->info_.bytesProgress) {
+                    JAMI_WARN() << "Remove file, larger file than announced for " << shared->info_.path;
+                    fileutils::remove(shared->info_.path, true);
+                }
             }
         }
         if (shared->isUserCancelled_)

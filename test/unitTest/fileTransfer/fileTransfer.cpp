@@ -67,6 +67,10 @@ public:
     std::string recvPath {std::filesystem::current_path() / "RECV"};
     std::string recv2Path {std::filesystem::current_path() / "RECV2"};
 
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
 private:
     void testConversationFileTransfer();
     void testFileTransferInConversation();
@@ -78,6 +82,7 @@ private:
     void testCancelOutTransfer();
     void testTransferInfo();
     void testRemoveHardLink();
+    void testTooLarge();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
     CPPUNIT_TEST(testConversationFileTransfer);
@@ -89,6 +94,7 @@ private:
     CPPUNIT_TEST(testCancelInTransfer);
     CPPUNIT_TEST(testTransferInfo);
     CPPUNIT_TEST(testRemoveHardLink);
+    CPPUNIT_TEST(testTooLarge);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -144,9 +150,6 @@ FileTransferTest::testConversationFileTransfer()
     wait_for_announcement_of(carlaId);
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     auto requestReceived = 0;
     auto conversationReady = 0;
     auto memberJoined = 0;
@@ -248,9 +251,6 @@ FileTransferTest::testFileTransferInConversation()
     auto aliceUri = aliceAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
@@ -339,9 +339,6 @@ FileTransferTest::testVcfFileTransferInConversation()
     auto aliceUri = aliceAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
@@ -430,9 +427,6 @@ FileTransferTest::testBadSha3sumOut()
     auto aliceUri = aliceAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
@@ -537,9 +531,6 @@ FileTransferTest::testBadSha3sumIn()
     auto aliceUri = aliceAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
@@ -649,9 +640,6 @@ FileTransferTest::testAskToMultipleParticipants()
     auto carlaUri = carlaAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
@@ -765,9 +753,6 @@ FileTransferTest::testCancelInTransfer()
     auto aliceUri = aliceAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
@@ -861,9 +846,6 @@ FileTransferTest::testTransferInfo()
     auto aliceUri = aliceAccount->getUsername();
     auto convId = libjami::startConversation(aliceId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool requestReceived = false;
     bool conversationReady = false;
@@ -971,10 +953,7 @@ FileTransferTest::testRemoveHardLink()
     wait_for_announcement_of(carlaId);
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    auto messageReceived = false;
+    bool messageReceived = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& /*accountId*/,
             const std::string& /* conversationId */,
@@ -1016,6 +995,90 @@ FileTransferTest::testRemoveHardLink()
 
     auto content = fileutils::loadTextFile(sendPath);
     CPPUNIT_ASSERT(content.find("AAA") != std::string::npos);
+
+    libjami::unregisterSignalHandlers();
+}
+
+void
+FileTransferTest::testTooLarge()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool memberJoined = false;
+    std::string tidBob, iidBob;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> message) {
+            if (message["type"] == "application/data-transfer+json") {
+                if (accountId == bobId) {
+                    tidBob = message["fileId"];
+                    iidBob = message["id"];
+                }
+            } else if (accountId == aliceId && message["type"] == "member"
+                       && message["action"] == "join") {
+                memberJoined = true;
+            }
+            cv.notify_one();
+        }));
+    auto requestReceived = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    auto conversationReady = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
+            conversationReady = true;
+            cv.notify_one();
+        }));
+    bool cancelled = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::string&,
+            const std::string& fileId,
+            int code) {
+            if (conversationId == convId && code == static_cast<int>(libjami::DataTransferEventCode::closed_by_host))
+                cancelled = true;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    cv.wait_for(lk, 60s, [&]() { return requestReceived; });
+
+    conversationReady = false;
+    libjami::acceptConversationRequest(bobId, convId);
+    cv.wait_for(lk, 30s, [&]() { return conversationReady && memberJoined; });
+
+    // Send file
+    std::ofstream sendFile(sendPath);
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << std::string(64000, 'A');
+    sendFile.close();
+
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return !tidBob.empty(); }));
+
+    // Add some data for the reception. This will break the final shasum
+    std::ofstream recvFile(recvPath);
+    CPPUNIT_ASSERT(recvFile.is_open());
+    recvFile << std::string(1000, 'B');
+    recvFile.close();
+    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return cancelled; }));
+    CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
 
     libjami::unregisterSignalHandlers();
 }
