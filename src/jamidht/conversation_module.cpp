@@ -1901,7 +1901,15 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 }
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
-            pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
+            auto clone = false;
+            {
+
+                std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+                auto conversation = pimpl_->conversations_.find(convId);
+                clone = conversation == pimpl_->conversations_.end() || !conversation->second;
+            }
+            if (clone)
+                pimpl_->cloneConversation(deviceId, peerId, convId, convInfo.lastDisplayed);
         } else {
             {
                 std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
@@ -1928,6 +1936,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     }
 
     for (const auto& [convId, req] : msg.cr) {
+        JAMI_ERROR("@@@ {}", convId);
         if (pimpl_->isAcceptedConversation(convId)) {
             // Already accepted request
             pimpl_->rmConversationRequest(convId);
@@ -1935,10 +1944,14 @@ ConversationModule::onSyncData(const SyncMsg& msg,
         }
 
         // New request
-        if (!pimpl_->addConversationRequest(convId, req))
+        if (!pimpl_->addConversationRequest(convId, req)) {
+            JAMI_ERROR("@@@ NEXT! {}", convId);
+
             continue;
+        }
 
         if (req.declined != 0) {
+        JAMI_ERROR("@@@ DECLINED! {}", convId);
             // Request declined
             JAMI_LOG("[Account {:s}] Declined request detected for conversation {:s} (device {:s})",
                      pimpl_->accountId_,
@@ -2289,22 +2302,23 @@ void
 ConversationModule::removeContact(const std::string& uri, bool banned)
 {
     // Remove linked conversation's requests
+    auto update = false;
     {
         std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
-        auto update = false;
-        auto it = pimpl_->conversationsRequests_.begin();
-        while (it != pimpl_->conversationsRequests_.end()) {
-            if (it->second.from == uri) {
+        for (auto it = pimpl_->conversationsRequests_.begin(); it != pimpl_->conversationsRequests_.end(); ++it) {
+            JAMI_ERROR("@@@ {} vs {}", it->second.from, uri);
+            if (it->second.from == uri && !it->second.declined) {
                 emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(
                     pimpl_->accountId_, it->first);
                 update = true;
-                it = pimpl_->conversationsRequests_.erase(it);
-            } else {
-                ++it;
+                it->second.declined = std::time(nullptr);
             }
         }
-        if (update)
+        if (update) {
+            JAMI_ERROR("@@@ NEEDS SYNCING");
+            pimpl_->needsSyncingCb_({});
             pimpl_->saveConvRequests();
+        }
     }
     if (banned)
         return; // Keep the conversation in banned model

@@ -94,11 +94,13 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
         }
         buffer.clear();
         // Sync requests
+        JAMI_ERROR("@@@ SYNC REQUESTS");
         auto cr = ConversationModule::convRequests(acc->getAccountID());
         if (!cr.empty()) {
             SyncMsg msg;
             msg.cr = std::move(cr);
             msgpack::pack(buffer, msg);
+            JAMI_ERROR("@@@ SYNC REQUESTS {}", buffer.size());
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
                 JAMI_ERROR("{:s}", ec.message());
@@ -188,7 +190,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             return len;
         }
 
-        if (auto manager = dynamic_cast<ArchiveAccountManager*>(acc->accountManager()))
+        if (auto manager = acc->accountManager())
             manager->onSyncData(std::move(msg.ds), false);
 
         if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())

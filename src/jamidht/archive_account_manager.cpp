@@ -568,56 +568,6 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnounce
         });
 }
 
-void
-ArchiveAccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
-{
-    auto sync_date = clock::time_point(clock::duration(sync.date));
-    if (checkDevice) {
-        // If the DHT is used, we need to check the device here
-        if (not info_->contacts->syncDevice(sync.owner->getLongId(), sync_date)) {
-            return;
-        }
-    }
-
-    // Sync known devices
-    JAMI_DEBUG("[Contacts] received device sync data ({:d} devices, {:d} contacts)",
-             sync.devices_known.size() + sync.devices.size(),
-             sync.peers.size());
-    for (const auto& d : sync.devices_known) {
-        findCertificate(d.first, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (not crt)
-                return;
-            // std::lock_guard<std::mutex> lock(deviceListMutex_);
-            foundAccountDevice(crt, d.second);
-        });
-    }
-    for (const auto& d : sync.devices) {
-        findCertificate(d.second.sha1,
-                        [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                            if (not crt || crt->getLongId() != d.first)
-                                return;
-                            // std::lock_guard<std::mutex> lock(deviceListMutex_);
-                            foundAccountDevice(crt, d.second.name);
-                        });
-    }
-    // saveKnownDevices();
-
-    // Sync contacts
-    for (const auto& peer : sync.peers)
-        info_->contacts->updateContact(peer.first, peer.second);
-    info_->contacts->saveContacts();
-
-    // Sync trust requests
-    for (const auto& tr : sync.trust_requests)
-        info_->contacts->onTrustRequest(tr.first,
-                                        tr.second.device,
-                                        tr.second.received,
-                                        false,
-                                        tr.second.conversationId,
-                                        {});
-    info_->contacts->saveTrustRequests();
-}
-
 AccountArchive
 ArchiveAccountManager::readArchive(const std::string& pwd) const
 {
