@@ -55,7 +55,6 @@ public:
     bool changePassword(const std::string& password_old, const std::string& password_new) override;
 
     void syncDevices() override;
-    void onSyncData(DeviceSync&& device, bool checkDevice = true);
 
     void addDevice(const std::string& password, AddDeviceCallback) override;
     bool revokeDevice(

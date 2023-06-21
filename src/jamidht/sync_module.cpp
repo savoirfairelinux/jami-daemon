@@ -65,11 +65,13 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
         // Send contacts infos
         // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
         // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all informations).
+        JAMI_ERROR("@@@ SYNC INFOS");
         if (auto info = acc->accountManager()->getInfo()) {
             if (info->contacts) {
                 SyncMsg msg;
                 msg.ds = info->contacts->getSyncData();
                 msgpack::pack(buffer, msg);
+                JAMI_ERROR("@@@ SYNC CONTACTS {}", buffer.size());
                 socket->write(reinterpret_cast<const unsigned char*>(buffer.data()),
                               buffer.size(),
                               ec);
@@ -188,7 +190,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             return len;
         }
 
-        if (auto manager = dynamic_cast<ArchiveAccountManager*>(acc->accountManager()))
+        if (auto manager = acc->accountManager())
             manager->onSyncData(std::move(msg.ds), false);
 
         if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())

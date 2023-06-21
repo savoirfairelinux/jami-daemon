@@ -123,6 +123,7 @@ public:
     virtual bool changePassword(const std::string& password_old, const std::string& password_new) = 0;
 
     virtual void syncDevices() = 0;
+    virtual void onSyncData(DeviceSync&& device, bool checkDevice = true);
 
     virtual bool isPasswordValid(const std::string& /*password*/) { return false; };
 
