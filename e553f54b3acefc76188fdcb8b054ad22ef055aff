@@ -16,6 +16,52 @@
       "message": "To merge after DHTNet/prevent JamiAccountUsage",
       "revId": "e553f54b3acefc76188fdcb8b054ad22ef055aff",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "646f16f3_74cad5b4",
+        "filename": "src/connectivity/connectionmanager.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-21T18:34:59Z",
+      "side": 1,
+      "message": "Improve the documentation (e.g. with an example of MapStringString and explain status",
+      "range": {
+        "startLine": 166,
+        "startChar": 7,
+        "endLine": 168,
+        "endChar": 6
+      },
+      "revId": "e553f54b3acefc76188fdcb8b054ad22ef055aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "727498bf_f15515af",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1315,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-21T18:34:59Z",
+      "side": 1,
+      "message": "doesn\u0027t build",
+      "range": {
+        "startLine": 1314,
+        "startChar": 62,
+        "endLine": 1315,
+        "endChar": 62
+      },
+      "revId": "e553f54b3acefc76188fdcb8b054ad22ef055aff",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
