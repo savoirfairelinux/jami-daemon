@@ -1236,8 +1236,9 @@ ConversationModule::loadConversations()
     // Note: This is only to homogeneize trust and convRequests
     std::vector<std::string> invalidPendingRequests;
     {
+        auto requests = acc->getTrustRequests();
         std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
-        for (const auto& request : acc->getTrustRequests()) {
+        for (const auto& request : requests) {
             auto itConvId = request.find(libjami::Account::TrustRequest::CONVERSATIONID);
             auto itConvFrom = request.find(libjami::Account::TrustRequest::FROM);
             if (itConvId != request.end() && itConvFrom != request.end()) {
