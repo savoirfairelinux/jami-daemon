@@ -54,6 +54,7 @@ using SengMsgCb = std::function<
     uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
 using UpdateConvReq = std::function<void(const std::string&, const std::string&, bool)>;
+using OneToOneReceived = std::function<void(const std::string&, const std::string&)>;
 
 class ConversationModule
 {
@@ -63,7 +64,8 @@ public:
                        SengMsgCb&& sendMsgCb,
                        NeedSocketCb&& onNeedSocket,
                        NeedSocketCb&& onNeedSwarmSocket,
-                       UpdateConvReq&& updateConvReqCb);
+                       UpdateConvReq&& updateConvReqCb,
+                       OneToOneReceived&& oneToOneRecvCb);
     ~ConversationModule() = default;
 
     /**

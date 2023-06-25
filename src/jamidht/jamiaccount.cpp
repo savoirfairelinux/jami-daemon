@@ -1128,9 +1128,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     // Here account can be initializing
                     if (auto cm = shared->convModule()) {
                         auto activeConv = cm->getOneToOneConversation(uri);
-                        if (activeConv != conversationId) {
+                        if (activeConv != conversationId)
                             cm->onTrustRequest(uri, conversationId, payload, received);
-                        }
                     }
                 }
             });
@@ -1150,6 +1149,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             // Note: Do not retrigger on another thread. This has to be done
             // at the same time of acceptTrustRequest a synced state between TrustRequest
             // and convRequests.
+
             convModule()->acceptConversationRequest(conversationId);
         },
         [this](const std::string& uri, const std::string& convFromReq) {
@@ -2253,6 +2253,19 @@ JamiAccount::convModule()
                 } else {
                     updateConvForContact(contactUri, convId, "");
                 }
+            },
+            [this](auto&& convId, auto&& from) {
+                accountManager_->findCertificate(dht::InfoHash(from), [this, from, convId](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                    auto info = accountManager_->getInfo();
+                    if (!cert || !info)
+                        return;
+                    info->contacts->onTrustRequest(dht::InfoHash(from),
+                                                        cert->getSharedPublicKey(),
+                                                        time(nullptr),
+                                                        false,
+                                                        convId,
+                                                        {});
+                });
             });
     }
     return convModule_.get();
