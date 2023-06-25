@@ -59,7 +59,8 @@ public:
          SengMsgCb&& sendMsgCb,
          NeedSocketCb&& onNeedSocket,
          NeedSocketCb&& onNeedSwarmSocket,
-         UpdateConvReq&& updateConvReqCb);
+         UpdateConvReq&& updateConvReqCb,
+         OneToOneRecvCb&& oneToOneRecvCb);
 
     // Retrieving recent commits
     /**
@@ -185,6 +186,7 @@ public:
     NeedSocketCb onNeedSocket_;
     NeedSocketCb onNeedSwarmSocket_;
     UpdateConvReq updateConvReqCb_;
+    OneToOneRecvCb oneToOneRecvCb_;
 
     std::string accountId_ {};
     std::string deviceId_ {};
@@ -320,13 +322,15 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
                                SengMsgCb&& sendMsgCb,
                                NeedSocketCb&& onNeedSocket,
                                NeedSocketCb&& onNeedSwarmSocket,
-                               UpdateConvReq&& updateConvReqCb)
+                               UpdateConvReq&& updateConvReqCb,
+                               OneToOneRecvCb&& oneToOneRecvCb)
     : account_(account)
     , needsSyncingCb_(needsSyncingCb)
     , sendMsgCb_(sendMsgCb)
     , onNeedSocket_(onNeedSocket)
     , onNeedSwarmSocket_(onNeedSwarmSocket)
     , updateConvReqCb_(updateConvReqCb)
+    , oneToOneRecvCb_(oneToOneRecvCb)
 {
     if (auto shared = account.lock()) {
         accountId_ = shared->getAccountID();
@@ -1093,13 +1097,15 @@ ConversationModule::ConversationModule(std::weak_ptr<JamiAccount>&& account,
                                        SengMsgCb&& sendMsgCb,
                                        NeedSocketCb&& onNeedSocket,
                                        NeedSocketCb&& onNeedSwarmSocket,
-                                       UpdateConvReq&& updateConvReqCb)
+                                       UpdateConvReq&& updateConvReqCb,
+                                       OneToOneRecvCb&& oneToOneRecvCb)
     : pimpl_ {std::make_unique<Impl>(std::move(account),
                                      std::move(needsSyncingCb),
                                      std::move(sendMsgCb),
                                      std::move(onNeedSocket),
                                      std::move(onNeedSwarmSocket),
-                                     std::move(updateConvReqCb))}
+                                     std::move(updateConvReqCb),
+                                     std::move(oneToOneRecvCb))}
 {
     loadConversations();
 }
@@ -1452,10 +1458,12 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     }
     req.received = std::time(nullptr);
     auto reqMap = req.toMap();
+    auto isOneToOne = req.isOneToOne();
     if (pimpl_->addConversationRequest(convId, std::move(req))) {
         // Note: no need to sync here because other connected devices should receive
         // the same conversation request. Will sync when the conversation will be added
-
+        if (isOneToOne)
+            pimpl_->oneToOneRecvCb_(convId, from);
         emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
                                                                             convId,
                                                                             reqMap);

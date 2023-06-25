@@ -76,7 +76,6 @@ public:
     void testCacheRequestFromClient();
     void testNeedsSyncingWithForCloning();
     void testRemoveContactRemoveTrustRequest();
-
     std::string aliceId;
     std::string bobId;
     std::string bob2Id;
@@ -628,8 +627,10 @@ ConversationRequestTest::testInviteFromMessageAfterRemoved()
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     conversationReady = false;
+    CPPUNIT_ASSERT(bobAccount->getContacts().size() == 0);
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+    CPPUNIT_ASSERT(bobAccount->getContacts().size() == 1);
 }
 
 void

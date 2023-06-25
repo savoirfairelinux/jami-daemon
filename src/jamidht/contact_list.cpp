@@ -385,7 +385,6 @@ ContactList::acceptTrustRequest(const dht::InfoHash& from)
     auto i = trustRequests_.find(from);
     if (i == trustRequests_.end())
         return false;
-
     addContact(from, true, i->second.conversationId);
     // Clear trust request
     trustRequests_.erase(i);
