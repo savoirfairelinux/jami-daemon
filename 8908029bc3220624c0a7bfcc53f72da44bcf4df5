@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f2b6ac7e_e732ad1e",
+        "filename": "src/jamidht/conversation_module.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-26T19:04:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e73d8920_6f348e0a",
+      "range": {
+        "startLine": 68,
+        "startChar": 30,
+        "endLine": 68,
+        "endChar": 31
+      },
+      "revId": "8908029bc3220624c0a7bfcc53f72da44bcf4df5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "17e8c775_e25aef22",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-06-26T15:07:48Z",
       "side": 1,
       "message": "format ??",
+      "range": {
+        "startLine": 2262,
+        "startChar": 20,
+        "endLine": 2267,
+        "endChar": 60
+      },
+      "revId": "8908029bc3220624c0a7bfcc53f72da44bcf4df5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9945befc_1147d480",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2267,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-26T19:04:08Z",
+      "side": 1,
+      "message": "yeah weird, but hooks is there and seems ok",
+      "parentUuid": "17e8c775_e25aef22",
       "range": {
         "startLine": 2262,
         "startChar": 20,
