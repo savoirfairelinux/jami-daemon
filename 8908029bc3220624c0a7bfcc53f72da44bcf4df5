@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e73d8920_6f348e0a",
+        "filename": "src/jamidht/conversation_module.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-06-26T15:07:48Z",
+      "side": 1,
+      "message": "perhaps best to continue using the Cb suffix + \"Recv\" abbrev",
+      "range": {
+        "startLine": 68,
+        "startChar": 30,
+        "endLine": 68,
+        "endChar": 31
+      },
+      "revId": "8908029bc3220624c0a7bfcc53f72da44bcf4df5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17e8c775_e25aef22",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2267,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-06-26T15:07:48Z",
+      "side": 1,
+      "message": "format ??",
+      "range": {
+        "startLine": 2262,
+        "startChar": 20,
+        "endLine": 2267,
+        "endChar": 60
+      },
+      "revId": "8908029bc3220624c0a7bfcc53f72da44bcf4df5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
