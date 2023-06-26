@@ -194,22 +194,31 @@ public:
         if (!repo or !acc)
             return {};
         std::map<std::string, std::vector<DeviceId>> memberDevices;
-        std::string deviceDir = fmt::format("{}devices/",
-                                            git_repository_workdir(repo.get()));
+        std::string deviceDir = fmt::format("{}devices/", git_repository_workdir(repo.get()));
         for (const auto& file : fileutils::readDirectory(deviceDir)) {
             std::shared_ptr<dht::crypto::Certificate> cert;
             try {
                 cert = std::make_shared<dht::crypto::Certificate>(
                     fileutils::loadFile(deviceDir + file));
+                if (!cert)
+                    continue;
+                if (ignoreExpired && cert->getExpiration() < std::chrono::system_clock::now())
+                    continue;
+                auto issuerUid = cert->getIssuerUID();
+                if (!acc->certStore().getCertificate(issuerUid)) {
+                    // Check that parentCert
+                    auto memberFile = fmt::format("{}members/{}.crt", git_repository_workdir(repo.get()), issuerUid);
+                    auto adminFile = fmt::format("{}admins/{}.crt", git_repository_workdir(repo.get()), issuerUid);
+                    auto parentCert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(fileutils::isFile(memberFile) ? memberFile : adminFile));
+                    if (parentCert && (ignoreExpired || parentCert->getExpiration() < std::chrono::system_clock::now()))
+                        acc->certStore().pinCertificate(parentCert, true); // Pin certificate to local store if not already done
+                }
+                if (!acc->certStore().getCertificate(cert->getPublicKey().getLongId().toString())) {
+                    acc->certStore().pinCertificate(cert, true); // Pin certificate to local store if not already done
+                }
+                memberDevices[cert->getIssuerUID()].emplace_back(cert->getPublicKey().getLongId());
+
             } catch (const std::exception&) {}
-            if (!cert)
-                continue;
-            if (ignoreExpired && cert->getExpiration() < std::chrono::system_clock::now())
-                continue;
-            if (!acc->certStore().getCertificate(cert->getPublicKey().getLongId().toString())) {
-                acc->certStore().pinCertificate(cert, true); // Pin certificate to local store if not already done
-            }
-            memberDevices[cert->getIssuerUID()].emplace_back(cert->getPublicKey().getLongId());
         }
         return memberDevices;
     }
