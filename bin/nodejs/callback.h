@@ -31,8 +31,10 @@ Persistent<Function> incomingMessageCb;
 Persistent<Function> incomingCallCb;
 Persistent<Function> incomingCallWithMediaCb;
 Persistent<Function> conversationLoadedCb;
+Persistent<Function> swarmLoadedCb;
 Persistent<Function> messagesFoundCb;
 Persistent<Function> messageReceivedCb;
+Persistent<Function> swarmMessageReceivedCb;
 Persistent<Function> conversationProfileUpdatedCb;
 Persistent<Function> conversationRequestReceivedCb;
 Persistent<Function> conversationRequestDeclinedCb;
@@ -99,10 +101,14 @@ getPresistentCb(std::string_view signal)
         return &incomingCallWithMediaCb;
     else if (signal == "ConversationLoaded")
         return &conversationLoadedCb;
+    else if (signal == "SwarmLoaded")
+        return &swarmLoadedCb;
     else if (signal == "MessagesFound")
         return &messagesFoundCb;
     else if (signal == "MessageReceived")
         return &messageReceivedCb;
+    else if (signal == "SwarmMessageReceived")
+        return &swarmMessageReceivedCb;
     else if (signal == "ConversationProfileUpdated")
         return &conversationProfileUpdatedCb;
     else if (signal == "ConversationReady")
