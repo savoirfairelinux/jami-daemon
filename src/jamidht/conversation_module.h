@@ -226,9 +226,17 @@ public:
     uint32_t loadConversationMessages(const std::string& conversationId,
                                       const std::string& fromMessage = "",
                                       size_t n = 0);
+    uint32_t loadConversation(const std::string& conversationId,
+                                const std::string& fromMessage = "",
+                                size_t n = 0);
     uint32_t loadConversationUntil(const std::string& conversationId,
                                    const std::string& fromMessage,
                                    const std::string& to);
+    /**
+     * Clear loaded interactions
+     * @param conversationId
+     */
+    void clearCache(const std::string& conversationId);
 
     // File transfer
     /**
