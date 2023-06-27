@@ -129,6 +129,7 @@ getSignalHandlers()
 
         /* Conversation */
         exported_callback<libjami::ConversationSignal::ConversationLoaded>(),
+        exported_callback<libjami::ConversationSignal::SwarmLoaded>(),
         exported_callback<libjami::ConversationSignal::MessagesFound>(),
         exported_callback<libjami::ConversationSignal::MessageReceived>(),
         exported_callback<libjami::ConversationSignal::ConversationProfileUpdated>(),
