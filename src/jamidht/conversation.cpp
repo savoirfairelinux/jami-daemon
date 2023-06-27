@@ -29,12 +29,14 @@
 #include <string_view>
 #include <opendht/thread_pool.h>
 #include <tuple>
+#include <optional>
 #include "swarm/swarm_manager.h"
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
 #include "plugin/jamipluginmanager.h"
 #include "plugin/streamdata.h"
 #endif
+#include "jami/conversation_interface.h"
 
 namespace jami {
 
@@ -118,6 +120,16 @@ ConversationRequest::toMap() const
     result[ConversationMapKeys::RECEIVED] = std::to_string(received);
     return result;
 }
+
+using MessageList = std::list<std::shared_ptr<libjami::SwarmMessage>>;
+
+struct History
+{
+    MessageList messageList {};
+    std::map<std::string, std::shared_ptr<libjami::SwarmMessage>> quickAccess {};
+    std::map<std::string, std::list<std::shared_ptr<libjami::SwarmMessage>>> pendingEditions {};
+    std::map<std::string, std::list<std::map<std::string, std::string>>> pendingReactions {};
+};
 
 class Conversation::Impl
 {
@@ -255,6 +267,7 @@ public:
                 convcommits.emplace_back(*commit);
             }
         }
+        addToHistory(convcommits, true);
         announce(repository_->convCommitToMap(convcommits));
     }
 
@@ -604,6 +617,7 @@ public:
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options);
+    std::vector<libjami::SwarmMessage> loadMessages2(const LogOptions& options, History* optHistory = nullptr);
     void pull();
     std::vector<std::map<std::string, std::string>> mergeHistory(const std::string& uri);
 
@@ -642,6 +656,11 @@ public:
     std::unique_ptr<asio::steady_timer> fallbackTimer_;
 
     bool isMobile {false};
+
+    mutable History loadedHistory_ {};
+    std::vector<libjami::SwarmMessage> addToHistory(const std::vector<ConversationCommit>& commits,
+                        bool messageReceived = false,
+                        History* history = nullptr) const;
 };
 
 bool
@@ -749,9 +768,239 @@ Conversation::Impl::loadMessages(const LogOptions& options)
 {
     if (!repository_)
         return {};
-    std::vector<ConversationCommit> convCommits;
-    convCommits = repository_->log(options);
-    return repository_->convCommitToMap(convCommits);
+    std::vector<ConversationCommit> commits;
+    auto startLogging = options.from == "";
+    auto breakLogging = false;
+    repository_->log([&](const auto& id, const auto& author, const auto& commit) {
+            if (!commits.empty()) {
+                // Set linearized parent
+                commits.rbegin()->linearized_parent = id;
+            }
+            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
+                return CallbackResult::Skip;
+            }
+            if ((options.nbOfCommits != 0
+                && commits.size() == options.nbOfCommits))
+                return CallbackResult::Break; // Stop logging
+            if (breakLogging)
+                return CallbackResult::Break; // Stop logging
+            if (id == options.to) {
+                if (options.includeTo)
+                    breakLogging = true; // For the next commit
+                else
+                    return CallbackResult::Break; // Stop logging
+            }
+
+            if (!startLogging && options.from != "" && options.from == id)
+                startLogging = true;
+            if (!startLogging)
+                return CallbackResult::Skip; // Start logging after this one
+
+            if (options.fastLog) {
+                if (options.authorUri != "") {
+                    if (options.authorUri == repository_->uriFromDevice(author.email)) {
+                        return CallbackResult::Break; // Found author, stop
+                    }
+                }
+                // Used to only count commit
+                commits.emplace(commits.end(), ConversationCommit {});
+                return CallbackResult::Skip;
+            }
+
+            return CallbackResult::Ok; // Continue
+        },
+        [&](auto&& cc) {
+            commits.emplace(commits.end(), std::forward<decltype(cc)>(cc));
+        },
+        [](auto, auto, auto) { return false; },
+        options.from,
+        options.logIfNotFound);
+    return repository_->convCommitToMap(commits);
+}
+
+std::vector<libjami::SwarmMessage>
+Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory)
+{
+    if (!repository_)
+        return {};
+    auto startLogging = options.from == "";
+    auto breakLogging = false;
+    auto currentHistorySize = loadedHistory_.messageList.size();
+    std::vector<libjami::SwarmMessage> ret;
+    repository_->log([&](const auto& id, const auto& author, const auto& commit) {
+            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
+                return CallbackResult::Skip;
+            }
+            if ((options.nbOfCommits != 0
+                && (loadedHistory_.messageList.size() - currentHistorySize) == options.nbOfCommits))
+                return CallbackResult::Break; // Stop logging
+            if (breakLogging)
+                return CallbackResult::Break; // Stop logging
+            if (id == options.to) {
+                if (options.includeTo)
+                    breakLogging = true; // For the next commit
+                else
+                    return CallbackResult::Break; // Stop logging
+            }
+
+            if (!startLogging && options.from != "" && options.from == id)
+                startLogging = true;
+            if (!startLogging)
+                return CallbackResult::Skip; // Start logging after this one
+
+            return CallbackResult::Ok; // Continue
+        },
+        [&](auto&& cc) {
+            auto added = addToHistory({cc}, false, optHistory);
+            ret.insert(ret.end(), added.begin(), added.end());
+        },
+        [](auto, auto, auto) { return false; },
+        options.from,
+        options.logIfNotFound);
+    return ret;
+}
+
+std::vector<libjami::SwarmMessage>
+Conversation::Impl::addToHistory(const std::vector<ConversationCommit>& commits, bool messageReceived, History* optHistory) const
+{
+    std::vector<libjami::SwarmMessage> messages;
+    // TODO split
+    auto addCommit = [&](const auto& commit) {
+        auto* history = optHistory ? optHistory : &loadedHistory_;
+        if (history->quickAccess.find(commit.id) != history->quickAccess.end())
+            return; // Already present
+        auto opt = repository_->convCommitToMap(commit);
+        if (opt == std::nullopt)
+            return;
+        auto mss = *opt;
+        auto typeIt = mss.find("type");
+        auto reactToIt = mss.find("react-to");
+        auto editIt = mss.find("edit");
+        // Nothing to show for the client, skip
+        if (typeIt != mss.end() && typeIt->second == "merge")
+            return;
+
+        auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
+        auto baseCommit = sharedCommit;
+        sharedCommit->fromMapStringString(mss);
+        history->quickAccess[commit.id] = sharedCommit;
+
+        if (reactToIt != mss.end() && !reactToIt->second.empty()) {
+            // Reaction.
+            auto it = history->quickAccess.find(reactToIt->second);
+            auto peditIt = history->pendingEditions.find(commit.id);
+            if (peditIt != history->pendingEditions.end()) {
+                auto oldBody = sharedCommit->body;
+                sharedCommit->body = peditIt->second.front()->body;
+                if (sharedCommit->body.at("body").empty())
+                    return;
+                history->pendingEditions.erase(peditIt);
+            }
+            if (it != history->quickAccess.end()) {
+                baseCommit = it->second;
+                it->second->reactions.emplace_back(sharedCommit->body);
+                emitSignal<libjami::ConversationSignal::ReactionAdded>(accountId_, repository_->id(), baseCommit->id, sharedCommit->body);
+            } else {
+                history->pendingReactions[reactToIt->second].emplace_back(sharedCommit->body);
+            }
+            return;
+        } else if (editIt != mss.end() && !editIt->second.empty()) {
+            // Edition
+            auto it = history->quickAccess.find(editIt->second);
+            if (it != history->quickAccess.end()) {
+                baseCommit = it->second;
+                if (baseCommit) {
+                    auto itReact = baseCommit->body.find("react-to");
+                    // Edit reaction
+                    if (itReact != baseCommit->body.end()) {
+                        baseCommit->body["body"] = sharedCommit->body.at("body"); // Replace body if pending
+                        it = history->quickAccess.find(itReact->second);
+                        auto itPending = history->pendingReactions.find(itReact->second);
+                        if (it != history->quickAccess.end()) {
+                            baseCommit = it->second; // Base commit
+                            auto itPreviousReact = std::find_if(baseCommit->reactions.begin(), baseCommit->reactions.end(), [&](const auto& reaction) {
+                                return reaction.at("id") == editIt->second;
+                            });
+                            if (itPreviousReact != baseCommit->reactions.end()) {
+                                (*itPreviousReact)["body"] = sharedCommit->body.at("body");
+                                if (sharedCommit->body.at("body").empty()) {
+                                    baseCommit->reactions.erase(itPreviousReact);
+                                    emitSignal<libjami::ConversationSignal::ReactionRemoved>(accountId_, repository_->id(), baseCommit->id, editIt->second);
+                                }
+                            }
+                        } else if (itPending != history->pendingReactions.end()) {
+                            // Else edit if pending
+                            auto itReaction = std::find_if(itPending->second.begin(), itPending->second.end(), [&](const auto& reaction) {
+                                return reaction.at("id") == editIt->second;
+                            });
+                            if (itReaction != itPending->second.end()) {
+                                (*itReaction)["body"] = sharedCommit->body.at("body");
+                                if (sharedCommit->body.at("body").empty())
+                                    itPending->second.erase(itReaction);
+                            }
+                        } else {
+                            // Add to pending edtions
+                            messageReceived? history->pendingEditions[editIt->second].emplace_front(sharedCommit)
+                                           : history->pendingEditions[editIt->second].emplace_back(sharedCommit);
+                        }
+                    } else {
+                        // Normal message
+                        it->second->editions.emplace(it->second->editions.begin(), it->second->body);
+                        it->second->body = sharedCommit->body;
+                        emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *it->second);
+                        return;
+                    }
+                }
+            } else {
+                messageReceived? history->pendingEditions[editIt->second].emplace_front(sharedCommit)
+                : history->pendingEditions[editIt->second].emplace_back(sharedCommit);
+            }
+            return;
+        } else {
+            if (messageReceived) {
+                // For a received message, we place it at the beginning of the list
+                if (!history->messageList.empty())
+                    sharedCommit->linearizedParent = (*history->messageList.begin())->id;
+                history->messageList.emplace_front(sharedCommit);
+            } else {
+                // For a loaded message, we load from newest to oldest
+                // So we change the parent of the last message.
+                if (!history->messageList.empty())
+                    (*history->messageList.begin())->linearizedParent = sharedCommit->id;
+                history->messageList.emplace_back(sharedCommit);
+            }
+
+            auto reactIt = history->pendingReactions.find(commit.id);
+            if (reactIt != history->pendingReactions.end()) {
+                for (const auto& commitBody: reactIt->second)
+                    sharedCommit->reactions.emplace_back(commitBody);
+                history->pendingReactions.erase(reactIt);
+            }
+            auto peditIt = history->pendingEditions.find(commit.id);
+            if (peditIt != history->pendingEditions.end()) {
+                auto oldBody = sharedCommit->body;
+                sharedCommit->body = peditIt->second.front()->body;
+                peditIt->second.pop_front();
+                for (const auto& commit: peditIt->second) {
+                    sharedCommit->editions.emplace_back(commit->body);
+                }
+                sharedCommit->editions.emplace_back(oldBody);
+                history->pendingEditions.erase(peditIt);
+            }
+        }
+
+        if (messageReceived) {
+            emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *baseCommit);
+        } else {
+            messages.emplace_back(*baseCommit);
+        }
+    };
+    if (messageReceived)
+        std::for_each(commits.rbegin(), commits.rend(), addCommit);
+    else
+        std::for_each(commits.begin(), commits.end(), addCommit);
+
+    return messages;
 }
 
 Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
@@ -1192,6 +1441,27 @@ Conversation::loadMessages(const OnLoadMessages& cb, const LogOptions& options)
             cb(sthis->pimpl_->loadMessages(options));
         }
     });
+}
+
+void
+Conversation::loadMessages2(const OnLoadMessages2& cb, const LogOptions& options)
+{
+    if (!cb)
+        return;
+    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), options] {
+        if (auto sthis = w.lock()) {
+            cb(sthis->pimpl_->loadMessages2(options));
+        }
+    });
+}
+
+void
+Conversation::clearCache()
+{
+    pimpl_->loadedHistory_.messageList.clear();
+    pimpl_->loadedHistory_.quickAccess.clear();
+    pimpl_->loadedHistory_.pendingEditions.clear();
+    pimpl_->loadedHistory_.pendingReactions.clear();
 }
 
 std::string
@@ -1971,7 +2241,75 @@ Conversation::search(uint32_t req,
             auto acc = sthis->pimpl_->account_.lock();
             if (!acc)
                 return;
-            auto commits = sthis->pimpl_->repository_->search(filter);
+
+            // TODO move search content here
+            History history;
+            std::vector<std::map<std::string, std::string>> commits {};
+            // std::regex_constants::ECMAScript is the default flag.
+            auto re = std::regex(filter.regexSearch,
+                                filter.caseSensitive ? std::regex_constants::ECMAScript
+                                                    : std::regex_constants::icase);
+            sthis->pimpl_->repository_->log([&](const auto& id, const auto& author, auto& commit) {
+                    if (!filter.author.empty() && filter.author != sthis->uriFromDevice(author.email)) {
+                        // Filter author
+                        return CallbackResult::Skip;
+                    }
+                    auto commitTime = git_commit_time(commit.get());
+                    if (filter.before && filter.before < commitTime) {
+                        // Only get commits before this date
+                        return CallbackResult::Skip;
+                    }
+                    if (filter.after && filter.after > commitTime) {
+                        // Only get commits before this date
+                        if (git_commit_parentcount(commit.get()) <= 1)
+                            return CallbackResult::Break;
+                        else
+                            return CallbackResult::Skip; // Because we are sorting it with
+                                                        // GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME
+                    }
+
+                    return CallbackResult::Ok; // Continue
+                },
+                [&](auto&& cc) {
+                    sthis->pimpl_->addToHistory({cc}, false, &history);
+                },
+                [&](auto id, auto, auto) {
+                    if (id == filter.lastId)
+                        return true;
+                    return false;
+                },
+                "",
+                false);
+            // Search on generated history
+            for (auto& message : history.messageList) {
+                auto contentType = message->type;
+                auto isSearchable = contentType == "text/plain"
+                                    || contentType == "application/data-transfer+json";
+                if (filter.type.empty() && !isSearchable) {
+                    // Not searchable, at least for now
+                    continue;
+                } else if (contentType == filter.type || filter.type.empty()) {
+                    if (isSearchable) {
+                        // If it's a text match the body, else the display name
+                        auto body = contentType == "text/plain" ? message->body.at("body")
+                                                                : message->body.at("displayName");
+                        std::smatch body_match;
+                        if (std::regex_search(body, body_match, re)) {
+                            auto commit = message->body;
+                            commit["id"] = message->id;
+                            commit["type"] = message->type;
+                            commits.emplace_back(commit);
+                        }
+                    } else {
+                        // Matching type, just add it to the results
+                        commits.emplace_back(message->body);
+                    }
+
+                    if (filter.maxResult != 0 && commits.size() == filter.maxResult)
+                        break;
+                }
+            }
+
             if (commits.size() > 0)
                 emitSignal<libjami::ConversationSignal::MessagesFound>(req,
                                                                        acc->getAccountID(),

@@ -278,7 +278,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
             }
         }));
     libjami::registerSignalHandlers(confHandlers);
-    libjami::loadConversationMessages(alice2Id, convId, "", 0);
+    libjami::loadConversationMessages(alice2Id, convId, "", 0); // TODO
     cv.wait_for(lk, 30s);
     libjami::unregisterSignalHandlers();
     confHandlers.clear();

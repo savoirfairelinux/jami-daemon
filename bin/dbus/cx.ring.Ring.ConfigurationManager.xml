@@ -1821,6 +1821,18 @@
            <arg type="u" name="id" direction="out"/>
        </method>
 
+       <method name="loadConversation" tp:name-for-bindings="loadConversation">
+           <tp:added version="10.0.0"/>
+           <tp:docstring>
+               Load messages from a conversation
+           </tp:docstring>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+           <arg type="s" name="fromMessage" direction="in"/>
+           <arg type="u" name="n" direction="in"/>
+           <arg type="u" name="id" direction="out"/>
+       </method>
+
        <method name="loadConversationUntil" tp:name-for-bindings="loadConversationUntil">
            <tp:added version="10.0.0"/>
            <tp:docstring>
@@ -1965,6 +1977,33 @@
            </arg>
        </signal>
 
+       <signal name="swarmLoaded" tp:name-for-bindings="swarmLoaded">
+           <tp:added version="10.0.0"/>
+           <tp:docstring>
+               Notify clients when a conversation is loaded
+           </tp:docstring>
+           <arg type="u" name="id">
+               <tp:docstring>
+                   Id of the related loadConversationMessages's request
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="account_id">
+               <tp:docstring>
+                   Account id related
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="conversation_id">
+               <tp:docstring>
+                   Conversation id
+               </tp:docstring>
+           </arg>
+           <arg type="a(sssa{ss}aa{ss}aa{ss})" name="messages">
+               <tp:docstring>
+                    Messages of the conversation
+               </tp:docstring>
+           </arg>
+       </signal>
+
        <signal name="messagesFound" tp:name-for-bindings="messagesFound">
            <tp:added version="10.0.0"/>
            <tp:docstring>
@@ -2015,6 +2054,105 @@
                </tp:docstring>
            </arg>
        </signal>
+
+       <signal name="swarmMessageReceived" tp:name-for-bindings="swarmMessageReceived">
+           <tp:added version="13.8.0"/>
+           <tp:docstring>
+               Notify clients when a conversation receives a new message
+           </tp:docstring>
+           <arg type="s" name="account_id">
+               <tp:docstring>
+                   Account id related
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="conversation_id">
+               <tp:docstring>
+                   Conversation id
+               </tp:docstring>
+           </arg>
+           <arg type="(sssa{ss}aa{ss}aa{ss})" name="message">
+               <tp:docstring>
+                    The new message
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <signal name="swarmMessageUpdated" tp:name-for-bindings="swarmMessageUpdated">
+           <tp:added version="13.8.0"/>
+           <tp:docstring>
+               Notify clients when a conversation receives a new message
+           </tp:docstring>
+           <arg type="s" name="account_id">
+               <tp:docstring>
+                   Account id related
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="conversation_id">
+               <tp:docstring>
+                   Conversation id
+               </tp:docstring>
+           </arg>
+           <arg type="(sssa{ss}aa{ss}aa{ss})" name="message">
+               <tp:docstring>
+                    The new message
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <signal name="reactionAdded" tp:name-for-bindings="reactionAdded">
+           <tp:added version="13.8.0"/>
+           <tp:docstring>
+               Notify clients when a conversation receives a new message
+           </tp:docstring>
+           <arg type="s" name="account_id">
+               <tp:docstring>
+                   Account id related
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="conversation_id">
+               <tp:docstring>
+                   Conversation id
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="message_id">
+               <tp:docstring>
+                   Conversation id
+               </tp:docstring>
+           </arg>
+           <arg type="a{ss}" name="reaction">
+               <tp:docstring>
+                    The new message
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <signal name="reactionRemoved" tp:name-for-bindings="reactionRemoved">
+           <tp:added version="13.8.0"/>
+           <tp:docstring>
+               Notify clients when a conversation receives a new message
+           </tp:docstring>
+           <arg type="s" name="account_id">
+               <tp:docstring>
+                   Account id related
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="conversation_id">
+               <tp:docstring>
+                   Conversation id
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="message_id">
+               <tp:docstring>
+                   Message's id
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="reaction_id">
+               <tp:docstring>
+                   Reaction's id
+               </tp:docstring>
+           </arg>
+       </signal>
+
 
        <signal name="conversationProfileUpdated" tp:name-for-bindings="conversationProfileUpdated">
            <tp:added version="13.4.0"/>
