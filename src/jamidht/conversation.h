@@ -284,6 +284,10 @@ public:
      */
     void loadMessages(const OnLoadMessages& cb, const LogOptions& options);
     /**
+     * Clear all cached messages
+     */
+    void clearCache();
+    /**
      * Retrieve one commit
      * @param   commitId
      * @return  The commit if found

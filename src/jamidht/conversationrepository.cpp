@@ -56,13 +56,6 @@ as_view(const GitObject& blob)
     return as_view(reinterpret_cast<git_blob*>(blob.get()));
 }
 
-enum class CallbackResult { Skip, Break, Ok };
-
-using PreConditionCb
-    = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
-using PostConditionCb
-    = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
-
 class ConversationRepository::Impl
 {
 public:
@@ -3115,6 +3108,16 @@ std::vector<ConversationCommit>
 ConversationRepository::log(const LogOptions& options) const
 {
     return pimpl_->log(options);
+}
+
+void
+ConversationRepository::log(PreConditionCb&& preCondition,
+                            std::function<void(ConversationCommit&&)>&& emplaceCb,
+                            PostConditionCb&& postCondition,
+                            const std::string& from,
+                            bool logIfNotFound) const
+{
+    pimpl_->forEachCommit(std::move(preCondition), std::move(emplaceCb), std::move(postCondition), from, logIfNotFound);
 }
 
 std::vector<std::map<std::string, std::string>>

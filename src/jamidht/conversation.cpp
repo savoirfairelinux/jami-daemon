@@ -119,6 +119,21 @@ ConversationRequest::toMap() const
     return result;
 }
 
+struct DisplayableCommit
+{
+    std::string id;
+    std::string type;
+    std::map<std::string, std::string> body;
+    std::vector<std::map<std::string, std::string>> reactions;
+    std::list<std::map<std::string, std::string>> previousBodies; // Editions
+
+    void fromMapStringString(const std::map<std::string, std::string>& commit) {
+        id = commit.at("id");
+        type = commit.at("type");
+        body = commit; // TODO erase type/id?
+    }
+};
+
 class Conversation::Impl
 {
 public:
@@ -255,6 +270,7 @@ public:
                 convcommits.emplace_back(*commit);
             }
         }
+        addToHistory(convcommits, true);
         announce(repository_->convCommitToMap(convcommits));
     }
 
@@ -643,6 +659,18 @@ public:
     std::unique_ptr<asio::steady_timer> fallbackTimer_;
 
     bool isMobile {false};
+
+    // TODO not const
+    // TODO API to load/unload to avoid big memory issues
+    // TODO update searchHistory to search on a temporary history with correct edited bodies
+    mutable std::list<std::shared_ptr<DisplayableCommit>> loadedHistory_ {};
+    mutable std::map<std::string, std::shared_ptr<DisplayableCommit>> quickAccess_ {};
+    mutable std::map<std::string, std::list<std::shared_ptr<DisplayableCommit>>> pendingEditions_ {};
+    mutable std::map<std::string, std::list<std::shared_ptr<DisplayableCommit>>> pendingReactions_ {};
+    // TODO: add tests
+    // TODO: pass callback to log. If we want 1 message, it should automatically ignore merge commits
+    void addToHistory(const std::vector<ConversationCommit>& commits, bool reverseOrder = false) const;
+    void debugHistory() const; // TODO remove
 };
 
 bool
@@ -753,9 +781,151 @@ Conversation::Impl::loadMessages(const LogOptions& options)
 {
     if (!repository_)
         return {};
-    std::vector<ConversationCommit> convCommits;
-    convCommits = repository_->log(options);
-    return repository_->convCommitToMap(convCommits);
+    std::vector<ConversationCommit> commits;
+    auto startLogging = options.from == "";
+    auto breakLogging = false;
+    auto currentHistorySize = loadedHistory_.size();
+    repository_->log([&](const auto& id, const auto& author, const auto& commit) {
+            if (!commits.empty()) {
+                // Set linearized parent
+                commits.rbegin()->linearized_parent = id;
+            }
+            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
+                return CallbackResult::Skip;
+            }
+            if ((options.nbOfCommits != 0
+                && (loadedHistory_.size() - currentHistorySize) == options.nbOfCommits))
+                return CallbackResult::Break; // Stop logging
+            if (breakLogging)
+                return CallbackResult::Break; // Stop logging
+            if (id == options.to) {
+                if (options.includeTo)
+                    breakLogging = true; // For the next commit
+                else
+                    return CallbackResult::Break; // Stop logging
+            }
+
+            if (!startLogging && options.from != "" && options.from == id)
+                startLogging = true;
+            if (!startLogging)
+                return CallbackResult::Skip; // Start logging after this one
+
+            if (options.fastLog) {
+                if (options.authorUri != "") {
+                    if (options.authorUri == repository_->uriFromDevice(author.email)) {
+                        return CallbackResult::Break; // Found author, stop
+                    }
+                }
+                // Used to only count commit
+                commits.emplace(commits.end(), ConversationCommit {});
+                return CallbackResult::Skip;
+            }
+
+            return CallbackResult::Ok; // Continue
+        },
+        [&](auto&& cc) {
+            addToHistory({cc});
+            commits.emplace(commits.end(), std::forward<decltype(cc)>(cc));
+        },
+        [](auto, auto, auto) { return false; },
+        options.from,
+        options.logIfNotFound);
+    return repository_->convCommitToMap(commits);
+}
+
+void
+Conversation::Impl::addToHistory(const std::vector<ConversationCommit>& commits, bool reverseOrder) const
+{
+    auto addCommit = [&](const auto& commit) {
+        if (quickAccess_.find(commit.id) != quickAccess_.end())
+            return; // Already present
+        // TODO store MapStringString
+        auto sharedCommit = std::make_shared<DisplayableCommit>();
+        auto mss = *repository_->convCommitToMap(commit);
+        sharedCommit->fromMapStringString(mss);
+        quickAccess_[commit.id] = sharedCommit;
+        auto typeIt = mss.find("type");
+        auto reactToIt = mss.find("react-to");
+        auto editIt = mss.find("edit");
+        if (typeIt != mss.end() && typeIt->second == "merge") {
+            // Nothing to show for the client, skip
+            return;
+        } else if (reactToIt != mss.end() && !reactToIt->second.empty()) {
+            // Reaction.
+            auto it = quickAccess_.find(reactToIt->second);
+            if (it != quickAccess_.end()) {
+                it->second->reactions.emplace_back(sharedCommit->body);
+            } else {
+                pendingReactions_[reactToIt->second].emplace_back(sharedCommit);
+            }
+        } else if (editIt != mss.end() && !editIt->second.empty()) {
+            // Edition
+            auto it = quickAccess_.find(editIt->second);
+            if (it != quickAccess_.end()) {
+                // TODO order and real body
+                it->second->previousBodies.emplace_front(it->second->body);
+                it->second->body = sharedCommit->body;
+            } else {
+                reverseOrder? pendingEditions_[editIt->second].emplace_front(sharedCommit)
+                : pendingEditions_[editIt->second].emplace_back(sharedCommit);
+            }
+        } else {
+            // TODO order? & take into account linearized parent
+            if (reverseOrder) loadedHistory_.emplace_front(sharedCommit);
+            else loadedHistory_.emplace_back(sharedCommit);
+            auto reactIt = pendingReactions_.find(commit.id);
+            if (reactIt != pendingReactions_.end()) {
+                for (const auto& commit: reactIt->second) {
+                    sharedCommit->reactions.emplace_back(commit->body);
+                }
+                pendingReactions_.erase(reactIt);
+            }
+            auto peditIt = pendingEditions_.find(commit.id);
+            if (peditIt != pendingEditions_.end()) {
+                auto oldBody = sharedCommit->body;
+                sharedCommit->body = peditIt->second.front()->body;
+                peditIt->second.pop_front();
+                for (const auto& commit: peditIt->second) {
+                    sharedCommit->previousBodies.emplace_back(commit->body);
+                }
+                sharedCommit->previousBodies.emplace_back(oldBody);
+                pendingEditions_.erase(peditIt);
+            }
+        }
+    };
+    if (reverseOrder)
+        std::for_each(commits.rbegin(), commits.rend(), addCommit);
+    else
+        std::for_each(commits.begin(), commits.end(), addCommit);
+
+    debugHistory();
+}
+
+void
+Conversation::Impl::debugHistory() const
+{
+    JAMI_ERROR("Current log for {}", repository_->id());
+    for (const auto& commit: loadedHistory_) {
+        std::string body;
+        if (commit->type == "initial") {
+            body = "Initial commit";
+        } else if (commit->body.find("body") != commit->body.end()) {
+            body = commit->body.at("body");
+        } else if (commit->body.find("action") != commit->body.end()) {
+            body = commit->body.at("action");
+        } else if (commit->body.find("duration") != commit->body.end()) {
+            body = fmt::format("Call of duration {}", commit->body.at("duration"));
+        } else {
+            body = fmt::format("Unknown body for type {}", commit->type);
+        }
+        JAMI_ERROR("[{}]: {} - {}", commit->id, commit->type, body);
+        for (const auto& reaction: commit->reactions) {
+            JAMI_ERROR("\tReaction:\t{}\tfrom {}", reaction.at("body"), reaction.at("author"));
+        }
+        for (const auto& body: commit->previousBodies) {
+            JAMI_ERROR("\tPrevious: {}", body.at("body"));
+        }
+    }
 }
 
 Conversation::Conversation(const std::shared_ptr<JamiAccount>& account,
@@ -1196,6 +1366,15 @@ Conversation::loadMessages(const OnLoadMessages& cb, const LogOptions& options)
             cb(sthis->pimpl_->loadMessages(options));
         }
     });
+}
+
+void
+Conversation::clearCache()
+{
+    pimpl_->loadedHistory_.clear();
+    pimpl_->quickAccess_.clear();
+    pimpl_->pendingEditions_.clear();
+    pimpl_->pendingReactions_.clear();
 }
 
 std::string

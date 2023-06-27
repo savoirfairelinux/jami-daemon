@@ -128,6 +128,13 @@ struct ConversationMember
     }
 };
 
+enum class CallbackResult { Skip, Break, Ok };
+
+using PreConditionCb
+    = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
+using PostConditionCb
+    = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
+
 /**
  * This class gives access to the git repository that represents the conversation
  */
@@ -220,6 +227,11 @@ public:
      * @return a list of commits
      */
     std::vector<ConversationCommit> log(const LogOptions& options = {}) const;
+    void log(PreConditionCb&& preCondition,
+            std::function<void(ConversationCommit&&)>&& emplaceCb,
+            PostConditionCb&& postCondition,
+            const std::string& from = "",
+            bool logIfNotFound = true) const;
     std::optional<ConversationCommit> getCommit(const std::string& commitId,
                                                 bool logIfNotFound = true) const;
 
