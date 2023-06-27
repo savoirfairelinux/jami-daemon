@@ -2152,7 +2152,8 @@ JamiAccount::convModule()
             [this](auto&& syncMsg) {
                 dht::ThreadPool::io().run([w = weak(), syncMsg] {
                     if (auto shared = w.lock())
-                        shared->syncModule()->syncWithConnected(syncMsg);
+                        if (auto sm = shared->syncModule())
+                            sm->syncWithConnected(syncMsg);
                 });
             },
             [this](auto&& uri, auto&& device, auto&& msg, auto token = 0) {
