@@ -196,6 +196,18 @@ loadConversationMessages(const std::string& accountId,
 }
 
 uint32_t
+loadConversation(const std::string& accountId,
+                         const std::string& conversationId,
+                         const std::string& fromMessage,
+                         size_t n)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule())
+            return convModule->loadConversation(conversationId, fromMessage, n);
+    return 0;
+}
+
+uint32_t
 loadConversationUntil(const std::string& accountId,
                       const std::string& conversationId,
                       const std::string& fromMessage,
@@ -218,6 +230,14 @@ countInteractions(const std::string& accountId,
         if (auto convModule = acc->convModule())
             return convModule->countInteractions(conversationId, toId, fromId, authorUri);
     return 0;
+}
+
+void
+clearCache(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule())
+            convModule->clearCache(conversationId);
 }
 
 uint32_t
