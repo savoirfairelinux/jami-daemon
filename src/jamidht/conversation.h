@@ -22,6 +22,7 @@
 #include "jamidht/conversationrepository.h"
 #include "conversationrepository.h"
 #include "swarm/swarm_protocol.h"
+#include "jami/conversation_interface.h"
 
 #include <json/json.h>
 #include <msgpack.hpp>
@@ -132,6 +133,8 @@ enum class ConversationMode;
 using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages
     = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
+using OnLoadMessages2
+    = std::function<void(std::vector<libjami::SwarmMessage>&& messages)>;
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
@@ -295,6 +298,16 @@ public:
      * @param options   The log options
      */
     void loadMessages(const OnLoadMessages& cb, const LogOptions& options);
+    /**
+     * Get a range of messages
+     * @param cb        The callback when loaded
+     * @param options   The log options
+     */
+    void loadMessages2(const OnLoadMessages2& cb, const LogOptions& options);
+    /**
+     * Clear all cached messages
+     */
+    void clearCache();
     /**
      * Retrieve one commit
      * @param   commitId

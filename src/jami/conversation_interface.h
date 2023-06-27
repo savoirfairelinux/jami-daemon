@@ -26,10 +26,27 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <list>
 
 #include "jami.h"
 
 namespace libjami {
+
+struct SwarmMessage
+{
+    std::string id;
+    std::string type;
+    std::string linearizedParent;
+    std::map<std::string, std::string> body;
+    std::vector<std::map<std::string, std::string>> reactions;
+    std::vector<std::map<std::string, std::string>> editions;
+
+    void fromMapStringString(const std::map<std::string, std::string>& commit) {
+        id = commit.at("id");
+        type = commit.at("type");
+        body = commit; // TODO erase type/id?
+    }
+};
 
 // Conversation management
 LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
@@ -79,6 +96,10 @@ LIBJAMI_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
                                                  const std::string& conversationId,
                                                  const std::string& fromMessage,
                                                  size_t n);
+LIBJAMI_PUBLIC uint32_t loadConversation(const std::string& accountId,
+                                                 const std::string& conversationId,
+                                                 const std::string& fromMessage,
+                                                 size_t n);
 LIBJAMI_PUBLIC uint32_t loadConversationUntil(const std::string& accountId,
                                               const std::string& conversationId,
                                               const std::string& fromMessage,
@@ -110,6 +131,14 @@ struct LIBJAMI_PUBLIC ConversationSignal
                              const std::string& /* conversationId */,
                              std::vector<std::map<std::string, std::string>> /*messages*/);
     };
+    struct LIBJAMI_PUBLIC SwarmLoaded
+    {
+        constexpr static const char* name = "SwarmLoaded";
+        using cb_type = void(uint32_t /* id */,
+                             const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             std::vector<SwarmMessage> /*messages*/);
+    };
     struct LIBJAMI_PUBLIC MessagesFound
     {
         constexpr static const char* name = "MessagesFound";
@@ -124,6 +153,36 @@ struct LIBJAMI_PUBLIC ConversationSignal
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */,
                              std::map<std::string, std::string> /*message*/);
+    };
+    struct LIBJAMI_PUBLIC SwarmMessageReceived
+    {
+        constexpr static const char* name = "SwarmMessageReceived";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             const SwarmMessage& /*message*/);
+    };
+    struct LIBJAMI_PUBLIC SwarmMessageUpdated
+    {
+        constexpr static const char* name = "SwarmMessageUpdated";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             const SwarmMessage& /*message*/);
+    };
+    struct LIBJAMI_PUBLIC ReactionAdded
+    {
+        constexpr static const char* name = "ReactionAdded";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             const std::string& /* messageId */,
+                             std::map<std::string, std::string> /*reaction*/);
+    };
+    struct LIBJAMI_PUBLIC ReactionRemoved
+    {
+        constexpr static const char* name = "ReactionRemoved";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             const std::string& /* messageId */,
+                             const std::string& /* reactionId */);
     };
     struct LIBJAMI_PUBLIC ConversationProfileUpdated
     {

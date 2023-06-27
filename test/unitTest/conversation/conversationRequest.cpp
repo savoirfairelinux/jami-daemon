@@ -46,6 +46,22 @@ using namespace libjami::Account;
 namespace jami {
 namespace test {
 
+struct UserData {
+    std::string conversationId;
+    bool removed {false};
+    bool requestReceived {false};
+    bool requestRemoved {false};
+    bool registered {false};
+    bool stopped {false};
+    bool deviceAnnounced {false};
+    bool contactAdded {false};
+    bool contactRemoved {false};
+    std::string profilePath;
+    std::string payloadTrustRequest;
+    std::vector<libjami::SwarmMessage> messages;
+    std::vector<libjami::SwarmMessage> messagesUpdated;
+};
+
 class ConversationRequestTest : public CppUnit::TestFixture
 {
 public:
@@ -77,9 +93,19 @@ public:
     void testNeedsSyncingWithForCloning();
     void testRemoveContactRemoveTrustRequest();
     std::string aliceId;
+    UserData aliceData;
     std::string bobId;
+    UserData bobData;
     std::string bob2Id;
+    UserData bob2Data;
     std::string carlaId;
+    UserData carlaData;
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
+    void connectSignals();
 
 private:
     CPPUNIT_TEST_SUITE(ConversationRequestTest);
@@ -123,10 +149,178 @@ ConversationRequestTest::setUp()
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];
+    aliceData = {};
+    bobData = {};
+    bob2Data = {};
+    carlaData = {};
 
     Manager::instance().sendRegister(carlaId, false);
     wait_for_announcement_of({aliceId, bobId});
 }
+void
+ConversationRequestTest::connectSignals()
+{
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string& accountId, const std::map<std::string, std::string>&) {
+                if (accountId == aliceId) {
+                    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+                    auto details = aliceAccount->getVolatileAccountDetails();
+                    auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                    if (daemonStatus == "REGISTERED") {
+                        aliceData.registered = true;
+                    } else if (daemonStatus == "UNREGISTERED") {
+                        aliceData.stopped = true;
+                    }
+                    auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                    aliceData.deviceAnnounced = deviceAnnounced == "true";
+                } else if (accountId == bobId) {
+                    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+                    auto details = bobAccount->getVolatileAccountDetails();
+                    auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                    if (daemonStatus == "REGISTERED") {
+                        bobData.registered = true;
+                    } else if (daemonStatus == "UNREGISTERED") {
+                        bobData.stopped = true;
+                    }
+                    auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                    bobData.deviceAnnounced = deviceAnnounced == "true";
+                } else if (accountId == bob2Id) {
+                    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+                    auto details = bob2Account->getVolatileAccountDetails();
+                    auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                    if (daemonStatus == "REGISTERED") {
+                        bob2Data.registered = true;
+                    } else if (daemonStatus == "UNREGISTERED") {
+                        bob2Data.stopped = true;
+                    }
+                    auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                    bob2Data.deviceAnnounced = deviceAnnounced == "true";
+                } else if (accountId == carlaId) {
+                    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+                    auto details = carlaAccount->getVolatileAccountDetails();
+                    auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                    if (daemonStatus == "REGISTERED") {
+                        carlaData.registered = true;
+                    } else if (daemonStatus == "UNREGISTERED") {
+                        carlaData.stopped = true;
+                    }
+                    auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                    carlaData.deviceAnnounced = deviceAnnounced == "true";
+                }
+                cv.notify_one();
+            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                aliceData.conversationId = conversationId;
+            } else if (accountId == bobId) {
+                bobData.conversationId = conversationId;
+            } else if (accountId == bob2Id) {
+                bob2Data.conversationId = conversationId;
+            } else if (accountId == carlaId) {
+                carlaData.conversationId = conversationId;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
+            [&](const std::string& account_id,
+                const std::string& /*from*/,
+                const std::string& /*conversationId*/,
+                const std::vector<uint8_t>& payload,
+                time_t /*received*/) {
+                auto payloadStr = std::string(payload.data(), payload.data() + payload.size());
+                if (account_id == aliceId)
+                    aliceData.payloadTrustRequest = payloadStr;
+                else if (account_id == bobId)
+                    bobData.payloadTrustRequest = payloadStr;
+                cv.notify_one();
+            }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == aliceId) {
+                    aliceData.requestReceived = true;
+                } else if (accountId == bobId) {
+                    bobData.requestReceived = true;
+                } else if (accountId == bob2Id) {
+                    bob2Data.requestReceived = true;
+                } else if (accountId == carlaId) {
+                    carlaData.requestReceived = true;
+                }
+                cv.notify_one();
+            }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestDeclined>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == bobId) {
+                    bobData.requestRemoved = true;
+                } else if (accountId == bob2Id) {
+                    bob2Data.requestRemoved = true;
+                }
+                cv.notify_one();
+            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            libjami::SwarmMessage message) {
+            if (accountId == aliceId) {
+                aliceData.messages.emplace_back(message);
+            } else if (accountId == bobId) {
+                bobData.messages.emplace_back(message);
+            } else if (accountId == carlaId) {
+                carlaData.messages.emplace_back(message);
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            libjami::SwarmMessage message) {
+            if (accountId == aliceId) {
+                aliceData.messagesUpdated.emplace_back(message);
+            } else if (accountId == bobId) {
+                bobData.messagesUpdated.emplace_back(message);
+            } else if (accountId == carlaId) {
+                carlaData.messagesUpdated.emplace_back(message);
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == aliceId)
+                    aliceData.removed = true;
+                else if (accountId == bobId)
+                    bobData.removed = true;
+                else if (accountId == bob2Id)
+                    bob2Data.removed = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
+        [&](const std::string& accountId, const std::string&, bool) {
+            if (accountId == bobId) {
+                bobData.contactAdded = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactRemoved>(
+        [&](const std::string& accountId, const std::string&, bool) {
+            if (accountId == bobId) {
+                bobData.contactRemoved = true;
+            } else if (accountId == bob2Id) {
+                bob2Data.contactRemoved = true;
+            }
+            cv.notify_one();
+        }));
+
+    libjami::registerSignalHandlers(confHandlers);
+}
+
 
 void
 ConversationRequestTest::tearDown()
@@ -144,224 +338,109 @@ ConversationRequestTest::tearDown()
 void
 ConversationRequestTest::testAcceptTrustRemoveConvReq()
 {
+    connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 1);
-    libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
 }
 
 void
 ConversationRequestTest::acceptConvReqAlsoAddContact()
 {
+    connectSignals();
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false, memberMessageGenerated = false;
-    int conversationReady = 0;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady += 1;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
+    bobData.requestReceived = false;
     auto convId2 = libjami::startConversation(aliceId);
-    requestReceived = false;
     libjami::addConversationMember(aliceId, convId2, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     libjami::acceptConversationRequest(bobId, convId2);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady == 2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+    std::this_thread::sleep_for(5s);
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
 }
 
 void
 ConversationRequestTest::testGetRequests()
 {
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    connectSignals();
+
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    libjami::registerSignalHandlers(confHandlers);
 
     auto convId = libjami::startConversation(aliceId);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     auto requests = libjami::getConversationRequests(bobId);
     CPPUNIT_ASSERT(requests.size() == 1);
     CPPUNIT_ASSERT(requests.front()["id"] == convId);
-    libjami::unregisterSignalHandlers();
 }
 
 void
 ConversationRequestTest::testDeclineRequest()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    libjami::registerSignalHandlers(confHandlers);
-
     auto convId = libjami::startConversation(aliceId);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     libjami::declineConversationRequest(bobId, convId);
     // Decline request
     auto requests = libjami::getConversationRequests(bobId);
     CPPUNIT_ASSERT(requests.size() == 0);
-    libjami::unregisterSignalHandlers();
 }
 
 void
 ConversationRequestTest::testAddContact()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return !convId.empty(); }));
-    ConversationRepository repo(aliceAccount, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return !aliceData.conversationId.empty(); }));
+    ConversationRepository repo(aliceAccount, aliceData.conversationId);
     // Mode must be one to one
     CPPUNIT_ASSERT(repo.mode() == ConversationMode::ONE_TO_ONE);
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceId
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + aliceData.conversationId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
-    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size();; }));
+    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobId
+                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + aliceData.conversationId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
     auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
                      + ".crt";
@@ -371,56 +450,22 @@ ConversationRequestTest::testAddContact()
 void
 ConversationRequestTest::testDeclineConversationRequestRemoveTrustRequest()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     // Decline request
     auto requests = libjami::getConversationRequests(bobId);
     CPPUNIT_ASSERT(requests.size() == 1);
     auto trustRequests = libjami::getTrustRequests(bobId);
     CPPUNIT_ASSERT(trustRequests.size() == 1);
-    libjami::declineConversationRequest(bobId, convId);
+    libjami::declineConversationRequest(bobId, aliceData.conversationId);
     requests = libjami::getConversationRequests(bobId);
     CPPUNIT_ASSERT(requests.size() == 0);
     trustRequests = libjami::getTrustRequests(bobId);
@@ -430,51 +475,15 @@ ConversationRequestTest::testDeclineConversationRequestRemoveTrustRequest()
 void
 ConversationRequestTest::testMalformedTrustRequest()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         requestDeclined = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
 
-    libjami::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     // Decline request
     auto requests = libjami::getConversationRequests(bobId);
@@ -482,7 +491,7 @@ ConversationRequestTest::testMalformedTrustRequest()
     auto trustRequests = libjami::getTrustRequests(bobId);
     CPPUNIT_ASSERT(trustRequests.size() == 1);
     // This will let the trust request (not libjami::declineConversationRequest)
-    bobAccount->convModule()->declineConversationRequest(convId);
+    bobAccount->convModule()->declineConversationRequest(aliceData.conversationId);
     requests = libjami::getConversationRequests(bobId);
     CPPUNIT_ASSERT(requests.size() == 0);
     trustRequests = libjami::getTrustRequests(bobId);
@@ -494,6 +503,7 @@ ConversationRequestTest::testMalformedTrustRequest()
 
     auto start = std::chrono::steady_clock::now();
 
+    auto requestDeclined = false;
     do {
         trustRequests = libjami::getTrustRequests(bobId);
         requestDeclined = trustRequests.size() == 0;
@@ -507,227 +517,116 @@ ConversationRequestTest::testMalformedTrustRequest()
 void
 ConversationRequestTest::testAddContactDeleteAndReAdd()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-    requestReceived = false;
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
+        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // removeContact
     aliceAccount->removeContact(bobUri, false);
     std::this_thread::sleep_for(5s); // wait a bit that connections are closed
 
     // re-add
-    CPPUNIT_ASSERT(convId != "");
-    auto oldConvId = convId;
-    convId = "";
+    CPPUNIT_ASSERT(aliceData.conversationId != "");
+    auto oldConvId = aliceData.conversationId;
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Should retrieve previous conversation
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return oldConvId == convId; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return oldConvId == aliceData.conversationId; }));
 }
 
 void
 ConversationRequestTest::testInviteFromMessageAfterRemoved()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& accountId,
-                const std::string&,
-                std::map<std::string, std::string> /*metadatas*/) {
-                if (accountId == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-    requestReceived = false;
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
+        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // removeContact
     bobAccount->removeContact(aliceUri, false);
     std::this_thread::sleep_for(10s); // wait a bit that connections are closed
 
     // bob sends a message, this should generate a new request for Alice
-    requestReceived = false;
-    libjami::sendMessage(aliceId, convId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
-    conversationReady = false;
+    bobData.requestReceived = false;
+    libjami::sendMessage(aliceId, aliceData.conversationId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    bobData.conversationId = "";
     CPPUNIT_ASSERT(bobAccount->getContacts().size() == 0);
-    libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
     CPPUNIT_ASSERT(bobAccount->getContacts().size() == 1);
 }
 
 void
 ConversationRequestTest::testRemoveContact()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    bool conversationRemovedAlice = false, conversationRemovedBob = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-            [&](const std::string& accountId, const std::string&) {
-                if (accountId == aliceId)
-                    conversationRemovedAlice = true;
-                else if (accountId == bobId)
-                    conversationRemovedBob = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestReceived; }));
-    memberMessageGenerated = false;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
+        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
-    conversationRemovedBob = false;
     bobAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationRemovedBob; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
 
     auto details = bobAccount->getContactDetails(aliceUri);
     CPPUNIT_ASSERT(details.size() == 0);
 
-    conversationRemovedAlice = false;
     aliceAccount->removeContact(bobUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return conversationRemovedAlice; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return aliceData.removed; }));
 
     std::this_thread::sleep_for(
         10s); // There is no signal, but daemon should then erase the repository
 
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceId
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + aliceData.conversationId;
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
 
-    repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-               + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobId
+               + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + bobData.conversationId;
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
 }
 
 void
 ConversationRequestTest::testRemoveContactMultiDevice()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
 
     // Add second device for Bob
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
@@ -746,179 +645,69 @@ ConversationRequestTest::testRemoveContactMultiDevice()
 
     bob2Id = Manager::instance().addAccount(details);
 
-    wait_for_announcement_of(bob2Id);
-    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
-
-    bool requestB1Removed = false, requestB2Removed = false, requestB1Received = false, requestB2Received = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestB1Received = true;
-                else if (account_id == bob2Id)
-                    requestB2Received = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestDeclined>(
-            [&](const std::string& accountId, const std::string&) {
-                if (accountId == bobId) {
-                    requestB1Removed = true;
-                } else if (accountId == bob2Id) {
-                    requestB2Removed = true;
-                }
-                cv.notify_one();
-            }));
-    libjami::registerSignalHandlers(confHandlers);
-
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bob2Data.deviceAnnounced;
+    }));
     // First, Alice adds Bob
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return requestB1Received && requestB2Received;
+        return bobData.requestReceived && bob2Data.requestReceived;
     }));
 
     // Bob1 decline via removeContact, both device should remove the request
     bobAccount->removeContact(aliceUri, false);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return requestB1Removed && requestB2Removed; }));
+        cv.wait_for(lk, 30s, [&]() { return bobData.requestRemoved && bob2Data.requestRemoved; }));
 }
 
 void
 ConversationRequestTest::testRemoveSelfDoesntRemoveConversation()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         conversationRemoved = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-            [&](const std::string& accountId, const std::string&) {
-                if (accountId == bobId)
-                    conversationRemoved = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestReceived; }));
-    memberMessageGenerated = false;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
+        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
-    conversationRemoved = false;
     aliceAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return conversationRemoved; }));
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData.removed; }));
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceId
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + aliceData.conversationId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 }
 
 void
 ConversationRequestTest::testRemoveConversationUpdateContactDetails()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         conversationRemoved = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-            [&](const std::string& accountId, const std::string&) {
-                if (accountId == bobId)
-                    conversationRemoved = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !convId.empty() && requestReceived; }));
-    memberMessageGenerated = false;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
+        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
-    conversationRemoved = false;
-    libjami::removeConversation(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationRemoved; }));
+    libjami::removeConversation(bobId, bobData.conversationId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
 
     auto details = bobAccount->getContactDetails(aliceUri);
     CPPUNIT_ASSERT(details[libjami::Account::TrustRequest::CONVERSATIONID] == "");
@@ -927,111 +716,44 @@ ConversationRequestTest::testRemoveConversationUpdateContactDetails()
 void
 ConversationRequestTest::testBanContact()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return !convId.empty(); }));
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
-    memberMessageGenerated = false;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
-    memberMessageGenerated = false;
     bobAccount->removeContact(aliceUri, true);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobId
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + bobData.conversationId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 }
 
 void
 ConversationRequestTest::testBanContactRemoveTrustRequest()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, requestDeclined = true;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestDeclined>(
-            [&](const std::string& accountId, const std::string&) {
-                if (accountId == bobId)
-                    requestDeclined = true;
-                cv.notify_one();
-            }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
     bobAccount->removeContact(aliceUri, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return requestDeclined; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return bobData.requestRemoved; }));
     auto requests = libjami::getConversationRequests(bobId);
     CPPUNIT_ASSERT(requests.size() == 0);
 }
@@ -1039,194 +761,71 @@ ConversationRequestTest::testBanContactRemoveTrustRequest()
 void
 ConversationRequestTest::testAddOfflineContactThenConnect()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == carlaId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == carlaId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
-    libjami::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(carlaUri);
     aliceAccount->sendTrustRequest(carlaUri, {});
     cv.wait_for(lk, 5s); // Wait 5 secs for the put to happen
-    CPPUNIT_ASSERT(!convId.empty());
     Manager::instance().sendRegister(carlaId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() { return requestReceived; }));
-    memberMessageGenerated = false;
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() { return carlaData.requestReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(carlaAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
+        cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == aliceMsgSize + 1; }));
 }
 
 void
 ConversationRequestTest::testDeclineTrustRequestDoNotGenerateAnother()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
     aliceAccount->trackBuddyPresence(bobUri, true);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
-    std::string convId = "";
-    auto bobConnected = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto details = bobAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED") {
-                    bobConnected = true;
-                    cv.notify_one();
-                } else if (daemonStatus == "UNREGISTERED") {
-                    bobConnected = false;
-                    cv.notify_one();
-                }
-            }));
-    libjami::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->discardTrustRequest(aliceUri));
     cv.wait_for(lk, 10s); // Wait a bit
-    bobConnected = true;
     Manager::instance().sendRegister(bobId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobConnected; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.stopped; }));
     // Trigger on peer online
-    requestReceived = false;
+    bobData.deviceAnnounced = false; bobData.requestReceived = false;
     Manager::instance().sendRegister(bobId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobConnected; }));
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.deviceAnnounced; }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 }
 
 void
 ConversationRequestTest::testRemoveContactRemoveSyncing()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, contactAdded = false, requestReceived = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& convId,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId && !convId.empty())
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
-        [&](const std::string& accountId, const std::string& uri, bool) {
-            if (accountId == bobId && uri == aliceUri) {
-                contactAdded = true;
-            }
-            cv.notify_one();
-        }));
-    bool contactRemoved = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactRemoved>(
-        [&](const std::string& accountId, const std::string& uri, bool) {
-            if (accountId == bobId && uri == aliceUri) {
-                contactRemoved = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return contactAdded; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.contactAdded; }));
 
     CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 1);
     bobAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return contactRemoved; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.contactRemoved; }));
 
     CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 0);
 }
@@ -1234,65 +833,25 @@ ConversationRequestTest::testRemoveContactRemoveSyncing()
 void
 ConversationRequestTest::testRemoveConversationRemoveSyncing()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, contactAdded = false, requestReceived = false,
-         conversationRemoved = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& convId,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId && !convId.empty())
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-            [&](const std::string& accountId, const std::string&) {
-                if (accountId == bobId) {
-                    conversationRemoved = true;
-                }
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
-        [&](const std::string& accountId, const std::string& uri, bool) {
-            if (accountId == bobId && uri == aliceUri) {
-                contactAdded = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return contactAdded; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.contactAdded; }));
     // At this point the conversation should be there and syncing.
 
     CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 1);
-    libjami::removeConversation(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationRemoved; }));
+    libjami::removeConversation(bobId, aliceData.conversationId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
 
     CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 0);
 }
@@ -1300,91 +859,47 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
 void
 ConversationRequestTest::testCacheRequestFromClient()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationReady = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     aliceAccount->addContact(bobUri);
     std::vector<uint8_t> payload = {0x64, 0x64, 0x64};
     aliceAccount->sendTrustRequest(bobUri,
                                    payload); // Random payload, just care with the file
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
-    auto cachedPath = fileutils::get_cache_dir() + DIR_SEPARATOR_CH + aliceAccount->getAccountID()
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto cachedPath = fileutils::get_cache_dir() + DIR_SEPARATOR_CH + aliceId
                       + DIR_SEPARATOR_CH + "requests" + DIR_SEPARATOR_CH + bobUri;
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(cachedPath));
     CPPUNIT_ASSERT(fileutils::loadFile(cachedPath) == payload);
 
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 1);
-    libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
     CPPUNIT_ASSERT(!std::filesystem::is_regular_file(cachedPath));
 }
 
 void
 ConversationRequestTest::testNeedsSyncingWithForCloning()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
     auto aliceDevice = std::string(aliceAccount->currentDeviceId());
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool contactAdded = false, requestReceived = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& convId,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId && !convId.empty())
-                    requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
-        [&](const std::string& accountId, const std::string& uri, bool) {
-            if (accountId == bobId && uri == aliceUri) {
-                contactAdded = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+
     CPPUNIT_ASSERT(!bobAccount->convModule()->needsSyncingWith(aliceUri, aliceDevice));
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
     Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return contactAdded; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.contactAdded; }));
     // At this point the conversation should be there and syncing.
 
     CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 1);
@@ -1394,13 +909,12 @@ ConversationRequestTest::testNeedsSyncingWithForCloning()
 void
 ConversationRequestTest::testRemoveContactRemoveTrustRequest()
 {
+    connectSignals();
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
 
     // Add second device for Bob
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
@@ -1419,75 +933,29 @@ ConversationRequestTest::testRemoveContactRemoveTrustRequest()
 
     bob2Id = Manager::instance().addAccount(details);
 
-    wait_for_announcement_of(bob2Id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bob2Data.deviceAnnounced;
+    }));
     auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
-
-    bool conversationB1Ready = false, conversationB2Ready = false, conversationB1Removed = false,
-         conversationB2Removed = false, requestB1Received = false, requestB2Received = false,
-         memberMessageGenerated = false;
-    std::string convId = "";
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(
-            [&](const std::string& account_id,
-                const std::string& /*from*/,
-                const std::string& /*conversationId*/,
-                const std::vector<uint8_t>& /*payload*/,
-                time_t /*received*/) {
-                if (account_id == bobId)
-                    requestB1Received = true;
-                else if (account_id == bob2Id)
-                    requestB2Received = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
-                convId = conversationId;
-            } else if (accountId == bobId) {
-                conversationB1Ready = true;
-            } else if (accountId == bob2Id) {
-                conversationB2Ready = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-            [&](const std::string& accountId, const std::string&) {
-                if (accountId == bobId) {
-                    conversationB1Removed = true;
-                } else if (accountId == bob2Id) {
-                    conversationB2Removed = true;
-                }
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
-                memberMessageGenerated = true;
-                cv.notify_one();
-            }
-        }));
-    libjami::registerSignalHandlers(confHandlers);
 
     // First, Alice adds Bob
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return !convId.empty() && requestB1Received && requestB2Received;
+        return bobData.requestReceived && bob2Data.requestReceived;
     }));
 
     // Bob1 accepts, both device should get it
+    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationB1Ready && conversationB2Ready && memberMessageGenerated;
+        return !bobData.conversationId.empty() && !bob2Data.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size();
     }));
 
     // Bob2 remove Alice ; Bob1 should not have any trust requests
     bob2Account->removeContact(aliceUri, false);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return conversationB1Removed && conversationB2Removed; }));
+        cv.wait_for(lk, 30s, [&]() { return bobData.contactRemoved && bob2Data.contactRemoved; }));
     std::this_thread::sleep_for(10s); // Wait a bit to ensure that everything is update (via synced)
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
     CPPUNIT_ASSERT(bob2Account->getTrustRequests().size() == 0);
