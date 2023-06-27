@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb28bdce_a347fa4d",
+        "filename": "src/media/audio/pulseaudio/pulselayer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 712,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-06-27T14:31:19Z",
+      "side": 1,
+      "message": "remove?",
+      "range": {
+        "startLine": 712,
+        "startChar": 23,
+        "endLine": 712,
+        "endChar": 32
+      },
+      "revId": "ca5764a7d3b5a9d90992ace5b9b99aee00b194f8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
