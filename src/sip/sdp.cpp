@@ -979,13 +979,31 @@ dhtnet::IceTransport::Attribute
 Sdp::getIceAttributes(const pjmedia_sdp_session* session)
 {
     dhtnet::IceTransport::Attribute ice_attrs;
+    // Per RFC8839, ice-ufrag/ice-pwd can be present either at
+    // media or session level.
+    // This seems to be the case for Asterisk servers (ICE is at media-session).
     for (unsigned i = 0; i < session->attr_count; i++) {
         pjmedia_sdp_attr* attribute = session->attr[i];
         if (pj_stricmp2(&attribute->name, "ice-ufrag") == 0)
             ice_attrs.ufrag.assign(attribute->value.ptr, attribute->value.slen);
         else if (pj_stricmp2(&attribute->name, "ice-pwd") == 0)
             ice_attrs.pwd.assign(attribute->value.ptr, attribute->value.slen);
+        if (!ice_attrs.ufrag.empty() && !ice_attrs.pwd.empty())
+            return ice_attrs;
     }
+    for (unsigned i = 0; i < session->media_count; i++) {
+        auto* media = session->media[i];
+        for (unsigned j = 0; j < media->attr_count; j++) {
+            pjmedia_sdp_attr* attribute = media->attr[j];
+            if (pj_stricmp2(&attribute->name, "ice-ufrag") == 0)
+                ice_attrs.ufrag.assign(attribute->value.ptr, attribute->value.slen);
+            else if (pj_stricmp2(&attribute->name, "ice-pwd") == 0)
+                ice_attrs.pwd.assign(attribute->value.ptr, attribute->value.slen);
+            if (!ice_attrs.ufrag.empty() && !ice_attrs.pwd.empty())
+                return ice_attrs;
+        }
+    }
+
     return ice_attrs;
 }
 
