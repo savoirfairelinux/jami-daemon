@@ -56,13 +56,6 @@ as_view(const GitObject& blob)
     return as_view(reinterpret_cast<git_blob*>(blob.get()));
 }
 
-enum class CallbackResult { Skip, Break, Ok };
-
-using PreConditionCb
-    = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
-using PostConditionCb
-    = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
-
 class ConversationRepository::Impl
 {
 public:
@@ -160,7 +153,6 @@ public:
                        const std::string& from = "",
                        bool logIfNotFound = true) const;
     std::vector<ConversationCommit> log(const LogOptions& options) const;
-    std::vector<std::map<std::string, std::string>> search(const Filter& filter) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
     GitObject memberCertificate(std::string_view memberUri, const GitTree& tree) const;
@@ -2191,74 +2183,6 @@ ConversationRepository::Impl::log(const LogOptions& options) const
     return commits;
 }
 
-std::vector<std::map<std::string, std::string>>
-ConversationRepository::Impl::search(const Filter& filter) const
-{
-    std::vector<std::map<std::string, std::string>> commits {};
-    // std::regex_constants::ECMAScript is the default flag.
-    auto re = std::regex(filter.regexSearch,
-                         filter.caseSensitive ? std::regex_constants::ECMAScript
-                                              : std::regex_constants::icase);
-    forEachCommit(
-        [&](const auto& id, const auto& author, auto& commit) {
-            if (!commits.empty()) {
-                // Set linearized parent
-                commits.rbegin()->at("linearizedParent") = id;
-            }
-
-            if (!filter.author.empty() && filter.author != uriFromDevice(author.email)) {
-                // Filter author
-                return CallbackResult::Skip;
-            }
-            auto commitTime = git_commit_time(commit.get());
-            if (filter.before && filter.before < commitTime) {
-                // Only get commits before this date
-                return CallbackResult::Skip;
-            }
-            if (filter.after && filter.after > commitTime) {
-                // Only get commits before this date
-                if (git_commit_parentcount(commit.get()) <= 1)
-                    return CallbackResult::Break;
-                else
-                    return CallbackResult::Skip; // Because we are sorting it with
-                                                 // GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME
-            }
-
-            return CallbackResult::Ok; // Continue
-        },
-        [&](auto&& cc) {
-            auto content = convCommitToMap(cc);
-            auto contentType = content ? content->at("type") : "";
-            auto isSearchable = contentType == "text/plain"
-                                || contentType == "application/data-transfer+json";
-            if (filter.type.empty() && !isSearchable) {
-                // Not searchable, at least for now
-                return;
-            } else if (contentType == filter.type || filter.type.empty()) {
-                if (isSearchable) {
-                    // If it's a text match the body, else the display name
-                    auto body = contentType == "text/plain" ? content->at("body")
-                                                            : content->at("displayName");
-                    std::smatch body_match;
-                    if (std::regex_search(body, body_match, re)) {
-                        commits.emplace(commits.end(), std::move(*content));
-                    }
-                } else {
-                    // Matching type, just add it to the results
-                    commits.emplace(commits.end(), std::move(*content));
-                }
-            }
-        },
-        [&](auto id, auto, auto) {
-            if (filter.maxResult != 0 && commits.size() == filter.maxResult)
-                return true;
-            if (id == filter.lastId)
-                return true;
-            return false;
-        });
-    return commits;
-}
-
 GitObject
 ConversationRepository::Impl::fileAtTree(const std::string& path, const GitTree& tree) const
 {
@@ -3131,10 +3055,14 @@ ConversationRepository::log(const LogOptions& options) const
     return pimpl_->log(options);
 }
 
-std::vector<std::map<std::string, std::string>>
-ConversationRepository::search(const Filter& filter) const
+void
+ConversationRepository::log(PreConditionCb&& preCondition,
+                            std::function<void(ConversationCommit&&)>&& emplaceCb,
+                            PostConditionCb&& postCondition,
+                            const std::string& from,
+                            bool logIfNotFound) const
 {
-    return pimpl_->search(filter);
+    pimpl_->forEachCommit(std::move(preCondition), std::move(emplaceCb), std::move(postCondition), from, logIfNotFound);
 }
 
 std::optional<ConversationCommit>

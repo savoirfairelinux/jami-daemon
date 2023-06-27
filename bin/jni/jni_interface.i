@@ -325,8 +325,13 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
 
     const std::map<std::string, SharedCallback> conversationHandlers = {
         exportable_callback<ConversationSignal::ConversationLoaded>(bind(&ConversationCallback::conversationLoaded, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::SwarmLoaded>(bind(&ConversationCallback::swarmLoaded, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::MessagesFound>(bind(&ConversationCallback::messagesFound, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::MessageReceived>(bind(&ConversationCallback::messageReceived, convM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::SwarmMessageReceived>(bind(&ConversationCallback::swarmMessageReceived, convM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::SwarmMessageUpdated>(bind(&ConversationCallback::swarmMessageUpdated, convM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::ReactionAdded>(bind(&ConversationCallback::reactionAdded, convM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::ReactionRemoved>(bind(&ConversationCallback::reactionRemoved, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::ConversationProfileUpdated>(bind(&ConversationCallback::conversationProfileUpdated, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationRequestReceived>(bind(&ConversationCallback::conversationRequestReceived, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ConversationRequestDeclined>(bind(&ConversationCallback::conversationRequestDeclined, convM, _1, _2)),

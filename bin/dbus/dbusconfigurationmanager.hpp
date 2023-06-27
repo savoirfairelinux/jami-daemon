@@ -29,6 +29,7 @@
 class DBusConfigurationManager : public sdbus::AdaptorInterfaces<cx::ring::Ring::ConfigurationManager_adaptor>
 {
 public:
+    using DBusSwarmMessage = sdbus::Struct<std::string, std::string, std::string, std::map<std::string, std::string>, std::vector<std::map<std::string, std::string>>, std::vector<std::map<std::string, std::string>>>;
     DBusConfigurationManager(sdbus::IConnection& connection)
         : AdaptorInterfaces(connection, "/cx/ring/Ring/ConfigurationManager")
     {
@@ -932,6 +933,15 @@ public:
     }
 
     uint32_t
+    loadConversation(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& fromMessage,
+                             const uint32_t& n)
+    {
+        return libjami::loadConversation(accountId, conversationId, fromMessage, n);
+    }
+
+    uint32_t
     loadConversationUntil(const std::string& accountId,
                           const std::string& conversationId,
                           const std::string& fromMessage,
@@ -1122,10 +1132,30 @@ private:
         const std::map<std::string, SharedCallback> convEvHandlers = {
             exportable_serialized_callback<ConversationSignal::ConversationLoaded>(
                 std::bind(&DBusConfigurationManager::emitConversationLoaded, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConversationSignal::SwarmLoaded>([this](const uint32_t& id, const std::string& account_id, const std::string& conversation_id, const std::vector<libjami::SwarmMessage>& messages) {
+                std::vector<DBusSwarmMessage> msgList;
+                for (const auto& message: messages) {
+                    DBusSwarmMessage msg {message.id, message.type, message.linearizedParent, message.body, message.reactions, message.editions};
+                    msgList.push_back(msg);
+                }
+                DBusConfigurationManager::emitSwarmLoaded(id, account_id, conversation_id, msgList);
+            }),
             exportable_serialized_callback<ConversationSignal::MessagesFound>(
                 std::bind(&DBusConfigurationManager::emitMessagesFound, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConversationSignal::MessageReceived>(
                 std::bind(&DBusConfigurationManager::emitMessageReceived, this, _1, _2, _3)),
+            exportable_serialized_callback<ConversationSignal::SwarmMessageReceived>([this](const std::string& account_id, const std::string& conversation_id, const libjami::SwarmMessage& message) {
+                DBusSwarmMessage msg {message.id, message.type, message.linearizedParent, message.body, message.reactions, message.editions};
+                DBusConfigurationManager::emitSwarmMessageReceived(account_id, conversation_id, msg);
+            }),
+            exportable_serialized_callback<ConversationSignal::SwarmMessageUpdated>([this](const std::string& account_id, const std::string& conversation_id, const libjami::SwarmMessage& message) {
+                DBusSwarmMessage msg {message.id, message.type, message.linearizedParent, message.body, message.reactions, message.editions};
+                DBusConfigurationManager::emitSwarmMessageUpdated(account_id, conversation_id, msg);
+            }),
+            exportable_serialized_callback<ConversationSignal::ReactionAdded>(
+                std::bind(&DBusConfigurationManager::emitReactionAdded, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConversationSignal::ReactionRemoved>(
+                std::bind(&DBusConfigurationManager::emitReactionRemoved, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConversationSignal::ConversationProfileUpdated>(
                 std::bind(&DBusConfigurationManager::emitConversationProfileUpdated, this, _1, _2, _3)),
             exportable_serialized_callback<ConversationSignal::ConversationRequestReceived>(
