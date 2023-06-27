@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17372f53_751bf748",
+        "filename": "src/archiver.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-06-27T18:15:26Z",
+      "side": 1,
+      "message": "add doc for new function",
+      "revId": "8ddef07080922703251af0070077bd6fe0586526",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "29709644_2e0a4994",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-06-27T18:15:26Z",
+      "side": 1,
+      "message": "same code?",
+      "range": {
+        "startLine": 38,
+        "startChar": 40,
+        "endLine": 38,
+        "endChar": 43
+      },
+      "revId": "8ddef07080922703251af0070077bd6fe0586526",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
