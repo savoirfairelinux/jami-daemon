@@ -381,7 +381,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
         return {};
 
     auto uri = Uri(toUrl);
-    getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
+    connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
                 or not call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts))) {
@@ -752,8 +752,9 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
 
-    IpAddr addrSdp = getPublishedSameasLocal() ? localAddress
-                                               : getPublishedIpAddress(target.getFamily());
+    IpAddr addrSdp = getPublishedSameasLocal()
+                         ? localAddress
+                         : connectionManager_->getPublishedIpAddress(target.getFamily());
 
     // fallback on local address
     if (not addrSdp)
@@ -1928,7 +1929,7 @@ JamiAccount::doRegister_()
         connectionManager_->onICERequest([this](const DeviceId& deviceId) {
             std::promise<bool> accept;
             std::future<bool> fut = accept.get_future();
-            accountManager_->findCertificate(
+            connectionManager_->findCertificate(
                 deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                     dht::InfoHash peer_account_id;
                     auto res = accountManager_->onPeerCertificate(cert,
@@ -2336,7 +2337,8 @@ JamiAccount::setRegistrationState(RegistrationState state,
         if (state == RegistrationState::REGISTERED) {
             JAMI_WARNING("[Account {}] connected", getAccountID());
             turnCache_->refresh();
-            storeActiveIpAddress();
+            if (connectionManager_)
+                connectionManager_->storeActiveIpAddress();
         } else if (state == RegistrationState::TRYING) {
             JAMI_WARNING("[Account {}] connecting…", getAccountID());
         } else {
@@ -2362,11 +2364,12 @@ JamiAccount::connectivityChanged()
     dht_->connectivityChanged();
     {
         std::lock_guard<std::mutex> lkCM(connManagerMtx_);
-        if (connectionManager_)
+        if (connectionManager_) {
             connectionManager_->connectivityChanged();
+            // reset cache
+            connectionManager_->setPublishedAddress({});
+        }
     }
-    // reset cache
-    setPublishedAddress({});
 }
 
 bool
@@ -2374,8 +2377,8 @@ JamiAccount::findCertificate(
     const dht::InfoHash& h,
     std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
-    if (accountManager_)
-        return accountManager_->findCertificate(h, std::move(cb));
+    if (connectionManager_)
+        return connectionManager_->findCertificate(h, std::move(cb));
     return false;
 }
 
@@ -2383,16 +2386,16 @@ bool
 JamiAccount::findCertificate(
     const dht::PkId& id, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
-    if (accountManager_)
-        return accountManager_->findCertificate(id, std::move(cb));
+    if (connectionManager_)
+        return connectionManager_->findCertificate(id, std::move(cb));
     return false;
 }
 
 bool
 JamiAccount::findCertificate(const std::string& crt_id)
 {
-    if (accountManager_)
-        return accountManager_->findCertificate(dht::InfoHash(crt_id));
+    if (connectionManager_)
+        return connectionManager_->findCertificate(dht::InfoHash(crt_id));
     return false;
 }
 
@@ -2523,34 +2526,6 @@ JamiAccount::getKnownDevices() const
         ids.emplace(std::move(id), std::move(label));
     }
     return ids;
-}
-
-tls::DhParams
-JamiAccount::loadDhParams(std::string path)
-{
-    std::lock_guard<std::mutex> l(fileutils::getFileLock(path));
-    try {
-        // writeTime throw exception if file doesn't exist
-        auto duration = clock::now() - fileutils::writeTime(path);
-        if (duration >= std::chrono::hours(24 * 3)) // file is valid only 3 days
-            throw std::runtime_error("file too old");
-
-        JAMI_DBG("Loading DhParams from file '%s'", path.c_str());
-        return {fileutils::loadFile(path)};
-    } catch (const std::exception& e) {
-        JAMI_DBG("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
-        if (auto params = tls::DhParams::generate()) {
-            try {
-                fileutils::saveFile(path, params.serialize(), 0600);
-                JAMI_DBG("Saved DhParams to file '%s'", path.c_str());
-            } catch (const std::exception& ex) {
-                JAMI_WARN("Failed to save DhParams in file '%s': %s", path.c_str(), ex.what());
-            }
-            return params;
-        }
-        JAMI_ERR("Can't generate DH params.");
-        return {};
-    }
 }
 
 void
@@ -2687,7 +2662,7 @@ JamiAccount::generateDhParams()
     // make sure cachePath_ is writable
     fileutils::check_dir(cachePath_.c_str(), 0700);
     dhParams_ = dht::ThreadPool::computation().get<tls::DhParams>(
-        std::bind(loadDhParams, cachePath_ + DIR_SEPARATOR_STR "dhParams"));
+        std::bind(tls::DhParams::loadDhParams, cachePath_ + DIR_SEPARATOR_STR "dhParams"));
 }
 
 MatchRank
@@ -3332,59 +3307,10 @@ JamiAccount::onIsComposing(const std::string& conversationId,
     }
 }
 
-void
-JamiAccount::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept
+IceTransportOptions
+JamiAccount::getIceOptions() const noexcept
 {
-    storeActiveIpAddress([this, cb = std::move(cb)] {
-        auto opts = SIPAccountBase::getIceOptions();
-        auto publishedAddr = getPublishedIpAddress();
-
-        if (publishedAddr) {
-            auto interfaceAddr = ip_utils::getInterfaceAddr(getLocalInterface(),
-                                                            publishedAddr.getFamily());
-            if (interfaceAddr) {
-                opts.accountLocalAddr = interfaceAddr;
-                opts.accountPublicAddr = publishedAddr;
-            }
-        }
-        if (cb)
-            cb(std::move(opts));
-    });
-}
-
-void
-JamiAccount::storeActiveIpAddress(std::function<void()>&& cb)
-{
-    dht_->getPublicAddress([this, cb = std::move(cb)](std::vector<dht::SockAddr>&& results) {
-        bool hasIpv4 {false}, hasIpv6 {false};
-        for (auto& result : results) {
-            auto family = result.getFamily();
-            if (family == AF_INET) {
-                if (not hasIpv4) {
-                    hasIpv4 = true;
-                    JAMI_DBG("[Account %s] Store DHT public IPv4 address : %s",
-                             getAccountID().c_str(),
-                             result.toString().c_str());
-                    setPublishedAddress(*result.get());
-                    if (upnpCtrl_) {
-                        upnpCtrl_->setPublicAddress(*result.get());
-                    }
-                }
-            } else if (family == AF_INET6) {
-                if (not hasIpv6) {
-                    hasIpv6 = true;
-                    JAMI_DBG("[Account %s] Store DHT public IPv6 address : %s",
-                             getAccountID().c_str(),
-                             result.toString().c_str());
-                    setPublishedAddress(*result.get());
-                }
-            }
-            if (hasIpv4 and hasIpv6)
-                break;
-        }
-        if (cb)
-            cb();
-    });
+    return connectionManager_->getIceOptions();
 }
 
 bool
@@ -4255,15 +4181,38 @@ void
 JamiAccount::initConnectionManager()
 {
     if (!connectionManager_) {
-        connectionManager_ = std::make_unique<ConnectionManager>(*this);
-        channelHandlers_[Uri::Scheme::SWARM]
-            = std::make_unique<SwarmChannelHandler>(shared(), *connectionManager_.get());
+        auto connectionManagerConfig
+            = std::make_shared<ConnectionManager::Config>(dht(),
+                                                          identity(),
+                                                          certStore(),
+                                                          upnpCtrl_,
+                                                          config().turnServer,
+                                                          config().turnServerUserName,
+                                                          config().turnServerPwd,
+                                                          config().turnServerRealm,
+                                                          config().turnEnabled);
+        connectionManagerConfig->cachePath = cachePath_;
+        connectionManager_ = std::make_unique<ConnectionManager>(connectionManagerConfig);
         channelHandlers_[Uri::Scheme::GIT]
             = std::make_unique<ConversationChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::SYNC]
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+
+#if TARGET_OS_IOS
+        connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {
+            if ((connType == "videoCall" || connType == "audioCall")
+                && jami::Manager::instance().isIOSExtension) {
+                bool hasVideo = connType == "videoCall";
+                emitSignal<libjami::ConversationSignal::CallConnectionRequest>("",
+                                                                               peer_h.toString(),
+                                                                               hasVideo);
+                return true;
+            }
+            return false;
+        });
+#endif
     }
 }
 
