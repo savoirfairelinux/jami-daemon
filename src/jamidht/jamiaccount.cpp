@@ -380,7 +380,9 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
     if (not call)
         return {};
 
-    auto uri = Uri(toUrl);
+    std::string dest = std::string(toUrl);
+    string_replace(dest, ";transport=tls>", "");
+    auto uri = Uri(dest);
     connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
@@ -2695,7 +2697,9 @@ JamiAccount::getFromUri() const
 std::string
 JamiAccount::getToUri(const std::string& to) const
 {
-    return fmt::format("<sips:{};transport=tls>", to);
+    auto dest = to;
+    string_replace(dest, "sip:", "");
+    return fmt::format("<sips:{};transport=tls>", dest);
 }
 
 std::string
