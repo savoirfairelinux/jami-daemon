@@ -701,6 +701,10 @@ else()
             target_compile_definitions(ut_library PUBLIC ENABLE_VIDEO)
         endif()
 
+        add_executable(ut_bootstrap test/unitTest/swarm/bootstrap.cpp)
+        target_link_libraries(ut_bootstrap ut_library)
+        add_test(NAME bootstrap COMMAND ut_bootstrap)
+
         add_executable(ut_conversationRepository test/unitTest/conversationRepository/conversationRepository.cpp)
         target_link_libraries(ut_conversationRepository ut_library)
         add_test(NAME conversationRepository COMMAND ut_conversationRepository)

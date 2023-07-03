@@ -233,45 +233,10 @@ public:
 
     ~Config() {}
 
-    /**
-     * Determine if STUN public address resolution is required to register this account. In this
-     * case a STUN server hostname must be specified.
-     */
-    bool stunEnabled_ {false};
-
-    /**
-     * The STUN server hostname (optional), used to provide the public IP address in case the
-     * softphone stay behind a NAT.
-     */
-    std::string stunServer_ {};
-
-    /**
-     * Determine if TURN public address resolution is required to register this account. In this
-     * case a TURN server hostname must be specified.
-     */
-    bool turnEnabled_ {false};
-
-    /**
-     * The TURN server hostname (optional), used to provide the public IP address in case the
-     * softphone stay behind a NAT.
-     */
-    std::string turnServer_;
-    std::string turnServerUserName_;
-    std::string turnServerPwd_;
-    std::string turnServerRealm_;
-
-    mutable std::mutex cachedTurnMutex_ {};
-    std::unique_ptr<IpAddr> cacheTurnV4_ {};
-    std::unique_ptr<IpAddr> cacheTurnV6_ {};
-
-    std::string cachePath {};
-
     std::shared_ptr<dht::DhtRunner> dht_;
     const dht::crypto::Identity& id_;
 
     const dht::crypto::Identity& identity() const { return id_; }
-
-    tls::CertificateStore* certStore_;
 
     /**
      * UPnP IGD controller and the mutex to access it
@@ -285,6 +250,40 @@ public:
      * ie: if it is able to make port mappings
      */
     bool getUPnPActive() const;
+
+    /**
+     * Determine if STUN public address resolution is required to register this account. In this
+     * case a STUN server hostname must be specified.
+     */
+    bool stunEnabled_ {false};
+
+    /**
+     * The STUN server hostname (optional), used to provide the public IP address in case the
+     * softphone stay behind a NAT.
+     */
+    std::string stunServer_ {};
+    /**
+     * The TURN server hostname (optional), used to provide the public IP address in case the
+     * softphone stay behind a NAT.
+     */
+    std::string turnServer_;
+    std::string turnServerUserName_;
+    std::string turnServerPwd_;
+    std::string turnServerRealm_;
+
+    /**
+     * Determine if TURN public address resolution is required to register this account. In this
+     * case a TURN server hostname must be specified.
+     */
+    bool turnEnabled_ {false};
+
+    mutable std::mutex cachedTurnMutex_ {};
+    std::unique_ptr<IpAddr> cacheTurnV4_ {};
+    std::unique_ptr<IpAddr> cacheTurnV6_ {};
+
+    std::string cachePath {};
+
+    tls::CertificateStore* certStore_;
 };
 
 } // namespace jami
