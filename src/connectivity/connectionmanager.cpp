@@ -1363,8 +1363,6 @@ ConnectionManager::Impl::getIceOptions() const noexcept
     IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();
 
-    if (config_->stunEnabled_)
-        opts.stunServers.emplace_back(StunServerInfo().setUri(config_->stunServer_));
     if (config_->turnEnabled_) {
         auto cached = false;
         std::lock_guard<std::mutex> lk(config_->cachedTurnMutex_);

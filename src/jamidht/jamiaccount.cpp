@@ -895,6 +895,17 @@ JamiAccount::loadConfig()
     registeredName_ = config().registeredName;
     if (accountManager_)
         accountManager_->setAccountDeviceName(config().deviceName);
+    if (connectionManager_) {
+        if (auto c = connectionManager_->getConfig()) {
+            // Update connectionManager's config
+            c->upnpEnabled_ = config().upnpEnabled;
+            c->turnEnabled_ = config().turnEnabled;
+            c->turnServer_ = config().turnServer;
+            c->turnServerUserName_ = config().turnServerUserName;
+            c->turnServerPwd_ = config().turnServerPwd;
+            c->turnServerRealm_ = config().turnServerRealm;
+        }
+    }
     try {
         auto str = fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
                                                 std::chrono::hours(24 * 7));
@@ -4193,6 +4204,8 @@ JamiAccount::initConnectionManager()
                                                           config().turnEnabled);
         connectionManagerConfig->cachePath = cachePath_;
         connectionManager_ = std::make_unique<ConnectionManager>(connectionManagerConfig);
+        channelHandlers_[Uri::Scheme::SWARM]
+            = std::make_unique<SwarmChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::GIT]
             = std::make_unique<ConversationChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::SYNC]

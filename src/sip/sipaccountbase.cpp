@@ -252,8 +252,6 @@ SIPAccountBase::getIceOptions() const noexcept
     IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();
 
-    // if (config().stunEnabled)
-    //     opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
     if (config().turnEnabled && turnCache_) {
         auto turnAddr = turnCache_->getResolvedTurn();
         if (turnAddr != std::nullopt) {

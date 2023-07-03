@@ -250,18 +250,6 @@ public:
      * ie: if it is able to make port mappings
      */
     bool getUPnPActive() const;
-
-    /**
-     * Determine if STUN public address resolution is required to register this account. In this
-     * case a STUN server hostname must be specified.
-     */
-    bool stunEnabled_ {false};
-
-    /**
-     * The STUN server hostname (optional), used to provide the public IP address in case the
-     * softphone stay behind a NAT.
-     */
-    std::string stunServer_ {};
     /**
      * The TURN server hostname (optional), used to provide the public IP address in case the
      * softphone stay behind a NAT.
