@@ -1933,12 +1933,18 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             auto& ci = pimpl_->convInfos_;
             auto itConv = ci.find(convId);
             if (itConv != ci.end()) {
-                itConv->second.removed = std::time(nullptr);
-                if (convInfo.erased) {
+                auto update = false;
+                if (!itConv->second.removed) {
+                    update = true;
+                    itConv->second.removed = std::time(nullptr);
+                }
+                if (convInfo.erased && !itConv->second.erased) {
                     itConv->second.erased = std::time(nullptr);
                     pimpl_->saveConvInfos();
                     lk.unlock();
                     pimpl_->removeRepository(convId, false);
+                } else if (update) {
+                    pimpl_->saveConvInfos();
                 }
             }
         }
