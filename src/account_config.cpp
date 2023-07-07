@@ -75,7 +75,8 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     SERIALIZE_CONFIG(USER_AGENT_KEY, customUserAgent);
     SERIALIZE_CONFIG(DISPLAY_NAME_KEY, displayName);
     SERIALIZE_CONFIG(UPNP_ENABLED_KEY, upnpEnabled);
-    SERIALIZE_CONFIG(DEFAULT_MODERATORS_KEY, defaultModerators);
+    out << YAML::Key << DEFAULT_MODERATORS_KEY << YAML::Value
+        << fmt::format(FMT_COMPILE("{}"), fmt::join(defaultModerators, "/"sv));
     SERIALIZE_CONFIG(LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled);
     SERIALIZE_CONFIG(ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled);
     SERIALIZE_CONFIG(PROXY_PUSH_TOKEN_KEY, deviceKey);
