@@ -95,7 +95,7 @@ IceTest::tearDown()
 void
 IceTest::testRawIceConnection()
 {
-    IceTransportOptions ice_config;
+    dhtnet::IceTransportOptions ice_config;
     ice_config.upnpEnable = true;
     ice_config.tcpEnable = true;
     std::shared_ptr<IceTransport> ice_master, ice_slave;

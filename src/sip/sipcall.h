@@ -29,9 +29,9 @@
 #endif
 
 #include "call.h"
-#include "connectivity/ice_transport.h"
-#include "media/media_codec.h" // for MediaType enum
+#include <dhtnet/ice_transport.h>
 #include "connectivity/sip_utils.h"
+#include "media/media_codec.h" // for MediaType enum
 #include "sip/sdp.h"
 
 #include "media/rtp_session.h"
@@ -253,14 +253,14 @@ public:
     bool remoteHasValidIceAttributes() const;
     void addLocalIceAttributes();
 
-    std::shared_ptr<IceTransport> getIceMedia() const
+    std::shared_ptr<dhtnet::IceTransport> getIceMedia() const
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
         return reinvIceMedia_ ? reinvIceMedia_ : iceMedia_;
     };
 
     // Set ICE instance. Must be called only for sub-calls
-    void setIceMedia(std::shared_ptr<IceTransport> ice, bool isReinvite = false);
+    void setIceMedia(std::shared_ptr<dhtnet::IceTransport> ice, bool isReinvite = false);
 
     // Switch to re-invite ICE media if needed
     void switchToIceReinviteIfNeeded();
@@ -315,7 +315,7 @@ public:
     // The initialization is performed asynchronously, i.e, the instance
     // may not be ready to use when this method returns.
     bool initIceMediaTransport(bool master,
-                               std::optional<IceTransportOptions> options = std::nullopt);
+                               std::optional<dhtnet::IceTransportOptions> options = std::nullopt);
 
     std::vector<std::string> getLocalIceCandidates(unsigned compId) const;
 
@@ -354,7 +354,7 @@ private:
     void sendMuteState(bool state);
     void sendVoiceActivity(std::string_view streamId, bool state);
 
-    void resetTransport(std::shared_ptr<IceTransport>&& transport);
+    void resetTransport(std::shared_ptr<dhtnet::IceTransport>&& transport);
 
     /**
      * Send device orientation through SIP INFO
@@ -440,7 +440,7 @@ private:
     // Find the stream index with the matching label
     int findRtpStreamIndex(const std::string& label) const;
 
-    std::vector<IceCandidate> getAllRemoteCandidates(IceTransport& transport) const;
+    std::vector<IceCandidate> getAllRemoteCandidates(dhtnet::IceTransport& transport) const;
 
     inline std::shared_ptr<const SIPCall> shared() const
     {
@@ -502,9 +502,9 @@ private:
     bool rtcpMuxEnabled_ {false};
 
     // ICE media transport
-    std::shared_ptr<IceTransport> iceMedia_;
+    std::shared_ptr<dhtnet::IceTransport> iceMedia_;
     // Re-invite (temporary) ICE media transport.
-    std::shared_ptr<IceTransport> reinvIceMedia_;
+    std::shared_ptr<dhtnet::IceTransport> reinvIceMedia_;
 
     std::string peerUri_ {};
 

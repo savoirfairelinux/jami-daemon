@@ -55,12 +55,12 @@
 
 #include "system_codec_container.h"
 
-#include "connectivity/upnp/upnp_control.h"
 #include "connectivity/ip_utils.h"
 #include "string_utils.h"
 
 #include "im/instant_messaging.h"
 
+#include <dhtnet/upnp/upnp_control.h>
 #include <opendht/crypto.h>
 
 #include <unistd.h>

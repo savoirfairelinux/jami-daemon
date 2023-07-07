@@ -32,7 +32,6 @@
 #include "jami/call_const.h"
 #include "client/ring_signal.h"
 #include "connectivity/sip_utils.h"
-#include "connectivity/ip_utils.h"
 #include "map_utils.h"
 #include "call_factory.h"
 #include "string_utils.h"
@@ -40,6 +39,7 @@
 
 #include "errno.h"
 
+#include <dhtnet/ip_utils.h>
 #include <opendht/thread_pool.h>
 
 #include <stdexcept>

@@ -27,7 +27,7 @@
 
 #include "account_schema.h"
 #include "manager.h"
-#include "connectivity/ice_transport.h"
+#include <dhtnet/ice_transport.h>
 
 #include "config/yamlparser.h"
 
@@ -246,10 +246,10 @@ SIPAccountBase::generateVideoPort() const
 }
 #endif
 
-IceTransportOptions
+dhtnet::IceTransportOptions
 SIPAccountBase::getIceOptions() const noexcept
 {
-    IceTransportOptions opts;
+    dhtnet::IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();
 
     // if (config().stunEnabled)

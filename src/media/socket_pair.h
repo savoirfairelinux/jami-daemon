@@ -25,7 +25,7 @@
 #include <config.h>
 #endif
 
-#include "connectivity/ip_utils.h"
+#include <dhtnet/ip_utils.h>
 #include "media_io_handle.h"
 
 #ifndef _WIN32
@@ -212,8 +212,8 @@ private:
 
     int rtpHandle_ {-1};
     int rtcpHandle_ {-1};
-    IpAddr rtpDestAddr_;
-    IpAddr rtcpDestAddr_;
+    dhtnet::IpAddr rtpDestAddr_;
+    dhtnet::IpAddr rtcpDestAddr_;
     std::atomic_bool interrupted_ {false};
     // Read operations are blocking. This will allow unblocking the
     // receiver thread if the peer stops/mutes the media (RTP)

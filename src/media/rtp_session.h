@@ -74,8 +74,8 @@ public:
     virtual void initRecorder() = 0;
     virtual void deinitRecorder() = 0;
     std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }
-    const IpAddr& getSendAddr() const { return send_.addr; };
-    const IpAddr& getRecvAddr() const { return receive_.addr; };
+    const dhtnet::IpAddr& getSendAddr() const { return send_.addr; };
+    const dhtnet::IpAddr& getRecvAddr() const { return receive_.addr; };
 
     inline std::string streamId() const { return streamId_; }
 

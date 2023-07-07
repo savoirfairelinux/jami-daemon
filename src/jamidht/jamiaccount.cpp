@@ -30,7 +30,6 @@
 #include "archive_account_manager.h"
 #include "server_account_manager.h"
 #include "jamidht/channeled_transport.h"
-#include "connectivity/multiplexed_socket.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "transfer_channel_handler.h"
@@ -41,7 +40,6 @@
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 #include "connectivity/sip_utils.h"
-#include "connectivity/ice_transport.h"
 
 #include "uri.h"
 
@@ -49,7 +47,7 @@
 #include "jami/call_const.h"
 #include "jami/account_const.h"
 
-#include "connectivity/upnp/upnp_control.h"
+
 #include "system_codec_container.h"
 
 #include "account_schema.h"
@@ -69,11 +67,16 @@
 #include "archiver.h"
 #include "data_transfer.h"
 
-#include "connectivity/security/certstore.h"
 #include "libdevcrypto/Common.h"
 #include "base64.h"
 #include "vcard.h"
 #include "im/instant_messaging.h"
+
+#include <dhtnet/ice_transport.h>
+#include <dhtnet/ice_transport_factory.h>
+#include <dhtnet/upnp/upnp_control.h>
+#include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/certstore.h>
 
 #include <opendht/thread_pool.h>
 #include <opendht/peer_discovery.h>
@@ -127,7 +130,7 @@ struct TextMessageCtx
     DeviceId deviceId;
     uint64_t id;
     bool retryOnTimeout;
-    std::shared_ptr<ChannelSocket> channel;
+    std::shared_ptr<dhtnet::ChannelSocket> channel;
     bool onlyConnected;
     std::shared_ptr<PendingConfirmation> confirmation;
 };
@@ -266,22 +269,6 @@ dhtStatusStr(dht::NodeStatus status)
                : (status == dht::NodeStatus::Connecting ? "connecting" : "disconnected");
 }
 
-/**
- * Local ICE Transport factory helper
- *
- * JamiAccount must use this helper than direct IceTransportFactory API
- */
-template<class... Args>
-std::shared_ptr<IceTransport>
-JamiAccount::createIceTransport(const Args&... args)
-{
-    auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
-    if (!ice)
-        throw std::runtime_error("ICE transport creation failed");
-
-    return ice;
-}
-
 JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
     , dht_(new dht::DhtRunner)
@@ -290,7 +277,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
-    , certStore_ {std::make_unique<tls::CertificateStore>(accountId)}
+    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(accountId)}
 {}
 
 JamiAccount::~JamiAccount() noexcept
@@ -384,7 +371,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
     connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
-                or not call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts))) {
+                or not call->initIceMediaTransport(true, std::forward<dhtnet::IceTransportOptions>(opts))) {
                 return;
             }
         }
@@ -573,7 +560,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     }
 
     // TODO: for now, we automatically trust all explicitly called peers
-    setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
+    setCertificateStatus(toUri, dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
 
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
@@ -644,7 +631,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             requestSIPConnection(toUri, deviceId, type, true, dev_call);
         };
 
-    std::vector<std::shared_ptr<ChannelSocket>> channels;
+    std::vector<std::shared_ptr<dhtnet::ChannelSocket>> channels;
     for (auto& [key, value] : sipConns_) {
         if (key.first != toUri)
             continue;
@@ -744,15 +731,15 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 void
 JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
                                      const std::string& to_id,
-                                     IpAddr target)
+                                     dhtnet::IpAddr target)
 {
     if (!call)
         return;
     JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
 
-    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
+    const auto localAddress = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
 
-    IpAddr addrSdp = getPublishedSameasLocal()
+    dhtnet::IpAddr addrSdp = getPublishedSameasLocal()
                          ? localAddress
                          : connectionManager_->getPublishedIpAddress(target.getFamily());
 
@@ -1267,7 +1254,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             accountManager_->initAuthentication(
                 getAccountID(),
                 fDeviceKey,
-                ip_utils::getDeviceName(),
+                dhtnet::ip_utils::getDeviceName(),
                 std::move(creds),
                 [this, migrating, hasPassword](const AccountInfo& info,
                                                const std::map<std::string, std::string>& config,
@@ -3307,7 +3294,7 @@ JamiAccount::onIsComposing(const std::string& conversationId,
     }
 }
 
-IceTransportOptions
+dhtnet::IceTransportOptions
 JamiAccount::getIceOptions() const noexcept
 {
     return connectionManager_->getIceOptions();

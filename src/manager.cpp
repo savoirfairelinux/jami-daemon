@@ -74,7 +74,6 @@ using random_device = dht::crypto::random_device;
 #include "client/videomanager.h"
 
 #include "conference.h"
-#include "connectivity/ice_transport.h"
 
 #include "client/ring_signal.h"
 #include "jami/call_const.h"
@@ -92,7 +91,8 @@ using random_device = dht::crypto::random_device;
 #include "data_transfer.h"
 #include "jami/media_const.h"
 
-#include "connectivity/upnp/upnp_context.h"
+#include <dhtnet/ice_transport.h>
+#include <dhtnet/upnp/upnp_context.h>
 
 #include <libavutil/ffversion.h>
 
@@ -363,6 +363,8 @@ struct Manager::ManagerPimpl
     std::shared_ptr<asio::io_context> ioContext_;
     std::thread ioContextRunner_;
 
+    std::shared_ptr<dhtnet::upnp::UPnPContext> upnpContext_;
+
     /** Main scheduler */
     ScheduledExecutor scheduler_ {"manager"};
 
@@ -429,7 +431,7 @@ struct Manager::ManagerPimpl
     std::atomic_bool finished_ {false};
 
     /* ICE support */
-    std::unique_ptr<IceTransportFactory> ice_tf_;
+    std::unique_ptr<dhtnet::IceTransportFactory> ice_tf_;
 
     /* Sink ID mapping */
     std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
@@ -449,6 +451,7 @@ struct Manager::ManagerPimpl
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     : base_(base)
     , ioContext_(std::make_shared<asio::io_context>())
+    , upnpContext_(std::make_shared<dhtnet::upnp::UPnPContext>(ioContext_, Logger::dhtLogger()))
     , toneCtrl_(base.preferences)
     , dtmfBuf_(0, AudioFormat::MONO())
     , ringbufferpool_(new RingBufferPool)
@@ -806,7 +809,7 @@ Manager::init(const std::string& config_file, libjami::InitFlag flags)
     check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
     check_rename(fileutils::get_config_dir(PACKAGE_OLD), fileutils::get_config_dir());
 
-    pimpl_->ice_tf_.reset(new IceTransportFactory());
+    pimpl_->ice_tf_.reset(new dhtnet::IceTransportFactory());
 
     pimpl_->path_ = config_file.empty() ? pimpl_->retrieveConfigPath() : config_file;
     JAMI_DBG("Configuration file path: %s", pimpl_->path_.c_str());
@@ -861,7 +864,7 @@ Manager::finish() noexcept
 
     try {
         // Terminate UPNP context
-        jami::upnp::UPnPContext::getUPnPContext()->shutdown();
+        upnpContext()->shutdown();
 
         // Forbid call creation
         callFactory.forbid();
@@ -1660,6 +1663,12 @@ std::shared_ptr<asio::io_context>
 Manager::ioContext() const
 {
     return pimpl_->ioContext_;
+}
+
+std::shared_ptr<dhtnet::upnp::UPnPContext>
+Manager::upnpContext() const
+{
+    return pimpl_->upnpContext_;
 }
 
 std::shared_ptr<Task>
@@ -3110,7 +3119,7 @@ Manager::hasAccount(const std::string& accountID)
     return accountFactory.hasAccount(accountID);
 }
 
-IceTransportFactory&
+dhtnet::IceTransportFactory&
 Manager::getIceTransportFactory()
 {
     return *pimpl_->ice_tf_;
@@ -3144,7 +3153,7 @@ Manager::getJamiPluginManager() const
 }
 #endif
 
-std::shared_ptr<ChannelSocket>
+std::shared_ptr<dhtnet::ChannelSocket>
 Manager::gitSocket(std::string_view accountId,
                    std::string_view deviceId,
                    std::string_view conversationId)
@@ -3243,7 +3252,7 @@ Manager::eraseGitTransport(git_smart_subtransport* tr)
     pimpl_->gitTransports_.erase(tr);
 }
 
-tls::CertificateStore&
+dhtnet::tls::CertificateStore&
 Manager::certStore(const std::string& accountId) const
 {
     if (const auto& account = getAccount<JamiAccount>(accountId)) {

@@ -280,7 +280,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         dht_->put(
             h,
             info_->announce,
-            [this, dcb = std::move(dcb), h](bool ok) {
+            [dcb = std::move(dcb), h](bool ok) {
                 if (ok)
                     JAMI_DEBUG("device announced at {}", h.toString());
                 // We do not care about the status, it's a permanent put, if this fail,
@@ -434,7 +434,7 @@ AccountManager::onPeerMessage(const dht::crypto::PublicKey& peer_device,
 {
     // quick check in case we already explicilty banned this device
     auto trustStatus = getCertificateStatus(peer_device.toString());
-    if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
+    if (trustStatus == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
         JAMI_WARN("[Auth] Discarding message from banned device %s", peer_device.toString().c_str());
         return;
     }
@@ -594,30 +594,30 @@ AccountManager::findCertificate(
 
 bool
 AccountManager::setCertificateStatus(const std::string& cert_id,
-                                     tls::TrustStore::PermissionStatus status)
+                                     dhtnet::tls::TrustStore::PermissionStatus status)
 {
     return info_ and info_->contacts->setCertificateStatus(cert_id, status);
 }
 
 bool
 AccountManager::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                              tls::TrustStore::PermissionStatus status,
+                              dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local)
 {
     return info_ and info_->contacts->setCertificateStatus(cert, status, local);
 }
 
 std::vector<std::string>
-AccountManager::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
+AccountManager::getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status)
 {
     return info_ ? info_->contacts->getCertificatesByStatus(status) : std::vector<std::string> {};
 }
 
-tls::TrustStore::PermissionStatus
+dhtnet::tls::TrustStore::PermissionStatus
 AccountManager::getCertificateStatus(const std::string& cert_id) const
 {
     return info_ ? info_->contacts->getCertificateStatus(cert_id)
-                 : tls::TrustStore::PermissionStatus::UNDEFINED;
+                 : dhtnet::tls::TrustStore::PermissionStatus::UNDEFINED;
 }
 
 bool
@@ -798,7 +798,7 @@ AccountManager::lookupAddress(const std::string& addr, LookupCallback cb)
     nameDir_.get().lookupAddress(addr, cb);
 }
 
-tls::CertificateStore&
+dhtnet::tls::CertificateStore&
 AccountManager::certStore() const
 {
     return Manager::instance().certStore(info_->contacts->accountId());

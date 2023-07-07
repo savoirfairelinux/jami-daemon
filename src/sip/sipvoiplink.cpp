@@ -47,11 +47,11 @@
 
 #include "pres_sub_server.h"
 
-#include "connectivity/ip_utils.h"
 #include "connectivity/sip_utils.h"
 #include "string_utils.h"
 #include "logger.h"
 
+#include <dhtnet/ip_utils.h>
 #include <opendht/thread_pool.h>
 
 #include <pjsip/sip_endpoint.h>

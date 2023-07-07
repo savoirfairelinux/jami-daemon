@@ -31,13 +31,15 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 #include "im/message_engine.h"
-#include "connectivity/ip_utils.h"
 #include "media/media_codec.h"
 #include "media/media_attribute.h"
 #include "logger.h"
 #include "compiler_intrinsics.h" // include the "UNUSED" macro
 #include "call_set.h"
 #include "account_config.h"
+
+#include <dhtnet/ip_utils.h>
+#include <dhtnet/upnp/upnp_control.h>
 
 #include <functional>
 #include <string>
@@ -65,7 +67,6 @@ class Controller;
 
 class Call;
 class SystemCodecContainer;
-struct IceTransportOptions;
 
 class VoipLinkException : public std::runtime_error
 {
@@ -324,7 +325,7 @@ public:
      * Get the UPnP IP (external router) address.
      * If use UPnP is set to false, the address will be empty.
      */
-    IpAddr getUPnPIpAddress() const;
+    dhtnet::IpAddr getUPnPIpAddress() const;
 
     /**
      * Random generator engine
@@ -485,7 +486,7 @@ protected:
      * UPnP IGD controller and the mutex to access it
      */
     mutable std::mutex upnp_mtx {};
-    std::shared_ptr<jami::upnp::Controller> upnpCtrl_;
+    std::shared_ptr<dhtnet::upnp::Controller> upnpCtrl_;
 
     bool iceForMediaEnabled_ {true};
     bool iceCompIdRfc5245Compliant_ {false};

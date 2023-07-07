@@ -21,12 +21,9 @@
 
 #include "sip/siptransport.h"
 #include "connectivity/sip_utils.h"
-#include "connectivity/ip_utils.h"
-#include "connectivity/security/tls_session.h"
 
 #include "jamidht/abstract_sip_transport.h"
 #include "jamidht/channeled_transport.h"
-#include "connectivity/multiplexed_socket.h"
 
 #include "compiler_intrinsics.h"
 #include "sip/sipvoiplink.h"
@@ -39,6 +36,10 @@
 #include <pjnath/stun_config.h>
 #include <pjlib.h>
 #include <pjlib-util.h>
+
+#include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/ip_utils.h>
+#include <dhtnet/tls_session.h>
 
 #include <opendht/crypto.h>
 

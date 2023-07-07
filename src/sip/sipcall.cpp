@@ -33,7 +33,7 @@
 #include "sdp.h"
 #include "manager.h"
 #include "string_utils.h"
-#include "connectivity/upnp/upnp_control.h"
+
 #include "connectivity/sip_utils.h"
 #include "audio/audio_rtp_session.h"
 #include "system_codec_container.h"
@@ -61,6 +61,7 @@
 #include "jamidht/channeled_transport.h"
 
 #include "errno.h"
+#include <dhtnet/upnp/upnp_control.h>
 
 #include <opendht/crypto.h>
 #include <opendht/thread_pool.h>
@@ -3334,7 +3335,7 @@ SIPCall::createIceMediaTransport(bool isReinvite)
 }
 
 bool
-SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> options)
+SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOptions> options)
 {
     auto acc = getSIPAccount();
     if (!acc) {

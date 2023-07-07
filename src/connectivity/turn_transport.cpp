@@ -96,8 +96,8 @@ public:
     pj_turn_sock* relay {nullptr};
     std::unique_ptr<TurnLock> turnLock;
     pj_str_t relayAddr {};
-    IpAddr peerRelayAddr; // address where peers should connect to
-    IpAddr mappedAddr;
+    dhtnet::IpAddr peerRelayAddr; // address where peers should connect to
+    dhtnet::IpAddr mappedAddr;
     std::function<void(bool)> cb_;
 
     std::thread ioWorker;
@@ -122,8 +122,8 @@ TurnTransport::Impl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_
     if (new_state == PJ_TURN_STATE_READY) {
         pj_turn_session_info info;
         pj_turn_sock_get_info(relay, &info);
-        peerRelayAddr = IpAddr {info.relay_addr};
-        mappedAddr = IpAddr {info.mapped_addr};
+        peerRelayAddr = dhtnet::IpAddr {info.relay_addr};
+        mappedAddr = dhtnet::IpAddr {info.mapped_addr};
         JAMI_DEBUG("TURN server ready, peer relay address: {:s}",
                    peerRelayAddr.toString(true, true).c_str());
         cbCalled_ = true;

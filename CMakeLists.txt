@@ -663,7 +663,6 @@ else()
             PkgConfig::git2
             PkgConfig::archive
             PkgConfig::gnutls
-            PkgConfig::webrtcap
             PkgConfig::avformat
             PkgConfig::avdevice
             PkgConfig::avfilter
