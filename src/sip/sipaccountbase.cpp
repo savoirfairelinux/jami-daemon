@@ -27,7 +27,7 @@
 
 #include "account_schema.h"
 #include "manager.h"
-#include "connectivity/ice_transport.h"
+#include <dhtnet/ice_transport.h>
 
 #include "config/yamlparser.h"
 
@@ -140,7 +140,7 @@ SIPAccountBase::loadConfig()
 {
     Account::loadConfig();
     const auto& conf = config();
-    IpAddr publishedIp {conf.publishedIp};
+    dhtnet::IpAddr publishedIp {conf.publishedIp};
     if (not conf.publishedSameasLocal and publishedIp)
         setPublishedAddress(publishedIp);
     TurnTransportParams turnParams;
@@ -246,10 +246,10 @@ SIPAccountBase::generateVideoPort() const
 }
 #endif
 
-IceTransportOptions
+dhtnet::IceTransportOptions
 SIPAccountBase::getIceOptions() const noexcept
 {
-    IceTransportOptions opts;
+    dhtnet::IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();
 
     // if (config().stunEnabled)
@@ -257,7 +257,7 @@ SIPAccountBase::getIceOptions() const noexcept
     if (config().turnEnabled && turnCache_) {
         auto turnAddr = turnCache_->getResolvedTurn();
         if (turnAddr != std::nullopt) {
-            opts.turnServers.emplace_back(TurnServerInfo()
+            opts.turnServers.emplace_back(dhtnet::TurnServerInfo()
                                               .setUri(turnAddr->toString(true))
                                               .setUsername(config().turnServerUserName)
                                               .setPassword(config().turnServerPwd)
@@ -314,7 +314,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
     }
 }
 
-IpAddr
+dhtnet::IpAddr
 SIPAccountBase::getPublishedIpAddress(uint16_t family) const
 {
     if (family == AF_INET)
@@ -334,7 +334,7 @@ SIPAccountBase::getPublishedIpAddress(uint16_t family) const
 }
 
 void
-SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
+SIPAccountBase::setPublishedAddress(const dhtnet::IpAddr& ip_addr)
 {
     if (ip_addr.getFamily() == AF_INET) {
         publishedIp_[0] = ip_addr;

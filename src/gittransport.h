@@ -28,15 +28,18 @@
 
 namespace jami {
 class Manager;
-class ChannelSocket;
 } // namespace jami
+
+namespace dhtnet {
+class ChannelSocket;
+} // namespace dhtnet
 
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
 struct P2PStream
 {
     git_smart_subtransport_stream base;
-    std::weak_ptr<jami::ChannelSocket> socket;
+    std::weak_ptr<dhtnet::ChannelSocket> socket;
 
     std::string cmd {};
     std::string url {};

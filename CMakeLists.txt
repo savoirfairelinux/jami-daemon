@@ -4,6 +4,7 @@ project(jami
     VERSION 13.7.0
     LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
+set (CMAKE_CXX_STANDARD 17)
 
 ################################################################################
 # Build options
@@ -252,7 +253,6 @@ if (MSVC)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
-set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     PACKAGE_NAME="${PACKAGE_NAME}"
     PACKAGE_VERSION="${PROJECT_VERSION}"
@@ -533,9 +533,9 @@ else()
         PkgConfig::swscale
         PkgConfig::jsoncpp
         yaml-cpp
-        PkgConfig::fmt
         PkgConfig::secp256k1
         PUBLIC
+        PkgConfig::fmt
         PkgConfig::avutil
     )
     target_compile_options(${PROJECT_NAME} PRIVATE
@@ -583,7 +583,6 @@ else()
         add_library(${PROJECT_NAME}-jni SHARED ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni/jami_wrapper.cpp)
         target_link_directories(${PROJECT_NAME}-jni PRIVATE ${CONTRIB_PATH}/lib)
         target_link_libraries(${PROJECT_NAME}-jni ${PROJECT_NAME} android log)
-        set_target_properties(${PROJECT_NAME}-jni PROPERTIES CXX_STANDARD 17)
         target_compile_options(${PROJECT_NAME}-jni PRIVATE
             -fvisibility=hidden
             -Wall -Wextra
@@ -663,7 +662,6 @@ else()
             PkgConfig::git2
             PkgConfig::archive
             PkgConfig::gnutls
-            PkgConfig::webrtcap
             PkgConfig::avformat
             PkgConfig::avdevice
             PkgConfig::avfilter
