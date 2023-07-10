@@ -40,6 +40,10 @@ constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
 
 namespace jami {
 
+#ifdef LIBJAMI_TESTABLE
+bool ConversationRepository::DISABLE_RESET = false;
+#endif
+
 static const std::regex regex_display_name("<|>");
 
 inline std::string_view
@@ -158,9 +162,11 @@ public:
 
     bool add(const std::string& path);
     void addUserDevice();
+    void resetHard();
     // Verify that the device in the repository is still valid
     bool validateDevice();
     std::string commit(const std::string& msg, bool verifyDevice = true);
+    std::string commitMessage(const std::string& msg, bool verifyDevice = true);
     ConversationMode mode() const;
 
     // NOTE! GitDiff needs to be deteleted before repo
@@ -419,6 +425,8 @@ public:
 
         return true;
     }
+
+    std::mutex opMtx_; // Mutex for operations
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -2877,6 +2885,8 @@ ConversationRepository::id() const
 std::string
 ConversationRepository::addMember(const std::string& uri)
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     auto account = pimpl_->account_.lock();
     auto repo = pimpl_->repository();
     if (!account or not repo)
@@ -2980,6 +2990,8 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
 bool
 ConversationRepository::fetch(const std::string& remoteDeviceId)
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     // Fetch distant repository
     git_remote* remote_ptr = nullptr;
     git_fetch_options fetch_opts;
@@ -3098,11 +3110,39 @@ ConversationRepository::Impl::addUserDevice()
     }
 }
 
+void
+ConversationRepository::Impl::resetHard()
+{
+#ifdef LIBJAMI_TESTABLE
+    if (DISABLE_RESET)
+        return;
+#endif
+    auto repo = repository();
+    if (!repo)
+        return;
+    git_object *head_commit_obj = nullptr;
+    auto error = git_revparse_single(&head_commit_obj, repo.get(), "HEAD");
+    if (error < 0) {
+        JAMI_ERROR("Could not get HEAD commit");
+        return;
+    }
+    GitObject target {head_commit_obj, git_object_free};
+    git_reset(repo.get(), head_commit_obj, GIT_RESET_HARD, nullptr);
+}
+
 std::string
 ConversationRepository::commitMessage(const std::string& msg, bool verifyDevice)
 {
-    pimpl_->addUserDevice();
-    return pimpl_->commit(msg, verifyDevice);
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    return pimpl_->commitMessage(msg, verifyDevice);
+}
+
+std::string
+ConversationRepository::Impl::commitMessage(const std::string& msg, bool verifyDevice)
+{
+    addUserDevice();
+    return commit(msg, verifyDevice);
 }
 
 std::vector<std::string>
@@ -3145,6 +3185,8 @@ ConversationRepository::getCommit(const std::string& commitId, bool logIfNotFoun
 std::pair<bool, std::string>
 ConversationRepository::merge(const std::string& merge_id, bool force)
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     // First, the repository must be in a clean state
     auto repo = pimpl_->repository();
     if (!repo) {
@@ -3153,8 +3195,12 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     }
     int state = git_repository_state(repo.get());
     if (state != GIT_REPOSITORY_STATE_NONE) {
-        JAMI_ERROR("Merge operation aborted: repository is in unexpected state %d", state);
-        return {false, ""};
+        pimpl_->resetHard();
+        int state = git_repository_state(repo.get());
+        if (state != GIT_REPOSITORY_STATE_NONE) {
+            JAMI_ERROR("Merge operation aborted: repository is in unexpected state {}", state);
+            return {false, ""};
+        }
     }
     // Checkout main (to do a `git_merge branch`)
     if (git_repository_set_head(repo.get(), "refs/heads/main") < 0) {
@@ -3295,6 +3341,8 @@ ConversationRepository::changedFiles(std::string_view diffStats)
 std::string
 ConversationRepository::join()
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     // Check that not already member
     auto repo = pimpl_->repository();
     if (!repo)
@@ -3361,12 +3409,14 @@ ConversationRepository::join()
         pimpl_->saveMembers();
     }
 
-    return commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
 }
 
 std::string
 ConversationRepository::leave()
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     // TODO simplify
     auto account = pimpl_->account_.lock();
     auto repo = pimpl_->repository();
@@ -3458,6 +3508,8 @@ ConversationRepository::mode() const
 std::string
 ConversationRepository::voteKick(const std::string& uri, const std::string& type)
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     auto repo = pimpl_->repository();
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
@@ -3502,12 +3554,14 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
-    return commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
 }
 
 std::string
 ConversationRepository::voteUnban(const std::string& uri, const std::string_view type)
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     auto repo = pimpl_->repository();
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
@@ -3542,7 +3596,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
-    return commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
 }
 
 bool
@@ -3648,6 +3702,8 @@ ConversationRepository::resolveVote(const std::string& uri,
                                     const std::string_view type,
                                     const std::string& voteType)
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     // Count ratio admin/votes
     auto nbAdmins = 0, nbVotes = 0;
     // For each admin, check if voted
@@ -3693,7 +3749,7 @@ ConversationRepository::resolveVote(const std::string& uri,
         Json::StreamWriterBuilder wbuilder;
         wbuilder["commentStyle"] = "None";
         wbuilder["indentation"] = "";
-        return commitMessage(Json::writeString(wbuilder, json));
+        return pimpl_->commitMessage(Json::writeString(wbuilder, json));
     }
 
     // If vote nok
@@ -3809,6 +3865,8 @@ ConversationRepository::uriFromDevice(const std::string& deviceId) const
 std::string
 ConversationRepository::updateInfos(const std::map<std::string, std::string>& profile)
 {
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
     auto account = pimpl_->account_.lock();
     if (!account)
         return {};
@@ -3890,7 +3948,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
 
-    return commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
 }
 
 std::map<std::string, std::string>
