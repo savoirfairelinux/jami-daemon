@@ -16,6 +16,17 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "fileutils.h"
+#include "manager.h"
+#include "jamidht/jamiaccount.h"
+#include "../../test_runner.h"
+#include "jami.h"
+#include "account_const.h"
+#include "common.h"
+
+#include <dhtnet/connectionmanager.h>
+#include <dhtnet/multiplexed_socket.h>
+
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -23,16 +34,6 @@
 #include <chrono>
 #include <condition_variable>
 #include <filesystem>
-
-#include "fileutils.h"
-#include "manager.h"
-#include "connectivity/connectionmanager.h"
-#include "connectivity/multiplexed_socket.h"
-#include "jamidht/jamiaccount.h"
-#include "../../test_runner.h"
-#include "jami.h"
-#include "account_const.h"
-#include "common.h"
 
 using namespace libjami::Account;
 using namespace std::literals::chrono_literals;

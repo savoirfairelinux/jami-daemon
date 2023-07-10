@@ -33,7 +33,6 @@
 
 namespace jami {
 
-class IceSocket;
 class MediaRecorder;
 
 class RtpSession
@@ -50,7 +49,7 @@ public:
     {}
     virtual ~RtpSession() {};
 
-    virtual void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) = 0;
+    virtual void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) = 0;
     virtual void restartSender() = 0;
     virtual void stop() = 0;
     void setMediaSource(const std::string& resource) { input_ = resource; }
@@ -74,8 +73,8 @@ public:
     virtual void initRecorder() = 0;
     virtual void deinitRecorder() = 0;
     std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }
-    const IpAddr& getSendAddr() const { return send_.addr; };
-    const IpAddr& getRecvAddr() const { return receive_.addr; };
+    const dhtnet::IpAddr& getSendAddr() const { return send_.addr; };
+    const dhtnet::IpAddr& getRecvAddr() const { return receive_.addr; };
 
     inline std::string streamId() const { return streamId_; }
 
