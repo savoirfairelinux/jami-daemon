@@ -21,8 +21,8 @@
 #pragma once
 
 #include "jamidht/channel_handler.h"
-#include "connectivity/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
+#include <dhtnet/connectionmanager.h>
 
 namespace jami {
 
@@ -32,7 +32,7 @@ namespace jami {
 class SyncChannelHandler : public ChannelHandlerInterface
 {
 public:
-    SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc, ConnectionManager& cm);
+    SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm);
     ~SyncChannelHandler();
 
     /**
@@ -59,11 +59,11 @@ public:
      */
     void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                  const std::string& name,
-                 std::shared_ptr<ChannelSocket> channel) override;
+                 std::shared_ptr<dhtnet::ChannelSocket> channel) override;
 
 private:
     std::weak_ptr<JamiAccount> account_;
-    ConnectionManager& connectionManager_;
+    dhtnet::ConnectionManager& connectionManager_;
 };
 
 } // namespace jami

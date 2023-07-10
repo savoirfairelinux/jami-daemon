@@ -47,7 +47,7 @@ generateUID()
     return std::uniform_int_distribution<libjami::DataTransferId> {1, JAMI_ID_MAX_VAL}(rd);
 }
 
-FileInfo::FileInfo(const std::shared_ptr<ChannelSocket>& channel,
+FileInfo::FileInfo(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                    const std::string& fileId,
                    const std::string& interactionId,
                    const libjami::DataTransferInfo& info)
@@ -74,7 +74,7 @@ FileInfo::emit(libjami::DataTransferEventCode code)
     }
 }
 
-OutgoingFile::OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
+OutgoingFile::OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                            const std::string& fileId,
                            const std::string& interactionId,
                            const libjami::DataTransferInfo& info,
@@ -154,7 +154,7 @@ OutgoingFile::cancel()
     emit(libjami::DataTransferEventCode::closed_by_host);
 }
 
-IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
+IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                            const libjami::DataTransferInfo& info,
                            const std::string& fileId,
                            const std::string& interactionId,
@@ -290,7 +290,7 @@ public:
 
     std::mutex mapMutex_ {};
     std::map<std::string, WaitingRequest> waitingIds_ {};
-    std::map<std::shared_ptr<ChannelSocket>, std::shared_ptr<OutgoingFile>> outgoings_ {};
+    std::map<std::shared_ptr<dhtnet::ChannelSocket>, std::shared_ptr<OutgoingFile>> outgoings_ {};
     std::map<std::string, std::shared_ptr<IncomingFile>> incomings_ {};
     std::map<std::pair<std::string, std::string>, std::shared_ptr<IncomingFile>> vcards_ {};
 };
@@ -302,7 +302,7 @@ TransferManager::TransferManager(const std::string& accountId, const std::string
 TransferManager::~TransferManager() {}
 
 void
-TransferManager::transferFile(const std::shared_ptr<ChannelSocket>& channel,
+TransferManager::transferFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                               const std::string& fileId,
                               const std::string& interactionId,
                               const std::string& path,
@@ -343,7 +343,7 @@ TransferManager::transferFile(const std::shared_ptr<ChannelSocket>& channel,
 bool
 TransferManager::cancel(const std::string& fileId)
 {
-    std::shared_ptr<ChannelSocket> channel;
+    std::shared_ptr<dhtnet::ChannelSocket> channel;
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     // Remove from waiting, this avoid auto-download
     auto itW = pimpl_->waitingIds_.find(fileId);
@@ -414,7 +414,7 @@ TransferManager::waitForTransfer(const std::string& fileId,
 
 void
 TransferManager::onIncomingFileTransfer(const std::string& fileId,
-                                        const std::shared_ptr<ChannelSocket>& channel)
+                                        const std::shared_ptr<dhtnet::ChannelSocket>& channel)
 {
     std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
     // Check if not already an incoming file for this id and that we are waiting this file
@@ -487,7 +487,7 @@ TransferManager::path(const std::string& fileId) const
 }
 
 void
-TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel, const std::string& sha3Sum)
+TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>& channel, const std::string& sha3Sum)
 {
     if (!channel)
         return;
