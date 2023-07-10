@@ -63,7 +63,7 @@ TurnCache::~TurnCache() {
     }
 }
 
-std::optional<IpAddr>
+std::optional<dhtnet::IpAddr>
 TurnCache::getResolvedTurn(uint16_t family) const
 {
     if (family == AF_INET && cacheTurnV4_) {
@@ -119,30 +119,30 @@ TurnCache::refresh(const asio::error_code& ec)
     // same network
     // No need to resolve, it's already a valid address
     auto server = params_.domain;
-    if (IpAddr::isValid(server, AF_INET)) {
-        testTurn(IpAddr(server, AF_INET));
+    if (dhtnet::IpAddr::isValid(server, AF_INET)) {
+        testTurn(dhtnet::IpAddr(server, AF_INET));
         return;
-    } else if (IpAddr::isValid(server, AF_INET6)) {
-        testTurn(IpAddr(server, AF_INET6));
+    } else if (dhtnet::IpAddr::isValid(server, AF_INET6)) {
+        testTurn(dhtnet::IpAddr(server, AF_INET6));
         return;
     }
     // Else cache resolution result
     fileutils::recursive_mkdir(cachePath_ + DIR_SEPARATOR_STR + "domains", 0700);
     auto pathV4 = cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v4." + server;
-    IpAddr testV4, testV6;
+    dhtnet::IpAddr testV4, testV6;
     if (auto turnV4File = std::ifstream(pathV4)) {
         std::string content((std::istreambuf_iterator<char>(turnV4File)),
                             std::istreambuf_iterator<char>());
-        testV4 = IpAddr(content, AF_INET);
+        testV4 = dhtnet::IpAddr(content, AF_INET);
     }
     auto pathV6 = cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v6." + server;
     if (auto turnV6File = std::ifstream(pathV6)) {
         std::string content((std::istreambuf_iterator<char>(turnV6File)),
                             std::istreambuf_iterator<char>());
-        testV6 = IpAddr(content, AF_INET6);
+        testV6 = dhtnet::IpAddr(content, AF_INET6);
     }
     // Resolve just in case. The user can have a different connectivity
-    auto turnV4 = IpAddr {server, AF_INET};
+    auto turnV4 = dhtnet::IpAddr {server, AF_INET};
     {
         if (turnV4) {
             // Cache value to avoid a delay when starting up Jami
@@ -151,9 +151,9 @@ TurnCache::refresh(const asio::error_code& ec)
         } else
             fileutils::remove(pathV4, true);
         // Update TURN
-        testV4 = IpAddr(std::move(turnV4));
+        testV4 = dhtnet::IpAddr(std::move(turnV4));
     }
-    auto turnV6 = IpAddr {server, AF_INET6};
+    auto turnV6 = dhtnet::IpAddr {server, AF_INET6};
     {
         if (turnV6) {
             // Cache value to avoid a delay when starting up Jami
@@ -162,7 +162,7 @@ TurnCache::refresh(const asio::error_code& ec)
         } else
             fileutils::remove(pathV6, true);
         // Update TURN
-        testV6 = IpAddr(std::move(turnV6));
+        testV6 = dhtnet::IpAddr(std::move(turnV6));
     }
     if (testV4)
         testTurn(testV4);
@@ -173,7 +173,7 @@ TurnCache::refresh(const asio::error_code& ec)
 }
 
 void
-TurnCache::testTurn(IpAddr server)
+TurnCache::testTurn(dhtnet::IpAddr server)
 {
     TurnTransportParams params = params_;
     params.server = server;
@@ -197,7 +197,7 @@ TurnCache::testTurn(IpAddr server)
 }
 
 void
-TurnCache::onConnected(const asio::error_code& ec, bool ok, IpAddr server)
+TurnCache::onConnected(const asio::error_code& ec, bool ok, dhtnet::IpAddr server)
 {
     if (ec == asio::error::operation_aborted)
         return;
@@ -209,7 +209,7 @@ TurnCache::onConnected(const asio::error_code& ec, bool ok, IpAddr server)
         cacheTurn.reset();
     } else {
         JAMI_DEBUG("Connection to {:s} ready", server.toString());
-        cacheTurn = std::make_unique<IpAddr>(server);
+        cacheTurn = std::make_unique<dhtnet::IpAddr>(server);
     }
     refreshTurnDelay(!cacheTurnV6_ && !cacheTurnV4_);
     if (auto& turn = server.isIpv4() ? testTurnV4_ : testTurnV6_)

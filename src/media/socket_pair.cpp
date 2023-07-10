@@ -20,14 +20,16 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "connectivity/ip_utils.h"   // MUST BE INCLUDED FIRST
+#include <dhtnet/ip_utils.h>   // MUST BE INCLUDED FIRST
+
 #include "libav_deps.h" // THEN THIS ONE AFTER
 
 #include "socket_pair.h"
-#include "connectivity/ice_socket.h"
 #include "libav_utils.h"
 #include "logger.h"
 #include "connectivity/security/memory.h"
+
+#include <dhtnet/ice_socket.h>
 
 #include <iostream>
 #include <string>
@@ -161,7 +163,7 @@ udp_socket_create(int family, int port)
         return -1;
     }
 
-    auto bind_addr = ip_utils::getAnyHostAddr(family);
+    auto bind_addr = dhtnet::ip_utils::getAnyHostAddr(family);
     if (not bind_addr.isIpv4() and not bind_addr.isIpv6()) {
         JAMI_ERR("No IPv4/IPv6 host found for family %u", family);
         close(udp_fd);
@@ -185,7 +187,7 @@ SocketPair::SocketPair(const char* uri, int localPort)
     openSockets(uri, localPort);
 }
 
-SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock)
+SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
 {
@@ -344,9 +346,9 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     const int local_rtcp_port = local_rtp_port + 1;
     const int dst_rtcp_port = dst_rtp_port + 1;
 
-    rtpDestAddr_ = IpAddr {hostname};
+    rtpDestAddr_ = dhtnet::IpAddr {hostname};
     rtpDestAddr_.setPort(dst_rtp_port);
-    rtcpDestAddr_ = IpAddr {hostname};
+    rtcpDestAddr_ = dhtnet::IpAddr {hostname};
     rtcpDestAddr_.setPort(dst_rtcp_port);
 
     // Open local sockets (RTP/RTCP)
@@ -582,7 +584,7 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
     // System sockets?
     if (rtpHandle_ >= 0) {
         int fd;
-        IpAddr* dest_addr;
+        dhtnet::IpAddr* dest_addr;
 
         if (isRTCP) {
             fd = rtcpHandle_;

@@ -33,7 +33,7 @@
 #include "sdp.h"
 #include "manager.h"
 #include "string_utils.h"
-#include "connectivity/upnp/upnp_control.h"
+
 #include "connectivity/sip_utils.h"
 #include "audio/audio_rtp_session.h"
 #include "system_codec_container.h"
@@ -61,6 +61,9 @@
 #include "jamidht/channeled_transport.h"
 
 #include "errno.h"
+
+#include <dhtnet/upnp/upnp_control.h>
+#include <dhtnet/ice_transport_factory.h>
 
 #include <opendht/crypto.h>
 #include <opendht/thread_pool.h>
@@ -113,7 +116,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     jami_tracepoint(call_start, callId.c_str());
 
     if (account->getUPnPActive())
-        upnp_.reset(new upnp::Controller());
+        upnp_.reset(new dhtnet::upnp::Controller(Manager::instance().upnpContext()));
 
     setCallMediaLocal();
 
@@ -934,7 +937,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 
             if (publicAddr) {
                 opts.accountPublicAddr = publicAddr;
-                if (auto interfaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
+                if (auto interfaceAddr = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                                     publicAddr.getFamily())) {
                     opts.accountLocalAddr = interfaceAddr;
                     if (createIceMediaTransport(false)
@@ -1929,7 +1932,7 @@ SIPCall::addLocalIceAttributes()
 }
 
 std::vector<IceCandidate>
-SIPCall::getAllRemoteCandidates(IceTransport& transport) const
+SIPCall::getAllRemoteCandidates(dhtnet::IceTransport& transport) const
 {
     std::vector<IceCandidate> rem_candidates;
     for (unsigned mediaIdx = 0; mediaIdx < static_cast<unsigned>(rtpStreams_.size()); mediaIdx++) {
@@ -2969,15 +2972,15 @@ SIPCall::openPortsUPnP()
     JAMI_DBG("[call:%s] opening ports via UPNP for SDP session", getCallId().c_str());
 
     // RTP port.
-    upnp_->reserveMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP);
+    upnp_->reserveMapping(sdp_->getLocalAudioPort(), dhtnet::upnp::PortType::UDP);
     // RTCP port.
-    upnp_->reserveMapping(sdp_->getLocalAudioControlPort(), upnp::PortType::UDP);
+    upnp_->reserveMapping(sdp_->getLocalAudioControlPort(), dhtnet::upnp::PortType::UDP);
 
 #ifdef ENABLE_VIDEO
     // RTP port.
-    upnp_->reserveMapping(sdp_->getLocalVideoPort(), upnp::PortType::UDP);
+    upnp_->reserveMapping(sdp_->getLocalVideoPort(), dhtnet::upnp::PortType::UDP);
     // RTCP port.
-    upnp_->reserveMapping(sdp_->getLocalVideoControlPort(), upnp::PortType::UDP);
+    upnp_->reserveMapping(sdp_->getLocalVideoControlPort(), dhtnet::upnp::PortType::UDP);
 #endif
 }
 
@@ -3334,7 +3337,7 @@ SIPCall::createIceMediaTransport(bool isReinvite)
 }
 
 bool
-SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> options)
+SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOptions> options)
 {
     auto acc = getSIPAccount();
     if (!acc) {
@@ -3411,7 +3414,7 @@ SIPCall::getLocalIceCandidates(unsigned compId) const
 }
 
 void
-SIPCall::resetTransport(std::shared_ptr<IceTransport>&& transport)
+SIPCall::resetTransport(std::shared_ptr<dhtnet::IceTransport>&& transport)
 {
     // Move the transport to another thread and destroy it there if possible
     if (transport) {
@@ -3473,7 +3476,7 @@ SIPCall::remoteHasValidIceAttributes() const
 }
 
 void
-SIPCall::setIceMedia(std::shared_ptr<IceTransport> ice, bool isReinvite)
+SIPCall::setIceMedia(std::shared_ptr<dhtnet::IceTransport> ice, bool isReinvite)
 {
     std::lock_guard<std::mutex> lk(transportMtx_);
 
@@ -3519,12 +3522,12 @@ SIPCall::setupIceResponse(bool isReinvite)
     // fallback on local address.
     opt.accountPublicAddr = account->getPublishedIpAddress();
     if (opt.accountPublicAddr) {
-        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
+        opt.accountLocalAddr = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                           opt.accountPublicAddr.getFamily());
     } else {
         // Just set the local address for both, most likely the account is not
         // registered.
-        opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), AF_INET);
+        opt.accountLocalAddr = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(), AF_INET);
         opt.accountPublicAddr = opt.accountLocalAddr;
     }
 
@@ -3557,10 +3560,10 @@ SIPCall::isIceRunning() const
     return iceMedia_ and iceMedia_->isRunning();
 }
 
-std::unique_ptr<IceSocket>
+std::unique_ptr<dhtnet::IceSocket>
 SIPCall::newIceSocket(unsigned compId)
 {
-    return std::unique_ptr<IceSocket> {new IceSocket(getIceMedia(), compId)};
+    return std::unique_ptr<dhtnet::IceSocket> {new dhtnet::IceSocket(getIceMedia(), compId)};
 }
 
 void

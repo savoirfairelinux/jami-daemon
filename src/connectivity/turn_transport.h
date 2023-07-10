@@ -21,8 +21,7 @@
 
 #pragma once
 
-#include "connectivity/ip_utils.h"
-
+#include <dhtnet/ip_utils.h>
 #include <functional>
 #include <memory>
 #include <string>
@@ -31,7 +30,7 @@ namespace jami {
 
 struct TurnTransportParams
 {
-    IpAddr server;
+    dhtnet::IpAddr server;
     std::string domain; // Used by cache_turn
     // Plain Credentials
     std::string realm;

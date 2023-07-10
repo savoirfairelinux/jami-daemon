@@ -29,8 +29,9 @@
 #endif
 
 #include "ring_types.h"
-#include "connectivity/ip_utils.h"
 #include "noncopyable.h"
+
+#include <dhtnet/ip_utils.h>
 
 #include <pjsip.h>
 #include <pjlib.h>
@@ -105,7 +106,7 @@ public:
      */
     std::unique_ptr<SipTransportBroker> sipTransportBroker;
 
-    typedef std::function<void(std::vector<IpAddr>)> SrvResolveCallback;
+    typedef std::function<void(std::vector<dhtnet::IpAddr>)> SrvResolveCallback;
     void resolveSrvName(const std::string& name,
                         pjsip_transport_type_e type,
                         SrvResolveCallback&& cb);
