@@ -136,6 +136,7 @@ public:
 
     bool add(const std::string& path);
     void addUserDevice();
+    void resetHard();
     // Verify that the device in the repository is still valid
     bool validateDevice();
     std::string commit(const std::string& msg, bool verifyDevice = true);
@@ -3026,6 +3027,22 @@ ConversationRepository::Impl::addUserDevice()
     }
 }
 
+void
+ConversationRepository::Impl::resetHard()
+{
+    auto repo = repository();
+    if (!repo)
+        return;
+    git_object *head_commit_obj = nullptr;
+    auto error = git_revparse_single(&head_commit_obj, repo.get(), "HEAD");
+    if (error < 0) {
+        JAMI_ERROR("Could not get HEAD commit");
+        return;
+    }
+    GitObject target {head_commit_obj, git_object_free};
+    git_reset(repo.get(), head_commit_obj, GIT_RESET_HARD, nullptr);
+}
+
 std::string
 ConversationRepository::commitMessage(const std::string& msg, bool verifyDevice)
 {
@@ -3077,8 +3094,12 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     }
     int state = git_repository_state(repo.get());
     if (state != GIT_REPOSITORY_STATE_NONE) {
-        JAMI_ERROR("Merge operation aborted: repository is in unexpected state %d", state);
-        return {false, ""};
+        pimpl_->resetHard();
+        int state = git_repository_state(repo.get());
+        if (state != GIT_REPOSITORY_STATE_NONE) {
+            JAMI_ERROR("Merge operation aborted: repository is in unexpected state %d", state);
+            return {false, ""};
+        }
     }
     // Checkout main (to do a `git_merge branch`)
     if (git_repository_set_head(repo.get(), "refs/heads/main") < 0) {
