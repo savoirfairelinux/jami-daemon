@@ -141,6 +141,9 @@ using PostConditionCb
 class LIBJAMI_TESTABLE ConversationRepository
 {
 public:
+    #ifdef LIBJAMI_TESTABLE
+    static bool DISABLE_RESET; // Some tests inject bad files so resetHard() will break the test
+    #endif
     /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
      * @param account       The related account

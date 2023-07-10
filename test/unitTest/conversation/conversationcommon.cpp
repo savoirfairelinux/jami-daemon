@@ -51,6 +51,7 @@ addVote(std::shared_ptr<JamiAccount> account,
         const std::string& votedUri,
         const std::string& content)
 {
+    ConversationRepository::DISABLE_RESET = true;
     auto repoPath = fileutils::get_data_dir() / account->getAccountID()
                     / "conversations" / convId;
     auto voteDirectory = repoPath / "votes" / "members";
@@ -80,6 +81,7 @@ simulateRemoval(std::shared_ptr<JamiAccount> account,
                 const std::string& convId,
                 const std::string& votedUri)
 {
+    ConversationRepository::DISABLE_RESET = true;
     auto repoPath = fileutils::get_data_dir() / account->getAccountID()
                     / "conversations" / convId;
     auto memberFile = repoPath / "members" / (votedUri + ".crt");
@@ -125,6 +127,7 @@ addFile(std::shared_ptr<JamiAccount> account,
         const std::string& relativePath,
         const std::string& content)
 {
+    ConversationRepository::DISABLE_RESET = true;
     auto repoPath = fileutils::get_data_dir() / account->getAccountID()
                     / "conversations" / convId;
     // Add file
@@ -155,6 +158,7 @@ addFile(std::shared_ptr<JamiAccount> account,
 void
 addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
 {
+    ConversationRepository::DISABLE_RESET = true;
     auto repoPath = fileutils::get_data_dir() / account->getAccountID()
                     / "conversations" / convId;
 
@@ -177,6 +181,7 @@ addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
 void
 commit(std::shared_ptr<JamiAccount> account, const std::string& convId, Json::Value& message)
 {
+    ConversationRepository::DISABLE_RESET = true;
     ConversationRepository cr(account->weak(), convId);
 
     Json::StreamWriterBuilder wbuilder;
@@ -188,6 +193,7 @@ commit(std::shared_ptr<JamiAccount> account, const std::string& convId, Json::Va
 std::string
 commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, const std::string& msg)
 {
+    ConversationRepository::DISABLE_RESET = true;
     auto deviceId = std::string(account->currentDeviceId());
     auto name = account->getDisplayName();
     if (name.empty())
