@@ -25,10 +25,12 @@
 #include "manager.h"
 #include "opendht/dhtrunner.h"
 #include "opendht/thread_pool.h"
-#include "connectivity/ice_transport.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
+
+#include <dhtnet/ice_transport.h>
+#include <dhtnet/ice_transport_factory.h>
 
 using namespace libjami::Account;
 
@@ -52,7 +54,7 @@ public:
 
     // For future tests with publicIp
     std::shared_ptr<dht::DhtRunner> dht_ {};
-    std::unique_ptr<IpAddr> turnV4_ {};
+    std::unique_ptr<dhtnet::IpAddr> turnV4_ {};
 
 private:
     void testRawIceConnection();
@@ -84,7 +86,7 @@ IceTest::setUp()
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
     if (!turnV4_) {
-        turnV4_ = std::make_unique<IpAddr>("turn.jami.net", AF_INET);
+        turnV4_ = std::make_unique<dhtnet::IpAddr>("turn.jami.net", AF_INET);
     }
 }
 
@@ -95,10 +97,10 @@ IceTest::tearDown()
 void
 IceTest::testRawIceConnection()
 {
-    IceTransportOptions ice_config;
+    dhtnet::IceTransportOptions ice_config;
     ice_config.upnpEnable = true;
     ice_config.tcpEnable = true;
-    std::shared_ptr<IceTransport> ice_master, ice_slave;
+    std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
     std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
@@ -186,10 +188,10 @@ IceTest::testTurnMasterIceConnection()
     const auto& addr4 = dht_->getPublicAddress(AF_INET);
     CPPUNIT_ASSERT(addr4.size() != 0);
     CPPUNIT_ASSERT(turnV4_);
-    IceTransportOptions ice_config;
+    dhtnet::IceTransportOptions ice_config;
     ice_config.upnpEnable = true;
     ice_config.tcpEnable = true;
-    std::shared_ptr<IceTransport> ice_master, ice_slave;
+    std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
     std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
@@ -235,9 +237,9 @@ IceTest::testTurnMasterIceConnection()
         iceMasterReady = ok;
         cv.notify_one();
     };
-    ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
-    ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
-    ice_config.turnServers.emplace_back(TurnServerInfo()
+    ice_config.accountPublicAddr = dhtnet::IpAddr(*addr4[0].get());
+    ice_config.accountLocalAddr = dhtnet::ip_utils::getLocalAddr(AF_INET);
+    ice_config.turnServers.emplace_back(dhtnet::TurnServerInfo()
                                             .setUri(turnV4_->toString(true))
                                             .setUsername("ring")
                                             .setPassword("ring")
@@ -303,10 +305,10 @@ IceTest::testTurnSlaveIceConnection()
     const auto& addr4 = dht_->getPublicAddress(AF_INET);
     CPPUNIT_ASSERT(addr4.size() != 0);
     CPPUNIT_ASSERT(turnV4_);
-    IceTransportOptions ice_config;
+    dhtnet::IceTransportOptions ice_config;
     ice_config.upnpEnable = true;
     ice_config.tcpEnable = true;
-    std::shared_ptr<IceTransport> ice_master, ice_slave;
+    std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
     std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
@@ -351,8 +353,8 @@ IceTest::testTurnSlaveIceConnection()
         iceMasterReady = ok;
         cv.notify_one();
     };
-    ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
-    ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
+    ice_config.accountPublicAddr = dhtnet::IpAddr(*addr4[0].get());
+    ice_config.accountLocalAddr = dhtnet::ip_utils::getLocalAddr(AF_INET);
     ice_config.master = true;
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
@@ -395,7 +397,7 @@ IceTest::testTurnSlaveIceConnection()
         iceSlaveReady = ok;
         cv.notify_one();
     };
-    ice_config.turnServers.emplace_back(TurnServerInfo()
+    ice_config.turnServers.emplace_back(dhtnet::TurnServerInfo()
                                             .setUri(turnV4_->toString(true))
                                             .setUsername("ring")
                                             .setPassword("ring")
@@ -417,10 +419,10 @@ IceTest::testReceiveTooManyCandidates()
     const auto& addr4 = dht_->getPublicAddress(AF_INET);
     CPPUNIT_ASSERT(addr4.size() != 0);
     CPPUNIT_ASSERT(turnV4_);
-    IceTransportOptions ice_config;
+    dhtnet::IceTransportOptions ice_config;
     ice_config.upnpEnable = true;
     ice_config.tcpEnable = true;
-    std::shared_ptr<IceTransport> ice_master, ice_slave;
+    std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
     std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
@@ -456,9 +458,9 @@ IceTest::testReceiveTooManyCandidates()
         iceMasterReady = ok;
         cv.notify_one();
     };
-    ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
-    ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
-    ice_config.turnServers.emplace_back(TurnServerInfo()
+    ice_config.accountPublicAddr = dhtnet::IpAddr(*addr4[0].get());
+    ice_config.accountLocalAddr = dhtnet::ip_utils::getLocalAddr(AF_INET);
+    ice_config.turnServers.emplace_back(dhtnet::TurnServerInfo()
                                             .setUri(turnV4_->toString(true))
                                             .setUsername("ring")
                                             .setPassword("ring")
@@ -522,10 +524,10 @@ IceTest::testCompleteOnFailure()
     const auto& addr4 = dht_->getPublicAddress(AF_INET);
     CPPUNIT_ASSERT(addr4.size() != 0);
     CPPUNIT_ASSERT(turnV4_);
-    IceTransportOptions ice_config;
+    dhtnet::IceTransportOptions ice_config;
     ice_config.upnpEnable = true;
     ice_config.tcpEnable = true;
-    std::shared_ptr<IceTransport> ice_master, ice_slave;
+    std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
     std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
@@ -570,8 +572,8 @@ IceTest::testCompleteOnFailure()
         iceMasterNotReady = !ok;
         cv.notify_one();
     };
-    ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
-    ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
+    ice_config.accountPublicAddr = dhtnet::IpAddr(*addr4[0].get());
+    ice_config.accountLocalAddr = dhtnet::ip_utils::getLocalAddr(AF_INET);
     ice_config.master = true;
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
@@ -614,7 +616,7 @@ IceTest::testCompleteOnFailure()
         iceSlaveNotReady = !ok;
         cv.notify_one();
     };
-    ice_config.turnServers.emplace_back(TurnServerInfo()
+    ice_config.turnServers.emplace_back(dhtnet::TurnServerInfo()
                                             .setUri(turnV4_->toString(true))
                                             .setUsername("ring")
                                             .setPassword("ring")

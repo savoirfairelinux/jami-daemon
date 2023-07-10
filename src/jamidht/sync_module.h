@@ -36,7 +36,7 @@ public:
      * @param peerId    The contact who owns the device
      * @param deviceId  Device linked to that transport
      */
-    void cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
+    void cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                              const std::string& peerId,
                              const DeviceId& deviceId);
 
@@ -47,7 +47,7 @@ public:
      * @param syncMsg       Default message
      */
     void syncWith(const DeviceId& deviceId,
-                  const std::shared_ptr<ChannelSocket>& socket,
+                  const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                   const std::shared_ptr<SyncMsg>& syncMsg = nullptr);
 
     /**

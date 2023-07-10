@@ -25,7 +25,6 @@
 #include <config.h>
 #endif
 
-#include "connectivity/ip_utils.h"
 #include "media_io_handle.h"
 
 #ifndef _WIN32
@@ -38,6 +37,9 @@
 using socklen_t = int;
 #endif
 
+#include <dhtnet/ip_utils.h>
+#include <dhtnet/ice_socket.h>
+
 #include <cstdint>
 #include <mutex>
 #include <memory>
@@ -49,7 +51,6 @@ using socklen_t = int;
 
 namespace jami {
 
-class IceSocket;
 class SRTPProtoContext;
 
 typedef struct
@@ -133,7 +134,7 @@ class SocketPair
 {
 public:
     SocketPair(const char* uri, int localPort);
-    SocketPair(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock);
+    SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock);
     ~SocketPair();
 
     void interrupt();
@@ -207,13 +208,13 @@ private:
     std::list<std::vector<uint8_t>> rtpDataBuff_;
     std::list<std::vector<uint8_t>> rtcpDataBuff_;
 
-    std::unique_ptr<IceSocket> rtp_sock_;
-    std::unique_ptr<IceSocket> rtcp_sock_;
+    std::unique_ptr<dhtnet::IceSocket> rtp_sock_;
+    std::unique_ptr<dhtnet::IceSocket> rtcp_sock_;
 
     int rtpHandle_ {-1};
     int rtcpHandle_ {-1};
-    IpAddr rtpDestAddr_;
-    IpAddr rtcpDestAddr_;
+    dhtnet::IpAddr rtpDestAddr_;
+    dhtnet::IpAddr rtcpDestAddr_;
     std::atomic_bool interrupted_ {false};
     // Read operations are blocking. This will allow unblocking the
     // receiver thread if the peer stops/mutes the media (RTP)
