@@ -375,7 +375,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 void
 Sdp::addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port)
 {
-    IpAddr addr {publishedIpAddr_};
+    dhtnet::IpAddr addr {publishedIpAddr_};
     addr.setPort(port);
     pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create_rtcp(memPool_.get(), addr.pjPtr());
     if (attr)
@@ -400,7 +400,7 @@ Sdp::setPublishedIP(const std::string& addr, pj_uint16_t addr_type)
 }
 
 void
-Sdp::setPublishedIP(const IpAddr& ip_addr)
+Sdp::setPublishedIP(const dhtnet::IpAddr& ip_addr)
 {
     setPublishedIP(ip_addr, ip_addr.getFamily());
 }
@@ -957,7 +957,7 @@ Sdp::getIceCandidates(unsigned media_index) const
 }
 
 void
-Sdp::addIceAttributes(const IceTransport::Attribute&& ice_attrs)
+Sdp::addIceAttributes(const dhtnet::IceTransport::Attribute&& ice_attrs)
 {
     pj_str_t value = sip_utils::CONST_PJ_STR(ice_attrs.ufrag);
     pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create(memPool_.get(), "ice-ufrag", &value);
@@ -972,7 +972,7 @@ Sdp::addIceAttributes(const IceTransport::Attribute&& ice_attrs)
         throw SdpException("Could not add ICE.pwd attribute to local SDP");
 }
 
-IceTransport::Attribute
+dhtnet::IceTransport::Attribute
 Sdp::getIceAttributes() const
 {
     if (auto session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_)
@@ -980,10 +980,10 @@ Sdp::getIceAttributes() const
     return {};
 }
 
-IceTransport::Attribute
+dhtnet::IceTransport::Attribute
 Sdp::getIceAttributes(const pjmedia_sdp_session* session)
 {
-    IceTransport::Attribute ice_attrs;
+    dhtnet::IceTransport::Attribute ice_attrs;
     for (unsigned i = 0; i < session->attr_count; i++) {
         pjmedia_sdp_attr* attribute = session->attr[i];
         if (pj_stricmp2(&attribute->name, "ice-ufrag") == 0)

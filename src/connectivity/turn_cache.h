@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "connectivity/ip_utils.h"
 #include "connectivity/turn_transport.h"
+#include <dhtnet/ip_utils.h>
 
 #include <atomic>
 #include <asio.hpp>
@@ -43,7 +43,7 @@ public:
               bool enabled);
     ~TurnCache();
 
-    std::optional<IpAddr> getResolvedTurn(uint16_t family = AF_INET) const;
+    std::optional<dhtnet::IpAddr> getResolvedTurn(uint16_t family = AF_INET) const;
     /**
      * Pass a new configuration for the cache
      * @param param     The new configuration
@@ -67,7 +67,7 @@ private:
      * This will cache the turn server resolution each time we launch
      * Jami, or for each connectivityChange()
      */
-    void testTurn(IpAddr server);
+    void testTurn(dhtnet::IpAddr server);
     std::unique_ptr<TurnTransport> testTurnV4_;
     std::unique_ptr<TurnTransport> testTurnV6_;
 
@@ -77,10 +77,10 @@ private:
 
     // Store resoved turn addresses
     mutable std::mutex cachedTurnMutex_ {};
-    std::unique_ptr<IpAddr> cacheTurnV4_ {};
-    std::unique_ptr<IpAddr> cacheTurnV6_ {};
+    std::unique_ptr<dhtnet::IpAddr> cacheTurnV4_ {};
+    std::unique_ptr<dhtnet::IpAddr> cacheTurnV6_ {};
 
-    void onConnected(const asio::error_code& ec, bool ok, IpAddr server);
+    void onConnected(const asio::error_code& ec, bool ok, dhtnet::IpAddr server);
 
     // io
     std::shared_ptr<asio::io_context> io_context;

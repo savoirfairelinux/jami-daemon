@@ -29,12 +29,13 @@
 
 #include "logger.h"
 
-#include "connectivity/ip_utils.h"
 #include "conference.h"
 #include "media/recordable.h"
 #include "media/peerrecorder.h"
 #include "media/media_codec.h"
 #include "media/media_attribute.h"
+
+#include <dhtnet/ip_utils.h>
 
 #include <atomic>
 #include <mutex>
