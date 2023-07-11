@@ -217,6 +217,10 @@ SipAccountConfig::toMap() const
     }
     a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD, std::move(password));
 
+    // srtp settings
+    a.emplace(Conf::CONFIG_SRTP_KEY_EXCHANGE, sip_utils::getKeyExchangeName(srtpKeyExchange));
+    a.emplace(Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback ? TRUE_STR : FALSE_STR);
+
     a.emplace(Conf::CONFIG_TLS_ENABLE, tlsEnable ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_LISTENER_PORT, std::to_string(tlsListenerPort));
     a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile);
