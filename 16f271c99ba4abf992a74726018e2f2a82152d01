@@ -47,6 +47,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5eb6cd4f_0c1d130c",
+        "filename": "contrib/src/dhtnet/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-07-12T15:56:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e79965e9_99c6283d",
+      "range": {
+        "startLine": 2,
+        "startChar": 18,
+        "endLine": 2,
+        "endChar": 58
+      },
+      "revId": "16f271c99ba4abf992a74726018e2f2a82152d01",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2800bcd6_6492a9e9",
+        "filename": "contrib/src/dhtnet/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-07-12T15:56:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a5bd5dbb_0faae3db",
+      "range": {
+        "startLine": 2,
+        "startChar": 18,
+        "endLine": 2,
+        "endChar": 58
+      },
+      "revId": "16f271c99ba4abf992a74726018e2f2a82152d01",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d14c594b_20eb1858",
@@ -60,6 +108,30 @@
       "writtenOn": "2023-07-11T19:28:22Z",
       "side": 1,
       "message": "on ubuntu 22.04, with msgpack from system (not built in contrib) I see:\n\nres - done\n-- Found PkgConfig: /usr/bin/pkg-config (found version \"1.8.0\") \nCMake Error at CMakeLists.txt:22 (find_package):\n  Could not find a package configuration file provided by \"msgpack-cxx\" with\n  any of the following names:\n\n    msgpack-cxxConfig.cmake\n    msgpack-cxx-config.cmake\n\n  Add the installation prefix of \"msgpack-cxx\" to CMAKE_PREFIX_PATH or set\n  \"msgpack-cxx_DIR\" to a directory containing one of the above files.  If\n  \"msgpack-cxx\" provides a separate development package or SDK, be sure it\n  has been installed.\n\n\n\nIf I force build contrib it\u0027s ok:\n\n\n```\npkg-config --libs msgpack  \n-lmsgpackc\npkg-config msgpack --modversion     \n3.3.0\n\nsudo apt-get install libmsgpack-dev\nReading package lists... Done\nBuilding dependency tree... Done\nReading state information... Done\nlibmsgpack-dev is already the newest version (3.3.0-4).\n0 upgraded, 0 newly installed, 0 to remove and 82 not upgraded.\n\n```",
+      "range": {
+        "startLine": 7,
+        "startChar": 15,
+        "endLine": 7,
+        "endChar": 22
+      },
+      "revId": "16f271c99ba4abf992a74726018e2f2a82152d01",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e41cf698_0c8f507a",
+        "filename": "contrib/src/dhtnet/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-07-12T15:56:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d14c594b_20eb1858",
       "range": {
         "startLine": 7,
         "startChar": 15,
