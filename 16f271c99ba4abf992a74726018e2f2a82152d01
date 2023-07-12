@@ -140,6 +140,30 @@
       },
       "revId": "16f271c99ba4abf992a74726018e2f2a82152d01",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c4ce72d_b0c9d23f",
+        "filename": "contrib/src/dhtnet/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-12T17:28:29Z",
+      "side": 1,
+      "message": "```\ncd dhtnet \u0026\u0026 cd build \u0026\u0026 CC\u003d\"gcc\" CXX\u003d\"g++\" LD\u003d\"ld\" AR\u003d\"ar\" CCAS\u003d\"gcc -c\" RANLIB\u003d\"ranlib\" STRIP\u003d\"strip\" PATH\u003d\"/home/sblin/Projects/jami-project/client-qt/daemon/contrib/x86_64-linux-gnu/bin:/home/sblin/Projects/jami-project/client-qt/daemon/extras/tools/build/bin:/home/sblin/.asdf/shims:/home/sblin/.asdf/bin:/home/sblin/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:~/.local/bin/\" CPPFLAGS\u003d\" -I/home/sblin/Projects/jami-project/client-qt/daemon/contrib/x86_64-linux-gnu/include -fPIC\" CFLAGS\u003d\" -I/home/sblin/Projects/jami-project/client-qt/daemon/contrib/x86_64-linux-gnu/include -DNDEBUG\u003d1 -O3  -fPIC\" CXXFLAGS\u003d\" -I/home/sblin/Projects/jami-project/client-qt/daemon/contrib/x86_64-linux-gnu/include -DNDEBUG\u003d1 -O3  -fPIC\" LDFLAGS\u003d\" -L/home/sblin/Projects/jami-project/client-qt/daemon/contrib/x86_64-linux-gnu/lib\" cmake -DCMAKE_TOOLCHAIN_FILE\u003d/home/sblin/Projects/jami-project/client-qt/daemon/contrib/native/toolchain.cmake -DCMAKE_INSTALL_PREFIX\u003d/home/sblin/Projects/jami-project/client-qt/daemon/contrib/x86_64-linux-gnu -DCMAKE_INSTALL_LIBDIR\u003d/home/sblin/Projects/jami-project/client-qt/daemon/contrib/x86_64-linux-gnu/lib -DBUILD_SHARED_LIBS\u003dOff -DBUILD_TESTING\u003dOff ..\n-- The CXX compiler identification is GNU 11.3.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /usr/bin/g++ - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Found PkgConfig: /usr/bin/pkg-config (found version \"0.29.2\") \n-- Could NOT find msgpack-cxx (missing: msgpack-cxx_DIR)\nCMake Error at CMakeLists.txt:25 (add_library):\n  add_library cannot create ALIAS target \"msgpack-cxx\" because target\n  \"msgpack\" does not already exist.\n\n\n-- Checking for module \u0027opendht\u003e\u003d2.6.0\u0027\n--   Found opendht, version 2.6.0\n-- Checking for module \u0027libpjproject\u0027\n--   Found libpjproject, version 2.12.1\n-- Configuring incomplete, errors occurred!\n\n```",
+      "parentUuid": "e41cf698_0c8f507a",
+      "range": {
+        "startLine": 7,
+        "startChar": 15,
+        "endLine": 7,
+        "endChar": 22
+      },
+      "revId": "16f271c99ba4abf992a74726018e2f2a82152d01",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
