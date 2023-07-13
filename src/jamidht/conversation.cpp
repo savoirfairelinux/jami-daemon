@@ -536,7 +536,7 @@ public:
             auto file = fileutils::loadFile(hostedCallsPath_);
             // load values
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::lock_guard<std::mutex> lk {hostedCallsMtx_};
+            std::lock_guard<std::mutex> lk {activeCallsMtx_};
             oh.get().convert(hostedCalls_);
         } catch (const std::exception& e) {
             return;
@@ -629,7 +629,6 @@ public:
 
     // Manage hosted calls on this device
     std::string hostedCallsPath_ {};
-    mutable std::mutex hostedCallsMtx_ {};
     mutable std::map<std::string, uint64_t /* start time */> hostedCalls_ {};
     // Manage active calls for this conversation (can be hosted by other devices)
     std::string activeCallsPath_ {};
@@ -735,9 +734,6 @@ Conversation::Impl::announceEndedCalls()
     saveHostedCalls();
     lkA.unlock();
     lk.unlock();
-    if (!commits.empty()) {
-        announce(commits);
-    }
     return commits;
 }
 
@@ -1917,7 +1913,14 @@ Conversation::bootstrap(std::function<void()> onBootstraped, const std::vector<D
 std::vector<std::string>
 Conversation::refreshActiveCalls()
 {
-    return pimpl_->refreshActiveCalls();
+    auto commits = pimpl_->refreshActiveCalls();
+    if (!commits.empty()) {
+        dht::ThreadPool::io().run([w = weak(), commits]{
+            if (auto sthis = w.lock())
+                sthis->pimpl_->announce(commits);
+        });
+    }
+    return commits;
 }
 
 void
@@ -1997,7 +2000,7 @@ Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
     auto now = std::chrono::system_clock::now();
     auto nowSecs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
     {
-        std::lock_guard<std::mutex> lk(pimpl_->hostedCallsMtx_);
+        std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
         pimpl_->hostedCalls_[message["confId"].asString()] = nowSecs;
         pimpl_->saveHostedCalls();
     }
@@ -2014,7 +2017,7 @@ Conversation::isHosting(const std::string& confId) const
     auto info = infos();
     if (info["rdvDevice"] == shared->currentDeviceId() && info["rdvHost"] == shared->getUsername())
         return true; // We are the current device Host
-    std::lock_guard<std::mutex> lk(pimpl_->hostedCallsMtx_);
+    std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
     return pimpl_->hostedCalls_.find(confId) != pimpl_->hostedCalls_.end();
 }
 
@@ -2028,7 +2031,7 @@ Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
 
     auto erased = false;
     {
-        std::lock_guard<std::mutex> lk(pimpl_->hostedCallsMtx_);
+        std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
         erased = pimpl_->hostedCalls_.erase(message["confId"].asString());
     }
     if (erased) {
