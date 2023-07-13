@@ -1317,7 +1317,12 @@ Conversation::Impl::pull()
         }
         auto oldHead = repo->getHead();
         std::string newHead = oldHead;
+        if (repo->id() == "9d864ebe6712f18d1790b70d8ba7b605f78e63ac")
+            JAMI_ERROR("@@@ TRY LOCK");
         std::unique_lock<std::mutex> lk(writeMtx_);
+
+        if (repo->id() == "9d864ebe6712f18d1790b70d8ba7b605f78e63ac")
+            JAMI_ERROR("@@@ LOCK");
         auto commits = mergeHistory(deviceId);
         if (!commits.empty()) {
             newHead = commits.rbegin()->at("id");
@@ -1340,6 +1345,8 @@ Conversation::Impl::pull()
                 announce(commits);
             }
         }
+        if (repo->id() == "9d864ebe6712f18d1790b70d8ba7b605f78e63ac")
+            JAMI_ERROR("@@@ LOCK END");
         lk.unlock();
         if (cb)
             cb(true);
