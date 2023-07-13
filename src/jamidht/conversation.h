@@ -171,7 +171,7 @@ public:
      * and commit all the crashed calls
      * @return  Commits added
      */
-    std::vector<std::string> refreshActiveCalls();
+    std::vector<std::string> commitsEndedCalls();
 
     /**
      * Add a callback to update upper layers

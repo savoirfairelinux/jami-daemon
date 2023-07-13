@@ -1184,7 +1184,7 @@ ConversationModule::loadConversations()
                 conv->setRemovingFlag();
                 toRm.insert(repository);
             }
-            auto commits = conv->refreshActiveCalls();
+            auto commits = conv->commitsEndedCalls();
             if (!commits.empty()) {
                 // Note: here, this means that some calls were actives while the
                 // daemon finished (can be a crash).
