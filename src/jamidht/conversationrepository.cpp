@@ -3230,6 +3230,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
 
     git_merge_options merge_opts;
     git_merge_options_init(&merge_opts, GIT_MERGE_OPTIONS_VERSION);
+    merge_opts.recursion_limit = 2;
     git_index* index_ptr = nullptr;
     if (git_merge_commits(&index_ptr, repo.get(), head_commit.get(), other_commit.get(), &merge_opts)
         < 0) {
