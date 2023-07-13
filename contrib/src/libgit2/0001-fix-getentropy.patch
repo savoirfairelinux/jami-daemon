@@ -1,0 +1,25 @@
+ src/util/rand.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/util/rand.c b/src/util/rand.c
+index 940faf947..7b3f20774 100644
+--- a/src/util/rand.c
++++ b/src/util/rand.c
+@@ -10,7 +10,7 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
+ #include "rand.h"
+ #include "runtime.h"
+
+-#if defined(GIT_RAND_GETENTROPY)
++#if defined(GIT_RAND_GETENTROPY) && defined(HAVE_SYS_RANDOM_H)
+ # include <sys/random.h>
+ #endif
+
+@@ -85,7 +85,7 @@ GIT_INLINE(int) getseed(uint64_t *seed)
+ 	bits convert;
+ 	int fd;
+
+-# if defined(GIT_RAND_GETENTROPY)
++# if defined(GIT_RAND_GETENTROPY) && defined(HAVE_SYS_RANDOM_H)
+ 	GIT_UNUSED((fd = 0));
+
+ 	if (getentropy(seed, sizeof(uint64_t)) == 0)
