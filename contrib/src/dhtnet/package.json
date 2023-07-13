@@ -1,0 +1,24 @@
+{
+    "name": "dhtnet",
+    "version": "9d35096b2a6bd17e285ab45cc6417d462317f67a",
+    "url": "https://review.jami.net/plugins/gitiles/dhtnet/+archive/__VERSION__.tar.gz",
+    "deps": [
+        "opendht",
+        "pjproject",
+        "asio"
+    ],
+    "use_cmake" : true,
+    "defines": [
+        "BUILD_SHARED_LIBS=0",
+        "BUILD_TESTING=0"
+    ],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
