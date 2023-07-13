@@ -1247,7 +1247,7 @@ SIPCall::transferCommon(const pj_str_t* dst)
 
     /* Associate this voiplink of call with the client subscription
      * We can not just associate call with the client subscription
-     * because after this function, we can no find the cooresponding
+     * because after this function, we can not find the corresponding
      * voiplink from the call any more. But the voiplink is useful!
      */
     pjsip_evsub_set_mod_data(sub, Manager::instance().sipVoIPLink().getModId(), this);
@@ -1280,8 +1280,9 @@ SIPCall::transfer(const std::string& to)
     if (Call::isRecording())
         stopRecording();
 
-    std::string toUri = account->getToUri(to);
-    const pj_str_t dst(CONST_PJ_STR(toUri));
+    auto uri = Uri(to);
+    JAMI_WARN() << "@@@ " << uri.authority();
+    const pj_str_t dst(CONST_PJ_STR(uri.authority()));
     JAMI_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), (int) dst.slen, dst.ptr);
 
     if (!transferCommon(&dst))

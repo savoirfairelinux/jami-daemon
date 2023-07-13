@@ -61,6 +61,7 @@ public:
     std::string aliceId;
     std::string bobId;
     std::string bob2Id;
+    std::string carlaId;
 
 private:
     void testCall();
@@ -70,6 +71,7 @@ private:
     void testTlsInfosPeerCertificate();
     void testSocketInfos();
     void testInvalidTurn();
+    void testTransfer();
 
     CPPUNIT_TEST_SUITE(CallTest);
     CPPUNIT_TEST(testCall);
@@ -79,6 +81,7 @@ private:
     CPPUNIT_TEST(testTlsInfosPeerCertificate);
     CPPUNIT_TEST(testSocketInfos);
     CPPUNIT_TEST(testInvalidTurn);
+    CPPUNIT_TEST(testTransfer);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -87,9 +90,10 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(CallTest, CallTest::name());
 void
 CallTest::setUp()
 {
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
+    carlaId = actors["carla"];
 }
 
 void
@@ -99,9 +103,9 @@ CallTest::tearDown()
     std::remove(bobArchive.c_str());
 
     if (bob2Id.empty()) {
-        wait_for_removal_of({aliceId, bobId});
+        wait_for_removal_of({aliceId, bobId, carlaId});
     } else {
-        wait_for_removal_of({aliceId, bobId, bob2Id});
+        wait_for_removal_of({aliceId, bobId, carlaId, bob2Id});
     }
 }
 
@@ -488,6 +492,79 @@ CallTest::testInvalidTurn()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
 }
 
+void
+CallTest::testTransfer()
+{
+    // Alice call Bob
+    // Bob transfer to Carla
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::atomic_bool bobCallReceived {false};
+    std::atomic_bool carlaCallReceived {false};
+    std::atomic<int> bobCallStopped {0};
+    std::atomic<int> aliceCallStopped {0};
+    std::string bobCallId;
+    std::string carlaCallId;
+    std::string carlaCallPeer;
+    // Watch signals
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string& accountId,
+            const std::string& callId,
+            const std::string& peerId,
+            const std::vector<std::map<std::string, std::string>>&) {
+            if (accountId == bobId) {
+                bobCallReceived = true;
+                bobCallId = callId;
+            } else if (accountId == carlaId) {
+                carlaCallReceived = true;
+                carlaCallId = callId;
+                carlaCallPeer = peerId;
+                string_replace(carlaCallPeer, "@ring.dht", "");
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& accountId, const std::string&, const std::string& state, signed) {
+            if (state == "OVER") {
+                if (accountId == bobId) {
+                    bobCallStopped += 1;
+                    cv.notify_one();
+                }
+                if (accountId == aliceId) {
+                    aliceCallStopped += 1;
+                    cv.notify_one();
+                }
+            }
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    JAMI_INFO("Start call between alice and Bob");
+    auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobCallReceived.load(); }));
+
+    JAMI_INFO("Bob transfer to Carla");
+    libjami::transfer(bobId, bobCallId, carlaUri);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return bobCallStopped.load(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 120s, [&] { return carlaCallReceived.load(); }));
+    CPPUNIT_ASSERT(carlaCallPeer == aliceUri);
+
+    JAMI_INFO("Stop call between alice and carla");
+    aliceCallStopped = 0;
+    Manager::instance().hangupCall(carlaId, carlaCallId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallStopped == 1; }));
+}
 } // namespace test
 } // namespace jami
 
