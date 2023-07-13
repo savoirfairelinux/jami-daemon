@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f8305477_6573960d",
+        "filename": "src/archiver.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-07-13T22:31:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "17372f53_751bf748",
+      "revId": "8ddef07080922703251af0070077bd6fe0586526",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "29709644_2e0a4994",
