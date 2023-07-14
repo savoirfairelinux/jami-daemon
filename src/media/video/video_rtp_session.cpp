@@ -264,6 +264,10 @@ VideoRtpSession::startReceiver()
         receiveThread_.reset(
             new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
 
+        // ensure that start has been called
+        if (not socketPair_)
+            return;
+
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
@@ -419,10 +423,6 @@ void
 VideoRtpSession::setMuted(bool mute, Direction dir)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    // ensure that start has been called before setmuted
-    if (not socketPair_)
-        return;
 
     // Sender
     if (dir == Direction::SEND) {
