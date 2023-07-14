@@ -41,7 +41,7 @@ struct Response;
 class Resolver;
 } // namespace http
 namespace log {
-class Logger;
+struct Logger;
 }
 using Logger = log::Logger;
 } // namespace dht
