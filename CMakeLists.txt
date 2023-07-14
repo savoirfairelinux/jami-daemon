@@ -5,6 +5,8 @@ project(jami
     LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
 
+set(PROJECT_LABEL "libjami")
+
 ################################################################################
 # Build options
 ################################################################################
