@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8de4582b_8e1777bc",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-07-17T18:37:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6731de18_d36a33b4",
+      "range": {
+        "startLine": 125,
+        "startChar": 32,
+        "endLine": 125,
+        "endChar": 41
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fb21b2ee_1546260f",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-07-17T17:27:21Z",
       "side": 1,
       "message": "move to column 0 like other ifdef",
+      "range": {
+        "startLine": 193,
+        "startChar": 8,
+        "endLine": 193,
+        "endChar": 24
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "64e9f1dc_81babd11",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-07-17T18:37:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fb21b2ee_1546260f",
       "range": {
         "startLine": 193,
         "startChar": 8,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "94b4f330_843267f7",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-07-17T18:37:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c008ce4b_3d20845c",
+      "range": {
+        "startLine": 179,
+        "startChar": 14,
+        "endLine": 179,
+        "endChar": 26
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "149824d9_cf51546f",
@@ -93,6 +165,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0f2de0dd_ce5ea8e4",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-07-17T18:37:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "149824d9_cf51546f",
+      "range": {
+        "startLine": 192,
+        "startChar": 41,
+        "endLine": 192,
+        "endChar": 47
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "52172b77_dfea263a",
@@ -106,6 +202,30 @@
       "writtenOn": "2023-07-17T17:27:21Z",
       "side": 1,
       "message": "remove?",
+      "range": {
+        "startLine": 267,
+        "startChar": 4,
+        "endLine": 267,
+        "endChar": 27
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c38aa82_67552de4",
+        "filename": "test/unitTest/plugins/plugins.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 267,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-07-17T18:37:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "52172b77_dfea263a",
       "range": {
         "startLine": 267,
         "startChar": 4,
