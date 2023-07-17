@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6731de18_d36a33b4",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-17T17:27:21Z",
+      "side": 1,
+      "message": "filesPath.size() should be the same size than signatures.size() (else we should return false without checking anything else first)\n\nThen you can check that all path in signatures is present in filesPath (std::find_if)",
+      "range": {
+        "startLine": 125,
+        "startChar": 32,
+        "endLine": 125,
+        "endChar": 41
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb21b2ee_1546260f",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-17T17:27:21Z",
+      "side": 1,
+      "message": "move to column 0 like other ifdef",
+      "range": {
+        "startLine": 193,
+        "startChar": 8,
+        "endLine": 193,
+        "endChar": 24
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c008ce4b_3d20845c",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-17T17:27:21Z",
+      "side": 1,
+      "message": "clang-format installed? weird format",
+      "range": {
+        "startLine": 179,
+        "startChar": 14,
+        "endLine": 179,
+        "endChar": 26
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "149824d9_cf51546f",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-17T17:27:21Z",
+      "side": 1,
+      "message": "can throw potentially",
+      "range": {
+        "startLine": 192,
+        "startChar": 41,
+        "endLine": 192,
+        "endChar": 47
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "52172b77_dfea263a",
+        "filename": "test/unitTest/plugins/plugins.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 267,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-17T17:27:21Z",
+      "side": 1,
+      "message": "remove?",
+      "range": {
+        "startLine": 267,
+        "startChar": 4,
+        "endLine": 267,
+        "endChar": 27
+      },
+      "revId": "f5d607fb714b508904a531f42a31058392a5bdbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
