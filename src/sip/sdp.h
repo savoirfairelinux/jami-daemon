@@ -24,12 +24,12 @@
 
 #include "noncopyable.h"
 #include "sdes_negotiator.h"
-#include "connectivity/sip_utils.h"
-#include "connectivity/ip_utils.h"
-#include "connectivity/ice_transport.h"
 #include "media/media_codec.h"
 #include "media/media_attribute.h"
 #include "connectivity/sip_utils.h"
+
+#include <dhtnet/ip_utils.h>
+#include <dhtnet/ice_transport.h>
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -144,12 +144,12 @@ public:
      * Write accessor. Set the local IP address that will be used in the sdp session
      */
     void setPublishedIP(const std::string& addr, pj_uint16_t addr_type = pj_AF_UNSPEC());
-    void setPublishedIP(const IpAddr& addr);
+    void setPublishedIP(const dhtnet::IpAddr& addr);
 
     /*
      * Read accessor. Get the local IP address
      */
-    IpAddr getPublishedIPAddr() const { return std::string_view(publishedIpAddr_); }
+    dhtnet::IpAddr getPublishedIPAddr() const { return std::string_view(publishedIpAddr_); }
 
     std::string_view getPublishedIP() const { return publishedIpAddr_; }
 
@@ -186,9 +186,9 @@ public:
 
     unsigned int getTelephoneEventType() const { return telephoneEventPayload_; }
 
-    void addIceAttributes(const IceTransport::Attribute&& ice_attrs);
-    IceTransport::Attribute getIceAttributes() const;
-    static IceTransport::Attribute getIceAttributes(const pjmedia_sdp_session* session);
+    void addIceAttributes(const dhtnet::IceTransport::Attribute&& ice_attrs);
+    dhtnet::IceTransport::Attribute getIceAttributes() const;
+    static dhtnet::IceTransport::Attribute getIceAttributes(const pjmedia_sdp_session* session);
 
     void addIceCandidates(unsigned media_index, const std::vector<std::string>& cands);
 
