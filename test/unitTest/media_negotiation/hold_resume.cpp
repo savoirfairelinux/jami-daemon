@@ -17,15 +17,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestFixture.h>
-#include <cppunit/extensions/HelperMacros.h>
-
-#include <condition_variable>
-#include <string>
-
 #include "manager.h"
-#include "connectivity/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"
@@ -34,8 +26,16 @@
 #include "account_const.h"
 #include "sip/sipcall.h"
 #include "sip/sdp.h"
-
 #include "common.h"
+
+#include <dhtnet/connectionmanager.h>
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include <condition_variable>
+#include <string>
 
 using namespace libjami::Account;
 using namespace libjami::Call;
