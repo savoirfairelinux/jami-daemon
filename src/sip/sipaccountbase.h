@@ -27,11 +27,13 @@
 #include "account.h"
 
 #include "connectivity/sip_utils.h"
-#include "connectivity/ip_utils.h"
-#include "connectivity/turn_cache.h"
 #include "noncopyable.h"
 #include "im/message_engine.h"
 #include "sipaccountbase_config.h"
+
+#include <dhtnet/turn_cache.h>
+#include <dhtnet/ip_utils.h>
+#include <dhtnet/ice_options.h>
 
 #include <array>
 #include <deque>
@@ -143,9 +145,9 @@ public:
      */
     std::string getPublishedAddress() const { return config().publishedIp; }
 
-    IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
+    dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
 
-    void setPublishedAddress(const IpAddr& ip_addr);
+    void setPublishedAddress(const dhtnet::IpAddr& ip_addr);
 
     /**
      * Get a flag which determine the usage in sip headers of either the local
@@ -172,7 +174,7 @@ public:
 #endif
     static void releasePort(uint16_t port) noexcept;
 
-    IceTransportOptions getIceOptions() const noexcept;
+    dhtnet::IceTransportOptions getIceOptions() const noexcept;
 
     virtual void sendMessage(const std::string& to,
                              const std::string& deviceId,
@@ -249,7 +251,7 @@ protected:
      * configuration
      *
      */
-    IpAddr publishedIp_[2] {};
+    dhtnet::IpAddr publishedIp_[2] {};
 
     pj_status_t transportStatus_ {PJSIP_SC_TRYING};
     std::string transportError_ {};

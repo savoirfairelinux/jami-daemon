@@ -16,16 +16,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestFixture.h>
-#include <cppunit/extensions/HelperMacros.h>
-
-#include <condition_variable>
-#include <filesystem>
-#include <string>
-
 #include "manager.h"
-#include "connectivity/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
@@ -35,6 +26,16 @@
 #include "media_const.h"
 #include "call_const.h"
 #include "common.h"
+
+#include <dhtnet/connectionmanager.h>
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include <condition_variable>
+#include <filesystem>
+#include <string>
 
 using namespace libjami::Account;
 using namespace libjami::Call::Details;
@@ -195,7 +196,7 @@ CallTest::testCachedCall()
     aliceAccount->connectionManager()
         .connectDevice(bobDeviceId,
                        "sip",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                       [&cv, &successfullyConnected](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                      const DeviceId&) {
                            if (socket)
                                successfullyConnected = true;

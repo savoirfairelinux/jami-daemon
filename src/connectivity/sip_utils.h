@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "connectivity/ip_utils.h"
 #include "media/media_codec.h"
 #include "media/audio/audiobuffer.h"
 #include "noncopyable.h"
@@ -29,6 +28,8 @@
 #include <string>
 #include <vector>
 #include <cstring> // strcmp
+
+#include <dhtnet/ip_utils.h>
 
 #include <pjsip/sip_msg.h>
 #include <pjlib.h>
