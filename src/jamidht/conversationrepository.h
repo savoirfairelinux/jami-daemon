@@ -54,7 +54,6 @@ constexpr auto EUNAUTHORIZED = 4;
 constexpr auto ECOMMIT = 5;
 
 class JamiAccount;
-class ChannelSocket;
 
 struct LogOptions
 {

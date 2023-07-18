@@ -80,7 +80,7 @@ public:
 
     void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
 
-    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
+    void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) override;
     void restartSender() override;
     void stop() override;
     void setMuted(bool mute, Direction dir = Direction::SEND) override;

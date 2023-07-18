@@ -21,7 +21,7 @@
 namespace jami {
 
 SwarmChannelHandler::SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                         ConnectionManager& cm)
+                                         dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
@@ -67,7 +67,7 @@ SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& 
 void
 SwarmChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
                              const std::string& uri,
-                             std::shared_ptr<ChannelSocket> socket)
+                             std::shared_ptr<dhtnet::ChannelSocket> socket)
 {
     auto sep = uri.find_last_of('/');
     auto conversationId = uri.substr(sep + 1);
