@@ -527,7 +527,7 @@ IceSdpParsingTest::test_call()
 
     CPPUNIT_ASSERT_EQUAL(MEDIA_COUNT, offer.size());
     CPPUNIT_ASSERT_EQUAL(MEDIA_COUNT, answer.size());
-    auto bobAddr = ip_utils::getLocalAddr(AF_INET);
+    auto bobAddr = dhtnet::ip_utils::getLocalAddr(AF_INET);
     bobAddr.setPort(bobData_.listeningPort_);
 
     aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,

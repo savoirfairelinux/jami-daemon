@@ -35,6 +35,10 @@
 
 #include <asio.hpp>
 
+namespace dhtnet {
+class ChannelSocket;
+} // namespace dhtnet
+
 namespace jami {
 
 namespace ConversationMapKeys {
@@ -117,7 +121,6 @@ struct ConvInfo
 class JamiAccount;
 class ConversationRepository;
 class TransferManager;
-class ChannelSocket;
 enum class ConversationMode;
 
 using OnPullCb = std::function<void(bool fetchOk)>;
@@ -127,8 +130,8 @@ using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
 using DeviceId = dht::PkId;
-using GitSocketList = std::map<DeviceId, std::shared_ptr<ChannelSocket>>;
-using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
+using GitSocketList = std::map<DeviceId, std::shared_ptr<dhtnet::ChannelSocket>>;
+using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
 using NeedSocketCb
     = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
 
@@ -190,7 +193,7 @@ public:
      * Add swarm connection to the DRT
      * @param channel       Related channel
      */
-    void addSwarmChannel(std::shared_ptr<ChannelSocket> channel);
+    void addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel);
 
     /**
      * Get conversation's id
@@ -515,8 +518,8 @@ public:
      * Because libgit2 is a C library, we store the pointer in the corresponding conversation
      * and the GitTransport will inject to libgit2 whenever needed
      */
-    std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const;
-    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
+    std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const DeviceId& deviceId) const;
+    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& socket);
     void removeGitSocket(const DeviceId& deviceId);
 
     /**

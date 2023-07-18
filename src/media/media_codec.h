@@ -26,8 +26,7 @@
 #endif
 
 #include "audio/audiobuffer.h" // for AudioFormat
-#include "connectivity/ip_utils.h"
-
+#include <dhtnet/ip_utils.h>
 #include <cctype>
 #include <string>
 #include <vector>
@@ -241,10 +240,10 @@ struct MediaDescription
     MediaDirection direction_ {MediaDirection::UNKNOWN};
 
     /** Endpoint socket address */
-    IpAddr addr {};
+    dhtnet::IpAddr addr {};
 
     /** RTCP socket address */
-    IpAddr rtcp_addr {};
+    dhtnet::IpAddr rtcp_addr {};
 
     /** RTP */
     std::shared_ptr<SystemCodecInfo> codec {};
