@@ -1431,7 +1431,10 @@ Manager::joinParticipant(const std::string& accountId,
         return false;
     }
 
-    auto conf = std::make_shared<Conference>(account);
+    auto mediaAttr = call1->getMediaAttributeList();
+    if (mediaAttr.empty())
+        mediaAttr = call2->getMediaAttributeList();
+    auto conf = std::make_shared<Conference>(account, "", true, mediaAttr);
     account->attach(conf);
     emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), conf->getConfId());
 

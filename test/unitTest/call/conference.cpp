@@ -859,8 +859,24 @@ void
 ConferenceTest::testAudioConferenceConfInfo()
 {
     registerSignalHandlers();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
 
     startConference(true);
+
+    // Check that alice's video is muted
+    auto aliceVideoMuted = [&]() {
+        int result = 0;
+        std::lock_guard<std::mutex> lock(pInfosMtx_);
+        for (auto i = 0u; i < pInfos_.size(); ++i) {
+            if (pInfos_[i]["uri"].find(aliceUri) != std::string::npos
+                && pInfos_[i]["videoMuted"] == "true"
+                && pInfos_[i]["sinkId"] == "host_video_0")
+                result += 1;
+        }
+        return result;
+    };
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideoMuted() == 1; }));
 
     libjami::unregisterSignalHandlers();
 }
