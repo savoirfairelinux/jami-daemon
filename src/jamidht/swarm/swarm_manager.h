@@ -32,7 +32,7 @@ using namespace swarm_protocol;
 
 class SwarmManager : public std::enable_shared_from_this<SwarmManager>
 {
-    using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocketInterface>&)>;
+    using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocketInterface>&)>;
     using NeedSocketCb = std::function<void(const std::string&, ChannelCb&&)>;
     using OnConnectionChanged = std::function<void(bool ok)>;
 
@@ -66,7 +66,7 @@ public:
      * Add channel to routing table
      * @param channel
      */
-    void addChannel(const std::shared_ptr<ChannelSocketInterface>& channel);
+    void addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel);
 
     /**
      * Remove channel from routing table
@@ -183,7 +183,7 @@ private:
      * @param q
      * @param numberNodes
      */
-    void sendRequest(const std::shared_ptr<ChannelSocketInterface>& socket,
+    void sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
                      NodeId& nodeId,
                      Query q,
                      int numberNodes = Bucket::BUCKET_MAX_SIZE);
@@ -193,13 +193,13 @@ private:
      * @param socket
      * @param msg
      */
-    void sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, const Message& msg_);
+    void sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const Message& msg_);
 
     /**
      * Interpret received message
      * @param socket
      */
-    void receiveMessage(const std::shared_ptr<ChannelSocketInterface>& socket);
+    void receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket);
 
     /**
      * Reset node's timer expiry
@@ -208,7 +208,7 @@ private:
      * @param node
      */
     void resetNodeExpiry(const asio::error_code& ec,
-                         const std::shared_ptr<ChannelSocketInterface>& socket,
+                         const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
                          NodeId node = {});
 
     /**

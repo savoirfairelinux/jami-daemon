@@ -53,10 +53,11 @@ using random_device = dht::crypto::random_device;
 #include <yaml-cpp/yaml.h>
 #pragma GCC diagnostic pop
 
-#include "connectivity/upnp/upnp_control.h"
-#include "connectivity/ip_utils.h"
 #include "compiler_intrinsics.h"
 #include "jami/account_const.h"
+
+#include <dhtnet/upnp/upnp_control.h>
+#include <dhtnet/ip_utils.h>
 
 #include <fmt/ranges.h>
 
@@ -100,7 +101,7 @@ Account::updateUpnpController()
 
     // UPNP enabled. Create new controller if needed.
     if (not upnpCtrl_) {
-        upnpCtrl_.reset(new upnp::Controller());
+        upnpCtrl_.reset(new dhtnet::upnp::Controller(Manager::instance().upnpContext()));
         if (not upnpCtrl_) {
             throw std::runtime_error("Failed to create a UPNP Controller instance!");
         }
@@ -273,7 +274,7 @@ Account::getDefaultCodecDetails(const unsigned& codecId)
  * Get the UPnP IP (external router) address.
  * If use UPnP is set to false, the address will be empty.
  */
-IpAddr
+dhtnet::IpAddr
 Account::getUPnPIpAddress() const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);

@@ -21,12 +21,9 @@
 
 #include "sip/siptransport.h"
 #include "connectivity/sip_utils.h"
-#include "connectivity/ip_utils.h"
-#include "connectivity/security/tls_session.h"
 
 #include "jamidht/abstract_sip_transport.h"
 #include "jamidht/channeled_transport.h"
-#include "connectivity/multiplexed_socket.h"
 
 #include "compiler_intrinsics.h"
 #include "sip/sipvoiplink.h"
@@ -39,6 +36,10 @@
 #include <pjnath/stun_config.h>
 #include <pjlib.h>
 #include <pjlib-util.h>
+
+#include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/ip_utils.h>
+#include <dhtnet/tls_session.h>
 
 #include <opendht/crypto.h>
 
@@ -229,7 +230,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
         if (type == PJSIP_TRANSPORT_UDP or type == PJSIP_TRANSPORT_UDP6) {
             const auto updKey = std::find_if(udpTransports_.cbegin(),
                                              udpTransports_.cend(),
-                                             [tp](const std::pair<IpAddr, pjsip_transport*>& pair) {
+                                             [tp](const std::pair<dhtnet::IpAddr, pjsip_transport*>& pair) {
                                                  return pair.second == tp;
                                              });
             if (updKey != udpTransports_.cend())
@@ -279,7 +280,7 @@ SipTransportBroker::shutdown()
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::getUdpTransport(const IpAddr& ipAddress)
+SipTransportBroker::getUdpTransport(const dhtnet::IpAddr& ipAddress)
 {
     std::lock_guard<std::mutex> lock(transportMapMutex_);
     auto itp = udpTransports_.find(ipAddress);
@@ -310,7 +311,7 @@ SipTransportBroker::getUdpTransport(const IpAddr& ipAddress)
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::createUdpTransport(const IpAddr& ipAddress)
+SipTransportBroker::createUdpTransport(const dhtnet::IpAddr& ipAddress)
 {
     RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
 
@@ -333,7 +334,7 @@ SipTransportBroker::createUdpTransport(const IpAddr& ipAddress)
 }
 
 std::shared_ptr<TlsListener>
-SipTransportBroker::getTlsListener(const IpAddr& ipAddress, const pjsip_tls_setting* settings)
+SipTransportBroker::getTlsListener(const dhtnet::IpAddr& ipAddress, const pjsip_tls_setting* settings)
 {
     RETURN_IF_FAIL(settings, nullptr, "TLS settings not specified");
     RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
@@ -358,12 +359,12 @@ SipTransportBroker::getTlsListener(const IpAddr& ipAddress, const pjsip_tls_sett
 
 std::shared_ptr<SipTransport>
 SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
-                                    const IpAddr& remote,
+                                    const dhtnet::IpAddr& remote,
                                     const std::string& remote_name)
 {
     if (!l || !remote)
         return nullptr;
-    IpAddr remoteAddr {remote};
+    dhtnet::IpAddr remoteAddr {remote};
     if (remoteAddr.getPort() == 0)
         remoteAddr.setPort(pjsip_transport_get_default_port_for_type(l->get()->type));
 
@@ -400,7 +401,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
 
 std::shared_ptr<SipTransport>
 SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>& account,
-                                          const std::shared_ptr<ChannelSocket>& socket,
+                                          const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                                           onShutdownCb&& cb)
 {
     if (!socket)
