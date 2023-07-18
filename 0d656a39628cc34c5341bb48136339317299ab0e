@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8eef701c_7f9c8ab1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 736,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-07-18T03:01:25Z",
+      "side": 1,
+      "message": "could be removed. but why moving the announce out of the function called announce ?",
+      "range": {
+        "startLine": 735,
+        "startChar": 0,
+        "endLine": 736,
+        "endChar": 5
+      },
+      "revId": "0d656a39628cc34c5341bb48136339317299ab0e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e9c756a_da5e6caa",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1922,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-07-18T03:01:25Z",
+      "side": 1,
+      "message": "odd to see this here, was difficult to understand at first. Also seems unecessary to have this logic outside of impl ?",
+      "range": {
+        "startLine": 1917,
+        "startChar": 0,
+        "endLine": 1922,
+        "endChar": 5
+      },
+      "revId": "0d656a39628cc34c5341bb48136339317299ab0e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
