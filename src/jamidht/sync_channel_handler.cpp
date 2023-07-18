@@ -25,7 +25,7 @@ static constexpr const char SYNC_URI[] {"sync://"};
 namespace jami {
 
 SyncChannelHandler::SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                       ConnectionManager& cm)
+                                       dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
@@ -43,11 +43,7 @@ SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, Connec
     }
     connectionManager_.connectDevice(deviceId,
                                      channelName,
-                                     [cb = std::move(cb)](std::shared_ptr<ChannelSocket> socket,
-                                                          const DeviceId& dev) {
-                                         if (cb)
-                                             cb(socket, dev);
-                                     });
+                                     std::move(cb));
 }
 
 bool
@@ -63,7 +59,7 @@ SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& c
 void
 SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cert,
                             const std::string&,
-                            std::shared_ptr<ChannelSocket> channel)
+                            std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)

@@ -18,8 +18,9 @@
 #include "gittransport.h"
 
 #include "manager.h"
-#include "connectivity/multiplexed_socket.h"
-#include "connectivity/connectionmanager.h"
+
+#include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/connectionmanager.h>
 
 using namespace std::string_view_literals;
 
