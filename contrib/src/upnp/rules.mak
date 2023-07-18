@@ -1,5 +1,5 @@
 # UPNP
-UPNP_VERSION := 1.14.18
+UPNP_VERSION := 1.14.13
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
@@ -17,6 +17,7 @@ upnp: pupnp-release-$(UPNP_VERSION).tar.gz .sum-upnp
 ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
 endif
+	$(APPLY) $(SRC)/upnp/poll.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub
 	$(MOVE)
 
