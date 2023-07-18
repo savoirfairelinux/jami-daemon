@@ -17,6 +17,7 @@ upnp: pupnp-release-$(UPNP_VERSION).tar.gz .sum-upnp
 ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
 endif
+	$(APPLY) $(SRC)/upnp/poll.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub
 	$(MOVE)
 
